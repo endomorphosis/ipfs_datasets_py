@@ -27,6 +27,34 @@ def test_decoder_reconstructs_simple_obligation_without_temporal_duplication():
     assert decoded.phrases[2].text == norm.action
 
 
+def test_decoder_reconstructs_separated_recipient_slot_with_provenance():
+    _, norm, _ = _decode("The Director shall issue a permit.")
+    recipient_norm = replace(
+        norm,
+        action="provide notice",
+        recipient="the applicant",
+        field_spans={
+            **norm.field_spans,
+            "action": [19, 33],
+            "action_recipient": [37, 50],
+        },
+    )
+
+    decoded = decode_legal_norm_ir(recipient_norm)
+
+    assert decoded.text == "Director shall provide notice to the applicant."
+    assert [phrase.slot for phrase in decoded.phrases] == [
+        "actor",
+        "modality",
+        "action",
+        "recipient_connector",
+        "recipient",
+    ]
+    recipient_phrase = decoded.phrases[-1]
+    assert recipient_phrase.text == "the applicant"
+    assert recipient_phrase.spans == [[37, 50]]
+
+
 def test_decoder_reconstructs_separate_temporal_deadline_once():
     element, norm, decoded = _decode(
         "The Director shall issue a permit within 10 days after application."
@@ -42,6 +70,20 @@ def test_decoder_reconstructs_separate_temporal_deadline_once():
     assert temporal_phrase.text == "within 10 days after application"
     assert temporal_phrase.spans == [element["temporal_constraint_details"][0]["span"]]
     assert norm.temporal_constraints[0]["value"] == "10 days after application"
+
+
+def test_decoder_does_not_duplicate_recipient_already_in_action_slot():
+    _, norm, _ = _decode("The Director shall issue a permit.")
+    recipient_norm = replace(
+        norm,
+        action="provide notice to the applicant",
+        recipient="to the applicant",
+    )
+
+    decoded = decode_legal_norm_ir(recipient_norm)
+
+    assert decoded.text == "Director shall provide notice to the applicant."
+    assert [phrase.slot for phrase in decoded.phrases] == ["actor", "modality", "action"]
 
 
 def test_decoder_preserves_unresolved_reference_exception_without_clearing_repair():

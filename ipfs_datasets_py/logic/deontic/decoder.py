@@ -76,6 +76,7 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
 
     actor = _clean_text(norm.actor)
     action = _clean_text(_action_without_leading_modal(norm.action))
+    recipient = _recipient_phrase_text(norm.recipient)
     modal = _modal_phrase(norm.modality)
 
     if actor:
@@ -92,6 +93,10 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
         phrases.append(_phrase(action, "action", norm))
     else:
         missing.append("action")
+
+    if recipient and not _text_already_contains(action, recipient):
+        phrases.append(_fixed_phrase("to", "recipient_connector"))
+        phrases.append(_phrase(recipient, "recipient", norm))
 
     for condition in norm.conditions:
         condition_text = _slot_text(condition)
@@ -292,6 +297,11 @@ def _sentence_from_phrases(phrases: Iterable[DecodedPhrase]) -> str:
 
 def _action_without_leading_modal(action: str) -> str:
     return re.sub(r"^(?:shall not|must not|may not|shall|must|may)\s+", "", action.strip(), flags=re.IGNORECASE)
+
+
+def _recipient_phrase_text(recipient: str) -> str:
+    """Return a normalized recipient phrase without duplicating a connector."""
+    return re.sub(r"^(?:to|for)\s+", "", _clean_text(recipient), flags=re.IGNORECASE)
 
 
 def _strip_prefix(text: str, prefixes: Sequence[str]) -> str:
