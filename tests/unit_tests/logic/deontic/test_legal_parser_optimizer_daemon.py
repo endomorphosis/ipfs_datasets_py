@@ -405,6 +405,63 @@ def test_daemon_rejects_valid_patch_without_production_and_test_files(tmp_path):
     assert "patch must touch at least one deontic parser test file" in quality["reasons"]
 
 
+def test_daemon_rolls_back_patch_that_breaks_python_compile(tmp_path):
+    production = tmp_path / "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    test_file = tmp_path / "tests/unit_tests/logic/deontic/test_deontic_parser.py"
+    production.parent.mkdir(parents=True)
+    test_file.parent.mkdir(parents=True)
+    production.write_text("VALUE = 1\n", encoding="utf-8")
+    test_file.write_text("def test_placeholder():\n    assert True\n", encoding="utf-8")
+    unified_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "--- a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "@@ -1 +1 @@",
+            "-VALUE = 1",
+            "+def broken(:",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_parser.py b/tests/unit_tests/logic/deontic/test_deontic_parser.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_parser.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_parser.py",
+            "@@ -1,2 +1,3 @@",
+            " def test_placeholder():",
+            "     assert True",
+            "+",
+            "",
+        ]
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Introduce invalid syntax.",
+                "requirements_addressed": ["daemon validation"],
+                "acceptance_criteria": ["invalid Python is rolled back"],
+                "expected_metric_gain": {"parsed_rate": 0.1},
+                "tests_to_run": [],
+                "unified_diff": unified_diff,
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=False,
+        require_clean_touched_files=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert cycle["apply_result"]["applied"] is True
+    assert cycle["apply_result"]["rolled_back"] is True
+    assert cycle["apply_result"]["reason"] == "post_apply_validation_failed"
+    assert cycle["post_apply_validation"]["valid"] is False
+    assert "changed Python files failed py_compile" in cycle["post_apply_validation"]["reasons"]
+    assert production.read_text(encoding="utf-8") == "VALUE = 1\n"
+
+
 def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
@@ -961,8 +1018,8 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
     prod_file = "ipfs_datasets_py/logic/deontic/exports.py"
     test_file = "tests/unit_tests/logic/deontic/test_deontic_exports.py"
     for path, body in {
-        prod_file: "before_exports\n",
-        test_file: "before_test\n",
+        prod_file: "EXPORT_MARKER = 'before_exports'\n",
+        test_file: "def test_marker():\n    assert 'before_test'\n",
     }.items():
         full_path = repo / path
         full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -979,14 +1036,15 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
             "--- a/ipfs_datasets_py/logic/deontic/exports.py",
             "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
             "@@ -1 +1 @@",
-            "-before_exports",
-            "+after_exports",
+            "-EXPORT_MARKER = 'before_exports'",
+            "+EXPORT_MARKER = 'after_exports'",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
-            "@@ -1 +1 @@",
-            "-before_test",
-            "+after_test",
+            "@@ -1,2 +1,2 @@",
+            " def test_marker():",
+            "-    assert 'before_test'",
+            "+    assert 'after_test'",
             "",
         ]
     )
@@ -1041,8 +1099,8 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
     assert cycle["retained_change"]["has_retained_changes"] is False
     assert cycle["retained_change"]["reason"] == "metric_stall_no_metric_progress"
     assert cycle["commit_result"] == {"committed": False, "reason": "metric_stall_no_metric_progress"}
-    assert (repo / prod_file).read_text(encoding="utf-8") == "before_exports\n"
-    assert (repo / test_file).read_text(encoding="utf-8") == "before_test\n"
+    assert (repo / prod_file).read_text(encoding="utf-8") == "EXPORT_MARKER = 'before_exports'\n"
+    assert (repo / test_file).read_text(encoding="utf-8") == "def test_marker():\n    assert 'before_test'\n"
 
 
 def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp_path):

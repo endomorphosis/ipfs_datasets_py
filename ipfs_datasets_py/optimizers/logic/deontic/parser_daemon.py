@@ -23,6 +23,7 @@ import traceback
 import os
 import re
 import subprocess
+import sys
 import threading
 import time
 from dataclasses import asdict, dataclass, field
@@ -845,6 +846,11 @@ class LegalParserOptimizerDaemon:
         else:
             apply_result = {"applied": False, "reason": "not_applied_yet"}
         tests_result: Dict[str, Any] = {"valid": True, "skipped": True, "reason": "patch_not_applied"}
+        post_apply_validation: Dict[str, Any] = {
+            "valid": True,
+            "skipped": True,
+            "reason": "patch_not_applied",
+        }
         post_evaluation: Dict[str, Any] = {}
         retained_change: Dict[str, Any] = {
             "has_retained_changes": False,
@@ -868,75 +874,102 @@ class LegalParserOptimizerDaemon:
             if apply_result.get("applied"):
                 self._write_current_status(
                     status="running",
-                    phase="running_tests",
+                    phase="post_apply_validation",
                     cycle_index=cycle_index,
                     cycle_dir=cycle_dir,
                     started_at=started,
                     changed_files=changed_files,
                 )
-                tests_result = self.optimizer.run_tests()
-                if tests_result.get("valid"):
-                    self._write_current_status(
-                        status="running",
-                        phase="evaluating_retained_change",
-                        cycle_index=cycle_index,
-                        cycle_dir=cycle_dir,
-                        started_at=started,
-                        changed_files=changed_files,
-                    )
-                    post_evaluation = self.optimizer.evaluate_current_parser()
-                    metric_progress = self._metric_stall_retention_result(
-                        proposal=proposal,
-                        evaluation=evaluation,
-                        post_evaluation=post_evaluation,
-                        metric_stall_mode=metric_stall_mode,
-                    )
-                    if not metric_progress.get("valid"):
-                        self._write_current_status(
-                            status="running",
-                            phase="rolling_back_metric_stall_no_progress",
-                            cycle_index=cycle_index,
-                            cycle_dir=cycle_dir,
-                            started_at=started,
-                            changed_files=changed_files,
-                            metric_progress=metric_progress,
-                        )
-                        rollback = self._restore_patch_paths(pre_apply_files)
-                        if not rollback.get("valid"):
-                            rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
-                        apply_result["rolled_back"] = True
-                        apply_result["rollback"] = rollback
-                        apply_result["reason"] = "metric_stall_no_metric_progress"
-                        apply_result["metric_progress"] = metric_progress
-                        retained_change = {
-                            "has_retained_changes": False,
-                            "changed_files": [],
-                            "reason": "metric_stall_no_metric_progress",
-                            "metric_progress": metric_progress,
-                        }
-                        commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
-                    else:
-                        retained_change = self._retained_change_summary(pre_apply_files)
-                        retained_patch_path = cycle_dir / "retained.patch"
-                        retained_patch_path.write_text(
-                            self._retained_patch_for_paths(pre_apply_files),
-                            encoding="utf-8",
-                        )
-                        retained_change["patch_path"] = str(retained_patch_path)
-                        retained_change["metric_progress"] = metric_progress
-                        if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
-                            commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
-                else:
+                post_apply_validation = self._post_apply_validation(changed_files)
+                if not post_apply_validation.get("valid"):
                     rollback = self._restore_patch_paths(pre_apply_files)
                     if not rollback.get("valid"):
                         rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
                     apply_result["rolled_back"] = True
                     apply_result["rollback"] = rollback
+                    apply_result["reason"] = "post_apply_validation_failed"
                     retained_change = {
                         "has_retained_changes": False,
                         "changed_files": [],
-                        "reason": "rolled_back_after_failed_tests",
+                        "reason": "post_apply_validation_failed",
                     }
+                    tests_result = {
+                        "valid": False,
+                        "skipped": True,
+                        "reason": "post_apply_validation_failed",
+                    }
+                else:
+                    self._write_current_status(
+                        status="running",
+                        phase="running_tests",
+                        cycle_index=cycle_index,
+                        cycle_dir=cycle_dir,
+                        started_at=started,
+                        changed_files=changed_files,
+                    )
+                    tests_result = self.optimizer.run_tests()
+                    if tests_result.get("valid"):
+                        self._write_current_status(
+                            status="running",
+                            phase="evaluating_retained_change",
+                            cycle_index=cycle_index,
+                            cycle_dir=cycle_dir,
+                            started_at=started,
+                            changed_files=changed_files,
+                        )
+                        post_evaluation = self.optimizer.evaluate_current_parser()
+                        metric_progress = self._metric_stall_retention_result(
+                            proposal=proposal,
+                            evaluation=evaluation,
+                            post_evaluation=post_evaluation,
+                            metric_stall_mode=metric_stall_mode,
+                        )
+                        if not metric_progress.get("valid"):
+                            self._write_current_status(
+                                status="running",
+                                phase="rolling_back_metric_stall_no_progress",
+                                cycle_index=cycle_index,
+                                cycle_dir=cycle_dir,
+                                started_at=started,
+                                changed_files=changed_files,
+                                metric_progress=metric_progress,
+                            )
+                            rollback = self._restore_patch_paths(pre_apply_files)
+                            if not rollback.get("valid"):
+                                rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                            apply_result["rolled_back"] = True
+                            apply_result["rollback"] = rollback
+                            apply_result["reason"] = "metric_stall_no_metric_progress"
+                            apply_result["metric_progress"] = metric_progress
+                            retained_change = {
+                                "has_retained_changes": False,
+                                "changed_files": [],
+                                "reason": "metric_stall_no_metric_progress",
+                                "metric_progress": metric_progress,
+                            }
+                            commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
+                        else:
+                            retained_change = self._retained_change_summary(pre_apply_files)
+                            retained_patch_path = cycle_dir / "retained.patch"
+                            retained_patch_path.write_text(
+                                self._retained_patch_for_paths(pre_apply_files),
+                                encoding="utf-8",
+                            )
+                            retained_change["patch_path"] = str(retained_patch_path)
+                            retained_change["metric_progress"] = metric_progress
+                            if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
+                                commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
+                    else:
+                        rollback = self._restore_patch_paths(pre_apply_files)
+                        if not rollback.get("valid"):
+                            rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                        apply_result["rolled_back"] = True
+                        apply_result["rollback"] = rollback
+                        retained_change = {
+                            "has_retained_changes": False,
+                            "changed_files": [],
+                            "reason": "rolled_back_after_failed_tests",
+                        }
         elif self.config.run_tests and not self.config.apply_patches:
             self._write_current_status(
                 status="running",
@@ -971,6 +1004,7 @@ class LegalParserOptimizerDaemon:
             "commit_result": commit_result,
             "patch_check": patch_check,
             "apply_result": apply_result,
+            "post_apply_validation": post_apply_validation,
             "tests": tests_result,
             "post_evaluation": post_evaluation,
         }
@@ -1846,6 +1880,58 @@ class LegalParserOptimizerDaemon:
                 dirty.append(rel_path)
         return dirty
 
+    def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:
+        """Run fast structural checks before expensive tests or retention."""
+
+        existing_python_files = [
+            path
+            for path in changed_files
+            if path.endswith(".py") and (self.config.repo_root / path).exists()
+        ]
+        compile_result: Dict[str, Any] = {
+            "valid": True,
+            "skipped": True,
+            "reason": "no_changed_python_files",
+        }
+        if existing_python_files:
+            compile_result = _run_command(
+                [sys.executable, "-m", "py_compile", *existing_python_files],
+                cwd=self.config.repo_root,
+                timeout=min(60, max(10, int(self.config.test_timeout_seconds))),
+            )
+
+        changed_test_files = [
+            path
+            for path in existing_python_files
+            if path.startswith("tests/unit_tests/logic/deontic/")
+        ]
+        collect_result: Dict[str, Any] = {
+            "valid": True,
+            "skipped": True,
+            "reason": "no_changed_deontic_test_files",
+        }
+        if compile_result.get("valid") and changed_test_files:
+            collect_result = _run_command(
+                ["pytest", "--collect-only", "-q", *changed_test_files],
+                cwd=self.config.repo_root,
+                timeout=min(90, max(20, int(self.config.test_timeout_seconds))),
+            )
+
+        valid = bool(compile_result.get("valid")) and bool(collect_result.get("valid"))
+        reasons: List[str] = []
+        if not compile_result.get("valid"):
+            reasons.append("changed Python files failed py_compile")
+        if not collect_result.get("valid"):
+            reasons.append("changed deontic tests failed pytest collection")
+        return {
+            "valid": valid,
+            "changed_python_files": existing_python_files,
+            "changed_test_files": changed_test_files,
+            "compile": compile_result,
+            "collect": collect_result,
+            "reasons": reasons,
+        }
+
     def _commit_retained_change(
         self,
         cycle_index: int,
@@ -2148,7 +2234,7 @@ def _cycle_rejection_reason(cycle_payload: Dict[str, Any]) -> str:
     if not apply_result.get("applied"):
         return str(apply_result.get("reason") or "patch_not_applied")
     if apply_result.get("rolled_back"):
-        return "rolled_back_after_failed_tests"
+        return str(apply_result.get("reason") or "rolled_back_after_failed_tests")
     tests = cycle_payload.get("tests") or {}
     if tests.get("valid") is False:
         return "tests_failed"
