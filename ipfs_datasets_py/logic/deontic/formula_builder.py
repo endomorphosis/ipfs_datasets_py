@@ -493,6 +493,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
     return {
         "triggered_by_receipt_of": "procedure upon receipt",
         "triggered_by_filing_of": "procedure upon filing",
+        "triggered_by_electronic_filing_of": "procedure after electronic filing",
         "triggered_by_submission_of": "procedure upon submission",
         "triggered_by_notice_and_hearing": "procedure after",
         "triggered_by_approval_of": "procedure upon approval",
@@ -529,6 +530,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_mailing_of": "procedure after mailing",
         "triggered_by_certified_mailing_of": "procedure after certified mailing",
         "triggered_by_delivery_of": "procedure after delivery",
+        "triggered_by_electronic_service_on": "procedure after electronic service",
         "triggered_by_postmark_of": "procedure after postmark",
         "triggered_by_docketing_of": "procedure after docketing",
         "triggered_by_entry_of": "procedure after entry",
@@ -554,6 +556,7 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
     trigger_relations = {
         "triggered_by_receipt_of",
         "triggered_by_filing_of",
+        "triggered_by_electronic_filing_of",
         "triggered_by_submission_of",
         "triggered_by_notice_and_hearing",
         "triggered_by_approval_of",
@@ -589,6 +592,7 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_mailing_of",
         "triggered_by_certified_mailing_of",
         "triggered_by_delivery_of",
+        "triggered_by_electronic_service_on",
         "triggered_by_postmark_of",
         "triggered_by_docketing_of",
         "triggered_by_entry_of",
@@ -779,6 +783,15 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
             anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
             if anchor:
                 cleaned = re.sub(
+                    rf"\s+(?:and\s+)?(?:upon|after|following)\s+{tail_noun}\s+(?:of|on)?\s*(?:an?\s+|the\s+)?{re.escape(anchor)}\b",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
+                cleaned = re.sub(r"\s+and\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+                cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+            if anchor:
+                cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+{tail_noun}\s+(?:of|on)?\s*(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
                     "",
                     cleaned,
@@ -792,6 +805,8 @@ def _procedure_trigger_tail_noun(relation_type: str) -> str:
 
     return {
         "triggered_by_determination_of": "determination",
+        "triggered_by_electronic_filing_of": "electronic\\s+filing",
+        "triggered_by_electronic_service_on": "electronic\\s+service",
         "triggered_by_verification_of": "verification",
         "triggered_by_validation_of": "validation",
         "triggered_by_review_of": "review",

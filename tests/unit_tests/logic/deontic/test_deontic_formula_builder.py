@@ -3414,3 +3414,40 @@ def test_structured_acceptance_and_acknowledgment_triggers_become_formula_prereq
     assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(acknowledgment_element)) == (
         "O(∀x (Clerk(x) ∧ ProcedureAfterAcknowledgmentFiling(x) → DocketFiling(x)))"
     )
+
+
+def test_structured_electronic_filing_and_service_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Clerk shall docket the appeal after electronic filing of the appeal and after electronic service on the respondent."
+    )[0])
+    element["action"] = [
+        "docket the appeal after electronic filing appeal and after electronic service respondent"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_electronic_filing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after electronic filing of the appeal",
+                "span": [31, 68],
+            },
+            {
+                "event": "docketing",
+                "relation": "triggered_by_electronic_service_on",
+                "anchor_event": "respondent",
+                "raw_text": "after electronic service on the respondent",
+                "span": [73, 114],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Clerk(x) ∧ ProcedureAfterElectronicFilingAppeal(x) "
+        "∧ ProcedureAfterElectronicServiceRespondent(x) → DocketAppeal(x)))"
+    )
+    assert "DocketAppealAfterElectronicFilingAppeal" not in formula
+    assert "DocketAppealAfterElectronicServiceRespondent" not in formula
