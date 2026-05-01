@@ -4844,3 +4844,37 @@ def test_ir_procedure_event_records_mark_assessment_trigger_as_prerequisite():
     assert records[0]["span"] == [36, 64]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_determination_trigger_as_prerequisite():
+    """Determination of eligibility is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after determination of eligibility."
+    )[0])
+    element["action"] = ["issue a permit after determination eligibility"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_determination_of",
+                "anchor_event": "eligibility",
+                "raw_text": "after determination of eligibility",
+                "span": [36, 70],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_determination_of"
+    assert records[0]["anchor_event"] == "eligibility"
+    assert records[0]["anchor_symbol"] == "Eligibility"
+    assert records[0]["raw_text"] == "after determination of eligibility"
+    assert records[0]["span"] == [36, 70]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
