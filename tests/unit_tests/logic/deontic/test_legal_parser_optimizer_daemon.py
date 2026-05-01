@@ -479,6 +479,51 @@ def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
     assert history[0]["changed_files"] == ["ipfs_datasets_py/logic/deontic/formula_builder.py"]
 
 
+def test_recent_cycle_history_summarizes_test_failures_for_recovery_prompt(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9,
+                "feedback": ["repair_required_count: 1"],
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {"applied": True, "rolled_back": True},
+                "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
+                "tests": {
+                    "valid": False,
+                    "stdout": "\n".join(
+                        [
+                            "E   RecursionError: maximum recursion depth exceeded",
+                            "!!! Recursion detected (same locals & position)",
+                            "FAILED tests/unit_tests/logic/deontic/test_deontic_exports.py::test_export_tables - RecursionError",
+                        ]
+                    ),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    history = optimizer._recent_cycle_history(limit=1)
+    recent_failures = optimizer._recent_test_failures(history)
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert history[0]["tests_valid"] is False
+    assert history[0]["test_failure_summary"]["exception_types"] == ["RecursionError"]
+    assert recent_failures[0]["failed_tests"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py::test_export_tables"
+    ]
+    assert recent_failures[0]["rolled_back"] is True
+    assert '"test_failure_recovery_mode": true' in prompt
+    assert "RecursionError" in prompt
+    assert "recent_test_failures" in prompt
+
+
 def test_optimizer_enters_patch_stability_mode_after_repeated_patch_check_failures(tmp_path):
     target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
     test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"

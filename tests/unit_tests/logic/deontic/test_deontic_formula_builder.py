@@ -1688,3 +1688,50 @@ def test_detail_only_numbered_reference_exception_infers_operator_but_stays_bloc
     assert record["requires_validation"] is True
     assert record["repair_required"] is True
     assert record["deterministic_resolution"] == {}
+
+
+def test_batch_formula_records_resolve_numbered_exception_with_exact_same_document_section():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited_element = dict(extract_normative_elements("The Bureau shall maintain the public register.")[0])
+    cited_element["canonical_citation"] = "section 552"
+    cited_element["section_context"] = {"section": "552"}
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(cited_element),
+        ]
+    )
+
+    assert records[0]["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in records[0]["formula"]
+    assert records[0]["proof_ready"] is True
+    assert records[0]["requires_validation"] is False
+    assert records[0]["repair_required"] is False
+    assert records[0]["deterministic_resolution"] == {
+        "type": "resolved_same_document_reference_exception",
+        "resolved_blockers": [
+            "cross_reference_requires_resolution",
+            "exception_requires_scope_review",
+        ],
+        "references": ["section 552"],
+        "exception_spans": [reference_element["exception_details"][0].get("span", [])],
+        "reason": "numbered exception reference is resolved to an exact same-document section and retained as provenance",
+    }
+
+
+def test_batch_formula_records_keep_numbered_exception_blocked_without_same_document_section():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    records = build_deontic_formula_records_from_irs([
+        LegalNormIR.from_parser_element(reference_element),
+    ])
+
+    assert records[0]["proof_ready"] is False
+    assert records[0]["requires_validation"] is True
+    assert records[0]["repair_required"] is True
+    assert records[0]["deterministic_resolution"] == {}

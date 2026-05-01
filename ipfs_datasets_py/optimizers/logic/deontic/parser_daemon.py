@@ -307,6 +307,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         recent_cycle_history = self._recent_cycle_history(limit=5)
         patch_stability_mode = self._patch_stability_mode(recent_cycle_history)
         recent_failed_patch_files = self._recent_failed_patch_files(recent_cycle_history)
+        recent_test_failures = self._recent_test_failures(recent_cycle_history)
+        test_failure_recovery_mode = bool(recent_test_failures)
         file_payload = {
             path: _read_text(
                 self.daemon_config.repo_root / path,
@@ -335,10 +337,13 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
+                "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
             ],
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
+            "test_failure_recovery_mode": test_failure_recovery_mode,
             "recent_failed_patch_files": recent_failed_patch_files,
+            "recent_test_failures": recent_test_failures,
             "docs": docs_payload,
             "evaluation": evaluation,
             "feedback": list(feedback),
@@ -365,6 +370,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "The diff must normally touch at least one production parser/export file and at least one deontic test file. "
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
+            "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
             "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
@@ -420,6 +426,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     pass
             tests = dict(summary.get("tests") or {})
             tests_stdout = str(tests.get("stdout") or "")
+            test_failure_summary = _summarize_test_failure(tests_stdout)
             patch_check = dict(summary.get("patch_check") or {})
             apply_result = dict(summary.get("apply_result") or {})
             proposal_quality = dict(summary.get("proposal_quality") or {})
@@ -441,6 +448,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "applied": apply_result.get("applied"),
                     "rolled_back": apply_result.get("rolled_back", False),
                     "tests_valid": tests.get("valid"),
+                    "test_failure_summary": test_failure_summary if not tests.get("valid") else {},
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
             )
@@ -465,6 +473,26 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 if text and text not in files:
                     files.append(text)
         return files[:8]
+
+    def _recent_test_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        failures: List[Dict[str, Any]] = []
+        for item in recent_cycle_history:
+            if item.get("tests_valid") is not False:
+                continue
+            summary = dict(item.get("test_failure_summary") or {})
+            if not summary:
+                summary = _summarize_test_failure(str(item.get("test_failure_tail") or ""))
+            failures.append(
+                {
+                    "cycle_index": item.get("cycle_index"),
+                    "changed_files": item.get("changed_files", []),
+                    "rolled_back": item.get("rolled_back", False),
+                    "failed_tests": summary.get("failed_tests", [])[:12],
+                    "exception_types": summary.get("exception_types", [])[:8],
+                    "failure_head": summary.get("failure_head", ""),
+                }
+            )
+        return failures[:5]
 
     def check_patch(self, unified_diff: str) -> Dict[str, Any]:
         if not unified_diff.strip():
@@ -1644,6 +1672,41 @@ def _read_text(path: Path, *, limit: int) -> str:
     head = text[: limit // 2]
     tail = text[-(limit // 2) :]
     return f"{head}\n\n[... truncated ...]\n\n{tail}"
+
+
+def _summarize_test_failure(stdout: str) -> Dict[str, Any]:
+    failed_tests: List[str] = []
+    for match in re.finditer(r"FAILED\s+([^\s]+)", stdout):
+        name = match.group(1).strip()
+        if name and name not in failed_tests:
+            failed_tests.append(name)
+
+    exception_types: List[str] = []
+    for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", stdout):
+        name = match.group(1)
+        if name and name not in exception_types:
+            exception_types.append(name)
+
+    interesting_lines: List[str] = []
+    for line in stdout.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if (
+            text.startswith("FAILED ")
+            or text.startswith("E   ")
+            or "Recursion detected" in text
+            or "short test summary info" in text
+        ):
+            interesting_lines.append(text)
+        if len(interesting_lines) >= 10:
+            break
+
+    return {
+        "failed_tests": failed_tests,
+        "exception_types": exception_types,
+        "failure_head": "\n".join(interesting_lines)[:2000],
+    }
 
 
 def _json_safe(value: Any) -> Any:

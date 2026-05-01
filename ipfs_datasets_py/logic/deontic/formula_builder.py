@@ -102,6 +102,9 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     blockers = list(norm.blockers)
     omitted_slots = _omitted_formula_slots(norm)
     deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
+    if not deterministic_resolution:
+        deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(norm, blockers)
+    deterministic_resolution = _normalize_formula_resolution(deterministic_resolution)
     proof_ready = norm.proof_ready or bool(deterministic_resolution)
     requires_validation = not proof_ready
     repair_required = requires_validation
@@ -162,7 +165,11 @@ def _with_same_document_reference_resolutions(norms: List[LegalNormIR]) -> List[
     section_index = _same_document_section_index(norms)
     if not section_index:
         return norms
-    return [_resolve_norm_same_document_references(norm, section_index) for norm in norms]
+    section_context_citations = _same_document_section_context_citations(norms)
+    return [
+        _resolve_norm_same_document_references(norm, section_index, section_context_citations)
+        for norm in norms
+    ]
 
 
 def _same_document_section_index(norms: Sequence[LegalNormIR]) -> Dict[str, str]:
@@ -177,9 +184,17 @@ def _same_document_section_index(norms: Sequence[LegalNormIR]) -> Dict[str, str]
     return section_index
 
 
+def _same_document_section_context_citations(norms: Sequence[LegalNormIR]) -> set[str]:
+    citations: set[str] = set()
+    for norm in norms:
+        citations.update(_section_context_citations(norm))
+    return citations
+
+
 def _resolve_norm_same_document_references(
     norm: LegalNormIR,
     section_index: Mapping[str, str],
+    section_context_citations: set[str],
 ) -> LegalNormIR:
     additions: List[Dict[str, Any]] = []
     existing = {
@@ -208,6 +223,7 @@ def _resolve_norm_same_document_references(
                 "same_document": True,
                 "resolved_source_id": section_index[citation],
                 "source_id": section_index[citation],
+                "matched_section_context": citation in section_context_citations,
                 "span": reference.get("span", []),
             }
             )
@@ -775,12 +791,20 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
         if not any(_reference_text_matches_slot(reference_text, exception_text) for reference_text in resolved_texts):
             return {}
 
+    reason = "reference-only exception is backed by explicit same-document cross-reference resolution"
+    resolved_blockers = sorted(blocker_set)
+    if any(item.get("matched_section_context") for item in resolved_references):
+        reason = "numbered exception reference is resolved to an exact same-document section and retained as provenance"
+        resolved_blockers = sorted(
+            blocker for blocker in blocker_set if blocker != "llm_repair_required"
+        )
+
     return {
         "type": "resolved_same_document_reference_exception",
-        "resolved_blockers": sorted(blocker_set),
+        "resolved_blockers": resolved_blockers,
         "references": resolved_texts,
         "exception_spans": [item.get("span", []) for item in reference_exceptions],
-        "reason": "reference-only exception is backed by explicit same-document cross-reference resolution",
+        "reason": reason,
     }
 
 
@@ -981,6 +1005,85 @@ def _local_scope_reference_exception_formula_resolution(norm: LegalNormIR, block
         "exception_spans": [item.get("span", []) for item in reference_exceptions],
         "reason": "local self-reference exception is exported as provenance outside the operative formula",
     }
+
+
+def _batch_resolved_reference_exception_formula_resolution(
+    norm: LegalNormIR,
+    blockers: List[str],
+) -> Dict[str, Any]:
+    """Resolve numbered reference exceptions backed by same-document IR.
+
+    Single-record parsing must keep ``except as provided in section 552`` in the
+    repair lane because the referenced section may be absent, external, or
+    semantically incompatible. Batch formula export has a narrower deterministic
+    opportunity: if every reference-only exception cites a section that the IR
+    batch has already resolved to the same document, the exception is retained
+    as provenance and excluded from the operative formula antecedent.
+    """
+
+    if norm.modality not in {"O", "P", "F"}:
+        return {}
+    if norm.norm_type not in {"obligation", "permission", "prohibition"}:
+        return {}
+    if not norm.actor.strip() or not norm.action.strip():
+        return {}
+    if not norm.exceptions:
+        return {}
+    if norm.conditions or norm.overrides:
+        return {}
+
+    allowed_blockers = {
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+        "llm_repair_required",
+    }
+    blocker_set = set(blockers)
+    if not blocker_set or not blocker_set.issubset(allowed_blockers):
+        return {}
+    if not {"cross_reference_requires_resolution", "exception_requires_scope_review"}.issubset(blocker_set):
+        return {}
+
+    same_document_records = _same_document_reference_records(norm)
+    if not same_document_records:
+        return {}
+
+    exception_texts = [
+        _slot_primary_text(item)
+        for item in norm.exceptions
+        if isinstance(item, dict)
+    ]
+    if len(exception_texts) != len(norm.exceptions):
+        return {}
+    if any(not _exception_text_needs_external_resolution(text) for text in exception_texts):
+        return {}
+
+    reference_texts = [_reference_resolution_text(item) for item in same_document_records]
+    if not reference_texts:
+        return {}
+    if not all(
+        any(_reference_text_matches_slot(reference_text, exception_text) for reference_text in reference_texts)
+        for exception_text in exception_texts
+    ):
+        return {}
+
+    resolved_blockers = sorted(
+        blocker for blocker in blocker_set if blocker != "llm_repair_required"
+    )
+    return {
+        "type": "resolved_same_document_reference_exception",
+        "resolved_blockers": resolved_blockers,
+        "references": reference_texts,
+        "exception_spans": [item.get("span", []) for item in norm.exceptions if isinstance(item, dict)],
+        "reason": "numbered exception reference is resolved to an exact same-document section and retained as provenance",
+    }
+
+
+def _normalize_formula_resolution(resolution: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize deterministic resolution payloads without dropping provenance."""
+
+    if not resolution:
+        return {}
+    return dict(resolution)
 
 
 def _same_document_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
