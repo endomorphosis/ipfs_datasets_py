@@ -1548,3 +1548,57 @@ def test_active_repair_details_ignore_formula_resolved_rows():
         ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
     ]
     assert active_repair_details_from_parser_elements(elements[:3]) == []
+
+
+def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():
+    examples = [
+        (
+            "This section applies to food carts and mobile vendors.",
+            "local_scope_applicability",
+            ["cross_reference_requires_resolution"],
+        ),
+        (
+            "The applicant shall obtain a permit unless approval is denied.",
+            "standard_substantive_exception",
+            ["exception_requires_scope_review"],
+        ),
+        (
+            "Notwithstanding section 5.01.020, the Director may issue a variance.",
+            "pure_precedence_override",
+            ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
+        ),
+    ]
+
+    for text, resolution_type, parser_warnings in examples:
+        element = extract_normative_elements(text)[0]
+
+        assert element["promotable_to_theorem"] is False
+        assert element["parser_warnings"] == parser_warnings
+        assert element["llm_repair"]["required"] is False
+        assert element["llm_repair"]["allow_llm_repair"] is False
+        assert element["llm_repair"]["reasons"] == []
+        assert element["llm_repair"]["suggested_router"] == ""
+        assert element["llm_repair"]["prompt_hash"] == ""
+        assert element["llm_repair"]["prompt_context"] == {}
+        assert element["llm_repair"]["deterministically_resolved"] is True
+        assert element["llm_repair"]["deterministic_resolution"]["type"] == resolution_type
+        assert element["export_readiness"]["proof_ready"] is False
+        assert "human_or_llm_semantic_review" in element["export_readiness"]["requires_validation"]
+
+
+def test_raw_parser_keeps_llm_prompt_for_unresolved_numbered_reference_exception():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["llm_repair"]["required"] is True
+    assert element["llm_repair"]["allow_llm_repair"] is True
+    assert element["llm_repair"]["suggested_router"] == "llm_router"
+    assert element["llm_repair"]["prompt_hash"]
+    assert element["llm_repair"]["prompt_context"]
+    assert element["llm_repair"]["deterministically_resolved"] is False
+    assert element["llm_repair"]["deterministic_resolution"] == {}
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert "llm_router_repair" in element["export_readiness"]["requires_validation"]

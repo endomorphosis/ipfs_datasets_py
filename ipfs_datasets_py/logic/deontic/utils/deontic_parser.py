@@ -2118,7 +2118,7 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
 
     deterministic_resolution = _deterministic_ir_repair_resolution(element)
     if deterministic_resolution:
-        reasons = []
+        return _inactive_deterministic_repair_payload(element, deterministic_resolution)
     required = bool(reasons)
     prompt_context = {
         "source_text": element.get("text", ""),
@@ -2164,6 +2164,31 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
         "prompt_template": "legal_deontic_parser_repair_v1",
         "prompt_hash": prompt_hash,
         "prompt_context": prompt_context,
+    }
+
+
+def _inactive_deterministic_repair_payload(
+    element: Dict[str, Any],
+    deterministic_resolution: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return an inactive repair payload for deterministic no-LLM resolutions.
+
+    Parser warnings and theorem-promotion gates remain conservative, but raw
+    parser consumers should not see an active llm_router prompt after the typed
+    IR/formula layer has explicitly resolved the blocked slot.
+    """
+
+    return {
+        "required": False,
+        "reasons": [],
+        "target_schema_version": PARSER_SCHEMA_VERSION,
+        "suggested_router": "",
+        "allow_llm_repair": False,
+        "deterministically_resolved": True,
+        "deterministic_resolution": dict(deterministic_resolution),
+        "prompt_template": "legal_deontic_parser_repair_v1",
+        "prompt_hash": "",
+        "prompt_context": {},
     }
 
 
