@@ -49,6 +49,8 @@ _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES = {
     "triggered_by_opening_of": "after opening",
     "triggered_by_return_of": "after return",
     "triggered_by_reinstatement_of": "after reinstatement",
+    "triggered_by_commencement_of": "after commencement",
+    "triggered_by_execution_of": "after execution",
     "triggered_by_withdrawal_of": "after withdrawal",
     "triggered_by_determination_of": "after determination",
     "triggered_by_verification_of": "after verification",

@@ -5284,6 +5284,53 @@ def test_supplemental_status_triggers_become_prerequisites_without_action_tail()
     assert "RestoreLicenseAfterReinstatementPermit" not in formula
 
 
+def test_commencement_and_execution_triggers_become_prerequisites_without_action_tail():
+    element = dict(extract_normative_elements(
+        "The Clerk shall docket the order after commencement of the case and after execution of the agreement."
+    )[0])
+    element["action"] = [
+        "docket the order after commencement case and after execution agreement"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_commencement_of",
+                "anchor_event": "case",
+                "raw_text": "after commencement of the case",
+                "span": [30, 60],
+            },
+            {
+                "event": "docketing",
+                "relation": "triggered_by_execution_of",
+                "anchor_event": "agreement",
+                "raw_text": "after execution of the agreement",
+                "span": [65, 97],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Clerk(x) ∧ ")
+    assert formula.endswith(" → DocketOrder(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → DocketOrder(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Clerk(x)",
+        "ProcedureAfterCommencementCase(x)",
+        "ProcedureAfterExecutionAgreement(x)",
+    }
+    assert "DocketOrderAfterCommencementCase" not in formula
+    assert "DocketOrderAfterExecutionAgreement" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_public_participation_triggers_become_formula_prerequisites_without_action_tail():
     element = dict(extract_normative_elements(
         "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
