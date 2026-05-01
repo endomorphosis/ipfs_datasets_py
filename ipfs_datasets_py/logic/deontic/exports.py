@@ -440,7 +440,7 @@ def normalize_repair_required_evaluation(
 
     normalized_details = normalize_repair_required_details_from_parser_elements(
         source_elements,
-        evaluation.get("repair_required_details", []),
+        _evaluation_repair_required_details(evaluation),
     )
     normalized_source_ids = [
         str(detail.get("source_id") or "")
@@ -523,7 +523,7 @@ def _evaluation_parser_elements(
         if candidate:
             recovered.append(candidate)
 
-    for detail in evaluation.get("repair_required_details", []) if isinstance(evaluation.get("repair_required_details"), list) else []:
+    for detail in _evaluation_repair_required_details(evaluation):
         if not isinstance(detail, Mapping):
             continue
         llm_repair = detail.get("llm_repair")
@@ -540,6 +540,21 @@ def _evaluation_parser_elements(
             recovered.append(candidate)
 
     return _dedupe_evaluation_parser_elements(recovered)
+
+
+def _evaluation_repair_required_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    """Return raw repair details from top-level or nested metrics payloads."""
+
+    details = evaluation.get("repair_required_details")
+    if isinstance(details, list):
+        return [detail for detail in details if isinstance(detail, Mapping)]
+
+    metrics = evaluation.get("metrics")
+    if isinstance(metrics, Mapping):
+        metric_details = metrics.get("repair_required_details")
+        if isinstance(metric_details, list):
+            return [detail for detail in metric_details if isinstance(detail, Mapping)]
+    return []
 
 
 def _dedupe_evaluation_parser_elements(elements: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:

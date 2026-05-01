@@ -3433,6 +3433,84 @@ def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_prob
     assert active_by_id[details[3]["source_id"]] is True
 
 
+def test_normalize_repair_required_evaluation_recovers_nested_metric_details():
+    """Daemon metric payloads may carry repair details only under metrics."""
+
+    examples = [
+        ("exception", "The applicant shall obtain a permit unless approval is denied."),
+        ("override", "Notwithstanding section 5.01.020, the Director may issue a variance."),
+        ("applicability", "This section applies to food carts and mobile vendors."),
+        ("cross_reference", "The Secretary shall publish the notice except as provided in section 552."),
+    ]
+    details = []
+    for sample_id, text in examples:
+        parsed = extract_normative_elements(text)[0]
+        details.append(
+            {
+                "sample_id": sample_id,
+                "text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "norm_type": parsed["norm_type"],
+                "modality": None,
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(parsed["parser_warnings"]),
+                    "prompt_context": {
+                        "source_text": parsed["text"],
+                        "source_id": parsed["source_id"],
+                        "support_text": parsed["support_text"],
+                        "support_span": parsed["support_span"],
+                        "source_span": parsed.get("source_span", parsed["support_span"]),
+                        "deontic_operator": parsed["deontic_operator"],
+                        "norm_type": parsed["norm_type"],
+                        "subject": list(parsed["subject"]),
+                        "action": list(parsed["action"]),
+                        "conditions": list(parsed.get("condition_details") or []),
+                        "exceptions": list(parsed.get("exception_details") or []),
+                        "override_clauses": list(parsed.get("override_clause_details") or []),
+                        "cross_references": list(parsed.get("cross_reference_details") or []),
+                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "parser_warnings": list(parsed["parser_warnings"]),
+                    },
+                },
+            }
+        )
+
+    raw_evaluation = {
+        "metrics": {
+            "repair_required": [detail["source_id"] for detail in details],
+            "repair_required_count": 4,
+            "repair_required_rate": 1.0,
+            "repair_required_details": details,
+            "coverage_gaps": ["repair_required_count: 4"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required"] == [details[3]["source_id"]]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["repair_required"] == [details[3]["source_id"]]
+    assert [
+        detail["sample_id"]
+        for detail in normalized["metrics"]["repair_required_details"]
+    ] == ["cross_reference"]
+    assert normalized["metrics"]["active_repair_required_by_source_id"] == {
+        details[0]["source_id"]: False,
+        details[1]["source_id"]: False,
+        details[2]["source_id"]: False,
+        details[3]["source_id"]: True,
+    }
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_metric_projection_clears_stale_llm_flag_when_formula_readiness_resolved():
     """Formula-resolved detail rows should not survive as active repair."""
 
