@@ -12,10 +12,11 @@ Improve the deterministic legal parser so legal text can be converted into struc
 The desired end state is not "parse every clause no matter what." The desired end state is:
 
 - parse common legal text deterministically into stable, source-grounded slots;
+- support a deterministic encoder/decoder quality loop: `text -> encoder -> LegalNormIR -> decoder -> reconstructed text`;
 - emit formal logic only from structured slots with provenance;
 - refuse, downgrade, or queue uncertain clauses instead of fabricating formalizations;
 - reserve LLM calls for optional repair or review of explicitly blocked clauses;
-- measure coverage, precision, proof-readiness, and repair-rate over a legal corpus.
+- measure coverage, precision, proof-readiness, repair-rate, reconstruction similarity, and reconstruction loss over a legal corpus.
 
 ## Current Baseline
 
@@ -77,6 +78,10 @@ LegalNormIR
   - provenance on every major slot
   - quality gates and blockers
   |
+  +--> decoder / reconstruction text
+  |    - source-grounded paraphrase from IR slots
+  |    - no opaque LLM generation
+  |    - reconstruction metrics against original support text
   +--> canonical parquet / KG records
   +--> deontic / FOL / TDFOL / frame-logic exporters
   +--> proof obligation records
@@ -122,6 +127,36 @@ Candidate fields:
 - `export_readiness`
 
 The IR should be immutable or treated as immutable once built. All generated formulas and export rows should be derived from the IR, not raw text.
+
+## Encoder/Decoder Quality Loop
+
+Add a deterministic encoder/decoder pass as a first-class parser quality goal:
+
+```text
+source legal text
+  -> deterministic encoder
+  -> LegalNormIR
+  -> deterministic decoder
+  -> reconstructed legal text
+```
+
+The encoder is the parser path that maps source text into `LegalNormIR`. The decoder is a source-grounded rendering layer that maps `LegalNormIR` back into normalized legal text. The decoder is not a language model and should not add facts that are absent from the IR. Its job is to expose whether the IR preserved the legally salient content needed to reconstruct the clause.
+
+Quality metrics:
+
+- embedding cosine similarity between original support text and decoded reconstruction;
+- token-level or sequence-level cross-entropy loss of the reconstruction under a fixed local/legal language model or deterministic scorer;
+- slot coverage delta: which source tokens or semantic spans were not represented in the IR;
+- hallucination delta: which decoded tokens or slots were not grounded in source spans;
+- reconstruction exactness for controlled fixture clauses where canonical normalized text is known.
+
+Operational rules:
+
+- These metrics are diagnostic quality gates, not a replacement for reviewed gold fixtures.
+- Embedding and loss models must be pinned, local or reproducible, and never used to modify parser output directly.
+- Low reconstruction similarity should create an explicit parser coverage gap or repair item.
+- High reconstruction similarity must not automatically promote a clause to proof-ready; proof promotion still depends on deterministic slots, provenance, and blockers.
+- The encoder/decoder report should store the original support text, decoded text, metric values, and per-slot provenance so regressions are auditable.
 
 ## Workstream 1: Stabilize And Measure
 
@@ -305,6 +340,10 @@ Add a report command or test helper that emits:
 - cross-reference resolution rate;
 - average scaffold quality;
 - source-span validity rate.
+- encoder/decoder reconstruction cosine similarity;
+- encoder/decoder reconstruction cross-entropy loss;
+- ungrounded decoded-token rate;
+- unreconstructed source-span rate.
 
 Suggested thresholds for initial production gating:
 
@@ -312,6 +351,9 @@ Suggested thresholds for initial production gating:
 - `source_span_valid_rate >= 0.99`
 - `proof_ready_false_positive_rate <= 0.02` on reviewed gold corpus
 - `llm_repair_required_rate` tracked by corpus/domain, not globally forced low at first
+- `mean_reconstruction_cosine >= 0.85` on reviewed fixture clauses after the decoder baseline exists
+- reconstruction cross-entropy tracked by corpus/domain with regressions failing CI once a stable baseline is established
+- zero ungrounded decoded legal facts in proof-ready clauses
 - zero LLM calls in deterministic parser tests
 
 ## First Implementation Slice
@@ -324,6 +366,7 @@ The first slice should be deliberately small:
 4. Update `DeonticConverter` metadata to include parser element and IR.
 5. Add no-LLM regression tests for proof-ready simple clauses.
 6. Add enumerated-clause child norm extraction behind an option or in a narrowly tested path.
+7. Add a minimal encoder/decoder fixture harness for a few simple clauses, with metrics recorded but not yet used as a hard gate.
 
 This gives the project a typed spine and a measurable baseline before any broad parser surgery.
 
@@ -333,6 +376,7 @@ This gives the project a typed spine and a measurable baseline before any broad 
 - Modularization can cause accidental schema drift unless snapshot tests are introduced first.
 - Aggressive proof promotion is more dangerous than repair queue growth.
 - Independent CEC/TDFOL parsers can produce inconsistent outputs unless legal text is routed through one canonical IR.
+- Reconstruction metrics can reward fluent but legally incomplete text unless paired with slot/provenance audits.
 - LLM repair can silently become a dependency unless tests explicitly forbid router calls in deterministic paths.
 
 ## Definition Of Done
@@ -343,5 +387,5 @@ The deterministic parser improvement is complete when:
 - proof-ready clauses are generated only from high-quality deterministic slots;
 - complex clauses are exported as KG/scaffold/repair records with clear blockers;
 - CEC, TDFOL, FOL, KG, and proof exports share stable source IDs and provenance;
-- the gold corpus reports parser quality and repair-rate metrics;
+- the gold corpus reports parser quality, repair-rate, and encoder/decoder reconstruction metrics;
 - any optional LLM repair is auditable, schema-validated, and never accepted as opaque formal logic.

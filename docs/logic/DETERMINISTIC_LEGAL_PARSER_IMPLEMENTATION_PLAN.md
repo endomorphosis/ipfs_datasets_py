@@ -356,10 +356,15 @@ Metrics:
 - `cross_reference_resolution_rate`
 - `average_scaffold_quality`
 - `formal_logic_target_distribution`
+- `mean_reconstruction_cosine`
+- `mean_reconstruction_cross_entropy`
+- `ungrounded_decoded_token_rate`
+- `unreconstructed_source_span_rate`
 
 Acceptance:
 
 - Metrics can run on parser elements without external services.
+- Reconstruction metrics are optional until Phase 8 lands, then included when decoder records are supplied.
 
 ### Task 7.2: CLI/Report Hook
 
@@ -377,6 +382,104 @@ Acceptance:
 
 - A local legal corpus can be parsed and summarized offline.
 
+## Phase 8: Deterministic Encoder/Decoder Quality Loop
+
+### Task 8.1: Add IR Decoder
+
+Files:
+
+- `ipfs_datasets_py/logic/deontic/decoder.py`
+- `ipfs_datasets_py/logic/deontic/ir.py`
+- `tests/unit_tests/logic/deontic/test_deontic_decoder.py`
+
+Implementation:
+
+- Add a deterministic `decode_legal_norm_ir(norm: LegalNormIR) -> DecodedLegalText` function.
+- Render normalized legal text from IR slots only: actor, modality, action, recipient, conditions, exceptions, overrides, temporal constraints, references, penalties, procedures, and lifecycle details.
+- Preserve source grounding by carrying the source slot names and spans used for every decoded phrase.
+- Avoid free-form generation. The decoder may normalize grammar and ordering, but it must not invent legal facts.
+
+Acceptance:
+
+- Simple obligations, permissions, prohibitions, definitions, applicability, exemptions, and lifecycle clauses round-trip into readable normalized text.
+- Decoded text changes when an important IR slot is removed, making lossy encodings visible.
+- Each decoded phrase can be traced back to one or more IR slots or marked as a fixed grammatical connective.
+
+### Task 8.2: Add Encoder/Decoder Metrics
+
+Files:
+
+- `ipfs_datasets_py/logic/deontic/reconstruction_metrics.py`
+- `ipfs_datasets_py/logic/deontic/metrics.py`
+- `tests/unit_tests/logic/deontic/test_deontic_reconstruction_metrics.py`
+
+Implementation:
+
+- Add `evaluate_ir_reconstruction(source_text, norm, decoded_text, scorer=...)`.
+- Compute embedding cosine similarity between source/support text and decoded text.
+- Compute token or sequence cross-entropy loss with a pinned scorer. Prefer a local deterministic scorer for CI; allow heavier model-backed scoring only behind an explicit optional dependency flag.
+- Compute ungrounded decoded-token rate by comparing decoded phrase provenance against IR field spans.
+- Compute unreconstructed source-span rate by checking which legally salient source spans were not represented in decoded provenance.
+
+Acceptance:
+
+- Metrics run offline in the default unit-test path.
+- Optional embedding/language-model scorers are pinned and reported with model/version metadata.
+- Low similarity or high loss produces diagnostics listing missing or ungrounded slots.
+- Metrics are diagnostic at first and do not promote proof readiness.
+
+### Task 8.3: Add Round-Trip Fixtures
+
+Files:
+
+- `tests/fixtures/legal_parser/reconstruction_roundtrip.json`
+- `tests/unit_tests/logic/deontic/test_deontic_reconstruction_fixtures.py`
+
+Implementation:
+
+- Add reviewed fixtures for representative clauses:
+  - simple obligation;
+  - simple prohibition;
+  - permission;
+  - definition;
+  - applicability;
+  - exemption;
+  - temporal deadline;
+  - exception;
+  - cross reference;
+  - penalty or lifecycle clause.
+- Store source text, expected key IR slots, expected decoded normalized text, and expected metric bands.
+
+Acceptance:
+
+- Fixture tests prove that `text -> encoder -> IR -> decoder -> text` is deterministic.
+- Exact decoded text is stable for controlled examples.
+- Metric bands catch lossy parser changes without requiring LLM calls.
+
+### Task 8.4: Wire Reconstruction Into Reports
+
+Files:
+
+- `ipfs_datasets_py/logic/deontic/metrics.py`
+- `ipfs_datasets_py/logic/cli.py`
+- relevant CLI tests
+
+Implementation:
+
+- Add reconstruction summaries to parser metric reports:
+  - mean and median cosine similarity;
+  - mean cross-entropy;
+  - worst examples by similarity and loss;
+  - ungrounded decoded-token rate;
+  - unreconstructed source-span rate.
+- Store per-clause reconstruction records alongside parser/export records.
+
+Acceptance:
+
+- A local legal corpus report shows both formalization quality and reconstruction quality.
+- The report makes it clear whether poor quality comes from failed encoding, lossy IR, decoder limitations, or scorer limitations.
+- CI can later turn stable reconstruction baselines into regression gates.
+
 ## Testing Policy
 
 Every parser behavior change should include:
@@ -386,6 +489,7 @@ Every parser behavior change should include:
 - a source-span assertion;
 - a parser-warning/export-readiness assertion;
 - a formula/export assertion if the behavior affects formal output.
+- an encoder/decoder reconstruction assertion when the behavior changes legally salient IR slots.
 
 Any change that increases `promotable_to_theorem` coverage must include reviewed fixture examples. Raising proof-readiness is a correctness-sensitive change.
 
