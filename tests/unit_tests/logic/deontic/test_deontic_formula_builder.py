@@ -2801,6 +2801,32 @@ def test_structured_procedure_signature_trigger_becomes_formula_prerequisite():
     assert "ServeNoticeAfterSignatureFinalOrder" not in formula
 
 
+def test_structured_procedure_opening_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Board shall award the contract after opening of the bids."
+    )[0])
+    element["action"] = ["award the contract after opening bids"]
+    element["procedure"] = {
+        "trigger_event": "bids",
+        "terminal_event": "award",
+        "event_relations": [
+            {
+                "event": "award",
+                "relation": "triggered_by_opening_of",
+                "anchor_event": "bids",
+                "raw_text": "after opening of the bids",
+                "span": [31, 58],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Board(x) ∧ ProcedureAfterOpeningBids(x) → AwardContract(x)))"
+    assert "AwardContractAfterOpeningBids" not in formula
+
+
 def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
     element = dict(extract_normative_elements(
         "The Director shall publish guidelines after adoption of rules."

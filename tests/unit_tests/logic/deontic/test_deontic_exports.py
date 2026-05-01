@@ -5320,3 +5320,37 @@ def test_ir_procedure_event_records_mark_signature_trigger_as_prerequisite():
     assert records[0]["span"] == [29, 65]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_opening_trigger_as_prerequisite():
+    """Opening of bids is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall award the contract after opening of the bids."
+    )[0])
+    element["action"] = ["award the contract after opening bids"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "award",
+                "relation": "triggered_by_opening_of",
+                "anchor_event": "bids",
+                "raw_text": "after opening of the bids",
+                "span": [31, 58],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "award"
+    assert records[0]["event_symbol"] == "Award"
+    assert records[0]["relation"] == "triggered_by_opening_of"
+    assert records[0]["anchor_event"] == "bids"
+    assert records[0]["anchor_symbol"] == "Bids"
+    assert records[0]["raw_text"] == "after opening of the bids"
+    assert records[0]["span"] == [31, 58]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
