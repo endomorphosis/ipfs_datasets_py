@@ -266,6 +266,34 @@ def active_repair_details_from_parser_elements(
     return details
 
 
+def summarize_active_repair_from_parser_elements(
+    elements: Iterable[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Return metric-ready active repair counts after IR readiness projection.
+
+    This helper is intentionally narrow: it reports active deterministic repair
+    work, not every conservative parser warning. Formula-resolved rows keep
+    their warnings for auditability, while unresolved numbered or external
+    references remain active repair details.
+    """
+
+    rows = parser_elements_for_metrics(elements)
+    details = active_repair_details_from_parser_elements(rows)
+    active_source_ids = {str(detail.get("source_id") or "") for detail in details}
+
+    return {
+        "element_count": len(rows),
+        "repair_required_count": len(details),
+        "repair_required_rate": (len(details) / len(rows)) if rows else 0.0,
+        "repair_required": [detail["source_id"] for detail in details],
+        "repair_required_details": details,
+        "active_repair_required_by_source_id": {
+            str(row.get("source_id") or ""): str(row.get("source_id") or "") in active_source_ids
+            for row in rows
+        },
+    }
+
+
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
     """Return active repair status for an already metrics-projected row."""
 

@@ -10,6 +10,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     parser_elements_for_metrics,
     parser_elements_with_ir_export_readiness,
     parser_elements_to_ir_aligned_export_tables,
+    summarize_active_repair_from_parser_elements,
     validate_export_tables,
 )
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
@@ -1576,6 +1577,40 @@ def test_active_repair_details_ignore_formula_resolved_rows():
         ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
     ]
     assert active_repair_details_from_parser_elements(elements[:3]) == []
+
+
+def test_active_repair_summary_counts_only_unresolved_repair_probes():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    summary = summarize_active_repair_from_parser_elements(elements)
+
+    assert summary["element_count"] == 4
+    assert summary["repair_required_count"] == 1
+    assert summary["repair_required_rate"] == 0.25
+    assert summary["repair_required"] == [elements[3]["source_id"]]
+    assert summary["active_repair_required_by_source_id"] == {
+        elements[0]["source_id"]: False,
+        elements[1]["source_id"]: False,
+        elements[2]["source_id"]: False,
+        elements[3]["source_id"]: True,
+    }
+    assert summary["repair_required_details"][0]["source_id"] == elements[3]["source_id"]
+    assert summary["repair_required_details"][0]["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert summary["repair_required_details"][0]["deterministic_resolution"] == {}
 
 
 def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():
