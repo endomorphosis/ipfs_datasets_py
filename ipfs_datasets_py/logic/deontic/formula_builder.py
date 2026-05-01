@@ -129,6 +129,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_confidentiality_action(action_text)
     elif _is_compliance_obligation(norm, action_text):
         action_text = _strip_compliance_action(action_text)
+    elif _is_access_availability_obligation(norm, action_text):
+        action_text = _strip_access_availability_action(action_text)
     elif _is_direct_gerund_prohibition(norm, action_text):
         action_text = _normalize_refrain_action_head(action_text)
 
@@ -254,6 +256,26 @@ def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
     ))
 
 
+def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether an access/availability duty embeds the proof action."""
+
+    if norm.modality != "O":
+        return False
+    text = str(action_text or "").strip()
+    return bool(
+        re.match(
+            r"^(?:make|maintain|keep)\s+.+?\s+available\s+(?:for|to)\s+\S",
+            text,
+            re.IGNORECASE,
+        )
+        or re.match(
+            r"^(?:provide|grant|allow)\s+access\s+to\s+\S",
+            text,
+            re.IGNORECASE,
+        )
+    )
+
+
 def _strip_refrain_action(action_text: str) -> str:
     """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
@@ -313,6 +335,34 @@ def _strip_compliance_action(action_text: str) -> str:
         flags=re.IGNORECASE,
     ).strip()
     return embedded
+
+
+def _strip_access_availability_action(action_text: str) -> str:
+    """Normalize availability/access duty wrappers into provide/access actions."""
+
+    text = str(action_text or "").strip()
+    availability_match = re.match(
+        r"^(?:make|maintain|keep)\s+(.+?)\s+available\s+(for|to)\s+(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if availability_match:
+        provided_object = availability_match.group(1).strip()
+        relation = availability_match.group(2).strip().lower()
+        target = availability_match.group(3).strip()
+        if provided_object and target:
+            return f"provide {provided_object} {relation} {target}"
+
+    access_match = re.match(
+        r"^(provide|grant|allow)\s+access\s+to\s+(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if access_match:
+        accessed_object = access_match.group(2).strip()
+        return f"provide access to {accessed_object}" if accessed_object else text
+
+    return text
 
 
 def _normalize_refrain_action_head(action_text: str) -> str:

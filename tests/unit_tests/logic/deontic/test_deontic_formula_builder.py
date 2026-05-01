@@ -446,6 +446,51 @@ def test_confidentiality_duties_export_disclosure_prohibition_formulas():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_access_and_availability_duties_export_provide_action_formulas():
+    examples = [
+        (
+            "The agency shall make inspection records available for public inspection.",
+            "make inspection records available for public inspection",
+            "O(∀x (Agency(x) → ProvideInspectionRecordsPublicInspection(x)))",
+            "MakeInspectionRecordsAvailablePublicInspection",
+        ),
+        (
+            "The clerk shall maintain permit files available for review.",
+            "maintain permit files available for review",
+            "O(∀x (Clerk(x) → ProvidePermitFilesReview(x)))",
+            "MaintainPermitFilesAvailableReview",
+        ),
+        (
+            "The custodian shall provide access to registration records.",
+            "provide access to registration records",
+            "O(∀x (Custodian(x) → ProvideAccessRegistrationRecords(x)))",
+            "ProvideAccessToRegistrationRecords",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
