@@ -3498,3 +3498,48 @@ def test_structured_electronic_filing_and_service_triggers_become_formula_prereq
     )
     assert "DocketAppealAfterElectronicFilingAppeal" not in formula
     assert "DocketAppealAfterElectronicServiceRespondent" not in formula
+
+
+def test_structured_notice_delivery_and_docketing_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Clerk shall serve the order after certified mailing of the notice and after docketing of the appeal."
+    )[0])
+    element["action"] = ["serve the order"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "service",
+                "relation": "triggered_by_certified_mailing_of",
+                "anchor_event": "notice",
+                "raw_text": "after certified mailing of the notice",
+                "span": [29, 66],
+            },
+            {
+                "event": "service",
+                "relation": "triggered_by_docketing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after docketing of the appeal",
+                "span": [71, 101],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Clerk(x) ∧ ")
+    assert formula.endswith(" → ServeOrder(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → ServeOrder(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Clerk(x)",
+        "ProcedureAfterCertifiedMailingNotice(x)",
+        "ProcedureAfterDocketingAppeal(x)",
+    }
+    assert "ServeOrderAfterCertifiedMailingNotice" not in formula
+    assert "ServeOrderAfterDocketingAppeal" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]

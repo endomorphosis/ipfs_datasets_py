@@ -31,6 +31,15 @@ _LEGAL_REFERENCE_LIST_TEXT_RE = re.compile(
     r"(?:\bsections\s+)([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)+)",
     re.IGNORECASE,
 )
+_SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES = {
+    "triggered_by_mailing_of": "after mailing",
+    "triggered_by_certified_mailing_of": "after certified mailing",
+    "triggered_by_delivery_of": "after delivery",
+    "triggered_by_posting_of": "after posting",
+    "triggered_by_postmark_of": "after postmark",
+    "triggered_by_docketing_of": "after docketing",
+    "triggered_by_entry_of": "after entry",
+}
 _LOCAL_SCOPE_REFERENCE_EXCEPTION_RE = re.compile(
     r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+this\s+"
     r"(section|subsection|chapter|title|article|part)$",
@@ -79,7 +88,9 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
     temporal_preds = _formula_temporal_predicates(norm.temporal_constraints)
-    modifiers = temporal_preds + _formula_procedure_predicates(norm.procedure)
+    procedure_preds = _formula_procedure_predicates(norm.procedure)
+    procedure_preds.extend(_supplemental_procedure_predicates(norm.procedure, procedure_preds))
+    modifiers = temporal_preds + procedure_preds
     mental_state_pred = _mental_state_predicate(norm)
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
@@ -159,6 +170,43 @@ def build_prover_syntax_records_from_ir(
     from .prover_syntax import validate_ir_with_provers
 
     return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
+
+
+def _supplemental_procedure_predicates(
+    procedure: Mapping[str, Any],
+    existing_predicates: Sequence[str],
+) -> List[str]:
+    """Return procedure predicates for source-grounded notice delivery triggers.
+
+    The primary procedure mapper covers most common trigger relations. This
+    supplement keeps the Phase 8 formula path deterministic for additional
+    notice-delivery relations already emitted by parser/export IR records,
+    without strengthening ordering-only relations or reparsing source text.
+    """
+
+    if not isinstance(procedure, Mapping):
+        return []
+
+    seen = set(existing_predicates)
+    predicates: List[str] = []
+    for relation in procedure.get("event_relations") or []:
+        if not isinstance(relation, Mapping):
+            continue
+
+        relation_type = str(relation.get("relation") or "").strip()
+        prefix = _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES.get(relation_type)
+        if not prefix:
+            continue
+
+        anchor_event = str(relation.get("anchor_event") or "").strip()
+        if not anchor_event:
+            continue
+
+        predicate = normalize_predicate_name(f"procedure {prefix} {anchor_event}")
+        if predicate not in seen:
+            predicates.append(predicate)
+            seen.add(predicate)
+    return predicates
 
 
 def parser_element_to_formula_record(element: Dict[str, Any]) -> Dict[str, Any]:
