@@ -81,6 +81,8 @@ _LOCAL_SCOPE_REFERENCE_CONDITION_RE = re.compile(
     r"^(?:this|current)\s+(section|subsection|chapter|title|article|part)$",
     re.IGNORECASE,
 )
+_FORMULA_CONDITION_LIMIT = 3
+_FORMULA_EXCEPTION_LIMIT = 3
 
 
 def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
@@ -127,11 +129,11 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
 
-    antecedent_preds = _unique_antecedent_predicates(condition_preds[:3] + modifiers)
+    antecedent_preds = _unique_antecedent_predicates(condition_preds[:_FORMULA_CONDITION_LIMIT] + modifiers)
 
     inner_parts = [_subject_predicate_expr(norm)]
     inner_parts.extend(f"{pred}(x)" for pred in antecedent_preds)
-    inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:3])
+    inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:_FORMULA_EXCEPTION_LIMIT])
     inner = " ∧ ".join(inner_parts)
     return f"{operator}(∀x ({inner} → {action_pred}(x)))"
 
@@ -1121,16 +1123,79 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
             reference_values,
         )
     ]
+    substantive_conditions = [
+        dict(item)
+        for item in norm.conditions
+        if isinstance(item, dict)
+        and not _is_reference_condition(
+            item,
+            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            reference_values,
+        )
+    ]
+    substantive_exceptions = [
+        dict(item)
+        for item in norm.exceptions
+        if isinstance(item, dict)
+        and not _is_reference_exception(
+            item,
+            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            reference_values,
+        )
+    ]
     if reference_conditions:
         omitted["conditions"] = reference_conditions
     if reference_exceptions:
         omitted["exceptions"] = reference_exceptions
+    capped_conditions = _capped_slot_omission_records(
+        substantive_conditions,
+        _FORMULA_CONDITION_LIMIT,
+        "condition",
+        "condition is preserved in IR but omitted from capped deontic formula antecedents",
+    )
+    if capped_conditions:
+        omitted.setdefault("conditions", []).extend(capped_conditions)
+    capped_exceptions = _capped_slot_omission_records(
+        substantive_exceptions,
+        _FORMULA_EXCEPTION_LIMIT,
+        "exception",
+        "exception is preserved in IR but omitted from capped deontic formula antecedents",
+    )
+    if capped_exceptions:
+        omitted.setdefault("exceptions", []).extend(capped_exceptions)
     if norm.overrides:
         omitted["overrides"] = [dict(item) for item in norm.overrides if isinstance(item, dict)]
     recipient_record = _recipient_omission_record(norm)
     if recipient_record:
         omitted["recipients"] = [recipient_record]
     return omitted
+
+
+def _capped_slot_omission_records(
+    items: Sequence[Dict[str, Any]],
+    limit: int,
+    field: str,
+    reason: str,
+) -> List[Dict[str, Any]]:
+    """Return provenance for source-grounded slots beyond formula caps."""
+
+    records: List[Dict[str, Any]] = []
+    for item in items[limit:]:
+        value = _slot_primary_text(item)
+        predicate = normalize_predicate_name(value)
+        if not value or not predicate or predicate == "P":
+            continue
+        record: Dict[str, Any] = {
+            "value": value,
+            "field": field,
+            "predicate": predicate,
+            "reason": reason,
+        }
+        span = item.get("span")
+        if isinstance(span, list) and len(span) == 2:
+            record["span"] = list(span)
+        records.append(record)
+    return records
 
 
 def _recipient_omission_record(norm: LegalNormIR) -> Dict[str, Any]:

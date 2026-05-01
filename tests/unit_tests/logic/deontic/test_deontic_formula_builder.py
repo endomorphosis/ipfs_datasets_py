@@ -173,6 +173,78 @@ def test_ir_formula_builder_preserves_detail_only_recipient_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_formula_record_preserves_capped_condition_slots_as_omitted_provenance():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit if all requirements are met."
+    )[0])
+    element["condition_details"] = [
+        {"type": "if", "value": "all requirements are met", "span": [37, 61]},
+        {"type": "if", "value": "fees are paid", "span": [63, 76]},
+        {"type": "if", "value": "inspection is complete", "span": [78, 100]},
+        {"type": "if", "value": "notice is posted", "span": [102, 118]},
+        {"type": "if", "value": "records are retained", "span": [120, 140]},
+    ]
+    element["conditions"] = [record["value"] for record in element["condition_details"]]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ AllRequirementsAreMet(x) ∧ FeesArePaid(x) "
+        "∧ InspectionIsComplete(x) → IssuePermit(x)))"
+    )
+    assert "NoticeIsPosted" not in formula
+    assert "RecordsAreRetained" not in formula
+    assert record["omitted_formula_slots"]["conditions"] == [
+        {
+            "value": "notice is posted",
+            "field": "condition",
+            "predicate": "NoticeIsPosted",
+            "reason": "condition is preserved in IR but omitted from capped deontic formula antecedents",
+            "span": [102, 118],
+        },
+        {
+            "value": "records are retained",
+            "field": "condition",
+            "predicate": "RecordsAreRetained",
+            "reason": "condition is preserved in IR but omitted from capped deontic formula antecedents",
+            "span": [120, 140],
+        },
+    ]
+
+
+def test_formula_record_preserves_capped_exception_slots_as_omitted_provenance():
+    element = dict(extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0])
+    element["exception_details"] = [
+        {"type": "unless", "value": "approval is denied", "span": [45, 63]},
+        {"type": "unless", "value": "the application is incomplete", "span": [65, 94]},
+        {"type": "unless", "value": "the fee is unpaid", "span": [96, 113]},
+        {"type": "unless", "value": "the site is unsafe", "span": [115, 133]},
+    ]
+    element["exceptions"] = [record["value"] for record in element["exception_details"]]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert "¬ApprovalIsDenied(x)" in formula
+    assert "¬ApplicationIsIncomplete(x)" in formula
+    assert "¬FeeIsUnpaid(x)" in formula
+    assert "SiteIsUnsafe" not in formula
+    assert record["omitted_formula_slots"]["exceptions"] == [
+        {
+            "value": "the site is unsafe",
+            "field": "exception",
+            "predicate": "SiteIsUnsafe",
+            "reason": "exception is preserved in IR but omitted from capped deontic formula antecedents",
+            "span": [115, 133],
+        }
+    ]
+
+
 def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
