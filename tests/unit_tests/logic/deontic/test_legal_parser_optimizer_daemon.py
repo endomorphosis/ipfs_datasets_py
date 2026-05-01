@@ -483,6 +483,54 @@ def test_daemon_retries_candidate_that_fails_changed_test_preflight(tmp_path):
     assert (tmp_path / test_path).read_text(encoding="utf-8").endswith("assert True\n")
 
 
+def test_daemon_rejects_cycle_when_all_candidate_attempts_fail_validation(tmp_path):
+    (tmp_path / "x.py").write_text("def value():\n    return 1\n", encoding="utf-8")
+    invalid_diff = "\n".join(
+        [
+            "diff --git a/x.py b/x.py",
+            "--- a/x.py",
+            "+++ b/x.py",
+            "@@ -1,2 +1,2 @@",
+            " def value():",
+            "-    return 1",
+            "+    if depth  str:",
+            "",
+        ]
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Only candidate fails validation.",
+                "requirements_addressed": ["daemon"],
+                "acceptance_criteria": ["failed candidate is not applied"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": invalid_diff,
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=1,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert cycle["proposal_attempts"][0]["candidate_validation_valid"] is False
+    assert cycle["patch_check"]["valid"] is False
+    assert "all proposal attempts exhausted" in cycle["patch_check"]["stderr"]
+    assert cycle["apply_result"]["applied"] is False
+    assert cycle["apply_result"]["reason"] == "proposal_quality_failed"
+    assert (tmp_path / "x.py").read_text(encoding="utf-8") == "def value():\n    return 1\n"
+
+
 def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):
     config = LegalParserDaemonConfig(
         repo_root=tmp_path,
@@ -631,11 +679,15 @@ def test_daemon_rolls_back_patch_that_breaks_python_compile(tmp_path):
 
     cycle = daemon.run_cycle(cycle_index=1)
 
-    assert cycle["apply_result"]["applied"] is True
-    assert cycle["apply_result"]["rolled_back"] is True
-    assert cycle["apply_result"]["reason"] == "post_apply_validation_failed"
-    assert cycle["post_apply_validation"]["valid"] is False
-    assert "changed Python files failed py_compile" in cycle["post_apply_validation"]["reasons"]
+    assert cycle["proposal_attempts"][0]["retry_reason"].startswith(
+        "candidate_post_apply_validation_failed:"
+    )
+    assert cycle["proposal_attempts"][0]["candidate_validation_valid"] is False
+    assert cycle["patch_check"]["valid"] is False
+    assert "all proposal attempts exhausted" in cycle["patch_check"]["stderr"]
+    assert cycle["apply_result"]["applied"] is False
+    assert cycle["apply_result"]["reason"] == "proposal_quality_failed"
+    assert cycle["post_apply_validation"]["reason"] == "patch_not_applied"
     assert production.read_text(encoding="utf-8") == "VALUE = 1\n"
 
 

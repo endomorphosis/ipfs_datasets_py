@@ -788,6 +788,7 @@ class LegalParserOptimizerDaemon:
         if repair_phase_feedback:
             attempt_feedback = list(feedback) + repair_phase_feedback
             test_failure_recovery_mode = True
+        final_retry_reason = ""
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -898,6 +899,7 @@ class LegalParserOptimizerDaemon:
                     }
                 )
             proposal_attempts.append(attempt_record)
+            final_retry_reason = retry_reason
             if not retry_reason:
                 break
             if attempt_index < max_attempts:
@@ -953,6 +955,13 @@ class LegalParserOptimizerDaemon:
         changed_files = _paths_from_unified_diff(proposal.unified_diff)
         patch_stats = _unified_diff_stats(proposal.unified_diff)
         proposal_quality = self._assess_proposal_quality(proposal, changed_files)
+        if final_retry_reason.startswith("candidate_post_apply_validation_failed"):
+            proposal_quality = {
+                **proposal_quality,
+                "valid": False,
+                "reasons": list(proposal_quality.get("reasons", []))
+                + [f"all proposal attempts exhausted; last rejection: {final_retry_reason}"],
+            }
         if patch_stability_mode:
             proposal_quality = self._enforce_patch_stability_quality(
                 proposal_quality=proposal_quality,
