@@ -1142,6 +1142,52 @@ def test_parser_element_readiness_projects_local_applicability_resolution():
     ]
 
 
+def test_raw_parser_marks_local_applicability_repair_inactive_without_hiding_warning():
+    element = extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["parser_warnings"] == ["cross_reference_requires_resolution"]
+    assert element["active_repair_warnings"] == []
+    assert element["repair_required_warnings"] == []
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == (
+        "local_scope_applicability"
+    )
+    assert element["export_readiness"]["metric_repair_required"] is False
+    assert element["resolved_cross_references"] == [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "value": "this section",
+            "raw_text": "This section",
+            "span": [0, 12],
+            "resolution_scope": "local_self",
+            "resolved": True,
+            "resolution_status": "resolved",
+            "same_document": True,
+            "target_exists": True,
+        }
+    ]
+
+
+def test_raw_parser_keeps_numbered_reference_exception_active_for_repair():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert "cross_reference_requires_resolution" in element["parser_warnings"]
+    assert element.get("active_repair_warnings", element["parser_warnings"]) == element["parser_warnings"]
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+
+
 def test_parser_element_readiness_projects_precedence_override_reference_provenance():
     element = extract_normative_elements(
         "Notwithstanding section 5.01.020, the Director may issue a variance."

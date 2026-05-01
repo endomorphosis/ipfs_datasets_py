@@ -439,10 +439,136 @@ def extract_normative_elements(
         elements = expand_enumerated_norms(elements)
     _apply_definition_context(elements)
     _apply_cross_reference_context(elements)
+    _apply_local_applicability_repair_clearance(elements)
     _apply_document_penalty_context(elements, str(text or ""))
     _apply_enforcement_context(elements)
     _apply_conflict_context(elements)
     return elements
+
+
+def _apply_local_applicability_repair_clearance(elements: List[Dict[str, Any]]) -> None:
+    """Mark local self-scope applicability as resolved repair provenance.
+
+    ``This section applies to ...`` carries a syntactic cross-reference because
+    the subject is the local section. That reference is useful provenance, but
+    it is not active repair work: the formula/export layer can deterministically
+    treat it as local self-scope without an LLM or external citation lookup.
+
+    Keep ``parser_warnings`` intact for audit and warning-distribution metrics;
+    expose the active repair channel separately so repair counters do not treat
+    the local self-reference as unresolved work.
+    """
+
+    for element in elements or []:
+        if not _is_local_applicability_element(element):
+            continue
+
+        local_records = _local_applicability_reference_records(element)
+        if not local_records:
+            continue
+
+        element["resolved_cross_references"] = local_records
+        element["active_repair_warnings"] = []
+        element["repair_required_warnings"] = []
+
+        readiness = dict(element.get("export_readiness") or {})
+        readiness["metric_requires_validation"] = False
+        readiness["metric_repair_required"] = False
+        readiness["local_applicability_resolved"] = True
+        readiness["deterministic_resolution"] = {
+            "type": "local_scope_applicability",
+            "scopes": sorted({record.get("value", "") for record in local_records if record.get("value")}),
+            "reason": "local applicability subject is a self-scope reference exported as provenance",
+        }
+        element["export_readiness"] = readiness
+
+        repair = dict(element.get("llm_repair") or {})
+        repair["required"] = False
+        repair["allow_llm_repair"] = False
+        repair["reasons"] = []
+        repair["prompt_context"] = {}
+        repair["prompt_hash"] = ""
+        repair["suggested_router"] = ""
+        repair["deterministically_resolved"] = True
+        repair["deterministic_resolution"] = readiness["deterministic_resolution"]
+        element["llm_repair"] = repair
+
+
+def _is_local_applicability_element(element: Dict[str, Any]) -> bool:
+    if element.get("norm_type") != "applicability" or element.get("deontic_operator") != "APP":
+        return False
+    subject = _first_text(element.get("subject")).strip().lower()
+    if subject not in {
+        "this section",
+        "this subsection",
+        "this chapter",
+        "this title",
+        "this article",
+        "this part",
+        "the section",
+        "the chapter",
+        "the title",
+        "the article",
+        "the part",
+    }:
+        return False
+    if element.get("exceptions") or element.get("exception_details"):
+        return False
+    if element.get("override_clauses") or element.get("override_clause_details"):
+        return False
+    return True
+
+
+def _local_applicability_reference_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    refs = list(element.get("cross_reference_details") or element.get("cross_references") or [])
+    if not refs:
+        refs = [
+            {
+                "type": "section",
+                "value": _first_text(element.get("subject")),
+                "raw_text": _first_text(element.get("subject")),
+                "span": (element.get("field_spans") or {}).get("subject", []),
+            }
+        ]
+
+    records: List[Dict[str, Any]] = []
+    for ref in refs:
+        if not isinstance(ref, dict):
+            return []
+        reference_type = str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
+        if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
+            return []
+
+        text = str(
+            ref.get("value")
+            or ref.get("normalized_text")
+            or ref.get("raw_text")
+            or ref.get("text")
+            or ""
+        ).strip().lower()
+        target = str(ref.get("target") or ref.get("section") or ref.get("subsection") or "").strip().lower()
+        scope = ""
+        if target in {"this", f"this {reference_type}"}:
+            scope = f"this {reference_type}"
+        elif text in {f"this {reference_type}", f"the {reference_type}", f"section this {reference_type}"}:
+            scope = f"this {reference_type}"
+        if not scope:
+            return []
+
+        record = {
+            "reference_type": reference_type,
+            "target": "this",
+            "value": scope,
+            "raw_text": str(ref.get("raw_text") or ref.get("text") or scope),
+            "span": list(ref.get("span") or []),
+            "resolution_scope": "local_self",
+            "resolved": True,
+            "resolution_status": "resolved",
+            "same_document": True,
+            "target_exists": True,
+        }
+        records.append(record)
+    return records
 
 
 def expand_enumerated_norms(elements: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
