@@ -505,6 +505,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_hearing_of": "procedure after hearing",
         "triggered_by_final_decision_of": "procedure after final decision",
         "triggered_by_mailing_of": "procedure after mailing",
+        "triggered_by_delivery_of": "procedure after delivery",
     }.get(relation, "")
 
 
@@ -554,6 +555,7 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_hearing_of",
         "triggered_by_final_decision_of",
         "triggered_by_mailing_of",
+        "triggered_by_delivery_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -758,6 +760,7 @@ def _procedure_trigger_tail_noun(relation_type: str) -> str:
         "triggered_by_hearing_of": "hearing",
         "triggered_by_final_decision_of": "final\\s+decision",
         "triggered_by_mailing_of": "mailing",
+        "triggered_by_delivery_of": "delivery",
     }.get(relation_type, "")
 
 
