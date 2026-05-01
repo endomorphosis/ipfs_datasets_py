@@ -136,6 +136,8 @@ Add a deterministic encoder/decoder pass as a first-class parser quality goal:
 source legal text
   -> deterministic encoder
   -> LegalNormIR
+  -> formal exporters / prover syntax targets
+  -> theorem-prover syntax checks
   -> deterministic decoder
   -> reconstructed legal text
 ```
@@ -146,6 +148,7 @@ Quality metrics:
 
 - embedding cosine similarity between original support text and decoded reconstruction;
 - token-level or sequence-level cross-entropy loss of the reconstruction under a fixed local/legal language model or deterministic scorer;
+- theorem-prover syntax-check pass rate across exported deontic/FOL/TDFOL/CEC targets;
 - slot coverage delta: which source tokens or semantic spans were not represented in the IR;
 - hallucination delta: which decoded tokens or slots were not grounded in source spans;
 - reconstruction exactness for controlled fixture clauses where canonical normalized text is known.
@@ -156,6 +159,8 @@ Operational rules:
 - Embedding and loss models must be pinned, local or reproducible, and never used to modify parser output directly.
 - Low reconstruction similarity should create an explicit parser coverage gap or repair item.
 - High reconstruction similarity must not automatically promote a clause to proof-ready; proof promotion still depends on deterministic slots, provenance, and blockers.
+- Encoder/decoder records must be able to feed the same `LegalNormIR` through formal exporters into theorem-prover syntax validators. A syntax failure is a formalization/export defect even when the natural-language reconstruction looks good.
+- Prover access should start with parser/syntax validation and well-formedness checks. Full theorem proving can be layered on later, but Phase 8 must at least prove that the generated formulas are accepted by the target prover front ends.
 - The encoder/decoder report should store the original support text, decoded text, metric values, and per-slot provenance so regressions are auditable.
 
 ## Workstream 1: Stabilize And Measure
@@ -342,6 +347,8 @@ Add a report command or test helper that emits:
 - source-span validity rate.
 - encoder/decoder reconstruction cosine similarity;
 - encoder/decoder reconstruction cross-entropy loss;
+- theorem-prover syntax-check pass rate;
+- prover-target parse error distribution;
 - ungrounded decoded-token rate;
 - unreconstructed source-span rate.
 
@@ -353,6 +360,7 @@ Suggested thresholds for initial production gating:
 - `llm_repair_required_rate` tracked by corpus/domain, not globally forced low at first
 - `mean_reconstruction_cosine >= 0.85` on reviewed fixture clauses after the decoder baseline exists
 - reconstruction cross-entropy tracked by corpus/domain with regressions failing CI once a stable baseline is established
+- `prover_syntax_valid_rate >= 0.99` for proof-ready fixture clauses once prover adapters are wired
 - zero ungrounded decoded legal facts in proof-ready clauses
 - zero LLM calls in deterministic parser tests
 
@@ -377,6 +385,7 @@ This gives the project a typed spine and a measurable baseline before any broad 
 - Aggressive proof promotion is more dangerous than repair queue growth.
 - Independent CEC/TDFOL parsers can produce inconsistent outputs unless legal text is routed through one canonical IR.
 - Reconstruction metrics can reward fluent but legally incomplete text unless paired with slot/provenance audits.
+- Prover syntax checks can become too target-specific unless each exported dialect records the target, version, and parse diagnostics.
 - LLM repair can silently become a dependency unless tests explicitly forbid router calls in deterministic paths.
 
 ## Definition Of Done
@@ -387,5 +396,6 @@ The deterministic parser improvement is complete when:
 - proof-ready clauses are generated only from high-quality deterministic slots;
 - complex clauses are exported as KG/scaffold/repair records with clear blockers;
 - CEC, TDFOL, FOL, KG, and proof exports share stable source IDs and provenance;
+- proof-ready formulas from encoder/decoder fixtures pass theorem-prover syntax checks before they are counted as formally valid;
 - the gold corpus reports parser quality, repair-rate, and encoder/decoder reconstruction metrics;
 - any optional LLM repair is auditable, schema-validated, and never accepted as opaque formal logic.

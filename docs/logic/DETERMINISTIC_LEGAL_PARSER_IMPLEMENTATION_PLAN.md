@@ -358,6 +358,8 @@ Metrics:
 - `formal_logic_target_distribution`
 - `mean_reconstruction_cosine`
 - `mean_reconstruction_cross_entropy`
+- `prover_syntax_valid_rate`
+- `prover_parse_error_distribution`
 - `ungrounded_decoded_token_rate`
 - `unreconstructed_source_span_rate`
 
@@ -365,6 +367,7 @@ Acceptance:
 
 - Metrics can run on parser elements without external services.
 - Reconstruction metrics are optional until Phase 8 lands, then included when decoder records are supplied.
+- Prover syntax metrics are optional until Phase 8 prover adapters land, then included when syntax-check records are supplied.
 
 ### Task 7.2: CLI/Report Hook
 
@@ -418,6 +421,7 @@ Implementation:
 - Add `evaluate_ir_reconstruction(source_text, norm, decoded_text, scorer=...)`.
 - Compute embedding cosine similarity between source/support text and decoded text.
 - Compute token or sequence cross-entropy loss with a pinned scorer. Prefer a local deterministic scorer for CI; allow heavier model-backed scoring only behind an explicit optional dependency flag.
+- Include theorem-prover syntax-check status when prover validation records are available.
 - Compute ungrounded decoded-token rate by comparing decoded phrase provenance against IR field spans.
 - Compute unreconstructed source-span rate by checking which legally salient source spans were not represented in decoded provenance.
 
@@ -428,7 +432,35 @@ Acceptance:
 - Low similarity or high loss produces diagnostics listing missing or ungrounded slots.
 - Metrics are diagnostic at first and do not promote proof readiness.
 
-### Task 8.3: Add Round-Trip Fixtures
+### Task 8.3: Add Prover Syntax Validation Bridge
+
+Files:
+
+- `ipfs_datasets_py/logic/deontic/prover_syntax.py`
+- `ipfs_datasets_py/logic/deontic/formula_builder.py`
+- `ipfs_datasets_py/logic/deontic/exports.py`
+- `tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py`
+
+Implementation:
+
+- Add a `validate_ir_with_provers(norm: LegalNormIR, targets=...) -> ProverSyntaxReport` helper.
+- Feed the same `LegalNormIR` used by the encoder/decoder through formal exporters before validation.
+- Support syntax-only validation targets first:
+  - deontic/FOL internal formula parser;
+  - TDFOL bridge/parser where available;
+  - CEC formula/proof-obligation parser where available;
+  - optional external prover front ends such as Z3, CVC5, SPASS, Vampire, E, Lean, Coq, or Isabelle only behind explicit availability checks.
+- Record target name, target version when known, exported formula, parse status, diagnostics, and whether validation was skipped because a prover is unavailable.
+- Treat parser/syntax failures as quality failures for the encoder/exporter path, not as proof failures. Full theorem proving is a later layer.
+
+Acceptance:
+
+- Proof-ready fixture clauses produce syntax-valid formulas for every enabled local target.
+- Unavailable external provers are reported as skipped, not failed, in default unit tests.
+- Malformed formulas produce structured parse diagnostics with source IDs and target names.
+- A clause cannot be counted as formally valid in encoder/decoder reports unless its exported formula passes syntax validation for at least one enabled target.
+
+### Task 8.4: Add Round-Trip Fixtures
 
 Files:
 
@@ -449,14 +481,16 @@ Implementation:
   - cross reference;
   - penalty or lifecycle clause.
 - Store source text, expected key IR slots, expected decoded normalized text, and expected metric bands.
+- Store expected prover syntax targets and whether each target must pass, skip, or fail with a known diagnostic.
 
 Acceptance:
 
 - Fixture tests prove that `text -> encoder -> IR -> decoder -> text` is deterministic.
 - Exact decoded text is stable for controlled examples.
+- Proof-ready fixture formulas pass enabled prover syntax checks.
 - Metric bands catch lossy parser changes without requiring LLM calls.
 
-### Task 8.4: Wire Reconstruction Into Reports
+### Task 8.5: Wire Reconstruction And Prover Syntax Into Reports
 
 Files:
 
@@ -469,15 +503,17 @@ Implementation:
 - Add reconstruction summaries to parser metric reports:
   - mean and median cosine similarity;
   - mean cross-entropy;
+  - prover syntax-check pass rate;
+  - prover parse error distribution;
   - worst examples by similarity and loss;
   - ungrounded decoded-token rate;
   - unreconstructed source-span rate.
-- Store per-clause reconstruction records alongside parser/export records.
+- Store per-clause reconstruction and prover syntax records alongside parser/export records.
 
 Acceptance:
 
 - A local legal corpus report shows both formalization quality and reconstruction quality.
-- The report makes it clear whether poor quality comes from failed encoding, lossy IR, decoder limitations, or scorer limitations.
+- The report makes it clear whether poor quality comes from failed encoding, lossy IR, decoder limitations, scorer limitations, exporter syntax errors, or unavailable prover targets.
 - CI can later turn stable reconstruction baselines into regression gates.
 
 ## Testing Policy
@@ -490,6 +526,7 @@ Every parser behavior change should include:
 - a parser-warning/export-readiness assertion;
 - a formula/export assertion if the behavior affects formal output.
 - an encoder/decoder reconstruction assertion when the behavior changes legally salient IR slots.
+- a prover syntax assertion when the behavior changes a proof-ready formula, exporter target, or formal-logic syntax.
 
 Any change that increases `promotable_to_theorem` coverage must include reviewed fixture examples. Raising proof-readiness is a correctness-sensitive change.
 
