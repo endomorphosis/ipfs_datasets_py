@@ -3411,6 +3411,17 @@ def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_prob
 
     assert normalized["repair_required_count"] == 1
     assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["repair_required"] == [details[3]["source_id"]]
+    assert [
+        detail["sample_id"]
+        for detail in normalized["metrics"]["repair_required_details"]
+    ] == ["cross_reference"]
+    assert normalized["metrics"]["active_repair_required_by_source_id"] == {
+        details[0]["source_id"]: False,
+        details[1]["source_id"]: False,
+        details[2]["source_id"]: False,
+        details[3]["source_id"]: True,
+    }
     assert normalized["metrics"]["coverage_gaps"] == []
     assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
         "cross_reference"

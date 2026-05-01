@@ -464,6 +464,9 @@ def normalize_repair_required_evaluation(
         normalized_metrics = dict(metrics)
         normalized_metrics["repair_required_count"] = normalized["repair_required_count"]
         normalized_metrics["repair_required_rate"] = normalized["repair_required_rate"]
+        normalized_metrics["repair_required"] = list(normalized_source_ids)
+        normalized_metrics["repair_required_details"] = [dict(detail) for detail in normalized_details]
+        normalized_metrics["active_repair_required_by_source_id"] = dict(summary["active_repair_required_by_source_id"])
         coverage_gaps = normalized_metrics.get("coverage_gaps")
         if isinstance(coverage_gaps, list):
             normalized_metrics["coverage_gaps"] = [
