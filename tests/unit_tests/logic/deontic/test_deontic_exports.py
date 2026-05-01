@@ -5926,3 +5926,67 @@ def test_ir_procedure_event_records_mark_correction_and_adjustment_triggers_as_p
     assert adjustment_record["support_span"] == element["support_span"]
     assert adjustment_record["is_formula_antecedent"] is True
     assert adjustment_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_public_comment_and_consultation_triggers_as_prerequisites():
+    """Public participation triggers can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+    )[0])
+    element["action"] = [
+        "adopt the rule after public comment proposal and after consultation Board"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "adoption",
+                "relation": "triggered_by_public_comment_on",
+                "anchor_event": "proposal",
+                "raw_text": "after public comment on the proposal",
+                "span": [32, 68],
+            },
+            {
+                "event": "adoption",
+                "relation": "triggered_by_consultation_with",
+                "anchor_event": "Board",
+                "raw_text": "after consultation with the Board",
+                "span": [73, 106],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    comment_record = records[0]
+    consultation_record = records[1]
+
+    assert comment_record["event_id"].startswith("event:")
+    assert comment_record["source_id"] == element["source_id"]
+    assert comment_record["event"] == "adoption"
+    assert comment_record["event_symbol"] == "Adoption"
+    assert comment_record["relation"] == "triggered_by_public_comment_on"
+    assert comment_record["anchor_event"] == "proposal"
+    assert comment_record["anchor_symbol"] == "Proposal"
+    assert comment_record["raw_text"] == "after public comment on the proposal"
+    assert comment_record["span"] == [32, 68]
+    assert comment_record["support_span"] == element["support_span"]
+    assert comment_record["is_formula_antecedent"] is True
+    assert comment_record["proof_role"] == "prerequisite"
+    assert comment_record["relation_record"]["relation"] == "triggered_by_public_comment_on"
+
+    assert consultation_record["event_id"].startswith("event:")
+    assert consultation_record["source_id"] == element["source_id"]
+    assert consultation_record["event"] == "adoption"
+    assert consultation_record["event_symbol"] == "Adoption"
+    assert consultation_record["relation"] == "triggered_by_consultation_with"
+    assert consultation_record["anchor_event"] == "Board"
+    assert consultation_record["anchor_symbol"] == "Board"
+    assert consultation_record["raw_text"] == "after consultation with the Board"
+    assert consultation_record["span"] == [73, 106]
+    assert consultation_record["support_span"] == element["support_span"]
+    assert consultation_record["is_formula_antecedent"] is True
+    assert consultation_record["proof_role"] == "prerequisite"
+    assert consultation_record["relation_record"]["relation"] == "triggered_by_consultation_with"
