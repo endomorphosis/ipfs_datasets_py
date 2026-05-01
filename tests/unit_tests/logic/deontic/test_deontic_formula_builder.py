@@ -197,6 +197,46 @@ def test_ir_formula_builder_uses_detail_only_definition_term_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
+    element = dict(extract_normative_elements(
+        "The license is valid for 30 days."
+    )[0])
+    element["subject"] = []
+    element["action"] = []
+    element["instrument_lifecycle_details"] = [
+        {
+            "type": "validity",
+            "instrument_type": "license",
+            "duration": "30 days",
+            "span": [4, 32],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["instrument"] = [4, 11]
+    field_spans["duration"] = [25, 32]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.norm_type == "instrument_lifecycle"
+    assert norm.modality == "LIFE"
+    assert norm.actor == "license"
+    assert norm.action == "valid for 30 days"
+    assert norm.actor_entities == ["license"]
+    assert norm.to_dict()["action"] == "valid for 30 days"
+    assert formula == "ValidFor(License, 30Days)"
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_preserves_detail_only_recipient_slot():
     element = dict(extract_normative_elements(
         "The Director shall send the notice to the applicant."

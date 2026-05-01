@@ -102,13 +102,103 @@ def _definition_actor_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _instrument_lifecycle_actor_text(element: Dict[str, Any]) -> str:
+    """Return the regulated instrument for detail-only lifecycle rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "instrument_lifecycle" and operator != "LIFE":
+        return ""
+
+    for key in ("instrument", "instrument_type", "regulated_instrument"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "instrument_lifecycle_details",
+        "lifecycle_details",
+        "instrument_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "instrument_type",
+                "instrument",
+                "regulated_instrument",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+                "name",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _instrument_lifecycle_action_text(element: Dict[str, Any]) -> str:
+    """Return a lifecycle action from structured duration or anchor details."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "instrument_lifecycle" and operator != "LIFE":
+        return ""
+
+    kind = str(
+        element.get("lifecycle_action")
+        or element.get("action_type")
+        or element.get("lifecycle_type")
+        or ""
+    ).strip()
+    duration = str(element.get("duration") or element.get("valid_for") or "").strip()
+    anchor = str(element.get("anchor") or element.get("expiration_anchor") or "").strip()
+    action = _instrument_lifecycle_action_from_parts(kind, duration, anchor)
+    if action:
+        return action
+
+    for detail_key in ("instrument_lifecycle_details", "lifecycle_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            kind = str(
+                normalized.get("lifecycle_action")
+                or normalized.get("action_type")
+                or normalized.get("lifecycle_type")
+                or normalized.get("type")
+                or normalized.get("relation")
+                or ""
+            ).strip()
+            duration = str(normalized.get("duration") or normalized.get("valid_for") or "").strip()
+            anchor = str(normalized.get("anchor") or normalized.get("expiration_anchor") or "").strip()
+            action = _instrument_lifecycle_action_from_parts(kind, duration, anchor)
+            if action:
+                return action
+
+    return ""
+
+
+def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: str) -> str:
+    normalized_kind = str(kind or "").strip().lower().replace("_", "-")
+    if duration and ("valid" in normalized_kind or "duration" in normalized_kind or normalized_kind in {""}):
+        return f"valid for {duration}"
+    if anchor and ("expir" in normalized_kind or "terminat" in normalized_kind or "expire" in normalized_kind):
+        return f"expires {anchor}"
+    return ""
+
+
 def _actor_entities(element: Dict[str, Any]) -> List[str]:
     """Return all actor labels, including detail-only actor provenance."""
 
     actors = _actor_texts(element.get("subject"))
     if actors:
         return actors
-    actor = _actor_text(element)
+    actor = _actor_text(element) or _definition_actor_text(element) or _instrument_lifecycle_actor_text(element)
     return [actor] if actor else []
 
 
@@ -607,9 +697,9 @@ class LegalNormIR:
             support_span=SourceSpan.from_value(element.get("support_span")),
             modality=_modality_from_parser_element(element),
             norm_type=str(element.get("norm_type") or ""),
-            actor=_actor_text(element) or _definition_actor_text(element),
+            actor=_actor_text(element) or _definition_actor_text(element) or _instrument_lifecycle_actor_text(element),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
-            action=_first_text(element.get("action")),
+            action=_instrument_lifecycle_action_text(element) or _first_text(element.get("action")),
             mental_state=_mental_state_text(element),
             action_verb=str(element.get("action_verb") or ""),
             action_object=str(element.get("action_object") or ""),
