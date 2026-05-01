@@ -1244,13 +1244,22 @@ class LegalParserOptimizerDaemon:
         started_at: str,
         **details: Any,
     ) -> None:
+        now = _utc_now()
+        phase_key = self._status_phase_key(phase=phase, cycle_index=cycle_index, details=details)
+        previous_payload = dict(self._status_payload)
+        previous_phase_started_at = str(previous_payload.get("phase_started_at") or "")
+        previous_phase_key = str(previous_payload.get("phase_key") or "")
+        phase_started_at = previous_phase_started_at if previous_phase_key == phase_key else now
         payload = {
             "status": status,
             "phase": phase,
+            "phase_key": phase_key,
+            "phase_started_at": phase_started_at,
+            "phase_updated_at": now,
             "cycle_index": cycle_index,
             "cycle_dir": str(cycle_dir),
             "started_at": started_at,
-            "updated_at": _utc_now(),
+            "updated_at": now,
             "pid": os.getpid(),
             "run_id": self.run_id,
             "baseline_head": self.run_baseline_head,
@@ -1264,6 +1273,18 @@ class LegalParserOptimizerDaemon:
         with self._status_lock:
             self._status_payload = dict(payload)
             self._write_status_file_atomic(payload)
+
+    def _status_phase_key(self, *, phase: str, cycle_index: int, details: Mapping[str, Any]) -> str:
+        """Return a stable key for supervisor phase-age accounting."""
+
+        attempt = details.get("proposal_attempt")
+        retry_reason = details.get("retry_reason")
+        key_parts = [str(cycle_index), phase]
+        if attempt is not None:
+            key_parts.append(f"attempt={attempt}")
+        if retry_reason:
+            key_parts.append(f"retry={str(retry_reason)[:80]}")
+        return "|".join(key_parts)
 
     def _write_status_file_atomic(self, payload: Mapping[str, Any]) -> None:
         """Write current status JSON without exposing a truncated file."""

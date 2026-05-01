@@ -169,6 +169,54 @@ def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
     assert status["apply_result"]["reason"] == "apply_patches_disabled"
 
 
+def test_current_status_tracks_phase_age_separately_from_heartbeat_updates(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+        proposal_attempt=1,
+    )
+    first = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    time.sleep(0.001)
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+        proposal_attempt=1,
+    )
+    same_phase = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    time.sleep(0.001)
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+        proposal_attempt=2,
+    )
+    next_attempt = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+
+    assert first["phase_key"] == same_phase["phase_key"]
+    assert same_phase["phase_started_at"] == first["phase_started_at"]
+    assert same_phase["phase_updated_at"] > first["phase_updated_at"]
+    assert next_attempt["phase_key"] != same_phase["phase_key"]
+    assert next_attempt["phase_started_at"] > same_phase["phase_started_at"]
+
+
 def test_evaluation_uses_active_repair_projection_for_probe_metrics(tmp_path):
     """Daemon repair details should not use stale raw llm_repair flags."""
 

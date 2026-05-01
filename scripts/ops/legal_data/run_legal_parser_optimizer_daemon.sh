@@ -222,8 +222,10 @@ cycle_delta = max(0, latest_cycle_index - baseline_cycle)
 rolled_back_delta = max(0, rolled_back_count - baseline_rolled_back)
 rejected_delta = max(0, rejected_count - baseline_rejected)
 metric_stall_rollback_delta = max(0, metric_stall_rollbacks_since_progress - baseline_metric_stall_rollbacks)
+phase_epoch = parse_epoch(status.get("phase_started_at") or "")
 updated_epoch = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
-cycle_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
+phase_stall_age = max(0, now - phase_epoch) if phase_epoch else 0
+status_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
 
 reason = ""
 if (
@@ -245,9 +247,9 @@ elif not cooling_down and rolled_back_delta >= rolled_back_tail_threshold:
     reason = f"rolled_back_without_acceptance:{rolled_back_delta}:threshold:{rolled_back_tail_threshold}"
 elif not cooling_down and rejected_delta >= rejected_tail_threshold:
     reason = f"rejected_without_acceptance:{rejected_delta}:threshold:{rejected_tail_threshold}"
-elif not cooling_down and cycle_stall_seconds > 0 and cycle_stall_age >= cycle_stall_seconds:
+elif not cooling_down and cycle_stall_seconds > 0 and phase_stall_age >= cycle_stall_seconds:
     phase = status.get("phase") or "unknown"
-    reason = f"status_stale:{cycle_stall_age}s:phase:{phase}:threshold:{cycle_stall_seconds}"
+    reason = f"phase_stale:{phase_stall_age}s:phase:{phase}:threshold:{cycle_stall_seconds}"
 
 state.update(
     {
@@ -268,6 +270,8 @@ state.update(
         "rolled_back_since_acceptance": rolled_back_delta,
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
+        "phase_stall_age_seconds": phase_stall_age,
+        "status_stall_age_seconds": status_stall_age,
         "cooling_down": cooling_down,
         "candidate_reason": reason,
     }
