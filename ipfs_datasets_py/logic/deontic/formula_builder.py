@@ -135,6 +135,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _normalize_refrain_action_head(action_text)
 
     action_text = _action_without_structured_recipient_tail(norm, action_text)
+    action_text = _action_without_temporal_duration_tail(norm, action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -418,6 +419,55 @@ def _action_without_structured_recipient_tail(norm: LegalNormIR, action_text: st
     if not _formula_text_contains_slot(head, action_object):
         return text
     return head
+
+
+def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) -> str:
+    """Remove a duration tail already represented in temporal IR slots.
+
+    Record-retention clauses often parse as actions such as ``retain records for
+    three years`` while also carrying a structured temporal duration. The unary
+    consequent should remain the operative act, and the duration should appear
+    as a temporal antecedent rather than being baked into the action predicate.
+    """
+
+    text = str(action_text or "").strip()
+    if not text or not norm.temporal_constraints:
+        return text
+
+    tail_match = re.search(r"\s+for\s+(.+)$", text, re.IGNORECASE)
+    if not tail_match:
+        return text
+
+    tail = tail_match.group(1).strip()
+    if not tail:
+        return text
+
+    duration_values = _temporal_duration_slot_values(norm.temporal_constraints)
+    if not any(_same_formula_slot_text(tail, duration) for duration in duration_values):
+        return text
+
+    head = text[: tail_match.start()].strip()
+    return head or text
+
+
+def _temporal_duration_slot_values(items: Iterable[Dict[str, Any]]) -> List[str]:
+    """Return duration strings explicitly carried by temporal constraint slots."""
+
+    values: List[str] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        for value in (
+            item.get("duration"),
+            item.get("deadline"),
+            item.get("value"),
+            item.get("normalized_text"),
+            item.get("raw_text"),
+        ):
+            text = str(value or "").strip()
+            if text:
+                values.append(text)
+    return values
 
 
 def _same_formula_slot_text(left: str, right: str) -> bool:

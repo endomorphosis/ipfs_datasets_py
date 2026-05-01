@@ -537,6 +537,50 @@ def test_transmittal_actions_omit_structured_recipient_from_unary_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_retention_duration_duty_uses_temporal_slot_not_action_tail():
+    element = dict(extract_normative_elements(
+        "The custodian shall retain records for three years."
+    )[0])
+    element["action"] = ["retain records for three years"]
+    element["action_verb"] = "retain"
+    element["action_object"] = "records"
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {
+            "type": "duration",
+            "duration": "three years",
+            "span": [35, 46],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action"] = [20, 46]
+    field_spans["action_verb"] = [20, 26]
+    field_spans["action_object"] = [27, 34]
+    field_spans["temporal_constraints"] = [35, 46]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "retain records for three years"
+    assert norm.temporal_constraints[0]["value"] == "three years"
+    assert formula == "O(∀x (Custodian(x) ∧ DurationThreeYears(x) → RetainRecords(x)))"
+    assert "RetainRecordsForThreeYears" not in formula
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
