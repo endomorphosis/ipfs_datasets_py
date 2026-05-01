@@ -237,6 +237,46 @@ def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_penalty_sanction_slot():
+    element = dict(extract_normative_elements(
+        "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+    )[0])
+    element["action"] = []
+    element["action_verb"] = ""
+    element["action_object"] = ""
+    element["penalty"] = {
+        "sanction_class": "civil fine",
+        "min_amount": "$100",
+        "max_amount": "$500",
+        "recurrence": "per violation",
+        "span": [31, 97],
+    }
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["penalty"] = [31, 97]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.norm_type == "penalty"
+    assert norm.actor == "violation"
+    assert norm.action == "incur civil fine not less than $100 and not more than $500 per violation"
+    assert norm.to_dict()["action"] == norm.action
+    assert formula == (
+        "O(∀x (Violation(x) → IncurCivilFineNotLessThan100AndNotMoreThan500PerViolation(x)))"
+    )
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_preserves_detail_only_recipient_slot():
     element = dict(extract_normative_elements(
         "The Director shall send the notice to the applicant."

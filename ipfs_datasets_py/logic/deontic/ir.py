@@ -192,6 +192,79 @@ def _instrument_lifecycle_action_from_parts(kind: str, duration: str, anchor: st
     return ""
 
 
+def _penalty_action_text(element: Dict[str, Any]) -> str:
+    """Return a sanction action from structured detail-only penalty fields."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    if norm_type != "penalty":
+        return ""
+
+    candidates: List[Dict[str, Any]] = []
+    penalty = element.get("penalty")
+    if isinstance(penalty, dict):
+        candidates.append(dict(penalty))
+    candidates.extend(_list_of_dicts(element.get("penalty_details")))
+    candidates.extend(_list_of_dicts(element.get("sanction_details")))
+
+    for record in candidates:
+        normalized = _with_value_alias(record)
+        for key in ("value", "normalized_text", "raw_text", "text", "action"):
+            value = str(normalized.get(key) or "").strip()
+            if value:
+                return value
+
+        action = _penalty_action_from_parts(normalized)
+        if action:
+            return action
+
+    return ""
+
+
+def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
+    sanction_class = str(
+        record.get("sanction_class")
+        or record.get("penalty_class")
+        or record.get("type")
+        or "penalty"
+    ).strip().lower().replace("_", " ")
+    sanction_class = sanction_class.replace("sanction", "").strip()
+
+    amount_text = _penalty_amount_text(record)
+    recurrence = str(record.get("recurrence") or record.get("per") or "").strip().lower()
+    if recurrence and not recurrence.startswith("per "):
+        recurrence = f"per {recurrence}"
+
+    parts = ["incur"]
+    if sanction_class:
+        parts.append(sanction_class)
+    if amount_text:
+        parts.append(amount_text)
+    if recurrence:
+        parts.append(recurrence)
+    return " ".join(part for part in parts if part).strip()
+
+
+def _penalty_amount_text(record: Dict[str, Any]) -> str:
+    for key in ("amount_text", "fine_text", "amount", "maximum", "minimum"):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+
+    minimum = str(record.get("min_amount") or record.get("minimum_amount") or "").strip()
+    maximum = str(record.get("max_amount") or record.get("maximum_amount") or "").strip()
+    if minimum and maximum:
+        return f"not less than {minimum} and not more than {maximum}"
+    if minimum:
+        return f"not less than {minimum}"
+    if maximum:
+        return f"not more than {maximum}"
+    return ""
+
+
 def _actor_entities(element: Dict[str, Any]) -> List[str]:
     """Return all actor labels, including detail-only actor provenance."""
 
@@ -699,7 +772,7 @@ class LegalNormIR:
             norm_type=str(element.get("norm_type") or ""),
             actor=_actor_text(element) or _definition_actor_text(element) or _instrument_lifecycle_actor_text(element),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
-            action=_instrument_lifecycle_action_text(element) or _first_text(element.get("action")),
+            action=_instrument_lifecycle_action_text(element) or _penalty_action_text(element) or _first_text(element.get("action")),
             mental_state=_mental_state_text(element),
             action_verb=str(element.get("action_verb") or ""),
             action_object=str(element.get("action_object") or ""),
