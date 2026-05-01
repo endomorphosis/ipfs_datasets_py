@@ -418,11 +418,12 @@ def normalize_repair_required_evaluation(
     explicit deterministic formula-resolution metadata.
     """
 
-    summary = summarize_active_repair_from_parser_elements(elements)
+    source_elements = _evaluation_parser_elements(elements, evaluation)
+    summary = summarize_active_repair_from_parser_elements(source_elements)
     normalized = dict(evaluation)
 
     normalized_details = normalize_repair_required_details_from_parser_elements(
-        elements,
+        source_elements,
         evaluation.get("repair_required_details", []),
     )
     normalized_source_ids = [
@@ -458,6 +459,80 @@ def normalize_repair_required_evaluation(
         normalized["metrics"] = normalized_metrics
 
     return normalized
+
+
+def _evaluation_parser_elements(
+    elements: Iterable[Mapping[str, Any]],
+    evaluation: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    """Return parser elements for evaluation repair normalization.
+
+    Some metric runners call ``normalize_repair_required_evaluation`` with an
+    empty element list while carrying parser-shaped rows inside ``samples``.
+    Without recovering those rows, stale raw repair detail counts survive even
+    though the deterministic IR/formula layer can clear the row. Prefer the
+    explicit element argument, then fall back to sample rows that already expose
+    source-grounded parser fields.
+    """
+
+    explicit_elements = [dict(element) for element in elements]
+    if explicit_elements:
+        return explicit_elements
+
+    recovered: List[Dict[str, Any]] = []
+    for sample in evaluation.get("samples", []) if isinstance(evaluation.get("samples"), list) else []:
+        if not isinstance(sample, Mapping):
+            continue
+        sample_elements = sample.get("elements") or sample.get("parser_elements")
+        if isinstance(sample_elements, list):
+            recovered.extend(
+                dict(element)
+                for element in sample_elements
+                if isinstance(element, Mapping)
+            )
+            continue
+
+        candidate = _parser_element_from_evaluation_sample(sample)
+        if candidate:
+            recovered.append(candidate)
+
+    return recovered
+
+
+def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
+    """Recover a minimal parser element from a metric sample row when present."""
+
+    required = {"source_id", "text", "norm_type", "deontic_operator", "subject", "action"}
+    if not any(key in sample for key in required):
+        return {}
+
+    return {
+        "schema_version": sample.get("schema_version", ""),
+        "source_id": sample.get("source_id", ""),
+        "canonical_citation": sample.get("canonical_citation", ""),
+        "text": sample.get("text", ""),
+        "support_text": sample.get("support_text", sample.get("text", "")),
+        "support_span": list(sample.get("support_span") or sample.get("source_span") or []),
+        "source_span": list(sample.get("source_span") or sample.get("support_span") or []),
+        "field_spans": dict(sample.get("field_spans") or {}),
+        "norm_type": sample.get("norm_type", ""),
+        "deontic_operator": sample.get("deontic_operator") or sample.get("modality") or "",
+        "subject": list(sample.get("subject") or []),
+        "action": list(sample.get("action") or []),
+        "conditions": list(sample.get("conditions") or []),
+        "condition_details": list(sample.get("condition_details") or []),
+        "exceptions": list(sample.get("exceptions") or []),
+        "exception_details": list(sample.get("exception_details") or []),
+        "override_clauses": list(sample.get("override_clauses") or []),
+        "override_clause_details": list(sample.get("override_clause_details") or []),
+        "cross_references": list(sample.get("cross_references") or []),
+        "cross_reference_details": list(sample.get("cross_reference_details") or []),
+        "resolved_cross_references": list(sample.get("resolved_cross_references") or []),
+        "parser_warnings": list(sample.get("parser_warnings") or []),
+        "llm_repair": dict(sample.get("llm_repair") or {}),
+        "export_readiness": dict(sample.get("export_readiness") or {}),
+        "promotable_to_theorem": bool(sample.get("promotable_to_theorem")),
+    }
 
 
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
