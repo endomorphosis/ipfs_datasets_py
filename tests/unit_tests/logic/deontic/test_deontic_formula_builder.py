@@ -3319,6 +3319,53 @@ def test_structured_procedure_hearing_and_final_decision_triggers_become_formula
     )
 
 
+def test_structured_public_comment_and_consultation_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+    )[0])
+    element["action"] = [
+        "adopt the rule after public comment proposal and after consultation Board"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "adoption",
+                "relation": "triggered_by_public_comment_on",
+                "anchor_event": "proposal",
+                "raw_text": "after public comment on the proposal",
+                "span": [32, 68],
+            },
+            {
+                "event": "adoption",
+                "relation": "triggered_by_consultation_with",
+                "anchor_event": "Board",
+                "raw_text": "after consultation with the Board",
+                "span": [73, 106],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Director(x) ∧ ")
+    assert formula.endswith(" → AdoptRule(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → AdoptRule(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Director(x)",
+        "ProcedureAfterPublicCommentProposal(x)",
+        "ProcedureAfterConsultationBoard(x)",
+    }
+    assert "AdoptRuleAfterPublicCommentProposal" not in formula
+    assert "AdoptRuleAfterConsultationBoard" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
