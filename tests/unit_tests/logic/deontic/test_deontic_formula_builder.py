@@ -242,6 +242,44 @@ def test_direct_gerund_prohibition_exports_base_action_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_coordinated_failure_prohibitions_export_affirmative_duty_formulas():
+    examples = [
+        (
+            "The permittee shall not fail or refuse to submit records.",
+            "fail or refuse to submit records",
+            "O(∀x (Permittee(x) → SubmitRecords(x)))",
+            "FailOrRefuseSubmitRecords",
+        ),
+        (
+            "The licensee shall not failure or refusal to file reports.",
+            "failure or refusal to file reports",
+            "O(∀x (Licensee(x) → FileReports(x)))",
+            "FailureOrRefusalFileReports",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "F"
+        assert norm.action == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_interference_gerund_prohibitions_export_base_action_formulas():
     examples = [
         (
