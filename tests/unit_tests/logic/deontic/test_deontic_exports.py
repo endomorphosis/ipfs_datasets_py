@@ -3,6 +3,8 @@
 
 from ipfs_datasets_py.logic.deontic.exports import (
     active_repair_details_from_parser_elements,
+    build_decoder_record_from_ir,
+    build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
@@ -208,6 +210,63 @@ def test_ir_prover_syntax_records_do_not_clear_blocked_numbered_reference_except
     assert proof_record["repair_required"] is True
     assert proof_record["deterministic_resolution"] == {}
     assert "cross_reference_requires_resolution" in proof_record["blockers"]
+
+
+def test_ir_decoder_record_exports_grounded_reconstruction_for_proof_ready_clause():
+    element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_decoder_record_from_ir(norm)
+
+    assert record["reconstruction_id"].startswith("reconstruction:")
+    assert record["source_id"] == element["source_id"]
+    assert record["source_text"] == element["text"]
+    assert record["support_text"] == element["support_text"]
+    assert record["decoded_text"] == "Tenant shall pay rent monthly."
+    assert record["support_span"] == element["support_span"]
+    assert record["missing_slots"] == []
+    assert record["parser_warnings"] == []
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["phrase_count"] == 3
+    assert record["fixed_phrase_count"] == 0
+    assert record["grounded_phrase_count"] == 3
+    assert record["ungrounded_decoded_phrase_count"] == 0
+    assert [phrase["slot"] for phrase in record["phrase_provenance"]] == [
+        "actor",
+        "modality",
+        "action",
+    ]
+    assert all(phrase["spans"] for phrase in record["phrase_provenance"])
+
+
+def test_ir_decoder_record_preserves_blocked_reference_exception_without_promotion():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_decoder_record_from_ir(norm)
+    proof_record = build_proof_obligation_record_from_ir(norm)
+
+    assert record["decoded_text"] == (
+        "Secretary shall publish the notice except as provided in section 552."
+    )
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["missing_slots"] == []
+    assert "cross_reference_requires_resolution" in record["parser_warnings"]
+    assert "exception_requires_scope_review" in record["parser_warnings"]
+    assert [phrase["slot"] for phrase in record["phrase_provenance"]][-2:] == [
+        "exception_connector",
+        "exceptions",
+    ]
+    assert proof_record["proof_ready"] is False
+    assert proof_record["repair_required"] is True
+    assert proof_record["deterministic_resolution"] == {}
+
+    batch_records = build_decoder_records_from_irs([norm])
+    assert batch_records == [record]
 
 
 def test_ir_procedure_event_relation_records_preserve_ordering_provenance_without_formula_strengthening():

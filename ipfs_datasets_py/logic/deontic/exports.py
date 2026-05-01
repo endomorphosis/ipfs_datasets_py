@@ -13,6 +13,7 @@ import re
 from dataclasses import replace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Union
 
+from .decoder import decode_legal_norm_ir
 from .formula_builder import (
     build_deontic_formula_record_from_ir,
     build_deontic_formula_records_from_irs,
@@ -275,6 +276,48 @@ def build_prover_syntax_records_from_ir(
     """
 
     return [record.to_dict() for record in validate_ir_with_provers(norm, targets).targets]
+
+
+def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
+    """Build an auditable Phase 8 reconstruction row from typed legal IR.
+
+    The decoder record is diagnostic only: it reports deterministic
+    reconstruction text and phrase provenance without changing parser repair
+    gates, theorem promotion, or formal logic export readiness.
+    """
+
+    decoded = decode_legal_norm_ir(norm)
+    phrase_rows = [phrase.to_dict() for phrase in decoded.phrases]
+    fixed_phrase_count = sum(1 for phrase in decoded.phrases if phrase.fixed)
+    ungrounded_phrase_count = sum(
+        1 for phrase in decoded.phrases if not phrase.fixed and not phrase.spans
+    )
+
+    return {
+        "reconstruction_id": _stable_id("reconstruction", norm.source_id, decoded.text),
+        "source_id": norm.source_id,
+        "canonical_citation": norm.canonical_citation,
+        "source_text": norm.source_text,
+        "support_text": norm.support_text,
+        "decoded_text": decoded.text,
+        "support_span": decoded.support_span,
+        "phrase_count": len(phrase_rows),
+        "fixed_phrase_count": fixed_phrase_count,
+        "grounded_phrase_count": len(phrase_rows) - fixed_phrase_count - ungrounded_phrase_count,
+        "ungrounded_decoded_phrase_count": ungrounded_phrase_count,
+        "missing_slots": list(decoded.missing_slots),
+        "parser_warnings": list(decoded.parser_warnings),
+        "phrase_provenance": phrase_rows,
+        "proof_ready": norm.proof_ready,
+        "requires_validation": bool(norm.blockers or decoded.missing_slots),
+        "schema_version": norm.schema_version,
+    }
+
+
+def build_decoder_records_from_irs(norms: Iterable[LegalNormIR]) -> List[Dict[str, Any]]:
+    """Build ordered deterministic reconstruction rows for typed legal IR."""
+
+    return [build_decoder_record_from_ir(norm) for norm in norms]
 
 
 def _procedure_event_symbol(value: str) -> str:
