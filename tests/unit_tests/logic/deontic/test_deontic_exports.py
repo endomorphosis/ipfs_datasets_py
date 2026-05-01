@@ -291,6 +291,30 @@ def test_parser_element_readiness_clears_substantive_exception_repair_reason():
     assert aligned[0]["llm_repair"]["allow_llm_repair"] is False
     assert aligned[0]["llm_repair"]["reasons"] == []
     assert aligned[0]["llm_repair"]["deterministically_resolved"] is True
+    assert aligned[0]["export_readiness"]["metric_requires_validation"] is False
+    assert aligned[0]["export_readiness"]["metric_repair_required"] is False
+    assert aligned[0]["active_repair_warnings"] == []
+    assert aligned[0]["repair_required_warnings"] == []
+
+
+def test_formula_resolved_substantive_exception_is_not_active_repair_detail():
+    elements = [
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    details = active_repair_details_from_parser_elements(elements)
+
+    assert len(details) == 1
+    assert details[0]["source_id"] == elements[1]["source_id"]
+    assert details[0]["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
 
 
 def test_document_export_tables_skip_repair_row_for_resolved_reference_exception():

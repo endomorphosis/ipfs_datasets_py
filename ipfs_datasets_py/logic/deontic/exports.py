@@ -419,6 +419,7 @@ def parser_elements_with_ir_export_readiness(
             )
             copied["resolved_cross_references"] = projected_references
             _clear_parser_exception_repair_if_formula_resolved(copied, deterministic_resolution)
+            _project_formula_resolved_metric_readiness(copied, deterministic_resolution)
 
         aligned.append(copied)
     return aligned
@@ -579,6 +580,38 @@ def _clear_parser_exception_repair_if_formula_resolved(
     llm_repair["deterministically_resolved"] = True
     llm_repair["deterministic_resolution"] = dict(deterministic_resolution)
     element["llm_repair"] = llm_repair
+
+
+def _project_formula_resolved_metric_readiness(
+    element: Dict[str, Any],
+    deterministic_resolution: Mapping[str, Any],
+) -> None:
+    """Expose inactive repair status for formula-resolved parser rows.
+
+    Parser warnings remain audit metadata. Metric collectors that inspect copied
+    parser dictionaries directly should see the same active-repair decision as
+    the IR/formula exporter: a single substantive exception represented as a
+    negated antecedent is resolved, while numbered or external references stay
+    blocked because they have no source-grounded target.
+    """
+
+    if deterministic_resolution.get("type") not in {
+        "standard_substantive_exception",
+        "local_scope_applicability",
+        "local_scope_reference_exception",
+        "local_scope_reference_condition",
+        "pure_precedence_override",
+        "resolved_same_document_reference_exception",
+        "resolved_same_document_reference_condition",
+    }:
+        return
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    export_readiness["metric_requires_validation"] = False
+    export_readiness["metric_repair_required"] = False
+    element["export_readiness"] = export_readiness
+    element["active_repair_warnings"] = []
+    element["repair_required_warnings"] = []
 
 
 def parser_elements_to_ir_aligned_export_tables(
