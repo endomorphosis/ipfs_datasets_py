@@ -497,6 +497,13 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_denial_of": "procedure after denial",
         "triggered_by_payment_of": "procedure after payment",
         "triggered_by_assessment_of": "procedure after assessment",
+        "triggered_by_determination_of": "procedure after determination",
+        "triggered_by_verification_of": "procedure after verification",
+        "triggered_by_validation_of": "procedure after validation",
+        "triggered_by_review_of": "procedure after review",
+        "triggered_by_reconsideration_of": "procedure after reconsideration",
+        "triggered_by_hearing_of": "procedure after hearing",
+        "triggered_by_final_decision_of": "procedure after final decision",
     }.get(relation, "")
 
 
@@ -538,6 +545,13 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_denial_of",
         "triggered_by_payment_of",
         "triggered_by_assessment_of",
+        "triggered_by_determination_of",
+        "triggered_by_verification_of",
+        "triggered_by_validation_of",
+        "triggered_by_review_of",
+        "triggered_by_reconsideration_of",
+        "triggered_by_hearing_of",
+        "triggered_by_final_decision_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -717,7 +731,31 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
                     cleaned,
                     flags=re.IGNORECASE,
                 ).strip()
+        tail_noun = _procedure_trigger_tail_noun(relation_type)
+        if tail_noun:
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after|following)\s+{tail_noun}\s+(?:of|on)?\s*(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
     return cleaned or text
+
+
+def _procedure_trigger_tail_noun(relation_type: str) -> str:
+    """Return trigger nouns that can appear as structured action tails."""
+
+    return {
+        "triggered_by_determination_of": "determination",
+        "triggered_by_verification_of": "verification",
+        "triggered_by_validation_of": "validation",
+        "triggered_by_review_of": "review",
+        "triggered_by_reconsideration_of": "reconsideration",
+        "triggered_by_hearing_of": "hearing",
+        "triggered_by_final_decision_of": "final\\s+decision",
+    }.get(relation_type, "")
 
 
 def _strip_action_tail_phrase(action: str, phrase: str) -> str:

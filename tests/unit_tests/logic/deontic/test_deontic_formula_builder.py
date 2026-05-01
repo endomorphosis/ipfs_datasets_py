@@ -2932,6 +2932,160 @@ def test_structured_procedure_assessment_trigger_becomes_formula_prerequisite():
     assert "IssueNoticeAfterAssessmentFee" not in formula
 
 
+def test_structured_procedure_determination_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after determination of eligibility."
+    )[0])
+    element["action"] = ["issue a permit after determination eligibility"]
+    element["procedure"] = {
+        "trigger_event": "eligibility",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_determination_of",
+                "anchor_event": "eligibility",
+                "raw_text": "after determination of eligibility",
+                "span": [36, 70],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterDeterminationEligibility(x) → IssuePermit(x)))"
+    assert "IssuePermitAfterDeterminationEligibility" not in formula
+
+
+def test_structured_procedure_verification_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after verification of residency."
+    )[0])
+    element["action"] = ["issue a permit after verification residency"]
+    element["procedure"] = {
+        "trigger_event": "residency",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_verification_of",
+                "anchor_event": "residency",
+                "raw_text": "after verification of residency",
+                "span": [36, 67],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterVerificationResidency(x) → IssuePermit(x)))"
+    assert "IssuePermitAfterVerificationResidency" not in formula
+
+
+def test_structured_procedure_validation_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Bureau shall approve the license after validation of the application."
+    )[0])
+    element["action"] = ["approve the license after validation application"]
+    element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "approval",
+        "event_relations": [
+            {
+                "event": "approval",
+                "relation": "triggered_by_validation_of",
+                "anchor_event": "application",
+                "raw_text": "after validation of the application",
+                "span": [39, 75],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Bureau(x) ∧ ProcedureAfterValidationApplication(x) → ApproveLicense(x)))"
+    assert "ApproveLicenseAfterValidationApplication" not in formula
+
+
+def test_structured_procedure_review_and_reconsideration_triggers_become_formula_prerequisites():
+    review_element = dict(extract_normative_elements(
+        "The Director shall issue a permit after review of the application."
+    )[0])
+    review_element["action"] = ["issue a permit after review application"]
+    review_element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_review_of",
+                "anchor_event": "application",
+                "raw_text": "after review of the application",
+                "span": [36, 67],
+            }
+        ],
+    }
+    reconsideration_element = dict(extract_normative_elements(
+        "The Board shall issue a final order after reconsideration of the appeal."
+    )[0])
+    reconsideration_element["action"] = ["issue a final order after reconsideration appeal"]
+    reconsideration_element["procedure"] = {
+        "trigger_event": "appeal",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_reconsideration_of",
+                "anchor_event": "appeal",
+                "raw_text": "after reconsideration of the appeal",
+                "span": [36, 73],
+            }
+        ],
+    }
+
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(review_element)) == (
+        "O(∀x (Director(x) ∧ ProcedureAfterReviewApplication(x) → IssuePermit(x)))"
+    )
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(reconsideration_element)) == (
+        "O(∀x (Board(x) ∧ ProcedureAfterReconsiderationAppeal(x) → IssueFinalOrder(x)))"
+    )
+
+
+def test_structured_procedure_hearing_and_final_decision_triggers_become_formula_prerequisites():
+    hearing_element = dict(extract_normative_elements(
+        "The Board shall issue a final order after hearing on the appeal."
+    )[0])
+    hearing_element["action"] = ["issue a final order after hearing appeal"]
+    hearing_element["procedure"] = {
+        "trigger_event": "appeal",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {"event": "issuance", "relation": "triggered_by_hearing_of", "anchor_event": "appeal"}
+        ],
+    }
+    decision_element = dict(extract_normative_elements(
+        "The Director shall issue a permit after final decision on the application."
+    )[0])
+    decision_element["action"] = ["issue a permit after final decision application"]
+    decision_element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {"event": "issuance", "relation": "triggered_by_final_decision_of", "anchor_event": "application"}
+        ],
+    }
+
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(hearing_element)) == (
+        "O(∀x (Board(x) ∧ ProcedureAfterHearingAppeal(x) → IssueFinalOrder(x)))"
+    )
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(decision_element)) == (
+        "O(∀x (Director(x) ∧ ProcedureAfterFinalDecisionApplication(x) → IssuePermit(x)))"
+    )
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
