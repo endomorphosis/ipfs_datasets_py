@@ -511,6 +511,11 @@ def _evaluation_parser_elements(
     return recovered
 
 
+def _raw_repair_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    details = evaluation.get("repair_required_details", [])
+    return [detail for detail in details if isinstance(detail, Mapping)] if isinstance(details, list) else []
+
+
 def _detail_records_from_sample(
     sample: Mapping[str, Any],
     detail_key: str,
@@ -554,6 +559,7 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "schema_version": sample.get("schema_version", ""),
         "source_id": sample.get("source_id", ""),
         "canonical_citation": sample.get("canonical_citation", ""),
+        "sample_id": sample.get("sample_id", ""),
         "text": sample.get("text", sample.get("source_text", "")),
         "support_text": sample.get("support_text", sample.get("text", sample.get("source_text", ""))),
         "support_span": list(sample.get("support_span") or sample.get("source_span") or []),
@@ -561,8 +567,8 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "field_spans": dict(sample.get("field_spans") or {}),
         "norm_type": sample.get("norm_type", ""),
         "deontic_operator": sample.get("deontic_operator") or sample.get("modality") or "",
-        "subject": list(sample.get("subject") or []),
-        "action": list(sample.get("action") or []),
+        "subject": _list_field(sample.get("subject")),
+        "action": _list_field(sample.get("action")),
         "conditions": _legacy_text_values_from_sample(sample, "conditions"),
         "condition_details": _detail_records_from_sample(sample, "condition_details", "conditions"),
         "exceptions": _legacy_text_values_from_sample(sample, "exceptions"),
@@ -577,6 +583,14 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "export_readiness": dict(sample.get("export_readiness") or {}),
         "promotable_to_theorem": bool(sample.get("promotable_to_theorem")),
     }
+
+
+def _list_field(value: Any) -> List[Any]:
+    if isinstance(value, list):
+        return list(value)
+    if value:
+        return [value]
+    return []
 
 
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
