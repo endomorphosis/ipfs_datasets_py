@@ -5358,6 +5358,68 @@ def test_ir_procedure_event_records_mark_signature_trigger_as_prerequisite():
     assert records[0]["proof_role"] == "prerequisite"
 
 
+def test_ir_procedure_event_records_mark_notarization_and_countersignature_triggers_as_prerequisites():
+    """Instrument notarization and countersignature can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall record the deed after notarization of the deed and after countersignature of the certificate."
+    )[0])
+    element["action"] = [
+        "record the deed after notarization deed and after countersignature certificate"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "recording",
+                "relation": "triggered_by_notarization_of",
+                "anchor_event": "deed",
+                "raw_text": "after notarization of the deed",
+                "span": [28, 59],
+            },
+            {
+                "event": "recording",
+                "relation": "triggered_by_countersignature_of",
+                "anchor_event": "certificate",
+                "raw_text": "after countersignature of the certificate",
+                "span": [64, 105],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    notarization_record = records[0]
+    countersignature_record = records[1]
+
+    assert notarization_record["event_id"].startswith("event:")
+    assert notarization_record["source_id"] == element["source_id"]
+    assert notarization_record["event"] == "recording"
+    assert notarization_record["event_symbol"] == "Recording"
+    assert notarization_record["relation"] == "triggered_by_notarization_of"
+    assert notarization_record["anchor_event"] == "deed"
+    assert notarization_record["anchor_symbol"] == "Deed"
+    assert notarization_record["raw_text"] == "after notarization of the deed"
+    assert notarization_record["span"] == [28, 59]
+    assert notarization_record["support_span"] == element["support_span"]
+    assert notarization_record["is_formula_antecedent"] is True
+    assert notarization_record["proof_role"] == "prerequisite"
+
+    assert countersignature_record["event_id"].startswith("event:")
+    assert countersignature_record["source_id"] == element["source_id"]
+    assert countersignature_record["event"] == "recording"
+    assert countersignature_record["event_symbol"] == "Recording"
+    assert countersignature_record["relation"] == "triggered_by_countersignature_of"
+    assert countersignature_record["anchor_event"] == "certificate"
+    assert countersignature_record["anchor_symbol"] == "Certificate"
+    assert countersignature_record["raw_text"] == "after countersignature of the certificate"
+    assert countersignature_record["span"] == [64, 105]
+    assert countersignature_record["support_span"] == element["support_span"]
+    assert countersignature_record["is_formula_antecedent"] is True
+    assert countersignature_record["proof_role"] == "prerequisite"
+
+
 def test_ir_procedure_event_records_mark_opening_trigger_as_prerequisite():
     """Opening of bids is a procedural prerequisite, not ordering-only provenance."""
 
