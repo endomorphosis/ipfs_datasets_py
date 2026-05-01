@@ -175,7 +175,31 @@ def parser_elements_for_metrics(
     projection used by converter/export callers.
     """
 
-    return parser_elements_with_ir_export_readiness(elements)
+    metric_elements = parser_elements_with_ir_export_readiness(elements)
+    for element in metric_elements:
+        export_readiness = dict(element.get("export_readiness") or {})
+        formula_proof_ready = export_readiness.get("formula_proof_ready") is True
+        formula_requires_validation = bool(export_readiness.get("formula_requires_validation"))
+        formula_repair_required = bool(export_readiness.get("formula_repair_required"))
+
+        if formula_proof_ready and not formula_requires_validation and not formula_repair_required:
+            export_readiness["requires_validation"] = []
+            export_readiness["repair_required"] = False
+            export_readiness["metric_requires_validation"] = False
+            export_readiness["metric_repair_required"] = False
+
+            llm_repair = dict(element.get("llm_repair") or {})
+            llm_repair["required"] = False
+            llm_repair["allow_llm_repair"] = False
+            llm_repair["deterministically_resolved"] = True
+            element["llm_repair"] = llm_repair
+        else:
+            export_readiness["metric_requires_validation"] = formula_requires_validation
+            export_readiness["metric_repair_required"] = formula_repair_required
+
+        element["export_readiness"] = export_readiness
+
+    return metric_elements
 
 
 def parser_elements_with_ir_export_readiness(

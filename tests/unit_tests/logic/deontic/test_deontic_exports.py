@@ -5,6 +5,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
     parser_elements_to_export_tables,
+    parser_elements_for_metrics,
     parser_elements_with_ir_export_readiness,
     parser_elements_to_ir_aligned_export_tables,
     validate_export_tables,
@@ -1321,3 +1322,52 @@ def test_validate_export_tables_reports_missing_and_duplicate_keys():
         "field": "source_id",
         "message": "missing source_id",
     } in validation["errors"]
+
+
+def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    rows = parser_elements_for_metrics(elements)
+
+    assert [row["promotable_to_theorem"] for row in rows] == [False, False, False, False]
+    assert [
+        row["export_readiness"].get("deterministic_resolution", {}).get("type")
+        for row in rows
+    ] == [
+        "local_scope_applicability",
+        "standard_substantive_exception",
+        "pure_precedence_override",
+        None,
+    ]
+    assert [row["export_readiness"]["formula_repair_required"] for row in rows] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+    assert [row["export_readiness"]["metric_repair_required"] for row in rows] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+    assert [row["export_readiness"].get("repair_required") for row in rows] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+    assert [row["export_readiness"].get("requires_validation") for row in rows[:3]] == [[], [], []]
+    assert "llm_router_repair" in rows[3]["export_readiness"].get("requires_validation", [])
+    assert [row["llm_repair"]["required"] for row in rows] == [False, False, False, True]
