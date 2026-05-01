@@ -50,6 +50,12 @@ _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES = {
     "triggered_by_return_of": "after return",
     "triggered_by_reinstatement_of": "after reinstatement",
     "triggered_by_withdrawal_of": "after withdrawal",
+    "triggered_by_determination_of": "after determination",
+    "triggered_by_verification_of": "after verification",
+    "triggered_by_validation_of": "after validation",
+    "triggered_by_review_of": "after review",
+    "triggered_by_reconsideration_of": "after reconsideration",
+    "triggered_by_final_decision_of": "after final decision",
     "triggered_by_archiving_of": "after archiving",
     "triggered_by_retention_of": "after retention",
 }
