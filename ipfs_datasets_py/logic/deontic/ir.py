@@ -362,6 +362,64 @@ def _exemption_action_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _action_verb_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded action verb from flat or detail fields."""
+
+    flat_value = str(element.get("action_verb") or "").strip()
+    if flat_value:
+        return flat_value
+
+    for detail_key in (
+        "action_verb_details",
+        "verb_details",
+        "action_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "verb",
+                "action_verb",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _action_object_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded action object from flat or detail fields."""
+
+    flat_value = str(element.get("action_object") or "").strip()
+    if flat_value:
+        return flat_value
+
+    for detail_key in (
+        "action_object_details",
+        "object_details",
+        "action_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "object",
+                "action_object",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
     sanction_class = str(
         record.get("sanction_class")
@@ -930,8 +988,8 @@ class LegalNormIR:
                 or _first_text(element.get("action"))
             ),
             mental_state=_mental_state_text(element),
-            action_verb=str(element.get("action_verb") or ""),
-            action_object=str(element.get("action_object") or ""),
+            action_verb=_action_verb_text(element),
+            action_object=_action_object_text(element),
             recipient=_recipient_text(element),
             conditions=_slot_detail_records(element, "condition_details", "conditions"),
             exceptions=_slot_detail_records(element, "exception_details", "exceptions"),

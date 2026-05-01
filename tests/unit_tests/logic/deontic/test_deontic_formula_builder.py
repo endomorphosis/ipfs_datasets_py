@@ -129,6 +129,44 @@ def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_action_component_records():
+    element = dict(extract_normative_elements(
+        "The inspector shall approve the discharge."
+    )[0])
+    element["action"] = []
+    element["action_verb"] = ""
+    element["action_object"] = ""
+    element["action_verb_details"] = [
+        {
+            "type": "action_verb",
+            "normalized_text": "approve",
+            "span": [20, 27],
+        }
+    ]
+    element["action_object_details"] = [
+        {
+            "type": "action_object",
+            "normalized_text": "the discharge",
+            "span": [28, 41],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action_verb"] = [20, 27]
+    field_spans["action_object"] = [28, 41]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.action == ""
+    assert norm.action_verb == "approve"
+    assert norm.action_object == "the discharge"
+    assert formula == "O(∀x (Inspector(x) → ApproveDischarge(x)))"
+    assert "Action(x)" not in formula
+    assert record["formula"] == formula
+
+
 def test_ir_formula_builder_uses_detail_only_actor_slot():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
