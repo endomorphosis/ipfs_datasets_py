@@ -246,6 +246,46 @@ def test_ir_procedure_event_records_mark_filing_and_submission_triggers_as_prere
     assert after_record["proof_role"] == "ordering_provenance"
 
 
+def test_ir_procedure_event_records_mark_notice_and_hearing_trigger_as_prerequisite():
+    element = extract_normative_elements(
+        "The Director shall issue a permit after notice and hearing."
+    )[0]
+    element = dict(element)
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_notice_and_hearing",
+                "anchor_event": "notice and hearing",
+                "raw_text": "after notice and hearing",
+                "span": [36, 60],
+            },
+            {
+                "event": "issuance",
+                "relation": "after",
+                "anchor_event": "publication",
+                "raw_text": "after publication",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    notice_record = next(
+        record for record in records if record["relation"] == "triggered_by_notice_and_hearing"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert notice_record["is_formula_antecedent"] is True
+    assert notice_record["proof_role"] == "prerequisite"
+    assert notice_record["anchor_event"] == "notice and hearing"
+    assert notice_record["anchor_symbol"] == "NoticeAndHearing"
+    assert notice_record["span"] == [36, 60]
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
