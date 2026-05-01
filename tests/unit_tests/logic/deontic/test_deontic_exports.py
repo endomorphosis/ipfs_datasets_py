@@ -5118,6 +5118,40 @@ def test_ir_procedure_event_records_mark_mailing_trigger_as_prerequisite():
     assert records[0]["proof_role"] == "prerequisite"
 
 
+def test_ir_procedure_event_records_mark_certified_mailing_trigger_as_prerequisite():
+    """Certified mailing of notice is a procedural prerequisite."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue an order after certified mailing of the notice."
+    )[0])
+    element["action"] = ["issue an order after certified mailing notice"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_certified_mailing_of",
+                "anchor_event": "notice",
+                "raw_text": "after certified mailing of the notice",
+                "span": [36, 74],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_certified_mailing_of"
+    assert records[0]["anchor_event"] == "notice"
+    assert records[0]["anchor_symbol"] == "Notice"
+    assert records[0]["raw_text"] == "after certified mailing of the notice"
+    assert records[0]["span"] == [36, 74]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+
+
 def test_ir_procedure_event_records_mark_delivery_trigger_as_prerequisite():
     """Delivery of notice is a procedural prerequisite, not ordering-only provenance."""
 

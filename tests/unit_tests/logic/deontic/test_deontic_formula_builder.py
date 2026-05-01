@@ -2645,6 +2645,32 @@ def test_structured_procedure_mailing_trigger_becomes_formula_prerequisite():
     assert "IssueOrderAfterMailingNotice" not in formula
 
 
+def test_structured_procedure_certified_mailing_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue an order after certified mailing of the notice."
+    )[0])
+    element["action"] = ["issue an order after certified mailing notice"]
+    element["procedure"] = {
+        "trigger_event": "notice",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_certified_mailing_of",
+                "anchor_event": "notice",
+                "raw_text": "after certified mailing of the notice",
+                "span": [36, 74],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterCertifiedMailingNotice(x) → IssueOrder(x)))"
+    assert "IssueOrderAfterCertifiedMailingNotice" not in formula
+
+
 def test_structured_procedure_delivery_trigger_becomes_formula_prerequisite():
     element = dict(extract_normative_elements(
         "The Director shall issue an order after delivery of the notice."
