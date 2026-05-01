@@ -183,6 +183,7 @@ def parser_elements_for_metrics(
         _hydrate_parser_element_from_prompt_context(dict(element))
         for element in elements
     ]
+    _hydrate_prompt_context_modal_slots(all_source_elements)
     for element in all_source_elements:
         _hydrate_prompt_context_override_clause_details(element)
 
@@ -1903,6 +1904,38 @@ def _hydrate_prompt_context_override_clause_details(element: Dict[str, Any]) -> 
     }
     element["override_clause_details"] = [record]
     element["override_clauses"] = [raw_text]
+
+
+def _hydrate_prompt_context_modal_slots(elements: Sequence[Dict[str, Any]]) -> None:
+    """Recover omitted modal slots from deterministic repair prompt context.
+
+    Optimizer repair-detail rows often preserve the parser's prompt_context but
+    set top-level ``modality`` to null and omit ``deontic_operator``. The IR can
+    infer an operator from ``norm_type`` for formula construction, but metric
+    readiness projection still sees stale repair flags on the source row. Copy
+    only parser-produced modal slots from prompt_context so detail-only rows use
+    the same deterministic readiness path as ordinary parser elements.
+    """
+
+    allowed = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+    for element in elements:
+        llm_repair = dict(element.get("llm_repair") or {})
+        prompt_context = llm_repair.get("prompt_context") or {}
+        if not isinstance(prompt_context, Mapping):
+            continue
+
+        prompt_operator = str(
+            prompt_context.get("deontic_operator") or prompt_context.get("modality") or ""
+        ).strip().upper()
+        if prompt_operator not in allowed:
+            continue
+
+        current_operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+        if current_operator in allowed:
+            continue
+
+        element["deontic_operator"] = prompt_operator
+        element["modality"] = prompt_operator
 
 
 def _hydrate_prompt_context_same_document_references(

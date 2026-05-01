@@ -3226,6 +3226,56 @@ def test_metrics_clear_numbered_reference_with_prompt_context_same_document_sect
     assert parser_element_has_active_repair(projected[0]) is False
 
 
+def test_metrics_hydrates_prompt_context_operator_for_detail_only_stale_repair_rows():
+    """Detail-only rows with null modality should still clear deterministic repairs."""
+
+    examples = [
+        ("exception", "The applicant shall obtain a permit unless approval is denied."),
+        ("override", "Notwithstanding section 5.01.020, the Director may issue a variance."),
+        ("applicability", "This section applies to food carts and mobile vendors."),
+    ]
+    detail_rows = []
+    for sample_id, text in examples:
+        parsed = extract_normative_elements(text)[0]
+        detail_rows.append(
+            {
+                "sample_id": sample_id,
+                "text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "norm_type": parsed["norm_type"],
+                "modality": None,
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(parsed["parser_warnings"]),
+                    "prompt_context": {
+                        "source_text": parsed["text"],
+                        "source_id": parsed["source_id"],
+                        "deontic_operator": parsed["deontic_operator"],
+                        "norm_type": parsed["norm_type"],
+                        "subject": list(parsed["subject"]),
+                        "action": list(parsed["action"]),
+                        "conditions": list(parsed.get("condition_details") or []),
+                        "exceptions": list(parsed.get("exception_details") or []),
+                        "override_clauses": list(parsed.get("override_clause_details") or []),
+                        "cross_references": list(parsed.get("cross_reference_details") or []),
+                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "parser_warnings": list(parsed["parser_warnings"]),
+                    },
+                },
+            }
+        )
+
+    projected = parser_elements_for_metrics(detail_rows)
+
+    assert [row["deontic_operator"] for row in projected] == ["O", "P", "APP"]
+    assert [row["active_repair_required"] for row in projected] == [False, False, False]
+    assert [parser_element_has_active_repair(row) for row in projected] == [False, False, False]
+    assert [row["llm_repair"]["required"] for row in projected] == [False, False, False]
+
+
 def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_probes():
     """Only the unresolved numbered reference should remain active repair."""
 
