@@ -487,6 +487,9 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_inspection_of": "procedure after inspection",
         "triggered_by_service_of": "procedure after service",
         "triggered_by_adoption_of": "procedure after adoption",
+        "triggered_by_commencement_of": "procedure after commencement",
+        "triggered_by_execution_of": "procedure after execution",
+        "triggered_by_recording_of": "procedure after recording",
     }.get(relation, "")
 
 
@@ -518,6 +521,9 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_inspection_of",
         "triggered_by_service_of",
         "triggered_by_adoption_of",
+        "triggered_by_commencement_of",
+        "triggered_by_execution_of",
+        "triggered_by_recording_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -603,6 +609,33 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+adoption\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
+        if relation_type == "triggered_by_commencement_of":
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after|following)\s+commencement\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
+        if relation_type == "triggered_by_execution_of":
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after|following)\s+execution\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
+        if relation_type == "triggered_by_recording_of":
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after|following)\s+recording\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
                     "",
                     cleaned,
                     flags=re.IGNORECASE,

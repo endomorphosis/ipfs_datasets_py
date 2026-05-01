@@ -2648,6 +2648,93 @@ def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
     assert "PublishGuidelinesAfterAdoptionRules" not in formula
 
 
+def test_structured_procedure_commencement_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall inspect the premises after commencement of operations."
+    )[0])
+    element["action"] = ["inspect the premises after commencement operations"]
+    element["procedure"] = {
+        "trigger_event": "operations",
+        "terminal_event": "inspection",
+        "event_relations": [
+            {
+                "event": "inspection",
+                "relation": "triggered_by_commencement_of",
+                "anchor_event": "operations",
+                "raw_text": "after commencement of operations",
+                "span": [40, 72],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterCommencementOperations(x) → InspectPremises(x)))"
+    )
+    assert "Procedureaftercommencementoperations" not in formula
+    assert "InspectPremisesAfterCommencementOperations" not in formula
+
+
+def test_structured_procedure_execution_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a certificate after execution of the agreement."
+    )[0])
+    element["action"] = ["issue a certificate after execution agreement"]
+    element["procedure"] = {
+        "trigger_event": "agreement",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_execution_of",
+                "anchor_event": "agreement",
+                "raw_text": "after execution of the agreement",
+                "span": [39, 72],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterExecutionAgreement(x) → IssueCertificate(x)))"
+    )
+    assert "Procedureafterexecutionagreement" not in formula
+    assert "IssueCertificateAfterExecutionAgreement" not in formula
+
+
+def test_structured_procedure_recording_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall renew a license after recording of the deed."
+    )[0])
+    element["action"] = ["renew a license after recording deed"]
+    element["procedure"] = {
+        "trigger_event": "deed",
+        "terminal_event": "renewal",
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_recording_of",
+                "anchor_event": "deed",
+                "raw_text": "after recording of the deed",
+                "span": [35, 63],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterRecordingDeed(x) → RenewLicense(x)))"
+    )
+    assert "Procedureafterrecordingdeed" not in formula
+    assert "RenewLicenseAfterRecordingDeed" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
