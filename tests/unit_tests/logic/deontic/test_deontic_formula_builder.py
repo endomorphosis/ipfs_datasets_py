@@ -238,6 +238,48 @@ def test_ir_formula_builder_uses_detail_only_applicability_slots():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_exemption_slots():
+    element = dict(extract_normative_elements(
+        "Emergency repairs are exempt from permit requirements."
+    )[0])
+    element["subject"] = []
+    element["action"] = []
+    element["exemption_details"] = [
+        {
+            "type": "exemption",
+            "target": "emergency repairs",
+            "requirement": "permit requirements",
+            "span": [0, 54],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["exemption_target"] = [0, 17]
+    field_spans["exemption_requirement"] = [34, 53]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.norm_type == "exemption"
+    assert norm.modality == "EXEMPT"
+    assert norm.actor == "emergency repairs"
+    assert norm.action == "permit requirements"
+    assert norm.actor_entities == ["emergency repairs"]
+    assert norm.to_dict()["actor"] == "emergency repairs"
+    assert norm.to_dict()["action"] == "permit requirements"
+    assert formula == "ExemptFrom(EmergencyRepairs, PermitRequirements)"
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
     element = dict(extract_normative_elements(
         "The license is valid for 30 days."

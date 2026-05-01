@@ -292,6 +292,76 @@ def _applicability_action_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _exemption_actor_text(element: Dict[str, Any]) -> str:
+    """Return the exempt entity for detail-only exemption parser rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "exemption" and operator != "EXEMPT":
+        return ""
+
+    for key in ("target", "exemption_target", "exempt_entity", "entity"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "exemption_details",
+        "exemption_target_details",
+        "target_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "target",
+                "target_text",
+                "exemption_target",
+                "exempt_entity",
+                "entity",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _exemption_action_text(element: Dict[str, Any]) -> str:
+    """Return the exempted requirement for detail-only exemption parser rows."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "exemption" and operator != "EXEMPT":
+        return ""
+
+    for key in ("requirement", "exemption_requirement", "instrument", "required_instrument"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "exemption_details",
+        "exemption_requirement_details",
+        "requirement_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in ("requirement", "requirement_text", "exemption_requirement", "instrument", "value", "normalized_text", "raw_text", "text"):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
     sanction_class = str(
         record.get("sanction_class")
@@ -342,6 +412,7 @@ def _actor_entities(element: Dict[str, Any]) -> List[str]:
     actor = (
         _actor_text(element)
         or _applicability_actor_text(element)
+        or _exemption_actor_text(element)
         or _definition_actor_text(element)
         or _instrument_lifecycle_actor_text(element)
     )
@@ -846,12 +917,14 @@ class LegalNormIR:
             actor=(
                 _actor_text(element)
                 or _applicability_actor_text(element)
+                or _exemption_actor_text(element)
                 or _definition_actor_text(element)
                 or _instrument_lifecycle_actor_text(element)
             ),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=(
                 _applicability_action_text(element)
+                or _exemption_action_text(element)
                 or _instrument_lifecycle_action_text(element)
                 or _penalty_action_text(element)
                 or _first_text(element.get("action"))
