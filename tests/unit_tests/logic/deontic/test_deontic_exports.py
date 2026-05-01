@@ -1918,6 +1918,59 @@ def test_metrics_projection_resolves_numbered_reference_exception_with_same_docu
     ]
 
 
+def test_raw_parser_clears_active_repair_for_same_document_numbered_reference_exception():
+    text = """Section 552. Publication rules
+The agency shall keep records.
+Section 553. Notice rule
+The Secretary shall publish the notice except as provided in section 552."""
+
+    elements = extract_normative_elements(text)
+    reference = next(
+        element for element in elements if element["action"] == ["publish the notice"]
+    )
+
+    assert reference["promotable_to_theorem"] is False
+    assert "exception_requires_scope_review" in reference["parser_warnings"]
+    assert reference["resolved_cross_references"] == [
+        {
+            "type": "section",
+            "value": "552",
+            "raw_text": "section 552",
+            "normalized_text": "section 552",
+            "span": [61, 72],
+            "resolution_status": "resolved",
+            "target_exists": True,
+            "target_section": "552",
+            "target_heading": "Publication rules",
+            "target_hierarchy_path": ["section:552", "heading:Publication rules"],
+        }
+    ]
+    assert reference["llm_repair"]["required"] is False
+    assert reference["llm_repair"]["allow_llm_repair"] is False
+    assert reference["llm_repair"]["reasons"] == []
+    assert reference["llm_repair"]["prompt_context"] == {}
+    assert reference["llm_repair"]["deterministically_resolved"] is True
+    assert reference["llm_repair"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert reference["active_repair_required"] is False
+    assert reference["repair_required"] is False
+    assert reference["active_repair_warnings"] == []
+    assert reference["repair_required_warnings"] == []
+
+
+def test_raw_parser_keeps_active_repair_for_standalone_numbered_reference_exception():
+    reference = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert reference["active_repair_required"] is True
+    assert reference["repair_required"] is True
+    assert reference["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in reference["active_repair_warnings"]
+    assert "exception_requires_scope_review" in reference["active_repair_warnings"]
+
+
 def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_exception():
     """A resolved reference row should not become active when reprocessed alone."""
     reference = extract_normative_elements(

@@ -441,6 +441,7 @@ def extract_normative_elements(
         elements = expand_enumerated_norms(elements)
     _apply_definition_context(elements)
     _apply_cross_reference_context(elements)
+    _apply_same_document_reference_repair_clearance(elements)
     _apply_local_applicability_repair_clearance(elements)
     _apply_formula_resolved_repair_clearance(elements)
     _apply_active_repair_status(elements)
@@ -448,6 +449,71 @@ def extract_normative_elements(
     _apply_enforcement_context(elements)
     _apply_conflict_context(elements)
     return elements
+
+
+def _apply_same_document_reference_repair_clearance(elements: List[Dict[str, Any]]) -> None:
+    """Clear active repair when a reference exception resolves in-document.
+
+    A clause such as ``except as provided in section 552`` is not proof-ready
+    when parsed by itself. When the parser has same-document evidence that the
+    cited section exists, however, the reference is deterministic provenance,
+    not an LLM repair task. Parser warnings and theorem promotion remain
+    conservative audit signals; this only updates active repair status.
+    """
+
+    for element in elements or []:
+        if not _has_resolved_same_document_reference_exception(element):
+            continue
+
+        resolution = {
+            "type": "resolved_same_document_reference_exception",
+            "references": _same_document_reference_values(element),
+            "reason": "numbered exception reference is backed by same-document section context",
+        }
+
+        element["active_repair_warnings"] = []
+        element["repair_required_warnings"] = []
+
+        readiness = dict(element.get("export_readiness") or {})
+        readiness["metric_requires_validation"] = False
+        readiness["metric_repair_required"] = False
+        readiness["deterministic_resolution"] = resolution
+        element["export_readiness"] = readiness
+
+        repair = dict(element.get("llm_repair") or {})
+        repair["required"] = False
+        repair["allow_llm_repair"] = False
+        repair["reasons"] = []
+        repair["prompt_context"] = {}
+        repair["prompt_hash"] = ""
+        repair["suggested_router"] = ""
+        repair["deterministically_resolved"] = True
+        repair["deterministic_resolution"] = resolution
+        element["llm_repair"] = repair
+
+
+def _has_resolved_same_document_reference_exception(element: Dict[str, Any]) -> bool:
+    if not element.get("exceptions") and not element.get("exception_details"):
+        return False
+    if not element.get("cross_references") and not element.get("cross_reference_details"):
+        return False
+    return any(
+        isinstance(ref, dict)
+        and ref.get("target_exists") is True
+        and str(ref.get("resolution_status") or "").lower() == "resolved"
+        for ref in element.get("resolved_cross_references") or []
+    )
+
+
+def _same_document_reference_values(element: Dict[str, Any]) -> List[str]:
+    values: List[str] = []
+    for ref in element.get("resolved_cross_references") or []:
+        if not isinstance(ref, dict) or ref.get("target_exists") is not True:
+            continue
+        value = str(ref.get("normalized_text") or ref.get("raw_text") or ref.get("value") or "").strip()
+        if value and value not in values:
+            values.append(value)
+    return values
 
 
 def _apply_local_applicability_repair_clearance(elements: List[Dict[str, Any]]) -> None:
