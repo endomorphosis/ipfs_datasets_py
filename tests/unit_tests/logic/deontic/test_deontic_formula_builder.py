@@ -1,4 +1,5 @@
 """Tests for deterministic IR-to-formula generation."""
+
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -3633,3 +3634,86 @@ def test_structured_determination_and_verification_triggers_become_formula_prere
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_structured_financial_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Treasurer shall release the permit after payment of the fee and after assessment of charges."
+    )[0])
+    element["action"] = ["release the permit"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "release",
+                "relation": "triggered_by_payment_of",
+                "anchor_event": "fee",
+                "raw_text": "after payment of the fee",
+                "span": [43, 67],
+            },
+            {
+                "event": "release",
+                "relation": "triggered_by_assessment_of",
+                "anchor_event": "charges",
+                "raw_text": "after assessment of charges",
+                "span": [72, 99],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Treasurer(x) ∧ ")
+    assert formula.endswith(" → ReleasePermit(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → ReleasePermit(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Treasurer(x)",
+        "ProcedureAfterPaymentFee(x)",
+        "ProcedureAfterAssessmentCharges(x)",
+    }
+    assert "ReleasePermitAfterPaymentFee" not in formula
+    assert "ReleasePermitAfterAssessmentCharges" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_structured_accounting_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
+    )[0])
+    element["action"] = ["certify the refund"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "certification",
+                "relation": "triggered_by_calculation_of",
+                "anchor_event": "fee",
+                "raw_text": "after calculation of the fee",
+                "span": [37, 65],
+            },
+            {
+                "event": "certification",
+                "relation": "triggered_by_audit_of",
+                "anchor_event": "account",
+                "raw_text": "after audit of the account",
+                "span": [70, 96],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Auditor(x) ∧ ")
+    assert formula.endswith(" → CertifyRefund(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → CertifyRefund(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Auditor(x)",
+        "ProcedureAfterCalculationFee(x)",
+        "ProcedureAfterAuditAccount(x)",
+    }
+    assert "CertifyRefundAfterCalculationFee" not in formula
+    assert "CertifyRefundAfterAuditAccount" not in formula
