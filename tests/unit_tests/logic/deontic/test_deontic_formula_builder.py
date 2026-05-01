@@ -869,6 +869,79 @@ def test_ir_formula_builder_uses_structured_temporal_before_anchor_relation():
     )
 
 
+def test_ir_formula_builder_suppresses_base_deadline_when_whichever_modifier_present():
+    element = extract_normative_elements(
+        "The Director shall complete review within 30 days after application."
+    )[0]
+    element = dict(element)
+    element["action"] = ["complete review"]
+    element["action_verb"] = "complete"
+    element["action_object"] = "review"
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {
+            "type": "deadline",
+            "value": "30 days after application or 10 days after inspection",
+            "span": [43, 96],
+        },
+        {
+            "type": "deadline",
+            "value": "30 days after application or 10 days after inspection whichever is earlier",
+            "span": [43, 117],
+        },
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ "
+        "Deadline30DaysAfterApplicationOr10DaysAfterInspectionWhicheverIsEarlier(x) "
+        "→ CompleteReview(x)))"
+    )
+    assert "Deadline30DaysAfterApplicationOr10DaysAfterInspection(x)" not in formula
+
+
+def test_parser_and_formula_capture_whichever_is_earlier_deadline():
+    element = extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application or "
+        "5 days after hearing, whichever is earlier."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+    temporal_values = [item.get("value") for item in norm.temporal_constraints]
+
+    assert any(
+        item.get("temporal_kind") == "whichever_is_earlier"
+        for item in element["temporal_constraint_details"]
+    )
+    assert "10 days after application or 5 days after hearing, whichever is earlier" in temporal_values
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ "
+        "Deadline10DaysAfterApplicationOr5DaysAfterHearingWhicheverIsEarlier(x) "
+        "→ IssuePermit(x)))"
+    )
+
+
+def test_parser_and_formula_capture_whichever_is_later_deadline():
+    element = extract_normative_elements(
+        "The Director shall complete review within 30 days after application or "
+        "10 days after inspection, whichever is later."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+    temporal_values = [item.get("value") for item in norm.temporal_constraints]
+
+    assert any(
+        item.get("temporal_kind") == "whichever_is_later"
+        for item in element["temporal_constraint_details"]
+    )
+    assert "30 days after application or 10 days after inspection, whichever is later" in temporal_values
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ "
+        "Deadline30DaysAfterApplicationOr10DaysAfterInspectionWhicheverIsLater(x) "
+        "→ CompleteReview(x)))"
+    )
+
+
 def test_applicability_formula_targets_regulated_entity_not_apply_artifact():
     element = extract_normative_elements("This section applies to food carts and mobile vendors.")[0]
     norm = LegalNormIR.from_parser_element(element)

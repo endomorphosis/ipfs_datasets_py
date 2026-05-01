@@ -244,6 +244,8 @@ _TEMPORAL_PATTERNS = [
     ("deadline", "by_date", r"\bby\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?)"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}/\d{1,2}/\d{2,4})"),
     ("deadline", "by_numeric_date", r"\bby\s+(\d{1,2}-\d{1,2}-\d{2,4})"),
+    ("deadline", "whichever_is_earlier", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+earlier)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)"),
+    ("deadline", "whichever_is_later", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+later)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)"),
     ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
     ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
     ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),

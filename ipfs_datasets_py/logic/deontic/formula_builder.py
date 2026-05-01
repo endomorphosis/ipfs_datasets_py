@@ -71,11 +71,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     subject_pred = normalize_predicate_name(norm.actor or "Agent")
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
-    temporal_preds = [
-        normalize_predicate_name(_temporal_predicate_text(item))
-        for item in norm.temporal_constraints[:3]
-        if isinstance(item, dict)
-    ]
+    temporal_preds = _formula_temporal_predicates(norm.temporal_constraints)
     modifiers = temporal_preds
     mental_state_pred = normalize_predicate_name(norm.mental_state)
     if mental_state_pred and mental_state_pred != "P":
@@ -391,6 +387,44 @@ def _unique_predicates(texts: Iterable[str]) -> List[str]:
         predicates.append(predicate)
         seen.add(predicate)
     return predicates
+
+
+def _formula_temporal_predicates(items: Iterable[Dict[str, Any]]) -> List[str]:
+    """Return temporal predicates with composite deadline aliases preferred."""
+
+    predicates: List[str] = []
+    seen = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        predicate = normalize_predicate_name(_temporal_predicate_text(item))
+        if not predicate or predicate == "P" or predicate in seen:
+            continue
+        predicates.append(predicate)
+        seen.add(predicate)
+    return _suppress_subsumed_whichever_deadlines(predicates)[:3]
+
+
+def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:
+    """Drop a base deadline when a whichever variant contains it.
+
+    Parser temporal extraction can legitimately preserve both the base phrase
+    and the source-grounded disambiguating phrase for provenance, for example
+    ``30 days after application or 10 days after inspection`` plus
+    ``... whichever is later``. The formula antecedent should use the narrower
+    composite predicate only; emitting both makes the proof condition stronger
+    than the source text.
+    """
+
+    suffixes = ("WhicheverIsEarlier", "WhicheverIsLater")
+    composites = [
+        predicate for predicate in predicates if predicate.endswith(suffixes)
+    ]
+    return [
+        predicate
+        for predicate in predicates
+        if not any(composite != predicate and composite.startswith(predicate) for composite in composites)
+    ]
 
 
 def _formula_exception_texts(norm: LegalNormIR) -> List[str]:
