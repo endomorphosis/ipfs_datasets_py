@@ -84,6 +84,8 @@ The supervisor also has a stale-heartbeat watchdog. `WATCHDOG_STALE_AFTER_SECOND
 
 For a belt-and-suspenders watchdog outside the supervisor itself, run `ensure_logic_port_daemon.sh` periodically from cron or systemd. The script is idempotent: when the daemon is healthy it only records `already_running`; when the health check fails it starts the supervisor with `setsid` and then verifies the new process. The supervisor lock keeps repeated ensure calls from creating duplicate supervisors.
 
+The supervisor can also run a bounded Codex maintenance pass when the daemon is alive but not making meaningful progress. `SUPERVISOR_AGENTIC_MAINTENANCE` defaults to `1`; set it to `0` to disable this behavior. Maintenance triggers when the current task reaches `SUPERVISOR_AGENTIC_TASK_FAILURES` failures since its last success, or when `SUPERVISOR_AGENTIC_STAGNANT_ROUNDS` rounds elapse without a new accepted round. The supervisor stops the child daemon, invokes `codex exec` with `gpt-5.5` against only the daemon/supervisor/docs/tests allowlist, runs shell syntax checks plus the daemon unit tests, records the result under `logic-port-daemon-agentic-maintenance_*.log`, and restarts the daemon. `SUPERVISOR_AGENTIC_COOLDOWN_SECONDS` prevents repeated maintenance loops.
+
 ```bash
 PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --repo-root . \

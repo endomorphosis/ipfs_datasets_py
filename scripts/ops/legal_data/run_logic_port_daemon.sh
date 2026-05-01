@@ -21,11 +21,19 @@ VALIDATION_REPAIR_ATTEMPTS="${VALIDATION_REPAIR_ATTEMPTS:-1}"
 BLOCKED_BACKLOG_LIMIT="${BLOCKED_BACKLOG_LIMIT:-10}"
 BLOCKED_TASK_STRATEGY="${BLOCKED_TASK_STRATEGY:-fewest-failures}"
 PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
+SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
+SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
+SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
+SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
+SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
+SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
+CODEX_BIN="${CODEX_BIN:-codex}"
 
 STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
 PROGRESS_PATH="${PROGRESS_PATH:-$DAEMON_DIR/logic-port-daemon.progress.json}"
 RESULT_LOG_PATH="${RESULT_LOG_PATH:-$DAEMON_DIR/logic-port-daemon.jsonl}"
 SUPERVISOR_STATUS_PATH="${SUPERVISOR_STATUS_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.status.json}"
+SUPERVISOR_AGENTIC_STATE_PATH="${SUPERVISOR_AGENTIC_STATE_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor-agentic.state.json}"
 SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.pid}"
 SUPERVISOR_LOCK_PATH="${SUPERVISOR_LOCK_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.lock}"
 CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/logic-port-daemon.pid}"
@@ -62,6 +70,9 @@ child_pid=""
 restart_count=0
 cleaning_up=0
 last_recycle_reason=""
+last_agentic_maintenance_status=""
+last_agentic_maintenance_reason=""
+last_agentic_maintenance_log_path=""
 
 write_supervisor_status() {
   local status="$1"
@@ -93,6 +104,15 @@ write_supervisor_status() {
   "result_log_path": "$RESULT_LOG_PATH",
   "child_pid_path": "$CHILD_PID_PATH",
   "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
+  "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
+  "agentic_stagnant_rounds": $SUPERVISOR_AGENTIC_STAGNANT_ROUNDS,
+  "agentic_task_failures": $SUPERVISOR_AGENTIC_TASK_FAILURES,
+  "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
+  "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
+  "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
+  "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
+  "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
+  "last_agentic_maintenance_log_path": "$last_agentic_maintenance_log_path",
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
@@ -138,6 +158,168 @@ if heartbeat_at is None:
     raise SystemExit(0)
 print(max(0.0, (datetime.now(timezone.utc) - heartbeat_at).total_seconds()))
 PY
+}
+
+agentic_maintenance_reason() {
+  if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]]; then
+    return 1
+  fi
+  python3 - \
+    "$REPO_ROOT/$PROGRESS_PATH" \
+    "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$SUPERVISOR_AGENTIC_STAGNANT_ROUNDS" \
+    "$SUPERVISOR_AGENTIC_TASK_FAILURES" \
+    "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
+import json
+import time
+import sys
+from pathlib import Path
+
+progress_path = Path(sys.argv[1])
+state_path = Path(sys.argv[2])
+stagnant_rounds = int(sys.argv[3])
+task_failures = int(sys.argv[4])
+cooldown_seconds = int(sys.argv[5])
+now = int(time.time())
+
+
+def read_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+progress = read_json(progress_path)
+if not progress:
+    raise SystemExit(1)
+
+state = read_json(state_path)
+rounds_total = int(progress.get("rounds_total") or 0)
+valid_rounds_total = int(progress.get("valid_rounds_total") or 0)
+current_task = str(progress.get("current_task") or "")
+task_failure_total = int((progress.get("current_task_failure_counts") or {}).get("total_since_success") or 0)
+last_maintenance_at = int(state.get("last_maintenance_at") or 0)
+baseline_round = int(state.get("baseline_rounds_total") or rounds_total)
+baseline_valid = int(state.get("baseline_valid_rounds_total") or valid_rounds_total)
+
+if valid_rounds_total > baseline_valid:
+    baseline_round = rounds_total
+    baseline_valid = valid_rounds_total
+
+stagnant_delta = max(0, rounds_total - baseline_round)
+cooling_down = last_maintenance_at > 0 and now - last_maintenance_at < cooldown_seconds
+reason = ""
+if not cooling_down and task_failure_total >= task_failures:
+    reason = f"task_failures:{task_failure_total}:threshold:{task_failures}"
+elif not cooling_down and stagnant_delta >= stagnant_rounds:
+    reason = f"stagnant_rounds:{stagnant_delta}:threshold:{stagnant_rounds}"
+
+state.update(
+    {
+        "updated_at_epoch": now,
+        "baseline_rounds_total": baseline_round,
+        "baseline_valid_rounds_total": baseline_valid,
+        "rounds_total": rounds_total,
+        "valid_rounds_total": valid_rounds_total,
+        "current_task": current_task,
+        "current_task_failure_total": task_failure_total,
+        "stagnant_rounds_since_valid": stagnant_delta,
+        "cooling_down": cooling_down,
+        "candidate_reason": reason,
+    }
+)
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+if reason:
+    print(reason)
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+mark_agentic_maintenance_ran() {
+  local reason="$1"
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$reason" <<'PY'
+import json
+import sys
+import time
+from pathlib import Path
+
+path = Path(sys.argv[1])
+reason = sys.argv[2]
+try:
+    state = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+state["last_maintenance_at"] = int(time.time())
+state["last_maintenance_reason"] = reason
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+run_agentic_maintenance() {
+  local reason="$1"
+  local maintenance_id=""
+  local maintenance_log=""
+  local rc=0
+  maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
+  maintenance_log="$DAEMON_DIR/logic-port-daemon-agentic-maintenance_${maintenance_id}.log"
+  last_agentic_maintenance_status="running"
+  last_agentic_maintenance_reason="$reason"
+  last_agentic_maintenance_log_path="$maintenance_log"
+  write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
+  stop_child
+  mark_agentic_maintenance_ran "$reason"
+  {
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting agentic daemon-maintenance pass: $reason"
+    timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
+      --skip-git-repo-check \
+      --sandbox "$SUPERVISOR_AGENTIC_SANDBOX" \
+      -m "$MODEL_NAME" \
+      -C "$REPO_ROOT" \
+      - <<PROMPT
+You are maintaining the logic-port daemon infrastructure for the browser-native TypeScript/WASM port.
+
+The supervisor detected that the daemon may be stuck or not making meaningful progress.
+
+Reason: $reason
+
+Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
+
+Allowed files:
+- ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
+- ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py
+- ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh
+- ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh
+- ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh
+- ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
+- ipfs_datasets_py/docs/logic/LOGIC_PORT_DAEMON.md
+
+Focus on changes that help unattended operation make real progress: better stuck detection, better task selection, better validation repair prompts, safer restart behavior, clearer status/progress accounting, or better documentation for those behaviors.
+
+After editing, run:
+- bash -n ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
+- PYTHONPATH=ipfs_datasets_py python3 -m py_compile ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
+- PYTHONPATH=ipfs_datasets_py pytest -q ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py
+
+Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not the deterministic parser plans.
+PROMPT
+  } >> "$REPO_ROOT/$maintenance_log" 2>&1
+  rc=$?
+  if [[ "$rc" == "0" ]] \
+    && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" pytest -q "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
+    last_agentic_maintenance_status="accepted"
+  else
+    last_agentic_maintenance_status="failed"
+  fi
+  write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
 }
 
 heartbeat_is_stale() {
@@ -262,6 +444,13 @@ while true; do
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$run_log"
       stop_child
+      break
+    fi
+    maintenance_reason="$(agentic_maintenance_reason || true)"
+    if [[ -n "$maintenance_reason" ]]; then
+      last_recycle_reason="agentic_maintenance"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking agentic maintenance: $maintenance_reason" >> "$REPO_ROOT/$run_log"
+      run_agentic_maintenance "$maintenance_reason"
       break
     fi
     sleep "$SUPERVISOR_HEARTBEAT_SECONDS"

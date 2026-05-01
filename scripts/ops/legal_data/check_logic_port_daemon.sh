@@ -99,6 +99,15 @@ payload = {
     "progress_path": progress_path,
     "supervisor_status_path": supervisor_path,
     "supervisor_lock_path": supervisor.get("supervisor_lock_path"),
+    "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
+    "agentic_stagnant_rounds": supervisor.get("agentic_stagnant_rounds"),
+    "agentic_task_failures": supervisor.get("agentic_task_failures"),
+    "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
+    "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
+    "agentic_state_path": supervisor.get("agentic_state_path"),
+    "last_agentic_maintenance_status": supervisor.get("last_agentic_maintenance_status"),
+    "last_agentic_maintenance_reason": supervisor.get("last_agentic_maintenance_reason"),
+    "last_agentic_maintenance_log_path": supervisor.get("last_agentic_maintenance_log_path"),
 }
 print(json.dumps(payload, indent=2, sort_keys=True))
 raise SystemExit(0 if alive else 1)
