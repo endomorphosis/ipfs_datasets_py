@@ -2153,3 +2153,40 @@ def test_batch_formula_records_keep_numbered_exception_blocked_without_same_docu
     assert records[0]["requires_validation"] is True
     assert records[0]["repair_required"] is True
     assert records[0]["deterministic_resolution"] == {}
+
+
+def test_ir_temporal_value_alias_handles_whichever_earlier_structured_alternatives():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0])
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {
+            "type": "deadline",
+            "alternatives": [
+                {
+                    "duration": "10 days",
+                    "anchor_event": "application",
+                    "anchor_relation": "after",
+                },
+                {
+                    "duration": "30 days",
+                    "anchor_event": "notice",
+                    "anchor_relation": "after",
+                },
+            ],
+            "selector": "earlier",
+            "span": [34, 96],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.temporal_constraints[0]["value"] == (
+        "10 days after application or 30 days after notice whichever is earlier"
+    )
+    assert formula == (
+        "O(∀x (Director(x) ∧ Deadline10DaysAfterApplicationOr30DaysAfterNoticeWhicheverIsEarlier(x) "
+        "→ IssuePermit(x)))"
+    )
