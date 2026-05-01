@@ -188,11 +188,7 @@ def parser_elements_for_metrics(
             export_readiness["metric_requires_validation"] = False
             export_readiness["metric_repair_required"] = False
 
-            llm_repair = dict(element.get("llm_repair") or {})
-            llm_repair["required"] = False
-            llm_repair["allow_llm_repair"] = False
-            llm_repair["deterministically_resolved"] = True
-            element["llm_repair"] = llm_repair
+            element["llm_repair"] = _cleared_deterministic_repair_payload(element)
         else:
             export_readiness["metric_requires_validation"] = formula_requires_validation
             export_readiness["metric_repair_required"] = formula_repair_required
@@ -200,6 +196,31 @@ def parser_elements_for_metrics(
         element["export_readiness"] = export_readiness
 
     return metric_elements
+
+
+def _cleared_deterministic_repair_payload(element: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return an inactive repair payload for deterministically resolved rows.
+
+    Some reporting paths inspect more than the boolean ``required`` flag and
+    treat lingering ``reasons`` or prompt context as active repair work. Once
+    the IR/formula layer has produced an explicit deterministic resolution, the
+    metrics-facing row should expose an auditable inactive repair marker rather
+    than a stale llm_router prompt.
+    """
+
+    repair = dict(element.get("llm_repair") or {})
+    export_readiness = dict(element.get("export_readiness") or {})
+    deterministic_resolution = export_readiness.get("deterministic_resolution") or {}
+
+    repair["required"] = False
+    repair["allow_llm_repair"] = False
+    repair["reasons"] = []
+    repair["prompt_context"] = {}
+    repair["prompt_hash"] = ""
+    repair["suggested_router"] = ""
+    repair["deterministically_resolved"] = True
+    repair["deterministic_resolution"] = deterministic_resolution
+    return repair
 
 
 def parser_elements_with_ir_export_readiness(

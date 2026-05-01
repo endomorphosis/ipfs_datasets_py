@@ -1374,3 +1374,17 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
     assert [row["export_readiness"].get("requires_validation") for row in rows[:3]] == [[], [], []]
     assert "llm_router_repair" in rows[3]["export_readiness"].get("requires_validation", [])
     assert [row["llm_repair"]["required"] for row in rows] == [False, False, False, True]
+    assert [row["llm_repair"].get("reasons") for row in rows[:3]] == [[], [], []]
+    assert [row["llm_repair"].get("prompt_context") for row in rows[:3]] == [{}, {}, {}]
+    assert [row["llm_repair"].get("prompt_hash") for row in rows[:3]] == ["", "", ""]
+    assert [row["llm_repair"].get("suggested_router") for row in rows[:3]] == ["", "", ""]
+    assert [
+        row["llm_repair"].get("deterministic_resolution", {}).get("type")
+        for row in rows[:3]
+    ] == [
+        "local_scope_applicability",
+        "standard_substantive_exception",
+        "pure_precedence_override",
+    ]
+    assert rows[3]["llm_repair"]["reasons"]
+    assert rows[3]["llm_repair"].get("prompt_context")
