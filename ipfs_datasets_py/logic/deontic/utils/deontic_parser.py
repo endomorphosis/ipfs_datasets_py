@@ -443,6 +443,7 @@ def extract_normative_elements(
     _apply_cross_reference_context(elements)
     _apply_local_applicability_repair_clearance(elements)
     _apply_formula_resolved_repair_clearance(elements)
+    _apply_active_repair_status(elements)
     _apply_document_penalty_context(elements, str(text or ""))
     _apply_enforcement_context(elements)
     _apply_conflict_context(elements)
@@ -639,6 +640,31 @@ def _apply_formula_resolved_repair_clearance(elements: List[Dict[str, Any]]) -> 
         repair["deterministically_resolved"] = True
         repair["deterministic_resolution"] = deterministic_resolution
         element["llm_repair"] = repair
+
+
+def _apply_active_repair_status(elements: List[Dict[str, Any]]) -> None:
+    """Expose active repair status separately from audit warnings.
+
+    Parser warnings are intentionally retained after deterministic formula
+    resolution so warning-distribution and parser-gate metrics stay stable.
+    Repair metrics, however, need a direct parser-level predicate for whether a
+    row still requires repair work. This projection mirrors the current
+    ``llm_repair.required`` payload after local/formula repair clearance and
+    keeps unresolved numbered or external references active.
+    """
+
+    for element in elements or []:
+        repair = dict(element.get("llm_repair") or {})
+        active_required = bool(repair.get("required"))
+        if active_required:
+            active_warnings = list(repair.get("reasons") or element.get("parser_warnings") or [])
+        else:
+            active_warnings = []
+
+        element["active_repair_required"] = active_required
+        element["repair_required"] = active_required
+        element["active_repair_warnings"] = active_warnings
+        element["repair_required_warnings"] = active_warnings
 
 
 def _precedence_override_reference_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:

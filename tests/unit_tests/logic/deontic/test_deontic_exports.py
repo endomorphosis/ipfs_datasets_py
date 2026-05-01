@@ -1783,6 +1783,42 @@ def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():
         assert "human_or_llm_semantic_review" in element["export_readiness"]["requires_validation"]
 
 
+def test_raw_parser_exposes_active_repair_status_for_stalled_probe_metrics():
+    """Active repair fields should separate resolved audit warnings from blockers."""
+    resolved_examples = [
+        (
+            "This section applies to food carts and mobile vendors.",
+            ["cross_reference_requires_resolution"],
+        ),
+        (
+            "The applicant shall obtain a permit unless approval is denied.",
+            ["exception_requires_scope_review"],
+        ),
+        (
+            "Notwithstanding section 5.01.020, the Director may issue a variance.",
+            ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
+        ),
+    ]
+
+    for text, parser_warnings in resolved_examples:
+        element = extract_normative_elements(text)[0]
+
+        assert element["parser_warnings"] == parser_warnings
+        assert element["promotable_to_theorem"] is False
+        assert element["llm_repair"]["required"] is False
+        assert element["active_repair_required"] is False
+        assert element["repair_required"] is False
+        assert element["active_repair_warnings"] == []
+        assert element["repair_required_warnings"] == []
+
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert unresolved["active_repair_required"] is True
+    assert unresolved["repair_required"] is True
+    assert unresolved["active_repair_warnings"] == unresolved["llm_repair"]["reasons"]
+
+
 def test_raw_parser_projects_top_level_modality_for_repair_probe_details():
     """Repair detail metrics should not see null modality for parsed clauses."""
     examples = [
