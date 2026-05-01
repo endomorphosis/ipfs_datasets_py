@@ -420,10 +420,23 @@ def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:
     composites = [
         predicate for predicate in predicates if predicate.endswith(suffixes)
     ]
+    composite_bases = {
+        re.sub(r"WhicheverIs(?:Earlier|Later)$", "", composite)
+        for composite in composites
+    }
     return [
         predicate
         for predicate in predicates
-        if not any(composite != predicate and composite.startswith(predicate) for composite in composites)
+        if predicate in composites
+        or not any(
+            base
+            and (
+                predicate == base
+                or base.startswith(predicate)
+                or predicate.startswith(base)
+            )
+            for base in composite_bases
+        )
     ]
 
 
