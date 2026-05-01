@@ -2723,6 +2723,32 @@ def test_structured_procedure_docketing_trigger_becomes_formula_prerequisite():
     assert "AcceptAppealAfterDocketingAppeal" not in formula
 
 
+def test_structured_procedure_entry_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Board shall serve notice after entry of the final order."
+    )[0])
+    element["action"] = ["serve notice after entry final order"]
+    element["procedure"] = {
+        "trigger_event": "final order",
+        "terminal_event": "service",
+        "event_relations": [
+            {
+                "event": "service",
+                "relation": "triggered_by_entry_of",
+                "anchor_event": "final order",
+                "raw_text": "after entry of the final order",
+                "span": [29, 61],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Board(x) ∧ ProcedureAfterEntryFinalOrder(x) → ServeNotice(x)))"
+    assert "ServeNoticeAfterEntryFinalOrder" not in formula
+
+
 def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
     element = dict(extract_normative_elements(
         "The Director shall publish guidelines after adoption of rules."
