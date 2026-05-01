@@ -300,6 +300,7 @@ _MENTAL_STATE_TERMS = {
     "maliciously",
     "willfully",
     "wilfully",
+    "fraudulently",
 }
 _RECIPIENT_RE = re.compile(
     r"\b(?:to|for|with|of)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
