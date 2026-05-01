@@ -4476,6 +4476,7 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
     for element in elements:
         _clear_standard_substantive_exception_active_repair(element)
         _clear_local_applicability_active_repair(element)
+        _clear_pure_precedence_override_active_repair(element)
     _apply_active_repair_status(elements)
     return elements
 
@@ -4559,6 +4560,63 @@ def _clear_local_applicability_active_repair(element: Dict[str, Any]) -> None:
     export_readiness["formula_proof_ready"] = True
     export_readiness["formula_requires_validation"] = False
     export_readiness["formula_repair_required"] = False
+    export_readiness["deterministic_resolution"] = resolution
+    element["export_readiness"] = export_readiness
+
+
+def _clear_pure_precedence_override_active_repair(element: Dict[str, Any]) -> None:
+    """Clear active repair for source-grounded pure precedence overrides."""
+
+    if element.get("norm_type") not in {"obligation", "permission", "prohibition"}:
+        return
+    if element.get("deontic_operator") not in {"O", "P", "F"}:
+        return
+    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(element.get("action")):
+        return
+    if element.get("conditions") or element.get("condition_details"):
+        return
+    if element.get("exceptions") or element.get("exception_details"):
+        return
+    if not element.get("override_clauses") and not element.get("override_clause_details"):
+        return
+
+    warnings = set(element.get("parser_warnings") or [])
+    required_warnings = {
+        "cross_reference_requires_resolution",
+        "override_clause_requires_precedence_review",
+    }
+    if not required_warnings.issubset(warnings):
+        return
+    if warnings - required_warnings:
+        return
+
+    precedence_records = _precedence_override_reference_records(element)
+    if not precedence_records:
+        return
+
+    resolution = {
+        "type": "pure_precedence_override",
+        "resolved_blockers": sorted(required_warnings),
+        "references": [record.get("normalized_text") or record.get("raw_text") or record.get("value") for record in precedence_records],
+        "reason": "override reference is retained as precedence provenance outside the operative formula",
+    }
+
+    element["resolved_cross_references"] = precedence_records
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    llm_repair["required"] = False
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = []
+    llm_repair["prompt_context"] = {}
+    llm_repair["prompt_hash"] = ""
+    llm_repair["suggested_router"] = ""
+    llm_repair["deterministically_resolved"] = True
+    llm_repair["deterministic_resolution"] = resolution
+    element["llm_repair"] = llm_repair
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    export_readiness["metric_requires_validation"] = False
+    export_readiness["metric_repair_required"] = False
     export_readiness["deterministic_resolution"] = resolution
     element["export_readiness"] = export_readiness
 

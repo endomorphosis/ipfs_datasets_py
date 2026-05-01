@@ -1267,6 +1267,47 @@ def test_raw_parser_marks_formula_resolved_override_repair_inactive_without_hidi
     ]
 
 
+def test_pure_precedence_override_clearance_helper_does_not_need_formula_projection():
+    """Parser-native override slots are enough to clear stale active repair."""
+
+    element = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )[0]
+    element = dict(element)
+    element["llm_repair"] = {
+        "required": True,
+        "allow_llm_repair": True,
+        "reasons": list(element["parser_warnings"]),
+        "prompt_context": {"source_text": element["text"]},
+        "prompt_hash": "stale",
+        "suggested_router": "llm_router",
+    }
+    element["export_readiness"] = {
+        "metric_requires_validation": True,
+        "metric_repair_required": True,
+    }
+
+    from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+        _apply_active_repair_status,
+        _clear_pure_precedence_override_active_repair,
+    )
+
+    _clear_pure_precedence_override_active_repair(element)
+    _apply_active_repair_status([element])
+
+    assert element["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "override_clause_requires_precedence_review",
+    ]
+    assert element["promotable_to_theorem"] is False
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == "pure_precedence_override"
+    assert element["export_readiness"]["metric_repair_required"] is False
+    assert element["active_repair_required"] is False
+    assert element["resolved_cross_references"][0]["resolution_scope"] == "precedence_provenance"
+
+
 def test_raw_parser_keeps_numbered_reference_exception_active_for_repair():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
