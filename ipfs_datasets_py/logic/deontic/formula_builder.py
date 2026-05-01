@@ -219,6 +219,9 @@ def _formula_action_text(norm: LegalNormIR) -> str:
             return action_object
         return f"{verb} {action_object}"
     if verb:
+        recipient = str(norm.recipient or "").strip()
+        if recipient:
+            return f"{verb} {recipient}"
         return verb
     if action_object:
         return action_object

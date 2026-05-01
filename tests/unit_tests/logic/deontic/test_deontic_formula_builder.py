@@ -207,6 +207,47 @@ def test_ir_formula_builder_uses_detail_only_regulated_object_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_recipient_slot():
+    element = dict(extract_normative_elements(
+        "The clerk shall notify the applicant."
+    )[0])
+    element["action"] = []
+    element["action_verb"] = "notify"
+    element["action_object"] = ""
+    element["action_recipient"] = ""
+    element["recipient_details"] = [
+        {
+            "type": "recipient",
+            "normalized_text": "the applicant",
+            "span": [23, 36],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action_verb"] = [16, 22]
+    field_spans["action_recipient"] = [23, 36]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.action == ""
+    assert norm.action_verb == "notify"
+    assert norm.action_object == ""
+    assert norm.recipient == "the applicant"
+    assert norm.to_dict()["recipient"] == "the applicant"
+    assert formula == "O(∀x (Clerk(x) → NotifyApplicant(x)))"
+    assert "Notify(x)" not in formula
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_actor_slot():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."

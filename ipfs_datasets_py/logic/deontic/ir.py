@@ -66,6 +66,33 @@ def _actor_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _detail_only_recipient_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded recipient from structured detail-only slots."""
+
+    for detail_key in (
+        "recipient_details",
+        "action_recipient_details",
+        "beneficiary_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "recipient",
+                "action_recipient",
+                "beneficiary",
+                "entity",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _definition_actor_text(element: Dict[str, Any]) -> str:
     """Return the defined term for detail-only definition parser rows."""
 
@@ -1020,7 +1047,7 @@ class LegalNormIR:
             mental_state=_mental_state_text(element),
             action_verb=_action_verb_text(element),
             action_object=_action_object_text(element),
-            recipient=_recipient_text(element),
+            recipient=_recipient_text(element) or _detail_only_recipient_text(element),
             conditions=_slot_detail_records(element, "condition_details", "conditions"),
             exceptions=_slot_detail_records(element, "exception_details", "exceptions"),
             overrides=_slot_detail_records(element, "override_clause_details", "override_clauses"),
