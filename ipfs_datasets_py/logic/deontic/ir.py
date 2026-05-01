@@ -30,6 +30,52 @@ def _actor_texts(value: Any) -> List[str]:
     return [text for text in _list_of_strings(value) if text.strip()]
 
 
+def _actor_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded actor slot from flat or detail fields."""
+
+    flat_value = _first_text(element.get("subject")).strip()
+    if flat_value:
+        return flat_value
+
+    for key in ("actor", "legal_actor", "regulated_entity"):
+        flat_value = str(element.get(key) or "").strip()
+        if flat_value:
+            return flat_value
+
+    for detail_key in (
+        "actor_details",
+        "subject_details",
+        "regulated_entity_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+                "actor",
+                "subject",
+                "entity",
+                "name",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _actor_entities(element: Dict[str, Any]) -> List[str]:
+    """Return all actor labels, including detail-only actor provenance."""
+
+    actors = _actor_texts(element.get("subject"))
+    if actors:
+        return actors
+    actor = _actor_text(element)
+    return [actor] if actor else []
+
+
 def _mental_state_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded mental-state slot from flat or detail fields."""
 
@@ -525,7 +571,7 @@ class LegalNormIR:
             support_span=SourceSpan.from_value(element.get("support_span")),
             modality=_modality_from_parser_element(element),
             norm_type=str(element.get("norm_type") or ""),
-            actor=_first_text(element.get("subject")),
+            actor=_actor_text(element),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=_first_text(element.get("action")),
             mental_state=_mental_state_text(element),
@@ -560,7 +606,7 @@ class LegalNormIR:
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
-            actor_entities=_actor_texts(element.get("subject")),
+            actor_entities=_actor_entities(element),
             quality=LegalNormQuality.from_parser_element(element),
             definition_scope=dict(element.get("definition_scope") or {}),
         )
