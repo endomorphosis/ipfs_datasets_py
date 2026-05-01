@@ -179,6 +179,9 @@ def parser_elements_for_metrics(
         _hydrate_parser_element_from_prompt_context(dict(element))
         for element in elements
     ]
+    for element in all_source_elements:
+        _hydrate_prompt_context_override_clause_details(element)
+
     source_elements = [element for element in all_source_elements if not _is_context_only_parser_element(element)]
     source_norms = [LegalNormIR.from_parser_element(element) for element in all_source_elements]
     resolved_norms = _with_same_document_reference_resolutions(source_norms)
@@ -1765,6 +1768,77 @@ def _precedence_override_reference_records(norm: LegalNormIR) -> List[Dict[str, 
         records.append(normalized)
         seen.add(key)
     return records
+
+
+def _hydrate_prompt_context_override_clause_details(element: Dict[str, Any]) -> None:
+    """Recover source-grounded precedence override slots for metric rows.
+
+    Repair-required metric payloads can be detail-only: they preserve the raw
+    parser prompt_context and cross-reference record, but omit the top-level
+    ``override_clause_details`` array. Formula readiness for a pure
+    ``Notwithstanding section ...`` clause depends on that structured override
+    slot, so reconstruct only that narrow parser-native record from the cited
+    source text before IR projection.
+    """
+
+    if element.get("override_clause_details"):
+        return
+
+    warnings = set(str(warning) for warning in element.get("parser_warnings") or [])
+    llm_repair = dict(element.get("llm_repair") or {})
+    prompt_context = dict(llm_repair.get("prompt_context") or {})
+    warnings.update(str(warning) for warning in prompt_context.get("parser_warnings") or [])
+    if "override_clause_requires_precedence_review" not in warnings:
+        return
+
+    source_text = str(
+        prompt_context.get("source_text")
+        or element.get("text")
+        or element.get("source_text")
+        or ""
+    )
+    match = re.search(r"\bnotwithstanding\s+(.+?)(?:,|$)", source_text, re.IGNORECASE)
+    if not match:
+        return
+
+    reference = _first_reference_record(element, prompt_context)
+    raw_text = str(
+        reference.get("raw_text")
+        or reference.get("normalized_text")
+        or reference.get("value")
+        or match.group(1)
+        or ""
+    ).strip()
+    if not raw_text:
+        return
+
+    span = list(reference.get("span") or [])
+    if len(span) != 2:
+        span = [match.start(1), match.end(1)]
+
+    clause_span = [match.start(), match.end()]
+    record = {
+        "type": "override",
+        "clause_type": "notwithstanding",
+        "raw_text": raw_text,
+        "normalized_text": raw_text,
+        "span": span,
+        "clause_span": clause_span,
+    }
+    element["override_clause_details"] = [record]
+    element["override_clauses"] = [raw_text]
+
+
+def _first_reference_record(
+    element: Mapping[str, Any],
+    prompt_context: Mapping[str, Any],
+) -> Dict[str, Any]:
+    for source in (element, prompt_context):
+        for key in ("cross_reference_details", "cross_references"):
+            for candidate in source.get(key) or []:
+                if isinstance(candidate, Mapping):
+                    return dict(candidate)
+    return {}
 
 
 def _project_same_document_resolved_cross_references(

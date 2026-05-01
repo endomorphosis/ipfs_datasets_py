@@ -2839,6 +2839,53 @@ def test_metrics_hydrate_detail_only_prompt_context_exception_slots():
     assert parser_element_has_active_repair(projected[0]) is False
 
 
+def test_metrics_hydrate_prompt_context_override_precedence_slots():
+    """Detail-only precedence rows should regain override provenance."""
+
+    parsed = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )[0]
+    detail_only = {
+        "sample_id": "override",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "modality": None,
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "support_text": parsed["support_text"],
+                "support_span": parsed["support_span"],
+                "source_span": parsed.get("source_span", parsed["support_span"]),
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "cross_references": list(parsed["cross_reference_details"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+
+    projected = parser_elements_for_metrics([detail_only])
+
+    assert projected[0]["override_clause_details"][0]["raw_text"] == "section 5.01.020"
+    assert projected[0]["override_clause_details"][0]["clause_type"] == "notwithstanding"
+    assert projected[0]["active_repair_required"] is False
+    assert projected[0]["repair_required"] is False
+    assert projected[0]["export_readiness"]["formula_repair_required"] is False
+    assert projected[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "pure_precedence_override"
+    )
+    assert parser_element_has_active_repair(projected[0]) is False
+
+
 def test_metrics_hydrate_prompt_context_but_keep_numbered_reference_blocked():
     """Hydration must not clear unresolved numbered exception references."""
 
