@@ -1,6 +1,5 @@
 """Tests for deterministic IR-to-formula generation."""
 
-
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -89,6 +88,30 @@ def test_ir_formula_builder_uses_detail_only_mental_state_slot():
 
     assert norm.mental_state == "knowingly"
     assert formula == "O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))"
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_refrain_from_obligation_exports_as_prohibition_formula():
+    element = extract_normative_elements(
+        "The employee shall refrain from disclosing confidential information."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "refrain from disclosing confidential information"
+    assert formula == "F(∀x (Employee(x) → DiscloseConfidentialInformation(x)))"
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["repair_required"] is False
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

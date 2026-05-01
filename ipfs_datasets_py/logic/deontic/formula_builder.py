@@ -121,6 +121,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     operator = _formula_operator(norm, action_text)
     if _is_failure_prohibition(norm, action_text):
         action_text = _strip_failure_action(action_text)
+    elif _is_refrain_obligation(norm, action_text):
+        action_text = _strip_refrain_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -147,6 +149,8 @@ def _formula_operator(norm: LegalNormIR, action_text: str) -> str:
 
     if _is_failure_prohibition(norm, action_text):
         return "O"
+    if _is_refrain_obligation(norm, action_text):
+        return "F"
     return norm.modality
 
 
@@ -171,6 +175,50 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether an affirmative duty to refrain is a prohibition."""
+
+    if norm.modality != "O":
+        return False
+    return bool(re.match(
+        r"^refrain\s+from\s+\S",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
+
+
+def _strip_refrain_action(action_text: str) -> str:
+    """Remove a refrain wrapper and normalize a narrow gerund action head."""
+
+    embedded = re.sub(
+        r"^refrain\s+from\s+",
+        "",
+        str(action_text or "").strip(),
+        flags=re.IGNORECASE,
+    ).strip()
+    return _normalize_refrain_action_head(embedded)
+
+
+def _normalize_refrain_action_head(action_text: str) -> str:
+    """Convert common legal gerund heads after `refrain from` to base form."""
+
+    parts = str(action_text or "").strip().split(maxsplit=1)
+    if not parts:
+        return ""
+    verb = parts[0].lower()
+    legal_gerunds = {
+        "disclosing": "disclose",
+        "entering": "enter",
+        "using": "use",
+        "removing": "remove",
+        "altering": "alter",
+        "destroying": "destroy",
+    }
+    if verb in legal_gerunds:
+        parts[0] = legal_gerunds[verb]
+    return " ".join(parts)
 
 
 def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
