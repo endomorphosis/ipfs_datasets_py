@@ -851,6 +851,77 @@ def test_progress_summary_counts_rollback_reasons_since_meaningful_progress(tmp_
     }
 
 
+def test_progress_summary_resets_stall_accounting_at_goal_epoch(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    daemon.run_started_at = "2026-05-01T10:00:00+00:00"
+    cycles = [
+        {
+            "cycle_index": 1,
+            "started_at": "2026-05-01T09:00:00+00:00",
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "patch_check": {"valid": True},
+            "apply_result": {"applied": True, "rolled_back": True, "reason": "old_goal_failure"},
+            "tests": {"valid": False},
+        },
+        {
+            "cycle_index": 2,
+            "started_at": "2026-05-01T10:01:00+00:00",
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "patch_check": {"valid": False, "stderr": "new goal rejected"},
+            "apply_result": {"applied": False, "reason": "patch_check_failed"},
+            "tests": {"valid": True},
+        },
+    ]
+    for cycle in cycles:
+        cycle_dir = tmp_path / f"out/cycles/cycle_{cycle['cycle_index']:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycles[-1])
+
+    assert progress["total_cycles"] == 2
+    assert progress["goal_epoch_cycle_count"] == 1
+    assert progress["rolled_back_count"] == 1
+    assert progress["rolled_back_since_meaningful_progress"] == 0
+    assert progress["cycles_since_meaningful_progress"] == 1
+    assert progress["goal_epoch_rejected_patch_count"] == 1
+
+
+def test_recent_cycle_history_uses_current_goal_epoch(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "current_run.json").write_text(
+        json.dumps({"started_at": "2026-05-01T10:00:00+00:00"}),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    for index, started_at in [(1, "2026-05-01T09:00:00+00:00"), (2, "2026-05-01T10:01:00+00:00")]:
+        cycle_dir = out_dir / f"cycles/cycle_{index:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(
+            json.dumps(
+                {
+                    "cycle_index": index,
+                    "started_at": started_at,
+                    "score": 0.9,
+                    "patch_check": {"valid": False, "stderr": f"failure {index}"},
+                    "apply_result": {"applied": False, "reason": "patch_check_failed"},
+                    "tests": {"valid": True},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    history = optimizer._recent_cycle_history(limit=5)
+
+    assert [item["cycle_index"] for item in history] == [2]
+    assert "failure 2" in history[0]["patch_failure_tail"]
+
+
 def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))

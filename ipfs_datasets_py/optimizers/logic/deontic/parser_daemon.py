@@ -507,11 +507,14 @@ class LegalParserParityOptimizer(BaseOptimizer):
         cycles_dir = self.daemon_config.resolved_output_dir() / "cycles"
         if not cycles_dir.exists():
             return []
+        epoch_started_at = self._goal_epoch_started_at()
         summaries: List[Dict[str, Any]] = []
-        for summary_path in sorted(cycles_dir.glob("cycle_*/cycle_summary.json"), reverse=True)[:limit]:
+        for summary_path in sorted(cycles_dir.glob("cycle_*/cycle_summary.json"), reverse=True):
             try:
                 summary = json.loads(summary_path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
+                continue
+            if epoch_started_at and not _cycle_in_epoch(summary, epoch_started_at):
                 continue
             proposal_path = Path(str(summary.get("proposal_path") or ""))
             proposal_summary = ""
@@ -564,7 +567,17 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
             )
+            if len(summaries) >= limit:
+                break
         return summaries
+
+    def _goal_epoch_started_at(self) -> str:
+        current_run_path = self.daemon_config.resolved_output_dir() / "current_run.json"
+        try:
+            current_run = json.loads(current_run_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return ""
+        return str(current_run.get("started_at") or "")
 
     def _patch_stability_mode(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> bool:
         failures = [
@@ -1152,6 +1165,8 @@ class LegalParserOptimizerDaemon:
             "started_at": started,
             "finished_at": finished,
             "duration_seconds": round(_parse_utc(finished) - _parse_utc(started), 3),
+            "run_id": self.run_id,
+            "run_baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
             "provider": self.config.provider,
             "apply_patches": self.config.apply_patches,
@@ -1306,6 +1321,8 @@ class LegalParserOptimizerDaemon:
             "started_at": finished,
             "finished_at": finished,
             "duration_seconds": 0.0,
+            "run_id": self.run_id,
+            "run_baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
             "provider": self.config.provider,
             "apply_patches": self.config.apply_patches,
@@ -1927,8 +1944,13 @@ class LegalParserOptimizerDaemon:
         latest_index = latest_cycle.get("cycle_index")
         if latest_index is not None and all(cycle.get("cycle_index") != latest_index for cycle in cycles):
             cycles.append(latest_cycle)
+        epoch_started_at = self.run_started_at
+        epoch_cycles = [cycle for cycle in cycles if _cycle_in_epoch(cycle, epoch_started_at)]
+        if not epoch_cycles:
+            epoch_cycles = [latest_cycle]
 
         accepted_cycles = [cycle for cycle in cycles if _cycle_was_kept(cycle)]
+        epoch_accepted_cycles = [cycle for cycle in epoch_cycles if _cycle_was_kept(cycle)]
         rolled_back = [
             cycle for cycle in cycles if (cycle.get("apply_result") or {}).get("rolled_back", False)
         ]
@@ -1942,8 +1964,14 @@ class LegalParserOptimizerDaemon:
             if not (cycle.get("patch_check") or {}).get("valid")
             or not (cycle.get("proposal_quality") or {"valid": True}).get("valid", True)
         ]
+        epoch_rejected = [
+            cycle
+            for cycle in epoch_cycles
+            if not (cycle.get("patch_check") or {}).get("valid")
+            or not (cycle.get("proposal_quality") or {"valid": True}).get("valid", True)
+        ]
         first_score = None
-        for cycle in cycles:
+        for cycle in epoch_cycles:
             score = cycle.get("score")
             if isinstance(score, (int, float)):
                 first_score = float(score)
@@ -1985,7 +2013,7 @@ class LegalParserOptimizerDaemon:
                 "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
                 "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
             }
-            for cycle in cycles[-10:]
+            for cycle in epoch_cycles[-10:]
             if not _cycle_was_kept(cycle)
         ]
 
@@ -1994,7 +2022,7 @@ class LegalParserOptimizerDaemon:
         rolled_back_since_meaningful_progress = 0
         rolled_back_reasons_since_meaningful_progress: Dict[str, int] = {}
         current_score_value = _as_float(current_score)
-        for cycle in reversed(cycles):
+        for cycle in reversed(epoch_cycles):
             if _cycle_was_kept(cycle):
                 break
             cycle_score = _cycle_effective_score(cycle)
@@ -2006,7 +2034,7 @@ class LegalParserOptimizerDaemon:
                 stalled_metric_cycles += 1
             else:
                 break
-        for cycle in reversed(cycles):
+        for cycle in reversed(epoch_cycles):
             if _cycle_was_kept(cycle):
                 break
             cycle_score = _cycle_effective_score(cycle)
@@ -2028,8 +2056,11 @@ class LegalParserOptimizerDaemon:
         return {
             "updated_at": _utc_now(),
             "total_cycles": len(cycles),
+            "goal_epoch_started_at": epoch_started_at,
+            "goal_epoch_cycle_count": len(epoch_cycles),
             "latest_cycle_index": latest_cycle.get("cycle_index"),
             "accepted_patch_count": len(accepted_cycles),
+            "goal_epoch_accepted_patch_count": len(epoch_accepted_cycles),
             "retained_accepted_patch_count": sum(
                 1
                 for cycle in accepted_cycles
@@ -2042,6 +2073,7 @@ class LegalParserOptimizerDaemon:
             "rolled_back_since_meaningful_progress": rolled_back_since_meaningful_progress,
             "rolled_back_reasons_since_meaningful_progress": rolled_back_reasons_since_meaningful_progress,
             "rejected_patch_count": len(rejected),
+            "goal_epoch_rejected_patch_count": len(epoch_rejected),
             "current_score": current_score,
             "initial_score": first_score,
             "score_delta": (
@@ -2119,10 +2151,14 @@ class LegalParserOptimizerDaemon:
             f"- Current HEAD: `{git_work.get('head', '')}`",
             f"- Visible work status: `{visible_status}`",
             f"- Total cycles: `{progress.get('total_cycles', 0)}`",
+            f"- Goal epoch started: `{progress.get('goal_epoch_started_at', '')}`",
+            f"- Goal epoch cycles: `{progress.get('goal_epoch_cycle_count', 0)}`",
             f"- Accepted retained patches: `{progress.get('retained_accepted_patch_count', 0)}`",
+            f"- Goal epoch accepted patches: `{progress.get('goal_epoch_accepted_patch_count', 0)}`",
             f"- Rolled back patches: `{progress.get('rolled_back_count', 0)}`",
             f"- Rolled back since meaningful progress: `{progress.get('rolled_back_since_meaningful_progress', 0)}`",
             f"- Rejected patches: `{progress.get('rejected_patch_count', 0)}`",
+            f"- Goal epoch rejected patches: `{progress.get('goal_epoch_rejected_patch_count', 0)}`",
             f"- Current score: `{progress.get('current_score')}`",
             f"- Score delta: `{progress.get('score_delta')}`",
             f"- Stalled metric cycles: `{progress.get('stalled_metric_cycles', 0)}`",
@@ -2713,6 +2749,18 @@ def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:
         and tests.get("valid") is True
         and retained_ok
     )
+
+
+def _cycle_in_epoch(cycle_payload: Mapping[str, Any], epoch_started_at: str) -> bool:
+    if not epoch_started_at:
+        return True
+    cycle_started_at = str(cycle_payload.get("started_at") or cycle_payload.get("finished_at") or "")
+    if not cycle_started_at:
+        return True
+    try:
+        return _parse_utc(cycle_started_at) >= _parse_utc(epoch_started_at)
+    except Exception:
+        return True
 
 
 def _cycle_effective_score(cycle_payload: Dict[str, Any]) -> Optional[float]:
