@@ -113,14 +113,26 @@ def test_ir_formula_builder_preserves_detail_only_recipient_slot():
             "span": [38, 51],
         }
     ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action_recipient"] = [38, 51]
+    element["field_spans"] = field_spans
 
     norm = LegalNormIR.from_parser_element(element)
     formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
 
     assert norm.recipient == "the applicant"
     assert norm.to_dict()["recipient"] == "the applicant"
     assert formula == "O(∀x (Director(x) → SendNotice(x)))"
     assert "Applicant" not in formula
+    assert record["omitted_formula_slots"]["recipients"] == [
+        {
+            "value": "the applicant",
+            "field": "recipient",
+            "reason": "recipient is preserved in IR but omitted from unary deontic formula consequent",
+            "span": [38, 51],
+        }
+    ]
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

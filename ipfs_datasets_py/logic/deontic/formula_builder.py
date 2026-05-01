@@ -1108,7 +1108,38 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         omitted["exceptions"] = reference_exceptions
     if norm.overrides:
         omitted["overrides"] = [dict(item) for item in norm.overrides if isinstance(item, dict)]
+    recipient_record = _recipient_omission_record(norm)
+    if recipient_record:
+        omitted["recipients"] = [recipient_record]
     return omitted
+
+
+def _recipient_omission_record(norm: LegalNormIR) -> Dict[str, Any]:
+    """Return omitted-formula provenance for a structured recipient slot."""
+
+    recipient = str(norm.recipient or "").strip()
+    if not recipient:
+        return {}
+
+    record: Dict[str, Any] = {
+        "value": recipient,
+        "field": "recipient",
+        "reason": "recipient is preserved in IR but omitted from unary deontic formula consequent",
+    }
+    span = _field_span(norm, ("action_recipient", "recipient", "beneficiary"))
+    if span:
+        record["span"] = span
+    return record
+
+
+def _field_span(norm: LegalNormIR, keys: Iterable[str]) -> List[int]:
+    for key in keys:
+        value = norm.field_spans.get(key)
+        if isinstance(value, list) and len(value) == 2:
+            return list(value)
+        if isinstance(value, dict) and isinstance(value.get("span"), list) and len(value["span"]) == 2:
+            return list(value["span"])
+    return []
 
 
 def _is_reference_condition(item: Dict[str, Any], text: str, reference_values: Iterable[str]) -> bool:
