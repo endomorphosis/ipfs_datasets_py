@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
@@ -71,6 +72,18 @@ FORBIDDEN_PATCH_SNIPPETS = (
     "from '@jest/globals'",
     'from "@jest/globals"',
 )
+
+TYPESCRIPT_SYNTAX_ERROR_CODES = {
+    "TS1003",
+    "TS1005",
+    "TS1011",
+    "TS1068",
+    "TS1109",
+    "TS1128",
+    "TS1138",
+    "TS1144",
+    "TS1434",
+}
 
 ALLOWED_WRITE_PREFIXES = (
     "src/lib/logic/",
@@ -695,6 +708,21 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact = parse_llm_patch_response(response)
             artifact.dry_run = self.daemon_config.dry_run
             artifact.target_task = target_label
+            if artifact.files:
+                preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
+                preflight_errors.extend(self._typescript_syntax_preflight_errors(artifact.files))
+                if preflight_errors:
+                    artifact.errors.extend(preflight_errors)
+                    artifact.failure_kind = "preflight"
+                    previous_feedback = self._proposal_feedback(artifact)
+                    self._write_status(
+                        "proposal_attempt_rejected",
+                        attempt=attempt,
+                        attempts=attempts,
+                        selected_task=target_label,
+                        artifact=artifact.to_dict(),
+                    )
+                    continue
             if artifact.files or artifact.patch.strip():
                 return artifact
             artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
@@ -2036,6 +2064,63 @@ Critical correction for attempt {attempt}:
                 "that loads or asserts the generated fixture."
             )
         return errors
+
+    def _typescript_syntax_preflight_errors(self, edits: List[Dict[str, str]]) -> List[str]:
+        ts_edits = [
+            edit
+            for edit in edits
+            if str(edit.get("path", "")).endswith((".ts", ".tsx")) and str(edit.get("content", "")).strip()
+        ]
+        if not ts_edits:
+            return []
+
+        with tempfile.TemporaryDirectory(prefix="logic-port-ts-preflight-") as temp_dir:
+            temp_root = Path(temp_dir)
+            temp_paths: List[Tuple[str, Path]] = []
+            for index, edit in enumerate(ts_edits[:6], start=1):
+                source_path = str(edit.get("path", "replacement.ts"))
+                suffix = ".tsx" if source_path.endswith(".tsx") else ".ts"
+                temp_path = temp_root / f"replacement-{index}{suffix}"
+                temp_path.write_text(str(edit.get("content", "")), encoding="utf-8")
+                temp_paths.append((source_path, temp_path))
+
+            command = (
+                "npx",
+                "tsc",
+                "--pretty",
+                "false",
+                "--noEmit",
+                "--target",
+                "ES2022",
+                "--module",
+                "ESNext",
+                "--moduleResolution",
+                "bundler",
+                "--skipLibCheck",
+                "--noResolve",
+                *[str(path) for _source_path, path in temp_paths],
+            )
+            result = run_command(
+                command,
+                cwd=self.daemon_config.repo_root,
+                timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+            )
+
+        diagnostics = (result.stdout + "\n" + result.stderr).strip()
+        if not diagnostics:
+            return []
+        syntax_lines = []
+        for line in diagnostics.splitlines():
+            if any(code in line for code in TYPESCRIPT_SYNTAX_ERROR_CODES):
+                for source_path, temp_path in temp_paths:
+                    line = line.replace(str(temp_path), source_path)
+                syntax_lines.append(line)
+        if not syntax_lines:
+            return []
+        return [
+            "Rejected proposal because TypeScript parser preflight found syntax errors before touching the worktree:\n"
+            + "\n".join(syntax_lines[:20])
+        ]
 
     def _recent_failure_context(self, selected_task: Optional[PlanTask], *, limit: int = 3) -> str:
         if selected_task is None or self.daemon_config.result_log_path is None:

@@ -2,6 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
+import ipfs_datasets_py.optimizers.logic_port_daemon as logic_port_daemon
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
     DEFAULT_PLAN_DOCS,
     LogicPortDaemonConfig,
@@ -1585,6 +1586,63 @@ def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):
     assert router.calls
     assert "feature_gap.py" in router.calls[0]["prompt"]
     assert target.read_text(encoding="utf-8") == "new\n"
+
+
+def test_generate_retries_file_replacement_after_typescript_syntax_preflight(tmp_path, monkeypatch):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("export const value = 'old';\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    router = SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "bad syntax",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}],
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "fixed syntax",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'new';\n"}],
+                }
+            ),
+        ]
+    )
+
+    def fake_syntax_preflight(self, edits):
+        content = "\n".join(str(edit.get("content", "")) for edit in edits)
+        if "value = ;" in content:
+            return ["Rejected proposal because TypeScript parser preflight found syntax errors before touching the worktree."]
+        return []
+
+    monkeypatch.setattr(logic_port_daemon.LogicPortDaemonOptimizer, "_typescript_syntax_preflight_errors", fake_syntax_preflight)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        proposal_attempts=2,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="syntax-preflight")
+
+    assert result["valid"] is True
+    assert len(router.calls) == 2
+    assert "TypeScript parser preflight" in router.calls[1]["prompt"]
+    assert target.read_text(encoding="utf-8") == 'export const value = "new";\n'
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):
