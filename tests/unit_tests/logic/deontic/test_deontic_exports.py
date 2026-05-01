@@ -4946,3 +4946,71 @@ def test_ir_procedure_event_records_mark_validation_trigger_as_prerequisite():
     assert records[0]["span"] == [39, 75]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_review_trigger_as_prerequisite():
+    """Review of an application is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after review of the application."
+    )[0])
+    element["action"] = ["issue a permit after review application"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_review_of",
+                "anchor_event": "application",
+                "raw_text": "after review of the application",
+                "span": [36, 67],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_review_of"
+    assert records[0]["anchor_event"] == "application"
+    assert records[0]["anchor_symbol"] == "Application"
+    assert records[0]["raw_text"] == "after review of the application"
+    assert records[0]["span"] == [36, 67]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_reconsideration_trigger_as_prerequisite():
+    """Reconsideration of an appeal is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall issue a final order after reconsideration of the appeal."
+    )[0])
+    element["action"] = ["issue a final order after reconsideration appeal"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_reconsideration_of",
+                "anchor_event": "appeal",
+                "raw_text": "after reconsideration of the appeal",
+                "span": [36, 73],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_reconsideration_of"
+    assert records[0]["anchor_event"] == "appeal"
+    assert records[0]["anchor_symbol"] == "Appeal"
+    assert records[0]["raw_text"] == "after reconsideration of the appeal"
+    assert records[0]["span"] == [36, 73]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
