@@ -496,9 +496,6 @@ def _evaluation_parser_elements(
         if candidate:
             recovered.append(candidate)
 
-    if recovered:
-        return recovered
-
     for detail in evaluation.get("repair_required_details", []) if isinstance(evaluation.get("repair_required_details"), list) else []:
         if not isinstance(detail, Mapping):
             continue
@@ -513,7 +510,34 @@ def _evaluation_parser_elements(
         if candidate:
             recovered.append(candidate)
 
-    return recovered
+    return _dedupe_evaluation_parser_elements(recovered)
+
+
+def _dedupe_evaluation_parser_elements(elements: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    """Return recovered evaluation parser rows without losing context rows.
+
+    Evaluation payloads can split same-document evidence across ``samples`` and
+    ``repair_required_details``: the sample row may carry section 552 context,
+    while the repair detail carries the blocked exception row.  Keep both rows
+    so batch IR reference resolution can prove the citation, but avoid duplicate
+    rows when the same source appears in both payload sections.
+    """
+
+    deduped: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for element in elements:
+        row = dict(element)
+        source_id = str(row.get("source_id") or "")
+        key = source_id or "|".join(
+            str(row.get(field) or "")
+            for field in ("canonical_citation", "text", "support_text")
+        )
+        if key and key in seen:
+            continue
+        if key:
+            seen.add(key)
+        deduped.append(row)
+    return deduped
 
 
 def _parser_element_from_repair_detail(detail: Mapping[str, Any]) -> Dict[str, Any]:

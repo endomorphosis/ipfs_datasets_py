@@ -2601,6 +2601,66 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_applicability
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_resolves_detail_only_cross_reference_from_sample_context():
+    """Detail-only numbered exceptions can clear only with same-document evidence."""
+
+    reference = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited = extract_normative_elements("The agency shall keep records.")[0]
+    cited = dict(cited)
+    cited["canonical_citation"] = ""
+    cited["section_context"] = {"section": "552"}
+
+    raw_evaluation = {
+        "samples": [
+            {
+                "sample_id": "section_552_context",
+                "elements": [cited],
+            }
+        ],
+        "repair_required_count": 1,
+        "repair_required_rate": 1.0,
+        "repair_required_details": [
+            {
+                "sample_id": "cross_reference",
+                "text": reference["text"],
+                "source_id": reference["source_id"],
+                "canonical_citation": reference["canonical_citation"],
+                "support_text": reference["support_text"],
+                "support_span": reference["support_span"],
+                "source_span": reference.get("source_span", reference["support_span"]),
+                "norm_type": reference["norm_type"],
+                "modality": None,
+                "subject": list(reference["subject"]),
+                "action": list(reference["action"]),
+                "exceptions": list(reference.get("exception_details") or []),
+                "cross_references": list(reference.get("cross_reference_details") or []),
+                "parser_warnings": list(reference["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(reference["parser_warnings"]),
+                },
+            }
+        ],
+        "metrics": {
+            "repair_required_count": 1,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 1"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 0
+    assert normalized["repair_required_rate"] == 0.0
+    assert normalized["repair_required"] == []
+    assert normalized["repair_required_details"] == []
+    assert normalized["active_repair_required_by_source_id"][reference["source_id"]] is False
+    assert normalized["metrics"]["repair_required_count"] == 0
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conservative():
     """Without parser rows, normalization must not invent cleared repairs."""
     raw_evaluation = {
