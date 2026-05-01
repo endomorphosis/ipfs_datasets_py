@@ -444,6 +444,7 @@ def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
                 "patch_check": {"valid": False, "stderr": "error: patch failed: file.py:10"},
                 "proposal_quality": {"valid": True, "reasons": []},
                 "apply_result": {"applied": False, "reason": "patch_check_failed"},
+                "changed_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
                 "tests": {"valid": True},
             }
         ),
@@ -455,6 +456,172 @@ def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
     assert history[0]["patch_valid"] is False
     assert "patch failed" in history[0]["patch_failure_tail"]
     assert history[0]["apply_reason"] == "patch_check_failed"
+    assert history[0]["changed_files"] == ["ipfs_datasets_py/logic/deontic/formula_builder.py"]
+
+
+def test_optimizer_enters_patch_stability_mode_after_repeated_patch_check_failures(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    cycles_dir = tmp_path / "out/cycles"
+    for index in range(1, 4):
+        cycle_dir = cycles_dir / f"cycle_{index:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(
+            json.dumps(
+                {
+                    "cycle_index": index,
+                    "score": 0.9,
+                    "feedback": ["gap"],
+                    "patch_check": {"valid": False, "stderr": "error: patch failed"},
+                    "proposal_quality": {"valid": True, "reasons": []},
+                    "apply_result": {"applied": False, "reason": "patch_check_failed"},
+                    "changed_files": [target_file, test_file],
+                    "tests": {"valid": True},
+                }
+            ),
+            encoding="utf-8",
+        )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        docs=(
+            "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md",
+            "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md",
+        ),
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    history = optimizer._recent_cycle_history(limit=5)
+    prompt = optimizer.build_patch_prompt(cycle_index=4, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert optimizer._patch_stability_mode(history) is True
+    assert optimizer._recent_failed_patch_files(history) == [target_file, test_file]
+    assert '"patch_stability_mode": true' in prompt
+    assert '"recent_failed_patch_files": [' in prompt
+    assert "prefer one production file plus one matching test file" in prompt
+
+
+def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    files = {
+        "ipfs_datasets_py/logic/deontic/formula_builder.py": "before_formula\n",
+        "ipfs_datasets_py/logic/deontic/exports.py": "before_exports\n",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py": "before_test\n",
+    }
+    for path, body in files.items():
+        full_path = repo / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    cycles_dir = repo / "out/cycles"
+    for index in range(101, 104):
+        cycle_dir = cycles_dir / f"cycle_{index:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(
+            json.dumps(
+                {
+                    "cycle_index": index,
+                    "patch_check": {"valid": False, "stderr": "error: patch failed"},
+                    "proposal_quality": {"valid": True, "reasons": []},
+                    "apply_result": {"applied": False, "reason": "patch_check_failed"},
+                    "changed_files": list(files),
+                    "tests": {"valid": True},
+                }
+            ),
+            encoding="utf-8",
+        )
+    broad_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/formula_builder.py b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "--- a/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_formula",
+            "+after_formula",
+            "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
+            "--- a/ipfs_datasets_py/logic/deontic/exports.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
+            "@@ -1 +1 @@",
+            "-before_exports",
+            "+after_exports",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_test",
+            "+after_test",
+            "",
+        ]
+    )
+    focused_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/formula_builder.py b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "--- a/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_formula",
+            "+after_formula",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_test",
+            "+after_test",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "Broad patch should be retried.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["stability mode rejects broad patches"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": broad_diff,
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Focused patch should pass quality.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["stability mode accepts focused patches"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": focused_diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=repo,
+        output_dir=repo / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert "patch stability mode allows at most two changed files" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
+    assert cycle["proposal_quality"]["valid"] is True
+    assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
 
 
 def test_retained_change_summary_detects_no_content_change(tmp_path):

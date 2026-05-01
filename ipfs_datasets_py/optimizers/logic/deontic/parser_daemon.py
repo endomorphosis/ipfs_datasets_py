@@ -299,13 +299,18 @@ class LegalParserParityOptimizer(BaseOptimizer):
         feedback: Sequence[str],
     ) -> str:
         docs_payload = {path: _read_text(self.daemon_config.repo_root / path, limit=24000) for path in self.daemon_config.docs}
+        recent_cycle_history = self._recent_cycle_history(limit=5)
+        patch_stability_mode = self._patch_stability_mode(recent_cycle_history)
+        recent_failed_patch_files = self._recent_failed_patch_files(recent_cycle_history)
         file_payload = {
-            path: _read_text(self.daemon_config.repo_root / path, limit=20000)
+            path: _read_text(
+                self.daemon_config.repo_root / path,
+                limit=70000 if path in recent_failed_patch_files else 20000,
+            )
             for path in self.daemon_config.target_files
             if (self.daemon_config.repo_root / path).is_file()
         }
         progress_payload = self._progress_snapshot()
-        recent_cycle_history = self._recent_cycle_history(limit=3)
         payload = {
             "cycle_index": cycle_index,
             "objective": (
@@ -322,7 +327,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Choose a coherent implementation slice large enough to matter: parser behavior, IR/export/formula handling, and focused tests should advance together when the roadmap calls for it.",
                 "Avoid cosmetic churn, one-line metric gaming, and isolated test-only patches.",
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
+                "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
             ],
+            "patch_stability_mode": patch_stability_mode,
+            "recent_failed_patch_files": recent_failed_patch_files,
             "docs": docs_payload,
             "evaluation": evaluation,
             "feedback": list(feedback),
@@ -347,6 +355,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "The slice should be large enough to materially improve parser coverage, IR/export correctness, formula quality, or parity metrics, "
             "while remaining reviewable and fully covered by tests. "
             "The diff must normally touch at least one production parser/export file and at least one deontic test file. "
+            "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
             "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
@@ -413,6 +422,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "proposal_quality_valid": proposal_quality.get("valid"),
                     "proposal_quality_reasons": proposal_quality.get("reasons", []),
                     "apply_reason": apply_result.get("reason"),
+                    "changed_files": summary.get("changed_files", []),
                     "applied": apply_result.get("applied"),
                     "rolled_back": apply_result.get("rolled_back", False),
                     "tests_valid": tests.get("valid"),
@@ -420,6 +430,26 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 }
             )
         return summaries
+
+    def _patch_stability_mode(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> bool:
+        failures = [
+            item
+            for item in recent_cycle_history
+            if item.get("patch_valid") is False
+            and str(item.get("apply_reason") or "").startswith("patch_check_failed")
+        ]
+        return len(failures) >= 3
+
+    def _recent_failed_patch_files(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[str]:
+        files: List[str] = []
+        for item in recent_cycle_history:
+            if item.get("patch_valid") is not False:
+                continue
+            for path in item.get("changed_files") or []:
+                text = str(path)
+                if text and text not in files:
+                    files.append(text)
+        return files[:8]
 
     def check_patch(self, unified_diff: str) -> Dict[str, Any]:
         if not unified_diff.strip():
@@ -541,6 +571,7 @@ class LegalParserOptimizerDaemon:
         proposal = LegalParserCycleProposal(summary="llm_router proposal failed")
         max_attempts = max(1, int(self.config.llm_proposal_attempts))
         attempt_feedback = list(feedback)
+        patch_stability_mode = self._patch_stability_mode()
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -553,6 +584,7 @@ class LegalParserOptimizerDaemon:
                 feedback=attempt_feedback,
                 proposal_attempt=attempt_index,
                 proposal_attempts=max_attempts,
+                patch_stability_mode=patch_stability_mode,
             )
             try:
                 proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
@@ -575,6 +607,11 @@ class LegalParserOptimizerDaemon:
                 candidate_patch_check = self.optimizer.check_patch(proposal.unified_diff)
                 candidate_changed_files = _paths_from_unified_diff(proposal.unified_diff)
                 candidate_quality = self._assess_proposal_quality(proposal, candidate_changed_files)
+                if patch_stability_mode:
+                    candidate_quality = self._enforce_patch_stability_quality(
+                        proposal_quality=candidate_quality,
+                        changed_files=candidate_changed_files,
+                    )
                 candidate_dirty_touched = self._dirty_touched_files(candidate_changed_files)
                 if self.config.require_clean_touched_files and candidate_dirty_touched:
                     candidate_quality = {
@@ -641,6 +678,11 @@ class LegalParserOptimizerDaemon:
         changed_files = _paths_from_unified_diff(proposal.unified_diff)
         patch_stats = _unified_diff_stats(proposal.unified_diff)
         proposal_quality = self._assess_proposal_quality(proposal, changed_files)
+        if patch_stability_mode:
+            proposal_quality = self._enforce_patch_stability_quality(
+                proposal_quality=proposal_quality,
+                changed_files=changed_files,
+            )
         dirty_touched_files = self._dirty_touched_files(changed_files)
         if self.config.require_clean_touched_files and dirty_touched_files:
             proposal_quality = {
@@ -953,6 +995,30 @@ class LegalParserOptimizerDaemon:
             "changed_files": list(changed_files),
             "production_files": production_files,
             "test_files": test_files,
+        }
+
+    def _patch_stability_mode(self) -> bool:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return False
+        history = self.optimizer._recent_cycle_history(limit=5)
+        return self.optimizer._patch_stability_mode(history)
+
+    def _enforce_patch_stability_quality(
+        self,
+        *,
+        proposal_quality: Dict[str, Any],
+        changed_files: Sequence[str],
+    ) -> Dict[str, Any]:
+        if len(changed_files) <= 2:
+            return proposal_quality
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", []))
+            + [
+                "patch stability mode allows at most two changed files after repeated patch-check failures"
+            ],
+            "patch_stability_mode": True,
         }
 
     def _proposal_retry_reason(self, proposal: LegalParserCycleProposal) -> str:
