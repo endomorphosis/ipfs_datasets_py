@@ -523,6 +523,47 @@ def test_ir_formula_builder_preserves_detail_only_recipient_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_condition_and_exception_alias_slots():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit if fees are paid unless inspection is incomplete."
+    )[0])
+    element["conditions"] = []
+    element["exceptions"] = []
+    element["condition_details"] = [
+        {
+            "type": "if",
+            "condition_text": "fees are paid",
+            "span": [39, 52],
+        }
+    ]
+    element["exception_details"] = [
+        {
+            "type": "unless",
+            "exception_text": "inspection is incomplete",
+            "span": [60, 84],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.conditions[0]["condition_text"] == "fees are paid"
+    assert norm.exceptions[0]["exception_text"] == "inspection is incomplete"
+    assert formula == (
+        "O(∀x (Director(x) ∧ FeesArePaid(x) ∧ ¬InspectionIsIncomplete(x) "
+        "→ IssuePermit(x)))"
+    )
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_formula_record_preserves_capped_condition_slots_as_omitted_provenance():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit if all requirements are met."

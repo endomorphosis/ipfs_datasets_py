@@ -492,7 +492,7 @@ def _slot_texts(items: Iterable[Dict[str, Any]]) -> List[str]:
     for item in items:
         if not isinstance(item, dict):
             continue
-        value = item.get("value") or item.get("normalized_text") or item.get("raw_text")
+        value = _slot_primary_text(item)
         if value:
             texts.append(str(value))
     return texts
@@ -1053,7 +1053,7 @@ def _formula_exception_texts(norm: LegalNormIR) -> List[str]:
     for item in norm.exceptions:
         if not isinstance(item, dict):
             continue
-        value = item.get("value") or item.get("normalized_text") or item.get("raw_text")
+        value = _slot_primary_text(item)
         if not value:
             continue
         text = str(value).strip()
@@ -1084,7 +1084,7 @@ def _formula_condition_texts(norm: LegalNormIR) -> List[str]:
     for item in norm.conditions:
         if not isinstance(item, dict):
             continue
-        value = item.get("value") or item.get("normalized_text") or item.get("raw_text")
+        value = _slot_primary_text(item)
         if not value:
             continue
         text = str(value).strip()
@@ -1950,7 +1950,19 @@ def _reference_resolution_text(item: Dict[str, Any]) -> str:
 def _slot_primary_text(item: Dict[str, Any]) -> str:
     """Return the stable text value for a structured IR slot."""
 
-    for key in ("value", "normalized_text", "raw_text", "text", "canonical_citation", "citation"):
+    for key in (
+        "value",
+        "normalized_text",
+        "raw_text",
+        "text",
+        "condition_text",
+        "exception_text",
+        "clause_text",
+        "predicate_text",
+        "description",
+        "canonical_citation",
+        "citation",
+    ):
         value = item.get(key)
         if value:
             return str(value).strip()
