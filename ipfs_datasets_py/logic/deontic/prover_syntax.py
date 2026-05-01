@@ -13,7 +13,10 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, Iterable, List, Sequence
 
-from .formula_builder import build_deontic_formula_from_ir
+from .formula_builder import (
+    build_deontic_formula_from_ir,
+    build_deontic_formula_record_from_ir,
+)
 from .ir import LegalNormIR
 
 
@@ -74,13 +77,14 @@ def validate_ir_with_provers(
 
     requested_targets = _normalize_targets(targets)
     formula = build_deontic_formula_from_ir(norm)
+    formula_record = build_deontic_formula_record_from_ir(norm)
     records = [
-        _validate_target_formula(norm, target, formula)
+        _validate_target_formula(norm, target, formula, formula_record)
         for target in requested_targets
     ]
     valid_count = sum(1 for record in records if record.syntax_valid)
     skipped_count = sum(1 for record in records if record.skipped)
-    requires_validation = bool(norm.blockers) or valid_count != len(records)
+    requires_validation = any(record.requires_validation for record in records)
 
     return ProverSyntaxReport(
         source_id=norm.source_id,
@@ -89,7 +93,7 @@ def validate_ir_with_provers(
         valid_target_count=valid_count,
         skipped_target_count=skipped_count,
         targets=records,
-        proof_ready=bool(norm.proof_ready and valid_count == len(records)),
+        proof_ready=bool(records and all(record.proof_ready for record in records)),
         requires_validation=requires_validation,
         schema_version=norm.schema_version,
     )
@@ -121,6 +125,7 @@ def _validate_target_formula(
     norm: LegalNormIR,
     target: str,
     formula: str,
+    formula_record: Dict[str, Any],
 ) -> ProverTargetSyntaxRecord:
     exported_formula = _render_target_formula(norm, target, formula)
     diagnostics = _syntax_diagnostics(target, exported_formula)
@@ -135,8 +140,8 @@ def _validate_target_formula(
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
-        proof_ready=bool(norm.proof_ready and syntax_valid),
-        requires_validation=bool(norm.blockers or diagnostics),
+        proof_ready=bool(formula_record.get("proof_ready") is True and syntax_valid),
+        requires_validation=bool(formula_record.get("requires_validation") is not False or diagnostics),
         schema_version=norm.schema_version,
     )
 
