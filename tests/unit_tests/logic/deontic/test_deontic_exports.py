@@ -3390,6 +3390,124 @@ def test_metrics_clear_numbered_reference_with_prompt_context_same_document_sect
     assert parser_element_has_active_repair(projected[0]) is False
 
 
+def test_metrics_projection_recovers_same_document_section_from_context_only_document_text():
+    """Context-only document text should resolve references without becoming a metric row."""
+
+    parsed = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    detail_only = {
+        "sample_id": "cross_reference",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "exceptions": list(parsed.get("exception_details") or []),
+        "cross_references": list(parsed.get("cross_reference_details") or []),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed.get("exception_details") or []),
+                "cross_references": list(parsed.get("cross_reference_details") or []),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+    context_only = {
+        "_context_only": True,
+        "document_text": "Section 552. Notice publication.\nThe agency shall keep records.",
+        "active_repair_required": True,
+        "active_repair_warnings": [],
+    }
+
+    projected = parser_elements_for_metrics([detail_only, context_only])
+
+    assert len(projected) == 1
+    assert projected[0]["source_id"] == parsed["source_id"]
+    assert projected[0]["resolved_cross_references"] == [
+        {
+            "type": "section",
+            "value": "552",
+            "raw_text": "section 552",
+            "normalized_text": "section 552",
+            "span": [61, 72],
+            "resolution_status": "resolved",
+            "target_exists": True,
+            "resolution_scope": "same_document",
+            "same_document": True,
+            "resolved": True,
+            "source_id": parsed["source_id"],
+            "resolved_source_id": parsed["source_id"],
+        }
+    ]
+    assert projected[0]["active_repair_required"] is False
+    assert projected[0]["active_repair_warnings"] == []
+    assert projected[0]["export_readiness"]["formula_repair_required"] is False
+    assert parser_element_has_active_repair(projected[0]) is False
+
+
+def test_metrics_projection_keeps_context_only_document_text_mismatch_blocked():
+    """Context-only document text must cite the exact referenced section."""
+
+    parsed = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    detail_only = {
+        "sample_id": "cross_reference",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "exceptions": list(parsed.get("exception_details") or []),
+        "cross_references": list(parsed.get("cross_reference_details") or []),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed.get("exception_details") or []),
+                "cross_references": list(parsed.get("cross_reference_details") or []),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+    context_only = {
+        "_context_only": True,
+        "document_text": "Section 553. Notice publication.\nThe agency shall keep records.",
+        "active_repair_required": True,
+        "active_repair_warnings": [],
+    }
+
+    projected = parser_elements_for_metrics([detail_only, context_only])
+
+    assert len(projected) == 1
+    assert projected[0]["source_id"] == parsed["source_id"]
+    assert projected[0].get("resolved_cross_references", []) == []
+    assert projected[0]["active_repair_required"] is True
+    assert projected[0]["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert projected[0]["export_readiness"]["formula_repair_required"] is True
+    assert parser_element_has_active_repair(projected[0]) is True
+
+
 def test_metrics_hydrates_prompt_context_operator_for_detail_only_stale_repair_rows():
     """Detail-only rows with null modality should still clear deterministic repairs."""
 

@@ -967,8 +967,12 @@ def _list_field(value: Any) -> List[Any]:
 def _is_context_only_parser_element(element: Mapping[str, Any]) -> bool:
     if element.get("context_only") is True:
         return True
+    if element.get("_context_only") is True:
+        return True
 
     norm_type = str(element.get("norm_type") or "").strip().lower()
+    if not norm_type and element.get("document_text") and not _sample_has_parser_norm_slots(element):
+        return True
     if norm_type not in {"document_context", "section_context"}:
         return False
     return not _list_field(element.get("subject")) and not _list_field(element.get("action"))
@@ -2061,6 +2065,11 @@ def _prompt_context_section_index(
         if isinstance(section_context, Mapping):
             citation = _canonical_section_citation(f"section {section_context.get('section') or ''}")
             if citation:
+                section_index.setdefault(citation, candidate_id or source_id)
+        for key in ("document_text", "source_document", "full_text", "same_document_text"):
+            text = str(candidate.get(key) or "")
+            for match in _SECTION_HEADING_RE.finditer(text):
+                citation = f"section {match.group(1)}".lower()
                 section_index.setdefault(citation, candidate_id or source_id)
 
     for key in ("document_text", "source_document", "full_text", "same_document_text"):
