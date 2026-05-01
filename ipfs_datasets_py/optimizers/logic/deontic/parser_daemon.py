@@ -681,6 +681,7 @@ class LegalParserOptimizerDaemon:
         patch_stability_mode = self._patch_stability_mode()
         metric_stall_mode = self._metric_stall_mode()
         test_failure_recovery_mode = self._test_failure_recovery_mode()
+        metric_no_progress_recovery_mode = self._metric_no_progress_recovery_mode()
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -696,6 +697,7 @@ class LegalParserOptimizerDaemon:
                 patch_stability_mode=patch_stability_mode,
                 metric_stall_mode=metric_stall_mode,
                 test_failure_recovery_mode=test_failure_recovery_mode,
+                metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
             )
             try:
                 proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
@@ -727,6 +729,11 @@ class LegalParserOptimizerDaemon:
                     candidate_quality = self._enforce_metric_stall_quality(
                         proposal=proposal,
                         proposal_quality=candidate_quality,
+                    )
+                if metric_no_progress_recovery_mode:
+                    candidate_quality = self._enforce_metric_no_progress_recovery_quality(
+                        proposal_quality=candidate_quality,
+                        changed_files=candidate_changed_files,
                     )
                 candidate_dirty_touched = self._dirty_touched_files(candidate_changed_files)
                 if self.config.require_clean_touched_files and candidate_dirty_touched:
@@ -803,6 +810,11 @@ class LegalParserOptimizerDaemon:
             proposal_quality = self._enforce_metric_stall_quality(
                 proposal=proposal,
                 proposal_quality=proposal_quality,
+            )
+        if metric_no_progress_recovery_mode:
+            proposal_quality = self._enforce_metric_no_progress_recovery_quality(
+                proposal_quality=proposal_quality,
+                changed_files=changed_files,
             )
         dirty_touched_files = self._dirty_touched_files(changed_files)
         if self.config.require_clean_touched_files and dirty_touched_files:
@@ -1167,6 +1179,12 @@ class LegalParserOptimizerDaemon:
         history = self.optimizer._recent_cycle_history(limit=5)
         return bool(self.optimizer._recent_test_failures(history))
 
+    def _metric_no_progress_recovery_mode(self) -> bool:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return False
+        history = self.optimizer._recent_cycle_history(limit=5)
+        return bool(self.optimizer._recent_metric_stall_failures(history))
+
     def _enforce_patch_stability_quality(
         self,
         *,
@@ -1212,6 +1230,30 @@ class LegalParserOptimizerDaemon:
                 "metric stall mode requires expected_metric_gain to name a real parser metric"
             ],
             "metric_stall_mode": True,
+        }
+
+    def _enforce_metric_no_progress_recovery_quality(
+        self,
+        *,
+        proposal_quality: Dict[str, Any],
+        changed_files: Sequence[str],
+    ) -> Dict[str, Any]:
+        production_files = _production_files(changed_files)
+        non_exports_production = [
+            path
+            for path in production_files
+            if path != "ipfs_datasets_py/logic/deontic/exports.py"
+        ]
+        if non_exports_production:
+            return proposal_quality
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", []))
+            + [
+                "metric no-progress recovery requires a non-exports production parser, IR, formula, or converter change"
+            ],
+            "metric_no_progress_recovery_mode": True,
         }
 
     def _metric_stall_retention_result(

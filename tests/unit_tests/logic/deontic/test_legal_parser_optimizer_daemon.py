@@ -1045,6 +1045,129 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
     assert (repo / test_file).read_text(encoding="utf-8") == "before_test\n"
 
 
+def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    files = {
+        "ipfs_datasets_py/logic/deontic/exports.py": "before_exports\n",
+        "ipfs_datasets_py/logic/deontic/formula_builder.py": "before_formula\n",
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py": "before_exports_test\n",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py": "before_formula_test\n",
+    }
+    for path, body in files.items():
+        full_path = repo / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    cycle_dir = repo / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {
+                    "applied": True,
+                    "rolled_back": True,
+                    "reason": "metric_stall_no_metric_progress",
+                    "metric_progress": {
+                        "valid": False,
+                        "expected_metric_gain": {"repair_required_count": -1},
+                        "pre_metrics": {"repair_required_count": 1},
+                        "post_metrics": {"repair_required_count": 1},
+                        "moved_expected_metrics": {},
+                    },
+                },
+                "changed_files": [
+                    "ipfs_datasets_py/logic/deontic/exports.py",
+                    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+                ],
+                "tests": {"valid": True, "stdout": "passed"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    exports_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
+            "--- a/ipfs_datasets_py/logic/deontic/exports.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
+            "@@ -1 +1 @@",
+            "-before_exports",
+            "+after_exports",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "@@ -1 +1 @@",
+            "-before_exports_test",
+            "+after_exports_test",
+            "",
+        ]
+    )
+    formula_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/formula_builder.py b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "--- a/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_formula",
+            "+after_formula",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            "@@ -1 +1 @@",
+            "-before_formula_test",
+            "+after_formula_test",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "Exports-only patch should be retried.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["metric moves"],
+                    "expected_metric_gain": {"repair_required_count": -1},
+                    "tests_to_run": [],
+                    "unified_diff": exports_diff,
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Formula patch can proceed.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["metric moves"],
+                    "expected_metric_gain": {"repair_required_count": -1},
+                    "tests_to_run": [],
+                    "unified_diff": formula_diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=repo,
+        output_dir=repo / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=2)
+
+    assert len(fake_router.calls) == 2
+    assert "metric no-progress recovery requires a non-exports production" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
+    assert cycle["proposal_quality"]["valid"] is True
+    assert cycle["changed_files"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    ]
+
+
 def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
