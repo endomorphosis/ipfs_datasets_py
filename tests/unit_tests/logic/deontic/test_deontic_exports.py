@@ -4470,3 +4470,37 @@ def test_ir_procedure_event_records_mark_adoption_trigger_as_prerequisite():
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
     assert records[0]["relation_record"]["relation"] == "triggered_by_adoption_of"
+
+
+def test_ir_procedure_event_records_mark_commencement_trigger_as_prerequisite():
+    """Commencement of operations is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall inspect the premises after commencement of operations."
+    )[0])
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "inspection",
+                "relation": "triggered_by_commencement_of",
+                "anchor_event": "operations",
+                "raw_text": "after commencement of operations",
+                "span": [40, 72],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "inspection"
+    assert records[0]["event_symbol"] == "Inspection"
+    assert records[0]["relation"] == "triggered_by_commencement_of"
+    assert records[0]["anchor_event"] == "operations"
+    assert records[0]["anchor_symbol"] == "Operations"
+    assert records[0]["raw_text"] == "after commencement of operations"
+    assert records[0]["span"] == [40, 72]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+    assert records[0]["relation_record"]["relation"] == "triggered_by_commencement_of"
