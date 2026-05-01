@@ -506,6 +506,50 @@ def test_ir_procedure_event_records_mark_issuance_trigger_as_prerequisite():
     )
 
 
+def test_ir_procedure_event_records_mark_publication_trigger_as_prerequisite():
+    element = extract_normative_elements(
+        "The Director shall renew a permit after publication of the notice."
+    )[0]
+    element = dict(element)
+    element["action"] = ["renew a permit after publication notice"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_publication_of",
+                "anchor_event": "notice",
+                "raw_text": "after publication of the notice",
+                "span": [36, 68],
+            },
+            {
+                "event": "renewal",
+                "relation": "after",
+                "anchor_event": "inspection",
+                "raw_text": "after inspection",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    publication_record = next(
+        record for record in records if record["relation"] == "triggered_by_publication_of"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert publication_record["is_formula_antecedent"] is True
+    assert publication_record["proof_role"] == "prerequisite"
+    assert publication_record["anchor_event"] == "notice"
+    assert publication_record["anchor_symbol"] == "Notice"
+    assert publication_record["span"] == [36, 68]
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ ProcedureAfterPublicationNotice(x) → RenewPermit(x)))"
+    )
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
