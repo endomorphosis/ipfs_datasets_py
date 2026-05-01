@@ -5014,3 +5014,71 @@ def test_ir_procedure_event_records_mark_reconsideration_trigger_as_prerequisite
     assert records[0]["span"] == [36, 73]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_hearing_trigger_as_prerequisite():
+    """A hearing on an appeal is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall issue a final order after hearing on the appeal."
+    )[0])
+    element["action"] = ["issue a final order after hearing appeal"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_hearing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after hearing on the appeal",
+                "span": [36, 64],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_hearing_of"
+    assert records[0]["anchor_event"] == "appeal"
+    assert records[0]["anchor_symbol"] == "Appeal"
+    assert records[0]["raw_text"] == "after hearing on the appeal"
+    assert records[0]["span"] == [36, 64]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_final_decision_trigger_as_prerequisite():
+    """A final decision on an application is a procedural prerequisite."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after final decision on the application."
+    )[0])
+    element["action"] = ["issue a permit after final decision application"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_final_decision_of",
+                "anchor_event": "application",
+                "raw_text": "after final decision on the application",
+                "span": [36, 77],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_final_decision_of"
+    assert records[0]["anchor_event"] == "application"
+    assert records[0]["anchor_symbol"] == "Application"
+    assert records[0]["raw_text"] == "after final decision on the application"
+    assert records[0]["span"] == [36, 77]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
