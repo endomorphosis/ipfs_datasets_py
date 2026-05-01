@@ -57,13 +57,32 @@ Check it with:
 bash ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh
 ```
 
+Ensure it is running, starting the supervisor only if the health check fails:
+
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh
+```
+
+Stop only the logic-port supervisor and its child daemon with:
+
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
+```
+
 The supervisor writes:
 
 - `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.pid`
+- `ipfs_datasets_py/.daemon/logic-port-daemon.pid`
+- `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.lock`
 - `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.status.json`
 - `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.latest.log`
+- `ipfs_datasets_py/.daemon/logic-port-daemon-ensure.status.json`
 
 It is deliberately separate from `run_legal_parser_optimizer_daemon.sh`, which supervises the deterministic parser daemon and uses the parser implementation plans.
+
+The supervisor also has a stale-heartbeat watchdog. `WATCHDOG_STALE_AFTER_SECONDS` defaults to `420`, which is intentionally longer than the default 300 second LLM and command timeouts. `WATCHDOG_STARTUP_GRACE_SECONDS` defaults to `120`, so a freshly started daemon has time to write its first heartbeat before the watchdog evaluates stale state from a previous run. If the daemon heartbeat stops updating beyond the stale threshold, the supervisor terminates the daemon subprocess tree, records `last_recycle_reason: "stale_heartbeat"`, and immediately starts a fresh cycle. Stop/restart cleanup sends `TERM` first and escalates to `KILL` after `STOP_GRACE_SECONDS`, which defaults to `10`. Startup, stop, and restart also sweep orphaned `logic_port_daemon` children that point at the same status file, preventing two logic-port daemons from writing to the same task board and TypeScript files. A nonblocking `flock` on `logic-port-daemon-supervisor.lock` prevents two supervisors from running at once even if a stale PID file is present.
+
+For a belt-and-suspenders watchdog outside the supervisor itself, run `ensure_logic_port_daemon.sh` periodically from cron or systemd. The script is idempotent: when the daemon is healthy it only records `already_running`; when the health check fails it starts the supervisor with `setsid` and then verifies the new process. The supervisor lock keeps repeated ensure calls from creating duplicate supervisors.
 
 ```bash
 PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \

@@ -61,14 +61,12 @@ heartbeat_age = None
 if heartbeat_at is not None:
     heartbeat_age = max(0.0, (now - heartbeat_at).total_seconds())
 
-daemon_pid = (
-    status.get("heartbeat_pid")
-    or status.get("pid")
-    or supervisor.get("daemon_pid")
-)
 supervisor_pid = supervisor.get("supervisor_pid")
-daemon_alive = bool(daemon_pid and pid_alive(daemon_pid))
 supervisor_alive = bool(supervisor_pid and pid_alive(supervisor_pid))
+supervisor_daemon_pid = supervisor.get("daemon_pid")
+status_daemon_pid = status.get("heartbeat_pid") or status.get("pid")
+daemon_pid = supervisor_daemon_pid if supervisor_alive and supervisor_daemon_pid else status_daemon_pid
+daemon_alive = bool(daemon_pid and pid_alive(daemon_pid))
 fresh = heartbeat_age is not None and heartbeat_age <= stale_after
 alive = bool(supervisor_alive and daemon_alive and fresh)
 
@@ -80,10 +78,16 @@ payload = {
     "heartbeat_age_seconds": None if heartbeat_age is None else round(heartbeat_age, 3),
     "daemon_pid": daemon_pid,
     "daemon_pid_alive": daemon_alive,
+    "status_daemon_pid": status_daemon_pid,
+    "supervisor_daemon_pid": supervisor_daemon_pid,
     "supervisor_pid": supervisor_pid,
     "supervisor_pid_alive": supervisor_alive,
     "supervisor_status": supervisor.get("status"),
     "restart_count": supervisor.get("restart_count"),
+    "watchdog_stale_after_seconds": supervisor.get("watchdog_stale_after_seconds"),
+    "watchdog_startup_grace_seconds": supervisor.get("watchdog_startup_grace_seconds"),
+    "stop_grace_seconds": supervisor.get("stop_grace_seconds"),
+    "last_recycle_reason": supervisor.get("last_recycle_reason"),
     "active_state": progress.get("active_state") or status.get("active_state") or status.get("state"),
     "current_task": progress.get("current_task") or status.get("selected_task"),
     "plan_status_counts": progress.get("plan_status_counts"),
@@ -94,6 +98,7 @@ payload = {
     "status_path": status_path,
     "progress_path": progress_path,
     "supervisor_status_path": supervisor_path,
+    "supervisor_lock_path": supervisor.get("supervisor_lock_path"),
 }
 print(json.dumps(payload, indent=2, sort_keys=True))
 raise SystemExit(0 if alive else 1)
