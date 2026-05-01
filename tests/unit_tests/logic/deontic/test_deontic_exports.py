@@ -1252,16 +1252,17 @@ def test_raw_parser_marks_formula_resolved_override_repair_inactive_without_hidi
     assert element["export_readiness"]["metric_repair_required"] is False
     assert element["resolved_cross_references"] == [
         {
-            "reference_type": "section",
-            "canonical_citation": "section 5.01.020",
-            "value": "section 5.01.020",
+            "type": "section",
+            "value": "5.01.020",
             "raw_text": "section 5.01.020",
+            "normalized_text": "section 5.01.020",
             "span": [16, 32],
             "resolution_scope": "precedence_provenance",
             "resolved": True,
             "resolution_status": "resolved",
             "precedence_only": True,
             "same_document": False,
+            "target_exists": False,
         }
     ]
 

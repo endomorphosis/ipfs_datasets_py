@@ -960,17 +960,19 @@ def _precedence_override_reference_records(element: Dict[str, Any]) -> List[Dict
         key = canonical.lower()
         if key in seen:
             continue
+        raw_text = str(ref.get("raw_text") or ref.get("text") or canonical)
         records.append({
-            "reference_type": reference_type,
-            "canonical_citation": canonical,
-            "value": canonical,
-            "raw_text": str(ref.get("raw_text") or ref.get("text") or canonical),
+            "type": reference_type,
+            "value": value,
+            "raw_text": raw_text,
+            "normalized_text": canonical,
             "span": list(ref.get("span") or []),
             "resolution_scope": "precedence_provenance",
             "resolved": True,
             "resolution_status": "resolved",
             "precedence_only": True,
             "same_document": False,
+            "target_exists": False,
         })
         seen.add(key)
     return records
