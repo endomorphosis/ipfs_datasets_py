@@ -2538,6 +2538,69 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_override_from
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_recovers_detail_only_applicability_without_operator():
+    """A detail-only local applicability row should not stay active repair."""
+    applicability = extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0]
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    raw_evaluation = {
+        "repair_required_count": 2,
+        "repair_required_rate": 1.0,
+        "repair_required_details": [
+            {
+                "sample_id": "applicability",
+                "text": applicability["text"],
+                "source_id": applicability["source_id"],
+                "canonical_citation": applicability["canonical_citation"],
+                "support_text": applicability["support_text"],
+                "support_span": applicability["support_span"],
+                "source_span": applicability.get("source_span", applicability["support_span"]),
+                "norm_type": "applicability",
+                "modality": None,
+                "subject": ["this section"],
+                "action": ["apply to food carts and mobile vendors"],
+                "cross_references": list(applicability.get("cross_reference_details") or []),
+                "parser_warnings": ["cross_reference_requires_resolution"],
+                "llm_repair": {
+                    "required": True,
+                    "reasons": ["cross_reference_requires_resolution"],
+                },
+            },
+            {
+                "sample_id": "cross_reference",
+                "text": unresolved["text"],
+                "source_id": unresolved["source_id"],
+                "canonical_citation": unresolved["canonical_citation"],
+                "support_text": unresolved["support_text"],
+                "support_span": unresolved["support_span"],
+                "source_span": unresolved.get("source_span", unresolved["support_span"]),
+                "norm_type": unresolved["norm_type"],
+                "modality": None,
+                "subject": list(unresolved["subject"]),
+                "action": list(unresolved["action"]),
+                "exceptions": list(unresolved.get("exception_details") or []),
+                "cross_references": list(unresolved.get("cross_reference_details") or []),
+                "parser_warnings": list(unresolved["parser_warnings"]),
+                "llm_repair": {"required": True, "reasons": list(unresolved["parser_warnings"])},
+            },
+        ],
+        "metrics": {"repair_required_count": 2, "repair_required_rate": 1.0, "coverage_gaps": ["repair_required_count: 2"]},
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required"] == [unresolved["source_id"]]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == ["cross_reference"]
+    assert normalized["active_repair_required_by_source_id"][applicability["source_id"]] is False
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conservative():
     """Without parser rows, normalization must not invent cleared repairs."""
     raw_evaluation = {

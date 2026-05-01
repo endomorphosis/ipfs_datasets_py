@@ -590,7 +590,13 @@ def _apply_local_applicability_repair_clearance(elements: List[Dict[str, Any]]) 
 
 
 def _is_local_applicability_element(element: Dict[str, Any]) -> bool:
-    if element.get("norm_type") != "applicability" or element.get("deontic_operator") != "APP":
+    if element.get("norm_type") != "applicability":
+        return False
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip()
+    if operator and operator != "APP":
+        return False
+    action = _first_text(element.get("action")).strip().lower()
+    if not action.startswith(("apply to ", "applies to ", "shall apply to ", "is applicable to ")):
         return False
     subject = _first_text(element.get("subject")).strip().lower()
     if subject not in {
