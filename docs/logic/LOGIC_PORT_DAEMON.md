@@ -44,6 +44,27 @@ Use `--validation-command` to override those checks, or `--skip-validation` for 
 
 ## Supervised Continuous Mode
 
+For unattended overnight runs, prefer the repository supervisor script. It starts the logic-port daemon against the outer TypeScript project root, pins `gpt-5.5` through `codex_cli`, uses 300 second operation timeouts, restarts the child immediately if it exits, revisits blocked tasks, and replenishes the TypeScript port plan when the normal backlog is exhausted:
+
+```bash
+setsid bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
+  </dev/null > ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.out 2>&1 &
+```
+
+Check it with:
+
+```bash
+bash ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh
+```
+
+The supervisor writes:
+
+- `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.pid`
+- `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.status.json`
+- `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.latest.log`
+
+It is deliberately separate from `run_legal_parser_optimizer_daemon.sh`, which supervises the deterministic parser daemon and uses the parser implementation plans.
+
 ```bash
 PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --repo-root . \

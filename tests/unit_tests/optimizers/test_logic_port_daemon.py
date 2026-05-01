@@ -1503,11 +1503,11 @@ def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
 
     updated = plan.read_text(encoding="utf-8")
     assert added == [
-        "Port remaining Python logic module `logic/unported_feature.py` to browser-native TypeScript/WASM, including focused parity tests and no server or Python runtime dependency."
+        "Port remaining Python logic module `logic/unported_feature.py` to browser-native TypeScript/WASM, including focused validation tests and no server or Python runtime dependency."
     ]
     assert "## Daemon-Discovered Implementation Gaps" in updated
     assert "- [ ] Port remaining Python logic module `logic/unported_feature.py`" in updated
-    assert "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused parity tests and no server or Python runtime dependency.`" in updated
+    assert "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused validation tests and no server or Python runtime dependency.`" in updated
 
 
 def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):

@@ -1254,7 +1254,7 @@ Critical correction for attempt {attempt}:
                     continue
                 title = (
                     f"Port remaining Python logic module `logic/{relative}` to browser-native TypeScript/WASM, "
-                    "including focused parity tests and no server or Python runtime dependency."
+                    "including focused validation tests and no server or Python runtime dependency."
                 )
                 if title.lower() not in existing_titles and title not in candidates:
                     candidates.append(title)
