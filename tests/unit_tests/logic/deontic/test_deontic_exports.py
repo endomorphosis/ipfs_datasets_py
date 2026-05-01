@@ -5218,3 +5218,37 @@ def test_ir_procedure_event_records_mark_docketing_trigger_as_prerequisite():
     assert records[0]["span"] == [33, 63]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_entry_trigger_as_prerequisite():
+    """Entry of a final order is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall serve notice after entry of the final order."
+    )[0])
+    element["action"] = ["serve notice after entry final order"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "service",
+                "relation": "triggered_by_entry_of",
+                "anchor_event": "final order",
+                "raw_text": "after entry of the final order",
+                "span": [29, 61],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "service"
+    assert records[0]["event_symbol"] == "Service"
+    assert records[0]["relation"] == "triggered_by_entry_of"
+    assert records[0]["anchor_event"] == "final order"
+    assert records[0]["anchor_symbol"] == "FinalOrder"
+    assert records[0]["raw_text"] == "after entry of the final order"
+    assert records[0]["span"] == [29, 61]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
