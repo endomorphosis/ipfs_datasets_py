@@ -537,6 +537,75 @@ def test_transmittal_actions_omit_structured_recipient_from_unary_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_registry_and_posting_actions_omit_structured_recipient_from_unary_formula():
+    examples = [
+        (
+            "record the deed with the clerk",
+            "record",
+            "deed",
+            "clerk",
+            "action_recipient",
+            [33, 42],
+            "O(∀x (Director(x) → RecordDeed(x)))",
+            "RecordDeedClerk",
+        ),
+        (
+            "register the permit with the Bureau",
+            "register",
+            "permit",
+            "Bureau",
+            "action_recipient",
+            [37, 43],
+            "O(∀x (Director(x) → RegisterPermit(x)))",
+            "RegisterPermitBureau",
+        ),
+        (
+            "post the notice on the premises",
+            "post",
+            "notice",
+            "premises",
+            "action_recipient",
+            [31, 39],
+            "O(∀x (Director(x) → PostNotice(x)))",
+            "PostNoticePremises",
+        ),
+    ]
+
+    for action, verb, action_object, recipient, span_key, span, expected_formula, rejected_predicate in examples:
+        element = dict(extract_normative_elements("The Director shall issue a notice.")[0])
+        element["action"] = [action]
+        element["action_verb"] = verb
+        element["action_object"] = action_object
+        element["action_recipient"] = recipient
+        element["field_spans"] = {
+            **dict(element.get("field_spans") or {}),
+            span_key: span,
+        }
+
+        norm = LegalNormIR.from_parser_element(element)
+        formula = build_deontic_formula_from_ir(norm)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.action == action
+        assert norm.action_object == action_object
+        assert norm.recipient == recipient
+        assert formula == expected_formula
+        assert rejected_predicate not in formula
+        assert record["formula"] == expected_formula
+        assert record["omitted_formula_slots"]["recipients"][0]["value"] == recipient
+        assert record["omitted_formula_slots"]["recipients"][0]["span"] == span
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_notice_duties_omit_structured_recipient_from_object_formula():
     examples = [
         (
