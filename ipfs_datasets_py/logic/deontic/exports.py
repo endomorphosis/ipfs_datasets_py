@@ -507,8 +507,59 @@ def _evaluation_parser_elements(
         candidate = _parser_element_from_evaluation_sample(prompt_context)
         if candidate:
             recovered.append(candidate)
+            continue
+
+        candidate = _parser_element_from_repair_detail(detail)
+        if candidate:
+            recovered.append(candidate)
 
     return recovered
+
+
+def _parser_element_from_repair_detail(detail: Mapping[str, Any]) -> Dict[str, Any]:
+    """Recover parser evidence from a raw repair detail row.
+
+    Some stalled metric payloads preserve only ``repair_required_details`` and
+    omit the original parser rows plus the richer repair prompt context. The
+    detail rows are still source-grounded: they carry source text, source ID,
+    norm type, parser warnings, actor, and action. Recover only that narrow
+    shape and infer the deontic operator from the audited warning pattern plus
+    norm type so existing IR/formula readiness can decide whether repair is
+    still active. Numbered-reference exceptions remain blocked because their
+    cross-reference warning is preserved without resolution evidence.
+    """
+
+    candidate = _parser_element_from_evaluation_sample(detail)
+    if not candidate:
+        return {}
+
+    if candidate.get("deontic_operator"):
+        return candidate
+
+    inferred_operator = _infer_detail_deontic_operator(detail)
+    if not inferred_operator:
+        return {}
+
+    candidate["deontic_operator"] = inferred_operator
+    return candidate
+
+
+def _infer_detail_deontic_operator(detail: Mapping[str, Any]) -> str:
+    norm_type = str(detail.get("norm_type") or "").strip().lower()
+    warnings = set(str(warning) for warning in detail.get("parser_warnings") or [])
+
+    if norm_type == "applicability" and warnings == {"cross_reference_requires_resolution"}:
+        return "APP"
+    if norm_type == "permission" and warnings == {
+        "cross_reference_requires_resolution",
+        "override_clause_requires_precedence_review",
+    }:
+        return "P"
+    if norm_type == "obligation" and "exception_requires_scope_review" in warnings:
+        return "O"
+    if norm_type == "prohibition" and "exception_requires_scope_review" in warnings:
+        return "F"
+    return ""
 
 
 def _raw_repair_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
