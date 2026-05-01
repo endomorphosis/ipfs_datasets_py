@@ -1783,6 +1783,36 @@ def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():
         assert "human_or_llm_semantic_review" in element["export_readiness"]["requires_validation"]
 
 
+def test_raw_parser_projects_top_level_modality_for_repair_probe_details():
+    """Repair detail metrics should not see null modality for parsed clauses."""
+    examples = [
+        ("This section applies to food carts and mobile vendors.", "APP"),
+        (
+            "The applicant shall obtain a permit unless approval is denied.",
+            "O",
+        ),
+        (
+            "Notwithstanding section 5.01.020, the Director may issue a variance.",
+            "P",
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            "O",
+        ),
+    ]
+
+    for text, expected_modality in examples:
+        element = extract_normative_elements(text)[0]
+
+        assert element["deontic_operator"] == expected_modality
+        assert element["modality"] == expected_modality
+
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert unresolved["llm_repair"]["required"] is True
+
+
 def test_raw_parser_keeps_llm_prompt_for_unresolved_numbered_reference_exception():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

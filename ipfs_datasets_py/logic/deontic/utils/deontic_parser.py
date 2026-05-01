@@ -434,6 +434,8 @@ def extract_normative_elements(
             element["hierarchy_path"] = segment["hierarchy_path"]
             element["hierarchy_details"] = segment.get("hierarchy_details", [])
             _finalize_element(element)
+            if element.get("deontic_operator") and not element.get("modality"):
+                element["modality"] = element["deontic_operator"]
             elements.append(element)
     if expand_enumerations:
         elements = expand_enumerated_norms(elements)
