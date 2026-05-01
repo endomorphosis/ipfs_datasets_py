@@ -329,6 +329,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
         }
         progress_payload = self._progress_snapshot()
         metric_stall_mode = self._metric_stall_mode(progress_payload)
+        roadmap_pivot_mode = self._roadmap_pivot_mode(progress_payload)
         irreducible_repair_blockers = self._irreducible_repair_blockers(evaluation)
         irreducible_residual_mode = metric_stall_mode and bool(irreducible_repair_blockers)
         payload = {
@@ -350,6 +351,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
+                "When roadmap_pivot_mode is true, stop adding narrow procedural trigger/export variants. Prioritize Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
                 "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
@@ -357,6 +359,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             ],
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
+            "roadmap_pivot_mode": roadmap_pivot_mode,
             "irreducible_residual_mode": irreducible_residual_mode,
             "irreducible_repair_blockers": irreducible_repair_blockers,
             "test_failure_recovery_mode": test_failure_recovery_mode,
@@ -393,6 +396,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
             "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
+            "If roadmap_pivot_mode is true, implement a Phase 8 encoder/decoder/prover-syntax slice instead of another procedural trigger/export synonym. "
             "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
             "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
             "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false. "
@@ -418,6 +422,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "current_feedback": progress.get("current_feedback", []),
             "accepted_change_summaries": progress.get("accepted_change_summaries", [])[-8:],
             "stalled_metric_cycles": progress.get("stalled_metric_cycles", 0),
+            "cycles_since_meaningful_progress": progress.get("cycles_since_meaningful_progress", 0),
+            "meaningful_progress_definition": progress.get("meaningful_progress_definition", ""),
         }
 
     def _metric_stall_mode(self, progress_payload: Dict[str, Any]) -> bool:
@@ -425,6 +431,34 @@ class LegalParserParityOptimizer(BaseOptimizer):
             return int(progress_payload.get("stalled_metric_cycles", 0) or 0) >= 3
         except (TypeError, ValueError):
             return False
+
+    def _roadmap_pivot_mode(self, progress_payload: Dict[str, Any]) -> bool:
+        """Detect when accepted micro-coverage patches should yield to roadmap work."""
+
+        try:
+            stalled_metric_cycles = int(progress_payload.get("stalled_metric_cycles", 0) or 0)
+        except (TypeError, ValueError):
+            stalled_metric_cycles = 0
+        summaries = progress_payload.get("accepted_change_summaries") or []
+        if len(summaries) < 4:
+            return False
+        recent_text = " ".join(
+            str(item.get("summary") or "") + " " + str(item.get("focus_area") or "")
+            for item in summaries[-8:]
+            if isinstance(item, Mapping)
+        ).lower()
+        phase8_terms = ("encoder", "decoder", "reconstruction", "prover syntax", "prover_syntax")
+        if any(term in recent_text for term in phase8_terms):
+            return False
+        micro_terms = ("procedural", "trigger", "export coverage", "proof prerequisite")
+        micro_signal_count = sum(1 for term in micro_terms if term in recent_text)
+        if stalled_metric_cycles >= 40 and micro_signal_count >= 2:
+            return True
+        try:
+            current_score = float(progress_payload.get("current_score") or 0.0)
+        except (TypeError, ValueError):
+            current_score = 0.0
+        return current_score >= 0.97 and micro_signal_count >= 3
 
     def _irreducible_repair_blockers(self, evaluation: Mapping[str, Any]) -> List[Dict[str, Any]]:
         """Return repair details that should remain blocked without source evidence."""
@@ -725,6 +759,7 @@ class LegalParserOptimizerDaemon:
         attempt_feedback = list(feedback)
         patch_stability_mode = self._patch_stability_mode()
         metric_stall_mode = self._metric_stall_mode()
+        roadmap_pivot_mode = self._roadmap_pivot_mode()
         irreducible_residual_mode = bool(
             self.optimizer._irreducible_repair_blockers(evaluation)
             if isinstance(self.optimizer, LegalParserParityOptimizer)
@@ -746,6 +781,7 @@ class LegalParserOptimizerDaemon:
                 proposal_attempts=max_attempts,
                 patch_stability_mode=patch_stability_mode,
                 metric_stall_mode=metric_stall_mode,
+                roadmap_pivot_mode=roadmap_pivot_mode,
                 irreducible_residual_mode=irreducible_residual_mode,
                 test_failure_recovery_mode=test_failure_recovery_mode,
                 metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
@@ -784,6 +820,12 @@ class LegalParserOptimizerDaemon:
                     )
                 if metric_no_progress_recovery_mode:
                     candidate_quality = self._enforce_metric_no_progress_recovery_quality(
+                        proposal=proposal,
+                        proposal_quality=candidate_quality,
+                        changed_files=candidate_changed_files,
+                    )
+                if roadmap_pivot_mode:
+                    candidate_quality = self._enforce_roadmap_pivot_quality(
                         proposal=proposal,
                         proposal_quality=candidate_quality,
                         changed_files=candidate_changed_files,
@@ -827,6 +869,12 @@ class LegalParserOptimizerDaemon:
                         " The residual repair-required gap is protected; pivot away from clearing "
                         "numbered references and propose deterministic_coverage, parser_capability, "
                         "or coverage_expansion work instead."
+                    )
+                if roadmap_pivot_mode:
+                    retry_instruction += (
+                        " Roadmap pivot mode is active; propose Phase 8 encoder/decoder "
+                        "reconstruction or local theorem-prover syntax validation work, not another "
+                        "procedural trigger/export synonym."
                     )
                 attempt_feedback = list(feedback) + [
                     (
@@ -876,6 +924,12 @@ class LegalParserOptimizerDaemon:
             )
         if metric_no_progress_recovery_mode:
             proposal_quality = self._enforce_metric_no_progress_recovery_quality(
+                proposal=proposal,
+                proposal_quality=proposal_quality,
+                changed_files=changed_files,
+            )
+        if roadmap_pivot_mode:
+            proposal_quality = self._enforce_roadmap_pivot_quality(
                 proposal=proposal,
                 proposal_quality=proposal_quality,
                 changed_files=changed_files,
@@ -1320,6 +1374,11 @@ class LegalParserOptimizerDaemon:
             return False
         return self.optimizer._metric_stall_mode(self.optimizer._progress_snapshot())
 
+    def _roadmap_pivot_mode(self) -> bool:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return False
+        return self.optimizer._roadmap_pivot_mode(self.optimizer._progress_snapshot())
+
     def _test_failure_recovery_mode(self) -> bool:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):
             return False
@@ -1373,6 +1432,9 @@ class LegalParserOptimizerDaemon:
                 "coverage_expansion",
                 "deterministic_coverage",
                 "parser_capability",
+                "encoder_decoder_reconstruction",
+                "prover_syntax_coverage",
+                "reconstruction_quality",
             }
         if gain_keys & accepted_metric_keys:
             return proposal_quality
@@ -1423,6 +1485,64 @@ class LegalParserOptimizerDaemon:
                 "metric no-progress recovery requires a non-exports production parser, IR, formula, or converter change"
             ],
             "metric_no_progress_recovery_mode": True,
+        }
+
+    def _enforce_roadmap_pivot_quality(
+        self,
+        *,
+        proposal: LegalParserCycleProposal,
+        proposal_quality: Dict[str, Any],
+        changed_files: Sequence[str],
+    ) -> Dict[str, Any]:
+        proposal_text = " ".join(
+            [
+                proposal.summary or "",
+                " ".join(proposal.requirements_addressed or []),
+                " ".join(proposal.acceptance_criteria or []),
+                " ".join(str(key) for key in (proposal.expected_metric_gain or {}).keys()),
+                " ".join(str(value) for value in (proposal.expected_metric_gain or {}).values()),
+                " ".join(changed_files),
+            ]
+        ).lower()
+        phase8_terms = (
+            "encoder",
+            "decoder",
+            "reconstruction",
+            "round-trip",
+            "roundtrip",
+            "prover_syntax",
+            "prover syntax",
+            "theorem-prover",
+            "frame logic",
+            "deontic cec",
+            "deontic cognitive event calculus",
+            "deontic temporal first-order logic",
+        )
+        if any(term in proposal_text for term in phase8_terms):
+            return proposal_quality
+        procedural_micro_terms = (
+            "procedural trigger",
+            "triggered_by_",
+            "export coverage",
+            "proof prerequisite",
+            "procedure.event_relations",
+            "timeline coverage",
+        )
+        if any(term in proposal_text for term in procedural_micro_terms):
+            reason = (
+                "roadmap pivot mode rejects additional procedural-trigger/export synonym patches; "
+                "implement Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation"
+            )
+        else:
+            reason = (
+                "roadmap pivot mode requires a Phase 8 encoder/decoder reconstruction or "
+                "local theorem-prover syntax validation slice"
+            )
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", [])) + [reason],
+            "roadmap_pivot_mode": True,
         }
 
     def _protected_reference_repair_invariant_reasons(
@@ -1744,11 +1864,31 @@ class LegalParserOptimizerDaemon:
             if not _cycle_was_kept(cycle)
         ]
 
-        unchanged_tail = 0
+        stalled_metric_cycles = 0
+        cycles_since_meaningful_progress = 0
+        current_score_value = _as_float(current_score)
         for cycle in reversed(cycles):
-            score = cycle.get("score")
-            if score == current_score:
-                unchanged_tail += 1
+            if _cycle_was_kept(cycle):
+                break
+            cycle_score = _cycle_effective_score(cycle)
+            if (
+                current_score_value is not None
+                and cycle_score is not None
+                and abs(cycle_score - current_score_value) <= 1e-9
+            ):
+                stalled_metric_cycles += 1
+            else:
+                break
+        for cycle in reversed(cycles):
+            if _cycle_was_kept(cycle):
+                break
+            cycle_score = _cycle_effective_score(cycle)
+            if (
+                current_score_value is not None
+                and cycle_score is not None
+                and abs(cycle_score - current_score_value) <= 1e-9
+            ):
+                cycles_since_meaningful_progress += 1
             else:
                 break
         return {
@@ -1773,7 +1913,12 @@ class LegalParserOptimizerDaemon:
                 else None
             ),
             "current_feedback": current_feedback,
-            "stalled_metric_cycles": unchanged_tail,
+            "stalled_metric_cycles": stalled_metric_cycles,
+            "cycles_since_meaningful_progress": cycles_since_meaningful_progress,
+            "meaningful_progress_definition": (
+                "retained accepted patch or parser metric score change; retained changes reset "
+                "stall accounting even when parity_score is unchanged"
+            ),
             "git_retained_work": self._git_retained_work_snapshot(),
             "run": {
                 "run_id": self.run_id,
@@ -1842,6 +1987,8 @@ class LegalParserOptimizerDaemon:
             f"- Rejected patches: `{progress.get('rejected_patch_count', 0)}`",
             f"- Current score: `{progress.get('current_score')}`",
             f"- Score delta: `{progress.get('score_delta')}`",
+            f"- Stalled metric cycles: `{progress.get('stalled_metric_cycles', 0)}`",
+            f"- Cycles since meaningful progress: `{progress.get('cycles_since_meaningful_progress', 0)}`",
             "",
             "## Visible Git Work",
             "",
@@ -2348,6 +2495,18 @@ def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:
         and tests.get("valid") is True
         and retained_ok
     )
+
+
+def _cycle_effective_score(cycle_payload: Dict[str, Any]) -> Optional[float]:
+    post_metrics = (cycle_payload.get("post_evaluation") or {}).get("metrics") or {}
+    post_score = _as_float(post_metrics.get("parity_score"))
+    if post_score is not None:
+        return post_score
+    metrics = cycle_payload.get("metrics") or {}
+    metric_score = _as_float(metrics.get("parity_score"))
+    if metric_score is not None:
+        return metric_score
+    return _as_float(cycle_payload.get("score"))
 
 
 def _cycle_rejection_reason(cycle_payload: Dict[str, Any]) -> str:

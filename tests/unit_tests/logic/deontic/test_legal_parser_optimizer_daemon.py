@@ -542,6 +542,49 @@ def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
     assert progress_payload["latest_cycle"]["commit_result"]["committed"] is False
 
 
+def test_progress_stall_accounting_resets_after_retained_patch(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycles = [
+        {
+            "cycle_index": 1,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "patch_check": {"valid": False},
+            "apply_result": {"applied": False, "reason": "patch_check_failed"},
+            "tests": {"valid": True},
+        },
+        {
+            "cycle_index": 2,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "post_evaluation": {"metrics": {"parity_score": 0.9}},
+            "patch_check": {"valid": True},
+            "apply_result": {"applied": True},
+            "tests": {"valid": True},
+            "retained_change": {"has_retained_changes": True},
+        },
+        {
+            "cycle_index": 3,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "patch_check": {"valid": False},
+            "apply_result": {"applied": False, "reason": "patch_check_failed"},
+            "tests": {"valid": True},
+        },
+    ]
+    for cycle in cycles:
+        cycle_dir = tmp_path / f"out/cycles/cycle_{cycle['cycle_index']:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycles[-1])
+
+    assert progress["stalled_metric_cycles"] == 1
+    assert progress["cycles_since_meaningful_progress"] == 1
+    assert "retained changes reset stall accounting" in progress["meaningful_progress_definition"]
+
+
 def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
@@ -1032,6 +1075,89 @@ def test_optimizer_prompt_marks_irreducible_residual_mode(tmp_path):
     assert "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false" in prompt
 
 
+def test_optimizer_prompt_marks_roadmap_pivot_after_procedural_micro_patches(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/exports.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Phase 8 encoder decoder prover syntax.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement reconstruction and prover syntax.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "stalled_metric_cycles": 50,
+                "current_score": 0.9763,
+                "accepted_change_summaries": [
+                    {
+                        "summary": "Add deterministic export coverage for docketing procedural triggers.",
+                        "focus_area": "exports",
+                    },
+                    {
+                        "summary": "Add deterministic export coverage for delivery trigger proof prerequisites.",
+                        "focus_area": "exports",
+                    },
+                    {
+                        "summary": "Add procedural timeline coverage for signature triggers.",
+                        "focus_area": "formula",
+                    },
+                    {
+                        "summary": "Add export coverage for recordkeeping procedure.event_relations.",
+                        "focus_area": "exports",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=10,
+        evaluation={"metrics": {"parity_score": 0.9763}, "repair_required_details": []},
+        feedback=["repair_required_count: 1"],
+    )
+
+    assert '"roadmap_pivot_mode": true' in prompt
+    assert "Phase 8 encoder/decoder/prover-syntax slice" in prompt
+    assert "stop adding narrow procedural trigger/export variants" in prompt
+
+
+def test_roadmap_pivot_activates_on_high_score_micro_patch_run_even_after_retained_change(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "stalled_metric_cycles": 0,
+                "current_score": 0.9763,
+                "accepted_change_summaries": [
+                    {"summary": "Add procedural trigger export coverage.", "focus_area": "exports"},
+                    {"summary": "Add proof prerequisite for procedure.event_relations.", "focus_area": "exports"},
+                    {"summary": "Add procedural timeline trigger coverage.", "focus_area": "formula"},
+                    {"summary": "Add another export coverage trigger.", "focus_area": "exports"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    assert optimizer._roadmap_pivot_mode(optimizer._progress_snapshot()) is True
+
+
 def test_evaluation_records_repair_required_details():
     optimizer = LegalParserParityOptimizer(daemon_config=LegalParserDaemonConfig())
 
@@ -1392,6 +1518,54 @@ def test_metric_no_progress_recovery_allows_exact_same_document_reference_fix(tm
 
     assert result["valid"] is True
     assert result["reasons"] == []
+
+
+def test_roadmap_pivot_quality_rejects_more_procedural_trigger_exports(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(
+        summary="Add deterministic export coverage for another procedural trigger proof prerequisite.",
+        requirements_addressed=["procedural timeline export coverage"],
+        acceptance_criteria=["procedure.event_relations classify a new triggered_by_foo_of relation"],
+        expected_metric_gain={"coverage_expansion": "procedural trigger export coverage"},
+    )
+    quality = {"valid": True, "reasons": []}
+
+    result = daemon._enforce_roadmap_pivot_quality(
+        proposal=proposal,
+        proposal_quality=quality,
+        changed_files=[
+            "ipfs_datasets_py/logic/deontic/exports.py",
+            "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+        ],
+    )
+
+    assert result["valid"] is False
+    assert result["roadmap_pivot_mode"] is True
+    assert any("procedural-trigger/export synonym" in reason for reason in result["reasons"])
+
+
+def test_roadmap_pivot_quality_allows_phase8_prover_syntax_slice(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(
+        summary="Add local theorem-prover syntax validation for LegalNormIR exports.",
+        requirements_addressed=["Phase 8 prover syntax"],
+        acceptance_criteria=["frame logic and deontic temporal first-order logic syntax checks run"],
+        expected_metric_gain={"prover_syntax_coverage": "local logic stack syntax validation"},
+    )
+    quality = {"valid": True, "reasons": []}
+
+    result = daemon._enforce_roadmap_pivot_quality(
+        proposal=proposal,
+        proposal_quality=quality,
+        changed_files=[
+            "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+            "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+        ],
+    )
+
+    assert result["valid"] is True
 
 
 def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):

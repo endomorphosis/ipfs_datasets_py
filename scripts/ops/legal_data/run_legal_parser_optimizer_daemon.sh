@@ -191,8 +191,11 @@ cooling_down = last_maintenance_at > 0 and now - last_maintenance_at < cooldown_
 latest_cycle_index = int(progress.get("latest_cycle_index") or status.get("cycle_index") or 0)
 accepted_count = int(progress.get("retained_accepted_patch_count") or progress.get("accepted_patch_count") or 0)
 rolled_back_count = int(progress.get("rolled_back_count") or 0)
-rejected_count = int(progress.get("rejected_count") or 0)
+rejected_count = int(progress.get("rejected_patch_count") or progress.get("rejected_count") or 0)
 stalled_metric_cycles = int(progress.get("stalled_metric_cycles") or 0)
+cycles_since_meaningful_progress = int(
+    progress.get("cycles_since_meaningful_progress") or stalled_metric_cycles
+)
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
 baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
@@ -212,8 +215,16 @@ updated_epoch = parse_epoch(status.get("updated_at") or status.get("heartbeat_at
 cycle_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
 
 reason = ""
-if not cooling_down and stalled_metric_cycles >= stalled_metric_threshold:
-    reason = f"stalled_metric_cycles:{stalled_metric_cycles}:threshold:{stalled_metric_threshold}"
+if (
+    not cooling_down
+    and stalled_metric_cycles >= stalled_metric_threshold
+    and cycles_since_meaningful_progress >= stalled_metric_threshold
+):
+    reason = (
+        f"stalled_metric_cycles:{stalled_metric_cycles}:"
+        f"cycles_since_meaningful_progress:{cycles_since_meaningful_progress}:"
+        f"threshold:{stalled_metric_threshold}"
+    )
 elif not cooling_down and rolled_back_delta >= rolled_back_tail_threshold:
     reason = f"rolled_back_without_acceptance:{rolled_back_delta}:threshold:{rolled_back_tail_threshold}"
 elif not cooling_down and rejected_delta >= rejected_tail_threshold:
@@ -234,6 +245,7 @@ state.update(
         "rolled_back_count": rolled_back_count,
         "rejected_count": rejected_count,
         "stalled_metric_cycles": stalled_metric_cycles,
+        "cycles_since_meaningful_progress": cycles_since_meaningful_progress,
         "cycles_since_acceptance": cycle_delta,
         "rolled_back_since_acceptance": rolled_back_delta,
         "rejected_since_acceptance": rejected_delta,

@@ -7,13 +7,13 @@ STALE_AFTER_SECONDS="${STALE_AFTER_SECONDS:-120}"
 
 cd "$REPO_ROOT" || exit 2
 
-python3 - "$OUTPUT_DIR/current_status.json" ".daemon/legal_parser_daemon_supervisor.json" "$STALE_AFTER_SECONDS" <<'PY'
+python3 - "$OUTPUT_DIR/current_status.json" ".daemon/legal_parser_daemon_supervisor.json" "$OUTPUT_DIR/progress_summary.json" "$STALE_AFTER_SECONDS" <<'PY'
 import json
 import os
 import sys
 from datetime import datetime, timezone
 
-status_path, supervisor_path, stale_after_raw = sys.argv[1:4]
+status_path, supervisor_path, progress_path, stale_after_raw = sys.argv[1:5]
 stale_after = float(stale_after_raw)
 
 
@@ -45,6 +45,7 @@ def pid_alive(pid):
 
 current = read_json(status_path)
 supervisor = read_json(supervisor_path)
+progress = read_json(progress_path)
 now = datetime.now(timezone.utc)
 heartbeat_at = parse_ts(current.get("heartbeat_at") or current.get("updated_at"))
 heartbeat_age = None
@@ -76,6 +77,9 @@ payload = {
     "last_recycle_reason": supervisor.get("last_recycle_reason"),
     "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
     "agentic_stalled_metric_cycles": supervisor.get("agentic_stalled_metric_cycles"),
+    "stalled_metric_cycles": progress.get("stalled_metric_cycles"),
+    "cycles_since_meaningful_progress": progress.get("cycles_since_meaningful_progress"),
+    "meaningful_progress_definition": progress.get("meaningful_progress_definition"),
     "agentic_rejected_tail": supervisor.get("agentic_rejected_tail"),
     "agentic_rolled_back_tail": supervisor.get("agentic_rolled_back_tail"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
