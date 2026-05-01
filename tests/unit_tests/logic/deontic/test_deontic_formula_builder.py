@@ -321,6 +321,83 @@ def test_batch_formula_records_do_not_resolve_absent_numbered_reference_exceptio
     assert record["deterministic_resolution"] == {}
 
 
+def test_batch_formula_records_resolve_complete_plural_section_list_exception():
+    first_reference = extract_normative_elements("The clerk shall maintain the index.")[0]
+    first_reference = dict(first_reference)
+    first_reference["canonical_citation"] = "section 552"
+    second_reference = extract_normative_elements("The agency shall keep records.")[0]
+    second_reference = dict(second_reference)
+    second_reference["canonical_citation"] = "section 553"
+
+    exception_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    exception_element = dict(exception_element)
+    exception_element["exception_details"] = [
+        {
+            "type": "cross_reference",
+            "value": "as provided in sections 552 and 553",
+            "span": [43, 82],
+        }
+    ]
+    exception_element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "raw_text": "sections 552 and 553",
+            "span": [58, 82],
+        }
+    ]
+    exception_element["resolved_cross_references"] = []
+
+    records = build_deontic_formula_records_from_irs(
+        [
+            LegalNormIR.from_parser_element(first_reference),
+            LegalNormIR.from_parser_element(second_reference),
+            LegalNormIR.from_parser_element(exception_element),
+        ]
+    )
+    exception_record = records[2]
+
+    assert exception_record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Sections552And553" not in exception_record["formula"]
+    assert exception_record["proof_ready"] is True
+    assert exception_record["requires_validation"] is False
+    assert exception_record["repair_required"] is False
+    assert exception_record["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert exception_record["deterministic_resolution"]["references"] == [
+        "section 552",
+        "section 553",
+    ]
+
+
+def test_batch_formula_records_keep_partial_plural_section_list_exception_blocked():
+    first_reference = extract_normative_elements("The clerk shall maintain the index.")[0]
+    first_reference = dict(first_reference)
+    first_reference["canonical_citation"] = "section 552"
+    exception_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    exception_element = dict(exception_element)
+    exception_element["exception_details"] = [
+        {"type": "cross_reference", "value": "as provided in sections 552 and 553", "span": [43, 82]}
+    ]
+    exception_element["cross_reference_details"] = [
+        {"reference_type": "section", "raw_text": "sections 552 and 553", "span": [58, 82]}
+    ]
+    exception_element["resolved_cross_references"] = []
+
+    records = build_deontic_formula_records_from_irs(
+        [LegalNormIR.from_parser_element(first_reference), LegalNormIR.from_parser_element(exception_element)]
+    )
+
+    assert records[1]["proof_ready"] is False
+    assert records[1]["requires_validation"] is True
+    assert records[1]["repair_required"] is True
+    assert records[1]["deterministic_resolution"] == {}
+
+
 def test_batch_formula_records_resolve_same_document_numbered_reference_condition():
     reference_element = extract_normative_elements("The clerk shall maintain the index.")[0]
     reference_element = dict(reference_element)

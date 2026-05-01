@@ -21,6 +21,10 @@ _LEGAL_REFERENCE_TEXT_RE = re.compile(
     r"([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
     re.IGNORECASE,
 )
+_LEGAL_REFERENCE_LIST_TEXT_RE = re.compile(
+    r"(?:\bsections\s+)([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)+)",
+    re.IGNORECASE,
+)
 _LOCAL_SCOPE_REFERENCE_EXCEPTION_RE = re.compile(
     r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+this\s+"
     r"(section|subsection|chapter|title|article|part)$",
@@ -188,12 +192,14 @@ def _resolve_norm_same_document_references(
         if not isinstance(reference, dict) or _reference_is_external(reference):
             continue
 
-        citation = _reference_section_citation(reference)
-        if not citation or citation not in section_index or citation in existing:
+        citations = _reference_section_citations(reference)
+        if not citations or any(citation not in section_index for citation in citations):
             continue
 
-        additions.append(
-            {
+        for citation in citations:
+            if citation in existing:
+                continue
+            additions.append({
                 "reference_type": "section",
                 "target": citation[len("section ") :],
                 "canonical_citation": citation,
@@ -204,8 +210,8 @@ def _resolve_norm_same_document_references(
                 "source_id": section_index[citation],
                 "span": reference.get("span", []),
             }
-        )
-        existing.add(citation)
+            )
+            existing.add(citation)
 
     if not additions:
         return norm
@@ -225,6 +231,18 @@ def _reference_section_citation(reference: Mapping[str, Any]) -> str:
     return ""
 
 
+def _reference_section_citations(reference: Mapping[str, Any]) -> List[str]:
+    citations: List[str] = []
+    for key in ("canonical_citation", "citation", "value", "normalized_text", "raw_text", "text"):
+        for citation in _section_citations_from_text(str(reference.get(key) or "")):
+            if citation not in citations:
+                citations.append(citation)
+    single = _reference_section_citation(reference)
+    if single and single not in citations:
+        citations.append(single)
+    return citations
+
+
 def _canonical_section_citation(text: str) -> str:
     match = _LEGAL_REFERENCE_TEXT_RE.search(str(text or ""))
     if not match:
@@ -233,6 +251,21 @@ def _canonical_section_citation(text: str) -> str:
     if raw.startswith("§"):
         return f"section {match.group(1).lower()}"
     return raw
+
+
+def _section_citations_from_text(text: str) -> List[str]:
+    source = str(text or "")
+    citations: List[str] = []
+    for match in _LEGAL_REFERENCE_LIST_TEXT_RE.finditer(source):
+        for part in re.split(r"\s*(?:,|and|or)\s*", match.group(1)):
+            token = part.strip().lower()
+            if token:
+                citations.append(f"section {token}")
+    for match in _LEGAL_REFERENCE_TEXT_RE.finditer(source):
+        citation = f"section {match.group(1).lower()}"
+        if citation not in citations:
+            citations.append(citation)
+    return citations
 
 
 def _section_context_citations(norm: LegalNormIR) -> List[str]:
@@ -984,7 +1017,11 @@ def _reference_text_matches_slot(reference_text: str, slot_text: str) -> bool:
         return True
     reference_citation = _canonical_section_citation(reference)
     slot_citation = _canonical_section_citation(slot)
-    return bool(reference_citation and slot_citation and reference_citation == slot_citation)
+    if reference_citation and slot_citation and reference_citation == slot_citation:
+        return True
+    reference_citations = set(_section_citations_from_text(reference))
+    slot_citations = set(_section_citations_from_text(slot))
+    return bool(reference_citations and reference_citations.issubset(slot_citations))
 
 
 def _local_scope_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
