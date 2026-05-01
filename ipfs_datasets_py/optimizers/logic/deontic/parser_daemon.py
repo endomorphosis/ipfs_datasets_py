@@ -308,11 +308,13 @@ class LegalParserParityOptimizer(BaseOptimizer):
         patch_stability_mode = self._patch_stability_mode(recent_cycle_history)
         recent_failed_patch_files = self._recent_failed_patch_files(recent_cycle_history)
         recent_test_failures = self._recent_test_failures(recent_cycle_history)
+        recent_test_failed_files = self._recent_test_failed_files(recent_test_failures)
+        expanded_snapshot_files = set(recent_failed_patch_files) | set(recent_test_failed_files)
         test_failure_recovery_mode = bool(recent_test_failures)
         file_payload = {
             path: _read_text(
                 self.daemon_config.repo_root / path,
-                limit=70000 if path in recent_failed_patch_files else 20000,
+                limit=70000 if path in expanded_snapshot_files else 20000,
             )
             for path in self.daemon_config.target_files
             if (self.daemon_config.repo_root / path).is_file()
@@ -343,6 +345,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "metric_stall_mode": metric_stall_mode,
             "test_failure_recovery_mode": test_failure_recovery_mode,
             "recent_failed_patch_files": recent_failed_patch_files,
+            "recent_test_failed_files": recent_test_failed_files,
             "recent_test_failures": recent_test_failures,
             "docs": docs_payload,
             "evaluation": evaluation,
@@ -494,6 +497,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
             )
         return failures[:5]
 
+    def _recent_test_failed_files(self, recent_test_failures: Sequence[Dict[str, Any]]) -> List[str]:
+        files: List[str] = []
+        for item in recent_test_failures:
+            for path in item.get("changed_files") or []:
+                text = str(path)
+                if text and text not in files:
+                    files.append(text)
+        return files[:8]
+
     def check_patch(self, unified_diff: str) -> Dict[str, Any]:
         if not unified_diff.strip():
             return {"valid": False, "returncode": 1, "stdout": "", "stderr": "empty unified diff"}
@@ -616,6 +628,7 @@ class LegalParserOptimizerDaemon:
         attempt_feedback = list(feedback)
         patch_stability_mode = self._patch_stability_mode()
         metric_stall_mode = self._metric_stall_mode()
+        test_failure_recovery_mode = self._test_failure_recovery_mode()
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -630,6 +643,7 @@ class LegalParserOptimizerDaemon:
                 proposal_attempts=max_attempts,
                 patch_stability_mode=patch_stability_mode,
                 metric_stall_mode=metric_stall_mode,
+                test_failure_recovery_mode=test_failure_recovery_mode,
             )
             try:
                 proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
@@ -1062,6 +1076,12 @@ class LegalParserOptimizerDaemon:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):
             return False
         return self.optimizer._metric_stall_mode(self.optimizer._progress_snapshot())
+
+    def _test_failure_recovery_mode(self) -> bool:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return False
+        history = self.optimizer._recent_cycle_history(limit=5)
+        return bool(self.optimizer._recent_test_failures(history))
 
     def _enforce_patch_stability_quality(
         self,
