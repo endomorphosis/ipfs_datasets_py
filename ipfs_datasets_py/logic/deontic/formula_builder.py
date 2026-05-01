@@ -212,7 +212,7 @@ def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
     if norm.modality != "O":
         return False
     return bool(re.match(
-        r"^prevent\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
+        r"^(?:prevent|prohibit|bar|block)\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
@@ -234,7 +234,7 @@ def _strip_prevention_action(action_text: str) -> str:
     """Remove a prevention wrapper from narrow legally salient actions."""
 
     embedded = re.sub(
-        r"^prevent\s+",
+        r"^(?:prevent|prohibit|bar|block)\s+",
         "",
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
