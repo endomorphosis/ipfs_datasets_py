@@ -553,16 +553,33 @@ def _evaluation_parser_elements(
 def _evaluation_repair_required_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
     """Return raw repair details from top-level or nested metrics payloads."""
 
+    recovered: List[Mapping[str, Any]] = []
+    seen: set[str] = set()
+
+    def add_details(details: Any) -> None:
+        if not isinstance(details, list):
+            return
+        for detail in details:
+            if not isinstance(detail, Mapping):
+                continue
+            key = "|".join(
+                str(detail.get(field) or "")
+                for field in ("source_id", "sample_id", "text")
+            )
+            if key and key in seen:
+                continue
+            if key:
+                seen.add(key)
+            recovered.append(detail)
+
     details = evaluation.get("repair_required_details")
-    if isinstance(details, list):
-        return [detail for detail in details if isinstance(detail, Mapping)]
+    add_details(details)
 
     metrics = evaluation.get("metrics")
     if isinstance(metrics, Mapping):
-        metric_details = metrics.get("repair_required_details")
-        if isinstance(metric_details, list):
-            return [detail for detail in metric_details if isinstance(detail, Mapping)]
-    return []
+        add_details(metrics.get("repair_required_details"))
+
+    return recovered
 
 
 def _dedupe_evaluation_parser_elements(elements: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
