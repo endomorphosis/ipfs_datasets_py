@@ -1243,6 +1243,7 @@ def test_daemon_stops_without_llm_when_no_eligible_tasks_remain(tmp_path):
         result_log_path=log_path,
         status_path=status_path,
         progress_path=progress_path,
+        replenish_plan_when_empty=False,
     )
 
     results = LogicPortDaemonOptimizer(config, llm_router=router).run_supervised(cycles=0)
