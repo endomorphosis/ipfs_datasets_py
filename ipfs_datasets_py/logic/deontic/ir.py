@@ -46,6 +46,33 @@ def _enumeration_index(value: Any) -> Optional[int]:
     return roman_values.get(text.lower())
 
 
+def _modality_from_parser_element(element: Dict[str, Any]) -> str:
+    """Return a stable deontic operator for parser and detail-only rows.
+
+    Optimizer/evaluation payloads sometimes carry the structured ``norm_type``
+    but omit ``deontic_operator``. The IR can recover the operator from that
+    already-classified slot without inspecting raw source text or relaxing any
+    parser warning. Unknown norm types still stay empty and blocked downstream.
+    """
+
+    for key in ("deontic_operator", "modality"):
+        value = str(element.get(key) or "").strip().upper()
+        if value in {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}:
+            return value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    return {
+        "obligation": "O",
+        "penalty": "O",
+        "permission": "P",
+        "prohibition": "F",
+        "definition": "DEF",
+        "applicability": "APP",
+        "exemption": "EXEMPT",
+        "instrument_lifecycle": "LIFE",
+    }.get(norm_type, "")
+
+
 def _slot_detail_records(
     element: Dict[str, Any],
     detail_key: str,
@@ -350,7 +377,7 @@ class LegalNormIR:
             support_text=str(element.get("support_text") or ""),
             source_span=SourceSpan.from_value(source_span_value),
             support_span=SourceSpan.from_value(element.get("support_span")),
-            modality=str(element.get("deontic_operator") or ""),
+            modality=_modality_from_parser_element(element),
             norm_type=str(element.get("norm_type") or ""),
             actor=_first_text(element.get("subject")),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),

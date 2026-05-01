@@ -1,5 +1,6 @@
 """Tests for deterministic IR-to-formula generation."""
 
+
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -1615,3 +1616,75 @@ def test_ir_explicit_source_span_still_takes_precedence_over_support_span():
 
     assert norm.source_span.to_list() == [0, 34]
     assert norm.support_span.to_list() == [4, 34]
+
+
+def test_detail_only_substantive_exception_infers_obligation_operator_for_resolution():
+    element = dict(extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0])
+    element["deontic_operator"] = None
+    element["modality"] = None
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert record["formula"] == "O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == "standard_substantive_exception"
+
+
+def test_detail_only_applicability_infers_app_operator_for_local_scope_resolution():
+    element = dict(extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0])
+    element["deontic_operator"] = None
+    element["modality"] = None
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "APP"
+    assert record["formula"] == "AppliesTo(ThisSection, FoodCartsAndMobileVendors)"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == "local_scope_applicability"
+
+
+def test_detail_only_override_infers_permission_operator_for_precedence_resolution():
+    element = dict(extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )[0])
+    element["deontic_operator"] = None
+    element["modality"] = None
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "P"
+    assert record["formula"] == "P(∀x (Director(x) → IssueVariance(x)))"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == "pure_precedence_override"
+
+
+def test_detail_only_numbered_reference_exception_infers_operator_but_stays_blocked():
+    element = dict(extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0])
+    element["deontic_operator"] = None
+    element["modality"] = None
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
