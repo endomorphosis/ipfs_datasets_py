@@ -57,6 +57,10 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --validation-repair-attempts 1 \
+  --revisit-blocked-tasks \
+  --blocked-backlog-limit 10 \
+  --blocked-task-strategy fewest-failures \
+  --plan-replenishment-limit 12 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --progress-file ipfs_datasets_py/.daemon/logic-port-daemon.progress.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
@@ -90,6 +94,22 @@ That file records total rounds, valid rounds, acceptance rate, current task, cur
 
 The daemon blocks the current task after repeated failures in two ways: `--max-task-failures` counts total failures for the task since its last accepted round, while `max_task_failure_rounds` still guards repeated same-kind failures. This prevents a task from spinning forever by alternating between parse, patch, and validation failures.
 
+At the beginning of each supervised cycle, the daemon also checks historical JSONL results before calling the LLM. If the selected task already exceeds the total-failure threshold, it marks that task blocked and advances immediately, avoiding one more wasted Codex call on work that is already known to be stuck.
+
+If every parsed port-plan task is already `[x]` complete or `[!]` blocked, the daemon now stops before calling `llm_router`. It writes a terminal `no_eligible_tasks` result to the JSONL log, status file, progress summary, and generated task board. That makes overnight runs fail closed at the plan boundary instead of spending Codex calls on an empty target. Add new `[ ]` tasks or deliberately unblock `[!]` tasks before restarting autonomous work.
+
+By default, continuous mode now tries to replenish the TypeScript port plan before taking that terminal stop. If no eligible tasks remain, it scans the current Python logic inventory and TypeScript logic implementation state, appends a `Daemon-Discovered Implementation Gaps` section to `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`, refreshes the generated task board, and immediately continues with the newly added task. Use `--plan-replenishment-limit` to bound how many tasks are added in one pass, or `--no-plan-replenishment` to keep the old fail-closed behavior.
+
+Use `--revisit-blocked-tasks` when the normal backlog is exhausted and you intentionally want the daemon to work through blocked tasks again. In that mode, selection still prefers `[ ]` and `[~]` tasks first; only when none remain does it select `[!]` tasks. The stale-failure pre-cycle blocker is disabled for this mode so historical failures do not immediately re-block the task before the new attempt. A successful round marks the blocked source checkbox `[x]`; a failed round leaves it blocked and records the latest failure evidence.
+
+Blocked task selection is controlled by `--blocked-task-strategy`:
+
+- `plan-order` keeps the markdown order and is the conservative default.
+- `fewest-failures` chooses the blocked task with the fewest failures since its last accepted round, which is useful for overnight unblocking runs that should make easier progress first.
+- `most-failures` chooses the task with the most failures first when you want to concentrate on the worst blocker.
+
+Blocked-task revisit mode also writes a `Blocked Backlog` section to the generated task board and includes the same backlog context in the LLM prompt. Each entry records the task label, failure count since the last accepted round, failure-kind counts, and the latest compact error. Use `--blocked-backlog-limit` to control how many blocked tasks are summarized.
+
 The daemon also encodes local test-harness conventions. Logic tests run under Jest with global `describe`/`it`/`expect`, so proposals importing `vitest` or `@jest/globals` are rejected before any files are written. This avoids failed autonomous cycles that create valid-looking tests for the wrong runner.
 
 ## Markdown Task Tracking
@@ -100,7 +120,8 @@ On each daemon round it:
 
 - parses Markdown task checkboxes from the porting plan;
 - treats `[x]` as complete, `[ ]` as needed, `[~]` as in progress, and `[!]` as blocked;
-- selects the first task that is not complete and injects that task into the next LLM prompt;
+- selects the first needed or in-progress task and injects that task into the next LLM prompt;
+- optionally revisits blocked tasks with `--revisit-blocked-tasks` after the needed/in-progress backlog is exhausted;
 - updates the task board after the round with the current target, checklist state, latest result, and follow-up instructions.
 
 The task board is generated between marker comments, so manual plan prose can stay stable while the daemon rewrites only its own tracking section.

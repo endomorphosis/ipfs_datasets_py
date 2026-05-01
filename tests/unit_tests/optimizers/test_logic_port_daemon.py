@@ -132,6 +132,158 @@ def test_extract_plan_tasks_reads_port_plan_checkboxes():
     ]
 
 
+def test_daemon_selection_skips_blocked_tasks(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Blocked task\n- [ ] Ready task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Ready task"
+
+
+def test_daemon_selection_can_revisit_blocked_tasks_when_enabled(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n- [!] Blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        revisit_blocked_tasks=True,
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Blocked task"
+
+
+def test_revisit_blocked_tasks_can_select_fewest_failures(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Hard blocked task\n- [!] Easier blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    hard_rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Hard blocked task",
+                "summary": f"hard {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(3)
+    ]
+    easy_row = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-2: Easier blocked task",
+            "summary": "easy",
+            "failure_kind": "validation",
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [*hard_rows, easy_row]}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Easier blocked task"
+
+
+def test_task_board_marks_artifact_target_not_next_strategy_target(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Hard blocked task\n- [!] Easier blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    hard_rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Hard blocked task",
+                "summary": f"hard {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(4)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": hard_rows}) + "\n", encoding="utf-8")
+    latest = {
+        "valid": True,
+        "artifact": {
+            "target_task": "Task checkbox-1: Hard blocked task",
+            "summary": "hard fixed",
+            "changed_files": ["src/lib/logic/feature.ts"],
+            "validation_results": [],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([latest])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [x] Hard blocked task" in updated
+    assert "- [!] Easier blocked task" in updated
+    assert "Current target: `Task checkbox-2: Easier blocked task`" in updated
+    assert "Target: `Task checkbox-1: Hard blocked task`" in updated
+
+
 def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     plan = tmp_path / "plan.md"
     status = tmp_path / "status.md"
@@ -1018,6 +1170,387 @@ def test_task_board_blocks_after_total_failures_across_kinds(tmp_path):
 
     updated = plan.read_text(encoding="utf-8")
     assert "- [!] Mixed failure task" in updated
+
+
+def test_supervised_blocks_stale_failed_task_before_llm_call(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    status_path = tmp_path / "daemon" / "status.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Stale failed task\n- [ ] Fresh task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Stale failed task",
+                "summary": f"failed {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(2)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        status_path=status_path,
+        max_task_total_failure_rounds=2,
+    )
+
+    blocked = LogicPortDaemonOptimizer(config, llm_router=FailingRouter())._block_current_task_if_stale_failed()
+
+    updated = plan.read_text(encoding="utf-8")
+    status_payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert blocked is True
+    assert "- [!] Stale failed task" in updated
+    assert "Current target: `Task checkbox-2: Fresh task`" in updated
+    assert status_payload["state"] == "task_blocked_before_cycle"
+
+
+def test_daemon_stops_without_llm_when_no_eligible_tasks_remain(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    status_path = tmp_path / "daemon" / "status.json"
+    progress_path = tmp_path / "daemon" / "progress.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n- [!] Blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "should not be called", "patch": ""}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        status_path=status_path,
+        progress_path=progress_path,
+    )
+
+    results = LogicPortDaemonOptimizer(config, llm_router=router).run_supervised(cycles=0)
+
+    assert len(results) == 1
+    assert results[0]["valid"] is True
+    assert results[0]["metadata"]["terminal_reason"] == "no_eligible_tasks"
+    assert results[0]["artifact"]["failure_kind"] == "no_eligible_tasks"
+    assert router.calls == []
+    status_payload = json.loads(status_path.read_text(encoding="utf-8"))
+    progress_payload = json.loads(progress_path.read_text(encoding="utf-8"))
+    log_rows = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+    assert status_payload["state"] == "no_eligible_tasks"
+    assert progress_payload["active_state"] == "no_eligible_tasks"
+    assert progress_payload["rounds_total"] == 0
+    assert progress_payload["valid_rounds_total"] == 0
+    assert progress_payload["terminal_events_total"] == 1
+    assert progress_payload["plan_status_counts"] == {"complete": 1, "blocked": 1}
+    assert log_rows[0]["results"][0]["metadata"]["terminal_reason"] == "no_eligible_tasks"
+
+
+def test_supervised_revisit_blocked_tasks_calls_llm_instead_of_terminal_stop(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [x] Complete task\n- [!] Blocked runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    router = FakeRouter(
+        json.dumps(
+            {
+                "summary": "Revisit blocked runtime feature",
+                "patch": "",
+                "files": [{"path": "src/lib/logic/feature.ts", "content": "new\n"}],
+            }
+        )
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+    )
+
+    results = LogicPortDaemonOptimizer(config, llm_router=router).run_supervised(cycles=1)
+
+    assert len(results) == 1
+    assert results[0]["valid"] is True
+    assert router.calls
+    assert "Task checkbox-2: Blocked runtime feature" in router.calls[0]["prompt"]
+    assert target.read_text(encoding="utf-8") == "new\n"
+    assert "- [x] Blocked runtime feature" in plan.read_text(encoding="utf-8")
+
+
+def test_revisit_blocked_prompt_includes_blocked_backlog_context(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n- [!] Blocked runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-2: Blocked runtime feature",
+            "summary": "bad blocked attempt",
+            "failure_kind": "validation",
+            "errors": ["src/lib/logic/feature.ts(1,1): error TS1005"],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "empty", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        proposal_attempts=1,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="blocked-context")
+
+    prompt = router.calls[0]["prompt"]
+    assert "Blocked backlog context" in prompt
+    assert "Task checkbox-2: Blocked runtime feature" in prompt
+    assert "TS1005" in prompt
+    assert "failure kinds" in prompt
+
+
+def test_task_board_includes_blocked_backlog_failure_evidence(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n- [!] Blocked runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-2: Blocked runtime feature",
+            "summary": "bad blocked attempt",
+            "failure_kind": "validation",
+            "errors": ["validation failed"],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "### Blocked Backlog" in updated
+    assert "Task checkbox-2: Blocked runtime feature" in updated
+    assert "Latest failure kind: `validation`" in updated
+    assert "Latest errors: validation failed" in updated
+
+
+def test_task_board_notes_blocked_task_selection_strategy(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Hard blocked task\n- [!] Easier blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Hard blocked task",
+                "summary": f"hard {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(4)
+    ]
+    rows.append(
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-2: Easier blocked task",
+                "summary": "easy",
+                "failure_kind": "validation",
+            },
+        }
+    )
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "with `fewest-failures` strategy" in updated
+    assert "Current target: `Task checkbox-2: Easier blocked task`" in updated
+
+
+def test_run_daemon_stops_without_llm_when_no_eligible_tasks_remain(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n", encoding="utf-8")
+    status.write_text("| runtime | complete |\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "should not be called", "patch": ""}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        validation_commands=tuple(),
+    )
+
+    results = LogicPortDaemonOptimizer(config, llm_router=router).run_daemon()
+
+    assert len(results) == 1
+    assert results[0]["metadata"]["terminal_reason"] == "no_eligible_tasks"
+    assert router.calls == []
+    assert "Current target: `none`" in plan.read_text(encoding="utf-8")
+
+
+def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (python_logic_dir / "unported_feature.py").write_text("class UnportedFeature: pass\n", encoding="utf-8")
+    plan.write_text("- [x] Existing complete task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        plan_replenishment_limit=3,
+    )
+
+    added = LogicPortDaemonOptimizer(config)._replenish_plan_from_code_state()
+
+    updated = plan.read_text(encoding="utf-8")
+    assert added == [
+        "Port remaining Python logic module `logic/unported_feature.py` to browser-native TypeScript/WASM, including focused parity tests and no server or Python runtime dependency."
+    ]
+    assert "## Daemon-Discovered Implementation Gaps" in updated
+    assert "- [ ] Port remaining Python logic module `logic/unported_feature.py`" in updated
+    assert "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused parity tests and no server or Python runtime dependency.`" in updated
+
+
+def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    (python_logic_dir / "feature_gap.py").write_text("class FeatureGap: pass\n", encoding="utf-8")
+    plan.write_text("- [x] Existing complete task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    router = FakeRouter(
+        json.dumps(
+            {
+                "summary": "Port replenished feature",
+                "patch": "",
+                "files": [{"path": "src/lib/logic/feature.ts", "content": "new\n"}],
+            }
+        )
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        result_log_path=log_path,
+        plan_replenishment_limit=1,
+    )
+
+    results = LogicPortDaemonOptimizer(config, llm_router=router).run_supervised(cycles=1)
+
+    assert len(results) == 1
+    assert results[0]["valid"] is True
+    assert router.calls
+    assert "feature_gap.py" in router.calls[0]["prompt"]
+    assert target.read_text(encoding="utf-8") == "new\n"
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

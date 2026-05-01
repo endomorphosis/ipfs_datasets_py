@@ -187,6 +187,11 @@ class LogicPortDaemonConfig:
     prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
     update_task_board: bool = True
+    revisit_blocked_tasks: bool = False
+    blocked_backlog_limit: int = 10
+    blocked_task_strategy: str = "plan-order"
+    replenish_plan_when_empty: bool = True
+    plan_replenishment_limit: int = 12
 
     def resolve(self, path: Path) -> Path:
         return path if path.is_absolute() else self.repo_root / path
@@ -421,6 +426,28 @@ def _current_task_failure_counts(
         kind = _classify_failure_kind(artifact)
         by_kind[kind] = by_kind.get(kind, 0) + 1
     return {"total_since_success": total, "by_kind_since_success": by_kind}
+
+
+def _task_failure_summary(
+    rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
+    task_label: str,
+) -> Dict[str, Any]:
+    counts = _current_task_failure_counts(rows, task_label)
+    latest_failure: Dict[str, Any] = {}
+    for result, artifact in reversed(rows):
+        if artifact.get("target_task") != task_label:
+            continue
+        if result.get("valid"):
+            break
+        latest_failure = {
+            "summary": _compact_message(artifact.get("summary", ""), limit=240),
+            "failure_kind": _classify_failure_kind(artifact),
+            "errors": [_compact_message(error, limit=240) for error in artifact.get("errors", [])[:3]]
+            if isinstance(artifact.get("errors", []), list)
+            else [_compact_message(artifact.get("errors", ""), limit=240)],
+        }
+        break
+    return {**counts, "latest_failure": latest_failure}
 
 
 def _slugify(value: str, *, limit: int = 80) -> str:
@@ -896,10 +923,11 @@ Critical correction for attempt {attempt}:
         results: List[Dict[str, Any]] = []
         session_id = f"logic-port-daemon-{uuid.uuid4()}"
         heartbeat_stop, heartbeat_thread = self._start_status_heartbeat()
+        selected_task = self._current_plan_task()
         self._write_status(
             "session_started",
             session_id=session_id,
-            selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+            selected_task=selected_task.label if selected_task else "",
         )
         log_session_start(
             LOGGER,
@@ -920,13 +948,24 @@ Critical correction for attempt {attempt}:
         started = time.time()
 
         try:
+            terminal_result = self._no_eligible_task_result()
+            if terminal_result is not None:
+                results.append(terminal_result)
+                self._write_status(
+                    "no_eligible_tasks",
+                    session_id=session_id,
+                    artifact=terminal_result.get("artifact", {}),
+                )
+                return results
+
             for iteration in range(self.daemon_config.max_iterations):
                 iteration_started = time.time()
+                selected_task = self._current_plan_task()
                 self._write_status(
                     "iteration_started",
                     session_id=session_id,
                     iteration=iteration + 1,
-                    selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+                    selected_task=selected_task.label if selected_task else "",
                 )
                 log_iteration_started(
                     LOGGER,
@@ -940,11 +979,12 @@ Critical correction for attempt {attempt}:
                 results.append(result)
                 score = float(result.get("score", 0.0))
                 valid = bool(result.get("valid", False))
+                selected_task = self._current_plan_task()
                 self._write_status(
                     "iteration_completed",
                     session_id=session_id,
                     iteration=iteration + 1,
-                    selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+                    selected_task=selected_task.label if selected_task else "",
                     valid=valid,
                     score=score,
                     artifact=result.get("artifact", {}),
@@ -1036,7 +1076,43 @@ Critical correction for attempt {attempt}:
 
         while cycles <= 0 or completed_cycles < cycles:
             completed_cycles += 1
-            self._write_status("cycle_started", cycle=completed_cycles, selected_task=self._current_plan_task().label if self._current_plan_task() else "")
+            self._block_current_task_if_stale_failed()
+            terminal_result = self._no_eligible_task_result()
+            if terminal_result is not None:
+                added_tasks = self._replenish_plan_from_code_state()
+                if added_tasks:
+                    self._write_status(
+                        "plan_replenished",
+                        cycle=completed_cycles,
+                        added_tasks=added_tasks,
+                        selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+                    )
+                    self._write_progress_summary(
+                        completed_cycles=completed_cycles,
+                        consecutive_failure_cycles=failure_cycles,
+                        active_state="plan_replenished",
+                    )
+                    completed_cycles -= 1
+                    continue
+
+                all_results.append(terminal_result)
+                self._update_task_board([terminal_result])
+                self._write_status(
+                    "no_eligible_tasks",
+                    cycle=completed_cycles,
+                    artifact=terminal_result.get("artifact", {}),
+                )
+                self._write_progress_summary(
+                    cycle_results=[terminal_result],
+                    completed_cycles=completed_cycles,
+                    consecutive_failure_cycles=failure_cycles,
+                    active_state="no_eligible_tasks",
+                )
+                self._append_result_log([terminal_result])
+                break
+
+            selected_task = self._current_plan_task()
+            self._write_status("cycle_started", cycle=completed_cycles, selected_task=selected_task.label if selected_task else "")
             self._write_progress_summary(
                 completed_cycles=completed_cycles,
                 consecutive_failure_cycles=failure_cycles,
@@ -1044,8 +1120,8 @@ Critical correction for attempt {attempt}:
             )
             cycle_results = self.run_daemon()
             all_results.extend(cycle_results)
-            self._append_result_log(cycle_results)
             self._write_progress_summary(cycle_results=cycle_results, completed_cycles=completed_cycles, consecutive_failure_cycles=failure_cycles)
+            self._append_result_log(cycle_results)
             cycle_valid = bool(cycle_results and cycle_results[-1].get("valid"))
             self._write_status(
                 "cycle_completed",
@@ -1076,6 +1152,171 @@ Critical correction for attempt {attempt}:
 
         return all_results
 
+    def _no_eligible_task_result(self) -> Optional[Dict[str, Any]]:
+        tasks = self._current_plan_tasks()
+        if not tasks or self._select_next_plan_task(tasks) is not None:
+            return None
+
+        counts: Dict[str, int] = {}
+        for task in tasks:
+            counts[task.status] = counts.get(task.status, 0) + 1
+        summary = "No eligible TypeScript port-plan tasks remain."
+        if counts.get("blocked"):
+            summary += " Blocked tasks require plan updates or a deliberate unblock before more autonomous work can run."
+
+        return {
+            "artifact": {
+                "summary": summary,
+                "target_task": "",
+                "impact": "The daemon stopped before calling the LLM because every parsed port-plan task is complete or blocked.",
+                "tasks": [],
+                "has_patch": False,
+                "files": [],
+                "applied": False,
+                "dry_run": self.daemon_config.dry_run,
+                "validation_passed": False,
+                "validation_results": [],
+                "errors": [],
+                "changed_files": [],
+                "failure_kind": "no_eligible_tasks",
+                "plan_status_counts": counts,
+            },
+            "score": 1.0,
+            "iterations": 0,
+            "valid": True,
+            "metadata": {
+                "model_name": self.daemon_config.model_name,
+                "provider": self._resolved_provider() or "auto",
+                "terminal_reason": "no_eligible_tasks",
+            },
+        }
+
+    def _replenish_plan_from_code_state(self) -> List[str]:
+        if (
+            self.daemon_config.dry_run
+            or not self.daemon_config.replenish_plan_when_empty
+            or self.daemon_config.task_board_doc is None
+        ):
+            return []
+        limit = max(0, int(self.daemon_config.plan_replenishment_limit))
+        if limit <= 0:
+            return []
+
+        plan_path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
+        if not plan_path.exists():
+            return []
+
+        original = plan_path.read_text(encoding="utf-8")
+        task_text = _strip_daemon_task_board(original)
+        existing_titles = {task.title.lower() for task in extract_plan_tasks(task_text)}
+        candidates = self._discover_plan_replenishment_tasks(existing_titles, limit=limit)
+        if not candidates:
+            return []
+
+        section_heading = "## Daemon-Discovered Implementation Gaps"
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        lines = [
+            "",
+            section_heading,
+            "",
+            f"Last replenished: {timestamp}",
+            "",
+            "These tasks were added automatically after the daemon found no eligible unchecked port-plan items. They are derived from the current Python logic inventory and TypeScript/WASM implementation state.",
+            "",
+        ]
+        lines.extend(f"- [ ] {title}" for title in candidates)
+
+        if section_heading in task_text:
+            task_text = task_text.rstrip() + "\n" + "\n".join(f"- [ ] {title}" for title in candidates) + "\n"
+        else:
+            task_text = task_text.rstrip() + "\n\n" + "\n".join(lines) + "\n"
+
+        tasks_after = extract_plan_tasks(task_text)
+        current_target = self._select_next_plan_task(tasks_after)
+        board = self._render_task_board(tasks_after, current_target=current_target, latest_target=current_target, results=[])
+        plan_path.write_text(task_text.rstrip() + "\n\n" + board + "\n", encoding="utf-8")
+        return candidates
+
+    def _discover_plan_replenishment_tasks(self, existing_titles: set[str], *, limit: int) -> List[str]:
+        candidates: List[str] = []
+        ts_root = self.daemon_config.resolve(self.daemon_config.typescript_logic_dir)
+        py_root = self.daemon_config.resolve(self.daemon_config.python_logic_dir)
+        ts_files = [path for path in ts_root.rglob("*.ts") if path.is_file()] if ts_root.exists() else []
+        ts_stems = {path.stem.lower() for path in ts_files}
+
+        if py_root.exists():
+            for path in sorted(py_root.rglob("*.py")):
+                if path.name == "__init__.py" or path.name.startswith("test_"):
+                    continue
+                relative = path.relative_to(py_root).as_posix()
+                stem = path.stem.lower()
+                if stem in ts_stems:
+                    continue
+                title = (
+                    f"Port remaining Python logic module `logic/{relative}` to browser-native TypeScript/WASM, "
+                    "including focused parity tests and no server or Python runtime dependency."
+                )
+                if title.lower() not in existing_titles and title not in candidates:
+                    candidates.append(title)
+                if len(candidates) >= limit:
+                    return candidates
+
+        gap_patterns = (
+            ("nlpUnavailable", "Replace remaining `nlpUnavailable` capability paths with browser-native NLP parity or explicit local model artifact loading."),
+            ("mlUnavailable", "Replace remaining `mlUnavailable` capability paths with browser-native ML confidence parity or explicit local model artifact loading."),
+            ("not implemented", "Resolve remaining TypeScript logic `not implemented` markers with browser-native implementations or documented parity exceptions."),
+            ("unsupported", "Audit remaining TypeScript logic `unsupported` paths and convert feasible ones into browser-native TypeScript/WASM implementations."),
+        )
+        for pattern, title in gap_patterns:
+            if title.lower() in existing_titles or title in candidates:
+                continue
+            for path in ts_files:
+                try:
+                    text = path.read_text(encoding="utf-8", errors="ignore")
+                except OSError:
+                    continue
+                if pattern in text:
+                    candidates.append(title)
+                    break
+            if len(candidates) >= limit:
+                return candidates
+
+        fallback = "Audit current TypeScript logic port against the Python logic inventory and add focused parity tasks for any remaining browser-native behavior gaps."
+        if not candidates and fallback.lower() not in existing_titles:
+            candidates.append(fallback)
+        return candidates[:limit]
+
+    def _block_current_task_if_stale_failed(self) -> bool:
+        if self.daemon_config.dry_run or self.daemon_config.task_board_doc is None:
+            return False
+        if self.daemon_config.revisit_blocked_tasks:
+            return False
+        if self.daemon_config.max_task_total_failure_rounds <= 0 or self.daemon_config.result_log_path is None:
+            return False
+        path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
+        if not path.exists():
+            return False
+        original = path.read_text(encoding="utf-8")
+        task_text = _strip_daemon_task_board(original)
+        tasks = extract_plan_tasks(task_text)
+        current = self._select_next_plan_task(tasks)
+        if current is None:
+            return False
+        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        if _recent_total_failure_count(rows, current.label) < self.daemon_config.max_task_total_failure_rounds:
+            return False
+        task_text = _replace_checkbox_mark(task_text, current, "!")
+        tasks_after = extract_plan_tasks(task_text)
+        next_target = self._select_next_plan_task(tasks_after)
+        board = self._render_task_board(tasks_after, current_target=next_target, latest_target=current, results=[])
+        path.write_text(task_text.rstrip() + "\n\n" + board + "\n", encoding="utf-8")
+        self._write_status(
+            "task_blocked_before_cycle",
+            blocked_task=current.label,
+            selected_task=next_target.label if next_target else "",
+        )
+        return True
+
     def _append_result_log(self, results: List[Dict[str, Any]]) -> None:
         if self.daemon_config.result_log_path is None:
             return
@@ -1104,16 +1345,23 @@ Critical correction for attempt {attempt}:
             if isinstance(artifact, dict):
                 rows.append((result, artifact))
 
-        valid_rows = [(result, artifact) for result, artifact in rows if result.get("valid")]
+        terminal_rows = [
+            (result, artifact)
+            for result, artifact in rows
+            if artifact.get("failure_kind") == "no_eligible_tasks"
+            or (isinstance(result.get("metadata"), dict) and result.get("metadata", {}).get("terminal_reason") == "no_eligible_tasks")
+        ]
+        work_rows = [(result, artifact) for result, artifact in rows if (result, artifact) not in terminal_rows]
+        valid_rows = [(result, artifact) for result, artifact in work_rows if result.get("valid")]
         latest_result, latest_artifact = rows[-1] if rows else ({}, {})
         failure_kind_counts: Dict[str, int] = {}
         recent_failures = []
-        for result, artifact in rows:
+        for result, artifact in work_rows:
             if result.get("valid"):
                 continue
             kind = _classify_failure_kind(artifact)
             failure_kind_counts[kind] = failure_kind_counts.get(kind, 0) + 1
-        for result, artifact in rows[-20:]:
+        for result, artifact in work_rows[-20:]:
             if result.get("valid"):
                 continue
             recent_failures.append(
@@ -1129,6 +1377,7 @@ Critical correction for attempt {attempt}:
         current_task = self._current_plan_task()
         tasks = self._current_plan_tasks()
         current_task_counts = _current_task_failure_counts(rows, current_task.label) if current_task else {}
+        blocked_backlog = self._blocked_task_backlog(tasks, rows)
         status_counts: Dict[str, int] = {}
         for task in tasks:
             status_counts[task.status] = status_counts.get(task.status, 0) + 1
@@ -1141,12 +1390,15 @@ Critical correction for attempt {attempt}:
             "active_state": active_state,
             "completed_cycles_this_process": completed_cycles,
             "consecutive_failure_cycles": consecutive_failure_cycles,
-            "rounds_total": len(rows),
+            "rounds_total": len(work_rows),
+            "terminal_events_total": len(terminal_rows),
             "valid_rounds_total": len(valid_rows),
-            "invalid_rounds_total": len(rows) - len(valid_rows),
-            "acceptance_rate": (len(valid_rows) / len(rows)) if rows else 0.0,
+            "invalid_rounds_total": len(work_rows) - len(valid_rows),
+            "acceptance_rate": (len(valid_rows) / len(work_rows)) if work_rows else 0.0,
             "current_task": current_task.label if current_task else "",
             "current_task_failure_counts": current_task_counts,
+            "blocked_backlog": blocked_backlog,
+            "blocked_task_strategy": self.daemon_config.blocked_task_strategy,
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "latest_round": {
@@ -1350,7 +1602,7 @@ Critical correction for attempt {attempt}:
 
         latest = results[-1] if results else {}
         latest_valid = bool(latest.get("valid"))
-        latest_target = self._select_next_plan_task(tasks_before)
+        latest_target = self._task_from_latest_result(tasks_before, latest) or self._select_next_plan_task(tasks_before)
         if latest_valid and latest_target is not None:
             task_text = _replace_checkbox_mark(task_text, latest_target, "x")
         elif latest_target is not None and self._should_block_task(latest_target, latest):
@@ -1363,6 +1615,22 @@ Critical correction for attempt {attempt}:
         board = self._render_task_board(tasks_after, current_target=current_target, latest_target=latest_target, results=results)
         updated = task_text.rstrip() + "\n\n" + board + "\n"
         path.write_text(updated, encoding="utf-8")
+
+    def _task_from_latest_result(self, tasks: Sequence[PlanTask], latest: Dict[str, Any]) -> Optional[PlanTask]:
+        artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
+        target_label = str(artifact.get("target_task") or "").replace("`", "'").strip()
+        if not target_label:
+            return None
+        for task in tasks:
+            if self._markdown_task_label(task) == target_label or task.label == target_label:
+                return task
+        id_match = re.search(r"Task\s+([^:\s]+):", target_label)
+        if id_match:
+            task_id = id_match.group(1)
+            for task in tasks:
+                if task.task_id == task_id:
+                    return task
+        return None
 
     def _should_block_task(self, task: PlanTask, latest: Dict[str, Any]) -> bool:
         if self.daemon_config.max_task_failure_rounds <= 0 and self.daemon_config.max_task_total_failure_rounds <= 0:
@@ -1384,12 +1652,82 @@ Critical correction for attempt {attempt}:
         )
         return same_kind_blocked or total_blocked
 
+    def _blocked_task_backlog(
+        self,
+        tasks: Sequence[PlanTask],
+        rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
+    ) -> List[Dict[str, Any]]:
+        limit = max(0, int(self.daemon_config.blocked_backlog_limit))
+        if limit <= 0:
+            return []
+        backlog: List[Dict[str, Any]] = []
+        for task in tasks:
+            if task.status != "blocked":
+                continue
+            summary = _task_failure_summary(rows, task.label)
+            backlog.append(
+                {
+                    "task": task.label,
+                    "task_id": task.task_id,
+                    "title": task.title,
+                    "total_failures_since_success": summary.get("total_since_success", 0),
+                    "failure_kinds_since_success": summary.get("by_kind_since_success", {}),
+                    "latest_failure": summary.get("latest_failure", {}),
+                }
+            )
+            if len(backlog) >= limit:
+                break
+        return backlog
+
+    def _blocked_task_backlog_markdown(
+        self,
+        tasks: Sequence[PlanTask],
+        rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
+    ) -> str:
+        backlog = self._blocked_task_backlog(tasks, rows)
+        if not backlog:
+            return "[No blocked tasks in the current daemon backlog.]"
+        lines: List[str] = []
+        for item in backlog:
+            latest = item.get("latest_failure", {}) if isinstance(item.get("latest_failure"), dict) else {}
+            errors = latest.get("errors", []) if isinstance(latest.get("errors", []), list) else []
+            task_label = str(item.get("task", "")).replace("`", "'")
+            lines.append(f"- `{task_label}`")
+            lines.append(f"  - failures since success: `{item.get('total_failures_since_success', 0)}`")
+            kinds = item.get("failure_kinds_since_success", {})
+            if kinds:
+                lines.append(f"  - failure kinds: `{json.dumps(kinds, sort_keys=True)}`")
+            if latest:
+                lines.append(f"  - latest failure kind: `{latest.get('failure_kind', '')}`")
+                if latest.get("summary"):
+                    lines.append(f"  - latest summary: {latest.get('summary')}")
+                if errors:
+                    lines.append(f"  - latest errors: {'; '.join(str(error) for error in errors[:2])}")
+        return "\n".join(lines)
+
     def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
-        for status in ("needed", "in-progress", "blocked"):
+        for status in ("needed", "in-progress"):
             for task in tasks:
                 if task.status == status:
                     return task
-        return tasks[0] if tasks else None
+        if self.daemon_config.revisit_blocked_tasks:
+            return self._select_blocked_plan_task(tasks)
+        return None
+
+    def _select_blocked_plan_task(self, tasks: Sequence[PlanTask]) -> Optional[PlanTask]:
+        blocked = [(index, task) for index, task in enumerate(tasks) if task.status == "blocked"]
+        if not blocked:
+            return None
+        strategy = self.daemon_config.blocked_task_strategy
+        if strategy == "plan-order" or self.daemon_config.result_log_path is None:
+            return blocked[0][1]
+
+        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        if strategy == "fewest-failures":
+            return min(blocked, key=lambda item: (_recent_total_failure_count(rows, item[1].label), item[0]))[1]
+        if strategy == "most-failures":
+            return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), item[0]))[1]
+        return blocked[0][1]
 
     def _render_task_board(
         self,
@@ -1409,6 +1747,14 @@ Critical correction for attempt {attempt}:
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         current_target_label = self._markdown_task_label(current_target) if current_target else "none"
         latest_target_label = self._markdown_task_label(latest_target) if latest_target else "none"
+        rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+        if self.daemon_config.result_log_path is not None:
+            rows.extend(_read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path)))
+        for result in results:
+            artifact = result.get("artifact", {}) if isinstance(result, dict) else {}
+            if isinstance(artifact, dict):
+                rows.append((result, artifact))
+        blocked_backlog = self._blocked_task_backlog(tasks, rows)
 
         lines = [
             "<!-- logic-port-daemon-task-board:start -->",
@@ -1416,7 +1762,7 @@ Critical correction for attempt {attempt}:
             "",
             f"Last updated: {timestamp}",
             "",
-            "Selection policy: choose the first port-plan checkbox that is not marked complete, keep the daemon scoped to that task, and update this board after every daemon round.",
+            self._task_board_selection_policy(),
             "",
             f"Current target: `{current_target_label}`",
             "",
@@ -1460,6 +1806,24 @@ Critical correction for attempt {attempt}:
         if latest_artifact.get("failure_kind"):
             lines.append(f"- Failure kind: `{latest_artifact.get('failure_kind')}`")
 
+        lines.extend(["", "### Blocked Backlog", ""])
+        if blocked_backlog:
+            for item in blocked_backlog:
+                latest_failure = item.get("latest_failure", {}) if isinstance(item.get("latest_failure"), dict) else {}
+                kinds = item.get("failure_kinds_since_success", {})
+                task_label = str(item.get("task", "")).replace("`", "'")
+                lines.append(f"- `{task_label}`")
+                lines.append(f"  - Failures since success: `{item.get('total_failures_since_success', 0)}`")
+                if kinds:
+                    lines.append(f"  - Failure kinds: `{json.dumps(kinds, sort_keys=True)}`")
+                if latest_failure.get("failure_kind"):
+                    lines.append(f"  - Latest failure kind: `{latest_failure.get('failure_kind')}`")
+                if latest_failure.get("errors"):
+                    errors = latest_failure.get("errors", [])
+                    lines.append(f"  - Latest errors: {'; '.join(str(error) for error in errors[:2])}")
+        else:
+            lines.append("- No blocked tasks in the current daemon backlog.")
+
         lines.extend(
             [
                 "",
@@ -1474,6 +1838,14 @@ Critical correction for attempt {attempt}:
             ]
         )
         return "\n".join(lines)
+
+    def _task_board_selection_policy(self) -> str:
+        if self.daemon_config.revisit_blocked_tasks:
+            return (
+                "Selection policy: choose the first needed or in-progress port-plan checkbox; if none remain, "
+                f"revisit blocked checkboxes with `{self.daemon_config.blocked_task_strategy}` strategy because blocked-task revisit mode is enabled."
+            )
+        return "Selection policy: choose the first port-plan checkbox that is not marked complete, keep the daemon scoped to that task, and update this board after every daemon round."
 
     def _markdown_task_label(self, task: Optional[PlanTask]) -> str:
         return task.label.replace("`", "'") if task else "none"
@@ -1943,6 +2315,12 @@ Attempted file replacements:
         )
         recent_failure_context = self._recent_failure_context(selected_task)
         relevant_file_context = self._relevant_file_context(selected_task, file_inventory.stdout)
+        blocked_backlog_context = "[No blocked backlog context available.]"
+        if self.daemon_config.task_board_doc is not None:
+            rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+            if self.daemon_config.result_log_path is not None:
+                rows.extend(_read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path)))
+            blocked_backlog_context = self._blocked_task_backlog_markdown(plan_tasks, rows)
 
         prompt = f"""You are implementing the browser-native TypeScript/WASM port of ipfs_datasets_py logic.
 
@@ -2008,6 +2386,9 @@ Relevant tracked files:
 Recent daemon failures for the selected task:
 {recent_failure_context}
 
+Blocked backlog context:
+{blocked_backlog_context}
+
 Relevant current file contents:
 {relevant_file_context}
 
@@ -2055,6 +2436,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
     parser.add_argument("--validation-repair-attempts", type=int, default=1, help="Attempts to repair complete file replacements after validation errors.")
     parser.add_argument("--proposal-attempts", type=int, default=3, help="LLM proposal attempts per daemon cycle before logging a failed round.")
+    parser.add_argument("--revisit-blocked-tasks", action="store_true", help="When no needed/in-progress tasks remain, intentionally select blocked port-plan tasks for another autonomous attempt.")
+    parser.add_argument("--blocked-backlog-limit", type=int, default=10, help="Number of blocked tasks to summarize in progress, prompts, and the generated task board.")
+    parser.add_argument(
+        "--blocked-task-strategy",
+        choices=("plan-order", "fewest-failures", "most-failures"),
+        default="plan-order",
+        help="Blocked-task selection strategy used with --revisit-blocked-tasks.",
+    )
+    parser.add_argument("--no-plan-replenishment", action="store_true", help="Disable automatic plan replenishment when no eligible tasks remain.")
+    parser.add_argument("--plan-replenishment-limit", type=int, default=12, help="Maximum implementation-plan tasks to add during one automatic code-state replenishment pass.")
     parser.add_argument("--skip-validation", action="store_true", help="Do not run validation commands")
     parser.add_argument("--validation-command", action="append", default=[], help="Validation command, shell-split by spaces")
     return parser
@@ -2093,6 +2484,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         file_repair_attempts=max(0, args.file_repair_attempts),
         validation_repair_attempts=max(0, args.validation_repair_attempts),
         proposal_attempts=max(1, args.proposal_attempts),
+        revisit_blocked_tasks=bool(args.revisit_blocked_tasks),
+        blocked_backlog_limit=max(0, args.blocked_backlog_limit),
+        blocked_task_strategy=args.blocked_task_strategy,
+        replenish_plan_when_empty=not bool(args.no_plan_replenishment),
+        plan_replenishment_limit=max(0, args.plan_replenishment_limit),
     )
     optimizer = LogicPortDaemonOptimizer(config)
     results = optimizer.run_supervised(cycles=max(0, args.cycles)) if args.watch else optimizer.run_daemon()
