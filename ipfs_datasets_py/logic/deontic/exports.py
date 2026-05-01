@@ -31,6 +31,7 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "proof_obligations": {"primary_key": "proof_obligation_id", "requires_source_id": True},
     "repair_queue": {"primary_key": "repair_id", "requires_source_id": True},
     "decoder_reconstructions": {"primary_key": "reconstruction_id", "requires_source_id": True},
+    "prover_syntax_summaries": {"primary_key": "prover_syntax_summary_id", "requires_source_id": True},
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -279,6 +280,56 @@ def build_prover_syntax_records_from_ir(
     return [record.to_dict() for record in validate_ir_with_provers(norm, targets).targets]
 
 
+def build_prover_syntax_summary_record_from_ir(
+    norm: LegalNormIR,
+    targets: Iterable[str] | None = None,
+) -> Dict[str, Any]:
+    """Build a document-level Phase 8 syntax summary for local prover targets.
+
+    The summary is diagnostic export metadata. It reports whether the formulas
+    rendered from this IR are accepted by the local syntax adapters, but it does
+    not relax parser warnings, repair rows, or theorem-promotion gates.
+    """
+
+    records = build_prover_syntax_records_from_ir(norm, targets)
+    checked_records = [record for record in records if record.get("skipped") is not True]
+    valid_count = sum(1 for record in checked_records if record.get("syntax_valid") is True)
+    invalid_records = [record for record in checked_records if record.get("syntax_valid") is not True]
+    diagnostics: Dict[str, int] = {}
+    for record in invalid_records:
+        for diagnostic in record.get("diagnostics") or []:
+            text = str(diagnostic)
+            diagnostics[text] = diagnostics.get(text, 0) + 1
+
+    target_names = [str(record.get("target") or "") for record in records]
+    required_targets_passed = bool(checked_records) and valid_count == len(checked_records)
+
+    return {
+        "prover_syntax_summary_id": _stable_id(
+            "prover_syntax",
+            norm.source_id,
+            "|".join(target_names),
+            str(valid_count),
+            str(len(checked_records)),
+        ),
+        "source_id": norm.source_id,
+        "canonical_citation": norm.canonical_citation,
+        "target_count": len(records),
+        "checked_target_count": len(checked_records),
+        "syntax_valid_count": valid_count,
+        "syntax_invalid_count": len(invalid_records),
+        "syntax_valid_rate": (valid_count / len(checked_records)) if checked_records else 0.0,
+        "required_targets_passed": required_targets_passed,
+        "proof_ready": norm.proof_ready,
+        "requires_validation": bool(norm.blockers) or not required_targets_passed,
+        "parser_warnings": list(norm.quality.parser_warnings),
+        "targets": target_names,
+        "diagnostic_distribution": diagnostics,
+        "prover_syntax_records": records,
+        "schema_version": norm.schema_version,
+    }
+
+
 def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     """Build an auditable Phase 8 reconstruction row from typed legal IR.
 
@@ -409,6 +460,7 @@ def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[s
         "proof_obligations": [],
         "repair_queue": [],
         "decoder_reconstructions": [],
+        "prover_syntax_summaries": [],
     }
 
     resolved_norms = _with_same_document_reference_resolutions(list(norms))
@@ -419,6 +471,7 @@ def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[s
         proof_record = build_proof_obligation_record_from_ir(norm)
         tables["proof_obligations"].append(proof_record)
         tables["decoder_reconstructions"].append(build_decoder_record_from_ir(norm))
+        tables["prover_syntax_summaries"].append(build_prover_syntax_summary_record_from_ir(norm))
         if proof_record["requires_validation"]:
             tables["repair_queue"].append(build_repair_queue_record_from_ir(norm))
 

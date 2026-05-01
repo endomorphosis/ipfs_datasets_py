@@ -7,6 +7,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
+    build_prover_syntax_summary_record_from_ir,
     build_proof_obligation_record_from_ir,
     build_procedure_event_records_from_ir,
     build_prover_syntax_records_from_ir,
@@ -238,6 +239,45 @@ def test_ir_prover_syntax_records_do_not_clear_blocked_numbered_reference_except
     assert proof_record["repair_required"] is True
     assert proof_record["deterministic_resolution"] == {}
     assert "cross_reference_requires_resolution" in proof_record["blockers"]
+
+
+def test_ir_prover_syntax_summary_record_reports_required_targets_without_promotion():
+    proof_ready_element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    blocked_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    proof_ready_summary = build_prover_syntax_summary_record_from_ir(
+        LegalNormIR.from_parser_element(proof_ready_element)
+    )
+    blocked_summary = build_prover_syntax_summary_record_from_ir(
+        LegalNormIR.from_parser_element(blocked_element)
+    )
+
+    assert proof_ready_summary["prover_syntax_summary_id"].startswith("prover_syntax:")
+    assert proof_ready_summary["source_id"] == proof_ready_element["source_id"]
+    assert proof_ready_summary["targets"] == [
+        "frame_logic",
+        "deontic_cec",
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+    ]
+    assert proof_ready_summary["target_count"] == 5
+    assert proof_ready_summary["checked_target_count"] == 5
+    assert proof_ready_summary["syntax_valid_count"] == 5
+    assert proof_ready_summary["syntax_invalid_count"] == 0
+    assert proof_ready_summary["syntax_valid_rate"] == 1.0
+    assert proof_ready_summary["required_targets_passed"] is True
+    assert proof_ready_summary["proof_ready"] is True
+    assert proof_ready_summary["requires_validation"] is False
+
+    assert blocked_summary["source_id"] == blocked_element["source_id"]
+    assert blocked_summary["syntax_valid_count"] == 5
+    assert blocked_summary["required_targets_passed"] is True
+    assert blocked_summary["proof_ready"] is False
+    assert blocked_summary["requires_validation"] is True
+    assert "cross_reference_requires_resolution" in blocked_summary["parser_warnings"]
 
 
 def test_ir_decoder_record_exports_grounded_reconstruction_for_proof_ready_clause():
@@ -739,13 +779,19 @@ def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_nor
     tables = build_document_export_tables_from_ir(norms)
 
     assert set(tables) == {
-        "canonical", "formal_logic", "proof_obligations", "repair_queue", "decoder_reconstructions"
+        "canonical",
+        "formal_logic",
+        "proof_obligations",
+        "repair_queue",
+        "decoder_reconstructions",
+        "prover_syntax_summaries",
     }
     assert len(tables["canonical"]) == 2
     assert len(tables["formal_logic"]) == 2
     assert len(tables["proof_obligations"]) == 2
     assert len(tables["repair_queue"]) == 1
     assert len(tables["decoder_reconstructions"]) == 2
+    assert len(tables["prover_syntax_summaries"]) == 2
 
     proof_ready_rows = [row for row in tables["proof_obligations"] if row["proof_ready"]]
     blocked_rows = [row for row in tables["proof_obligations"] if not row["proof_ready"]]
@@ -765,6 +811,14 @@ def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_nor
         "Secretary shall publish the notice except as provided in section 552."
     )
     assert tables["decoder_reconstructions"][1]["requires_validation"] is True
+    assert [row["source_id"] for row in tables["prover_syntax_summaries"]] == [
+        norm.source_id for norm in norms
+    ]
+    assert tables["prover_syntax_summaries"][0]["required_targets_passed"] is True
+    assert tables["prover_syntax_summaries"][0]["requires_validation"] is False
+    assert tables["prover_syntax_summaries"][1]["required_targets_passed"] is True
+    assert tables["prover_syntax_summaries"][1]["requires_validation"] is True
+    assert "cross_reference_requires_resolution" in tables["prover_syntax_summaries"][1]["parser_warnings"]
 
     validation = validate_export_tables(tables)
     assert validation == {"valid": True, "errors": []}
