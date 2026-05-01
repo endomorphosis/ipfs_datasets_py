@@ -1588,7 +1588,7 @@ def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):
     assert target.read_text(encoding="utf-8") == "new\n"
 
 
-def test_generate_retries_file_replacement_after_typescript_syntax_preflight(tmp_path, monkeypatch):
+def test_generate_retries_file_replacement_after_typescript_replacement_preflight(tmp_path, monkeypatch):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
     logic_dir = tmp_path / "src" / "lib" / "logic"
@@ -1621,10 +1621,10 @@ def test_generate_retries_file_replacement_after_typescript_syntax_preflight(tmp
     def fake_syntax_preflight(self, edits):
         content = "\n".join(str(edit.get("content", "")) for edit in edits)
         if "value = ;" in content:
-            return ["Rejected proposal because TypeScript parser preflight found syntax errors before touching the worktree."]
+            return ["Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree."]
         return []
 
-    monkeypatch.setattr(logic_port_daemon.LogicPortDaemonOptimizer, "_typescript_syntax_preflight_errors", fake_syntax_preflight)
+    monkeypatch.setattr(logic_port_daemon.LogicPortDaemonOptimizer, "_typescript_replacement_preflight_errors", fake_syntax_preflight)
     config = LogicPortDaemonConfig(
         repo_root=tmp_path,
         plan_docs=(plan,),
@@ -1641,8 +1641,28 @@ def test_generate_retries_file_replacement_after_typescript_syntax_preflight(tmp
 
     assert result["valid"] is True
     assert len(router.calls) == 2
-    assert "TypeScript parser preflight" in router.calls[1]["prompt"]
+    assert "TypeScript replacement preflight" in router.calls[1]["prompt"]
     assert target.read_text(encoding="utf-8") == 'export const value = "new";\n'
+
+
+def test_typescript_replacement_preflight_rejects_missing_generic_arguments(tmp_path):
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    config = LogicPortDaemonConfig(
+        repo_root=Path.cwd(),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        validation_commands=tuple(),
+    )
+
+    errors = LogicPortDaemonOptimizer(config)._typescript_replacement_preflight_errors(
+        [{"path": "src/lib/logic/example.ts", "content": "export const value: Record = {};\n"}]
+    )
+
+    assert errors
+    assert "TS2314" in errors[0]
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

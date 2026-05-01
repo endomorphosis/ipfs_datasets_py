@@ -73,7 +73,7 @@ FORBIDDEN_PATCH_SNIPPETS = (
     'from "@jest/globals"',
 )
 
-TYPESCRIPT_SYNTAX_ERROR_CODES = {
+TYPESCRIPT_PREFLIGHT_ERROR_CODES = {
     "TS1003",
     "TS1005",
     "TS1011",
@@ -83,6 +83,8 @@ TYPESCRIPT_SYNTAX_ERROR_CODES = {
     "TS1138",
     "TS1144",
     "TS1434",
+    "TS2314",
+    "TS2322",
 }
 
 ALLOWED_WRITE_PREFIXES = (
@@ -710,7 +712,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact.target_task = target_label
             if artifact.files:
                 preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
-                preflight_errors.extend(self._typescript_syntax_preflight_errors(artifact.files))
+                preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
                 if preflight_errors:
                     artifact.errors.extend(preflight_errors)
                     artifact.failure_kind = "preflight"
@@ -2065,7 +2067,7 @@ Critical correction for attempt {attempt}:
             )
         return errors
 
-    def _typescript_syntax_preflight_errors(self, edits: List[Dict[str, str]]) -> List[str]:
+    def _typescript_replacement_preflight_errors(self, edits: List[Dict[str, str]]) -> List[str]:
         ts_edits = [
             edit
             for edit in edits
@@ -2111,14 +2113,14 @@ Critical correction for attempt {attempt}:
             return []
         syntax_lines = []
         for line in diagnostics.splitlines():
-            if any(code in line for code in TYPESCRIPT_SYNTAX_ERROR_CODES):
+            if any(code in line for code in TYPESCRIPT_PREFLIGHT_ERROR_CODES):
                 for source_path, temp_path in temp_paths:
                     line = line.replace(str(temp_path), source_path)
                 syntax_lines.append(line)
         if not syntax_lines:
             return []
         return [
-            "Rejected proposal because TypeScript parser preflight found syntax errors before touching the worktree:\n"
+            "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree:\n"
             + "\n".join(syntax_lines[:20])
         ]
 

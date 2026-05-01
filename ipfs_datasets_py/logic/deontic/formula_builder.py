@@ -144,6 +144,17 @@ def build_deontic_formula_records_from_irs(norms: Iterable[LegalNormIR]) -> List
     return [build_deontic_formula_record_from_ir(norm) for norm in resolved_norms]
 
 
+def build_prover_syntax_records_from_ir(
+    norm: LegalNormIR,
+    targets: Iterable[str] | None = None,
+) -> List[Dict[str, Any]]:
+    """Build syntax-validation records for local prover target renderings."""
+
+    from .prover_syntax import validate_ir_with_provers
+
+    return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
+
+
 def parser_element_to_formula_record(element: Dict[str, Any]) -> Dict[str, Any]:
     """Compatibility helper for callers that still hold parser dictionaries."""
 

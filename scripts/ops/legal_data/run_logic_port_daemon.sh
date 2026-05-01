@@ -25,6 +25,8 @@ PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
 SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
+SUPERVISOR_AGENTIC_ROLLBACK_FAILURES="${SUPERVISOR_AGENTIC_ROLLBACK_FAILURES:-5}"
+SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES:-3}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
@@ -108,6 +110,8 @@ write_supervisor_status() {
   "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
   "agentic_stagnant_rounds": $SUPERVISOR_AGENTIC_STAGNANT_ROUNDS,
   "agentic_task_failures": $SUPERVISOR_AGENTIC_TASK_FAILURES,
+  "agentic_rollback_failures": $SUPERVISOR_AGENTIC_ROLLBACK_FAILURES,
+  "agentic_typescript_quality_failures": $SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
   "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
@@ -168,8 +172,11 @@ agentic_maintenance_reason() {
   python3 - \
     "$REPO_ROOT/$PROGRESS_PATH" \
     "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$REPO_ROOT/$RESULT_LOG_PATH" \
     "$SUPERVISOR_AGENTIC_STAGNANT_ROUNDS" \
     "$SUPERVISOR_AGENTIC_TASK_FAILURES" \
+    "$SUPERVISOR_AGENTIC_ROLLBACK_FAILURES" \
+    "$SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES" \
     "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
 import json
 import time
@@ -178,9 +185,12 @@ from pathlib import Path
 
 progress_path = Path(sys.argv[1])
 state_path = Path(sys.argv[2])
-stagnant_rounds = int(sys.argv[3])
-task_failures = int(sys.argv[4])
-cooldown_seconds = int(sys.argv[5])
+result_log_path = Path(sys.argv[3])
+stagnant_rounds = int(sys.argv[4])
+task_failures = int(sys.argv[5])
+rollback_failures_threshold = int(sys.argv[6])
+typescript_quality_failures_threshold = int(sys.argv[7])
+cooldown_seconds = int(sys.argv[8])
 now = int(time.time())
 
 
@@ -189,6 +199,85 @@ def read_json(path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def read_result_rows(path: Path) -> list[tuple[dict, dict]]:
+    rows: list[tuple[dict, dict]] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return rows
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        for result in record.get("results", []) or []:
+            if not isinstance(result, dict):
+                continue
+            artifact = result.get("artifact") or {}
+            if isinstance(artifact, dict):
+                rows.append((result, artifact))
+    return rows
+
+
+def validation_text(artifact: dict) -> str:
+    parts: list[str] = []
+    for item in artifact.get("validation_results") or []:
+        if isinstance(item, dict):
+            parts.append(str(item.get("stdout") or ""))
+            parts.append(str(item.get("stderr") or ""))
+    parts.extend(str(error) for error in artifact.get("errors") or [])
+    return "\n".join(parts)
+
+
+TYPESCRIPT_QUALITY_CODES = (
+    "TS1003",
+    "TS1005",
+    "TS1011",
+    "TS1068",
+    "TS1109",
+    "TS1128",
+    "TS1138",
+    "TS1144",
+    "TS1434",
+    "TS2314",
+    "TS2322",
+)
+
+
+def is_typescript_quality_failure(result: dict, artifact: dict) -> bool:
+    if result.get("valid") or artifact.get("changed_files"):
+        return False
+    text = validation_text(artifact)
+    if any(code in text for code in TYPESCRIPT_QUALITY_CODES):
+        return True
+    return "TypeScript replacement preflight" in text or "TypeScript parser preflight" in text
+
+
+def is_rollback_quality_failure(result: dict, artifact: dict) -> bool:
+    if result.get("valid"):
+        return False
+    if artifact.get("changed_files"):
+        return False
+    failure_kind = str(artifact.get("failure_kind") or "")
+    if failure_kind in {"apply_check", "validation", "validation_repair", "file_repair_validation", "validation_repair_preflight", "preflight"}:
+        return True
+    return is_typescript_quality_failure(result, artifact)
+
+
+def recent_matching_failures(rows: list[tuple[dict, dict]], predicate) -> int:
+    count = 0
+    for result, artifact in reversed(rows):
+        if result.get("valid"):
+            break
+        if predicate(result, artifact):
+            count += 1
+            continue
+        break
+    return count
 
 
 progress = read_json(progress_path)
@@ -200,6 +289,9 @@ rounds_total = int(progress.get("rounds_total") or 0)
 valid_rounds_total = int(progress.get("valid_rounds_total") or 0)
 current_task = str(progress.get("current_task") or "")
 task_failure_total = int((progress.get("current_task_failure_counts") or {}).get("total_since_success") or 0)
+result_rows = read_result_rows(result_log_path)
+rollback_quality_failures = recent_matching_failures(result_rows, is_rollback_quality_failure)
+typescript_quality_failures = recent_matching_failures(result_rows, is_typescript_quality_failure)
 last_maintenance_at = int(state.get("last_maintenance_at") or 0)
 baseline_round = int(state.get("baseline_rounds_total") or rounds_total)
 baseline_valid = int(state.get("baseline_valid_rounds_total") or valid_rounds_total)
@@ -209,12 +301,28 @@ if valid_rounds_total > baseline_valid:
     baseline_valid = valid_rounds_total
 
 stagnant_delta = max(0, rounds_total - baseline_round)
-cooling_down = last_maintenance_at > 0 and now - last_maintenance_at < cooldown_seconds
-reason = ""
-if not cooling_down and task_failure_total >= task_failures:
-    reason = f"task_failures:{task_failure_total}:threshold:{task_failures}"
-elif not cooling_down and stagnant_delta >= stagnant_rounds:
-    reason = f"stagnant_rounds:{stagnant_delta}:threshold:{stagnant_rounds}"
+candidate_reason = ""
+if task_failure_total >= task_failures:
+    candidate_reason = f"task_failures:{task_failure_total}:threshold:{task_failures}"
+elif typescript_quality_failures >= typescript_quality_failures_threshold:
+    candidate_reason = f"typescript_quality_failures:{typescript_quality_failures}:threshold:{typescript_quality_failures_threshold}"
+elif rollback_quality_failures >= rollback_failures_threshold:
+    candidate_reason = f"rollback_quality_failures:{rollback_quality_failures}:threshold:{rollback_failures_threshold}"
+elif stagnant_delta >= stagnant_rounds:
+    candidate_reason = f"stagnant_rounds:{stagnant_delta}:threshold:{stagnant_rounds}"
+
+
+def reason_family(value: str) -> str:
+    return value.split(":", 1)[0] if value else ""
+
+
+last_reason = str(state.get("last_maintenance_reason") or "")
+cooling_down = (
+    last_maintenance_at > 0
+    and now - last_maintenance_at < cooldown_seconds
+    and reason_family(candidate_reason) == reason_family(last_reason)
+)
+reason = "" if cooling_down else candidate_reason
 
 state.update(
     {
@@ -225,8 +333,11 @@ state.update(
         "valid_rounds_total": valid_rounds_total,
         "current_task": current_task,
         "current_task_failure_total": task_failure_total,
+        "rollback_quality_failure_total": rollback_quality_failures,
+        "typescript_quality_failure_total": typescript_quality_failures,
         "stagnant_rounds_since_valid": stagnant_delta,
         "cooling_down": cooling_down,
+        "suppressed_candidate_reason": candidate_reason if cooling_down else "",
         "candidate_reason": reason,
     }
 )
@@ -293,6 +404,8 @@ You are maintaining the logic-port daemon infrastructure for the browser-native 
 The supervisor detected that the daemon may be stuck or not making meaningful progress.
 
 Reason: $reason
+
+If the reason mentions rollback_quality_failures or typescript_quality_failures, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
 

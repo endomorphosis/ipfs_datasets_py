@@ -103,6 +103,8 @@ payload = {
     "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
     "agentic_stagnant_rounds": supervisor.get("agentic_stagnant_rounds"),
     "agentic_task_failures": supervisor.get("agentic_task_failures"),
+    "agentic_rollback_failures": supervisor.get("agentic_rollback_failures"),
+    "agentic_typescript_quality_failures": supervisor.get("agentic_typescript_quality_failures"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
     "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
     "agentic_state_path": supervisor.get("agentic_state_path"),
