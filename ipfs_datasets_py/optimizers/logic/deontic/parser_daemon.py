@@ -2305,18 +2305,37 @@ class LegalParserOptimizerDaemon:
                 timeout=min(90, max(20, int(self.config.test_timeout_seconds))),
             )
 
-        valid = bool(compile_result.get("valid")) and bool(collect_result.get("valid"))
+        focused_tests_result: Dict[str, Any] = {
+            "valid": True,
+            "skipped": True,
+            "reason": "no_changed_deontic_test_files",
+        }
+        if compile_result.get("valid") and collect_result.get("valid") and changed_test_files:
+            focused_tests_result = _run_command(
+                ["pytest", "-q", *changed_test_files],
+                cwd=self.config.repo_root,
+                timeout=min(120, max(30, int(self.config.test_timeout_seconds))),
+            )
+
+        valid = (
+            bool(compile_result.get("valid"))
+            and bool(collect_result.get("valid"))
+            and bool(focused_tests_result.get("valid"))
+        )
         reasons: List[str] = []
         if not compile_result.get("valid"):
             reasons.append("changed Python files failed py_compile")
         if not collect_result.get("valid"):
             reasons.append("changed deontic tests failed pytest collection")
+        if not focused_tests_result.get("valid"):
+            reasons.append("changed deontic tests failed focused pytest")
         return {
             "valid": valid,
             "changed_python_files": existing_python_files,
             "changed_test_files": changed_test_files,
             "compile": compile_result,
             "collect": collect_result,
+            "focused_tests": focused_tests_result,
             "reasons": reasons,
         }
 
@@ -2495,7 +2514,7 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
 
     exception_types: List[str] = []
     interesting_lines: List[str] = []
-    for check_name in ("compile", "collect"):
+    for check_name in ("compile", "collect", "focused_tests"):
         check = dict(validation.get(check_name) or {})
         if check.get("valid") is not False:
             continue

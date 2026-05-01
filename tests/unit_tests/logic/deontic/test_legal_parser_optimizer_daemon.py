@@ -406,6 +406,83 @@ def test_daemon_retries_candidate_that_fails_fast_post_apply_validation(tmp_path
     assert "candidate_post_apply_validation_failed" in fake_router.calls[1]["prompt"]
 
 
+def test_daemon_retries_candidate_that_fails_changed_test_preflight(tmp_path):
+    test_path = "tests/unit_tests/logic/deontic/test_candidate_preflight.py"
+    invalid_diff = "\n".join(
+        [
+            f"diff --git a/{test_path} b/{test_path}",
+            "new file mode 100644",
+            "index 0000000..1111111",
+            "--- /dev/null",
+            f"+++ b/{test_path}",
+            "@@ -0,0 +1,2 @@",
+            "+def test_candidate_preflight():",
+            "+    assert False",
+            "",
+        ]
+    )
+    valid_diff = "\n".join(
+        [
+            f"diff --git a/{test_path} b/{test_path}",
+            "new file mode 100644",
+            "index 0000000..2222222",
+            "--- /dev/null",
+            f"+++ b/{test_path}",
+            "@@ -0,0 +1,2 @@",
+            "+def test_candidate_preflight():",
+            "+    assert True",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "First patch has failing changed test.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["changed test preflight retries"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": invalid_diff,
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Second patch fixes changed test.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["changed test preflight passes"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": valid_diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert cycle["proposal_attempts"][0]["retry_reason"].startswith(
+        "candidate_post_apply_validation_failed:"
+    )
+    assert "changed deontic tests failed focused pytest" in cycle["proposal_attempts"][0][
+        "candidate_validation_reasons"
+    ]
+    assert cycle["proposal_attempts"][1]["candidate_validation_valid"] is True
+    assert (tmp_path / test_path).read_text(encoding="utf-8").endswith("assert True\n")
+
+
 def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):
     config = LegalParserDaemonConfig(
         repo_root=tmp_path,
