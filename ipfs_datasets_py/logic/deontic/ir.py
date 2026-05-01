@@ -53,6 +53,38 @@ def _mental_state_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _recipient_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded recipient slot from flat or detail fields."""
+
+    for key in ("action_recipient", "recipient", "beneficiary"):
+        flat_value = str(element.get(key) or "").strip()
+        if flat_value:
+            return flat_value
+
+    for detail_key in (
+        "action_recipient_details",
+        "recipient_details",
+        "beneficiary_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+                "recipient",
+                "target",
+                "beneficiary",
+                "object",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _enumeration_index(value: Any) -> Optional[int]:
     """Return a deterministic one-based enumeration index when available."""
 
@@ -499,7 +531,7 @@ class LegalNormIR:
             mental_state=_mental_state_text(element),
             action_verb=str(element.get("action_verb") or ""),
             action_object=str(element.get("action_object") or ""),
-            recipient=str(element.get("action_recipient") or ""),
+            recipient=_recipient_text(element),
             conditions=_slot_detail_records(element, "condition_details", "conditions"),
             exceptions=_slot_detail_records(element, "exception_details", "exceptions"),
             overrides=_slot_detail_records(element, "override_clause_details", "override_clauses"),

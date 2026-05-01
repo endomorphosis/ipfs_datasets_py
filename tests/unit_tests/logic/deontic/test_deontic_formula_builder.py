@@ -98,6 +98,38 @@ def test_ir_formula_builder_uses_detail_only_mental_state_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_preserves_detail_only_recipient_slot():
+    element = dict(extract_normative_elements(
+        "The Director shall send the notice to the applicant."
+    )[0])
+    element["action"] = ["send the notice"]
+    element["action_verb"] = "send"
+    element["action_object"] = "the notice"
+    element["action_recipient"] = ""
+    element["action_recipient_details"] = [
+        {
+            "type": "recipient",
+            "normalized_text": "the applicant",
+            "span": [38, 51],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.recipient == "the applicant"
+    assert norm.to_dict()["recipient"] == "the applicant"
+    assert formula == "O(∀x (Director(x) → SendNotice(x)))"
+    assert "Applicant" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
