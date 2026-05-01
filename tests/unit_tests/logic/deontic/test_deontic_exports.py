@@ -3508,6 +3508,76 @@ def test_metrics_projection_keeps_context_only_document_text_mismatch_blocked():
     assert parser_element_has_active_repair(projected[0]) is True
 
 
+def test_normalize_repair_required_evaluation_recovers_context_from_nested_metric_samples():
+    """Nested metric samples may carry the only same-document section evidence."""
+
+    parsed = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    detail = {
+        "sample_id": "cross_reference",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "canonical_citation": parsed["canonical_citation"],
+        "support_text": parsed["support_text"],
+        "support_span": parsed["support_span"],
+        "source_span": parsed.get("source_span", parsed["support_span"]),
+        "norm_type": parsed["norm_type"],
+        "modality": None,
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "exceptions": list(parsed.get("exception_details") or []),
+        "cross_references": list(parsed.get("cross_reference_details") or []),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed.get("exception_details") or []),
+                "cross_references": list(parsed.get("cross_reference_details") or []),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+    raw_evaluation = {
+        "repair_required": [parsed["source_id"]],
+        "repair_required_count": 1,
+        "repair_required_rate": 1.0,
+        "repair_required_details": [detail],
+        "metrics": {
+            "samples": [
+                {
+                    "sample_id": "section_552_context",
+                    "text": "Section 552. Notice publication.\nThe agency shall keep records.",
+                }
+            ],
+            "repair_required": [parsed["source_id"]],
+            "repair_required_count": 1,
+            "repair_required_rate": 1.0,
+            "repair_required_details": [detail],
+            "coverage_gaps": ["repair_required_count: 1"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 0
+    assert normalized["repair_required_rate"] == 0.0
+    assert normalized["repair_required"] == []
+    assert normalized["repair_required_details"] == []
+    assert normalized["active_repair_required_by_source_id"][parsed["source_id"]] is False
+    assert normalized["metrics"]["repair_required_count"] == 0
+    assert normalized["metrics"]["repair_required"] == []
+    assert normalized["metrics"]["repair_required_details"] == []
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_metrics_hydrates_prompt_context_operator_for_detail_only_stale_repair_rows():
     """Detail-only rows with null modality should still clear deterministic repairs."""
 

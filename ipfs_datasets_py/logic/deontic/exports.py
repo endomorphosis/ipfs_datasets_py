@@ -510,7 +510,7 @@ def _evaluation_parser_elements(
             _parser_context_elements_from_evaluation_document_text(metrics)
         )
 
-    for sample in evaluation.get("samples", []) if isinstance(evaluation.get("samples"), list) else []:
+    for sample in _evaluation_samples(evaluation):
         if not isinstance(sample, Mapping):
             continue
         sample_elements = sample.get("elements") or sample.get("parser_elements")
@@ -548,6 +548,26 @@ def _evaluation_parser_elements(
             recovered.append(candidate)
 
     return _dedupe_evaluation_parser_elements(recovered)
+
+
+def _evaluation_samples(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    """Return parser/context samples from top-level and nested metric payloads.
+
+    Optimizer payloads can carry repair details at the top level while placing
+    the reviewed probe samples under ``metrics.samples``. Those samples may be
+    context-only section-heading evidence used to resolve same-document
+    references, so evaluation recovery must inspect both locations before the
+    active repair projection runs.
+    """
+
+    samples: List[Mapping[str, Any]] = []
+    for container in (evaluation, evaluation.get("metrics")):
+        if not isinstance(container, Mapping):
+            continue
+        for sample in container.get("samples", []) if isinstance(container.get("samples"), list) else []:
+            if isinstance(sample, Mapping):
+                samples.append(sample)
+    return samples
 
 
 def _evaluation_repair_required_details(evaluation: Mapping[str, Any]) -> List[Mapping[str, Any]]:
