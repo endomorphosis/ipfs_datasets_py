@@ -598,6 +598,84 @@ def test_status_file_records_liveness_and_latest_artifact(tmp_path):
     assert heartbeat["artifact"]["valid_changed_files"] == ["src/lib/logic/feature.ts"]
 
 
+def test_daemon_retries_empty_or_non_json_proposals_as_file_replacements(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    router = SequencedRouter(
+        [
+            "I cannot edit files in a read-only sandbox.",
+            json.dumps({"summary": "empty", "patch": "", "files": []}),
+            json.dumps(
+                {
+                    "summary": "Runtime feature",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "new\n"}],
+                }
+            ),
+        ]
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        proposal_attempts=3,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="proposal-retry")
+
+    assert result["valid"] is True
+    assert target.read_text(encoding="utf-8") == "new\n"
+    assert len(router.calls) == 3
+    assert "Do not refuse because of a read-only sandbox" in router.calls[1]["prompt"]
+
+
+def test_empty_proposal_gets_failure_kind_for_task_blocking(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        proposal_attempts=1,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(json.dumps({"summary": "empty", "patch": "", "files": []}))).run_once(
+        session_id="empty-proposal"
+    )
+
+    assert result["valid"] is False
+    assert result["artifact"]["failure_kind"] == "empty_proposal"
+    assert "No usable patch or file replacement" in result["artifact"]["errors"][0]
+
+
 def test_task_board_blocks_repeated_same_failure_kind(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
@@ -645,6 +723,54 @@ def test_task_board_blocks_repeated_same_failure_kind(tmp_path):
     updated = plan.read_text(encoding="utf-8")
     assert "- [!] Add stubborn fixture" in updated
     assert "Failure kind: `apply_check`" in updated
+
+
+def test_task_board_blocks_repeated_invalid_rounds_without_failure_kind(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Stuck implementation task\n- [ ] Next task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Stuck implementation task",
+            "summary": "empty",
+            "failure_kind": "",
+            "changed_files": [],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    latest = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Stuck implementation task",
+            "summary": "empty again",
+            "failure_kind": "",
+            "changed_files": [],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        max_task_failure_rounds=2,
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([latest])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [!] Stuck implementation task" in updated
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

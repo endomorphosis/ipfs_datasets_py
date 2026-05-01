@@ -178,6 +178,7 @@ class LogicPortDaemonConfig:
     heartbeat_interval_seconds: float = 30.0
     patch_repair_attempts: int = 1
     file_repair_attempts: int = 1
+    proposal_attempts: int = 3
     prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
     update_task_board: bool = True
@@ -381,7 +382,8 @@ def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
             continue
         if result.get("valid"):
             break
-        if artifact.get("failure_kind") == failure_kind:
+        row_failure_kind = str(artifact.get("failure_kind") or "invalid_no_change")
+        if row_failure_kind == failure_kind:
             count += 1
             continue
         break
@@ -429,6 +431,13 @@ def _task_requires_fixture_validation(task: Optional[PlanTask]) -> bool:
         return False
     title = task.title.lower()
     return any(keyword in title for keyword in FIXTURE_VALIDATION_TASK_KEYWORDS)
+
+
+def _task_is_explicit_failure(task: Optional[PlanTask]) -> bool:
+    if task is None:
+        return False
+    title = task.title.lower()
+    return "latest daemon round failed" in title or "blocked or failing" in title
 
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
@@ -517,11 +526,29 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
     def generate(self, input_data: Any, context: OptimizationContext) -> LogicPortArtifact:
         prompt = self._build_prompt(input_data=input_data, context=context)
-        response = self._call_llm(prompt)
-        artifact = parse_llm_patch_response(response)
-        artifact.dry_run = self.daemon_config.dry_run
         selected_task = self._current_plan_task()
-        artifact.target_task = selected_task.label if selected_task else ""
+        target_label = selected_task.label if selected_task else ""
+        attempts = max(1, int(self.daemon_config.proposal_attempts))
+        previous_feedback = ""
+        artifact = LogicPortArtifact(summary="No proposal generated.")
+        for attempt in range(1, attempts + 1):
+            attempt_prompt = prompt if attempt == 1 else self._build_retry_prompt(prompt, previous_feedback, attempt=attempt, attempts=attempts)
+            self._write_status("proposal_attempt_started", attempt=attempt, attempts=attempts, selected_task=target_label)
+            response = self._call_llm(attempt_prompt)
+            artifact = parse_llm_patch_response(response)
+            artifact.dry_run = self.daemon_config.dry_run
+            artifact.target_task = target_label
+            if artifact.files or artifact.patch.strip():
+                return artifact
+            artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
+            previous_feedback = self._proposal_feedback(artifact)
+            self._write_status(
+                "proposal_attempt_rejected",
+                attempt=attempt,
+                attempts=attempts,
+                selected_task=target_label,
+                artifact=artifact.to_dict(),
+            )
         return artifact
 
     def critique(self, artifact: LogicPortArtifact, context: OptimizationContext) -> Tuple[float, List[str]]:
@@ -549,6 +576,31 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
         return min(score, 1.0), feedback
 
+    def _proposal_feedback(self, artifact: LogicPortArtifact) -> str:
+        parts = [
+            f"summary={artifact.summary or '<empty>'}",
+            f"failure_kind={artifact.failure_kind or '<empty>'}",
+            f"errors={'; '.join(artifact.errors[:3]) if artifact.errors else '<none>'}",
+            f"response_prefix={artifact.raw_response[:1200]}",
+        ]
+        return "\n".join(parts)
+
+    def _build_retry_prompt(self, original_prompt: str, previous_feedback: str, *, attempt: int, attempts: int) -> str:
+        return f"""{original_prompt}
+
+Previous proposal attempt {attempt - 1} of {attempts} was rejected before any files could be used by the daemon.
+
+Rejection details:
+{previous_feedback}
+
+Critical correction for attempt {attempt}:
+- Return ONLY one JSON object. No markdown fence, no explanation before or after it.
+- Use the `files` array with complete replacement file contents.
+- Leave `patch` as an empty string.
+- The Codex subprocess may be read-only, but the daemon itself applies the returned `files` contents after validation. Do not refuse because of a read-only sandbox.
+- Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
+"""
+
     def optimize(
         self,
         artifact: LogicPortArtifact,
@@ -557,6 +609,10 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         context: OptimizationContext,
     ) -> LogicPortArtifact:
         if not artifact.patch.strip() and not artifact.files:
+            if not artifact.failure_kind:
+                artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
+            if not artifact.errors:
+                artifact.errors.append("No usable patch or file replacement was proposed.")
             return artifact
 
         if self.daemon_config.dry_run:
@@ -574,6 +630,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 artifact.applied, artifact.validation_results, changed_files = self._apply_file_edits_with_validation(artifact.files)
             except Exception as exc:
                 artifact.errors.append(str(exc))
+                artifact.failure_kind = "file_edit_exception"
                 return artifact
             if not artifact.applied:
                 if not changed_files and all(result.ok for result in artifact.validation_results):
@@ -587,6 +644,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             return artifact
 
         if not artifact.patch.strip():
+            if not artifact.failure_kind:
+                artifact.failure_kind = "empty_proposal"
             return artifact
 
         check = run_command(
@@ -773,13 +832,18 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 {
                     "artifact": {
                         "summary": "Daemon failed before producing a valid patch.",
+                        "target_task": self._current_plan_task().label if self._current_plan_task() else "",
+                        "impact": "",
                         "tasks": [],
                         "has_patch": False,
+                        "files": [],
                         "applied": False,
                         "dry_run": self.daemon_config.dry_run,
                         "validation_passed": False,
                         "validation_results": [],
                         "errors": [str(exc)],
+                        "changed_files": [],
+                        "failure_kind": "daemon_exception",
                     },
                     "score": 0.0,
                     "iterations": len(results),
@@ -1054,6 +1118,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             task_text = _replace_checkbox_mark(task_text, latest_target, "x")
         elif latest_target is not None and self._should_block_task(latest_target, latest):
             task_text = _replace_checkbox_mark(task_text, latest_target, "!")
+        elif latest_target is not None and _task_is_explicit_failure(latest_target):
+            task_text = _replace_checkbox_mark(task_text, latest_target, "!")
 
         tasks_after = extract_plan_tasks(task_text)
         current_target = self._select_next_plan_task(tasks_after)
@@ -1065,9 +1131,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         if self.daemon_config.max_task_failure_rounds <= 0:
             return False
         artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
-        failure_kind = str(artifact.get("failure_kind") or "")
-        if not failure_kind:
-            return False
+        failure_kind = str(artifact.get("failure_kind") or "invalid_no_change")
         if self.daemon_config.result_log_path is None:
             return False
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
@@ -1250,7 +1314,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
         if not path.exists():
             return None
-        return self._select_next_plan_task(extract_plan_tasks(path.read_text(encoding="utf-8")))
+        return self._select_next_plan_task(extract_plan_tasks(_strip_daemon_task_board(path.read_text(encoding="utf-8"))))
 
     def _rollback_patch(self, patch: str) -> List[CommandResult]:
         check = run_command(
@@ -1484,7 +1548,7 @@ Current file contents for likely targets:
             text = _read_text(resolved, limit=max(2000, budget // 4))
             doc_sections.append(f"## {path}\n{text}")
             if self.daemon_config.task_board_doc is not None and resolved == self.daemon_config.resolve(self.daemon_config.task_board_doc):
-                plan_tasks = extract_plan_tasks(resolved.read_text(encoding="utf-8"))
+                plan_tasks = extract_plan_tasks(_strip_daemon_task_board(resolved.read_text(encoding="utf-8")))
 
         selected_task = self._select_next_plan_task(plan_tasks)
         selected_task_text = selected_task.label if selected_task else "No markdown task could be selected."
@@ -1514,6 +1578,7 @@ Hard constraints:
 - Prefer adding cases to an existing matching *.test.ts file over creating a new test file.
 - Prefer the JSON `files` array with complete replacement file contents. For this daemon run, `files` is the primary output channel because it produces auditable changed files and avoids malformed patch cycles.
 - Leave `patch` empty unless a complete file replacement would be unsafe or impossible.
+- The Codex subprocess may run in a read-only sandbox. That only prevents the subprocess from editing files directly; it does not prevent this daemon from applying the JSON `files` replacements that you return. Never refuse because of a read-only sandbox.
 - Do not include shell commands that mutate files.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
@@ -1546,6 +1611,7 @@ Return ONLY JSON with this shape:
 }}
 
 Prefer "files" over "patch" for TypeScript/doc changes. Use complete file contents, not snippets.
+Set `"patch": ""` whenever you provide `files`.
 Only use paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
 Session: {context.session_id}
 Model requested by daemon: {self.daemon_config.model_name}
@@ -1598,6 +1664,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--status-file", default=None, help="Optional heartbeat/status JSON file. Defaults to .daemon status path.")
     parser.add_argument("--heartbeat-interval", type=float, default=30.0, help="Seconds between status heartbeat writes while a cycle is active.")
     parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
+    parser.add_argument("--proposal-attempts", type=int, default=3, help="LLM proposal attempts per daemon cycle before logging a failed round.")
     parser.add_argument("--skip-validation", action="store_true", help="Do not run validation commands")
     parser.add_argument("--validation-command", action="append", default=[], help="Validation command, shell-split by spaces")
     return parser
@@ -1631,6 +1698,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         status_path=Path(args.status_file) if args.status_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json"),
         heartbeat_interval_seconds=max(0.0, args.heartbeat_interval),
         file_repair_attempts=max(0, args.file_repair_attempts),
+        proposal_attempts=max(1, args.proposal_attempts),
     )
     optimizer = LogicPortDaemonOptimizer(config)
     results = optimizer.run_supervised(cycles=max(0, args.cycles)) if args.watch else optimizer.run_daemon()

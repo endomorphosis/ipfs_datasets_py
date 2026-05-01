@@ -52,6 +52,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --retry-interval 300 \
   --llm-timeout 600 \
   --heartbeat-interval 30 \
+  --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
@@ -62,6 +63,8 @@ Continuous mode runs without user input. If the configured `gpt-5.5` route is un
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
 If the repaired diff is still malformed, the daemon performs one more repair path: it asks `gpt-5.5` to convert the same intended change into complete allowlisted file replacements. This is important for unattended runs because malformed diff hunks were the most common cause of "busy but no files changed" cycles.
+
+The daemon also retries unusable proposals inside a cycle. If the model returns no JSON, an empty change, or refuses because the Codex subprocess is read-only, the next proposal attempt explicitly reminds it that the daemon applies returned JSON `files` replacements after validation. Empty proposals receive `failure_kind: "empty_proposal"` and parse failures receive `failure_kind: "parse"`, so repeated unproductive rounds can block the current task and advance the task board instead of spinning forever.
 
 The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted, formatted with Prettier for TypeScript files, and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
 
@@ -115,6 +118,7 @@ python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --retry-interval 300 \
   --llm-timeout 600 \
   --heartbeat-interval 30 \
+  --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
