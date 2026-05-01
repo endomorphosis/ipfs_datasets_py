@@ -705,6 +705,43 @@ def test_refuse_to_prohibition_becomes_positive_obligation_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_neglect_and_omit_to_prohibitions_become_positive_obligation_formulas():
+    examples = [
+        (
+            "No person shall neglect to maintain records.",
+            "neglect to maintain records",
+            "O(∀x (Person(x) → MaintainRecords(x)))",
+            "NeglectToMaintainRecords",
+        ),
+        (
+            "No person shall omit to file the report.",
+            "omit to file the report",
+            "O(∀x (Person(x) → FileReport(x)))",
+            "OmitToFileReport",
+        ),
+    ]
+
+    for text, expected_action, expected_formula, forbidden_predicate in examples:
+        element = dict(extract_normative_elements(text)[0])
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "F"
+        assert norm.action == expected_action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert forbidden_predicate not in record["formula"]
+        assert record["formula"] == expected_formula
+        assert record["modality"] == "F"
+        assert record["proof_ready"] is True
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ordinary_prohibition_remains_forbidden_formula():
     element = extract_normative_elements(
         "No person may discharge pollutants into the sewer."

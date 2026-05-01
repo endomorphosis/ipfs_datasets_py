@@ -156,7 +156,7 @@ def _is_failure_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     if norm.modality != "F":
         return False
     return bool(re.match(
-        r"^(?:fail(?:ure)?|refus(?:e|al))\s+to\s+\S",
+        r"^(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?)\s+to\s+\S",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
@@ -166,7 +166,7 @@ def _strip_failure_action(action_text: str) -> str:
     """Remove a refusal/failure wrapper from a double-negative duty action."""
 
     return re.sub(
-        r"^(?:fail(?:ure)?|refus(?:e|al))\s+to\s+",
+        r"^(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?)\s+to\s+",
         "",
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
