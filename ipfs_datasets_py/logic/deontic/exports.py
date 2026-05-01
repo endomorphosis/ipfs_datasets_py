@@ -333,6 +333,68 @@ def build_decoder_records_from_irs(norms: Iterable[LegalNormIR]) -> List[Dict[st
     return [build_decoder_record_from_ir(norm) for norm in norms]
 
 
+def summarize_decoder_reconstruction_records(
+    records: Iterable[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Return deterministic aggregate metrics for decoder reconstruction rows.
+
+    The summary consumes only decoder export rows. It is diagnostic and does not
+    change theorem promotion, repair status, or parser warnings.
+    """
+
+    rows = [dict(record) for record in records]
+    warning_distribution: Dict[str, int] = {}
+    for row in rows:
+        for warning in row.get("parser_warnings") or []:
+            warning_text = str(warning)
+            warning_distribution[warning_text] = warning_distribution.get(warning_text, 0) + 1
+
+    grounded_rates = [
+        float(row.get("grounded_decoded_phrase_rate") or 0.0)
+        for row in rows
+    ]
+    ungrounded_rates = [
+        float(row.get("ungrounded_decoded_phrase_rate") or 0.0)
+        for row in rows
+    ]
+    total_missing_slots = sum(int(row.get("missing_slot_count") or 0) for row in rows)
+    records_with_missing_slots = sum(
+        1 for row in rows if int(row.get("missing_slot_count") or 0) > 0
+    )
+    validation_required = [row for row in rows if row.get("requires_validation") is True]
+    proof_ready = [row for row in rows if row.get("proof_ready") is True]
+
+    worst_grounded = sorted(
+        (
+            {
+                "source_id": row.get("source_id", ""),
+                "grounded_decoded_phrase_rate": float(
+                    row.get("grounded_decoded_phrase_rate") or 0.0
+                ),
+                "missing_slot_count": int(row.get("missing_slot_count") or 0),
+            }
+            for row in rows
+        ),
+        key=lambda item: (item["grounded_decoded_phrase_rate"], -item["missing_slot_count"]),
+    )
+
+    return {
+        "record_count": len(rows),
+        "proof_ready_count": len(proof_ready),
+        "requires_validation_count": len(validation_required),
+        "mean_grounded_decoded_phrase_rate": (
+            sum(grounded_rates) / len(grounded_rates) if grounded_rates else 0.0
+        ),
+        "mean_ungrounded_decoded_phrase_rate": (
+            sum(ungrounded_rates) / len(ungrounded_rates) if ungrounded_rates else 0.0
+        ),
+        "total_missing_slot_count": total_missing_slots,
+        "records_with_missing_slots": records_with_missing_slots,
+        "parser_warning_distribution": warning_distribution,
+        "worst_grounded_reconstructions": worst_grounded[:5],
+    }
+
+
 def _procedure_event_symbol(value: str) -> str:
     words = re.findall(r"[0-9A-Za-z]+", str(value or ""))
     return "".join(word.capitalize() for word in words) if words else ""

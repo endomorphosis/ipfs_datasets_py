@@ -12,6 +12,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_prover_syntax_records_from_ir,
     normalize_repair_required_evaluation,
     normalize_repair_required_details_from_parser_elements,
+    summarize_decoder_reconstruction_records,
     parser_element_has_active_repair,
     parser_elements_to_export_tables,
     parser_elements_for_metrics,
@@ -276,6 +277,35 @@ def test_ir_decoder_record_preserves_blocked_reference_exception_without_promoti
 
     batch_records = build_decoder_records_from_irs([norm])
     assert batch_records == [record]
+
+
+def test_decoder_reconstruction_summary_reports_quality_without_promoting_blockers():
+    elements = [
+        extract_normative_elements("The tenant must pay rent monthly.")[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+    norms = [LegalNormIR.from_parser_element(element) for element in elements]
+    records = build_decoder_records_from_irs(norms)
+
+    summary = summarize_decoder_reconstruction_records(records)
+
+    assert summary["record_count"] == 2
+    assert summary["proof_ready_count"] == 1
+    assert summary["requires_validation_count"] == 1
+    assert summary["mean_grounded_decoded_phrase_rate"] == 1.0
+    assert summary["mean_ungrounded_decoded_phrase_rate"] == 0.0
+    assert summary["total_missing_slot_count"] == 0
+    assert summary["records_with_missing_slots"] == 0
+    assert summary["parser_warning_distribution"] == {
+        "cross_reference_requires_resolution": 1,
+        "exception_requires_scope_review": 1,
+    }
+    assert [item["source_id"] for item in summary["worst_grounded_reconstructions"]] == [
+        norm.source_id for norm in norms
+    ]
+    assert records[1]["requires_validation"] is True
 
 
 def test_ir_procedure_event_relation_records_preserve_ordering_provenance_without_formula_strengthening():
