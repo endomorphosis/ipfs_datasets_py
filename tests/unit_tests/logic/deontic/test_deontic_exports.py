@@ -1176,6 +1176,67 @@ def test_raw_parser_marks_local_applicability_repair_inactive_without_hiding_war
     ]
 
 
+def test_raw_parser_marks_formula_resolved_exception_repair_inactive_without_hiding_warning():
+    element = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["parser_warnings"] == ["exception_requires_scope_review"]
+    assert element["active_repair_warnings"] == []
+    assert element["repair_required_warnings"] == []
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["prompt_hash"] == ""
+    assert element["llm_repair"]["suggested_router"] == ""
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"] == {
+        "type": "standard_substantive_exception",
+        "resolved_blockers": ["exception_requires_scope_review"],
+        "exception": "approval is denied",
+        "exception_span": [43, 61],
+        "reason": "single substantive exception is represented as a negated formula antecedent",
+    }
+    assert element["export_readiness"]["metric_repair_required"] is False
+
+
+def test_raw_parser_marks_formula_resolved_override_repair_inactive_without_hiding_warning():
+    element = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "override_clause_requires_precedence_review",
+    ]
+    assert element["active_repair_warnings"] == []
+    assert element["repair_required_warnings"] == []
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == "pure_precedence_override"
+    assert element["export_readiness"]["metric_repair_required"] is False
+    assert element["resolved_cross_references"] == [
+        {
+            "reference_type": "section",
+            "canonical_citation": "section 5.01.020",
+            "value": "section 5.01.020",
+            "raw_text": "section 5.01.020",
+            "span": [16, 32],
+            "resolution_scope": "precedence_provenance",
+            "resolved": True,
+            "resolution_status": "resolved",
+            "precedence_only": True,
+            "same_document": False,
+        }
+    ]
+
+
 def test_raw_parser_keeps_numbered_reference_exception_active_for_repair():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

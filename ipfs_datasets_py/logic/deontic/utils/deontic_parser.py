@@ -440,6 +440,7 @@ def extract_normative_elements(
     _apply_definition_context(elements)
     _apply_cross_reference_context(elements)
     _apply_local_applicability_repair_clearance(elements)
+    _apply_formula_resolved_repair_clearance(elements)
     _apply_document_penalty_context(elements, str(text or ""))
     _apply_enforcement_context(elements)
     _apply_conflict_context(elements)
@@ -568,6 +569,107 @@ def _local_applicability_reference_records(element: Dict[str, Any]) -> List[Dict
             "target_exists": True,
         }
         records.append(record)
+    return records
+
+
+def _apply_formula_resolved_repair_clearance(elements: List[Dict[str, Any]]) -> None:
+    """Clear raw repair payloads when typed formula readiness resolved them.
+
+    Parser warnings remain audit facts and parser theorem promotion remains
+    conservative. This only clears active repair accounting for clauses where
+    the IR/formula layer has already produced an explicit source-grounded
+    deterministic resolution: a single substantive exception represented as a
+    negated antecedent, or an override used solely as precedence provenance.
+    Numbered reference exceptions without same-document resolution remain
+    blocked by the formula record and are not changed here.
+    """
+
+    try:
+        from ipfs_datasets_py.logic.deontic.formula_builder import parser_element_to_formula_record
+    except ImportError:  # pragma: no cover - defensive import guard
+        return
+
+    clearable_resolution_types = {
+        "standard_substantive_exception",
+        "pure_precedence_override",
+    }
+
+    for element in elements or []:
+        if _is_local_applicability_element(element):
+            continue
+
+        try:
+            formula_record = parser_element_to_formula_record(element)
+        except Exception:  # pragma: no cover - repair clearance must never break parsing
+            continue
+
+        deterministic_resolution = formula_record.get("deterministic_resolution") or {}
+        resolution_type = deterministic_resolution.get("type")
+        if resolution_type not in clearable_resolution_types:
+            continue
+        if formula_record.get("proof_ready") is not True:
+            continue
+        if formula_record.get("requires_validation") or formula_record.get("repair_required"):
+            continue
+
+        if resolution_type == "pure_precedence_override":
+            precedence_records = _precedence_override_reference_records(element)
+            if not precedence_records:
+                continue
+            element["resolved_cross_references"] = precedence_records
+
+        element["active_repair_warnings"] = []
+        element["repair_required_warnings"] = []
+
+        readiness = dict(element.get("export_readiness") or {})
+        readiness["metric_requires_validation"] = False
+        readiness["metric_repair_required"] = False
+        readiness["deterministic_resolution"] = deterministic_resolution
+        element["export_readiness"] = readiness
+
+        repair = dict(element.get("llm_repair") or {})
+        repair["required"] = False
+        repair["allow_llm_repair"] = False
+        repair["reasons"] = []
+        repair["prompt_context"] = {}
+        repair["prompt_hash"] = ""
+        repair["suggested_router"] = ""
+        repair["deterministically_resolved"] = True
+        repair["deterministic_resolution"] = deterministic_resolution
+        element["llm_repair"] = repair
+
+
+def _precedence_override_reference_records(element: Dict[str, Any]) -> List[Dict[str, Any]]:
+    records: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    refs = element.get("cross_reference_details") or element.get("cross_references") or []
+    for ref in refs:
+        if not isinstance(ref, dict):
+            continue
+        reference_type = str(ref.get("reference_type") or ref.get("type") or "section").strip().lower()
+        value = str(ref.get("value") or ref.get("canonical_citation") or ref.get("normalized_text") or ref.get("raw_text") or "").strip()
+        if not value:
+            target = str(ref.get("target") or ref.get("section") or "").strip()
+            value = f"{reference_type} {target}".strip() if target else ""
+        if not value:
+            continue
+        canonical = value if value.lower().startswith(reference_type + " ") else f"{reference_type} {value}"
+        key = canonical.lower()
+        if key in seen:
+            continue
+        records.append({
+            "reference_type": reference_type,
+            "canonical_citation": canonical,
+            "value": canonical,
+            "raw_text": str(ref.get("raw_text") or ref.get("text") or canonical),
+            "span": list(ref.get("span") or []),
+            "resolution_scope": "precedence_provenance",
+            "resolved": True,
+            "resolution_status": "resolved",
+            "precedence_only": True,
+            "same_document": False,
+        })
+        seen.add(key)
     return records
 
 
