@@ -2827,6 +2827,32 @@ def test_structured_procedure_opening_trigger_becomes_formula_prerequisite():
     assert "AwardContractAfterOpeningBids" not in formula
 
 
+def test_structured_procedure_return_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Board shall dismiss the appeal after return of the notice."
+    )[0])
+    element["action"] = ["dismiss the appeal after return notice"]
+    element["procedure"] = {
+        "trigger_event": "notice",
+        "terminal_event": "dismissal",
+        "event_relations": [
+            {
+                "event": "dismissal",
+                "relation": "triggered_by_return_of",
+                "anchor_event": "notice",
+                "raw_text": "after return of the notice",
+                "span": [35, 62],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Board(x) ∧ ProcedureAfterReturnNotice(x) → DismissAppeal(x)))"
+    assert "DismissAppealAfterReturnNotice" not in formula
+
+
 def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
     element = dict(extract_normative_elements(
         "The Director shall publish guidelines after adoption of rules."

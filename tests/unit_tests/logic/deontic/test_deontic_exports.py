@@ -5354,3 +5354,37 @@ def test_ir_procedure_event_records_mark_opening_trigger_as_prerequisite():
     assert records[0]["span"] == [31, 58]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_return_trigger_as_prerequisite():
+    """Return of notice is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall dismiss the appeal after return of the notice."
+    )[0])
+    element["action"] = ["dismiss the appeal after return notice"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "dismissal",
+                "relation": "triggered_by_return_of",
+                "anchor_event": "notice",
+                "raw_text": "after return of the notice",
+                "span": [35, 62],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "dismissal"
+    assert records[0]["event_symbol"] == "Dismissal"
+    assert records[0]["relation"] == "triggered_by_return_of"
+    assert records[0]["anchor_event"] == "notice"
+    assert records[0]["anchor_symbol"] == "Notice"
+    assert records[0]["raw_text"] == "after return of the notice"
+    assert records[0]["span"] == [35, 62]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
