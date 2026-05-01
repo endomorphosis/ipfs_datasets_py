@@ -39,6 +39,19 @@ _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES = {
     "triggered_by_postmark_of": "after postmark",
     "triggered_by_docketing_of": "after docketing",
     "triggered_by_entry_of": "after entry",
+    "triggered_by_electronic_filing_of": "after electronic filing",
+    "triggered_by_electronic_service_on": "after electronic service",
+    "triggered_by_transmission_of": "after transmission",
+    "triggered_by_receipt_confirmation_of": "after receipt confirmation",
+    "triggered_by_signature_of": "after signature",
+    "triggered_by_notarization_of": "after notarization",
+    "triggered_by_countersignature_of": "after countersignature",
+    "triggered_by_opening_of": "after opening",
+    "triggered_by_return_of": "after return",
+    "triggered_by_reinstatement_of": "after reinstatement",
+    "triggered_by_withdrawal_of": "after withdrawal",
+    "triggered_by_archiving_of": "after archiving",
+    "triggered_by_retention_of": "after retention",
 }
 _LOCAL_SCOPE_REFERENCE_EXCEPTION_RE = re.compile(
     r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+this\s+"
