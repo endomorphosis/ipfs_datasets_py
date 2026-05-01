@@ -2038,6 +2038,69 @@ def test_normalize_repair_required_evaluation_recovers_parser_rows_from_samples(
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_recovers_parser_rows_from_repair_prompt_contexts():
+    """Repair-detail-only metric payloads should still use IR readiness."""
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+    raw_evaluation = {
+        "repair_required_count": 4,
+        "repair_required_rate": 1.0,
+        "repair_required": [element["source_id"] for element in elements],
+        "repair_required_details": [
+            {
+                "source_id": element["source_id"],
+                "text": element["text"],
+                "norm_type": element["norm_type"],
+                "parser_warnings": list(element["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(element["parser_warnings"]),
+                    "prompt_context": dict(element["llm_repair"].get("prompt_context") or element),
+                },
+            }
+            for element in elements
+        ],
+        "metrics": {
+            "repair_required_count": 4,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 4"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required_rate"] == 0.25
+    assert normalized["repair_required"] == [elements[3]["source_id"]]
+    assert normalized["active_repair_required_by_source_id"] == {
+        elements[0]["source_id"]: False,
+        elements[1]["source_id"]: False,
+        elements[2]["source_id"]: False,
+        elements[3]["source_id"]: True,
+    }
+    assert len(normalized["repair_required_details"]) == 1
+    detail = normalized["repair_required_details"][0]
+    assert detail["source_id"] == elements[3]["source_id"]
+    assert detail["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert detail["deterministic_resolution"] == {}
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["repair_required_rate"] == 0.25
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conservative():
     """Without parser rows, normalization must not invent cleared repairs."""
     raw_evaluation = {

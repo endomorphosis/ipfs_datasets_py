@@ -496,6 +496,18 @@ def _evaluation_parser_elements(
         if candidate:
             recovered.append(candidate)
 
+    if recovered:
+        return recovered
+
+    for detail in evaluation.get("repair_required_details", []) if isinstance(evaluation.get("repair_required_details"), list) else []:
+        if not isinstance(detail, Mapping):
+            continue
+        llm_repair = detail.get("llm_repair")
+        prompt_context = dict(llm_repair.get("prompt_context") or {}) if isinstance(llm_repair, Mapping) else {}
+        candidate = _parser_element_from_evaluation_sample(prompt_context)
+        if candidate:
+            recovered.append(candidate)
+
     return recovered
 
 
