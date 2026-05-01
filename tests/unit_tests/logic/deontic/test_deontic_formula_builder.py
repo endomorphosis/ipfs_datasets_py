@@ -3810,3 +3810,71 @@ def test_structured_recordkeeping_triggers_become_formula_prerequisites_without_
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_supplemental_procedure_triggers_become_prerequisites_without_action_tail():
+    element = dict(extract_normative_elements(
+        "The Clerk shall file the certificate after transmission of the order and after receipt confirmation of the notice."
+    )[0])
+    element["action"] = [
+        "file the certificate after transmission order and after receipt confirmation notice"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "filing",
+                "relation": "triggered_by_transmission_of",
+                "anchor_event": "order",
+                "raw_text": "after transmission of the order",
+                "span": [35, 66],
+            },
+            {
+                "event": "filing",
+                "relation": "triggered_by_receipt_confirmation_of",
+                "anchor_event": "notice",
+                "raw_text": "after receipt confirmation of the notice",
+                "span": [71, 111],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Clerk(x) ∧ ")
+    assert formula.endswith(" → FileCertificate(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → FileCertificate(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Clerk(x)",
+        "ProcedureAfterTransmissionOrder(x)",
+        "ProcedureAfterReceiptConfirmationNotice(x)",
+    }
+    assert "FileCertificateAfterTransmissionOrder" not in formula
+    assert "FileCertificateAfterReceiptConfirmationNotice" not in formula
+
+
+def test_supplemental_status_triggers_become_prerequisites_without_action_tail():
+    element = dict(extract_normative_elements(
+        "The Board shall restore the license after posting of the bond and after reinstatement of the permit."
+    )[0])
+    element["action"] = [
+        "restore the license after posting bond and after reinstatement permit"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {"event": "restoration", "relation": "triggered_by_posting_of", "anchor_event": "bond"},
+            {"event": "restoration", "relation": "triggered_by_reinstatement_of", "anchor_event": "permit"},
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Board(x) ∧ ")
+    assert formula.endswith(" → RestoreLicense(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → RestoreLicense(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Board(x)",
+        "ProcedureAfterPostingBond(x)",
+        "ProcedureAfterReinstatementPermit(x)",
+    }
+    assert "RestoreLicenseAfterPostingBond" not in formula
+    assert "RestoreLicenseAfterReinstatementPermit" not in formula

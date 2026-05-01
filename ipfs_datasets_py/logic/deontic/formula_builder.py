@@ -677,12 +677,19 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_certified_mailing_of",
         "triggered_by_delivery_of",
         "triggered_by_electronic_service_on",
+        "triggered_by_transmission_of",
+        "triggered_by_receipt_confirmation_of",
+        "triggered_by_posting_of",
         "triggered_by_postmark_of",
         "triggered_by_docketing_of",
         "triggered_by_entry_of",
         "triggered_by_signature_of",
+        "triggered_by_notarization_of",
+        "triggered_by_countersignature_of",
         "triggered_by_opening_of",
         "triggered_by_return_of",
+        "triggered_by_reinstatement_of",
+        "triggered_by_withdrawal_of",
         "triggered_by_archiving_of",
         "triggered_by_retention_of",
     }
@@ -697,6 +704,14 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         raw_text = str(relation.get("raw_text") or "").strip()
         if raw_text:
             cleaned = _strip_action_tail_phrase(cleaned, raw_text)
+
+        supplemental_prefix = _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES.get(relation_type, "")
+        anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+        if supplemental_prefix and anchor:
+            trigger_phrase = re.sub(
+                r"^(?:after|upon)\s+", "", supplemental_prefix, flags=re.IGNORECASE
+            ).strip()
+            cleaned = _strip_action_tail_trigger_segment(cleaned, trigger_phrase, anchor)
 
         if relation_type in {"triggered_by_archiving_of", "triggered_by_retention_of"}:
             anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
