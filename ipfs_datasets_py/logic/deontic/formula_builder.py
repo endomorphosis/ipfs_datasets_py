@@ -19,6 +19,7 @@ _MENTAL_STATE_TERMS = {
     "negligently",
     "wilfully",
     "fraudulently",
+    "deliberately",
 }
 _LEGAL_REFERENCE_TEXT_RE = re.compile(
     r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
