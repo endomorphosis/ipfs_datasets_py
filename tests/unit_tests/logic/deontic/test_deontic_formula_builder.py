@@ -197,6 +197,47 @@ def test_ir_formula_builder_uses_detail_only_definition_term_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_applicability_slots():
+    element = dict(extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0])
+    element["subject"] = []
+    element["action"] = []
+    element["applicability_details"] = [
+        {
+            "type": "applicability",
+            "scope": "this section",
+            "target": "food carts and mobile vendors",
+            "span": [0, 53],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["scope"] = [0, 12]
+    field_spans["target"] = [24, 53]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.norm_type == "applicability"
+    assert norm.modality == "APP"
+    assert norm.actor == "this section"
+    assert norm.action == "food carts and mobile vendors"
+    assert norm.actor_entities == ["this section"]
+    assert norm.to_dict()["actor"] == "this section"
+    assert norm.to_dict()["action"] == "food carts and mobile vendors"
+    assert formula == "AppliesTo(ThisSection, FoodCartsAndMobileVendors)"
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_instrument_lifecycle_slot():
     element = dict(extract_normative_elements(
         "The license is valid for 30 days."

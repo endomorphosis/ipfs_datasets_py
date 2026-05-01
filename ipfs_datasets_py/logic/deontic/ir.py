@@ -224,6 +224,74 @@ def _penalty_action_text(element: Dict[str, Any]) -> str:
     return ""
 
 
+def _applicability_actor_text(element: Dict[str, Any]) -> str:
+    """Return the scope for detail-only applicability parser rows."""
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "applicability" and operator != "APP":
+        return ""
+
+    for key in ("scope", "applicability_scope", "legal_scope"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "applicability_details",
+        "scope_details",
+        "applicability_scope_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in (
+                "scope",
+                "scope_text",
+                "applicability_scope",
+                "value",
+                "normalized_text",
+                "raw_text",
+                "text",
+            ):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
+def _applicability_action_text(element: Dict[str, Any]) -> str:
+    """Return the target for detail-only applicability parser rows."""
+
+    flat_value = _first_text(element.get("action")).strip()
+    if flat_value:
+        return flat_value
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    operator = str(element.get("deontic_operator") or element.get("modality") or "").strip().upper()
+    if norm_type != "applicability" and operator != "APP":
+        return ""
+
+    for key in ("target", "applicability_target", "regulated_target"):
+        value = str(element.get(key) or "").strip()
+        if value:
+            return value
+
+    for detail_key in (
+        "applicability_details",
+        "applicability_target_details",
+        "target_details",
+    ):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in ("target", "target_text", "applicability_target", "value", "normalized_text", "raw_text", "text"):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    return ""
+
+
 def _penalty_action_from_parts(record: Dict[str, Any]) -> str:
     sanction_class = str(
         record.get("sanction_class")
@@ -271,7 +339,12 @@ def _actor_entities(element: Dict[str, Any]) -> List[str]:
     actors = _actor_texts(element.get("subject"))
     if actors:
         return actors
-    actor = _actor_text(element) or _definition_actor_text(element) or _instrument_lifecycle_actor_text(element)
+    actor = (
+        _actor_text(element)
+        or _applicability_actor_text(element)
+        or _definition_actor_text(element)
+        or _instrument_lifecycle_actor_text(element)
+    )
     return [actor] if actor else []
 
 
@@ -770,9 +843,19 @@ class LegalNormIR:
             support_span=SourceSpan.from_value(element.get("support_span")),
             modality=_modality_from_parser_element(element),
             norm_type=str(element.get("norm_type") or ""),
-            actor=_actor_text(element) or _definition_actor_text(element) or _instrument_lifecycle_actor_text(element),
+            actor=(
+                _actor_text(element)
+                or _applicability_actor_text(element)
+                or _definition_actor_text(element)
+                or _instrument_lifecycle_actor_text(element)
+            ),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
-            action=_instrument_lifecycle_action_text(element) or _penalty_action_text(element) or _first_text(element.get("action")),
+            action=(
+                _applicability_action_text(element)
+                or _instrument_lifecycle_action_text(element)
+                or _penalty_action_text(element)
+                or _first_text(element.get("action"))
+            ),
             mental_state=_mental_state_text(element),
             action_verb=str(element.get("action_verb") or ""),
             action_object=str(element.get("action_object") or ""),
