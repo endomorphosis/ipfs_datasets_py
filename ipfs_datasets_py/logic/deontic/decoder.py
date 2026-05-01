@@ -77,6 +77,7 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     actor = _clean_text(norm.actor)
     action = _clean_text(_action_without_leading_modal(norm.action))
     recipient = _recipient_phrase_text(norm.recipient)
+    mental_state = _clean_text(norm.mental_state)
     modal = _modal_phrase(norm.modality)
 
     if actor:
@@ -88,6 +89,9 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
         phrases.append(_phrase(modal, "modality", norm))
     else:
         missing.append("modality")
+
+    if mental_state and not _text_already_contains(action, mental_state):
+        phrases.append(_phrase(mental_state, "mental_state", norm))
 
     if action:
         phrases.append(_phrase(action, "action", norm))

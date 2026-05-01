@@ -27,6 +27,39 @@ def test_decoder_reconstructs_simple_obligation_without_temporal_duplication():
     assert decoded.phrases[2].text == norm.action
 
 
+def test_decoder_reconstructs_separated_mental_state_slot_with_provenance():
+    _, norm, _ = _decode("The applicant shall file the report.")
+    mens_rea_norm = replace(
+        norm,
+        mental_state="knowingly",
+        action="file the report",
+        field_spans={
+            **norm.field_spans,
+            "mental_state": [20, 29],
+            "action": [30, 45],
+        },
+    )
+
+    decoded = decode_legal_norm_ir(mens_rea_norm)
+
+    assert decoded.text == "Applicant shall knowingly file the report."
+    assert [phrase.slot for phrase in decoded.phrases] == [
+        "actor",
+        "modality",
+        "mental_state",
+        "action",
+    ]
+    mental_state_phrase = decoded.phrases[2]
+    assert mental_state_phrase.text == "knowingly"
+    assert mental_state_phrase.spans == [[20, 29]]
+
+    already_encoded = replace(mens_rea_norm, action="knowingly file the report")
+    already_decoded = decode_legal_norm_ir(already_encoded)
+
+    assert already_decoded.text == "Applicant shall knowingly file the report."
+    assert [phrase.slot for phrase in already_decoded.phrases] == ["actor", "modality", "action"]
+
+
 def test_decoder_reconstructs_separated_recipient_slot_with_provenance():
     _, norm, _ = _decode("The Director shall issue a permit.")
     recipient_norm = replace(
