@@ -975,6 +975,50 @@ def test_parser_and_formula_capture_no_later_than_deadline():
     )
 
 
+def test_parser_and_formula_capture_after_notice_and_hearing_prerequisite():
+    element = extract_normative_elements(
+        "The Commission shall adopt rules after notice and hearing."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "adopt rules"
+    assert norm.temporal_constraints == [
+        {
+            "type": "procedure",
+            "temporal_kind": "after_notice_and_hearing",
+            "value": "after notice and hearing",
+            "anchor": "",
+            "quantity": None,
+            "unit": "",
+            "calendar": "",
+            "anchor_event": "",
+            "direction": "",
+            "raw_text": "after notice and hearing",
+            "normalized_text": "after notice and hearing",
+            "span": [33, 57],
+        }
+    ]
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Commission(x) ∧ ProcedureAfterNoticeAndHearing(x) → AdoptRules(x)))"
+    )
+
+
+def test_after_notice_without_hearing_does_not_use_notice_and_hearing_prerequisite():
+    element = extract_normative_elements(
+        "The Commission shall adopt rules after notice is mailed."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "adopt rules"
+    assert all(
+        constraint.get("temporal_kind") != "after_notice_and_hearing"
+        for constraint in norm.temporal_constraints
+    )
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Commission(x) → AdoptRules(x)))"
+    )
+
+
 def test_ir_formula_suppresses_base_deadline_when_whichever_variant_is_later_in_ir_order():
     element = extract_normative_elements(
         "The Director shall complete review within 30 days after application or "
