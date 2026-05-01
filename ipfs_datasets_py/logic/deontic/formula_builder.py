@@ -136,6 +136,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_compliance_action(action_text)
     elif _is_access_availability_obligation(norm, action_text):
         action_text = _strip_access_availability_action(action_text)
+    elif _is_permission_facilitation_prohibition(norm, action_text):
+        action_text = _strip_permission_facilitation_action(action_text)
     elif _is_direct_gerund_prohibition(norm, action_text):
         action_text = _normalize_refrain_action_head(action_text)
 
@@ -289,6 +291,21 @@ def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> b
     )
 
 
+def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether a prohibition targets facilitating a regulated act."""
+
+    if norm.modality != "F":
+        return False
+    return bool(re.match(
+        r"^(?:permit|allow|authorize|enable)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
+        r"(?:person\s+to\s+|entity\s+to\s+|applicant\s+to\s+|permittee\s+to\s+|licensee\s+to\s+)?"
+        r"(?:enter|access|discharge|disclose|remove|alter|destroy|obstruct|interfere|impede|"
+        r"entry|discharge|disclosure|removal|alteration|destruction|access)\b",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
+
+
 def _strip_refrain_action(action_text: str) -> str:
     """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
@@ -375,6 +392,31 @@ def _strip_access_availability_action(action_text: str) -> str:
         accessed_object = access_match.group(2).strip()
         return f"provide access to {accessed_object}" if accessed_object else text
 
+    return text
+
+
+def _strip_permission_facilitation_action(action_text: str) -> str:
+    """Remove permit/allow/authorize wrappers from facilitation prohibitions."""
+
+    text = str(action_text or "").strip()
+    agent_action_match = re.match(
+        r"^(?:permit|allow|authorize|enable)\s+"
+        r"(?:any\s+|a\s+|an\s+|the\s+)?"
+        r"(?:person|entity|applicant|permittee|licensee)\s+to\s+(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if agent_action_match:
+        return _normalize_prevention_action_head(agent_action_match.group(1).strip())
+
+    embedded = re.sub(
+        r"^(?:permit|allow|authorize|enable)\s+",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    ).strip()
+    if embedded:
+        return _normalize_prevention_action_head(embedded)
     return text
 
 
