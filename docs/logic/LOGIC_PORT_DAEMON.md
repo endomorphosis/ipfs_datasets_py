@@ -152,6 +152,8 @@ By default, continuous mode now tries to replenish the TypeScript port plan befo
 
 Use `--revisit-blocked-tasks` when the normal backlog is exhausted and you intentionally want the daemon to work through blocked tasks again. In that mode, selection still prefers `[ ]` and `[~]` tasks first; only when none remain does it select `[!]` tasks. The stale-failure pre-cycle blocker is disabled for this mode so historical failures do not immediately re-block the task before the new attempt. A successful round marks the blocked source checkbox `[x]`; a failed round leaves it blocked and records the latest failure evidence.
 
+Blocked-task revisit mode has a small dependency gate for cleanup tasks. It will not select a task that removes `nlpUnavailable` or `mlUnavailable` capability flags while browser-native ML/NLP prerequisite tasks are still unfinished or while those markers still exist in `src/lib/logic`. If every remaining blocked task is dependency-gated, the daemon treats the plan as having no eligible target and falls back to goal review and plan replenishment instead of spending a cycle on impossible cleanup.
+
 Blocked task selection is controlled by `--blocked-task-strategy`:
 When failure counts tie under `fewest-failures` or `most-failures`, the daemon now prefers the blocked task least recently attempted. That keeps revisit mode rotating across equally stuck tasks instead of repeatedly selecting the first checkbox by markdown order.
 

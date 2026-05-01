@@ -1864,7 +1864,11 @@ Critical correction for attempt {attempt}:
         return None
 
     def _select_blocked_plan_task(self, tasks: Sequence[PlanTask]) -> Optional[PlanTask]:
-        blocked = [(index, task) for index, task in enumerate(tasks) if task.status == "blocked"]
+        blocked = [
+            (index, task)
+            for index, task in enumerate(tasks)
+            if task.status == "blocked" and not self._blocked_task_dependency_reason(task, tasks)
+        ]
         if not blocked:
             return None
         strategy = self.daemon_config.blocked_task_strategy
@@ -1877,6 +1881,52 @@ Critical correction for attempt {attempt}:
         if strategy == "most-failures":
             return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
         return blocked[0][1]
+
+    def _blocked_task_dependency_reason(self, task: PlanTask, tasks: Sequence[PlanTask]) -> str:
+        title = task.title.lower()
+        is_capability_cleanup = (
+            "remove" in title
+            and ("capability flag" in title or "unavailable" in title)
+            and ("nlpunavailable" in title or "mlunavailable" in title)
+        )
+        if not is_capability_cleanup:
+            return ""
+
+        unfinished_prerequisites = [
+            item.label
+            for item in tasks
+            if item.task_id != task.task_id
+            and item.status != "complete"
+            and any(token in item.title.lower() for token in ("spacy", "browser-native nlp", "ml_confidence", "ml confidence"))
+        ]
+        if unfinished_prerequisites:
+            return "ML/NLP prerequisite tasks are still unfinished."
+
+        markers = self._runtime_capability_unavailable_markers()
+        if markers:
+            return "Runtime capability unavailable markers still exist in TypeScript logic."
+        return ""
+
+    def _runtime_capability_unavailable_markers(self) -> List[str]:
+        ts_root = self.daemon_config.resolve(self.daemon_config.typescript_logic_dir)
+        if not ts_root.exists():
+            return []
+        markers: List[str] = []
+        for path in sorted(ts_root.rglob("*.ts")):
+            if not path.is_file() or path.name.endswith(".test.ts"):
+                continue
+            try:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            for marker in ("nlpUnavailable", "mlUnavailable"):
+                if marker in text:
+                    try:
+                        rel_path = path.relative_to(self.daemon_config.repo_root).as_posix()
+                    except ValueError:
+                        rel_path = path.as_posix()
+                    markers.append(f"{rel_path}:{marker}")
+        return markers
 
     def _render_task_board(
         self,

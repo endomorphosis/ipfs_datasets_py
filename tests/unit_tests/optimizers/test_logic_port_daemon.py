@@ -182,6 +182,82 @@ def test_daemon_selection_can_revisit_blocked_tasks_when_enabled(tmp_path):
     assert selected.title == "Blocked task"
 
 
+def test_revisit_blocked_skips_capability_cleanup_until_ml_nlp_prereqs_are_done(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (logic_dir / "runtimeCapabilities.ts").write_text(
+        "export const flags = { nlpUnavailable: true, mlUnavailable: false };\n",
+        encoding="utf-8",
+    )
+    plan.write_text(
+        "\n".join(
+            [
+                "- [x] Complete task",
+                "- [!] Replace spaCy extraction with browser-native NLP.",
+                "- [!] Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented.",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Replace spaCy extraction with browser-native NLP."
+
+
+def test_revisit_blocked_treats_dependent_cleanup_as_no_eligible_task(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (logic_dir / "runtimeCapabilities.ts").write_text(
+        "export const flags = { nlpUnavailable: true, mlUnavailable: false };\n",
+        encoding="utf-8",
+    )
+    plan.write_text(
+        "- [x] Complete task\n"
+        "- [!] Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented.\n",
+        encoding="utf-8",
+    )
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        revisit_blocked_tasks=True,
+        replenish_plan_when_empty=False,
+    )
+
+    optimizer = LogicPortDaemonOptimizer(config)
+
+    assert optimizer._current_plan_task() is None
+    result = optimizer._no_eligible_task_result()
+    assert result is not None
+    assert result["artifact"]["failure_kind"] == "no_eligible_tasks"
+
+
 def test_revisit_blocked_tasks_can_select_fewest_failures(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
