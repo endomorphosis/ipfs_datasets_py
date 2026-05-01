@@ -258,6 +258,41 @@ def test_revisit_blocked_treats_dependent_cleanup_as_no_eligible_task(tmp_path):
     assert result["artifact"]["failure_kind"] == "no_eligible_tasks"
 
 
+def test_capability_cleanup_dependency_ignores_test_only_markers(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (logic_dir / "runtimeCapabilities.ts").write_text("export const ready = true;\n", encoding="utf-8")
+    (logic_dir / "runtimeCapabilities.test.ts").write_text(
+        "expect('nlpUnavailable mlUnavailable').toBeTruthy();\n",
+        encoding="utf-8",
+    )
+    plan.write_text(
+        "- [x] Replace spaCy extraction with browser-native NLP.\n"
+        "- [x] Port `ml_confidence.py` to local browser inference or an equivalent deterministic TypeScript model.\n"
+        "- [!] Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented.\n",
+        encoding="utf-8",
+    )
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        revisit_blocked_tasks=True,
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Remove `nlpUnavailable` and `mlUnavailable` capability flags once browser-native parity is implemented."
+
+
 def test_revisit_blocked_tasks_can_select_fewest_failures(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
@@ -395,6 +430,8 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     assert router.calls[0]["kwargs"]["trace"] is True
     assert router.calls[0]["kwargs"]["trace_dir"].endswith("ipfs_datasets_py/.daemon/codex-runs")
     assert "DETERMINISTIC" not in router.calls[0]["prompt"] or "Port deterministic parser IR" in router.calls[0]["prompt"]
+    assert "Do not add Node-only, Rust FFI, filesystem, subprocess, RPC, or server fallbacks" in router.calls[0]["prompt"]
+    assert 'For tasks phrased "where feasible"' in router.calls[0]["prompt"]
     assert result["valid"] is True
     assert result["artifact"]["has_patch"] is True
     assert not (tmp_path / "new-file.txt").exists()
@@ -784,7 +821,7 @@ def test_malformed_patch_falls_back_to_complete_file_replacements(tmp_path):
     assert result["artifact"]["files"] == ["src/lib/logic/feature.ts"]
     assert result["artifact"]["changed_files"] == ["src/lib/logic/feature.ts"]
     assert len(router.calls) == 3
-    assert "Do not return another patch" in router.calls[-1]["prompt"]
+    assert "runtime TypeScript changes must use JSON `files` complete replacements" in router.calls[1]["prompt"]
 
 
 def test_status_file_records_liveness_and_latest_artifact(tmp_path):
@@ -872,6 +909,58 @@ def test_daemon_retries_empty_or_non_json_proposals_as_file_replacements(tmp_pat
     assert target.read_text(encoding="utf-8") == "new\n"
     assert len(router.calls) == 3
     assert "Do not refuse because of a read-only sandbox" in router.calls[1]["prompt"]
+
+
+def test_runtime_typescript_patch_is_retried_as_file_replacement(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("export const value = 'old';\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    patch = (
+        "diff --git a/src/lib/logic/feature.ts b/src/lib/logic/feature.ts\n"
+        "--- a/src/lib/logic/feature.ts\n"
+        "+++ b/src/lib/logic/feature.ts\n"
+        "@@ -1 +1 @@\n"
+        "-export const value = 'old';\n"
+        "+export const value = 'patch';\n"
+    )
+    router = SequencedRouter(
+        [
+            json.dumps({"summary": "Patch runtime feature", "patch": patch, "files": []}),
+            json.dumps(
+                {
+                    "summary": "File runtime feature",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'file';\n"}],
+                }
+            ),
+        ]
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        proposal_attempts=2,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="runtime-patch-retry")
+
+    assert result["valid"] is True
+    assert target.read_text(encoding="utf-8") == 'export const value = "file";\n'
+    assert len(router.calls) == 2
+    assert "runtime TypeScript changes must use JSON `files` complete replacements" in router.calls[1]["prompt"]
 
 
 def test_empty_proposal_gets_failure_kind_for_task_blocking(tmp_path):

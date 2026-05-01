@@ -712,21 +712,21 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact = parse_llm_patch_response(response)
             artifact.dry_run = self.daemon_config.dry_run
             artifact.target_task = target_label
+            preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
             if artifact.files:
-                preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
                 preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
-                if preflight_errors:
-                    artifact.errors.extend(preflight_errors)
-                    artifact.failure_kind = "preflight"
-                    previous_feedback = self._proposal_feedback(artifact)
-                    self._write_status(
-                        "proposal_attempt_rejected",
-                        attempt=attempt,
-                        attempts=attempts,
-                        selected_task=target_label,
-                        artifact=artifact.to_dict(),
-                    )
-                    continue
+            if preflight_errors:
+                artifact.errors.extend(preflight_errors)
+                artifact.failure_kind = "preflight"
+                previous_feedback = self._proposal_feedback(artifact)
+                self._write_status(
+                    "proposal_attempt_rejected",
+                    attempt=attempt,
+                    attempts=attempts,
+                    selected_task=target_label,
+                    artifact=artifact.to_dict(),
+                )
+                continue
             if artifact.files or artifact.patch.strip():
                 return artifact
             artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
@@ -2112,6 +2112,11 @@ Critical correction for attempt {attempt}:
                     f"Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
                 )
         paths = _artifact_paths(artifact)
+        if self.daemon_config.prefer_file_edits and artifact.patch.strip() and not artifact.files and _has_runtime_logic_change(paths):
+            errors.append(
+                "Rejected proposal because runtime TypeScript changes must use JSON `files` complete replacements "
+                "instead of a unified diff patch for this daemon run."
+            )
         if selected_task and paths and not _task_allows_non_runtime_only(selected_task) and not _has_runtime_logic_change(paths):
             errors.append(
                 "Rejected proposal because the selected port-plan task appears to require implementation work, "
@@ -2626,7 +2631,9 @@ Goal: improve parity with the Python logic module while preserving browser-nativ
 Hard constraints:
 - Do not add server-side runtime calls to the TypeScript logic library.
 - Do not wrap Python services from browser code.
+- Do not add Node-only, Rust FFI, filesystem, subprocess, RPC, or server fallbacks to browser runtime code.
 - Prefer deterministic TypeScript or WASM-compatible implementations.
+- For tasks phrased "where feasible", land the feasible browser-native contract, metadata, validation, or fail-closed adapter first when a real cryptographic/WASM implementation is not already available in the project.
 - Preserve existing tests and add focused tests for each change.
 - Use the existing Jest test harness. Test files should rely on global describe/it/expect and must not import vitest or @jest/globals.
 - Prefer adding cases to an existing matching *.test.ts file over creating a new test file.
