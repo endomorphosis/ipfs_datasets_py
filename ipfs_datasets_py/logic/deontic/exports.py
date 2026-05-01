@@ -33,6 +33,12 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
 _SECTION_REFERENCE_RE = re.compile(
     r"\bsection\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b", re.IGNORECASE
 )
+_SECTION_REFERENCE_LIST_RE = re.compile(
+    r"\bsections\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*"
+    r"(?:\s*(?:,|and|or)\s*[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)+)",
+    re.IGNORECASE,
+)
+_SECTION_REFERENCE_TOKEN_RE = re.compile(r"[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*", re.IGNORECASE)
 
 
 def build_formal_logic_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
@@ -469,24 +475,27 @@ def _resolve_norm_same_document_references(
         if _reference_is_external(reference):
             continue
 
-        citation = _reference_section_citation(reference)
-        if not citation or citation not in section_index or citation in existing:
+        citations = _reference_section_citations(reference)
+        if not citations or any(citation not in section_index for citation in citations):
             continue
 
-        additions.append(
-            {
-                "reference_type": "section",
-                "target": citation[len("section ") :],
-                "canonical_citation": citation,
-                "value": citation,
-                "resolution_scope": "same_document",
-                "same_document": True,
-                "resolved_source_id": section_index[citation],
-                "source_id": section_index[citation],
-                "span": reference.get("span", []),
-            }
-        )
-        existing.add(citation)
+        for citation in citations:
+            if citation in existing:
+                continue
+            additions.append(
+                {
+                    "reference_type": "section",
+                    "target": citation[len("section ") :],
+                    "canonical_citation": citation,
+                    "value": citation,
+                    "resolution_scope": "same_document",
+                    "same_document": True,
+                    "resolved_source_id": section_index[citation],
+                    "source_id": section_index[citation],
+                    "span": reference.get("span", []),
+                }
+            )
+            existing.add(citation)
 
     if not additions:
         return norm
@@ -497,23 +506,48 @@ def _resolve_norm_same_document_references(
 
 
 def _reference_section_citation(reference: Mapping[str, Any]) -> str:
+    citations = _reference_section_citations(reference)
+    return citations[0] if citations else ""
+
+
+def _reference_section_citations(reference: Mapping[str, Any]) -> List[str]:
+    citations: List[str] = []
+
     for key in ("canonical_citation", "citation", "value", "normalized_text", "raw_text", "text"):
-        citation = _canonical_section_citation(str(reference.get(key) or ""))
-        if citation:
-            return citation
+        for citation in _section_citations_from_text(str(reference.get(key) or "")):
+            if citation not in citations:
+                citations.append(citation)
 
     reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
     target = str(reference.get("target") or reference.get("section") or "").strip()
     if reference_type == "section" and target and target.lower() not in {"this", "current"}:
-        return _canonical_section_citation(f"section {target}")
-    return ""
+        for citation in _section_citations_from_text(f"section {target}"):
+            if citation not in citations:
+                citations.append(citation)
+    return citations
 
 
 def _canonical_section_citation(text: str) -> str:
-    match = _SECTION_REFERENCE_RE.search(str(text or ""))
-    if not match:
-        return ""
-    return f"section {match.group(1).lower()}"
+    citations = _section_citations_from_text(text)
+    return citations[0] if citations else ""
+
+
+def _section_citations_from_text(text: str) -> List[str]:
+    value = str(text or "")
+    citations: List[str] = []
+
+    for match in _SECTION_REFERENCE_RE.finditer(value):
+        citation = f"section {match.group(1).lower()}"
+        if citation not in citations:
+            citations.append(citation)
+
+    for match in _SECTION_REFERENCE_LIST_RE.finditer(value):
+        for token in _SECTION_REFERENCE_TOKEN_RE.findall(match.group(1)):
+            citation = f"section {token.lower()}"
+            if citation not in citations:
+                citations.append(citation)
+
+    return citations
 
 
 def _section_context_citations(norm: LegalNormIR) -> List[str]:

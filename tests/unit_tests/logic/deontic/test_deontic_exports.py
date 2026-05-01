@@ -1091,6 +1091,99 @@ def test_parser_element_readiness_keeps_mismatched_section_context_reference_blo
     assert "cross_reference_requires_resolution" in aligned[0]["llm_repair"]["reasons"]
 
 
+def test_document_export_tables_resolve_complete_plural_section_list_exception():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    reference_element = dict(reference_element)
+    reference_element["exception_details"] = [
+        {
+            "type": "exception",
+            "clause_type": "except",
+            "raw_text": "as provided in sections 552 and 553",
+            "normalized_text": "as provided in sections 552 and 553",
+            "span": [46, 82],
+            "clause_span": [39, 82],
+        }
+    ]
+    reference_element["cross_reference_details"] = [
+        {
+            "reference_type": "section",
+            "raw_text": "sections 552 and 553",
+            "normalized_text": "sections 552 and 553",
+            "span": [61, 82],
+        }
+    ]
+    reference_element["resolved_cross_references"] = []
+
+    section_552 = extract_normative_elements("The Bureau shall maintain the public register.")[0]
+    section_552 = dict(section_552)
+    section_552["canonical_citation"] = "section 552"
+    section_553 = extract_normative_elements("The Bureau shall publish the annual index.")[0]
+    section_553 = dict(section_553)
+    section_553["canonical_citation"] = "section 553"
+
+    tables = build_document_export_tables_from_ir(
+        [
+            LegalNormIR.from_parser_element(reference_element),
+            LegalNormIR.from_parser_element(section_552),
+            LegalNormIR.from_parser_element(section_553),
+        ]
+    )
+
+    assert tables["repair_queue"] == []
+    reference_formula = tables["formal_logic"][0]
+    assert reference_formula["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in reference_formula["formula"]
+    assert "Section553" not in reference_formula["formula"]
+    assert reference_formula["proof_ready"] is True
+    assert reference_formula["requires_validation"] is False
+    assert reference_formula["repair_required"] is False
+    assert reference_formula["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert reference_formula["deterministic_resolution"]["references"] == [
+        "section 552",
+        "section 553",
+    ]
+    assert reference_formula["cross_reference_resolution_status"] == "resolved"
+    assert reference_formula["unresolved_cross_references"] == []
+    assert [record["canonical_citation"] for record in reference_formula["resolved_cross_references"]] == [
+        "section 552",
+        "section 553",
+    ]
+    assert tables["proof_obligations"][0]["theorem_candidate"] is True
+    assert validate_export_tables(tables) == {"valid": True, "errors": []}
+
+
+def test_document_export_tables_keep_partial_plural_section_list_exception_blocked():
+    reference_element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    reference_element = dict(reference_element)
+    reference_element["exception_details"] = [
+        {"type": "exception", "clause_type": "except", "raw_text": "as provided in sections 552 and 553", "normalized_text": "as provided in sections 552 and 553", "span": [46, 82]}
+    ]
+    reference_element["cross_reference_details"] = [
+        {"reference_type": "section", "raw_text": "sections 552 and 553", "normalized_text": "sections 552 and 553", "span": [61, 82]}
+    ]
+    reference_element["resolved_cross_references"] = []
+    section_552 = extract_normative_elements("The Bureau shall maintain the public register.")[0]
+    section_552 = dict(section_552)
+    section_552["canonical_citation"] = "section 552"
+
+    tables = build_document_export_tables_from_ir(
+        [LegalNormIR.from_parser_element(reference_element), LegalNormIR.from_parser_element(section_552)]
+    )
+
+    assert len(tables["repair_queue"]) == 1
+    assert tables["repair_queue"][0]["source_id"] == reference_element["source_id"]
+    assert tables["formal_logic"][0]["proof_ready"] is False
+    assert tables["formal_logic"][0]["requires_validation"] is True
+    assert tables["formal_logic"][0]["deterministic_resolution"] == {}
+    assert validate_export_tables(tables) == {"valid": True, "errors": []}
+
+
 def test_validate_export_tables_reports_missing_and_duplicate_keys():
     element = extract_normative_elements("The tenant must pay rent monthly.")[0]
     norm = LegalNormIR.from_parser_element(element)
