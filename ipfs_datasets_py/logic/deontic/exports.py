@@ -176,6 +176,13 @@ def parser_elements_for_metrics(
     """
 
     source_elements = [dict(element) for element in elements]
+    source_norms = [LegalNormIR.from_parser_element(element) for element in source_elements]
+    resolved_norms = _with_same_document_reference_resolutions(source_norms)
+    resolved_references_by_source_id = {
+        norm.source_id: list(norm.resolved_cross_references)
+        for norm in resolved_norms
+        if norm.source_id
+    }
     inactive_projection_by_source_id = {
         str(element.get("source_id") or ""): element
         for element in source_elements
@@ -184,9 +191,7 @@ def parser_elements_for_metrics(
     metric_elements = parser_elements_with_ir_export_readiness(source_elements)
     batch_formula_records_by_source_id = {
         record.get("source_id"): record
-        for record in build_deontic_formula_records_from_irs(
-            LegalNormIR.from_parser_element(element) for element in source_elements
-        )
+        for record in build_deontic_formula_records_from_irs(resolved_norms)
         if record.get("source_id")
     }
 
@@ -204,6 +209,11 @@ def parser_elements_for_metrics(
             )
             export_readiness["deterministic_resolution"] = dict(
                 batch_formula_record.get("deterministic_resolution") or {}
+            )
+            _project_same_document_resolved_cross_references(
+                element,
+                resolved_references_by_source_id.get(str(element.get("source_id") or ""), []),
+                batch_formula_record,
             )
 
         if inactive_projection:
@@ -1303,6 +1313,92 @@ def _precedence_override_reference_records(norm: LegalNormIR) -> List[Dict[str, 
         records.append(normalized)
         seen.add(key)
     return records
+
+
+def _project_same_document_resolved_cross_references(
+    element: Dict[str, Any],
+    resolved_references: Sequence[Mapping[str, Any]],
+    formula_record: Mapping[str, Any],
+) -> None:
+    """Attach parser-native same-document reference resolutions to a metrics row.
+
+    Formula batch resolution uses IR reference records. Metrics and repair-detail
+    collectors still inspect parser elements, so a resolved numbered exception
+    must carry the same evidence in ``resolved_cross_references`` without
+    forcing those callers to understand formula-record provenance.
+    """
+
+    deterministic_resolution = dict(formula_record.get("deterministic_resolution") or {})
+    if deterministic_resolution.get("type") != "resolved_same_document_reference_exception":
+        return
+
+    projected: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for reference in resolved_references:
+        if not isinstance(reference, Mapping):
+            continue
+        if not _is_same_document_resolved_reference(reference):
+            continue
+        normalized = _normalized_reference_record(reference)
+        key = _reference_provenance_key(normalized)
+        if not key or key in seen:
+            continue
+        projected.append(_parser_native_resolved_reference_record(element, reference))
+        seen.add(key)
+
+    if projected:
+        element["resolved_cross_references"] = projected
+
+
+def _parser_native_resolved_reference_record(
+    element: Mapping[str, Any],
+    reference: Mapping[str, Any],
+) -> Dict[str, Any]:
+    normalized = _normalized_reference_record(reference)
+    original = _matching_parser_reference(element, normalized)
+    reference_type = str(
+        original.get("type")
+        or original.get("reference_type")
+        or normalized.get("reference_type")
+        or "section"
+    )
+    target = str(original.get("value") or original.get("target") or normalized.get("target") or "")
+    citation = str(normalized.get("canonical_citation") or normalized.get("value") or "").strip()
+    raw_text = str(original.get("raw_text") or original.get("text") or citation or target).strip()
+    normalized_text = str(original.get("normalized_text") or citation or raw_text).strip()
+
+    record = {
+        "type": reference_type,
+        "value": target,
+        "raw_text": raw_text,
+        "normalized_text": normalized_text,
+        "span": list(original.get("span") or normalized.get("span") or []),
+        "resolution_status": "resolved",
+        "target_exists": True,
+        "resolution_scope": "same_document",
+        "same_document": True,
+        "resolved": True,
+    }
+    for key in ("source_id", "resolved_source_id"):
+        value = reference.get(key)
+        if value:
+            record[key] = value
+    return record
+
+
+def _matching_parser_reference(
+    element: Mapping[str, Any],
+    normalized_reference: Mapping[str, Any],
+) -> Dict[str, Any]:
+    target_key = _reference_provenance_key(normalized_reference)
+    for key in ("cross_reference_details", "cross_references"):
+        for candidate in element.get(key) or []:
+            if not isinstance(candidate, Mapping):
+                continue
+            candidate_key = _reference_provenance_key(_normalized_reference_record(candidate))
+            if candidate_key and candidate_key == target_key:
+                return dict(candidate)
+    return {}
 
 
 def _stable_id(prefix: str, *parts: str) -> str:

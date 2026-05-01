@@ -1900,6 +1900,22 @@ def test_metrics_projection_resolves_numbered_reference_exception_with_same_docu
     assert projected_reference["export_readiness"]["deterministic_resolution"]["references"] == [
         "section 552"
     ]
+    assert projected_reference["resolved_cross_references"] == [
+        {
+            "type": "section",
+            "value": "552",
+            "raw_text": "section 552",
+            "normalized_text": "section 552",
+            "span": [61, 72],
+            "resolution_status": "resolved",
+            "target_exists": True,
+            "resolution_scope": "same_document",
+            "same_document": True,
+            "resolved": True,
+            "source_id": cited["source_id"],
+            "resolved_source_id": cited["source_id"],
+        }
+    ]
 
 
 def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_exception():
@@ -1934,6 +1950,7 @@ def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_except
     assert reprojected_reference["export_readiness"]["deterministic_resolution"]["type"] == (
         "resolved_same_document_reference_exception"
     )
+    assert reprojected_reference["resolved_cross_references"] == projected_reference["resolved_cross_references"]
     assert parser_element_has_active_repair(projected_reference) is False
     assert active_repair_details_from_parser_elements([projected_reference]) == []
 
