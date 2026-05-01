@@ -5184,3 +5184,37 @@ def test_ir_procedure_event_records_mark_postmark_trigger_as_prerequisite():
     assert records[0]["span"] == [37, 66]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_docketing_trigger_as_prerequisite():
+    """Docketing of an appeal is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall accept an appeal after docketing of the appeal."
+    )[0])
+    element["action"] = ["accept an appeal after docketing appeal"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "acceptance",
+                "relation": "triggered_by_docketing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after docketing of the appeal",
+                "span": [33, 63],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "acceptance"
+    assert records[0]["event_symbol"] == "Acceptance"
+    assert records[0]["relation"] == "triggered_by_docketing_of"
+    assert records[0]["anchor_event"] == "appeal"
+    assert records[0]["anchor_symbol"] == "Appeal"
+    assert records[0]["raw_text"] == "after docketing of the appeal"
+    assert records[0]["span"] == [33, 63]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"

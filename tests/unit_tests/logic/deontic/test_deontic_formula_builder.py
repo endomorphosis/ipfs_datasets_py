@@ -2697,6 +2697,32 @@ def test_structured_procedure_postmark_trigger_becomes_formula_prerequisite():
     assert "AcceptAppealAfterPostmarkNotice" not in formula
 
 
+def test_structured_procedure_docketing_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Board shall accept an appeal after docketing of the appeal."
+    )[0])
+    element["action"] = ["accept an appeal after docketing appeal"]
+    element["procedure"] = {
+        "trigger_event": "appeal",
+        "terminal_event": "acceptance",
+        "event_relations": [
+            {
+                "event": "acceptance",
+                "relation": "triggered_by_docketing_of",
+                "anchor_event": "appeal",
+                "raw_text": "after docketing of the appeal",
+                "span": [33, 63],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Board(x) ∧ ProcedureAfterDocketingAppeal(x) → AcceptAppeal(x)))"
+    assert "AcceptAppealAfterDocketingAppeal" not in formula
+
+
 def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
     element = dict(extract_normative_elements(
         "The Director shall publish guidelines after adoption of rules."
