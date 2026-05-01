@@ -655,6 +655,37 @@ def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in section 552"
 
 
+def test_formula_record_preserves_alias_only_reference_exception_omission():
+    element = dict(extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0])
+    element["exceptions"] = []
+    element["exception_details"] = [
+        {
+            "type": "except",
+            "clause_text": "as provided in section 552",
+            "span": [46, 72],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert "Section552" not in record["formula"]
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+    assert record["omitted_formula_slots"]["exceptions"] == [
+        {
+            "type": "except",
+            "clause_text": "as provided in section 552",
+            "span": [46, 72],
+        }
+    ]
+
+
 def test_simple_substantive_exception_formula_record_is_proof_ready_with_resolution_note():
     element = extract_normative_elements(
         "The applicant shall obtain a permit unless approval is denied."

@@ -1112,7 +1112,7 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         if isinstance(item, dict)
         and _is_reference_condition(
             item,
-            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            _slot_primary_text(item),
             reference_values,
         )
     ]
@@ -1122,7 +1122,7 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         if isinstance(item, dict)
         and _is_reference_exception(
             item,
-            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            _slot_primary_text(item),
             reference_values,
         )
     ]
@@ -1132,7 +1132,7 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         if isinstance(item, dict)
         and not _is_reference_condition(
             item,
-            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            _slot_primary_text(item),
             reference_values,
         )
     ]
@@ -1142,7 +1142,7 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         if isinstance(item, dict)
         and not _is_reference_exception(
             item,
-            str(item.get("value") or item.get("normalized_text") or item.get("raw_text") or ""),
+            _slot_primary_text(item),
             reference_values,
         )
     ]
