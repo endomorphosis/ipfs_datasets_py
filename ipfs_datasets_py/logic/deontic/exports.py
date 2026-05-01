@@ -175,7 +175,10 @@ def parser_elements_for_metrics(
     projection used by converter/export callers.
     """
 
-    all_source_elements = [dict(element) for element in elements]
+    all_source_elements = [
+        _hydrate_parser_element_from_prompt_context(dict(element))
+        for element in elements
+    ]
     source_elements = [element for element in all_source_elements if not _is_context_only_parser_element(element)]
     source_norms = [LegalNormIR.from_parser_element(element) for element in all_source_elements]
     resolved_norms = _with_same_document_reference_resolutions(source_norms)
@@ -508,6 +511,7 @@ def _evaluation_parser_elements(
         llm_repair = detail.get("llm_repair")
         prompt_context = dict(llm_repair.get("prompt_context") or {}) if isinstance(llm_repair, Mapping) else {}
         candidate = _parser_element_from_evaluation_sample(prompt_context)
+        candidate = _hydrate_parser_element_from_prompt_context(candidate) if candidate else {}
         if candidate:
             recovered.append(candidate)
             continue
@@ -690,6 +694,99 @@ def _detail_records_from_sample(
     if not isinstance(legacy_values, list):
         return []
     return [dict(value) for value in legacy_values if isinstance(value, Mapping)]
+
+
+def _hydrate_parser_element_from_prompt_context(element: Mapping[str, Any]) -> Dict[str, Any]:
+    """Fill absent parser slots from deterministic repair prompt context.
+
+    Metric payloads may carry a detail-only parser row at the top level and the
+    richer source-grounded parser slots inside ``llm_repair.prompt_context``.
+    Those prompt-context slots were emitted by the deterministic parser before
+    the row entered the optional repair lane, so metrics can safely use them as
+    parser evidence.  Hydration is deliberately fill-only: explicit caller slots
+    win, and unresolved reference warnings still flow through the normal IR and
+    formula readiness gates.
+    """
+
+    hydrated = dict(element)
+    llm_repair = hydrated.get("llm_repair")
+    if not isinstance(llm_repair, Mapping):
+        return hydrated
+
+    prompt_context = llm_repair.get("prompt_context")
+    if not isinstance(prompt_context, Mapping):
+        return hydrated
+
+    prompt = dict(prompt_context)
+
+    _fill_empty_field(hydrated, prompt, "schema_version")
+    _fill_empty_field(hydrated, prompt, "source_id")
+    _fill_empty_field(hydrated, prompt, "canonical_citation")
+    _fill_empty_field(hydrated, prompt, "support_text")
+    _fill_empty_field(hydrated, prompt, "support_span")
+    _fill_empty_field(hydrated, prompt, "source_span")
+    _fill_empty_field(hydrated, prompt, "field_spans")
+    _fill_empty_field(hydrated, prompt, "norm_type")
+    _fill_empty_field(hydrated, prompt, "deontic_operator")
+    if not hydrated.get("deontic_operator") and prompt.get("modality"):
+        hydrated["deontic_operator"] = prompt.get("modality")
+    if not hydrated.get("text"):
+        hydrated["text"] = prompt.get("text") or prompt.get("source_text") or ""
+
+    for key in ("subject", "action", "parser_warnings"):
+        if not hydrated.get(key):
+            hydrated[key] = _list_field(prompt.get(key))
+
+    _hydrate_slot_records(hydrated, prompt, "conditions", "condition_details")
+    _hydrate_slot_records(hydrated, prompt, "exceptions", "exception_details")
+    _hydrate_slot_records(hydrated, prompt, "override_clauses", "override_clause_details")
+    _hydrate_slot_records(hydrated, prompt, "cross_references", "cross_reference_details")
+
+    for key in (
+        "resolved_cross_references",
+        "enforcement_links",
+        "conflict_links",
+        "defined_term_refs",
+        "ontology_terms",
+        "kg_relationship_hints",
+    ):
+        if not hydrated.get(key) and isinstance(prompt.get(key), list):
+            hydrated[key] = list(prompt.get(key) or [])
+
+    for key in ("legal_frame", "formal_terms", "section_context", "export_readiness"):
+        if not hydrated.get(key) and isinstance(prompt.get(key), Mapping):
+            hydrated[key] = dict(prompt.get(key) or {})
+
+    return hydrated
+
+
+def _fill_empty_field(target: Dict[str, Any], source: Mapping[str, Any], key: str) -> None:
+    if target.get(key) not in (None, "", [], {}):
+        return
+    value = source.get(key)
+    if value not in (None, "", [], {}):
+        if isinstance(value, Mapping):
+            target[key] = dict(value)
+        elif isinstance(value, list):
+            target[key] = list(value)
+        else:
+            target[key] = value
+
+
+def _hydrate_slot_records(
+    target: Dict[str, Any],
+    source: Mapping[str, Any],
+    legacy_key: str,
+    detail_key: str,
+) -> None:
+    if not target.get(detail_key):
+        detail_records = _detail_records_from_sample(source, detail_key, legacy_key)
+        if detail_records:
+            target[detail_key] = detail_records
+    if not target.get(legacy_key):
+        legacy_values = _legacy_text_values_from_sample(source, legacy_key)
+        if legacy_values:
+            target[legacy_key] = legacy_values
 
 
 def _legacy_text_values_from_sample(sample: Mapping[str, Any], key: str) -> List[Any]:

@@ -2793,6 +2793,92 @@ def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conser
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_metrics_hydrate_detail_only_prompt_context_exception_slots():
+    """Prompt-context parser slots should survive metrics projection."""
+
+    parsed = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+    detail_only = {
+        "sample_id": "exception",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "modality": None,
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "support_text": parsed["support_text"],
+                "support_span": parsed["support_span"],
+                "source_span": parsed.get("source_span", parsed["support_span"]),
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed["exception_details"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+
+    projected = parser_elements_for_metrics([detail_only])
+
+    assert projected[0]["exception_details"][0]["raw_text"] == "approval is denied"
+    assert projected[0]["active_repair_required"] is False
+    assert projected[0]["repair_required"] is False
+    assert projected[0]["export_readiness"]["formula_repair_required"] is False
+    assert projected[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "standard_substantive_exception"
+    )
+    assert parser_element_has_active_repair(projected[0]) is False
+
+
+def test_metrics_hydrate_prompt_context_but_keep_numbered_reference_blocked():
+    """Hydration must not clear unresolved numbered exception references."""
+
+    parsed = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    detail_only = {
+        "sample_id": "cross_reference",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed["exception_details"]),
+                "cross_references": list(parsed["cross_reference_details"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+
+    projected = parser_elements_for_metrics([detail_only])
+
+    assert projected[0]["exception_details"][0]["raw_text"] == "as provided in section 552"
+    assert projected[0]["cross_reference_details"][0]["raw_text"] == "section 552"
+    assert projected[0]["active_repair_required"] is True
+    assert projected[0]["export_readiness"]["formula_repair_required"] is True
+    assert parser_element_has_active_repair(projected[0]) is True
+
+
 def test_raw_parser_clears_repair_for_standard_substantive_exception():
     """A single plain unless-clause is deterministic formula structure, not LLM repair."""
 
