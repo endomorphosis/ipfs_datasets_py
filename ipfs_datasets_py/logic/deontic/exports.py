@@ -511,6 +511,38 @@ def _evaluation_parser_elements(
     return recovered
 
 
+def _detail_records_from_sample(
+    sample: Mapping[str, Any],
+    detail_key: str,
+    legacy_key: str,
+) -> List[Any]:
+    """Return rich slot records from recovered metric payloads when present.
+
+    Raw repair prompt contexts historically place dict-shaped records under
+    legacy keys such as ``exceptions`` and ``cross_references``. Passing those
+    through as legacy string lists causes the IR bridge to stringify the dicts,
+    which hides deterministic formula resolutions for otherwise source-grounded
+    rows. Prefer explicit detail fields, then promote dict-shaped legacy values
+    to detail records while leaving plain strings on the legacy list.
+    """
+
+    detail_values = sample.get(detail_key)
+    if isinstance(detail_values, list) and detail_values:
+        return list(detail_values)
+
+    legacy_values = sample.get(legacy_key)
+    if not isinstance(legacy_values, list):
+        return []
+    return [dict(value) for value in legacy_values if isinstance(value, Mapping)]
+
+
+def _legacy_text_values_from_sample(sample: Mapping[str, Any], key: str) -> List[Any]:
+    values = sample.get(key)
+    if not isinstance(values, list):
+        return []
+    return [value for value in values if not isinstance(value, Mapping)]
+
+
 def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
     """Recover a minimal parser element from a metric sample row when present."""
 
@@ -522,8 +554,8 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "schema_version": sample.get("schema_version", ""),
         "source_id": sample.get("source_id", ""),
         "canonical_citation": sample.get("canonical_citation", ""),
-        "text": sample.get("text", ""),
-        "support_text": sample.get("support_text", sample.get("text", "")),
+        "text": sample.get("text", sample.get("source_text", "")),
+        "support_text": sample.get("support_text", sample.get("text", sample.get("source_text", ""))),
         "support_span": list(sample.get("support_span") or sample.get("source_span") or []),
         "source_span": list(sample.get("source_span") or sample.get("support_span") or []),
         "field_spans": dict(sample.get("field_spans") or {}),
@@ -531,14 +563,14 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
         "deontic_operator": sample.get("deontic_operator") or sample.get("modality") or "",
         "subject": list(sample.get("subject") or []),
         "action": list(sample.get("action") or []),
-        "conditions": list(sample.get("conditions") or []),
-        "condition_details": list(sample.get("condition_details") or []),
-        "exceptions": list(sample.get("exceptions") or []),
-        "exception_details": list(sample.get("exception_details") or []),
-        "override_clauses": list(sample.get("override_clauses") or []),
-        "override_clause_details": list(sample.get("override_clause_details") or []),
-        "cross_references": list(sample.get("cross_references") or []),
-        "cross_reference_details": list(sample.get("cross_reference_details") or []),
+        "conditions": _legacy_text_values_from_sample(sample, "conditions"),
+        "condition_details": _detail_records_from_sample(sample, "condition_details", "conditions"),
+        "exceptions": _legacy_text_values_from_sample(sample, "exceptions"),
+        "exception_details": _detail_records_from_sample(sample, "exception_details", "exceptions"),
+        "override_clauses": _legacy_text_values_from_sample(sample, "override_clauses"),
+        "override_clause_details": _detail_records_from_sample(sample, "override_clause_details", "override_clauses"),
+        "cross_references": _legacy_text_values_from_sample(sample, "cross_references"),
+        "cross_reference_details": _detail_records_from_sample(sample, "cross_reference_details", "cross_references"),
         "resolved_cross_references": list(sample.get("resolved_cross_references") or []),
         "parser_warnings": list(sample.get("parser_warnings") or []),
         "llm_repair": dict(sample.get("llm_repair") or {}),

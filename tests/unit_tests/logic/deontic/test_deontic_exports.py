@@ -2101,6 +2101,89 @@ def test_normalize_repair_required_evaluation_recovers_parser_rows_from_repair_p
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_preserves_rich_prompt_context_slots():
+    """Prompt contexts may carry dict slots under legacy parser field names."""
+    exception = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+    override = extract_normative_elements(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )[0]
+    applicability = extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0]
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    prompt_contexts = []
+    for element in [exception, override, applicability, unresolved]:
+        context = {
+            "schema_version": element["schema_version"],
+            "source_id": element["source_id"],
+            "canonical_citation": element["canonical_citation"],
+            "source_text": element["text"],
+            "support_text": element["support_text"],
+            "support_span": element["support_span"],
+            "source_span": element.get("source_span", element["support_span"]),
+            "norm_type": element["norm_type"],
+            "deontic_operator": element["deontic_operator"],
+            "subject": list(element["subject"]),
+            "action": list(element["action"]),
+            "conditions": list(element.get("condition_details") or element.get("conditions") or []),
+            "exceptions": list(element.get("exception_details") or element.get("exceptions") or []),
+            "override_clauses": list(element.get("override_clause_details") or element.get("override_clauses") or []),
+            "cross_references": list(element.get("cross_reference_details") or element.get("cross_references") or []),
+            "resolved_cross_references": list(element.get("resolved_cross_references") or []),
+            "parser_warnings": list(element["parser_warnings"]),
+            "export_readiness": dict(element.get("export_readiness") or {}),
+            "promotable_to_theorem": bool(element.get("promotable_to_theorem")),
+        }
+        prompt_contexts.append(context)
+
+    raw_evaluation = {
+        "repair_required_count": 4,
+        "repair_required_rate": 1.0,
+        "repair_required": [context["source_id"] for context in prompt_contexts],
+        "repair_required_details": [
+            {
+                "source_id": context["source_id"],
+                "text": context["source_text"],
+                "norm_type": context["norm_type"],
+                "parser_warnings": list(context["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(context["parser_warnings"]),
+                    "prompt_context": context,
+                },
+            }
+            for context in prompt_contexts
+        ],
+        "metrics": {
+            "repair_required_count": 4,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 4"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required_rate"] == 0.25
+    assert normalized["repair_required"] == [unresolved["source_id"]]
+    assert len(normalized["repair_required_details"]) == 1
+    detail = normalized["repair_required_details"][0]
+    assert detail["source_id"] == unresolved["source_id"]
+    assert detail["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert detail["deterministic_resolution"] == {}
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["repair_required_rate"] == 0.25
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conservative():
     """Without parser rows, normalization must not invent cleared repairs."""
     raw_evaluation = {
