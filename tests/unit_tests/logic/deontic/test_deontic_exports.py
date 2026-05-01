@@ -1865,3 +1865,38 @@ def test_raw_parser_keeps_llm_prompt_for_unresolved_numbered_reference_exception
     assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
     assert "llm_router_repair" in element["export_readiness"]["requires_validation"]
+
+
+def test_metrics_projection_resolves_numbered_reference_exception_with_same_document_section():
+    """Metrics can clear active repair when the cited section is in the same batch."""
+    reference = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited = extract_normative_elements("The agency shall keep records.")[0]
+    cited = dict(cited)
+    cited["canonical_citation"] = "section 552"
+
+    projected = parser_elements_for_metrics([reference, cited])
+    projected_reference = projected[0]
+
+    assert reference["active_repair_required"] is True
+    assert parser_element_has_active_repair(reference) is True
+    assert projected_reference["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert projected_reference["active_repair_required"] is False
+    assert projected_reference["repair_required"] is False
+    assert projected_reference["active_repair_warnings"] == []
+    assert projected_reference["repair_required_warnings"] == []
+    assert projected_reference["llm_repair"]["required"] is False
+    assert projected_reference["llm_repair"]["allow_llm_repair"] is False
+    assert projected_reference["export_readiness"]["metric_repair_required"] is False
+    assert projected_reference["export_readiness"]["formula_proof_ready"] is True
+    assert projected_reference["export_readiness"]["formula_requires_validation"] is False
+    assert projected_reference["export_readiness"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert projected_reference["export_readiness"]["deterministic_resolution"]["references"] == [
+        "section 552"
+    ]

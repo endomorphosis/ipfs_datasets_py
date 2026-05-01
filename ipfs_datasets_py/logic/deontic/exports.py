@@ -175,9 +175,31 @@ def parser_elements_for_metrics(
     projection used by converter/export callers.
     """
 
-    metric_elements = parser_elements_with_ir_export_readiness(elements)
+    source_elements = [dict(element) for element in elements]
+    metric_elements = parser_elements_with_ir_export_readiness(source_elements)
+    batch_formula_records_by_source_id = {
+        record.get("source_id"): record
+        for record in build_deontic_formula_records_from_irs(
+            LegalNormIR.from_parser_element(element) for element in source_elements
+        )
+        if record.get("source_id")
+    }
+
     for element in metric_elements:
         export_readiness = dict(element.get("export_readiness") or {})
+        batch_formula_record = batch_formula_records_by_source_id.get(element.get("source_id"))
+        if batch_formula_record:
+            export_readiness["formula_proof_ready"] = bool(batch_formula_record.get("proof_ready"))
+            export_readiness["formula_requires_validation"] = bool(
+                batch_formula_record.get("requires_validation")
+            )
+            export_readiness["formula_repair_required"] = bool(
+                batch_formula_record.get("repair_required")
+            )
+            export_readiness["deterministic_resolution"] = dict(
+                batch_formula_record.get("deterministic_resolution") or {}
+            )
+
         formula_proof_ready = export_readiness.get("formula_proof_ready") is True
         formula_requires_validation = bool(export_readiness.get("formula_requires_validation"))
         formula_repair_required = bool(export_readiness.get("formula_repair_required"))
@@ -187,6 +209,8 @@ def parser_elements_for_metrics(
             export_readiness["repair_required"] = False
             export_readiness["metric_requires_validation"] = False
             export_readiness["metric_repair_required"] = False
+            element["active_repair_required"] = False
+            element["repair_required"] = False
             element["repair_required_warnings"] = []
             element["active_repair_warnings"] = []
 
@@ -195,6 +219,8 @@ def parser_elements_for_metrics(
             export_readiness["metric_requires_validation"] = formula_requires_validation
             export_readiness["metric_repair_required"] = formula_repair_required
             active_warnings = list(element.get("parser_warnings") or [])
+            element["active_repair_required"] = formula_repair_required
+            element["repair_required"] = formula_repair_required
             element["repair_required_warnings"] = active_warnings
             element["active_repair_warnings"] = active_warnings
 
