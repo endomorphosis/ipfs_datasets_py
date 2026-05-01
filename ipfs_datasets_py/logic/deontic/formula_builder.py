@@ -69,6 +69,9 @@ _SUPPLEMENTAL_PROCEDURE_TRIGGER_PREFIXES = {
     "triggered_by_review_of": "after review",
     "triggered_by_reconsideration_of": "after reconsideration",
     "triggered_by_final_decision_of": "after final decision",
+    "triggered_by_hearing_of": "after hearing",
+    "triggered_by_public_comment_on": "after public comment",
+    "triggered_by_consultation_with": "after consultation",
     "triggered_by_archiving_of": "after archiving",
     "triggered_by_retention_of": "after retention",
 }

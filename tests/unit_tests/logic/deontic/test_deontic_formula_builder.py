@@ -5282,3 +5282,43 @@ def test_supplemental_status_triggers_become_prerequisites_without_action_tail()
     }
     assert "RestoreLicenseAfterPostingBond" not in formula
     assert "RestoreLicenseAfterReinstatementPermit" not in formula
+
+
+def test_public_participation_triggers_become_formula_prerequisites_without_action_tail():
+    element = dict(extract_normative_elements(
+        "The Director shall adopt the rule after public comment on the proposal and after consultation with the Board."
+    )[0])
+    element["action"] = [
+        "adopt the rule after public comment proposal and after consultation Board"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "adoption",
+                "relation": "triggered_by_public_comment_on",
+                "anchor_event": "proposal",
+                "raw_text": "after public comment on the proposal",
+                "span": [32, 68],
+            },
+            {
+                "event": "adoption",
+                "relation": "triggered_by_consultation_with",
+                "anchor_event": "Board",
+                "raw_text": "after consultation with the Board",
+                "span": [73, 106],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Director(x) ∧ ")
+    assert formula.endswith(" → AdoptRule(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → AdoptRule(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Director(x)",
+        "ProcedureAfterPublicCommentProposal(x)",
+        "ProcedureAfterConsultationBoard(x)",
+    }
+    assert "AdoptRuleAfterPublicCommentProposal" not in formula
+    assert "AdoptRuleAfterConsultationBoard" not in formula
