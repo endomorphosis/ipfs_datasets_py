@@ -114,7 +114,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         return f"Lifecycle({subject}, {normalize_predicate_name(action_text)})"
 
     action_text = _action_without_mental_state(
-        _action_without_procedure_trigger_tail(norm.action or "Action", norm.procedure)
+        _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -202,6 +202,25 @@ def build_prover_syntax_records_from_ir(
     from .prover_syntax import validate_ir_with_provers
 
     return [target.to_dict() for target in validate_ir_with_provers(norm, targets).targets]
+
+
+def _formula_action_text(norm: LegalNormIR) -> str:
+    action = str(norm.action or "").strip()
+    if action:
+        return action
+
+    verb = str(norm.action_verb or "").strip()
+    action_object = str(norm.action_object or "").strip()
+    if verb and action_object:
+        lowered_object = action_object.lower()
+        if lowered_object.startswith(verb.lower() + " "):
+            return action_object
+        return f"{verb} {action_object}"
+    if verb:
+        return verb
+    if action_object:
+        return action_object
+    return "Action"
 
 
 def _supplemental_procedure_predicates(
