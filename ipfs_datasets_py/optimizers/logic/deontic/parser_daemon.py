@@ -778,16 +778,21 @@ class LegalParserOptimizerDaemon:
         )
         test_failure_recovery_mode = self._test_failure_recovery_mode()
         metric_no_progress_recovery_mode = self._metric_no_progress_recovery_mode()
+        repair_phase_feedback = self._repair_phase_feedback()
+        if repair_phase_feedback:
+            attempt_feedback = list(feedback) + repair_phase_feedback
+            test_failure_recovery_mode = True
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
                 status="running",
-                phase="requesting_llm_patch",
+                phase="repairing_failed_patch" if repair_phase_feedback else "requesting_llm_patch",
                 cycle_index=cycle_index,
                 cycle_dir=cycle_dir,
                 started_at=started,
                 score=score,
                 feedback=attempt_feedback,
+                repair_phase_feedback=repair_phase_feedback,
                 proposal_attempt=attempt_index,
                 proposal_attempts=max_attempts,
                 patch_stability_mode=patch_stability_mode,
@@ -887,7 +892,7 @@ class LegalParserOptimizerDaemon:
                         "reconstruction or local theorem-prover syntax validation work, not another "
                         "procedural trigger/export synonym."
                     )
-                attempt_feedback = list(feedback) + [
+                attempt_feedback = list(feedback) + repair_phase_feedback + [
                     (
                         f"previous proposal attempt {attempt_index} was rejected before apply: "
                         f"{retry_reason}.{retry_instruction}"
@@ -901,6 +906,7 @@ class LegalParserOptimizerDaemon:
                     started_at=started,
                     proposal_attempt=attempt_index,
                     retry_reason=retry_reason,
+                    repair_phase_feedback=repair_phase_feedback,
                     last_parse_error=proposal.parse_error,
                 )
 
@@ -1395,6 +1401,36 @@ class LegalParserOptimizerDaemon:
             return False
         history = self.optimizer._recent_cycle_history(limit=5)
         return bool(self.optimizer._recent_test_failures(history))
+
+    def _repair_phase_feedback(self) -> List[str]:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return []
+        history = self.optimizer._recent_cycle_history(limit=5)
+        failures = self.optimizer._recent_test_failures(history)
+        if not failures:
+            return []
+        feedback: List[str] = [
+            "repair_phase: previous retained candidate failed validation/tests; repair the named failure before adding new behavior."
+        ]
+        for failure in failures[:3]:
+            phase = str(failure.get("failure_phase") or "tests")
+            files = ", ".join(str(path) for path in failure.get("changed_files") or []) or "unknown files"
+            failed_tests = ", ".join(str(item) for item in failure.get("failed_tests") or [])
+            exception_types = ", ".join(str(item) for item in failure.get("exception_types") or [])
+            head = " ".join(str(failure.get("failure_head") or "").split())
+            parts = [
+                f"cycle={failure.get('cycle_index')}",
+                f"phase={phase}",
+                f"files={files}",
+            ]
+            if failed_tests:
+                parts.append(f"failed_tests={failed_tests}")
+            if exception_types:
+                parts.append(f"exceptions={exception_types}")
+            if head:
+                parts.append(f"failure_head={head[:1200]}")
+            feedback.append("repair_phase_failure: " + "; ".join(parts))
+        return feedback
 
     def _metric_no_progress_recovery_mode(self) -> bool:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):

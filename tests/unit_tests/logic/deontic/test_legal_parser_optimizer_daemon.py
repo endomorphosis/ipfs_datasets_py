@@ -726,6 +726,77 @@ def test_recent_cycle_history_summarizes_post_apply_validation_failures(tmp_path
     assert "SyntaxError" in prompt
 
 
+def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
+    (tmp_path / "x.txt").write_text("before\n", encoding="utf-8")
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9763,
+                "feedback": ["repair_required_count: 1"],
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {"applied": True, "rolled_back": True},
+                "changed_files": ["ipfs_datasets_py/logic/deontic/prover_syntax.py"],
+                "tests": {
+                    "valid": False,
+                    "stdout": "\n".join(
+                        [
+                            "E   AssertionError: expected time predicate",
+                            "FAILED tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py::test_target - AssertionError",
+                        ]
+                    ),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    valid_diff = "\n".join(
+        [
+            "diff --git a/x.txt b/x.txt",
+            "--- a/x.txt",
+            "+++ b/x.txt",
+            "@@ -1 +1 @@",
+            "-before",
+            "+after",
+            "",
+        ]
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Repair previous prover syntax failure.",
+                "requirements_addressed": ["repair phase"],
+                "acceptance_criteria": ["previous failure is repaired"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": valid_diff,
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=2)
+
+    assert cycle["proposal_attempts"][0]["retry_reason"] == ""
+    prompt = fake_router.calls[0]["prompt"]
+    assert "repair_phase:" in prompt
+    assert "repair_phase_failure:" in prompt
+    assert "test_deontic_prover_syntax.py::test_target" in prompt
+    assert "AssertionError" in prompt
+
+
 def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
