@@ -516,6 +516,7 @@ def _evaluation_parser_elements(
         candidate = _parser_element_from_evaluation_sample(prompt_context)
         candidate = _hydrate_parser_element_from_prompt_context(candidate) if candidate else {}
         if candidate:
+            _recover_detail_only_precedence_override_slots(candidate, detail)
             recovered.append(candidate)
             continue
 
