@@ -680,6 +680,31 @@ def test_failure_to_prohibition_becomes_positive_obligation_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_refuse_to_prohibition_becomes_positive_obligation_formula():
+    element = dict(extract_normative_elements(
+        "No person shall refuse to permit inspection."
+    )[0])
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "F"
+    assert norm.action == "refuse to permit inspection"
+    assert formula == "O(∀x (Person(x) → PermitInspection(x)))"
+    assert "RefuseToPermitInspection" not in formula
+    assert record["formula"] == formula
+    assert record["modality"] == "F"
+    assert record["proof_ready"] is True
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ordinary_prohibition_remains_forbidden_formula():
     element = extract_normative_elements(
         "No person may discharge pollutants into the sewer."

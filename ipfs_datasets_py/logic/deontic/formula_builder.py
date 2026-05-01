@@ -155,13 +155,22 @@ def _is_failure_prohibition(norm: LegalNormIR, action_text: str) -> bool:
 
     if norm.modality != "F":
         return False
-    return bool(re.match(r"^fail(?:ure)?\s+to\s+\S", str(action_text or "").strip(), re.IGNORECASE))
+    return bool(re.match(
+        r"^(?:fail(?:ure)?|refus(?:e|al))\s+to\s+\S",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
 
 
 def _strip_failure_action(action_text: str) -> str:
-    """Remove the failure wrapper from a double-negative duty action."""
+    """Remove a refusal/failure wrapper from a double-negative duty action."""
 
-    return re.sub(r"^fail(?:ure)?\s+to\s+", "", str(action_text or "").strip(), flags=re.IGNORECASE).strip()
+    return re.sub(
+        r"^(?:fail(?:ure)?|refus(?:e|al))\s+to\s+",
+        "",
+        str(action_text or "").strip(),
+        flags=re.IGNORECASE,
+    ).strip()
 
 
 def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
