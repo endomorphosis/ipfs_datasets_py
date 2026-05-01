@@ -18,6 +18,7 @@ from .formula_builder import (
     build_deontic_formula_records_from_irs,
 )
 from .ir import LegalNormIR
+from .prover_syntax import validate_ir_with_provers
 
 
 IRInput = Union[LegalNormIR, Mapping[str, Any]]
@@ -260,6 +261,20 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
         })
 
     return records
+
+
+def build_prover_syntax_records_from_ir(
+    norm: LegalNormIR,
+    targets: Iterable[str] | None = None,
+) -> List[Dict[str, Any]]:
+    """Build syntax-only prover validation rows from typed legal IR.
+
+    These records are diagnostics for the Phase 8 encoder/export quality loop.
+    They do not alter parser warnings, repair queue status, or theorem promotion
+    gates for blocked clauses.
+    """
+
+    return [record.to_dict() for record in validate_ir_with_provers(norm, targets).targets]
 
 
 def _procedure_event_symbol(value: str) -> str:

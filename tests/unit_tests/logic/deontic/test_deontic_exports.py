@@ -7,6 +7,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
     build_procedure_event_records_from_ir,
+    build_prover_syntax_records_from_ir,
     normalize_repair_required_evaluation,
     normalize_repair_required_details_from_parser_elements,
     parser_element_has_active_repair,
@@ -156,6 +157,57 @@ def test_ir_proof_record_does_not_promote_blocked_cross_reference_exception():
     assert "cross_reference_requires_resolution" in record["blockers"]
     assert "exception_requires_scope_review" in record["parser_warnings"]
     assert record["deterministic_resolution"] == {}
+
+
+def test_ir_prover_syntax_records_validate_required_local_targets_for_proof_ready_clause():
+    element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_prover_syntax_records_from_ir(norm)
+
+    assert [record["target"] for record in records] == [
+        "frame_logic",
+        "deontic_cec",
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+    ]
+    assert all(record["source_id"] == element["source_id"] for record in records)
+    assert all(record["syntax_valid"] is True for record in records)
+    assert all(record["skipped"] is False for record in records)
+    assert all(record["diagnostics"] == [] for record in records)
+    assert all(record["proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert records[0]["exported_formula"].startswith("legal_norm(")
+    assert records[1]["exported_formula"].startswith("Happens(legal_norm(")
+    assert records[2]["exported_formula"] == "∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x))"
+    assert records[3]["exported_formula"] == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
+    assert records[4]["exported_formula"] == "Always(O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x))))"
+
+
+def test_ir_prover_syntax_records_do_not_clear_blocked_numbered_reference_exception():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_prover_syntax_records_from_ir(norm)
+    proof_record = build_proof_obligation_record_from_ir(norm)
+
+    assert all(record["syntax_valid"] is True for record in records)
+    assert all(record["proof_ready"] is False for record in records)
+    assert all(record["requires_validation"] is True for record in records)
+    assert {record["target"] for record in records} == {
+        "frame_logic",
+        "deontic_cec",
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+    }
+    assert proof_record["proof_ready"] is False
+    assert proof_record["repair_required"] is True
+    assert proof_record["deterministic_resolution"] == {}
+    assert "cross_reference_requires_resolution" in proof_record["blockers"]
 
 
 def test_ir_procedure_event_relation_records_preserve_ordering_provenance_without_formula_strengthening():
