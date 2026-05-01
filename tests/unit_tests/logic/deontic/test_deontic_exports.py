@@ -374,6 +374,50 @@ def test_ir_procedure_event_records_mark_completion_trigger_as_prerequisite():
     )
 
 
+def test_ir_procedure_event_records_mark_effective_date_trigger_as_prerequisite():
+    element = extract_normative_elements(
+        "The Director shall issue a permit upon the effective date of the ordinance."
+    )[0]
+    element = dict(element)
+    element["action"] = ["issue a permit upon effective date ordinance"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_effective_date_of",
+                "anchor_event": "ordinance",
+                "raw_text": "upon the effective date of the ordinance",
+                "span": [36, 78],
+            },
+            {
+                "event": "issuance",
+                "relation": "after",
+                "anchor_event": "publication",
+                "raw_text": "after publication",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    effective_date_record = next(
+        record for record in records if record["relation"] == "triggered_by_effective_date_of"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert effective_date_record["is_formula_antecedent"] is True
+    assert effective_date_record["proof_role"] == "prerequisite"
+    assert effective_date_record["anchor_event"] == "ordinance"
+    assert effective_date_record["anchor_symbol"] == "Ordinance"
+    assert effective_date_record["span"] == [36, 78]
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ ProcedureUponEffectiveDateOrdinance(x) → IssuePermit(x)))"
+    )
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
