@@ -5802,3 +5802,65 @@ def test_ir_procedure_event_records_mark_calculation_and_audit_triggers_as_prere
     assert audit_record["support_span"] == element["support_span"]
     assert audit_record["is_formula_antecedent"] is True
     assert audit_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_correction_and_adjustment_triggers_as_prerequisites():
+    """Correction and adjustment events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Auditor shall certify the refund after correction of the record and after adjustment of the account."
+    )[0])
+    element["action"] = [
+        "certify the refund after correction record and after adjustment account"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "certification",
+                "relation": "triggered_by_correction_of",
+                "anchor_event": "record",
+                "raw_text": "after correction of the record",
+                "span": [37, 67],
+            },
+            {
+                "event": "certification",
+                "relation": "triggered_by_adjustment_of",
+                "anchor_event": "account",
+                "raw_text": "after adjustment of the account",
+                "span": [72, 103],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    correction_record = records[0]
+    adjustment_record = records[1]
+
+    assert correction_record["event_id"].startswith("event:")
+    assert correction_record["source_id"] == element["source_id"]
+    assert correction_record["event"] == "certification"
+    assert correction_record["event_symbol"] == "Certification"
+    assert correction_record["relation"] == "triggered_by_correction_of"
+    assert correction_record["anchor_event"] == "record"
+    assert correction_record["anchor_symbol"] == "Record"
+    assert correction_record["raw_text"] == "after correction of the record"
+    assert correction_record["span"] == [37, 67]
+    assert correction_record["support_span"] == element["support_span"]
+    assert correction_record["is_formula_antecedent"] is True
+    assert correction_record["proof_role"] == "prerequisite"
+
+    assert adjustment_record["event_id"].startswith("event:")
+    assert adjustment_record["source_id"] == element["source_id"]
+    assert adjustment_record["event"] == "certification"
+    assert adjustment_record["event_symbol"] == "Certification"
+    assert adjustment_record["relation"] == "triggered_by_adjustment_of"
+    assert adjustment_record["anchor_event"] == "account"
+    assert adjustment_record["anchor_symbol"] == "Account"
+    assert adjustment_record["raw_text"] == "after adjustment of the account"
+    assert adjustment_record["span"] == [72, 103]
+    assert adjustment_record["support_span"] == element["support_span"]
+    assert adjustment_record["is_formula_antecedent"] is True
+    assert adjustment_record["proof_role"] == "prerequisite"
