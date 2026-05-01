@@ -244,6 +244,18 @@ def _with_procedure_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
         normalized["value"] = " -> ".join(str(event) for event in events)
         return normalized
 
+    event_relations = normalized.get("event_relations")
+    if isinstance(event_relations, list) and event_relations:
+        relation_values = [
+            _procedure_relation_value(relation)
+            for relation in event_relations
+            if isinstance(relation, dict)
+        ]
+        relation_values = [value for value in relation_values if value]
+        if relation_values:
+            normalized["value"] = " -> ".join(relation_values)
+            return normalized
+
     trigger = normalized.get("trigger_event")
     terminal = normalized.get("terminal_event")
     if trigger and terminal:
@@ -251,6 +263,26 @@ def _with_procedure_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
     elif trigger or terminal:
         normalized["value"] = str(trigger or terminal)
     return normalized
+
+
+def _procedure_relation_value(record: Dict[str, Any]) -> str:
+    """Return a compact value alias for a structured procedure relation."""
+
+    event = str(record.get("event") or "").strip()
+    relation = str(record.get("relation") or "").strip()
+    anchor = str(record.get("anchor_event") or "").strip()
+    if not event and not anchor:
+        return ""
+
+    if relation == "triggered_by_receipt_of" and event and anchor:
+        return f"{anchor} -> {event}"
+    if relation in {"before", "after"} and event and anchor:
+        return f"{event} {relation} {anchor}"
+    if event and anchor:
+        return f"{event} {relation} {anchor}".strip()
+    if event:
+        return event
+    return anchor
 
 
 def _temporal_anchor_relation(record: Dict[str, Any]) -> str:

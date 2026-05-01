@@ -1907,6 +1907,31 @@ def test_ir_procedure_record_gets_stable_value_alias_from_event_chain():
     assert build_deontic_formula_from_ir(norm) == build_deontic_formula(element)
 
 
+def test_ir_procedure_value_alias_uses_event_relations_without_formula_strengthening():
+    element = extract_normative_elements(
+        "The Bureau shall inspect the premises before approval."
+    )[0]
+    element = dict(element)
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "inspection",
+                "relation": "before",
+                "anchor_event": "issuance",
+                "raw_text": "before approval",
+                "span": [43, 58],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.procedure["value"] == "inspection before issuance"
+    assert formula == "O(∀x (Bureau(x) → InspectPremises(x)))"
+    assert "ProcedureBeforeIssuance" not in formula
+
+
 def test_ir_procedure_value_alias_falls_back_to_trigger_and_terminal_events():
     element = extract_normative_elements("The Director shall issue a permit after notice.")[0]
     element = dict(element)
