@@ -365,6 +365,31 @@ def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):
     assert status["heartbeat_thread"] == "legal-parser-daemon-heartbeat"
 
 
+def test_current_status_write_is_atomic_json(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        heartbeat_interval_seconds=0.01,
+    )
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+
+    daemon._write_current_status(
+        status="running",
+        phase="checking_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-04-28T00:00:00+00:00",
+    )
+
+    status_text = (tmp_path / "out/current_status.json").read_text(encoding="utf-8")
+    status = json.loads(status_text)
+
+    assert status["phase"] == "checking_patch"
+    assert not list((tmp_path / "out").glob(".current_status.json.*.tmp"))
+
+
 def test_daemon_records_cycle_exception_instead_of_exiting(tmp_path):
     config = LegalParserDaemonConfig(
         repo_root=tmp_path,

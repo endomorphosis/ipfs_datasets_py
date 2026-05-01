@@ -5616,3 +5616,65 @@ def test_ir_procedure_event_records_mark_transmission_and_receipt_confirmation_t
     assert confirmation_record["support_span"] == element["support_span"]
     assert confirmation_record["is_formula_antecedent"] is True
     assert confirmation_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_registration_and_enrollment_triggers_as_prerequisites():
+    """Registration and enrollment events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall activate the permit after registration of the applicant and after enrollment of the license."
+    )[0])
+    element["action"] = [
+        "activate the permit after registration applicant and after enrollment license"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "activation",
+                "relation": "triggered_by_registration_of",
+                "anchor_event": "applicant",
+                "raw_text": "after registration of the applicant",
+                "span": [32, 67],
+            },
+            {
+                "event": "activation",
+                "relation": "triggered_by_enrollment_of",
+                "anchor_event": "license",
+                "raw_text": "after enrollment of the license",
+                "span": [72, 103],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    registration_record = records[0]
+    enrollment_record = records[1]
+
+    assert registration_record["event_id"].startswith("event:")
+    assert registration_record["source_id"] == element["source_id"]
+    assert registration_record["event"] == "activation"
+    assert registration_record["event_symbol"] == "Activation"
+    assert registration_record["relation"] == "triggered_by_registration_of"
+    assert registration_record["anchor_event"] == "applicant"
+    assert registration_record["anchor_symbol"] == "Applicant"
+    assert registration_record["raw_text"] == "after registration of the applicant"
+    assert registration_record["span"] == [32, 67]
+    assert registration_record["support_span"] == element["support_span"]
+    assert registration_record["is_formula_antecedent"] is True
+    assert registration_record["proof_role"] == "prerequisite"
+
+    assert enrollment_record["event_id"].startswith("event:")
+    assert enrollment_record["source_id"] == element["source_id"]
+    assert enrollment_record["event"] == "activation"
+    assert enrollment_record["event_symbol"] == "Activation"
+    assert enrollment_record["relation"] == "triggered_by_enrollment_of"
+    assert enrollment_record["anchor_event"] == "license"
+    assert enrollment_record["anchor_symbol"] == "License"
+    assert enrollment_record["raw_text"] == "after enrollment of the license"
+    assert enrollment_record["span"] == [72, 103]
+    assert enrollment_record["support_span"] == element["support_span"]
+    assert enrollment_record["is_formula_antecedent"] is True
+    assert enrollment_record["proof_role"] == "prerequisite"

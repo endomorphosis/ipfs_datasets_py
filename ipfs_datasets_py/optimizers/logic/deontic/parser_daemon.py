@@ -1143,7 +1143,20 @@ class LegalParserOptimizerDaemon:
         }
         with self._status_lock:
             self._status_payload = dict(payload)
-            self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+            self._write_status_file_atomic(payload)
+
+    def _write_status_file_atomic(self, payload: Mapping[str, Any]) -> None:
+        """Write current status JSON without exposing a truncated file."""
+
+        tmp_path = self.status_file.with_name(
+            f".{self.status_file.name}.{os.getpid()}.{threading.get_ident()}.tmp"
+        )
+        try:
+            tmp_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+            tmp_path.replace(self.status_file)
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
 
     def _start_heartbeat(self) -> None:
         interval = float(self.config.heartbeat_interval_seconds)
@@ -1176,7 +1189,7 @@ class LegalParserOptimizerDaemon:
                 payload["heartbeat_pid"] = os.getpid()
                 payload["heartbeat_thread"] = "legal-parser-daemon-heartbeat"
                 self._status_payload = payload
-                self.status_file.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+                self._write_status_file_atomic(payload)
 
     def _record_cycle_exception(self, *, cycle_index: int, exc: Exception) -> Dict[str, Any]:
         finished = _utc_now()
