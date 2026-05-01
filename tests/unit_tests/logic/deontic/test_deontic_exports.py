@@ -5425,6 +5425,41 @@ def test_ir_procedure_event_records_mark_return_trigger_as_prerequisite():
     assert records[0]["proof_role"] == "prerequisite"
 
 
+def test_ir_procedure_event_records_mark_reinstatement_trigger_as_prerequisite():
+    """Reinstatement of eligibility is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall reinstate the license after reinstatement of eligibility."
+    )[0])
+    element["action"] = ["reinstate the license after reinstatement eligibility"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "reinstatement",
+                "relation": "triggered_by_reinstatement_of",
+                "anchor_event": "eligibility",
+                "raw_text": "after reinstatement of eligibility",
+                "span": [41, 75],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "reinstatement"
+    assert records[0]["event_symbol"] == "Reinstatement"
+    assert records[0]["relation"] == "triggered_by_reinstatement_of"
+    assert records[0]["anchor_event"] == "eligibility"
+    assert records[0]["anchor_symbol"] == "Eligibility"
+    assert records[0]["raw_text"] == "after reinstatement of eligibility"
+    assert records[0]["span"] == [41, 75]
+    assert records[0]["support_span"] == element["support_span"]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+
+
 def test_ir_procedure_event_records_mark_withdrawal_trigger_as_prerequisite():
     """Withdrawal of an appeal is a procedural prerequisite, not ordering-only provenance."""
 
