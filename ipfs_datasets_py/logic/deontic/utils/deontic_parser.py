@@ -443,6 +443,7 @@ def extract_normative_elements(
     _apply_cross_reference_context(elements)
     _apply_same_document_reference_repair_clearance(elements)
     _apply_local_applicability_repair_clearance(elements)
+    _apply_local_scope_exception_repair_clearance(elements)
     _apply_formula_resolved_repair_clearance(elements)
     _apply_active_repair_status(elements)
     _apply_document_penalty_context(elements, str(text or ""))
@@ -662,6 +663,96 @@ def _local_applicability_reference_records(element: Dict[str, Any]) -> List[Dict
         }
         records.append(record)
     return records
+
+
+def _apply_local_scope_exception_repair_clearance(elements: List[Dict[str, Any]]) -> None:
+    """Clear active repair for exact local self-scope exception references.
+
+    ``except as provided in this section`` is an auditable reference to the
+    current local legal scope, not an unresolved external citation. Keep parser
+    warnings and theorem promotion conservative, but do not enqueue an LLM
+    repair prompt when the exception is only that local self-reference.
+    """
+
+    for element in elements or []:
+        if not _is_local_scope_exception_element(element):
+            continue
+
+        scopes = _local_scope_exception_scopes(element)
+        if not scopes:
+            continue
+
+        resolution = {
+            "type": "local_scope_reference_exception",
+            "scopes": scopes,
+            "reason": "local self-reference exception is exported as provenance outside the operative formula",
+        }
+
+        element["active_repair_warnings"] = []
+        element["repair_required_warnings"] = []
+
+        readiness = dict(element.get("export_readiness") or {})
+        readiness["metric_requires_validation"] = False
+        readiness["metric_repair_required"] = False
+        readiness["deterministic_resolution"] = resolution
+        element["export_readiness"] = readiness
+
+        repair = dict(element.get("llm_repair") or {})
+        repair["required"] = False
+        repair["allow_llm_repair"] = False
+        repair["reasons"] = []
+        repair["prompt_context"] = {}
+        repair["prompt_hash"] = ""
+        repair["suggested_router"] = ""
+        repair["deterministically_resolved"] = True
+        repair["deterministic_resolution"] = resolution
+        element["llm_repair"] = repair
+
+
+def _is_local_scope_exception_element(element: Dict[str, Any]) -> bool:
+    if element.get("norm_type") not in {"obligation", "permission", "prohibition"}:
+        return False
+    if not element.get("exceptions") and not element.get("exception_details"):
+        return False
+    if element.get("override_clauses") or element.get("override_clause_details"):
+        return False
+
+    warnings = set(element.get("parser_warnings") or [])
+    allowed_warnings = {"exception_requires_scope_review", "llm_repair_required"}
+    if not warnings or not warnings.issubset(allowed_warnings):
+        return False
+    return "exception_requires_scope_review" in warnings
+
+
+def _local_scope_exception_scopes(element: Dict[str, Any]) -> List[str]:
+    scopes: List[str] = []
+    exception_records = element.get("exception_details") or []
+    if not exception_records:
+        exception_records = [
+            {"normalized_text": text}
+            for text in element.get("exceptions") or []
+            if isinstance(text, str)
+        ]
+
+    if not exception_records:
+        return []
+
+    pattern = re.compile(
+        r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+this\s+"
+        r"(section|subsection|chapter|title|article|part)$",
+        re.IGNORECASE,
+    )
+    for record in exception_records:
+        if not isinstance(record, dict):
+            return []
+        text = str(record.get("normalized_text") or record.get("raw_text") or record.get("value") or "").strip()
+        match = pattern.match(text)
+        if not match:
+            return []
+        scope = f"this {match.group(1).lower()}"
+        if scope not in scopes:
+            scopes.append(scope)
+    return scopes
 
 
 def _apply_formula_resolved_repair_clearance(elements: List[Dict[str, Any]]) -> None:

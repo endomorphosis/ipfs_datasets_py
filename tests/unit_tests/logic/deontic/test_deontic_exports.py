@@ -1867,6 +1867,42 @@ def test_raw_parser_keeps_llm_prompt_for_unresolved_numbered_reference_exception
     assert "llm_router_repair" in element["export_readiness"]["requires_validation"]
 
 
+def test_raw_parser_clears_active_repair_for_local_scope_reference_exception():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in this section."
+    )[0]
+
+    assert element["promotable_to_theorem"] is False
+    assert element["parser_warnings"] == ["exception_requires_scope_review"]
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["suggested_router"] == ""
+    assert element["llm_repair"]["prompt_hash"] == ""
+    assert element["llm_repair"]["prompt_context"] == {}
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"] == {
+        "type": "local_scope_reference_exception",
+        "scopes": ["this section"],
+        "reason": "local self-reference exception is exported as provenance outside the operative formula",
+    }
+    assert element["active_repair_required"] is False
+    assert element["repair_required"] is False
+    assert element["active_repair_warnings"] == []
+    assert element["repair_required_warnings"] == []
+    assert element["export_readiness"]["metric_repair_required"] is False
+
+
+def test_raw_parser_keeps_active_repair_for_numbered_reference_exception_after_local_clearance():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert element["active_repair_required"] is True
+    assert element["llm_repair"]["required"] is True
+    assert element["llm_repair"]["prompt_context"]
+
+
 def test_metrics_projection_resolves_numbered_reference_exception_with_same_document_section():
     """Metrics can clear active repair when the cited section is in the same batch."""
     reference = extract_normative_elements(
