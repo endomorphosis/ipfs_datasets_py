@@ -309,8 +309,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
         recent_failed_patch_files = self._recent_failed_patch_files(recent_cycle_history)
         recent_test_failures = self._recent_test_failures(recent_cycle_history)
         recent_test_failed_files = self._recent_test_failed_files(recent_test_failures)
-        expanded_snapshot_files = set(recent_failed_patch_files) | set(recent_test_failed_files)
+        recent_metric_stall_failures = self._recent_metric_stall_failures(recent_cycle_history)
+        recent_metric_stall_failed_files = self._recent_metric_stall_failed_files(recent_metric_stall_failures)
+        expanded_snapshot_files = (
+            set(recent_failed_patch_files)
+            | set(recent_test_failed_files)
+            | set(recent_metric_stall_failed_files)
+        )
         test_failure_recovery_mode = bool(recent_test_failures)
+        metric_no_progress_recovery_mode = bool(recent_metric_stall_failures)
         file_payload = {
             path: _read_text(
                 self.daemon_config.repo_root / path,
@@ -340,13 +347,17 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
+                "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
             ],
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
             "test_failure_recovery_mode": test_failure_recovery_mode,
+            "metric_no_progress_recovery_mode": metric_no_progress_recovery_mode,
             "recent_failed_patch_files": recent_failed_patch_files,
             "recent_test_failed_files": recent_test_failed_files,
             "recent_test_failures": recent_test_failures,
+            "recent_metric_stall_failed_files": recent_metric_stall_failed_files,
+            "recent_metric_stall_failures": recent_metric_stall_failures,
             "docs": docs_payload,
             "evaluation": evaluation,
             "feedback": list(feedback),
@@ -374,6 +385,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
             "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
+            "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
             "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
@@ -432,6 +444,11 @@ class LegalParserParityOptimizer(BaseOptimizer):
             test_failure_summary = _summarize_test_failure(tests_stdout)
             patch_check = dict(summary.get("patch_check") or {})
             apply_result = dict(summary.get("apply_result") or {})
+            metric_progress = dict(
+                apply_result.get("metric_progress")
+                or (summary.get("retained_change") or {}).get("metric_progress")
+                or {}
+            )
             proposal_quality = dict(summary.get("proposal_quality") or {})
             summaries.append(
                 {
@@ -447,6 +464,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "proposal_quality_valid": proposal_quality.get("valid"),
                     "proposal_quality_reasons": proposal_quality.get("reasons", []),
                     "apply_reason": apply_result.get("reason"),
+                    "metric_progress": metric_progress,
                     "changed_files": summary.get("changed_files", []),
                     "applied": apply_result.get("applied"),
                     "rolled_back": apply_result.get("rolled_back", False),
@@ -500,6 +518,40 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def _recent_test_failed_files(self, recent_test_failures: Sequence[Dict[str, Any]]) -> List[str]:
         files: List[str] = []
         for item in recent_test_failures:
+            for path in item.get("changed_files") or []:
+                text = str(path)
+                if text and text not in files:
+                    files.append(text)
+        return files[:8]
+
+    def _recent_metric_stall_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        failures: List[Dict[str, Any]] = []
+        for item in recent_cycle_history:
+            if item.get("apply_reason") != "metric_stall_no_metric_progress":
+                continue
+            metric_progress = dict(item.get("metric_progress") or {})
+            failures.append(
+                {
+                    "cycle_index": item.get("cycle_index"),
+                    "changed_files": item.get("changed_files", []),
+                    "proposal_summary": item.get("proposal_summary", ""),
+                    "expected_metric_gain": metric_progress.get("expected_metric_gain", {}),
+                    "pre_metrics": metric_progress.get("pre_metrics", {}),
+                    "post_metrics": metric_progress.get("post_metrics", {}),
+                    "moved_expected_metrics": metric_progress.get("moved_expected_metrics", {}),
+                    "score_delta": metric_progress.get("score_delta"),
+                    "feedback_reduced": metric_progress.get("feedback_reduced"),
+                    "reasons": metric_progress.get("reasons", []),
+                }
+            )
+        return failures[:5]
+
+    def _recent_metric_stall_failed_files(
+        self,
+        recent_metric_stall_failures: Sequence[Dict[str, Any]],
+    ) -> List[str]:
+        files: List[str] = []
+        for item in recent_metric_stall_failures:
             for path in item.get("changed_files") or []:
                 text = str(path)
                 if text and text not in files:

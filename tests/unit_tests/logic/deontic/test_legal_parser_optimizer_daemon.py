@@ -586,6 +586,71 @@ def test_test_failure_files_receive_expanded_snapshots_in_prompt(tmp_path):
     assert "MIDDLE_FAILURE_HELPER" in prompt
 
 
+def test_metric_stall_no_progress_failures_are_prompt_feedback(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/exports.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "A" * 25000 + "\nMETRIC_STALL_HELPER\n" + "B" * 25000,
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "proposal_path": str(cycle_dir / "proposal.json"),
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {
+                    "applied": True,
+                    "rolled_back": True,
+                    "reason": "metric_stall_no_metric_progress",
+                    "metric_progress": {
+                        "valid": False,
+                        "expected_metric_gain": {"repair_required_count": -1},
+                        "pre_metrics": {"repair_required_count": 1, "parity_score": 0.9763},
+                        "post_metrics": {"repair_required_count": 1, "parity_score": 0.9763},
+                        "moved_expected_metrics": {},
+                        "score_delta": 0.0,
+                        "feedback_reduced": False,
+                        "reasons": ["metric-stall patch passed tests but did not improve claimed metrics"],
+                    },
+                },
+                "changed_files": [target_file, test_file],
+                "tests": {"valid": True, "stdout": "passed"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (cycle_dir / "proposal.json").write_text(
+        json.dumps({"summary": "Exports-only context recovery did not move metrics."}),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    history = optimizer._recent_cycle_history(limit=1)
+    failures = optimizer._recent_metric_stall_failures(history)
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert failures[0]["expected_metric_gain"] == {"repair_required_count": -1}
+    assert failures[0]["pre_metrics"]["repair_required_count"] == 1
+    assert optimizer._recent_metric_stall_failed_files(failures) == [target_file, test_file]
+    assert '"metric_no_progress_recovery_mode": true' in prompt
+    assert "recent_metric_stall_failures" in prompt
+    assert "METRIC_STALL_HELPER" in prompt
+
+
 def test_optimizer_enters_patch_stability_mode_after_repeated_patch_check_failures(tmp_path):
     target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
     test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
