@@ -1,5 +1,6 @@
 """Tests for deterministic IR-to-formula generation."""
 
+
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -3717,3 +3718,48 @@ def test_structured_accounting_triggers_become_formula_prerequisites():
     }
     assert "CertifyRefundAfterCalculationFee" not in formula
     assert "CertifyRefundAfterAuditAccount" not in formula
+
+
+def test_structured_compliance_inspection_triggers_become_formula_prerequisites():
+    element = dict(extract_normative_elements(
+        "The Inspector shall approve the discharge after sampling of the effluent and after testing of the meter."
+    )[0])
+    element["action"] = ["approve the discharge"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "approval",
+                "relation": "triggered_by_sampling_of",
+                "anchor_event": "effluent",
+                "raw_text": "after sampling of the effluent",
+                "span": [40, 70],
+            },
+            {
+                "event": "approval",
+                "relation": "triggered_by_testing_of",
+                "anchor_event": "meter",
+                "raw_text": "after testing of the meter",
+                "span": [75, 101],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Inspector(x) ∧ ")
+    assert formula.endswith(" → ApproveDischarge(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → ApproveDischarge(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Inspector(x)",
+        "ProcedureAfterSamplingEffluent(x)",
+        "ProcedureAfterTestingMeter(x)",
+    }
+    assert "ApproveDischargeAfterSamplingEffluent" not in formula
+    assert "ApproveDischargeAfterTestingMeter" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
