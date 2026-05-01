@@ -216,6 +216,12 @@ def parser_elements_with_ir_export_readiness(
         export_readiness["export_repair_required"] = formula_repair_required
         export_readiness["formula_blockers"] = list(formula_record.get("blockers") or [])
 
+        if deterministic_resolution.get("type") == "pure_precedence_override":
+            precedence_references = _precedence_override_reference_records(resolved_norm)
+            if precedence_references:
+                copied["resolved_cross_references"] = precedence_references
+                copied["cross_reference_details"] = precedence_references
+
         # Legacy parser elements use list-shaped requires_validation values such
         # as ["llm_router_repair"] for parquet/backward-compatible callers.
         # Preserve that field shape and publish IR/formula readiness in explicit
@@ -888,6 +894,34 @@ def _is_local_scope_reference_record(reference: Mapping[str, Any]) -> bool:
             return True
 
     return False
+
+
+def _precedence_override_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
+    """Return parser-facing provenance records for pure precedence overrides.
+
+    Formula readiness can deterministically clear a clause like
+    ``Notwithstanding section 5.01.020, ...`` when the cited section is used
+    only as override provenance and not as an operative formula antecedent. The
+    reference should still be visible to parser/export callers as resolved
+    precedence provenance, not as a same-document factual resolution.
+    """
+
+    records: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for reference in norm.cross_references:
+        if not isinstance(reference, dict):
+            continue
+        normalized = _normalized_reference_record(reference)
+        key = _reference_provenance_key(normalized)
+        if not key or key in seen:
+            continue
+        normalized["resolved"] = True
+        normalized["resolution_scope"] = "precedence_provenance"
+        normalized["precedence_only"] = True
+        normalized["same_document"] = False
+        records.append(normalized)
+        seen.add(key)
+    return records
 
 
 def _stable_id(prefix: str, *parts: str) -> str:
