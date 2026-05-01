@@ -187,6 +187,8 @@ def parser_elements_for_metrics(
         _hydrate_prompt_context_override_clause_details(element)
 
     source_elements = [element for element in all_source_elements if not _is_context_only_parser_element(element)]
+    for element in source_elements:
+        _hydrate_prompt_context_same_document_references(element, all_source_elements)
     source_norms = [LegalNormIR.from_parser_element(element) for element in all_source_elements]
     resolved_norms = _with_same_document_reference_resolutions(source_norms)
     resolved_references_by_source_id = {
@@ -1901,6 +1903,117 @@ def _hydrate_prompt_context_override_clause_details(element: Dict[str, Any]) -> 
     }
     element["override_clause_details"] = [record]
     element["override_clauses"] = [raw_text]
+
+
+def _hydrate_prompt_context_same_document_references(
+    element: Dict[str, Any],
+    all_elements: Sequence[Mapping[str, Any]],
+) -> None:
+    """Recover same-document numbered reference evidence for detail rows.
+
+    Optimizer repair-detail payloads can preserve the blocked clause plus a
+    prompt-context document excerpt, while omitting the parsed target section as
+    a separate parser element. Clear active repair only when the cited numbered
+    section is explicitly present in same-document source supplied to the
+    deterministic evaluation payload. Standalone ``section 552`` exceptions
+    still lack this evidence and remain blocked.
+    """
+
+    if element.get("resolved_cross_references"):
+        return
+
+    warnings = set(str(warning) for warning in element.get("parser_warnings") or [])
+    llm_repair = dict(element.get("llm_repair") or {})
+    prompt_context = dict(llm_repair.get("prompt_context") or {})
+    warnings.update(str(warning) for warning in prompt_context.get("parser_warnings") or [])
+    if "cross_reference_requires_resolution" not in warnings:
+        return
+
+    references = _prompt_context_reference_records(element, prompt_context)
+    if not references:
+        return
+
+    section_index = _prompt_context_section_index(element, prompt_context, all_elements)
+    if not section_index:
+        return
+
+    projected: List[Dict[str, Any]] = []
+    for reference in references:
+        citation = _canonical_section_citation(_reference_display_text(reference))
+        if not citation:
+            citation = _canonical_section_citation(
+                f"section {reference.get('target') or reference.get('section') or reference.get('value') or ''}"
+            )
+        if not citation or citation not in section_index:
+            return
+        projected.append(_parser_native_same_document_reference(reference, citation, section_index[citation]))
+
+    if projected:
+        element["resolved_cross_references"] = projected
+
+
+def _prompt_context_reference_records(
+    element: Mapping[str, Any],
+    prompt_context: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    records: List[Dict[str, Any]] = []
+    for source in (element, prompt_context):
+        for key in ("cross_reference_details", "cross_references"):
+            for candidate in source.get(key) or []:
+                if isinstance(candidate, Mapping):
+                    records.append(dict(candidate))
+    return records
+
+
+def _prompt_context_section_index(
+    element: Mapping[str, Any],
+    prompt_context: Mapping[str, Any],
+    all_elements: Sequence[Mapping[str, Any]],
+) -> Dict[str, str]:
+    section_index: Dict[str, str] = {}
+    source_id = str(element.get("source_id") or prompt_context.get("source_id") or "")
+
+    for candidate in all_elements:
+        candidate_id = str(candidate.get("source_id") or "")
+        for key in ("canonical_citation", "citation"):
+            citation = _canonical_section_citation(str(candidate.get(key) or ""))
+            if citation:
+                section_index.setdefault(citation, candidate_id or source_id)
+        section_context = candidate.get("section_context") or {}
+        if isinstance(section_context, Mapping):
+            citation = _canonical_section_citation(f"section {section_context.get('section') or ''}")
+            if citation:
+                section_index.setdefault(citation, candidate_id or source_id)
+
+    for key in ("document_text", "source_document", "full_text", "same_document_text"):
+        text = str(prompt_context.get(key) or element.get(key) or "")
+        for match in _SECTION_HEADING_RE.finditer(text):
+            section_index.setdefault(f"section {match.group(1)}".lower(), source_id)
+
+    return section_index
+
+
+def _parser_native_same_document_reference(
+    reference: Mapping[str, Any],
+    citation: str,
+    source_id: str,
+) -> Dict[str, Any]:
+    target = citation[len("section ") :] if citation.startswith("section ") else citation
+    raw_text = str(reference.get("raw_text") or reference.get("text") or citation).strip()
+    return {
+        "type": str(reference.get("type") or reference.get("reference_type") or "section"),
+        "value": str(reference.get("value") or reference.get("target") or target),
+        "raw_text": raw_text,
+        "normalized_text": str(reference.get("normalized_text") or citation).strip(),
+        "span": list(reference.get("span") or []),
+        "resolution_status": "resolved",
+        "target_exists": True,
+        "resolution_scope": "same_document",
+        "same_document": True,
+        "resolved": True,
+        "source_id": source_id,
+        "resolved_source_id": source_id,
+    }
 
 
 def _first_reference_record(

@@ -3166,6 +3166,66 @@ def test_metrics_hydrate_prompt_context_but_keep_numbered_reference_blocked():
     assert parser_element_has_active_repair(projected[0]) is True
 
 
+def test_metrics_clear_numbered_reference_with_prompt_context_same_document_section():
+    """Detail-only numbered exceptions may clear with explicit same-document evidence."""
+
+    parsed = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    detail_only = {
+        "sample_id": "cross_reference",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "llm_repair": {
+            "required": True,
+            "reasons": list(parsed["parser_warnings"]),
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed["exception_details"]),
+                "cross_references": list(parsed["cross_reference_details"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+                "document_text": (
+                    "Section 552. Notice publication.\n"
+                    "The Secretary shall keep a public notice register."
+                ),
+            },
+        },
+    }
+
+    projected = parser_elements_for_metrics([detail_only])
+
+    assert projected[0]["exception_details"][0]["raw_text"] == "as provided in section 552"
+    assert projected[0]["cross_reference_details"][0]["raw_text"] == "section 552"
+    assert projected[0]["resolved_cross_references"] == [
+        {
+            "type": "section",
+            "value": "552",
+            "raw_text": "section 552",
+            "normalized_text": "section 552",
+            "span": [61, 72],
+            "resolution_status": "resolved",
+            "target_exists": True,
+            "resolution_scope": "same_document",
+            "same_document": True,
+            "resolved": True,
+            "source_id": parsed["source_id"],
+            "resolved_source_id": parsed["source_id"],
+        }
+    ]
+    assert projected[0]["active_repair_required"] is False
+    assert projected[0]["export_readiness"]["formula_repair_required"] is False
+    assert parser_element_has_active_repair(projected[0]) is False
+
+
 def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_probes():
     """Only the unresolved numbered reference should remain active repair."""
 
