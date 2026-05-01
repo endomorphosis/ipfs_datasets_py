@@ -558,7 +558,6 @@ class TestPhase5ZKPCertificate:
             source_pdf=str(pdf_path),
         )
         # Force overall_pass for ZKP test
-        object.__setattr__(report, "overall_pass", True) if hasattr(report, "__dataclass_fields__") else None
         report.overall_pass = True
         return kg, rule_set, report
 

@@ -406,7 +406,7 @@ class FormToLegalIR:
             jurisdiction=self.jurisdiction or "",
             legal_domain="form_compliance",
             applicable_law=kg.source_pdf,
-        ) if True else None
+        )
 
         formulas: list[DeonticFormula] = []
 

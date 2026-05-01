@@ -213,7 +213,7 @@ class FormCompletionCertificate:
     ipfs_cid: str = ""
     verification_summary: Dict[str, Any] = field(default_factory=dict)
     public_inputs: Dict[str, str] = field(default_factory=dict)
-    timestamp: float = field(default_factory=time.time)
+    timestamp: float = field(default_factory=lambda: time.time())
     is_simulated: bool = True
 
     def to_dict(self) -> Dict[str, Any]:

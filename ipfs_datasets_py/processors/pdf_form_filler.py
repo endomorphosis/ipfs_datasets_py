@@ -1262,10 +1262,7 @@ def classify_pdf(
     text_ratio = text_rich_pages / total_pages
 
     if image_ratio >= 0.8:
-        # Mostly scanned — check if drawings suggest a form
-        if drawing_ratio >= 0.3:
-            return PDFDocumentType.SCANNED_FORM
-        return PDFDocumentType.SCANNED_FORM  # still likely scanned paper form
+        return PDFDocumentType.SCANNED_FORM
 
     if text_ratio >= 0.8 and drawing_ratio < 0.2:
         return PDFDocumentType.STRUCTURED_DOCUMENT

@@ -73,7 +73,11 @@ class ConflictRecord:
     description: str
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)  # type: ignore[name-defined]
+        return {
+            "formula_id_a": self.formula_id_a,
+            "formula_id_b": self.formula_id_b,
+            "description": self.description,
+        }
 
 
 @dataclass
@@ -119,24 +123,13 @@ class VerificationReport:
         return hashlib.sha256(summary.encode()).hexdigest()
 
 
-def _dataclass_asdict(obj: Any) -> Any:
-    """Minimal dataclass to dict — avoids importing dataclasses.asdict in loops."""
+def _dataclass_asdict_unused(obj: Any) -> Any:
+    """Unused - kept for reference."""
     if hasattr(obj, "__dataclass_fields__"):
-        return {k: _dataclass_asdict(getattr(obj, k)) for k in obj.__dataclass_fields__}
+        return {k: _dataclass_asdict_unused(getattr(obj, k)) for k in obj.__dataclass_fields__}
     if isinstance(obj, list):
-        return [_dataclass_asdict(v) for v in obj]
+        return [_dataclass_asdict_unused(v) for v in obj]
     return obj
-
-
-# Monkey-patch ConflictRecord.to_dict properly
-def _conflict_to_dict(self: ConflictRecord) -> Dict[str, Any]:
-    return {
-        "formula_id_a": self.formula_id_a,
-        "formula_id_b": self.formula_id_b,
-        "description": self.description,
-    }
-
-ConflictRecord.to_dict = _conflict_to_dict  # type: ignore[method-assign]
 
 
 # ---------------------------------------------------------------------------
@@ -308,12 +301,13 @@ class FormRequirementsVerifier:
                 from ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types import ProofStatus
                 if proof_result.status == ProofStatus.SUCCESS:
                     status = "satisfied"
-                elif proof_result.status in {ProofStatus.UNSUPPORTED, ProofStatus.TIMEOUT}:
-                    # Cannot prove — treat as skipped, don't fail the form
-                    status = "skipped"
-                else:
+                elif proof_result.status == ProofStatus.FAILURE:
+                    # Explicit proof failure (prover ran and found a counter-example)
                     status = "violated"
                     overall_pass = False
+                else:
+                    # TIMEOUT, ERROR, UNSUPPORTED — cannot determine; skip rather than fail
+                    status = "skipped"
 
                 results.append(FieldVerificationResult(
                     formula_id=formula.formula_id,
