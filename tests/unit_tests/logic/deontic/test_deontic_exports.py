@@ -1900,3 +1900,54 @@ def test_metrics_projection_resolves_numbered_reference_exception_with_same_docu
     assert projected_reference["export_readiness"]["deterministic_resolution"]["references"] == [
         "section 552"
     ]
+
+
+def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_exception():
+    """A resolved reference row should not become active when reprocessed alone."""
+    reference = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    cited = extract_normative_elements("The agency shall keep records.")[0]
+    cited = dict(cited)
+    cited["canonical_citation"] = "section 552"
+
+    projected_reference = parser_elements_for_metrics([reference, cited])[0]
+    reprojected_reference = parser_elements_for_metrics([projected_reference])[0]
+
+    assert projected_reference["active_repair_required"] is False
+    assert projected_reference["repair_required"] is False
+    assert projected_reference["llm_repair"]["required"] is False
+    assert projected_reference["export_readiness"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert reprojected_reference["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert reprojected_reference["active_repair_required"] is False
+    assert reprojected_reference["repair_required"] is False
+    assert reprojected_reference["active_repair_warnings"] == []
+    assert reprojected_reference["repair_required_warnings"] == []
+    assert reprojected_reference["llm_repair"]["required"] is False
+    assert reprojected_reference["llm_repair"]["allow_llm_repair"] is False
+    assert reprojected_reference["export_readiness"]["metric_repair_required"] is False
+    assert reprojected_reference["export_readiness"]["deterministic_resolution"]["type"] == (
+        "resolved_same_document_reference_exception"
+    )
+    assert parser_element_has_active_repair(projected_reference) is False
+    assert active_repair_details_from_parser_elements([projected_reference]) == []
+
+    raw_evaluation = {
+        "element_count": 1,
+        "repair_required_count": 1,
+        "repair_required_rate": 1.0,
+        "repair_required": [projected_reference["source_id"]],
+        "repair_required_details": [{"source_id": projected_reference["source_id"]}],
+    }
+
+    normalized = normalize_repair_required_evaluation([projected_reference], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 0
+    assert normalized["repair_required_rate"] == 0.0
+    assert normalized["repair_required"] == []
+    assert normalized["repair_required_details"] == []

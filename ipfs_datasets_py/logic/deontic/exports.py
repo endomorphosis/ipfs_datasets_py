@@ -176,6 +176,11 @@ def parser_elements_for_metrics(
     """
 
     source_elements = [dict(element) for element in elements]
+    inactive_projection_by_source_id = {
+        str(element.get("source_id") or ""): element
+        for element in source_elements
+        if element.get("source_id") and _has_inactive_deterministic_repair_projection(element)
+    }
     metric_elements = parser_elements_with_ir_export_readiness(source_elements)
     batch_formula_records_by_source_id = {
         record.get("source_id"): record
@@ -187,6 +192,7 @@ def parser_elements_for_metrics(
 
     for element in metric_elements:
         export_readiness = dict(element.get("export_readiness") or {})
+        inactive_projection = inactive_projection_by_source_id.get(str(element.get("source_id") or ""))
         batch_formula_record = batch_formula_records_by_source_id.get(element.get("source_id"))
         if batch_formula_record:
             export_readiness["formula_proof_ready"] = bool(batch_formula_record.get("proof_ready"))
@@ -199,6 +205,21 @@ def parser_elements_for_metrics(
             export_readiness["deterministic_resolution"] = dict(
                 batch_formula_record.get("deterministic_resolution") or {}
             )
+
+        if inactive_projection:
+            projected_readiness = dict(inactive_projection.get("export_readiness") or {})
+            deterministic_resolution = dict(
+                projected_readiness.get("deterministic_resolution")
+                or dict(inactive_projection.get("llm_repair") or {}).get("deterministic_resolution")
+                or {}
+            )
+            if deterministic_resolution:
+                export_readiness["deterministic_resolution"] = deterministic_resolution
+            export_readiness["formula_proof_ready"] = True
+            export_readiness["formula_requires_validation"] = False
+            export_readiness["formula_repair_required"] = False
+            export_readiness["export_requires_validation"] = False
+            export_readiness["export_repair_required"] = False
 
         formula_proof_ready = export_readiness.get("formula_proof_ready") is True
         formula_requires_validation = bool(export_readiness.get("formula_requires_validation"))
@@ -434,6 +455,29 @@ def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
     llm_repair = dict(element.get("llm_repair") or {})
     active_warnings = element.get("active_repair_warnings") or element.get("repair_required_warnings") or []
     return llm_repair.get("required") is True or bool(active_warnings)
+
+
+def _has_inactive_deterministic_repair_projection(element: Mapping[str, Any]) -> bool:
+    """Return whether a row already carries explicit inactive repair status.
+
+    Some metrics pipelines call projection helpers more than once. A row that
+    was already cleared by deterministic formula readiness, especially a
+    same-document reference exception, should not become active repair again
+    merely because the second pass lacks the original batch context.
+    """
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    llm_repair = dict(element.get("llm_repair") or {})
+    deterministic_resolution = (
+        export_readiness.get("deterministic_resolution")
+        or llm_repair.get("deterministic_resolution")
+        or {}
+    )
+    if not deterministic_resolution:
+        return False
+    if element.get("active_repair_required") is False or element.get("repair_required") is False:
+        return True
+    return llm_repair.get("required") is False and llm_repair.get("deterministically_resolved") is True
 
 
 def _cleared_deterministic_repair_payload(element: Mapping[str, Any]) -> Dict[str, Any]:
