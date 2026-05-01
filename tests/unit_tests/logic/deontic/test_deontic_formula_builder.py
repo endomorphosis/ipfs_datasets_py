@@ -242,6 +242,50 @@ def test_direct_gerund_prohibition_exports_base_action_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_interference_gerund_prohibitions_export_base_action_formulas():
+    examples = [
+        (
+            "The permittee is prohibited from obstructing inspection.",
+            "obstructing inspection",
+            "F(∀x (Permittee(x) → ObstructInspection(x)))",
+            "ObstructingInspection",
+        ),
+        (
+            "The operator is prohibited from interfering with inspection.",
+            "interfering with inspection",
+            "F(∀x (Operator(x) → InterfereInspection(x)))",
+            "InterferingInspection",
+        ),
+        (
+            "The applicant is prohibited from impeding access.",
+            "impeding access",
+            "F(∀x (Applicant(x) → ImpedeAccess(x)))",
+            "ImpedingAccess",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "F"
+        assert norm.action == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prevent_entry_obligation_exports_as_prohibition_formula():
     element = extract_normative_elements(
         "The owner shall prevent entry into the restricted area."

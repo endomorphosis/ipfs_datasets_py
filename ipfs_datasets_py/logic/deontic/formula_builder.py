@@ -187,7 +187,7 @@ def _is_direct_gerund_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     if norm.modality != "F":
         return False
     return bool(re.match(
-        r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying)\b",
+        r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
@@ -200,7 +200,7 @@ def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
         return False
     return bool(re.match(
         r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop))\s+\S"
-        r"|^avoid\s+(?:contacting|entering|operating|using|discharging|removing|altering|destroying)\b",
+        r"|^avoid\s+(?:contacting|entering|operating|using|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
@@ -259,6 +259,9 @@ def _normalize_refrain_action_head(action_text: str) -> str:
         "removing": "remove",
         "altering": "alter",
         "destroying": "destroy",
+        "obstructing": "obstruct",
+        "interfering": "interfere",
+        "impeding": "impede",
     }
     if verb in legal_gerunds:
         parts[0] = legal_gerunds[verb]
