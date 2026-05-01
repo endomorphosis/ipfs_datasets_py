@@ -5554,3 +5554,65 @@ def test_ir_procedure_event_records_mark_deposit_and_clearing_triggers_as_prereq
     assert clearing_record["support_span"] == element["support_span"]
     assert clearing_record["is_formula_antecedent"] is True
     assert clearing_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_transmission_and_receipt_confirmation_triggers_as_prerequisites():
+    """Notice transmission and receipt-confirmation events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall docket the appeal after transmission of the notice and after receipt confirmation of the filing."
+    )[0])
+    element["action"] = [
+        "docket the appeal after transmission notice and after receipt confirmation filing"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_transmission_of",
+                "anchor_event": "notice",
+                "raw_text": "after transmission of the notice",
+                "span": [31, 63],
+            },
+            {
+                "event": "docketing",
+                "relation": "triggered_by_receipt_confirmation_of",
+                "anchor_event": "filing",
+                "raw_text": "after receipt confirmation of the filing",
+                "span": [68, 109],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    transmission_record = records[0]
+    confirmation_record = records[1]
+
+    assert transmission_record["event_id"].startswith("event:")
+    assert transmission_record["source_id"] == element["source_id"]
+    assert transmission_record["event"] == "docketing"
+    assert transmission_record["event_symbol"] == "Docketing"
+    assert transmission_record["relation"] == "triggered_by_transmission_of"
+    assert transmission_record["anchor_event"] == "notice"
+    assert transmission_record["anchor_symbol"] == "Notice"
+    assert transmission_record["raw_text"] == "after transmission of the notice"
+    assert transmission_record["span"] == [31, 63]
+    assert transmission_record["support_span"] == element["support_span"]
+    assert transmission_record["is_formula_antecedent"] is True
+    assert transmission_record["proof_role"] == "prerequisite"
+
+    assert confirmation_record["event_id"].startswith("event:")
+    assert confirmation_record["source_id"] == element["source_id"]
+    assert confirmation_record["event"] == "docketing"
+    assert confirmation_record["event_symbol"] == "Docketing"
+    assert confirmation_record["relation"] == "triggered_by_receipt_confirmation_of"
+    assert confirmation_record["anchor_event"] == "filing"
+    assert confirmation_record["anchor_symbol"] == "Filing"
+    assert confirmation_record["raw_text"] == "after receipt confirmation of the filing"
+    assert confirmation_record["span"] == [68, 109]
+    assert confirmation_record["support_span"] == element["support_span"]
+    assert confirmation_record["is_formula_antecedent"] is True
+    assert confirmation_record["proof_role"] == "prerequisite"
