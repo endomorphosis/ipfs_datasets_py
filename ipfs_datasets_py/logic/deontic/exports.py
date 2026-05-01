@@ -432,6 +432,21 @@ def normalize_repair_required_evaluation(
     normalized["active_repair_required_by_source_id"] = summary[
         "active_repair_required_by_source_id"
     ]
+
+    metrics = evaluation.get("metrics")
+    if isinstance(metrics, Mapping):
+        normalized_metrics = dict(metrics)
+        normalized_metrics["repair_required_count"] = normalized["repair_required_count"]
+        normalized_metrics["repair_required_rate"] = normalized["repair_required_rate"]
+        coverage_gaps = normalized_metrics.get("coverage_gaps")
+        if isinstance(coverage_gaps, list):
+            normalized_metrics["coverage_gaps"] = [
+                gap
+                for gap in coverage_gaps
+                if not str(gap).strip().startswith("repair_required_count:")
+            ]
+        normalized["metrics"] = normalized_metrics
+
     return normalized
 
 

@@ -1943,6 +1943,11 @@ def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_except
         "repair_required_rate": 1.0,
         "repair_required": [projected_reference["source_id"]],
         "repair_required_details": [{"source_id": projected_reference["source_id"]}],
+        "metrics": {
+            "repair_required_count": 4,
+            "repair_required_rate": 0.25,
+            "coverage_gaps": ["repair_required_count: 4", "cross_reference_resolution_rate: 0.0"],
+        },
     }
 
     normalized = normalize_repair_required_evaluation([projected_reference], raw_evaluation)
@@ -1951,3 +1956,8 @@ def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_except
     assert normalized["repair_required_rate"] == 0.0
     assert normalized["repair_required"] == []
     assert normalized["repair_required_details"] == []
+    assert normalized["metrics"]["repair_required_count"] == 0
+    assert normalized["metrics"]["repair_required_rate"] == 0.0
+    assert normalized["metrics"]["coverage_gaps"] == [
+        "cross_reference_resolution_rate: 0.0"
+    ]
