@@ -292,12 +292,12 @@ def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> b
 
 
 def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str) -> bool:
-    """Return whether a prohibition targets facilitating a regulated act."""
+    """Return whether a prohibition targets facilitating or causing a regulated act."""
 
     if norm.modality != "F":
         return False
     return bool(re.match(
-        r"^(?:permit|allow|authorize|enable)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
+        r"^(?:permit|allow|authorize|enable|cause|causes|result\s+in)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
         r"(?:person\s+to\s+|entity\s+to\s+|applicant\s+to\s+|permittee\s+to\s+|licensee\s+to\s+)?"
         r"(?:enter|access|discharge|disclose|remove|alter|destroy|obstruct|interfere|impede|"
         r"entry|discharge|disclosure|removal|alteration|destruction|access)\b",
@@ -396,11 +396,11 @@ def _strip_access_availability_action(action_text: str) -> str:
 
 
 def _strip_permission_facilitation_action(action_text: str) -> str:
-    """Remove permit/allow/authorize wrappers from facilitation prohibitions."""
+    """Remove facilitation or causation wrappers from prohibited acts."""
 
     text = str(action_text or "").strip()
     agent_action_match = re.match(
-        r"^(?:permit|allow|authorize|enable)\s+"
+        r"^(?:permit|allow|authorize|enable|cause|causes)\s+"
         r"(?:any\s+|a\s+|an\s+|the\s+)?"
         r"(?:person|entity|applicant|permittee|licensee)\s+to\s+(.+)$",
         text,
@@ -410,7 +410,7 @@ def _strip_permission_facilitation_action(action_text: str) -> str:
         return _normalize_prevention_action_head(agent_action_match.group(1).strip())
 
     embedded = re.sub(
-        r"^(?:permit|allow|authorize|enable)\s+",
+        r"^(?:permit|allow|authorize|enable|cause|causes|result\s+in)\s+",
         "",
         text,
         flags=re.IGNORECASE,
