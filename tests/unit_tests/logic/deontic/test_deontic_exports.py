@@ -2957,6 +2957,61 @@ def test_normalize_repair_required_evaluation_resolves_document_text_section_con
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_resolves_nested_metrics_document_text_section_context():
+    """Nested metric payload document text can resolve detail-only references."""
+
+    reference = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    raw_evaluation = {
+        "repair_required_count": 1,
+        "repair_required_rate": 1.0,
+        "repair_required_details": [
+            {
+                "sample_id": "cross_reference",
+                "text": reference["text"],
+                "source_id": reference["source_id"],
+                "canonical_citation": reference["canonical_citation"],
+                "support_text": reference["support_text"],
+                "support_span": reference["support_span"],
+                "source_span": reference.get("source_span", reference["support_span"]),
+                "norm_type": reference["norm_type"],
+                "modality": None,
+                "subject": list(reference["subject"]),
+                "action": list(reference["action"]),
+                "exceptions": list(reference.get("exception_details") or []),
+                "cross_references": list(reference.get("cross_reference_details") or []),
+                "parser_warnings": list(reference["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(reference["parser_warnings"]),
+                },
+            }
+        ],
+        "metrics": {
+            "document_text": "Section 552. The agency shall keep records.",
+            "repair_required_count": 1,
+            "repair_required_rate": 1.0,
+            "repair_required_details": [],
+            "coverage_gaps": ["repair_required_count: 1"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 0
+    assert normalized["repair_required_rate"] == 0.0
+    assert normalized["repair_required"] == []
+    assert normalized["repair_required_details"] == []
+    assert normalized["active_repair_required_by_source_id"][reference["source_id"]] is False
+    assert normalized["metrics"]["repair_required_count"] == 0
+    assert normalized["metrics"]["repair_required_rate"] == 0.0
+    assert normalized["metrics"]["repair_required"] == []
+    assert normalized["metrics"]["repair_required_details"] == []
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_keeps_mismatched_text_only_section_blocked():
     """Text-only context must cite the same numbered section to clear repair."""
 

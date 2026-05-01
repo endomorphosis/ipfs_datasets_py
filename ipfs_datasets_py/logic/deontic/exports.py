@@ -504,6 +504,12 @@ def _evaluation_parser_elements(
     recovered.extend(
         _parser_context_elements_from_evaluation_document_text(evaluation)
     )
+    metrics = evaluation.get("metrics")
+    if isinstance(metrics, Mapping):
+        recovered.extend(
+            _parser_context_elements_from_evaluation_document_text(metrics)
+        )
+
     for sample in evaluation.get("samples", []) if isinstance(evaluation.get("samples"), list) else []:
         if not isinstance(sample, Mapping):
             continue
