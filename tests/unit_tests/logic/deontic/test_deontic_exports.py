@@ -462,6 +462,50 @@ def test_ir_procedure_event_records_mark_certification_trigger_as_prerequisite()
     )
 
 
+def test_ir_procedure_event_records_mark_issuance_trigger_as_prerequisite():
+    element = extract_normative_elements(
+        "The Director shall renew a permit after issuance of the license."
+    )[0]
+    element = dict(element)
+    element["action"] = ["renew a permit after issuance license"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_issuance_of",
+                "anchor_event": "license",
+                "raw_text": "after issuance of the license",
+                "span": [36, 65],
+            },
+            {
+                "event": "renewal",
+                "relation": "after",
+                "anchor_event": "inspection",
+                "raw_text": "after inspection",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    issuance_record = next(
+        record for record in records if record["relation"] == "triggered_by_issuance_of"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert issuance_record["is_formula_antecedent"] is True
+    assert issuance_record["proof_role"] == "prerequisite"
+    assert issuance_record["anchor_event"] == "license"
+    assert issuance_record["anchor_symbol"] == "License"
+    assert issuance_record["span"] == [36, 65]
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ ProcedureAfterIssuanceLicense(x) → RenewPermit(x)))"
+    )
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
