@@ -189,6 +189,18 @@ def test_daemon_reports_invalid_patch_as_patch_check_failed(tmp_path):
 
 
 def test_daemon_retries_empty_or_unparseable_llm_proposals(tmp_path):
+    (tmp_path / "x.txt").write_text("before\n", encoding="utf-8")
+    valid_diff = "\n".join(
+        [
+            "diff --git a/x.txt b/x.txt",
+            "--- a/x.txt",
+            "+++ b/x.txt",
+            "@@ -1 +1 @@",
+            "-before",
+            "+after",
+            "",
+        ]
+    )
     fake_router = _SequencedRouter(
         [
             '{"type":"thread.started"}\n{"type":"turn.started"}',
@@ -199,7 +211,7 @@ def test_daemon_retries_empty_or_unparseable_llm_proposals(tmp_path):
                     "acceptance_criteria": ["retry result is recorded"],
                     "expected_metric_gain": {},
                     "tests_to_run": [],
-                    "unified_diff": "not a valid diff, but no longer empty",
+                    "unified_diff": valid_diff,
                 }
             ),
         ]
@@ -210,6 +222,7 @@ def test_daemon_retries_empty_or_unparseable_llm_proposals(tmp_path):
         apply_patches=False,
         run_tests=False,
         require_production_and_tests=False,
+        require_clean_touched_files=False,
         llm_proposal_attempts=2,
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
@@ -221,6 +234,65 @@ def test_daemon_retries_empty_or_unparseable_llm_proposals(tmp_path):
     assert cycle["proposal_attempts"][0]["retry_reason"].startswith("parse_error:")
     assert cycle["proposal_attempts"][1]["retry_reason"] == ""
     assert cycle["proposal_attempts"][1]["summary"] == "Retry produced a patch."
+
+
+def test_daemon_retries_patch_check_failures_with_feedback(tmp_path):
+    (tmp_path / "x.txt").write_text("before\n", encoding="utf-8")
+    valid_diff = "\n".join(
+        [
+            "diff --git a/x.txt b/x.txt",
+            "--- a/x.txt",
+            "+++ b/x.txt",
+            "@@ -1 +1 @@",
+            "-before",
+            "+after",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "First patch has stale context.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["patch check retries"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": "not a diff",
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Second patch applies.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["patch applies"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": valid_diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert "patch_check_failed" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert cycle["proposal_attempts"][1]["patch_valid"] is True
+    assert cycle["patch_check"]["valid"] is True
+    assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
+    assert "previous proposal attempt 1 was rejected" in fake_router.calls[1]["prompt"]
 
 
 def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):

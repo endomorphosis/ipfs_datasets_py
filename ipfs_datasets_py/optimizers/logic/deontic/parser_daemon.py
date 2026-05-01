@@ -540,6 +540,7 @@ class LegalParserOptimizerDaemon:
         proposal_attempts: List[Dict[str, Any]] = []
         proposal = LegalParserCycleProposal(summary="llm_router proposal failed")
         max_attempts = max(1, int(self.config.llm_proposal_attempts))
+        attempt_feedback = list(feedback)
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -549,12 +550,12 @@ class LegalParserOptimizerDaemon:
                 cycle_dir=cycle_dir,
                 started_at=started,
                 score=score,
-                feedback=feedback,
+                feedback=attempt_feedback,
                 proposal_attempt=attempt_index,
                 proposal_attempts=max_attempts,
             )
             try:
-                proposal = self.optimizer.optimize(evaluation, score, feedback, context)
+                proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
             except Exception as exc:
                 proposal = LegalParserCycleProposal(
                     summary="llm_router proposal failed",
@@ -562,19 +563,55 @@ class LegalParserOptimizerDaemon:
                     parse_error=f"{type(exc).__name__}: {exc}",
                 )
             retry_reason = self._proposal_retry_reason(proposal)
-            proposal_attempts.append(
-                {
-                    "attempt": attempt_index,
-                    "retry_reason": retry_reason,
-                    "parse_error": proposal.parse_error,
-                    "summary": proposal.summary,
-                    "raw_response_chars": len(proposal.raw_response or ""),
-                    "diff_chars": len(proposal.unified_diff or ""),
-                }
-            )
+            attempt_record: Dict[str, Any] = {
+                "attempt": attempt_index,
+                "retry_reason": retry_reason,
+                "parse_error": proposal.parse_error,
+                "summary": proposal.summary,
+                "raw_response_chars": len(proposal.raw_response or ""),
+                "diff_chars": len(proposal.unified_diff or ""),
+            }
+            if not retry_reason:
+                candidate_patch_check = self.optimizer.check_patch(proposal.unified_diff)
+                candidate_changed_files = _paths_from_unified_diff(proposal.unified_diff)
+                candidate_quality = self._assess_proposal_quality(proposal, candidate_changed_files)
+                candidate_dirty_touched = self._dirty_touched_files(candidate_changed_files)
+                if self.config.require_clean_touched_files and candidate_dirty_touched:
+                    candidate_quality = {
+                        **candidate_quality,
+                        "valid": False,
+                        "reasons": list(candidate_quality.get("reasons", []))
+                        + [
+                            "patch touches files with pre-existing uncommitted changes: "
+                            + ", ".join(candidate_dirty_touched)
+                        ],
+                        "dirty_touched_files": candidate_dirty_touched,
+                    }
+                retry_reason = self._candidate_patch_retry_reason(
+                    patch_check=candidate_patch_check,
+                    proposal_quality=candidate_quality,
+                )
+                attempt_record.update(
+                    {
+                        "retry_reason": retry_reason,
+                        "patch_valid": candidate_patch_check.get("valid"),
+                        "patch_stderr_tail": str(candidate_patch_check.get("stderr") or "")[-2000:],
+                        "proposal_quality_valid": candidate_quality.get("valid"),
+                        "proposal_quality_reasons": candidate_quality.get("reasons", []),
+                        "changed_files": candidate_changed_files,
+                    }
+                )
+            proposal_attempts.append(attempt_record)
             if not retry_reason:
                 break
             if attempt_index < max_attempts:
+                attempt_feedback = list(feedback) + [
+                    (
+                        f"previous proposal attempt {attempt_index} was rejected before apply: "
+                        f"{retry_reason}. Regenerate a unified diff against the exact current "
+                        "relevant_file_snapshots; do not reuse stale hunk context."
+                    )
+                ]
                 self._write_current_status(
                     status="running",
                     phase="retrying_llm_patch",
@@ -929,6 +966,21 @@ class LegalParserOptimizerDaemon:
             return "proposal_acceptance_criteria_empty"
         if not proposal.unified_diff.strip():
             return "proposal_unified_diff_empty"
+        return ""
+
+    def _candidate_patch_retry_reason(
+        self,
+        *,
+        patch_check: Dict[str, Any],
+        proposal_quality: Dict[str, Any],
+    ) -> str:
+        if proposal_quality.get("valid") is False:
+            reasons = "; ".join(str(item) for item in proposal_quality.get("reasons", [])[:3])
+            return f"proposal_quality_failed:{reasons}" if reasons else "proposal_quality_failed"
+        if patch_check.get("valid") is False:
+            stderr_lines = str(patch_check.get("stderr") or "").strip().splitlines()
+            first_line = stderr_lines[0] if stderr_lines else "patch_check_failed"
+            return f"patch_check_failed:{first_line}"
         return ""
 
     def _record_progress(self, cycle_payload: Dict[str, Any]) -> None:
