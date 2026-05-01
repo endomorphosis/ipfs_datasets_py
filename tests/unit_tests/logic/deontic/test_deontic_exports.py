@@ -1,6 +1,5 @@
 """Tests for IR-derived deterministic export records."""
 
-
 from ipfs_datasets_py.logic.deontic.exports import (
     active_repair_details_from_parser_elements,
     build_document_export_tables_from_ir,
@@ -4405,3 +4404,35 @@ def test_raw_parser_same_document_reference_resolution_uses_canonical_reference_
     ]
     assert aligned["resolved_cross_references"][0]["value"] == "552"
     assert aligned["resolved_cross_references"][0]["normalized_text"] == "section 552"
+
+
+def test_ir_procedure_event_records_mark_service_trigger_as_prerequisite():
+    """Service of notice is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall renew a permit after service of notice."
+    )[0])
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_service_of",
+                "anchor_event": "notice",
+                "raw_text": "after service of notice",
+                "span": [36, 59],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "renewal"
+    assert records[0]["event_symbol"] == "Renewal"
+    assert records[0]["relation"] == "triggered_by_service_of"
+    assert records[0]["anchor_event"] == "notice"
+    assert records[0]["anchor_symbol"] == "Notice"
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+    assert records[0]["relation_record"]["raw_text"] == "after service of notice"
