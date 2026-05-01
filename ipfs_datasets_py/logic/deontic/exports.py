@@ -240,10 +240,15 @@ def parser_elements_with_ir_export_readiness(
                 if reason not in set(formula_record.get("blockers") or [])
             ]
             copied["llm_repair"] = llm_repair
-            copied["resolved_cross_references"] = _project_parser_resolved_cross_references(
+            projected_references = _project_parser_resolved_cross_references(
                 copied.get("resolved_cross_references", []),
                 resolved_norm.resolved_cross_references,
             )
+            projected_references = _extend_unique_references(
+                projected_references,
+                _local_scope_parser_resolved_cross_references(copied, deterministic_resolution),
+            )
+            copied["resolved_cross_references"] = projected_references
             _clear_parser_exception_repair_if_formula_resolved(copied, deterministic_resolution)
 
         aligned.append(copied)
@@ -288,6 +293,88 @@ def _project_parser_resolved_cross_references(
             seen.add(key)
 
     return projected
+
+
+def _extend_unique_references(
+    references: Sequence[Mapping[str, Any]],
+    additions: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Append reference records without duplicating canonical/local keys."""
+
+    projected: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for reference in list(references) + list(additions):
+        if not isinstance(reference, Mapping):
+            continue
+        normalized = dict(reference)
+        key = _reference_provenance_key(normalized)
+        if key and key in seen:
+            continue
+        projected.append(normalized)
+        if key:
+            seen.add(key)
+    return projected
+
+
+def _local_scope_parser_resolved_cross_references(
+    element: Mapping[str, Any],
+    deterministic_resolution: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    """Return parser-facing resolved records for local self-scope repairs.
+
+    Formula records can deterministically resolve clauses such as ``This section
+    applies to ...`` because the reference is to the current local scope. Metrics
+    and converter callers inspect copied parser dictionaries directly, so expose
+    that same source-grounded local resolution without relaxing parser theorem
+    promotion or resolving numbered/external references.
+    """
+
+    if deterministic_resolution.get("type") not in {
+        "local_scope_applicability",
+        "local_scope_reference_condition",
+        "local_scope_reference_exception",
+    }:
+        return []
+
+    resolved: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for key in ("cross_reference_details", "cross_references", "resolved_cross_references"):
+        values = element.get(key)
+        if not isinstance(values, list):
+            continue
+        for reference in values:
+            if not isinstance(reference, Mapping):
+                continue
+            if not _is_local_scope_reference_record(reference):
+                continue
+            normalized = _normalized_reference_record(reference)
+            normalized["target"] = normalized.get("target") or _local_scope_reference_target(reference)
+            normalized["resolved"] = True
+            normalized["same_document"] = True
+            normalized["resolution_scope"] = "local_self"
+            provenance_key = _reference_provenance_key(normalized)
+            if provenance_key and provenance_key in seen:
+                continue
+            resolved.append(normalized)
+            if provenance_key:
+                seen.add(provenance_key)
+    return resolved
+
+
+def _local_scope_reference_target(reference: Mapping[str, Any]) -> str:
+    reference_type = str(reference.get("reference_type") or reference.get("type") or "").strip().lower()
+    if reference_type not in {"section", "subsection", "chapter", "title", "article", "part"}:
+        return ""
+
+    for key in ("target", "section", "subsection"):
+        value = str(reference.get(key) or "").strip().lower()
+        if value in {"this", "current"}:
+            return value
+    for key in ("value", "normalized_text", "raw_text", "text", "canonical_citation", "citation"):
+        text = str(reference.get(key) or "").strip().lower()
+        if text in {f"this {reference_type}", f"current {reference_type}"}:
+            return text.split()[0]
+    return ""
 
 
 def _clear_parser_exception_repair_if_formula_resolved(

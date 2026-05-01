@@ -1099,6 +1099,40 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
     ]
 
 
+def test_parser_element_readiness_projects_local_applicability_resolution():
+    element = extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0]
+
+    aligned = parser_elements_with_ir_export_readiness([element])
+
+    assert element["promotable_to_theorem"] is False
+    assert aligned[0]["promotable_to_theorem"] is False
+    assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
+    assert aligned[0]["export_readiness"]["formula_proof_ready"] is True
+    assert aligned[0]["export_readiness"]["proof_ready"] is True
+    assert aligned[0]["export_readiness"]["formula_requires_validation"] is False
+    assert aligned[0]["export_readiness"]["formula_repair_required"] is False
+    assert aligned[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "local_scope_applicability"
+    )
+    assert aligned[0]["llm_repair"]["required"] is False
+    assert aligned[0]["llm_repair"]["allow_llm_repair"] is False
+    assert aligned[0]["llm_repair"]["deterministically_resolved"] is True
+    assert aligned[0]["resolved_cross_references"] == [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "value": "this section",
+            "raw_text": "This section",
+            "span": [0, 12],
+            "resolution_scope": "local_self",
+            "resolved": True,
+            "same_document": True,
+        }
+    ]
+
+
 def test_parser_element_readiness_keeps_mismatched_section_context_reference_blocked():
     reference_element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
