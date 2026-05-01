@@ -6,6 +6,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
+    build_procedure_event_records_from_ir,
     normalize_repair_required_evaluation,
     normalize_repair_required_details_from_parser_elements,
     parser_element_has_active_repair,
@@ -16,6 +17,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     summarize_active_repair_from_parser_elements,
     validate_export_tables,
 )
+from ipfs_datasets_py.logic.deontic.formula_builder import build_deontic_formula_from_ir
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
@@ -154,6 +156,42 @@ def test_ir_proof_record_does_not_promote_blocked_cross_reference_exception():
     assert "cross_reference_requires_resolution" in record["blockers"]
     assert "exception_requires_scope_review" in record["parser_warnings"]
     assert record["deterministic_resolution"] == {}
+
+
+def test_ir_procedure_event_relation_records_preserve_ordering_provenance_without_formula_strengthening():
+    element = extract_normative_elements(
+        "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    receipt_record = next(
+        record for record in records if record["relation"] == "triggered_by_receipt_of"
+    )
+    before_record = next(record for record in records if record["relation"] == "before")
+
+    assert receipt_record["event_id"].startswith("event:")
+    assert receipt_record["source_id"] == element["source_id"]
+    assert receipt_record["event"] == "inspection"
+    assert receipt_record["event_symbol"] == "Inspection"
+    assert receipt_record["anchor_event"] == "application"
+    assert receipt_record["anchor_symbol"] == "Application"
+    assert receipt_record["span"] == [0, 30]
+    assert receipt_record["support_span"] == element["support_span"]
+    assert receipt_record["is_formula_antecedent"] is True
+    assert receipt_record["proof_role"] == "prerequisite"
+
+    assert before_record["source_id"] == element["source_id"]
+    assert before_record["event"] == "inspection"
+    assert before_record["anchor_event"] == "issuance"
+    assert before_record["raw_text"].startswith("before approval")
+    assert before_record["is_formula_antecedent"] is False
+    assert before_record["proof_role"] == "ordering_provenance"
+    assert before_record["relation_record"]["relation"] == "before"
+
+    formula = build_deontic_formula_from_ir(norm)
+    assert formula == "O(∀x (Bureau(x) ∧ ProcedureUponReceiptApplication(x) → InspectPremises(x)))"
+    assert "ProcedureBeforeIssuance" not in formula
 
 
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():

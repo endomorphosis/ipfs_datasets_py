@@ -137,6 +137,73 @@ def build_repair_queue_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     return row
 
 
+def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, Any]]:
+    """Build export records for structured procedure event relations.
+
+    Procedure relations are provenance and event-ordering metadata. Only the
+    narrow receipt-trigger relation is tagged as a formula prerequisite; before
+    and after ordering relations remain export-visible without becoming deontic
+    antecedents.
+    """
+
+    procedure = norm.procedure
+    if not isinstance(procedure, Mapping):
+        return []
+
+    records: List[Dict[str, Any]] = []
+    for index, relation in enumerate(procedure.get("event_relations") or [], start=1):
+        if not isinstance(relation, Mapping):
+            continue
+
+        event = str(relation.get("event") or procedure.get("terminal_event") or "").strip()
+        relation_type = str(relation.get("relation") or "").strip()
+        anchor_event = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+        if not event and not anchor_event:
+            continue
+
+        span = relation.get("span")
+        if not isinstance(span, list):
+            span = []
+        raw_text = str(relation.get("raw_text") or relation.get("value") or "").strip()
+        formula_antecedent = relation_type == "triggered_by_receipt_of"
+        proof_role = "prerequisite" if formula_antecedent else "ordering_provenance"
+
+        records.append({
+            "event_id": _stable_id(
+                "event",
+                norm.source_id,
+                str(index),
+                event,
+                relation_type,
+                anchor_event,
+                "|".join(str(part) for part in span),
+            ),
+            "source_id": norm.source_id,
+            "canonical_citation": norm.canonical_citation,
+            "event_order": index,
+            "event": event,
+            "event_symbol": _procedure_event_symbol(event),
+            "relation": relation_type,
+            "anchor_event": anchor_event,
+            "anchor_symbol": _procedure_event_symbol(anchor_event),
+            "raw_text": raw_text,
+            "span": list(span),
+            "support_span": norm.support_span.to_list(),
+            "procedure_value": str(procedure.get("value") or ""),
+            "is_formula_antecedent": formula_antecedent,
+            "proof_role": proof_role,
+            "relation_record": dict(relation),
+            "schema_version": norm.schema_version,
+        })
+
+    return records
+
+
+def _procedure_event_symbol(value: str) -> str:
+    words = re.findall(r"[0-9A-Za-z]+", str(value or ""))
+    return "".join(word.capitalize() for word in words) if words else ""
+
+
 def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[str, List[Dict[str, Any]]]:
     """Build deterministic export tables from typed legal norms."""
 
