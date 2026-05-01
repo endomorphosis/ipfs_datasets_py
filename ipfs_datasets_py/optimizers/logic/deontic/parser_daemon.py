@@ -818,15 +818,47 @@ class LegalParserOptimizerDaemon:
                         changed_files=changed_files,
                     )
                     post_evaluation = self.optimizer.evaluate_current_parser()
-                    retained_change = self._retained_change_summary(pre_apply_files)
-                    retained_patch_path = cycle_dir / "retained.patch"
-                    retained_patch_path.write_text(
-                        self._retained_patch_for_paths(pre_apply_files),
-                        encoding="utf-8",
+                    metric_progress = self._metric_stall_retention_result(
+                        proposal=proposal,
+                        evaluation=evaluation,
+                        post_evaluation=post_evaluation,
+                        metric_stall_mode=metric_stall_mode,
                     )
-                    retained_change["patch_path"] = str(retained_patch_path)
-                    if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
-                        commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
+                    if not metric_progress.get("valid"):
+                        self._write_current_status(
+                            status="running",
+                            phase="rolling_back_metric_stall_no_progress",
+                            cycle_index=cycle_index,
+                            cycle_dir=cycle_dir,
+                            started_at=started,
+                            changed_files=changed_files,
+                            metric_progress=metric_progress,
+                        )
+                        rollback = self._restore_patch_paths(pre_apply_files)
+                        if not rollback.get("valid"):
+                            rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                        apply_result["rolled_back"] = True
+                        apply_result["rollback"] = rollback
+                        apply_result["reason"] = "metric_stall_no_metric_progress"
+                        apply_result["metric_progress"] = metric_progress
+                        retained_change = {
+                            "has_retained_changes": False,
+                            "changed_files": [],
+                            "reason": "metric_stall_no_metric_progress",
+                            "metric_progress": metric_progress,
+                        }
+                        commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
+                    else:
+                        retained_change = self._retained_change_summary(pre_apply_files)
+                        retained_patch_path = cycle_dir / "retained.patch"
+                        retained_patch_path.write_text(
+                            self._retained_patch_for_paths(pre_apply_files),
+                            encoding="utf-8",
+                        )
+                        retained_change["patch_path"] = str(retained_patch_path)
+                        retained_change["metric_progress"] = metric_progress
+                        if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
+                            commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
                 else:
                     rollback = self._restore_patch_paths(pre_apply_files)
                     if not rollback.get("valid"):
@@ -1129,6 +1161,96 @@ class LegalParserOptimizerDaemon:
             ],
             "metric_stall_mode": True,
         }
+
+    def _metric_stall_retention_result(
+        self,
+        *,
+        proposal: LegalParserCycleProposal,
+        evaluation: Dict[str, Any],
+        post_evaluation: Dict[str, Any],
+        metric_stall_mode: bool,
+    ) -> Dict[str, Any]:
+        pre_metrics = dict(evaluation.get("metrics") or {})
+        post_metrics = dict((post_evaluation.get("metrics") or {}) if isinstance(post_evaluation, dict) else {})
+        result = {
+            "valid": True,
+            "metric_stall_mode": metric_stall_mode,
+            "expected_metric_gain": dict(proposal.expected_metric_gain or {}),
+            "pre_metrics": self._selected_metric_snapshot(pre_metrics),
+            "post_metrics": self._selected_metric_snapshot(post_metrics),
+            "reasons": [],
+        }
+        if not metric_stall_mode:
+            return result
+
+        moved_metrics = self._moved_expected_metrics(proposal.expected_metric_gain or {}, pre_metrics, post_metrics)
+        pre_score = _as_float(pre_metrics.get("parity_score"))
+        post_score = _as_float(post_metrics.get("parity_score"))
+        score_delta = None if pre_score is None or post_score is None else post_score - pre_score
+        feedback_reduced = self._coverage_feedback_reduced(pre_metrics, post_metrics)
+        result.update(
+            {
+                "moved_expected_metrics": moved_metrics,
+                "score_delta": score_delta,
+                "feedback_reduced": feedback_reduced,
+            }
+        )
+        if moved_metrics or feedback_reduced:
+            return result
+        if score_delta is not None and score_delta >= self.config.min_score_improvement:
+            return result
+
+        result["valid"] = False
+        result["reasons"] = [
+            "metric-stall patch passed tests but did not improve claimed metrics, score, or coverage gaps"
+        ]
+        return result
+
+    def _selected_metric_snapshot(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+        keys = [
+            "parity_score",
+            "repair_required_count",
+            "repair_required_rate",
+            "proof_ready_rate",
+            "cross_reference_resolution_rate",
+            "formula_error_rate",
+            "parsed_rate",
+            "schema_valid_rate",
+            "coverage_gaps",
+        ]
+        return {key: metrics.get(key) for key in keys if key in metrics}
+
+    def _moved_expected_metrics(
+        self,
+        expected_metric_gain: Dict[str, Any],
+        pre_metrics: Dict[str, Any],
+        post_metrics: Dict[str, Any],
+    ) -> Dict[str, Dict[str, Any]]:
+        moved: Dict[str, Dict[str, Any]] = {}
+        lower_is_better = {"repair_required_count", "repair_required_rate", "formula_error_rate"}
+        for key, expected in expected_metric_gain.items():
+            metric = str(key)
+            before = _as_float(pre_metrics.get(metric))
+            after = _as_float(post_metrics.get(metric))
+            if before is None or after is None:
+                continue
+            expected_value = _as_float(expected)
+            if expected_value is not None and expected_value < 0:
+                improved = after < before
+            elif expected_value is not None and expected_value > 0:
+                improved = after > before
+            elif metric in lower_is_better:
+                improved = after < before
+            else:
+                improved = after > before
+            if improved:
+                moved[metric] = {"before": before, "after": after, "expected_gain": expected}
+        return moved
+
+    def _coverage_feedback_reduced(self, pre_metrics: Dict[str, Any], post_metrics: Dict[str, Any]) -> bool:
+        pre_gaps = {str(item) for item in pre_metrics.get("coverage_gaps") or []}
+        post_gaps = {str(item) for item in post_metrics.get("coverage_gaps") or []}
+        return bool(pre_gaps) and post_gaps < pre_gaps
 
     def _proposal_retry_reason(self, proposal: LegalParserCycleProposal) -> str:
         if proposal.parse_error:
@@ -1737,6 +1859,17 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
+
+
+def _as_float(value: Any) -> Optional[float]:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _run_command(

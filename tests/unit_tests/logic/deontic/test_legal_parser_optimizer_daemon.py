@@ -55,6 +55,22 @@ class _FailingOptimizer:
         raise RuntimeError("boom before proposal")
 
 
+class _MetricGateOptimizer(LegalParserParityOptimizer):
+    def __init__(self, *, daemon_config, llm_backend, initial_evaluation, post_evaluation):
+        super().__init__(daemon_config=daemon_config, llm_backend=llm_backend)
+        self.initial_evaluation = initial_evaluation
+        self.post_evaluation = post_evaluation
+
+    def generate(self, input_data, context):
+        return self.initial_evaluation
+
+    def evaluate_current_parser(self):
+        return self.post_evaluation
+
+    def run_tests(self):
+        return {"valid": True, "returncode": 0, "stdout": "passed", "stderr": ""}
+
+
 def test_parse_cycle_proposal_accepts_strict_json():
     raw = json.dumps(
         {
@@ -872,6 +888,113 @@ def test_daemon_retries_metric_stall_proposal_without_expected_metric_gain(tmp_p
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
+
+
+def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    prod_file = "ipfs_datasets_py/logic/deontic/exports.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    for path, body in {
+        prod_file: "before_exports\n",
+        test_file: "before_test\n",
+    }.items():
+        full_path = repo / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = repo / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps({"stalled_metric_cycles": 5, "current_score": 0.9763}),
+        encoding="utf-8",
+    )
+    diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
+            "--- a/ipfs_datasets_py/logic/deontic/exports.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
+            "@@ -1 +1 @@",
+            "-before_exports",
+            "+after_exports",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "@@ -1 +1 @@",
+            "-before_test",
+            "+after_test",
+            "",
+        ]
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Patch claims repair progress but leaves metrics flat.",
+                "requirements_addressed": ["daemon"],
+                "acceptance_criteria": ["repair-required count moves"],
+                "expected_metric_gain": {"repair_required_count": -1},
+                "tests_to_run": [],
+                "unified_diff": diff,
+            }
+        )
+    )
+    initial_evaluation = {
+        "metrics": {
+            "parity_score": 0.9763,
+            "repair_required_count": 1,
+            "coverage_gaps": ["repair_required_count: 1"],
+        }
+    }
+    post_evaluation = {
+        "metrics": {
+            "parity_score": 0.9763,
+            "repair_required_count": 1,
+            "coverage_gaps": ["repair_required_count: 1"],
+        }
+    }
+    config = LegalParserDaemonConfig(
+        repo_root=repo,
+        output_dir=out_dir,
+        apply_patches=True,
+        run_tests=True,
+        commit_accepted_patches=True,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=1,
+    )
+    optimizer = _MetricGateOptimizer(
+        daemon_config=config,
+        llm_backend=fake_router,
+        initial_evaluation=initial_evaluation,
+        post_evaluation=post_evaluation,
+    )
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert cycle["tests"]["valid"] is True
+    assert cycle["apply_result"]["rolled_back"] is True
+    assert cycle["apply_result"]["reason"] == "metric_stall_no_metric_progress"
+    assert cycle["retained_change"]["has_retained_changes"] is False
+    assert cycle["retained_change"]["reason"] == "metric_stall_no_metric_progress"
+    assert cycle["commit_result"] == {"committed": False, "reason": "metric_stall_no_metric_progress"}
+    assert (repo / prod_file).read_text(encoding="utf-8") == "before_exports\n"
+    assert (repo / test_file).read_text(encoding="utf-8") == "before_test\n"
+
+
+def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(expected_metric_gain={"repair_required_count": -1})
+
+    result = daemon._metric_stall_retention_result(
+        proposal=proposal,
+        evaluation={"metrics": {"parity_score": 0.9, "repair_required_count": 2}},
+        post_evaluation={"metrics": {"parity_score": 0.9, "repair_required_count": 1}},
+        metric_stall_mode=True,
+    )
+
+    assert result["valid"] is True
+    assert result["moved_expected_metrics"]["repair_required_count"]["before"] == 2.0
+    assert result["moved_expected_metrics"]["repair_required_count"]["after"] == 1.0
 
 
 def test_retained_change_summary_detects_no_content_change(tmp_path):
