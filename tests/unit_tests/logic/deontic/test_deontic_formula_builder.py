@@ -1054,6 +1054,61 @@ def test_after_notice_without_hearing_does_not_use_notice_and_hearing_prerequisi
     )
 
 
+def test_parser_and_formula_capture_after_public_notice_and_hearing_prerequisite():
+    text = "The Commission shall adopt rules after public notice and hearing."
+
+    element = extract_normative_elements(text)[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "adopt rules"
+    assert {
+        "type": "procedure",
+        "temporal_kind": "after_notice_and_hearing",
+        "value": "after public notice and hearing",
+        "anchor": "",
+        "quantity": None,
+        "unit": "",
+        "calendar": "",
+        "anchor_event": "",
+        "direction": "",
+        "raw_text": "after public notice and hearing",
+        "normalized_text": "after public notice and hearing",
+        "span": [33, 64],
+    } in norm.temporal_constraints
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Commission(x) ∧ ProcedureAfterPublicNoticeAndHearing(x) "
+        "→ AdoptRules(x)))"
+    )
+
+
+def test_after_public_notice_without_hearing_does_not_use_notice_and_hearing_prerequisite():
+    element = extract_normative_elements(
+        "The Commission shall adopt rules after public notice is mailed."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "adopt rules"
+    assert all(
+        constraint.get("temporal_kind") != "after_notice_and_hearing"
+        for constraint in norm.temporal_constraints
+    )
+    formula = build_deontic_formula_from_ir(norm)
+    assert formula == "O(∀x (Commission(x) → AdoptRules(x)))"
+    assert "ProcedureAfterPublicNoticeAndHearing" not in formula
+
+
+def test_public_notice_and_hearing_patch_keeps_numbered_reference_repair_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    record = build_deontic_formula_record_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
 def test_ir_formula_suppresses_base_deadline_when_whichever_variant_is_later_in_ir_order():
     element = extract_normative_elements(
         "The Director shall complete review within 30 days after application or "
