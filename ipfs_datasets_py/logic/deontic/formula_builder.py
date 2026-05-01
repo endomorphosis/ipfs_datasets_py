@@ -486,6 +486,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_publication_of": "procedure after publication",
         "triggered_by_inspection_of": "procedure after inspection",
         "triggered_by_service_of": "procedure after service",
+        "triggered_by_signature_of": "procedure after signature",
         "triggered_by_adoption_of": "procedure after adoption",
         "triggered_by_commencement_of": "procedure after commencement",
         "triggered_by_execution_of": "procedure after execution",
@@ -562,6 +563,7 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_postmark_of",
         "triggered_by_docketing_of",
         "triggered_by_entry_of",
+        "triggered_by_signature_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -770,6 +772,7 @@ def _procedure_trigger_tail_noun(relation_type: str) -> str:
         "triggered_by_postmark_of": "postmark",
         "triggered_by_docketing_of": "docketing",
         "triggered_by_entry_of": "entry",
+        "triggered_by_signature_of": "signature",
     }.get(relation_type, "")
 
 
