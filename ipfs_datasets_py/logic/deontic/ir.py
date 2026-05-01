@@ -24,6 +24,12 @@ def _list_of_strings(value: Any) -> List[str]:
     return [str(item) for item in value if item is not None]
 
 
+def _actor_texts(value: Any) -> List[str]:
+    """Return all structured actor labels while preserving parser order."""
+
+    return [text for text in _list_of_strings(value) if text.strip()]
+
+
 def _enumeration_index(value: Any) -> Optional[int]:
     """Return a deterministic one-based enumeration index when available."""
 
@@ -386,6 +392,7 @@ class LegalNormIR:
     formal_terms: Dict[str, Any] = field(default_factory=dict)
     legal_frame: Dict[str, Any] = field(default_factory=dict)
     section_context: Dict[str, Any] = field(default_factory=dict)
+    actor_entities: List[str] = field(default_factory=list)
     quality: LegalNormQuality = field(default_factory=LegalNormQuality)
 
     @classmethod
@@ -446,6 +453,7 @@ class LegalNormIR:
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
+            actor_entities=_actor_texts(element.get("subject")),
             quality=LegalNormQuality.from_parser_element(element),
         )
 

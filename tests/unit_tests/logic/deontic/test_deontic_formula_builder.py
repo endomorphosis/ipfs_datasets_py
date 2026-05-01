@@ -1254,6 +1254,40 @@ def test_formula_prefers_structured_mens_rea_slot_over_action_fallback():
     assert "Knowingly(x)" not in formula
 
 
+def test_ir_formula_preserves_multiple_structured_actor_subjects():
+    element = extract_normative_elements("The Director shall issue a permit.")[0]
+    element = dict(element)
+    element["subject"] = ["Director", "Commissioner"]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.actor == "Director"
+    assert norm.actor_entities == ["Director", "Commissioner"]
+    assert norm.to_dict()["actor"] == "Director"
+    assert norm.to_dict()["actor_entities"] == ["Director", "Commissioner"]
+    assert formula == (
+        "O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))"
+    )
+
+
+def test_ir_formula_deduplicates_multiple_actor_aliases():
+    element = extract_normative_elements("The Director shall issue a permit.")[0]
+    element = dict(element)
+    element["subject"] = ["Director", "the Director", "Commissioner"]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.actor == "Director"
+    assert norm.actor_entities == ["Director", "the Director", "Commissioner"]
+    assert formula == (
+        "O(∀x ((Director(x) ∨ Commissioner(x)) → IssuePermit(x)))"
+    )
+    assert formula.count("Director(x)") == 1
+    assert formula.count("Commissioner(x)") == 1
+
+
 def test_ir_preserves_legacy_slot_lists_when_detail_records_are_absent():
     element = extract_normative_elements(
         "The Director shall issue a permit if all requirements are met within 10 days after application "

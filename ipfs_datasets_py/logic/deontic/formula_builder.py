@@ -68,7 +68,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
 
     action_text = _action_without_mental_state(norm.action or "Action")
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
-    subject_pred = normalize_predicate_name(norm.actor or "Agent")
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
     temporal_preds = _formula_temporal_predicates(norm.temporal_constraints)
@@ -77,7 +76,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
 
-    inner_parts = [f"{subject_pred}(x)"]
+    inner_parts = [_subject_predicate_expr(norm)]
     inner_parts.extend(f"{pred}(x)" for pred in condition_preds[:3])
     inner_parts.extend(f"{pred}(x)" for pred in modifiers)
     inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:3])
@@ -387,6 +386,21 @@ def _unique_predicates(texts: Iterable[str]) -> List[str]:
         predicates.append(predicate)
         seen.add(predicate)
     return predicates
+
+
+def _subject_predicate_expr(norm: LegalNormIR) -> str:
+    """Return the antecedent subject expression for one or more actors."""
+
+    actor_texts = list(getattr(norm, "actor_entities", []) or [])
+    if not actor_texts:
+        actor_texts = [norm.actor or "Agent"]
+
+    predicates = _unique_predicates(actor_texts)
+    if not predicates:
+        predicates = [normalize_predicate_name(norm.actor or "Agent")]
+    if len(predicates) == 1:
+        return f"{predicates[0]}(x)"
+    return "(" + " ∨ ".join(f"{predicate}(x)" for predicate in predicates) + ")"
 
 
 def _formula_temporal_predicates(items: Iterable[Dict[str, Any]]) -> List[str]:
