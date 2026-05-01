@@ -5,6 +5,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
+    normalize_repair_required_evaluation,
     normalize_repair_required_details_from_parser_elements,
     parser_element_has_active_repair,
     parser_elements_to_export_tables,
@@ -1691,6 +1692,59 @@ def test_normalize_repair_required_details_adds_missing_active_projected_detail(
     assert details[0]["source_id"] == element["source_id"]
     assert details[0]["active_repair_warnings"] == element["parser_warnings"]
     assert details[0]["deterministic_resolution"] == {}
+
+
+def test_normalize_repair_required_evaluation_filters_formula_resolved_details():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+    raw_evaluation = {
+        "element_count": 4,
+        "repair_required_count": 4,
+        "repair_required_rate": 1.0,
+        "repair_required": [element["source_id"] for element in elements],
+        "repair_required_details": [
+            {
+                "source_id": element["source_id"],
+                "text": element["text"],
+                "norm_type": element["norm_type"],
+                "parser_warnings": list(element["parser_warnings"]),
+                "llm_repair": dict(element["llm_repair"]),
+            }
+            for element in elements
+        ],
+        "parity_score": 0.9763,
+    }
+
+    normalized = normalize_repair_required_evaluation(elements, raw_evaluation)
+
+    assert normalized["parity_score"] == 0.9763
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required_rate"] == 0.25
+    assert normalized["repair_required"] == [elements[3]["source_id"]]
+    assert normalized["active_repair_required_by_source_id"] == {
+        elements[0]["source_id"]: False,
+        elements[1]["source_id"]: False,
+        elements[2]["source_id"]: False,
+        elements[3]["source_id"]: True,
+    }
+    assert len(normalized["repair_required_details"]) == 1
+    detail = normalized["repair_required_details"][0]
+    assert detail["source_id"] == elements[3]["source_id"]
+    assert detail["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert detail["deterministic_resolution"] == {}
 
 
 def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():

@@ -343,6 +343,51 @@ def normalize_repair_required_details_from_parser_elements(
     return normalized
 
 
+def normalize_repair_required_evaluation(
+    elements: Iterable[Mapping[str, Any]],
+    evaluation: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return evaluation metrics with stale repair details removed.
+
+    Some metric runners preserve the raw parser's historical
+    ``repair_required`` and ``repair_required_details`` fields even after the
+    deterministic IR/formula layer has resolved a row for export. This helper is
+    the boundary adapter for that payload shape: it preserves all unrelated
+    evaluation metrics, but replaces repair-required accounting with the active
+    repair projection used by export and converter callers.
+
+    Unresolved numbered or external references remain active because
+    ``summarize_active_repair_from_parser_elements`` only clears rows backed by
+    explicit deterministic formula-resolution metadata.
+    """
+
+    summary = summarize_active_repair_from_parser_elements(elements)
+    normalized = dict(evaluation)
+
+    normalized_details = normalize_repair_required_details_from_parser_elements(
+        elements,
+        evaluation.get("repair_required_details", []),
+    )
+    normalized_source_ids = [
+        str(detail.get("source_id") or "")
+        for detail in normalized_details
+        if detail.get("source_id")
+    ]
+
+    normalized["repair_required_details"] = normalized_details
+    normalized["repair_required"] = normalized_source_ids
+    normalized["repair_required_count"] = len(normalized_details)
+    normalized["repair_required_rate"] = (
+        len(normalized_details) / summary["element_count"]
+        if summary["element_count"]
+        else 0.0
+    )
+    normalized["active_repair_required_by_source_id"] = summary[
+        "active_repair_required_by_source_id"
+    ]
+    return normalized
+
+
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
     """Return active repair status for an already metrics-projected row."""
 
