@@ -230,6 +230,7 @@ def parser_elements_for_metrics(
                 batch_formula_record,
             )
             _project_formula_record_active_repair_status(element, batch_formula_record)
+        _clear_stale_active_repair_from_export_readiness(element)
 
         if inactive_projection:
             projected_readiness = dict(inactive_projection.get("export_readiness") or {})
@@ -2128,6 +2129,42 @@ def _project_formula_record_active_repair_status(
     export_readiness["metric_requires_validation"] = False
     export_readiness["metric_repair_required"] = False
     export_readiness["deterministic_resolution"] = deterministic_resolution
+    element["export_readiness"] = export_readiness
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    llm_repair["required"] = False
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = []
+    llm_repair["deterministically_resolved"] = True
+    llm_repair["deterministic_resolution"] = deterministic_resolution
+    element["llm_repair"] = llm_repair
+    element["active_repair_required"] = False
+    element["active_repair_warnings"] = []
+
+
+def _clear_stale_active_repair_from_export_readiness(element: Dict[str, Any]) -> None:
+    """Clear stale metric repair flags after deterministic formula projection.
+
+    Optimizer repair-detail rows can preserve an old ``llm_repair.required``
+    flag even after IR/formula export readiness has deterministically resolved
+    the row. Metrics should count active repair work, so this helper only clears
+    that stale flag when export readiness explicitly says formula repair is not
+    required and carries a deterministic resolution. Unresolved numbered
+    references do not meet that contract and remain active repair.
+    """
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    deterministic_resolution = dict(export_readiness.get("deterministic_resolution") or {})
+    if not deterministic_resolution:
+        return
+    if export_readiness.get("formula_repair_required") is not False:
+        return
+    if export_readiness.get("formula_requires_validation") is not False:
+        return
+
+    export_readiness["formula_proof_ready"] = True
+    export_readiness["metric_requires_validation"] = False
+    export_readiness["metric_repair_required"] = False
     element["export_readiness"] = export_readiness
 
     llm_repair = dict(element.get("llm_repair") or {})

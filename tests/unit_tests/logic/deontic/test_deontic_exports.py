@@ -3433,6 +3433,57 @@ def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_prob
     assert active_by_id[details[3]["source_id"]] is True
 
 
+def test_metric_projection_clears_stale_llm_flag_when_formula_readiness_resolved():
+    """Formula-resolved detail rows should not survive as active repair."""
+
+    parsed = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+    detail_row = {
+        "sample_id": "exception",
+        "text": parsed["text"],
+        "source_id": parsed["source_id"],
+        "norm_type": parsed["norm_type"],
+        "modality": None,
+        "subject": list(parsed["subject"]),
+        "action": list(parsed["action"]),
+        "parser_warnings": list(parsed["parser_warnings"]),
+        "export_readiness": {
+            "formula_proof_ready": True,
+            "formula_requires_validation": False,
+            "formula_repair_required": False,
+            "deterministic_resolution": {
+                "type": "standard_substantive_exception",
+                "resolved_blockers": ["exception_requires_scope_review"],
+            },
+        },
+        "llm_repair": {
+            "required": True,
+            "allow_llm_repair": True,
+            "reasons": ["exception_requires_scope_review"],
+            "prompt_context": {
+                "source_text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "deontic_operator": parsed["deontic_operator"],
+                "norm_type": parsed["norm_type"],
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "exceptions": list(parsed.get("exception_details") or []),
+                "parser_warnings": list(parsed["parser_warnings"]),
+            },
+        },
+    }
+
+    projected = parser_elements_for_metrics([detail_row])[0]
+
+    assert projected["active_repair_required"] is False
+    assert projected["active_repair_warnings"] == []
+    assert projected["llm_repair"]["required"] is False
+    assert projected["llm_repair"]["allow_llm_repair"] is False
+    assert projected["llm_repair"]["deterministically_resolved"] is True
+    assert parser_element_has_active_repair(projected) is False
+
+
 def test_raw_parser_clears_repair_for_standard_substantive_exception():
     """A single plain unless-clause is deterministic formula structure, not LLM repair."""
 
