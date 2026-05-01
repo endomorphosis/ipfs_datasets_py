@@ -595,6 +595,38 @@ def test_recent_cycle_history_summarizes_test_failures_for_recovery_prompt(tmp_p
     assert '"test_failure_recovery_mode": true' in prompt
     assert "RecursionError" in prompt
     assert "recent_test_failures" in prompt
+    assert "do not add tests that assert an extracted legal fact should become empty" in prompt
+
+
+def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
+    proposal = LegalParserCycleProposal(
+        summary="Bad mental state erasure test.",
+        acceptance_criteria=["Reject contradictory slot erasure."],
+        unified_diff="\n".join(
+            [
+                "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                "@@",
+                "+def test_bad_mental_state_erasure():",
+                "+    text = 'A person shall knowingly submit a false statement.'",
+                "+    norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])",
+                "+    assert norm.mental_state == \"\"",
+            ]
+        ),
+    )
+
+    quality = daemon._assess_proposal_quality(
+        proposal,
+        [
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+        ],
+    )
+
+    assert quality["valid"] is False
+    assert "tests must not assert empty mental_state" in quality["reasons"][-1]
 
 
 def test_test_failure_files_receive_expanded_snapshots_in_prompt(tmp_path):

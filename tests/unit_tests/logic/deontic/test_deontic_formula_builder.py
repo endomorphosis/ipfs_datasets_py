@@ -942,6 +942,39 @@ def test_parser_and_formula_capture_whichever_is_later_deadline():
     )
 
 
+def test_parser_and_formula_capture_not_more_than_deadline():
+    element = extract_normative_elements(
+        "The Director shall issue a permit not more than 10 days after the application is complete."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "issue a permit"
+    assert norm.temporal_constraints[0]["type"] == "deadline"
+    assert norm.temporal_constraints[0]["temporal_kind"] == "not_more_than"
+    assert norm.temporal_constraints[0]["value"] == "10 days after the application is complete"
+    assert norm.temporal_constraints[0]["anchor"] == "the application is complete"
+    assert norm.temporal_constraints[0]["quantity"] == 10
+    assert norm.temporal_constraints[0]["unit"] == "day"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ Deadline10DaysAfterApplicationIsComplete(x) → IssuePermit(x)))"
+    )
+
+
+def test_parser_and_formula_capture_no_later_than_deadline():
+    element = extract_normative_elements(
+        "The Secretary shall publish notice no later than 30 calendar days after receipt of the application."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "publish notice"
+    assert norm.temporal_constraints[0]["temporal_kind"] == "no_later_than"
+    assert norm.temporal_constraints[0]["value"] == "30 calendar days after receipt of the application"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Secretary(x) ∧ Deadline30CalendarDaysAfterReceiptApplication(x) "
+        "→ PublishNotice(x)))"
+    )
+
+
 def test_ir_formula_suppresses_base_deadline_when_whichever_variant_is_later_in_ir_order():
     element = extract_normative_elements(
         "The Director shall complete review within 30 days after application or "

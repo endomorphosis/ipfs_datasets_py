@@ -351,6 +351,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
+                "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
                 "Do not move metrics by clearing repair for unresolved, absent, mismatched, partial, or external numbered legal references; those must stay blocked unless exact same-document evidence is present.",
             ],
@@ -1250,6 +1251,7 @@ class LegalParserOptimizerDaemon:
                 reasons.append("patch must touch at least one production deontic parser/export file")
             if not test_files:
                 reasons.append("patch must touch at least one deontic parser test file")
+        reasons.extend(self._source_slot_erasure_reasons(proposal))
         return {
             "valid": not reasons,
             "reasons": reasons,
@@ -1258,6 +1260,41 @@ class LegalParserOptimizerDaemon:
             "production_files": production_files,
             "test_files": test_files,
         }
+
+    def _source_slot_erasure_reasons(self, proposal: LegalParserCycleProposal) -> List[str]:
+        """Reject generated tests that erase source-grounded facts already parsed.
+
+        The optimizer occasionally proposes a useful implementation idea with a
+        contradictory test, for example asserting that ``mental_state`` is empty
+        for text that explicitly says "knowingly". Catch that before the full
+        suite spends a cycle applying and rolling the patch back.
+        """
+
+        diff = proposal.unified_diff or ""
+        added_lines = [
+            line[1:]
+            for line in diff.splitlines()
+            if line.startswith("+") and not line.startswith("+++")
+        ]
+        added_text = "\n".join(added_lines).lower()
+        mental_state_terms = {
+            "intentionally",
+            "knowingly",
+            "recklessly",
+            "willfully",
+            "purposely",
+            "negligently",
+        }
+        if not any(term in added_text for term in mental_state_terms):
+            return []
+        empty_mental_state_assertion = re.compile(
+            r"assert\s+.*(?:mental_state|\\[\"mental_state\"\\]|\\['mental_state'\\]).*==\s*['\"]{2}"
+        )
+        if any(empty_mental_state_assertion.search(line) for line in added_lines):
+            return [
+                "tests must not assert empty mental_state for source text containing explicit mens rea"
+            ]
+        return []
 
     def _patch_stability_mode(self) -> bool:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):

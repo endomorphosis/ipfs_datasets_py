@@ -142,7 +142,7 @@ _MODAL_RE = re.compile(
     )
     \s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -157,7 +157,7 @@ _IMPLICIT_MODAL_RE = re.compile(
     )
     \s+
     (?P<action>.+?)
-    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -170,7 +170,7 @@ _IMPERSONAL_NORM_RE = re.compile(
         |
         (?P<duty>(?:a|an|the)\s+duty\s+is\s+imposed\s+on\s+(?P<duty_subject>.+?)\s+to\s+(?P<duty_action>.+?))
     )
-    (?=(?:\s+(?:if|when|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than)\b)|[.;:]|$)
+    (?=(?:\s+(?:if|when|where|provided\s+that|unless|except|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
     re.IGNORECASE | re.VERBOSE,
 )
@@ -248,6 +248,9 @@ _TEMPORAL_PATTERNS = [
     ("deadline", "whichever_is_later", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?\s+or\s+\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)\s+after\s+[^,.;]+?,?\s+whichever\s+is\s+later)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[.;]|$)"),
     ("deadline", "within_duration", r"\bwithin\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
     ("deadline", "not_later_than", r"\bnot\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "no_later_than", r"\bno\s+later\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "not_more_than", r"\bnot\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
+    ("deadline", "no_more_than", r"\bno\s+more\s+than\s+(\d+\s+(?:(?:business|calendar)\s+)?(?:days?|weeks?|months?|years?)(?:\s+after\s+.+?)?)(?=\s+(?:unless|except|without|absent|if|when|where|provided that|subject to)\b|[,.;]|$)"),
     ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("deadline", "after_date", r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("period", "annually", r"\b(annually)\b"),
