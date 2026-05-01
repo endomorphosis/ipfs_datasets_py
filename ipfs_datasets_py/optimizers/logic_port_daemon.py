@@ -160,24 +160,29 @@ class LogicPortDaemonConfig:
     dry_run: bool = True
     validation_commands: Tuple[Tuple[str, ...], ...] = DEFAULT_VALIDATION_COMMANDS
     max_prompt_chars: int = 50000
+    max_context_file_chars: int = 12000
+    max_context_files: int = 6
     max_patch_lines: int = 180
-    command_timeout_seconds: int = 600
+    command_timeout_seconds: int = 300
     max_new_tokens: int = 4096
     temperature: float = 0.1
     allow_local_fallback: bool = False
-    llm_timeout_seconds: int = 900
-    retry_interval_seconds: float = 300.0
+    llm_timeout_seconds: int = 300
+    retry_interval_seconds: float = 0.0
     max_failure_cycles: int = 0
     max_task_failure_rounds: int = 3
+    max_task_total_failure_rounds: int = 6
     result_log_path: Optional[Path] = None
     accepted_work_log_path: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md")
     accepted_work_artifact_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/accepted-work")
     codex_trace_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/codex-runs")
     failed_patch_dir: Path = Path("ipfs_datasets_py/.daemon/failed-patches")
     status_path: Optional[Path] = Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json")
+    progress_path: Optional[Path] = Path("ipfs_datasets_py/.daemon/logic-port-daemon.progress.json")
     heartbeat_interval_seconds: float = 30.0
     patch_repair_attempts: int = 1
     file_repair_attempts: int = 1
+    validation_repair_attempts: int = 1
     proposal_attempts: int = 3
     prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
@@ -390,6 +395,34 @@ def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     return count
 
 
+def _recent_total_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
+    count = 0
+    for result, artifact in reversed(rows):
+        if artifact.get("target_task") != task_label:
+            continue
+        if result.get("valid"):
+            break
+        count += 1
+    return count
+
+
+def _current_task_failure_counts(
+    rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
+    task_label: str,
+) -> Dict[str, Any]:
+    total = 0
+    by_kind: Dict[str, int] = {}
+    for result, artifact in reversed(rows):
+        if artifact.get("target_task") != task_label:
+            continue
+        if result.get("valid"):
+            break
+        total += 1
+        kind = _classify_failure_kind(artifact)
+        by_kind[kind] = by_kind.get(kind, 0) + 1
+    return {"total_since_success": total, "by_kind_since_success": by_kind}
+
+
 def _slugify(value: str, *, limit: int = 80) -> str:
     slug = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-").lower()
     return (slug or "accepted-work")[:limit]
@@ -438,6 +471,84 @@ def _task_is_explicit_failure(task: Optional[PlanTask]) -> bool:
         return False
     title = task.title.lower()
     return "latest daemon round failed" in title or "blocked or failing" in title
+
+
+def _task_tokens(task: Optional[PlanTask]) -> List[str]:
+    if task is None:
+        return []
+    stopwords = {
+        "and",
+        "the",
+        "with",
+        "for",
+        "into",
+        "from",
+        "full",
+        "port",
+        "initial",
+        "browser",
+        "native",
+        "typescript",
+        "python",
+        "parity",
+    }
+    return [
+        token
+        for token in re.findall(r"[A-Za-z0-9]+", task.title.lower())
+        if len(token) >= 3 and token not in stopwords
+    ]
+
+
+def _rank_relevant_file(path: str, tokens: Sequence[str]) -> int:
+    normalized = path.lower()
+    score = 0
+    for token in tokens:
+        if token in normalized:
+            score += 5
+    basename = Path(path).stem.lower()
+    for token in tokens:
+        if token == basename:
+            score += 12
+        elif token in basename:
+            score += 8
+    if path.endswith(".test.ts"):
+        score += 2
+    if "/cec/" in normalized or "/tdfol/" in normalized or "/fol/" in normalized or "/deontic/" in normalized:
+        score += 1
+    return score
+
+
+def _compact_message(value: Any, *, limit: int = 600) -> str:
+    text = str(value or "")
+    text = re.sub(r"<(?:html|head|body|script|style|svg|path|div|meta|noscript)[\s\S]*", "[html response omitted]", text, flags=re.IGNORECASE)
+    text = re.sub(r"__cf_chl_[A-Za-z0-9_=-]+", "__cf_chl_[omitted]", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > limit:
+        return text[:limit].rstrip() + "..."
+    return text
+
+
+def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
+    explicit = str(artifact.get("failure_kind") or "")
+    if explicit:
+        return explicit
+    errors = " ".join(str(error) for error in artifact.get("errors", []) if error)
+    validation = artifact.get("validation_results", [])
+    validation_text = errors
+    if isinstance(validation, list):
+        for item in validation:
+            if isinstance(item, dict):
+                validation_text += " " + str(item.get("stdout", "")) + " " + str(item.get("stderr", ""))
+    lower = validation_text.lower()
+    if "cloudflare" in lower or "403 forbidden" in lower or "plugins/featured" in lower or "analytics-events" in lower:
+        return "provider_http_403"
+    if "timed out" in lower:
+        return "timeout"
+    if "did not contain json" in lower:
+        return "parse"
+    if "ts1005" in lower or "ts" in lower and "error" in lower:
+        return "validation"
+    return "invalid_no_change"
 
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
@@ -637,8 +748,33 @@ Critical correction for attempt {attempt}:
                     artifact.errors.append("File edits made no content changes.")
                     artifact.failure_kind = "no_change"
                 else:
+                    repaired = self._repair_file_edits_after_validation(artifact, context=context)
+                    if repaired.files:
+                        preflight_errors = self._preflight_artifact(repaired, selected_task=self._current_plan_task())
+                        if preflight_errors:
+                            artifact.errors.extend(preflight_errors)
+                            artifact.failure_kind = "validation_repair_preflight"
+                            return artifact
+                        try:
+                            applied, validation_results, changed_files = self._apply_file_edits_with_validation(repaired.files)
+                        except Exception as exc:
+                            artifact.errors.append(str(exc))
+                            artifact.failure_kind = "validation_repair_exception"
+                            return artifact
+                        artifact.files = repaired.files
+                        artifact.summary = repaired.summary or artifact.summary
+                        artifact.impact = repaired.impact or artifact.impact
+                        artifact.validation_results = validation_results
+                        artifact.applied = applied
+                        artifact.changed_files = changed_files if applied else []
+                        if applied:
+                            artifact.failure_kind = ""
+                            artifact.errors = []
+                            return artifact
+                        artifact.failure_kind = "validation_repair"
                     artifact.errors.append("File edits failed validation and were rolled back.")
-                    artifact.failure_kind = "validation"
+                    if not artifact.failure_kind:
+                        artifact.failure_kind = "validation"
             else:
                 artifact.changed_files = changed_files
             return artifact
@@ -901,9 +1037,15 @@ Critical correction for attempt {attempt}:
         while cycles <= 0 or completed_cycles < cycles:
             completed_cycles += 1
             self._write_status("cycle_started", cycle=completed_cycles, selected_task=self._current_plan_task().label if self._current_plan_task() else "")
+            self._write_progress_summary(
+                completed_cycles=completed_cycles,
+                consecutive_failure_cycles=failure_cycles,
+                active_state="cycle_started",
+            )
             cycle_results = self.run_daemon()
             all_results.extend(cycle_results)
             self._append_result_log(cycle_results)
+            self._write_progress_summary(cycle_results=cycle_results, completed_cycles=completed_cycles, consecutive_failure_cycles=failure_cycles)
             cycle_valid = bool(cycle_results and cycle_results[-1].get("valid"))
             self._write_status(
                 "cycle_completed",
@@ -916,6 +1058,7 @@ Critical correction for attempt {attempt}:
                 failure_cycles = 0
             else:
                 failure_cycles += 1
+                self._write_progress_summary(cycle_results=cycle_results, completed_cycles=completed_cycles, consecutive_failure_cycles=failure_cycles)
                 self._write_status(
                     "cycle_failed",
                     cycle=completed_cycles,
@@ -942,6 +1085,99 @@ Critical correction for attempt {attempt}:
             handle.write(json.dumps({"pid": os.getpid(), "results": results}, default=str))
             handle.write("\n")
 
+    def _write_progress_summary(
+        self,
+        *,
+        cycle_results: Optional[List[Dict[str, Any]]] = None,
+        completed_cycles: int = 0,
+        consecutive_failure_cycles: int = 0,
+        active_state: str = "",
+    ) -> None:
+        if self.daemon_config.progress_path is None:
+            return
+
+        rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+        if self.daemon_config.result_log_path is not None:
+            rows.extend(_read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path)))
+        for result in cycle_results or []:
+            artifact = result.get("artifact", {}) if isinstance(result, dict) else {}
+            if isinstance(artifact, dict):
+                rows.append((result, artifact))
+
+        valid_rows = [(result, artifact) for result, artifact in rows if result.get("valid")]
+        latest_result, latest_artifact = rows[-1] if rows else ({}, {})
+        failure_kind_counts: Dict[str, int] = {}
+        recent_failures = []
+        for result, artifact in rows:
+            if result.get("valid"):
+                continue
+            kind = _classify_failure_kind(artifact)
+            failure_kind_counts[kind] = failure_kind_counts.get(kind, 0) + 1
+        for result, artifact in rows[-20:]:
+            if result.get("valid"):
+                continue
+            recent_failures.append(
+                {
+                    "target_task": artifact.get("target_task", ""),
+                    "summary": _compact_message(artifact.get("summary", ""), limit=200),
+                    "failure_kind": _classify_failure_kind(artifact),
+                    "errors": [_compact_message(error, limit=240) for error in artifact.get("errors", [])[:3]]
+                    if isinstance(artifact.get("errors", []), list)
+                    else [_compact_message(artifact.get("errors", ""), limit=240)],
+                }
+            )
+        current_task = self._current_plan_task()
+        tasks = self._current_plan_tasks()
+        current_task_counts = _current_task_failure_counts(rows, current_task.label) if current_task else {}
+        status_counts: Dict[str, int] = {}
+        for task in tasks:
+            status_counts[task.status] = status_counts.get(task.status, 0) + 1
+
+        payload = {
+            "schema": "ipfs_datasets_py.logic_port_daemon.progress",
+            "schema_version": 1,
+            "pid": os.getpid(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "active_state": active_state,
+            "completed_cycles_this_process": completed_cycles,
+            "consecutive_failure_cycles": consecutive_failure_cycles,
+            "rounds_total": len(rows),
+            "valid_rounds_total": len(valid_rows),
+            "invalid_rounds_total": len(rows) - len(valid_rows),
+            "acceptance_rate": (len(valid_rows) / len(rows)) if rows else 0.0,
+            "current_task": current_task.label if current_task else "",
+            "current_task_failure_counts": current_task_counts,
+            "plan_status_counts": status_counts,
+            "failure_kind_counts": failure_kind_counts,
+            "latest_round": {
+                "valid": bool(latest_result.get("valid")),
+                "score": latest_result.get("score"),
+                "target_task": latest_artifact.get("target_task", ""),
+                "summary": _compact_message(latest_artifact.get("summary", ""), limit=400),
+                "impact": _compact_message(latest_artifact.get("impact", ""), limit=500),
+                "failure_kind": _classify_failure_kind(latest_artifact) if latest_artifact else "",
+                "changed_files": latest_artifact.get("changed_files", []),
+                "errors": [_compact_message(error, limit=360) for error in latest_artifact.get("errors", [])[:5]]
+                if isinstance(latest_artifact.get("errors", []), list)
+                else [_compact_message(latest_artifact.get("errors", ""), limit=360)],
+            },
+            "recent_failures": recent_failures[-5:],
+            "recent_valid_rounds": [
+                {
+                    "target_task": artifact.get("target_task", ""),
+                    "summary": _compact_message(artifact.get("summary", ""), limit=240),
+                    "changed_files": artifact.get("changed_files", []),
+                }
+                for _, artifact in valid_rows[-5:]
+            ],
+        }
+
+        path = self.daemon_config.resolve(self.daemon_config.progress_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        tmp.replace(path)
+
     def _start_status_heartbeat(self) -> Tuple[threading.Event, Optional[threading.Thread]]:
         stop = threading.Event()
         interval = float(self.daemon_config.heartbeat_interval_seconds)
@@ -962,6 +1198,7 @@ Critical correction for attempt {attempt}:
                     "heartbeat_interval_seconds": interval,
                 }
                 self._write_status_payload(payload)
+                self._write_progress_summary(active_state=base.get("state", "heartbeat"))
 
         thread = threading.Thread(target=beat, name="logic-port-daemon-heartbeat", daemon=True)
         thread.start()
@@ -1128,7 +1365,7 @@ Critical correction for attempt {attempt}:
         path.write_text(updated, encoding="utf-8")
 
     def _should_block_task(self, task: PlanTask, latest: Dict[str, Any]) -> bool:
-        if self.daemon_config.max_task_failure_rounds <= 0:
+        if self.daemon_config.max_task_failure_rounds <= 0 and self.daemon_config.max_task_total_failure_rounds <= 0:
             return False
         artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
         failure_kind = str(artifact.get("failure_kind") or "invalid_no_change")
@@ -1137,7 +1374,15 @@ Critical correction for attempt {attempt}:
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         # The current result is appended after the board update, so include it.
         rows = [*rows, (latest, artifact)]
-        return _recent_failure_count(rows, task.label, failure_kind) >= self.daemon_config.max_task_failure_rounds
+        same_kind_blocked = (
+            self.daemon_config.max_task_failure_rounds > 0
+            and _recent_failure_count(rows, task.label, failure_kind) >= self.daemon_config.max_task_failure_rounds
+        )
+        total_blocked = (
+            self.daemon_config.max_task_total_failure_rounds > 0
+            and _recent_total_failure_count(rows, task.label) >= self.daemon_config.max_task_total_failure_rounds
+        )
+        return same_kind_blocked or total_blocked
 
     def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
         for status in ("needed", "in-progress", "blocked"):
@@ -1308,13 +1553,79 @@ Critical correction for attempt {attempt}:
             )
         return errors
 
+    def _recent_failure_context(self, selected_task: Optional[PlanTask], *, limit: int = 3) -> str:
+        if selected_task is None or self.daemon_config.result_log_path is None:
+            return "[No recent daemon failure context available.]"
+        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        snippets: List[str] = []
+        for result, artifact in reversed(rows):
+            if artifact.get("target_task") != selected_task.label:
+                continue
+            if result.get("valid"):
+                break
+            validation = artifact.get("validation_results", [])
+            failures = []
+            for item in validation if isinstance(validation, list) else []:
+                if isinstance(item, dict) and item.get("returncode") not in (0, None):
+                    command = " ".join(str(part) for part in item.get("command", []))
+                    stdout = str(item.get("stdout", ""))[-2000:]
+                    stderr = str(item.get("stderr", ""))[-2000:]
+                    failures.append(f"{command}\nstdout:\n{stdout}\nstderr:\n{stderr}".strip())
+            errors = "; ".join(str(error) for error in artifact.get("errors", [])[:3])
+            snippets.append(
+                "\n".join(
+                    part
+                    for part in [
+                        f"Summary: {artifact.get('summary') or '<empty>'}",
+                        f"Failure kind: {artifact.get('failure_kind') or 'invalid_no_change'}",
+                        f"Errors: {errors or '<none>'}",
+                        "Validation failures:\n" + "\n\n".join(failures) if failures else "",
+                    ]
+                    if part
+                )
+            )
+            if len(snippets) >= limit:
+                break
+        return "\n\n---\n\n".join(reversed(snippets)) if snippets else "[No recent failures for selected task.]"
+
+    def _relevant_file_context(self, selected_task: Optional[PlanTask], tracked_files: str) -> str:
+        tokens = _task_tokens(selected_task)
+        if not tokens:
+            return "[No selected task tokens available.]"
+        candidates = []
+        for raw in tracked_files.splitlines():
+            path = raw.strip()
+            if not path.startswith("src/lib/logic/"):
+                continue
+            if not path.endswith((".ts", ".tsx", ".json")):
+                continue
+            score = _rank_relevant_file(path, tokens)
+            if score > 0:
+                candidates.append((score, path))
+        candidates.sort(key=lambda item: (-item[0], item[1]))
+        sections: List[str] = []
+        used = set()
+        for _, path_text in candidates[: self.daemon_config.max_context_files]:
+            if path_text in used:
+                continue
+            used.add(path_text)
+            path = self.daemon_config.resolve(Path(path_text))
+            if not path.exists() or not path.is_file():
+                continue
+            sections.append(f"### {path_text}\n```\n{_read_text(path, limit=self.daemon_config.max_context_file_chars)}\n```")
+        return "\n\n".join(sections) if sections else "[No relevant current file contents selected.]"
+
     def _current_plan_task(self) -> Optional[PlanTask]:
+        tasks = self._current_plan_tasks()
+        return self._select_next_plan_task(tasks)
+
+    def _current_plan_tasks(self) -> List[PlanTask]:
         if self.daemon_config.task_board_doc is None:
-            return None
+            return []
         path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
         if not path.exists():
-            return None
-        return self._select_next_plan_task(extract_plan_tasks(_strip_daemon_task_board(path.read_text(encoding="utf-8"))))
+            return []
+        return extract_plan_tasks(_strip_daemon_task_board(path.read_text(encoding="utf-8")))
 
     def _rollback_patch(self, patch: str) -> List[CommandResult]:
         check = run_command(
@@ -1454,6 +1765,73 @@ Current file contents for likely targets:
         repaired.target_task = artifact.target_task
         return repaired
 
+    def _repair_file_edits_after_validation(self, artifact: LogicPortArtifact, *, context: OptimizationContext) -> LogicPortArtifact:
+        attempts = max(0, int(self.daemon_config.validation_repair_attempts))
+        if attempts <= 0:
+            return LogicPortArtifact(raw_response=artifact.raw_response)
+
+        failed_results = [result.compact(limit=12000) for result in artifact.validation_results if not result.ok]
+        attempted_files = []
+        for edit in artifact.files[:6]:
+            path = str(edit.get("path", ""))
+            content = str(edit.get("content", ""))
+            attempted_files.append(f"### {path}\n```\n{content[:20000]}\n```")
+
+        selected_task = self._current_plan_task()
+        selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
+        repair_prompt = f"""The daemon applied these complete file replacements, but validation failed and the edits were rolled back.
+
+Return ONLY JSON with corrected complete file replacements.
+
+Required JSON shape:
+{{
+  "summary": "short repair description",
+  "impact": "how the corrected files are directly used by the TypeScript port or validation suite",
+  "tasks": {json.dumps(artifact.tasks or [selected_label])},
+  "patch": "",
+  "files": [
+    {{"path": "src/lib/logic/example.ts", "content": "complete replacement file content"}}
+  ],
+  "validation_commands": [["npx", "tsc", "--noEmit"], ["npm", "run", "validate:logic-port"]]
+}}
+
+Rules:
+- Do not return a patch.
+- Return complete replacement file contents, not snippets.
+- Fix the exact validation errors below.
+- Keep the change focused on the daemon-selected task: {selected_label}
+- Keep browser runtime changes TypeScript/WASM-native with no Python service or server dependency.
+- Use only paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
+- Test files must use Jest globals and must not import vitest or @jest/globals.
+
+Session: {context.session_id}
+Original summary:
+{artifact.summary}
+
+Original impact:
+{artifact.impact}
+
+Validation failures:
+{json.dumps(failed_results, indent=2)}
+
+Attempted file replacements:
+{chr(10).join(attempted_files)}
+"""
+        self._write_status(
+            "validation_repair_started",
+            selected_task=selected_label,
+            failed_commands=[" ".join(result.command) for result in artifact.validation_results if not result.ok],
+        )
+        try:
+            repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+        except Exception as exc:
+            LOGGER.warning("validation repair call failed: %s", exc)
+            return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
+        if repaired.errors or not repaired.files:
+            return repaired
+        repaired.target_task = artifact.target_task
+        return repaired
+
     def _call_llm(self, prompt: str) -> str:
         provider = self._resolved_provider()
         self._write_status(
@@ -1563,6 +1941,8 @@ Current file contents for likely targets:
             cwd=self.daemon_config.repo_root,
             timeout_seconds=30,
         )
+        recent_failure_context = self._recent_failure_context(selected_task)
+        relevant_file_context = self._relevant_file_context(selected_task, file_inventory.stdout)
 
         prompt = f"""You are implementing the browser-native TypeScript/WASM port of ipfs_datasets_py logic.
 
@@ -1625,6 +2005,12 @@ Current git status:
 Relevant tracked files:
 {file_inventory.stdout[-12000:]}
 
+Recent daemon failures for the selected task:
+{recent_failure_context}
+
+Relevant current file contents:
+{relevant_file_context}
+
 Documents:
 {chr(10).join(doc_sections)}
 """
@@ -1657,13 +2043,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--apply", action="store_true", help="Apply model-generated patches. Default is dry-run.")
     parser.add_argument("--watch", action="store_true", help="Run continuously without user input.")
     parser.add_argument("--cycles", type=int, default=0, help="Cycles for --watch; 0 means unlimited.")
-    parser.add_argument("--retry-interval", type=float, default=300.0, help="Seconds between supervised daemon cycles.")
+    parser.add_argument("--retry-interval", type=float, default=0.0, help="Seconds between supervised daemon cycles. Default 0 starts the next cycle immediately.")
     parser.add_argument("--max-failure-cycles", type=int, default=0, help="Stop --watch after N failed cycles; 0 means unlimited.")
-    parser.add_argument("--llm-timeout", type=int, default=900, help="Seconds before a single LLM/Codex call times out.")
+    parser.add_argument("--max-task-failures", type=int, default=6, help="Block the current task after N failures since its last accepted round, regardless of failure kind.")
+    parser.add_argument("--llm-timeout", type=int, default=300, help="Seconds before a single LLM/Codex call times out.")
+    parser.add_argument("--command-timeout", type=int, default=300, help="Seconds before validation/git commands time out.")
     parser.add_argument("--log-file", default=None, help="Optional file for JSON results from each daemon invocation.")
     parser.add_argument("--status-file", default=None, help="Optional heartbeat/status JSON file. Defaults to .daemon status path.")
+    parser.add_argument("--progress-file", default=None, help="Optional progress summary JSON file. Defaults to .daemon progress path.")
     parser.add_argument("--heartbeat-interval", type=float, default=30.0, help="Seconds between status heartbeat writes while a cycle is active.")
     parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
+    parser.add_argument("--validation-repair-attempts", type=int, default=1, help="Attempts to repair complete file replacements after validation errors.")
     parser.add_argument("--proposal-attempts", type=int, default=3, help="LLM proposal attempts per daemon cycle before logging a failed round.")
     parser.add_argument("--skip-validation", action="store_true", help="Do not run validation commands")
     parser.add_argument("--validation-command", action="append", default=[], help="Validation command, shell-split by spaces")
@@ -1692,12 +2082,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         dry_run=not args.apply,
         validation_commands=validation_commands,
         llm_timeout_seconds=max(1, args.llm_timeout),
+        command_timeout_seconds=max(1, args.command_timeout),
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
+        max_task_total_failure_rounds=max(0, args.max_task_failures),
         result_log_path=Path(args.log_file) if args.log_file else None,
         status_path=Path(args.status_file) if args.status_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json"),
+        progress_path=Path(args.progress_file) if args.progress_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.progress.json"),
         heartbeat_interval_seconds=max(0.0, args.heartbeat_interval),
         file_repair_attempts=max(0, args.file_repair_attempts),
+        validation_repair_attempts=max(0, args.validation_repair_attempts),
         proposal_attempts=max(1, args.proposal_attempts),
     )
     optimizer = LogicPortDaemonOptimizer(config)

@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
@@ -161,7 +162,7 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     assert router.calls[0]["kwargs"]["provider"] == "codex_cli"
     assert router.calls[0]["kwargs"]["allow_local_fallback"] is False
     assert router.calls[0]["kwargs"]["max_new_tokens"] == 4096
-    assert router.calls[0]["kwargs"]["timeout"] == 900
+    assert router.calls[0]["kwargs"]["timeout"] == 300
     assert router.calls[0]["kwargs"]["trace"] is True
     assert router.calls[0]["kwargs"]["trace_dir"].endswith("ipfs_datasets_py/.daemon/codex-runs")
     assert "DETERMINISTIC" not in router.calls[0]["prompt"] or "Port deterministic parser IR" in router.calls[0]["prompt"]
@@ -676,6 +677,199 @@ def test_empty_proposal_gets_failure_kind_for_task_blocking(tmp_path):
     assert "No usable patch or file replacement" in result["artifact"]["errors"][0]
 
 
+def test_prompt_includes_relevant_file_contents_and_recent_failures(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    cec_dir = logic_dir / "cec"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    cec_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (cec_dir / "problemParser.ts").write_text("export const currentProblemParser = true;\n", encoding="utf-8")
+    (cec_dir / "problemParser.test.ts").write_text("describe('problem parser', () => {});\n", encoding="utf-8")
+    plan.write_text("- [ ] Port CEC problem parser\n", encoding="utf-8")
+    status.write_text("| cec | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Port CEC problem parser",
+            "summary": "bad parser",
+            "failure_kind": "validation",
+            "errors": ["File edits failed validation and were rolled back."],
+            "validation_results": [
+                {
+                    "command": ["npx", "tsc", "--noEmit"],
+                    "returncode": 2,
+                    "stdout": "src/lib/logic/cec/problemParser.ts(10,1): error TS1005: ';' expected.\n",
+                    "stderr": "",
+                }
+            ],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    subprocess.run(("git", "init"), cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    subprocess.run(("git", "add", "."), cwd=tmp_path, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    response = json.dumps({"summary": "empty", "patch": "", "files": []})
+    router = FakeRouter(response)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        result_log_path=log_path,
+        proposal_attempts=1,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="context-prompt")
+
+    prompt = router.calls[0]["prompt"]
+    assert "Recent daemon failures for the selected task" in prompt
+    assert "TS1005" in prompt
+    assert "currentProblemParser" in prompt
+    assert "src/lib/logic/cec/problemParser.ts" in prompt
+
+
+def test_file_edit_validation_failure_gets_repaired_before_round_fails(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    router = SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "Bad runtime feature",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "bad\n"}],
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Repaired runtime feature",
+                    "impact": "The corrected runtime file passes validation.",
+                    "patch": "",
+                    "files": [{"path": "src/lib/logic/feature.ts", "content": "good\n"}],
+                }
+            ),
+        ]
+    )
+    validation = (
+        "python3",
+        "-c",
+        "from pathlib import Path; import sys; text=Path('src/lib/logic/feature.ts').read_text(); sys.exit(1 if 'bad' in text else 0)",
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=(validation,),
+        task_board_doc=plan,
+        proposal_attempts=1,
+        validation_repair_attempts=1,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="validation-repair")
+
+    assert result["valid"] is True
+    assert target.read_text(encoding="utf-8") == "good;\n"
+    assert result["artifact"]["summary"] == "Repaired runtime feature"
+    assert result["artifact"]["changed_files"] == ["src/lib/logic/feature.ts"]
+    assert len(router.calls) == 2
+    assert "validation failed and the edits were rolled back" in router.calls[1]["prompt"]
+
+
+def test_progress_summary_records_acceptance_rate_and_current_task(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    progress_path = tmp_path / "daemon" / "progress.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Done task\n- [ ] Next task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(
+        json.dumps(
+            {
+                "pid": 1,
+                "results": [
+                    {
+                        "valid": True,
+                        "score": 1.0,
+                        "artifact": {
+                            "target_task": "Task checkbox-1: Done task",
+                            "summary": "accepted",
+                            "changed_files": ["src/lib/logic/done.ts"],
+                        },
+                    }
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    latest = {
+        "valid": False,
+        "score": 0.0,
+        "artifact": {
+            "target_task": "Task checkbox-2: Next task",
+            "summary": "failed",
+            "failure_kind": "",
+            "changed_files": [],
+            "errors": ["403 Forbidden <html><body>very long cloudflare challenge</body></html>"],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        result_log_path=log_path,
+        progress_path=progress_path,
+        task_board_doc=plan,
+    )
+
+    LogicPortDaemonOptimizer(config)._write_progress_summary(
+        cycle_results=[latest],
+        completed_cycles=2,
+        consecutive_failure_cycles=1,
+        active_state="cycle_failed",
+    )
+
+    progress = json.loads(progress_path.read_text(encoding="utf-8"))
+    assert progress["rounds_total"] == 2
+    assert progress["active_state"] == "cycle_failed"
+    assert progress["valid_rounds_total"] == 1
+    assert progress["current_task"] == "Task checkbox-2: Next task"
+    assert progress["current_task_failure_counts"]["total_since_success"] == 1
+    assert progress["latest_round"]["failure_kind"] == "provider_http_403"
+    assert progress["failure_kind_counts"]["provider_http_403"] == 1
+    assert "[html response omitted]" in progress["latest_round"]["errors"][0]
+    assert progress["recent_valid_rounds"][0]["changed_files"] == ["src/lib/logic/done.ts"]
+
+
 def test_task_board_blocks_repeated_same_failure_kind(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
@@ -771,6 +965,59 @@ def test_task_board_blocks_repeated_invalid_rounds_without_failure_kind(tmp_path
 
     updated = plan.read_text(encoding="utf-8")
     assert "- [!] Stuck implementation task" in updated
+
+
+def test_task_board_blocks_after_total_failures_across_kinds(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Mixed failure task\n- [ ] Next task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = []
+    for kind in ("parse", "validation"):
+        rows.append(
+            {
+                "valid": False,
+                "artifact": {
+                    "target_task": "Task checkbox-1: Mixed failure task",
+                    "summary": kind,
+                    "failure_kind": kind,
+                    "changed_files": [],
+                },
+            }
+        )
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    latest = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Mixed failure task",
+            "summary": "apply failed",
+            "failure_kind": "apply_check",
+            "changed_files": [],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        max_task_failure_rounds=10,
+        max_task_total_failure_rounds=3,
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([latest])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [!] Mixed failure task" in updated
 
 
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):

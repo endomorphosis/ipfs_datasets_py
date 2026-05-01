@@ -49,22 +49,30 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --repo-root . \
   --apply \
   --watch \
-  --retry-interval 300 \
-  --llm-timeout 600 \
+  --retry-interval 0 \
+  --llm-timeout 300 \
+  --command-timeout 300 \
   --heartbeat-interval 30 \
+  --max-task-failures 6 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
+  --validation-repair-attempts 1 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
+  --progress-file ipfs_datasets_py/.daemon/logic-port-daemon.progress.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 
-Continuous mode runs without user input. If the configured `gpt-5.5` route is unavailable, it records a structured failure, sleeps, and retries. When the route becomes available, it resumes patch generation, applies only patches that pass `git apply --check`, and then runs validation.
+Continuous mode runs without user input. If the configured `gpt-5.5` route is unavailable, it records a structured failure and starts the next cycle immediately by default. Time is bounded by operation timeouts, not by a fixed retry sleep: use `--llm-timeout 300` and `--command-timeout 300` to cap individual LLM and validation/git calls. When the route becomes available, it resumes patch generation, applies only patches that pass `git apply --check`, and then runs validation.
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
 If the repaired diff is still malformed, the daemon performs one more repair path: it asks `gpt-5.5` to convert the same intended change into complete allowlisted file replacements. This is important for unattended runs because malformed diff hunks were the most common cause of "busy but no files changed" cycles.
 
 The daemon also retries unusable proposals inside a cycle. If the model returns no JSON, an empty change, or refuses because the Codex subprocess is read-only, the next proposal attempt explicitly reminds it that the daemon applies returned JSON `files` replacements after validation. Empty proposals receive `failure_kind: "empty_proposal"` and parse failures receive `failure_kind: "parse"`, so repeated unproductive rounds can block the current task and advance the task board instead of spinning forever.
+
+When complete file replacements apply but fail validation, the daemon now performs one validation-repair attempt before waiting for the next cycle. The repair prompt includes the failed validation output and the attempted file contents, asks for corrected complete file replacements, and reruns the normal validation/rollback flow.
+
+Each proposal prompt includes recent failure context for the selected task plus current contents for likely target files selected from the tracked TypeScript logic tree. This keeps complete-file replacements grounded in the actual code instead of asking the model to infer file shape from filenames alone.
 
 The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted, formatted with Prettier for TypeScript files, and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
 
@@ -73,6 +81,14 @@ The daemon writes a heartbeat/status file while running:
 - `ipfs_datasets_py/.daemon/logic-port-daemon.status.json`
 
 That file records the daemon PID, timestamp, current state, selected task, latest result, changed files, and failure kind. While a cycle is active, a background heartbeat rewrites the file with `state: "heartbeat"` and the `active_state` it is waiting on, so a fresh timestamp means the daemon is alive even if the current Codex call has not returned yet. Use it with the JSONL result log to distinguish a crashed daemon from an active daemon that is waiting on Codex or validation.
+
+The daemon also writes a progress summary:
+
+- `ipfs_datasets_py/.daemon/logic-port-daemon.progress.json`
+
+That file records total rounds, valid rounds, acceptance rate, current task, current-task failure counts, active state, plan status counts, failure-kind counts, the latest round, recent failures, and recent accepted changed files. It is written at cycle start, on heartbeat, and after each completed round, so it appears immediately after daemon startup instead of only after the first LLM call returns. Provider/Cloudflare HTML failures are compacted and classified, keeping the progress file readable even when Codex emits long HTTP error pages.
+
+The daemon blocks the current task after repeated failures in two ways: `--max-task-failures` counts total failures for the task since its last accepted round, while `max_task_failure_rounds` still guards repeated same-kind failures. This prevents a task from spinning forever by alternating between parse, patch, and validation failures.
 
 The daemon also encodes local test-harness conventions. Logic tests run under Jest with global `describe`/`it`/`expect`, so proposals importing `vitest` or `@jest/globals` are rejected before any files are written. This avoids failed autonomous cycles that create valid-looking tests for the wrong runner.
 
@@ -115,12 +131,16 @@ python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --repo-root . \
   --apply \
   --watch \
-  --retry-interval 300 \
-  --llm-timeout 600 \
+  --retry-interval 0 \
+  --llm-timeout 300 \
+  --command-timeout 300 \
   --heartbeat-interval 30 \
+  --max-task-failures 6 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
+  --validation-repair-attempts 1 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
+  --progress-file ipfs_datasets_py/.daemon/logic-port-daemon.progress.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 
