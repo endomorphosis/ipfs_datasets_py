@@ -50,6 +50,10 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --apply \
   --watch \
   --retry-interval 300 \
+  --llm-timeout 600 \
+  --heartbeat-interval 30 \
+  --file-repair-attempts 1 \
+  --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 
@@ -57,7 +61,15 @@ Continuous mode runs without user input. If the configured `gpt-5.5` route is un
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
-The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
+If the repaired diff is still malformed, the daemon performs one more repair path: it asks `gpt-5.5` to convert the same intended change into complete allowlisted file replacements. This is important for unattended runs because malformed diff hunks were the most common cause of "busy but no files changed" cycles.
+
+The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted, formatted with Prettier for TypeScript files, and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
+
+The daemon writes a heartbeat/status file while running:
+
+- `ipfs_datasets_py/.daemon/logic-port-daemon.status.json`
+
+That file records the daemon PID, timestamp, current state, selected task, latest result, changed files, and failure kind. While a cycle is active, a background heartbeat rewrites the file with `state: "heartbeat"` and the `active_state` it is waiting on, so a fresh timestamp means the daemon is alive even if the current Codex call has not returned yet. Use it with the JSONL result log to distinguish a crashed daemon from an active daemon that is waiting on Codex or validation.
 
 The daemon also encodes local test-harness conventions. Logic tests run under Jest with global `describe`/`it`/`expect`, so proposals importing `vitest` or `@jest/globals` are rejected before any files are written. This avoids failed autonomous cycles that create valid-looking tests for the wrong runner.
 
@@ -78,7 +90,15 @@ For accepted rounds, the daemon records the concrete changed files in the JSONL 
 
 The daemon now distinguishes fixture/capture tasks from implementation tasks. If the selected port-plan checkbox does not explicitly ask for fixtures, captures, docs, evaluation, or planning, a proposal must change runtime TypeScript under `src/lib/logic/`; docs-only and parity-fixture-only changes are rejected before they touch the worktree. Fixture and capture tasks must still add tests that load and assert the fixture content so the generated work is exercised by `npm run validate:logic-port`.
 
-Validated accepted work is also appended to `docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md`. That ledger records the target task, impact statement, changed files, and validation commands so daemon output is visible even when the changed files are small.
+Validated accepted work is also appended to `docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md`. That ledger records the target task, impact statement, changed files, validation commands, and evidence artifact paths so daemon output is visible even when the changed files are small.
+
+For every accepted round, the daemon also writes review artifacts under `ipfs_datasets_py/.daemon/accepted-work/`:
+
+- a JSON manifest with task, impact, changed files, validation status, and diff-stat summary;
+- a `.patch` snapshot from `git diff -- <changed files>`;
+- a `.stat.txt` summary from `git diff --stat -- <changed files>`.
+
+These files make accepted daemon output auditable without hunting through process logs.
 
 If the system Codex CLI is too old for `gpt-5.5`, install a local CLI and point the router at it:
 
@@ -93,6 +113,10 @@ python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --apply \
   --watch \
   --retry-interval 300 \
+  --llm-timeout 600 \
+  --heartbeat-interval 30 \
+  --file-repair-attempts 1 \
+  --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 

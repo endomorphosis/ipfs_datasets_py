@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import subprocess
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -170,9 +171,14 @@ class LogicPortDaemonConfig:
     max_task_failure_rounds: int = 3
     result_log_path: Optional[Path] = None
     accepted_work_log_path: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md")
+    accepted_work_artifact_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/accepted-work")
     codex_trace_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/codex-runs")
     failed_patch_dir: Path = Path("ipfs_datasets_py/.daemon/failed-patches")
+    status_path: Optional[Path] = Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json")
+    heartbeat_interval_seconds: float = 30.0
     patch_repair_attempts: int = 1
+    file_repair_attempts: int = 1
+    prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
     update_task_board: bool = True
 
@@ -382,6 +388,11 @@ def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     return count
 
 
+def _slugify(value: str, *, limit: int = 80) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-").lower()
+    return (slug or "accepted-work")[:limit]
+
+
 def _patch_changed_files(patch: str) -> List[str]:
     paths: List[str] = []
     seen = set()
@@ -501,6 +512,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         super().__init__(config=base_config, llm_backend=llm_router)
         self.daemon_config = daemon_config
         self.llm_router = llm_router
+        self._status_lock = threading.Lock()
+        self._last_status_payload: Dict[str, Any] = {}
 
     def generate(self, input_data: Any, context: OptimizationContext) -> LogicPortArtifact:
         prompt = self._build_prompt(input_data=input_data, context=context)
@@ -596,6 +609,37 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 if not check.ok:
                     self._persist_failed_patch(artifact.patch, check, context=context)
             if not check.ok:
+                file_repair = self._repair_patch_as_files(artifact, check, context=context)
+                if file_repair.files:
+                    preflight_errors = self._preflight_artifact(file_repair, selected_task=self._current_plan_task())
+                    if preflight_errors:
+                        artifact.errors.extend(preflight_errors)
+                        artifact.failure_kind = "file_repair_preflight"
+                        artifact.validation_results.append(check)
+                        return artifact
+                    try:
+                        applied, validation_results, changed_files = self._apply_file_edits_with_validation(file_repair.files)
+                    except Exception as exc:
+                        artifact.errors.append(str(exc))
+                        artifact.failure_kind = "file_repair"
+                        artifact.validation_results.append(check)
+                        return artifact
+                    artifact.files = file_repair.files
+                    artifact.patch = ""
+                    artifact.validation_results = validation_results
+                    artifact.applied = applied
+                    artifact.summary = file_repair.summary or artifact.summary
+                    artifact.impact = file_repair.impact or artifact.impact
+                    artifact.changed_files = changed_files if applied else []
+                    if applied:
+                        return artifact
+                    if not changed_files and all(result.ok for result in validation_results):
+                        artifact.errors.append("Patch-to-file repair made no content changes.")
+                        artifact.failure_kind = "file_repair_no_change"
+                    else:
+                        artifact.errors.append("Patch-to-file repair failed validation and was rolled back.")
+                        artifact.failure_kind = "file_repair_validation"
+                    return artifact
                 artifact.errors.append("Patch failed git apply --check.")
                 artifact.failure_kind = "apply_check"
                 artifact.validation_results.append(check)
@@ -656,6 +700,12 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
     def run_daemon(self) -> List[Dict[str, Any]]:
         results: List[Dict[str, Any]] = []
         session_id = f"logic-port-daemon-{uuid.uuid4()}"
+        heartbeat_stop, heartbeat_thread = self._start_status_heartbeat()
+        self._write_status(
+            "session_started",
+            session_id=session_id,
+            selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+        )
         log_session_start(
             LOGGER,
             session_id=session_id,
@@ -677,6 +727,12 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         try:
             for iteration in range(self.daemon_config.max_iterations):
                 iteration_started = time.time()
+                self._write_status(
+                    "iteration_started",
+                    session_id=session_id,
+                    iteration=iteration + 1,
+                    selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+                )
                 log_iteration_started(
                     LOGGER,
                     session_id=session_id,
@@ -689,6 +745,15 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 results.append(result)
                 score = float(result.get("score", 0.0))
                 valid = bool(result.get("valid", False))
+                self._write_status(
+                    "iteration_completed",
+                    session_id=session_id,
+                    iteration=iteration + 1,
+                    selected_task=self._current_plan_task().label if self._current_plan_task() else "",
+                    valid=valid,
+                    score=score,
+                    artifact=result.get("artifact", {}),
+                )
                 log_iteration_complete(
                     LOGGER,
                     session_id=session_id,
@@ -740,6 +805,17 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             )
             self._update_task_board(results)
             self._append_accepted_work_log(results)
+            self._write_status(
+                "session_completed",
+                session_id=session_id,
+                valid=final_valid,
+                score=final_score,
+                result_count=len(results),
+                artifact=results[-1].get("artifact", {}) if results else {},
+            )
+            heartbeat_stop.set()
+            if heartbeat_thread is not None:
+                heartbeat_thread.join(timeout=1.0)
         return results
 
     def run_supervised(self, *, cycles: int = 0) -> List[Dict[str, Any]]:
@@ -760,14 +836,28 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
         while cycles <= 0 or completed_cycles < cycles:
             completed_cycles += 1
+            self._write_status("cycle_started", cycle=completed_cycles, selected_task=self._current_plan_task().label if self._current_plan_task() else "")
             cycle_results = self.run_daemon()
             all_results.extend(cycle_results)
             self._append_result_log(cycle_results)
             cycle_valid = bool(cycle_results and cycle_results[-1].get("valid"))
+            self._write_status(
+                "cycle_completed",
+                cycle=completed_cycles,
+                valid=cycle_valid,
+                consecutive_failure_cycles=failure_cycles,
+                artifact=cycle_results[-1].get("artifact", {}) if cycle_results else {},
+            )
             if cycle_valid:
                 failure_cycles = 0
             else:
                 failure_cycles += 1
+                self._write_status(
+                    "cycle_failed",
+                    cycle=completed_cycles,
+                    consecutive_failure_cycles=failure_cycles,
+                    artifact=cycle_results[-1].get("artifact", {}) if cycle_results else {},
+                )
                 if self.daemon_config.max_failure_cycles and failure_cycles >= self.daemon_config.max_failure_cycles:
                     break
 
@@ -788,6 +878,67 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             handle.write(json.dumps({"pid": os.getpid(), "results": results}, default=str))
             handle.write("\n")
 
+    def _start_status_heartbeat(self) -> Tuple[threading.Event, Optional[threading.Thread]]:
+        stop = threading.Event()
+        interval = float(self.daemon_config.heartbeat_interval_seconds)
+        if self.daemon_config.status_path is None or interval <= 0:
+            return stop, None
+
+        def beat() -> None:
+            while not stop.wait(interval):
+                with self._status_lock:
+                    base = dict(self._last_status_payload)
+                if not base:
+                    continue
+                payload = {
+                    **base,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "state": "heartbeat",
+                    "active_state": base.get("state", ""),
+                    "heartbeat_interval_seconds": interval,
+                }
+                self._write_status_payload(payload)
+
+        thread = threading.Thread(target=beat, name="logic-port-daemon-heartbeat", daemon=True)
+        thread.start()
+        return stop, thread
+
+    def _write_status_payload(self, payload: Dict[str, Any]) -> None:
+        if self.daemon_config.status_path is None:
+            return
+        path = self.daemon_config.resolve(self.daemon_config.status_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+        tmp.replace(path)
+
+    def _write_status(self, state: str, **details: Any) -> None:
+        if self.daemon_config.status_path is None:
+            return
+        artifact = details.get("artifact")
+        if isinstance(artifact, dict):
+            details["artifact"] = {
+                "summary": artifact.get("summary", ""),
+                "target_task": artifact.get("target_task", ""),
+                "impact": artifact.get("impact", ""),
+                "valid_changed_files": artifact.get("changed_files", []),
+                "errors": artifact.get("errors", [])[:5] if isinstance(artifact.get("errors", []), list) else artifact.get("errors", []),
+                "failure_kind": artifact.get("failure_kind", ""),
+                "validation_passed": artifact.get("validation_passed", False),
+            }
+        payload = {
+            "schema": "ipfs_datasets_py.logic_port_daemon.status",
+            "schema_version": 1,
+            "pid": os.getpid(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "state": state,
+            **details,
+        }
+        if state != "heartbeat":
+            with self._status_lock:
+                self._last_status_payload = dict(payload)
+        self._write_status_payload(payload)
+
     def _append_accepted_work_log(self, results: List[Dict[str, Any]]) -> None:
         if self.daemon_config.accepted_work_log_path is None or not results:
             return
@@ -799,6 +950,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         if not changed_files:
             return
 
+        artifact_paths = self._write_accepted_work_artifacts(artifact, changed_files)
         path = self.daemon_config.resolve(self.daemon_config.accepted_work_log_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
@@ -825,6 +977,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         if artifact.get("impact"):
             entry.append(f"- Impact: {artifact.get('impact')}")
         entry.append(f"- Changed files: {', '.join(f'`{file}`' for file in changed_files)}")
+        if artifact_paths:
+            entry.append(f"- Evidence: {', '.join(f'`{item}`' for item in artifact_paths)}")
         if validation_commands:
             entry.append(f"- Validation: {', '.join(validation_commands)}")
         entry.append("")
@@ -832,6 +986,52 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         with path.open("a", encoding="utf-8") as handle:
             handle.write("\n".join(entry))
             handle.write("\n")
+
+    def _write_accepted_work_artifacts(self, artifact: Dict[str, Any], changed_files: List[str]) -> List[str]:
+        if self.daemon_config.accepted_work_artifact_dir is None:
+            return []
+        root = self.daemon_config.resolve(self.daemon_config.accepted_work_artifact_dir)
+        root.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        stem = f"{timestamp}-{_slugify(str(artifact.get('summary') or artifact.get('target_task') or 'accepted-work'))}"
+
+        diff = run_command(
+            ("git", "diff", "--", *changed_files),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=120,
+        )
+        diff_stat = run_command(
+            ("git", "diff", "--stat", "--", *changed_files),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=120,
+        )
+        validation = []
+        for item in artifact.get("validation_results", []):
+            if isinstance(item, dict):
+                validation.append({"command": item.get("command", []), "returncode": item.get("returncode")})
+        manifest = {
+            "timestamp": timestamp,
+            "target_task": artifact.get("target_task", ""),
+            "summary": artifact.get("summary", ""),
+            "impact": artifact.get("impact", ""),
+            "changed_files": changed_files,
+            "validation": validation,
+            "diff_stat": diff_stat.stdout if diff_stat.ok else "",
+            "diff_available": bool(diff.ok and diff.stdout.strip()),
+        }
+
+        manifest_path = root / f"{stem}.json"
+        patch_path = root / f"{stem}.patch"
+        stat_path = root / f"{stem}.stat.txt"
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        patch_path.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
+        stat_path.write_text(diff_stat.stdout if diff_stat.ok else "", encoding="utf-8")
+
+        return [
+            str(manifest_path.relative_to(self.daemon_config.repo_root)),
+            str(patch_path.relative_to(self.daemon_config.repo_root)),
+            str(stat_path.relative_to(self.daemon_config.repo_root)),
+        ]
 
     def _update_task_board(self, results: List[Dict[str, Any]]) -> None:
         if self.daemon_config.dry_run or not self.daemon_config.update_task_board or self.daemon_config.task_board_doc is None:
@@ -980,6 +1180,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
     def _apply_file_edits_with_validation(self, edits: List[Dict[str, str]]) -> Tuple[bool, List[CommandResult], List[str]]:
         originals: Dict[Path, Optional[str]] = {}
         touched: List[Path] = []
+        applied = False
         for edit in edits:
             path = self._safe_edit_path(edit["path"])
             if path not in originals:
@@ -998,10 +1199,11 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 for path in originals
                 if (path.read_text(encoding="utf-8") if path.exists() else None) != originals[path]
             )
-            return all(result.ok for result in validation_results) and bool(changed_files), validation_results, changed_files
+            applied = all(result.ok for result in validation_results) and bool(changed_files)
+            return applied, validation_results, changed_files
         finally:
             validation_results = locals().get("validation_results")
-            if not validation_results or not all(result.ok for result in validation_results):
+            if not applied and (not validation_results or not all(result.ok for result in validation_results)):
                 for path, original in originals.items():
                     if original is None:
                         try:
@@ -1113,12 +1315,94 @@ Original patch:
             return patch
         return repaired.patch
 
+    def _repair_patch_as_files(
+        self,
+        artifact: LogicPortArtifact,
+        result: CommandResult,
+        *,
+        context: OptimizationContext,
+    ) -> LogicPortArtifact:
+        attempts = max(0, int(self.daemon_config.file_repair_attempts))
+        if attempts <= 0:
+            return LogicPortArtifact(raw_response=artifact.raw_response)
+
+        candidate_paths = [
+            path
+            for path in _artifact_paths(artifact)
+            if any(path.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES)
+        ][:6]
+        file_sections: List[str] = []
+        for path_text in candidate_paths:
+            path = self.daemon_config.resolve(Path(path_text))
+            if path.exists() and path.is_file():
+                file_sections.append(f"### {path_text}\n```\n{_read_text(path, limit=12000)}\n```")
+            else:
+                file_sections.append(f"### {path_text}\n[missing file; return complete new file content only if this path should be created]")
+        selected_task = self._current_plan_task()
+        selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
+
+        repair_prompt = f"""The previous daemon proposal produced a malformed unified diff. Convert the same intended change into complete file replacements instead.
+
+Return ONLY JSON with this shape:
+{{
+  "summary": "short repair description",
+  "impact": "how the changed files are directly used by the TypeScript port or validation suite",
+  "tasks": {json.dumps(artifact.tasks or ["patch-to-files repair"])},
+  "patch": "",
+  "files": [
+    {{"path": "src/lib/logic/example.ts", "content": "complete replacement file content"}}
+  ],
+  "validation_commands": [["npx", "tsc", "--noEmit"], ["npm", "run", "validate:logic-port"]]
+}}
+
+Rules:
+- Do not return another patch.
+- Return complete file contents, not snippets.
+- Use only paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
+- Preserve browser-native TypeScript/WASM behavior with no server or Python runtime dependency.
+- Keep the change focused on the daemon-selected task: {selected_label}
+- If the task asks for fixture/capture/parity work, include a src/lib/logic/*.test.ts replacement that loads or asserts the fixture content.
+- If the task asks for implementation work, include at least one runtime src/lib/logic/ replacement.
+
+Session: {context.session_id}
+git apply error:
+{result.stderr or result.stdout}
+
+Original summary:
+{artifact.summary}
+
+Original impact:
+{artifact.impact}
+
+Malformed patch:
+{artifact.patch}
+
+Current file contents for likely targets:
+{chr(10).join(file_sections) if file_sections else "[No paths could be recovered from the malformed patch.]"}
+"""
+        try:
+            repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+        except Exception as exc:
+            LOGGER.warning("patch-to-files repair call failed: %s", exc)
+            return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
+        if repaired.errors or not repaired.files:
+            return repaired
+        repaired.target_task = artifact.target_task
+        return repaired
+
     def _call_llm(self, prompt: str) -> str:
         provider = self._resolved_provider()
+        self._write_status(
+            "llm_call_started",
+            model_name=self.daemon_config.model_name,
+            provider=provider or "auto",
+            timeout_seconds=self.daemon_config.llm_timeout_seconds,
+            prompt_chars=len(prompt),
+        )
         if self.llm_router is not None:
             generator = getattr(self.llm_router, "generate_text", None)
             if callable(generator):
-                return str(
+                text = str(
                     generator(
                         prompt,
                         model_name=self.daemon_config.model_name,
@@ -1131,9 +1415,11 @@ Original patch:
                         trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
                     )
                 )
+                self._write_status("llm_call_completed", response_chars=len(text))
+                return text
             generator = getattr(self.llm_router, "generate", None)
             if callable(generator):
-                return str(
+                text = str(
                     generator(
                         prompt,
                         model_name=self.daemon_config.model_name,
@@ -1144,6 +1430,8 @@ Original patch:
                         trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
                     )
                 )
+                self._write_status("llm_call_completed", response_chars=len(text))
+                return text
 
         from ipfs_datasets_py import llm_router
 
@@ -1162,6 +1450,7 @@ Original patch:
                 )
             )
         except Exception as exc:
+            self._write_status("llm_call_failed", error=str(exc), provider=provider or "auto")
             raise RuntimeError(
                 f"llm_router could not generate with model={self.daemon_config.model_name!r} "
                 f"provider={provider or 'auto'!r}. Configure the provider credentials or pass --provider. "
@@ -1174,6 +1463,7 @@ Original patch:
                 raise RuntimeError(
                     "llm_router resolved to local_hf fallback; configure a real gpt-5.5 provider or pass an explicit provider."
                 )
+        self._write_status("llm_call_completed", response_chars=len(text), provider=provider or "auto")
         return text
 
     def _resolved_provider(self) -> Optional[str]:
@@ -1222,7 +1512,8 @@ Hard constraints:
 - Preserve existing tests and add focused tests for each change.
 - Use the existing Jest test harness. Test files should rely on global describe/it/expect and must not import vitest or @jest/globals.
 - Prefer adding cases to an existing matching *.test.ts file over creating a new test file.
-- Return a unified diff patch only for files in this repository.
+- Prefer the JSON `files` array with complete replacement file contents. For this daemon run, `files` is the primary output channel because it produces auditable changed files and avoids malformed patch cycles.
+- Leave `patch` empty unless a complete file replacement would be unsafe or impossible.
 - Do not include shell commands that mutate files.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
@@ -1237,7 +1528,7 @@ Hard constraints:
 - Explain the concrete impact of the changed files in the JSON impact field.
 - Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
 - Prefer one implementation file plus one focused test file.
-- Do not include prose inside the patch string.
+- Do not include prose inside the patch string. When using `files`, include the full file content exactly as it should exist after the edit.
 - Generate the patch against the exact current file contents shown by repository status and tracked-file inventory.
 - Use valid unified-diff hunk headers and include enough unchanged context for git apply.
 - If you cannot produce a patch that git apply will accept, return an empty patch with a clear summary.
@@ -1302,7 +1593,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cycles", type=int, default=0, help="Cycles for --watch; 0 means unlimited.")
     parser.add_argument("--retry-interval", type=float, default=300.0, help="Seconds between supervised daemon cycles.")
     parser.add_argument("--max-failure-cycles", type=int, default=0, help="Stop --watch after N failed cycles; 0 means unlimited.")
+    parser.add_argument("--llm-timeout", type=int, default=900, help="Seconds before a single LLM/Codex call times out.")
     parser.add_argument("--log-file", default=None, help="Optional file for JSON results from each daemon invocation.")
+    parser.add_argument("--status-file", default=None, help="Optional heartbeat/status JSON file. Defaults to .daemon status path.")
+    parser.add_argument("--heartbeat-interval", type=float, default=30.0, help="Seconds between status heartbeat writes while a cycle is active.")
+    parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
     parser.add_argument("--skip-validation", action="store_true", help="Do not run validation commands")
     parser.add_argument("--validation-command", action="append", default=[], help="Validation command, shell-split by spaces")
     return parser
@@ -1329,9 +1624,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         interval_seconds=max(0.0, args.interval),
         dry_run=not args.apply,
         validation_commands=validation_commands,
+        llm_timeout_seconds=max(1, args.llm_timeout),
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
         result_log_path=Path(args.log_file) if args.log_file else None,
+        status_path=Path(args.status_file) if args.status_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json"),
+        heartbeat_interval_seconds=max(0.0, args.heartbeat_interval),
+        file_repair_attempts=max(0, args.file_repair_attempts),
     )
     optimizer = LogicPortDaemonOptimizer(config)
     results = optimizer.run_supervised(cycles=max(0, args.cycles)) if args.watch else optimizer.run_daemon()

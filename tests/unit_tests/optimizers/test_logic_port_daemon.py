@@ -20,6 +20,18 @@ class FakeRouter:
         return self.response
 
 
+class SequencedRouter:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def generate_text(self, prompt, **kwargs):
+        self.calls.append({"prompt": prompt, "kwargs": kwargs})
+        if len(self.calls) <= len(self.responses):
+            return self.responses[len(self.calls) - 1]
+        return self.responses[-1]
+
+
 class FailingRouter:
     def generate_text(self, prompt, **kwargs):
         raise RuntimeError("no route")
@@ -432,6 +444,7 @@ def test_accepted_work_log_records_valid_changed_files(tmp_path):
         validation_commands=tuple(),
         task_board_doc=plan,
         accepted_work_log_path=log_path,
+        accepted_work_artifact_dir=tmp_path / "artifacts",
     )
 
     result = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_once(session_id="accepted-log")
@@ -441,6 +454,11 @@ def test_accepted_work_log_records_valid_changed_files(tmp_path):
     assert "Runtime feature" in accepted
     assert "`src/lib/logic/feature.ts`" in accepted
     assert "Feature is imported by the logic runtime." in accepted
+    assert "Evidence:" in accepted
+    artifact_files = list((tmp_path / "artifacts").glob("*"))
+    assert any(path.suffix == ".json" for path in artifact_files)
+    assert any(path.suffix == ".patch" for path in artifact_files)
+    assert any(path.name.endswith(".stat.txt") for path in artifact_files)
 
 
 def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
@@ -480,6 +498,104 @@ def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
     assert result["valid"] is False
     assert result["artifact"]["changed_files"] == []
     assert "made no content changes" in result["artifact"]["errors"][0]
+
+
+def test_malformed_patch_falls_back_to_complete_file_replacements(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("export const value = 'old';\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    malformed_patch = (
+        "diff --git a/src/lib/logic/feature.ts b/src/lib/logic/feature.ts\n"
+        "--- a/src/lib/logic/feature.ts\n"
+        "+++ b/src/lib/logic/feature.ts\n"
+        "@@ broken hunk header\n"
+        "-export const value = 'old';\n"
+        "+export const value = 'new';\n"
+    )
+    repair_response = json.dumps(
+        {
+            "summary": "Repair as file replacement",
+            "impact": "Runtime feature is updated by a complete file replacement.",
+            "patch": "",
+            "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = 'new';\n"}],
+        }
+    )
+    router = SequencedRouter(
+        [
+            json.dumps({"summary": "Malformed runtime patch", "patch": malformed_patch}),
+            json.dumps({"summary": "Still malformed", "patch": malformed_patch}),
+            repair_response,
+        ]
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="file-repair")
+
+    assert result["valid"] is True
+    assert target.read_text(encoding="utf-8") == 'export const value = "new";\n'
+    assert result["artifact"]["files"] == ["src/lib/logic/feature.ts"]
+    assert result["artifact"]["changed_files"] == ["src/lib/logic/feature.ts"]
+    assert len(router.calls) == 3
+    assert "Do not return another patch" in router.calls[-1]["prompt"]
+
+
+def test_status_file_records_liveness_and_latest_artifact(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    status_path = tmp_path / "daemon" / "status.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("old\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    response = json.dumps(
+        {
+            "summary": "Runtime feature",
+            "files": [{"path": "src/lib/logic/feature.ts", "content": "new\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        status_path=status_path,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_supervised(cycles=1)
+
+    heartbeat = json.loads(status_path.read_text(encoding="utf-8"))
+    assert heartbeat["state"] == "cycle_completed"
+    assert heartbeat["valid"] is True
+    assert heartbeat["artifact"]["summary"] == "Runtime feature"
+    assert heartbeat["artifact"]["valid_changed_files"] == ["src/lib/logic/feature.ts"]
 
 
 def test_task_board_blocks_repeated_same_failure_kind(tmp_path):
