@@ -30,6 +30,7 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "formal_logic": {"primary_key": "formula_id", "requires_source_id": True},
     "proof_obligations": {"primary_key": "proof_obligation_id", "requires_source_id": True},
     "repair_queue": {"primary_key": "repair_id", "requires_source_id": True},
+    "decoder_reconstructions": {"primary_key": "reconstruction_id", "requires_source_id": True},
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -333,6 +334,7 @@ def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[s
         "formal_logic": [],
         "proof_obligations": [],
         "repair_queue": [],
+        "decoder_reconstructions": [],
     }
 
     resolved_norms = _with_same_document_reference_resolutions(list(norms))
@@ -342,6 +344,7 @@ def build_document_export_tables_from_ir(norms: Iterable[LegalNormIR]) -> Dict[s
         tables["formal_logic"].append(build_formal_logic_record_from_ir(norm))
         proof_record = build_proof_obligation_record_from_ir(norm)
         tables["proof_obligations"].append(proof_record)
+        tables["decoder_reconstructions"].append(build_decoder_record_from_ir(norm))
         if proof_record["requires_validation"]:
             tables["repair_queue"].append(build_repair_queue_record_from_ir(norm))
 

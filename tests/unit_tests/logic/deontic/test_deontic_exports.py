@@ -672,11 +672,14 @@ def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_nor
 
     tables = build_document_export_tables_from_ir(norms)
 
-    assert set(tables) == {"canonical", "formal_logic", "proof_obligations", "repair_queue"}
+    assert set(tables) == {
+        "canonical", "formal_logic", "proof_obligations", "repair_queue", "decoder_reconstructions"
+    }
     assert len(tables["canonical"]) == 2
     assert len(tables["formal_logic"]) == 2
     assert len(tables["proof_obligations"]) == 2
     assert len(tables["repair_queue"]) == 1
+    assert len(tables["decoder_reconstructions"]) == 2
 
     proof_ready_rows = [row for row in tables["proof_obligations"] if row["proof_ready"]]
     blocked_rows = [row for row in tables["proof_obligations"] if not row["proof_ready"]]
@@ -687,6 +690,15 @@ def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_nor
     assert tables["repair_queue"][0]["formula_proof_ready"] is False
     assert tables["repair_queue"][0]["formula_repair_required"] is True
     assert "cross_reference_requires_resolution" in tables["repair_queue"][0]["reasons"]
+    assert [row["source_id"] for row in tables["decoder_reconstructions"]] == [
+        norm.source_id for norm in norms
+    ]
+    assert tables["decoder_reconstructions"][0]["decoded_text"] == "Tenant shall pay rent monthly."
+    assert tables["decoder_reconstructions"][0]["requires_validation"] is False
+    assert tables["decoder_reconstructions"][1]["decoded_text"] == (
+        "Secretary shall publish the notice except as provided in section 552."
+    )
+    assert tables["decoder_reconstructions"][1]["requires_validation"] is True
 
     validation = validate_export_tables(tables)
     assert validation == {"valid": True, "errors": []}
@@ -724,6 +736,32 @@ def test_document_export_tables_skip_repair_rows_for_formula_resolved_norms():
     assert tables["proof_obligations"][2]["deterministic_resolution"]["type"] == "pure_precedence_override"
     assert tables["repair_queue"][0]["source_id"] == norms[3].source_id
     assert validate_export_tables(tables)["valid"] is True
+
+
+def test_document_export_tables_validate_decoder_reconstruction_primary_keys():
+    element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+    tables = build_document_export_tables_from_ir([norm])
+
+    decoder_rows = tables["decoder_reconstructions"]
+
+    assert len(decoder_rows) == 1
+    assert decoder_rows[0]["reconstruction_id"].startswith("reconstruction:")
+    assert decoder_rows[0]["source_id"] == element["source_id"]
+    assert validate_export_tables(tables) == {"valid": True, "errors": []}
+
+    broken = {name: [dict(row) for row in rows] for name, rows in tables.items()}
+    broken["decoder_reconstructions"][0]["reconstruction_id"] = ""
+
+    validation = validate_export_tables(broken)
+
+    assert validation["valid"] is False
+    assert {
+        "table": "decoder_reconstructions",
+        "row_index": 0,
+        "field": "reconstruction_id",
+        "message": "missing primary key",
+    } in validation["errors"]
 
 
 def test_parser_elements_with_ir_export_readiness_clears_formula_resolved_repair_noise():
