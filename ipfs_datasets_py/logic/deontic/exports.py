@@ -203,6 +203,19 @@ def parser_elements_for_metrics(
     return metric_elements
 
 
+def parser_element_has_active_repair(element: Mapping[str, Any]) -> bool:
+    """Return whether a parser element still represents active repair work.
+
+    This is the metrics-facing repair predicate. It runs the same IR/formula
+    readiness projection used by export callers, so conservative parser warnings
+    remain visible without being counted as active repair after deterministic
+    formula resolution. Unresolved numbered or external references remain active.
+    """
+
+    rows = parser_elements_for_metrics([element])
+    return bool(rows and _metric_row_has_active_repair(rows[0]))
+
+
 def active_repair_details_from_parser_elements(
     elements: Iterable[Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
@@ -222,19 +235,16 @@ def active_repair_details_from_parser_elements(
         llm_repair = dict(element.get("llm_repair") or {})
         active_warnings = list(element.get("active_repair_warnings") or [])
 
-        if not active_warnings and llm_repair.get("required") is True:
+        if not _metric_row_has_active_repair(element):
+            continue
+
+        if not active_warnings:
             active_warnings = list(
                 llm_repair.get("reasons")
                 or element.get("repair_required_warnings")
                 or element.get("parser_warnings")
                 or []
             )
-
-        metric_repair_required = export_readiness.get("metric_repair_required")
-        if metric_repair_required is False and llm_repair.get("required") is not True and not active_warnings:
-            continue
-        if metric_repair_required is not True and llm_repair.get("required") is not True and not active_warnings:
-            continue
 
         details.append(
             {
@@ -254,6 +264,28 @@ def active_repair_details_from_parser_elements(
             }
         )
     return details
+
+
+def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
+    """Return active repair status for an already metrics-projected row."""
+
+    export_readiness = dict(element.get("export_readiness") or {})
+
+    metric_repair_required = export_readiness.get("metric_repair_required")
+    if metric_repair_required is not None:
+        return metric_repair_required is True
+
+    formula_repair_required = export_readiness.get("formula_repair_required")
+    if formula_repair_required is not None:
+        return formula_repair_required is True
+
+    export_repair_required = export_readiness.get("export_repair_required")
+    if export_repair_required is not None:
+        return export_repair_required is True
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    active_warnings = element.get("active_repair_warnings") or element.get("repair_required_warnings") or []
+    return llm_repair.get("required") is True or bool(active_warnings)
 
 
 def _cleared_deterministic_repair_payload(element: Mapping[str, Any]) -> Dict[str, Any]:

@@ -5,6 +5,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
+    parser_element_has_active_repair,
     parser_elements_to_export_tables,
     parser_elements_for_metrics,
     parser_elements_with_ir_export_readiness,
@@ -1505,6 +1506,33 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
     assert rows[3]["active_repair_warnings"] == rows[3]["parser_warnings"]
     assert rows[3]["llm_repair"]["reasons"]
     assert rows[3]["llm_repair"].get("prompt_context")
+
+
+def test_parser_element_has_active_repair_uses_formula_readiness_projection():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    assert [parser_element_has_active_repair(element) for element in elements] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+
+    details = active_repair_details_from_parser_elements(elements)
+    assert len(details) == 1
+    assert details[0]["source_id"] == elements[3]["source_id"]
+    assert details[0]["deterministic_resolution"] == {}
 
 
 def test_active_repair_details_ignore_formula_resolved_rows():
