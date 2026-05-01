@@ -39,6 +39,10 @@ _SECTION_REFERENCE_LIST_RE = re.compile(
     re.IGNORECASE,
 )
 _SECTION_REFERENCE_TOKEN_RE = re.compile(r"[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*", re.IGNORECASE)
+_SECTION_HEADING_RE = re.compile(
+    r"(?:^|\n)\s*(?:section|sec\.?|§)\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
+    re.IGNORECASE,
+)
 
 
 def build_formal_logic_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
@@ -487,6 +491,9 @@ def _evaluation_parser_elements(
         return explicit_elements
 
     recovered: List[Dict[str, Any]] = []
+    recovered.extend(
+        _parser_context_elements_from_evaluation_document_text(evaluation)
+    )
     for sample in evaluation.get("samples", []) if isinstance(evaluation.get("samples"), list) else []:
         if not isinstance(sample, Mapping):
             continue
@@ -917,6 +924,69 @@ def _is_context_only_parser_element(element: Mapping[str, Any]) -> bool:
     if norm_type not in {"document_context", "section_context"}:
         return False
     return not _list_field(element.get("subject")) and not _list_field(element.get("action"))
+
+
+def _parser_context_elements_from_evaluation_document_text(
+    evaluation: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    """Recover section context from explicit document-level evaluation text.
+
+    Repair details for numbered exceptions can clear only with same-document
+    evidence. Some metric payloads carry that evidence as whole-document text
+    rather than as a parser sample row. Treat only explicit document/context
+    fields with section headings as context; do not infer context from the
+    repair clause text itself.
+    """
+
+    texts: List[tuple[str, str]] = []
+    for key in ("document_text", "full_document_text", "context_text"):
+        value = evaluation.get(key)
+        if isinstance(value, str) and value.strip():
+            texts.append((key, value.strip()))
+
+    for key in ("document", "context"):
+        value = evaluation.get(key)
+        if not isinstance(value, Mapping):
+            continue
+        text = value.get("text") or value.get("document_text") or value.get("source_text")
+        if isinstance(text, str) and text.strip():
+            texts.append((key, text.strip()))
+
+    records: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for key, text in texts:
+        for match in _SECTION_HEADING_RE.finditer(text):
+            citation = _canonical_section_citation(f"section {match.group(1)}")
+            if not citation or citation in seen:
+                continue
+            section = citation[len("section ") :]
+            source_id = _stable_id("context", key, citation, text)
+            records.append(
+                {
+                    "schema_version": "",
+                    "source_id": source_id,
+                    "canonical_citation": citation,
+                    "sample_id": key,
+                    "text": text,
+                    "support_text": text,
+                    "support_span": [0, len(text)],
+                    "source_span": [0, len(text)],
+                    "field_spans": {},
+                    "norm_type": "document_context",
+                    "deontic_operator": "",
+                    "subject": [],
+                    "action": [],
+                    "section_context": {"section": section, "canonical_citation": citation},
+                    "parser_warnings": [],
+                    "llm_repair": {"required": False, "reasons": []},
+                    "export_readiness": {},
+                    "promotable_to_theorem": False,
+                    "context_only": True,
+                    "extraction_method": "evaluation_document_text_section_context",
+                }
+            )
+            seen.add(citation)
+    return records
 
 
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
