@@ -445,6 +445,7 @@ class LegalNormIR:
     section_context: Dict[str, Any] = field(default_factory=dict)
     actor_entities: List[str] = field(default_factory=list)
     quality: LegalNormQuality = field(default_factory=LegalNormQuality)
+    definition_scope: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_parser_element(cls, element: Dict[str, Any]) -> "LegalNormIR":
@@ -506,6 +507,7 @@ class LegalNormIR:
             section_context=dict(element.get("section_context") or {}),
             actor_entities=_actor_texts(element.get("subject")),
             quality=LegalNormQuality.from_parser_element(element),
+            definition_scope=dict(element.get("definition_scope") or {}),
         )
 
     @property

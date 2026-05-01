@@ -1836,6 +1836,7 @@ def _canonical_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "modality": norm.modality,
         "actor": norm.actor,
         "action": norm.action,
+        "definition_scope": dict(norm.definition_scope),
         "quality_label": norm.quality.quality_label,
         "proof_ready": bool(formula_record["proof_ready"]),
         "parser_proof_ready": parser_proof_ready,

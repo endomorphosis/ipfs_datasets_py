@@ -44,6 +44,33 @@ def test_ir_formal_logic_record_preserves_provenance_for_proof_ready_clause():
     assert record["blockers"] == []
 
 
+def test_scoped_definition_ir_and_canonical_export_preserve_definition_scope():
+    element = dict(extract_normative_elements(
+        'In this section, the term "food cart" means a mobile food vending unit.'
+    )[0])
+    element["definition_scope"] = {
+        "scope_type": "section",
+        "scope_reference": "this section",
+        "span": [0, 15],
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    tables = build_document_export_tables_from_ir([norm])
+    canonical = tables["canonical"][0]
+    formal_logic = tables["formal_logic"][0]
+
+    assert norm.definition_scope == {
+        "scope_type": "section",
+        "scope_reference": "this section",
+        "span": [0, 15],
+    }
+    assert norm.to_dict()["definition_scope"] == norm.definition_scope
+    assert canonical["definition_scope"] == norm.definition_scope
+    assert formal_logic["formula"] == "Definition(FoodCart)"
+    assert tables["repair_queue"] == []
+    assert validate_export_tables(tables) == {"valid": True, "errors": []}
+
+
 def test_ir_formal_logic_record_preserves_deterministic_resolution_metadata():
     element = extract_normative_elements("This section applies to food carts.")[0]
     norm = LegalNormIR.from_parser_element(element)
