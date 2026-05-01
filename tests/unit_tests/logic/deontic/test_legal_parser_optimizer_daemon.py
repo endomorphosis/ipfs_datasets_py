@@ -972,6 +972,7 @@ def test_optimizer_prompt_marks_irreducible_residual_mode(tmp_path):
     assert '"irreducible_residual_mode": true' in prompt
     assert "stop chasing repair_required_count" in prompt
     assert "deterministic_coverage" in prompt
+    assert "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false" in prompt
 
 
 def test_evaluation_records_repair_required_details():
@@ -1057,6 +1058,7 @@ def test_daemon_retries_metric_stall_proposal_without_expected_metric_gain(tmp_p
 
     assert len(fake_router.calls) == 2
     assert "requires expected_metric_gain" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert "pivot away from clearing numbered references" in fake_router.calls[1]["prompt"]
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"

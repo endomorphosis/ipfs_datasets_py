@@ -394,7 +394,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
             "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
             "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
-            "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
+            "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
         )
@@ -817,11 +817,20 @@ class LegalParserOptimizerDaemon:
             if not retry_reason:
                 break
             if attempt_index < max_attempts:
+                retry_instruction = (
+                    " Regenerate a unified diff against the exact current relevant_file_snapshots; "
+                    "do not reuse stale hunk context."
+                )
+                if irreducible_residual_mode:
+                    retry_instruction += (
+                        " The residual repair-required gap is protected; pivot away from clearing "
+                        "numbered references and propose deterministic_coverage, parser_capability, "
+                        "or coverage_expansion work instead."
+                    )
                 attempt_feedback = list(feedback) + [
                     (
                         f"previous proposal attempt {attempt_index} was rejected before apply: "
-                        f"{retry_reason}. Regenerate a unified diff against the exact current "
-                        "relevant_file_snapshots; do not reuse stale hunk context."
+                        f"{retry_reason}.{retry_instruction}"
                     )
                 ]
                 self._write_current_status(
