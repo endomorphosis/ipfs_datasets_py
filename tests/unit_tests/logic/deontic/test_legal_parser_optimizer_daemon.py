@@ -153,6 +153,26 @@ def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
     assert status["apply_result"]["reason"] == "apply_patches_disabled"
 
 
+def test_evaluation_uses_active_repair_projection_for_probe_metrics(tmp_path):
+    """Daemon repair details should not use stale raw llm_repair flags."""
+
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    evaluation = optimizer.evaluate_current_parser()
+
+    assert evaluation["metrics"]["repair_required_count"] == 1
+    assert evaluation["repair_required"] == [evaluation["repair_required_details"][0]["source_id"]]
+    assert [detail["sample_id"] for detail in evaluation["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    assert evaluation["metrics"]["coverage_gaps"] == ["repair_required_count: 1"]
+
+
 def test_daemon_reports_invalid_patch_as_patch_check_failed(tmp_path):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     fake_router = _FakeRouter(

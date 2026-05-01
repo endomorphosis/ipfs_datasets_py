@@ -321,6 +321,7 @@ def active_repair_details_from_parser_elements(
 
         details.append(
             {
+                "sample_id": element.get("sample_id") or element.get("_probe_sample_id", ""),
                 "source_id": element.get("source_id", ""),
                 "canonical_citation": element.get("canonical_citation", ""),
                 "text": element.get("text", ""),
@@ -330,6 +331,7 @@ def active_repair_details_from_parser_elements(
                 "modality": element.get("deontic_operator"),
                 "subject": list(element.get("subject") or []),
                 "action": list(element.get("action") or []),
+                "object": element.get("object") or element.get("action_object"),
                 "parser_warnings": list(element.get("parser_warnings") or []),
                 "active_repair_warnings": active_warnings,
                 "llm_repair": llm_repair,

@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.logic.deontic.metrics import summarize_parser_elements
+from ipfs_datasets_py.logic.deontic.exports import active_repair_details_from_parser_elements
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
     build_deontic_formula,
     extract_normative_elements,
@@ -175,8 +176,6 @@ class LegalParserParityOptimizer(BaseOptimizer):
         samples: List[Dict[str, Any]] = []
         all_elements: List[Dict[str, Any]] = []
         unparsed: List[str] = []
-        repair_required: List[str] = []
-        repair_required_details: List[Dict[str, Any]] = []
         formula_errors: List[Dict[str, str]] = []
 
         for sample in DEFAULT_PROBE_CORPUS:
@@ -190,23 +189,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 unparsed.append(sample["id"])
             formulas: List[str] = []
             for element in elements:
+                element = dict(element)
+                element["_probe_sample_id"] = sample["id"]
                 all_elements.append(element)
-                if (element.get("llm_repair") or {}).get("required"):
-                    repair_required.append(str(element.get("source_id") or sample["id"]))
-                    repair_required_details.append(
-                        {
-                            "sample_id": sample["id"],
-                            "text": text,
-                            "source_id": element.get("source_id"),
-                            "norm_type": element.get("norm_type"),
-                            "modality": element.get("modality"),
-                            "subject": element.get("subject"),
-                            "action": element.get("action"),
-                            "object": element.get("object"),
-                            "parser_warnings": element.get("parser_warnings", []),
-                            "llm_repair": element.get("llm_repair", {}),
-                        }
-                    )
                 try:
                     formulas.append(build_deontic_formula(element))
                 except Exception as exc:
@@ -223,6 +208,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
             )
 
         summary = summarize_parser_elements(all_elements)
+        repair_required_details = active_repair_details_from_parser_elements(all_elements)
+        repair_required = [
+            str(detail.get("source_id") or detail.get("sample_id") or "") for detail in repair_required_details
+        ]
         sample_count = len(DEFAULT_PROBE_CORPUS)
         parsed_rate = (sample_count - len(unparsed)) / max(1, sample_count)
         proof_ready_rate = float(summary.get("proof_ready_rate", 0.0) or 0.0)
