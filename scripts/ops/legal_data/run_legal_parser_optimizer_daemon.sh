@@ -12,35 +12,407 @@ HEARTBEAT_INTERVAL_SECONDS="${HEARTBEAT_INTERVAL_SECONDS:-10}"
 LLM_PROPOSAL_ATTEMPTS="${LLM_PROPOSAL_ATTEMPTS:-3}"
 DAEMON_DIR="${DAEMON_DIR:-.daemon}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
+WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
+WATCHDOG_STARTUP_GRACE_SECONDS="${WATCHDOG_STARTUP_GRACE_SECONDS:-120}"
+STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
+SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
+SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
+SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
+SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
+SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
+SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
+SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
+SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
+CODEX_BIN="${CODEX_BIN:-codex}"
+
+SUPERVISOR_STATUS_PATH="${SUPERVISOR_STATUS_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.json}"
+SUPERVISOR_AGENTIC_STATE_PATH="${SUPERVISOR_AGENTIC_STATE_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor_agentic_state.json}"
+SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.pid}"
+SUPERVISOR_LOCK_PATH="${SUPERVISOR_LOCK_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.lock}"
+CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/legal_parser_daemon.pid}"
+LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/legal_parser_daemon_overnight.log}"
+CURRENT_STATUS_PATH="$OUTPUT_DIR/current_status.json"
+PROGRESS_PATH="$OUTPUT_DIR/progress_summary.json"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
-child_pid=""
 
-stop_child() {
-  if [[ -n "${child_pid:-}" ]] && kill -0 "$child_pid" 2>/dev/null; then
-    kill "$child_pid" 2>/dev/null || true
-    wait "$child_pid" 2>/dev/null || true
+exec 9>"$REPO_ROOT/$SUPERVISOR_LOCK_PATH"
+if ! flock -n 9; then
+  existing_pid=""
+  if [[ -f "$REPO_ROOT/$SUPERVISOR_PID_PATH" ]]; then
+    existing_pid="$(tr -dc '0-9' < "$REPO_ROOT/$SUPERVISOR_PID_PATH" 2>/dev/null || true)"
+  fi
+  echo "legal-parser daemon supervisor lock is held${existing_pid:+ by PID $existing_pid}"
+  exit 0
+fi
+
+printf '%s\n' "$$" > "$REPO_ROOT/$SUPERVISOR_PID_PATH"
+
+child_pid=""
+restart_count=0
+cleaning_up=0
+last_recycle_reason=""
+last_agentic_maintenance_status=""
+last_agentic_maintenance_reason=""
+last_agentic_maintenance_log_path=""
+
+json_bool() {
+  [[ "$1" == "1" ]] && printf true || printf false
+}
+
+write_supervisor_status() {
+  local status="$1"
+  local run_id="${2:-}"
+  local log_path="${3:-}"
+  local last_exit_code="${4:-null}"
+  local daemon_pid_json="null"
+  if [[ -n "${child_pid:-}" ]]; then
+    daemon_pid_json="$child_pid"
+  fi
+  cat > "$REPO_ROOT/$SUPERVISOR_STATUS_PATH" <<JSON
+{
+  "schema": "ipfs_datasets_py.legal_parser_daemon.supervisor",
+  "status": "$status",
+  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "repo_root": "$REPO_ROOT",
+  "supervisor_pid": $$,
+  "daemon_pid": $daemon_pid_json,
+  "restart_count": $restart_count,
+  "restart_backoff_seconds": $RESTART_BACKOFF_SECONDS,
+  "supervisor_heartbeat_seconds": $SUPERVISOR_HEARTBEAT_SECONDS,
+  "watchdog_stale_after_seconds": $WATCHDOG_STALE_AFTER_SECONDS,
+  "watchdog_startup_grace_seconds": $WATCHDOG_STARTUP_GRACE_SECONDS,
+  "stop_grace_seconds": $STOP_GRACE_SECONDS,
+  "run_id": "$run_id",
+  "log_path": "$log_path",
+  "current_status_path": "$CURRENT_STATUS_PATH",
+  "progress_path": "$PROGRESS_PATH",
+  "child_pid_path": "$CHILD_PID_PATH",
+  "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
+  "agentic_maintenance_enabled": $(json_bool "$SUPERVISOR_AGENTIC_MAINTENANCE"),
+  "agentic_stalled_metric_cycles": $SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES,
+  "agentic_rejected_tail": $SUPERVISOR_AGENTIC_REJECTED_TAIL,
+  "agentic_rolled_back_tail": $SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL,
+  "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
+  "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
+  "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
+  "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
+  "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
+  "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
+  "last_agentic_maintenance_log_path": "$last_agentic_maintenance_log_path",
+  "model_name": "$MODEL_NAME",
+  "provider": "$PROVIDER",
+  "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
+  "test_timeout_seconds": $TEST_TIMEOUT_SECONDS,
+  "llm_proposal_attempts": $LLM_PROPOSAL_ATTEMPTS,
+  "last_exit_code": $last_exit_code,
+  "last_recycle_reason": "$last_recycle_reason"
+}
+JSON
+}
+
+daemon_heartbeat_age_seconds() {
+  python3 - "$REPO_ROOT/$CURRENT_STATUS_PATH" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+
+try:
+    status = json.load(open(sys.argv[1], "r", encoding="utf-8"))
+except Exception:
+    raise SystemExit(0)
+
+raw = status.get("heartbeat_at") or status.get("updated_at")
+if not raw:
+    raise SystemExit(0)
+try:
+    heartbeat_at = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+except ValueError:
+    raise SystemExit(0)
+print(max(0.0, (datetime.now(timezone.utc) - heartbeat_at).total_seconds()))
+PY
+}
+
+agentic_maintenance_reason() {
+  if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]]; then
+    return 1
+  fi
+  python3 - \
+    "$REPO_ROOT/$PROGRESS_PATH" \
+    "$REPO_ROOT/$CURRENT_STATUS_PATH" \
+    "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES" \
+    "$SUPERVISOR_AGENTIC_REJECTED_TAIL" \
+    "$SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL" \
+    "$SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS" \
+    "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
+import json
+import sys
+import time
+from pathlib import Path
+from datetime import datetime, timezone
+
+progress_path = Path(sys.argv[1])
+status_path = Path(sys.argv[2])
+state_path = Path(sys.argv[3])
+stalled_metric_threshold = int(sys.argv[4])
+rejected_tail_threshold = int(sys.argv[5])
+rolled_back_tail_threshold = int(sys.argv[6])
+cycle_stall_seconds = int(sys.argv[7])
+cooldown_seconds = int(sys.argv[8])
+now = int(time.time())
+
+
+def read_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def parse_epoch(value) -> int:
+    if not value:
+        return 0
+    try:
+        return int(datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp())
+    except ValueError:
+        return 0
+
+
+progress = read_json(progress_path)
+status = read_json(status_path)
+if not progress and not status:
+    raise SystemExit(1)
+
+state = read_json(state_path)
+last_maintenance_at = int(state.get("last_maintenance_at") or 0)
+cooling_down = last_maintenance_at > 0 and now - last_maintenance_at < cooldown_seconds
+
+latest_cycle_index = int(progress.get("latest_cycle_index") or status.get("cycle_index") or 0)
+accepted_count = int(progress.get("retained_accepted_patch_count") or progress.get("accepted_patch_count") or 0)
+rolled_back_count = int(progress.get("rolled_back_count") or 0)
+rejected_count = int(progress.get("rejected_count") or 0)
+stalled_metric_cycles = int(progress.get("stalled_metric_cycles") or 0)
+
+baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
+baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
+baseline_rolled_back = int(state.get("baseline_rolled_back_count") or rolled_back_count)
+baseline_rejected = int(state.get("baseline_rejected_count") or rejected_count)
+
+if accepted_count > baseline_accepted:
+    baseline_cycle = latest_cycle_index
+    baseline_accepted = accepted_count
+    baseline_rolled_back = rolled_back_count
+    baseline_rejected = rejected_count
+
+cycle_delta = max(0, latest_cycle_index - baseline_cycle)
+rolled_back_delta = max(0, rolled_back_count - baseline_rolled_back)
+rejected_delta = max(0, rejected_count - baseline_rejected)
+updated_epoch = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
+cycle_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
+
+reason = ""
+if not cooling_down and stalled_metric_cycles >= stalled_metric_threshold:
+    reason = f"stalled_metric_cycles:{stalled_metric_cycles}:threshold:{stalled_metric_threshold}"
+elif not cooling_down and rolled_back_delta >= rolled_back_tail_threshold:
+    reason = f"rolled_back_without_acceptance:{rolled_back_delta}:threshold:{rolled_back_tail_threshold}"
+elif not cooling_down and rejected_delta >= rejected_tail_threshold:
+    reason = f"rejected_without_acceptance:{rejected_delta}:threshold:{rejected_tail_threshold}"
+elif not cooling_down and cycle_stall_seconds > 0 and cycle_stall_age >= cycle_stall_seconds:
+    phase = status.get("phase") or "unknown"
+    reason = f"status_stale:{cycle_stall_age}s:phase:{phase}:threshold:{cycle_stall_seconds}"
+
+state.update(
+    {
+        "updated_at_epoch": now,
+        "baseline_cycle_index": baseline_cycle,
+        "baseline_accepted_count": baseline_accepted,
+        "baseline_rolled_back_count": baseline_rolled_back,
+        "baseline_rejected_count": baseline_rejected,
+        "latest_cycle_index": latest_cycle_index,
+        "accepted_count": accepted_count,
+        "rolled_back_count": rolled_back_count,
+        "rejected_count": rejected_count,
+        "stalled_metric_cycles": stalled_metric_cycles,
+        "cycles_since_acceptance": cycle_delta,
+        "rolled_back_since_acceptance": rolled_back_delta,
+        "rejected_since_acceptance": rejected_delta,
+        "cooling_down": cooling_down,
+        "candidate_reason": reason,
+    }
+)
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+if reason:
+    print(reason)
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+mark_agentic_maintenance_ran() {
+  local reason="$1"
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$reason" <<'PY'
+import json
+import sys
+import time
+from pathlib import Path
+
+path = Path(sys.argv[1])
+reason = sys.argv[2]
+try:
+    state = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+state["last_maintenance_at"] = int(time.time())
+state["last_maintenance_reason"] = reason
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+run_agentic_maintenance() {
+  local reason="$1"
+  local maintenance_id=""
+  local maintenance_log=""
+  local rc=0
+  maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
+  maintenance_log="$DAEMON_DIR/legal_parser_daemon_agentic_maintenance_${maintenance_id}.log"
+  last_agentic_maintenance_status="running"
+  last_agentic_maintenance_reason="$reason"
+  last_agentic_maintenance_log_path="$maintenance_log"
+  write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
+  stop_child
+  mark_agentic_maintenance_ran "$reason"
+  {
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting legal-parser daemon-maintenance pass: $reason"
+    timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
+      --skip-git-repo-check \
+      --sandbox "$SUPERVISOR_AGENTIC_SANDBOX" \
+      -m "$MODEL_NAME" \
+      -C "$REPO_ROOT" \
+      - <<PROMPT
+You are maintaining the deterministic legal-parser optimizer daemon and its supervisor.
+
+The supervisor detected that the daemon may be stuck or not making meaningful progress.
+
+Reason: $reason
+
+Improve only daemon/supervisor programming, tests, or docs in this maintenance pass. Do not implement a new legal parser feature here unless it is strictly required to repair daemon progress logic.
+
+Allowed files:
+- ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
+- tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
+- scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh
+- scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh
+- docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md
+- docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md
+
+Focus on unattended operation making real progress: better stuck/no-progress detection, better recovery prompts, safer restart behavior, clearer status/progress accounting, stronger validation before retaining patches, or documentation of those behaviors.
+
+After editing, run:
+- bash -n scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh
+- python3 -m py_compile ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
+- pytest -q tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
+
+Keep the daemon pointed at the deterministic legal parser plans and preserve the no-LLM parser contract for proof-ready clauses.
+PROMPT
+  } >> "$REPO_ROOT/$maintenance_log" 2>&1
+  rc=$?
+  if [[ "$rc" == "0" ]] \
+    && bash -n "$REPO_ROOT/scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh" "$REPO_ROOT/scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && pytest -q "$REPO_ROOT/tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
+    last_agentic_maintenance_status="accepted"
+  else
+    last_agentic_maintenance_status="failed"
+  fi
+  write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
+}
+
+heartbeat_is_stale() {
+  local age=""
+  age="$(daemon_heartbeat_age_seconds)"
+  if [[ -z "$age" ]]; then
+    return 1
+  fi
+  python3 - "$age" "$WATCHDOG_STALE_AFTER_SECONDS" <<'PY'
+import sys
+age = float(sys.argv[1])
+threshold = float(sys.argv[2])
+raise SystemExit(0 if age > threshold else 1)
+PY
+}
+
+terminate_pid_tree() {
+  local pid="$1"
+  local child=""
+  local deadline=0
+  if [[ -z "$pid" ]] || ! kill -0 "$pid" 2>/dev/null; then
+    return 0
+  fi
+  for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+    terminate_pid_tree "$child"
+  done
+  kill "$pid" 2>/dev/null || true
+  deadline=$((SECONDS + STOP_GRACE_SECONDS))
+  while kill -0 "$pid" 2>/dev/null && [[ "$SECONDS" -lt "$deadline" ]]; do
+    sleep 1
+  done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -KILL "$pid" 2>/dev/null || true
   fi
 }
 
-trap 'stop_child; exit 143' TERM INT
+terminate_matching_legal_parser_daemons() {
+  local pid=""
+  local args=""
+  while read -r pid args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]] || [[ "$pid" == "${child_pid:-}" ]]; then
+      continue
+    fi
+    if [[ "$args" == *"ipfs_datasets_py.optimizers.logic.deontic.parser_daemon"* ]]; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaning up orphaned legal-parser daemon $pid before supervisor start/restart" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+      terminate_pid_tree "$pid"
+    fi
+  done < <(ps -eo pid=,args=)
+}
+
+stop_child() {
+  local stopped_pid="${child_pid:-}"
+  if [[ -n "${child_pid:-}" ]] && kill -0 "$child_pid" 2>/dev/null; then
+    terminate_pid_tree "$child_pid"
+    wait "$child_pid" 2>/dev/null || true
+  fi
+  if [[ -f "$REPO_ROOT/$CHILD_PID_PATH" ]] && [[ "$(cat "$REPO_ROOT/$CHILD_PID_PATH" 2>/dev/null)" == "$stopped_pid" ]]; then
+    rm -f "$REPO_ROOT/$CHILD_PID_PATH"
+  fi
+  child_pid=""
+}
+
+cleanup() {
+  if [[ "$cleaning_up" == "1" ]]; then
+    return 0
+  fi
+  cleaning_up=1
+  stop_child
+  write_supervisor_status "stopped" "" "" null
+  if [[ -f "$REPO_ROOT/$SUPERVISOR_PID_PATH" ]] && [[ "$(cat "$REPO_ROOT/$SUPERVISOR_PID_PATH" 2>/dev/null)" == "$$" ]]; then
+    rm -f "$REPO_ROOT/$SUPERVISOR_PID_PATH"
+  fi
+  rm -f "$REPO_ROOT/$SUPERVISOR_LOCK_PATH"
+}
+
+trap 'cleanup; exit 143' TERM INT
+trap 'cleanup' EXIT
+
+terminate_matching_legal_parser_daemons
 
 while true; do
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"
   log_path="$DAEMON_DIR/legal_parser_daemon_supervised_${run_id}.log"
-  latest_log="$DAEMON_DIR/legal_parser_daemon_overnight.log"
-  status_path="$DAEMON_DIR/legal_parser_daemon_supervisor.json"
-  ln -sf "$(basename "$log_path")" "$REPO_ROOT/$latest_log"
-  cat > "$REPO_ROOT/$status_path" <<JSON
-{
-  "status": "starting",
-  "run_id": "$run_id",
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "log_path": "$log_path",
-  "model_name": "$MODEL_NAME",
-  "provider": "$PROVIDER"
-}
-JSON
+  ln -sfn "$(basename "$log_path")" "$REPO_ROOT/$LATEST_LOG_PATH"
+  write_supervisor_status "starting" "$run_id" "$log_path" null
 
   (
     cd "$REPO_ROOT" || exit 2
@@ -60,39 +432,39 @@ JSON
       --model-name "$MODEL_NAME"
   ) >> "$REPO_ROOT/$log_path" 2>&1 &
   child_pid=$!
+  child_started_at=$SECONDS
+  printf '%s\n' "$child_pid" > "$REPO_ROOT/$CHILD_PID_PATH"
 
   while kill -0 "$child_pid" 2>/dev/null; do
-    cat > "$REPO_ROOT/$status_path" <<JSON
-{
-  "status": "running",
-  "run_id": "$run_id",
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "supervisor_pid": $$,
-  "daemon_pid": $child_pid,
-  "supervisor_heartbeat_seconds": $SUPERVISOR_HEARTBEAT_SECONDS,
-  "log_path": "$log_path",
-  "model_name": "$MODEL_NAME",
-  "provider": "$PROVIDER"
-}
-JSON
+    write_supervisor_status "running" "$run_id" "$log_path" null
+    if [[ $((SECONDS - child_started_at)) -ge "$WATCHDOG_STARTUP_GRACE_SECONDS" ]] && heartbeat_is_stale; then
+      last_recycle_reason="stale_heartbeat"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$log_path"
+      stop_child
+      break
+    fi
+    maintenance_reason="$(agentic_maintenance_reason || true)"
+    if [[ -n "$maintenance_reason" ]]; then
+      last_recycle_reason="agentic_maintenance"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking agentic maintenance: $maintenance_reason" >> "$REPO_ROOT/$log_path"
+      run_agentic_maintenance "$maintenance_reason"
+      break
+    fi
     sleep "$SUPERVISOR_HEARTBEAT_SECONDS"
   done
-  wait "$child_pid"
-  rc=$?
-  child_pid=""
 
-  cat > "$REPO_ROOT/$status_path" <<JSON
-{
-  "status": "restarting",
-  "run_id": "$run_id",
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "last_exit_code": $rc,
-  "restart_backoff_seconds": $RESTART_BACKOFF_SECONDS,
-  "log_path": "$log_path",
-  "model_name": "$MODEL_NAME",
-  "provider": "$PROVIDER"
-}
-JSON
+  rc=0
+  if [[ -n "${child_pid:-}" ]]; then
+    wait "$child_pid"
+    rc=$?
+  fi
+  if [[ -f "$REPO_ROOT/$CHILD_PID_PATH" ]] && [[ "$(cat "$REPO_ROOT/$CHILD_PID_PATH" 2>/dev/null)" == "${child_pid:-}" ]]; then
+    rm -f "$REPO_ROOT/$CHILD_PID_PATH"
+  fi
+  child_pid=""
+  restart_count=$((restart_count + 1))
+  write_supervisor_status "restarting" "$run_id" "$log_path" "$rc"
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) daemon exited with code $rc; restarting in ${RESTART_BACKOFF_SECONDS}s" >> "$REPO_ROOT/$log_path"
   sleep "$RESTART_BACKOFF_SECONDS"
+  terminate_matching_legal_parser_daemons
 done
