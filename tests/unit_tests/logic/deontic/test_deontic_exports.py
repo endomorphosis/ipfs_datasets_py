@@ -5740,3 +5740,65 @@ def test_ir_procedure_event_records_mark_acceptance_and_acknowledgment_triggers_
     assert acknowledgment_record["support_span"] == element["support_span"]
     assert acknowledgment_record["is_formula_antecedent"] is True
     assert acknowledgment_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_calculation_and_audit_triggers_as_prerequisites():
+    """Calculation and audit events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Auditor shall certify the refund after calculation of the fee and after audit of the account."
+    )[0])
+    element["action"] = [
+        "certify the refund after calculation fee and after audit account"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "certification",
+                "relation": "triggered_by_calculation_of",
+                "anchor_event": "fee",
+                "raw_text": "after calculation of the fee",
+                "span": [37, 65],
+            },
+            {
+                "event": "certification",
+                "relation": "triggered_by_audit_of",
+                "anchor_event": "account",
+                "raw_text": "after audit of the account",
+                "span": [70, 96],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    calculation_record = records[0]
+    audit_record = records[1]
+
+    assert calculation_record["event_id"].startswith("event:")
+    assert calculation_record["source_id"] == element["source_id"]
+    assert calculation_record["event"] == "certification"
+    assert calculation_record["event_symbol"] == "Certification"
+    assert calculation_record["relation"] == "triggered_by_calculation_of"
+    assert calculation_record["anchor_event"] == "fee"
+    assert calculation_record["anchor_symbol"] == "Fee"
+    assert calculation_record["raw_text"] == "after calculation of the fee"
+    assert calculation_record["span"] == [37, 65]
+    assert calculation_record["support_span"] == element["support_span"]
+    assert calculation_record["is_formula_antecedent"] is True
+    assert calculation_record["proof_role"] == "prerequisite"
+
+    assert audit_record["event_id"].startswith("event:")
+    assert audit_record["source_id"] == element["source_id"]
+    assert audit_record["event"] == "certification"
+    assert audit_record["event_symbol"] == "Certification"
+    assert audit_record["relation"] == "triggered_by_audit_of"
+    assert audit_record["anchor_event"] == "account"
+    assert audit_record["anchor_symbol"] == "Account"
+    assert audit_record["raw_text"] == "after audit of the account"
+    assert audit_record["span"] == [70, 96]
+    assert audit_record["support_span"] == element["support_span"]
+    assert audit_record["is_formula_antecedent"] is True
+    assert audit_record["proof_role"] == "prerequisite"
