@@ -125,6 +125,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_refrain_action(action_text)
     elif _is_prevention_obligation(norm, action_text):
         action_text = _strip_prevention_action(action_text)
+    elif _is_confidentiality_obligation(norm, action_text):
+        action_text = _strip_confidentiality_action(action_text)
     elif _is_compliance_obligation(norm, action_text):
         action_text = _strip_compliance_action(action_text)
     elif _is_direct_gerund_prohibition(norm, action_text):
@@ -155,7 +157,11 @@ def _formula_operator(norm: LegalNormIR, action_text: str) -> str:
 
     if _is_failure_prohibition(norm, action_text):
         return "O"
-    if _is_refrain_obligation(norm, action_text) or _is_prevention_obligation(norm, action_text):
+    if (
+        _is_refrain_obligation(norm, action_text)
+        or _is_prevention_obligation(norm, action_text)
+        or _is_confidentiality_obligation(norm, action_text)
+    ):
         return "F"
     return norm.modality
 
@@ -220,6 +226,22 @@ def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
     ))
 
 
+def _is_confidentiality_obligation(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether an affirmative confidentiality duty prohibits disclosure."""
+
+    if norm.modality != "O":
+        return False
+    text = str(action_text or "").strip()
+    return bool(
+        re.match(
+            r"^(?:keep|maintain|preserve)\s+.+?\s+confidential\b",
+            text,
+            re.IGNORECASE,
+        )
+        or re.match(r"^(?:protect|preserve|maintain)\s+(?:the\s+)?confidentiality\s+of\s+\S", text, re.IGNORECASE)
+    )
+
+
 def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a duty to ensure compliance embeds the operative action."""
 
@@ -254,6 +276,31 @@ def _strip_prevention_action(action_text: str) -> str:
         flags=re.IGNORECASE,
     ).strip()
     return _normalize_prevention_action_head(embedded)
+
+
+def _strip_confidentiality_action(action_text: str) -> str:
+    """Normalize confidentiality-duty wrappers into disclosure prohibitions."""
+
+    text = str(action_text or "").strip()
+    direct_match = re.match(
+        r"^(?:keep|maintain|preserve)\s+(.+?)\s+confidential\b",
+        text,
+        re.IGNORECASE,
+    )
+    if direct_match:
+        protected_object = direct_match.group(1).strip()
+        return f"disclose {protected_object}" if protected_object else text
+
+    confidentiality_match = re.match(
+        r"^(?:protect|preserve|maintain)\s+(?:the\s+)?confidentiality\s+of\s+(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if confidentiality_match:
+        protected_object = confidentiality_match.group(1).strip()
+        return f"disclose {protected_object}" if protected_object else text
+
+    return text
 
 
 def _strip_compliance_action(action_text: str) -> str:
