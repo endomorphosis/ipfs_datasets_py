@@ -18,6 +18,7 @@ MAX_TASK_FAILURES="${MAX_TASK_FAILURES:-4}"
 PROPOSAL_ATTEMPTS="${PROPOSAL_ATTEMPTS:-3}"
 FILE_REPAIR_ATTEMPTS="${FILE_REPAIR_ATTEMPTS:-1}"
 VALIDATION_REPAIR_ATTEMPTS="${VALIDATION_REPAIR_ATTEMPTS:-1}"
+VALIDATION_REPAIR_FAILURE_BUDGET="${VALIDATION_REPAIR_FAILURE_BUDGET:-2}"
 BLOCKED_BACKLOG_LIMIT="${BLOCKED_BACKLOG_LIMIT:-10}"
 BLOCKED_TASK_STRATEGY="${BLOCKED_TASK_STRATEGY:-fewest-failures}"
 PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
@@ -240,20 +241,27 @@ PY
 
 mark_agentic_maintenance_ran() {
   local reason="$1"
-  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$reason" <<'PY'
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$REPO_ROOT/$PROGRESS_PATH" "$reason" <<'PY'
 import json
 import sys
 import time
 from pathlib import Path
 
 path = Path(sys.argv[1])
-reason = sys.argv[2]
+progress_path = Path(sys.argv[2])
+reason = sys.argv[3]
 try:
     state = json.loads(path.read_text(encoding="utf-8"))
 except Exception:
     state = {}
 state["last_maintenance_at"] = int(time.time())
 state["last_maintenance_reason"] = reason
+try:
+    progress = json.loads(progress_path.read_text(encoding="utf-8"))
+except Exception:
+    progress = {}
+state["baseline_rounds_total"] = int(progress.get("rounds_total") or state.get("rounds_total") or 0)
+state["baseline_valid_rounds_total"] = int(progress.get("valid_rounds_total") or state.get("valid_rounds_total") or 0)
 path.parent.mkdir(parents=True, exist_ok=True)
 path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
@@ -426,6 +434,7 @@ while true; do
       --proposal-attempts "$PROPOSAL_ATTEMPTS" \
       --file-repair-attempts "$FILE_REPAIR_ATTEMPTS" \
       --validation-repair-attempts "$VALIDATION_REPAIR_ATTEMPTS" \
+      --validation-repair-failure-budget "$VALIDATION_REPAIR_FAILURE_BUDGET" \
       --revisit-blocked-tasks \
       --blocked-backlog-limit "$BLOCKED_BACKLOG_LIMIT" \
       --blocked-task-strategy "$BLOCKED_TASK_STRATEGY" \

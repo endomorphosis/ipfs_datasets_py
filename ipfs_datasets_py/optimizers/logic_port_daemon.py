@@ -183,6 +183,7 @@ class LogicPortDaemonConfig:
     patch_repair_attempts: int = 1
     file_repair_attempts: int = 1
     validation_repair_attempts: int = 1
+    validation_repair_failure_budget: int = 2
     proposal_attempts: int = 3
     prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
@@ -426,6 +427,24 @@ def _current_task_failure_counts(
         kind = _classify_failure_kind(artifact)
         by_kind[kind] = by_kind.get(kind, 0) + 1
     return {"total_since_success": total, "by_kind_since_success": by_kind}
+
+
+def _rounds_since_last_valid(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> int:
+    count = 0
+    for result, _artifact in reversed(rows):
+        if result.get("valid"):
+            break
+        count += 1
+    return count
+
+
+def _last_task_attempt_index(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
+    for index in range(len(rows) - 1, -1, -1):
+        _result, artifact = rows[index]
+        if artifact.get("target_task") == task_label:
+            return index
+    return -1
+
 
 
 def _task_failure_summary(
@@ -1210,6 +1229,10 @@ Critical correction for attempt {attempt}:
         task_text = _strip_daemon_task_board(original)
         existing_titles = {task.title.lower() for task in extract_plan_tasks(task_text)}
         candidates = self._discover_plan_replenishment_tasks(existing_titles, limit=limit)
+        if len(candidates) < limit:
+            combined_titles = set(existing_titles)
+            combined_titles.update(title.lower() for title in candidates)
+            candidates.extend(self._discover_goal_review_replenishment_tasks(combined_titles, limit=limit - len(candidates)))
         if not candidates:
             return []
 
@@ -1221,7 +1244,7 @@ Critical correction for attempt {attempt}:
             "",
             f"Last replenished: {timestamp}",
             "",
-            "These tasks were added automatically after the daemon found no eligible unchecked port-plan items. They are derived from the current Python logic inventory and TypeScript/WASM implementation state.",
+            "These tasks were added automatically after the daemon found no eligible unchecked port-plan items. They are derived from the current Python logic inventory, TypeScript/WASM implementation state, accepted-work evidence, and the original browser-native parity goal.",
             "",
         ]
         lines.extend(f"- [ ] {title}" for title in candidates)
@@ -1281,10 +1304,98 @@ Critical correction for attempt {attempt}:
             if len(candidates) >= limit:
                 return candidates
 
-        fallback = "Audit current TypeScript logic port against the Python logic inventory and add focused parity tasks for any remaining browser-native behavior gaps."
-        if not candidates and fallback.lower() not in existing_titles:
-            candidates.append(fallback)
         return candidates[:limit]
+
+    def _discover_goal_review_replenishment_tasks(self, existing_titles: set[str], *, limit: int) -> List[str]:
+        if limit <= 0:
+            return []
+
+        evidence = self._collect_goal_review_evidence()
+        templates = [
+            (
+                "Review the accepted TypeScript logic changes against the original browser-native TypeScript/WASM port goal, "
+                "then add or implement any missing parity tasks for Python logic behavior that lacks accepted-work evidence."
+            ),
+            (
+                "Add end-to-end browser-native validation proving the converted logic runs without Python, spaCy, "
+                "or server-side calls, including deterministic coverage for ML and NLP capability surfaces."
+            ),
+            (
+                "Audit Python ML and spaCy expectations against the TypeScript/WASM implementation and add focused parity "
+                "tests or local-model artifact loading tasks for unsupported browser-native behavior."
+            ),
+            (
+                "Refresh the TypeScript port plan with a parity matrix mapping Python logic modules, TypeScript/WASM files, "
+                "validation evidence, accepted work, and remaining browser-native tasks."
+            ),
+            (
+                "Compare TypeScript logic public exports against Python logic module public APIs and add missing browser-native "
+                "compatibility adapters or parity tests."
+            ),
+        ]
+        if evidence["accepted_rounds"] == 0:
+            templates.insert(
+                0,
+                (
+                    "Create accepted-work parity evidence for the current TypeScript/WASM logic port by linking completed "
+                    "tasks to changed files, validation commands, and remaining Python logic gaps."
+                ),
+            )
+        if evidence["python_files"] and evidence["ts_files"] and evidence["python_files"] > evidence["ts_files"]:
+            templates.insert(
+                0,
+                (
+                    f"Reconcile the Python logic inventory ({evidence['python_files']} files) with the TypeScript/WASM "
+                    f"implementation ({evidence['ts_files']} files) and add browser-native port tasks for uncovered behavior."
+                ),
+            )
+
+        candidates: List[str] = []
+        for title in templates:
+            if title.lower() in existing_titles or title in candidates:
+                continue
+            candidates.append(title)
+            if len(candidates) >= limit:
+                break
+        return candidates
+
+    def _collect_goal_review_evidence(self) -> Dict[str, int]:
+        py_root = self.daemon_config.resolve(self.daemon_config.python_logic_dir)
+        ts_root = self.daemon_config.resolve(self.daemon_config.typescript_logic_dir)
+        python_files = 0
+        ts_files = 0
+        if py_root.exists():
+            python_files = sum(
+                1
+                for path in py_root.rglob("*.py")
+                if path.is_file() and path.name != "__init__.py" and not path.name.startswith("test_")
+            )
+        if ts_root.exists():
+            ts_files = sum(1 for path in ts_root.rglob("*.ts") if path.is_file())
+
+        accepted_rounds = 0
+        if self.daemon_config.result_log_path is not None:
+            rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+            accepted_rounds = sum(1 for result, _artifact in rows if result.get("valid"))
+        if accepted_rounds == 0 and self.daemon_config.progress_path is not None:
+            path = self.daemon_config.resolve(self.daemon_config.progress_path)
+            if path.exists():
+                try:
+                    progress = json.loads(path.read_text(encoding="utf-8"))
+                    accepted_rounds = int(progress.get("valid_rounds_total") or 0)
+                except (json.JSONDecodeError, OSError, TypeError, ValueError):
+                    accepted_rounds = 0
+        if accepted_rounds == 0 and self.daemon_config.accepted_work_log_path is not None:
+            path = self.daemon_config.resolve(self.daemon_config.accepted_work_log_path)
+            if path.exists():
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                accepted_rounds = len(re.findall(r"^##\s+", text, re.MULTILINE))
+
+        return {
+            "python_files": python_files,
+            "ts_files": ts_files,
+            "accepted_rounds": accepted_rounds,
+        }
 
     def _block_current_task_if_stale_failed(self) -> bool:
         if self.daemon_config.dry_run or self.daemon_config.task_board_doc is None:
@@ -1394,6 +1505,7 @@ Critical correction for attempt {attempt}:
             "terminal_events_total": len(terminal_rows),
             "valid_rounds_total": len(valid_rows),
             "invalid_rounds_total": len(work_rows) - len(valid_rows),
+            "stagnant_rounds_since_valid": _rounds_since_last_valid(work_rows),
             "acceptance_rate": (len(valid_rows) / len(work_rows)) if work_rows else 0.0,
             "current_task": current_task.label if current_task else "",
             "current_task_failure_counts": current_task_counts,
@@ -1724,9 +1836,9 @@ Critical correction for attempt {attempt}:
 
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         if strategy == "fewest-failures":
-            return min(blocked, key=lambda item: (_recent_total_failure_count(rows, item[1].label), item[0]))[1]
+            return min(blocked, key=lambda item: (_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
         if strategy == "most-failures":
-            return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), item[0]))[1]
+            return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
         return blocked[0][1]
 
     def _render_task_board(
@@ -2142,6 +2254,30 @@ Current file contents for likely targets:
         if attempts <= 0:
             return LogicPortArtifact(raw_response=artifact.raw_response)
 
+        selected_task = self._current_plan_task()
+        selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
+        if self.daemon_config.validation_repair_failure_budget > 0 and self.daemon_config.result_log_path is not None:
+            rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+            repair_failures = int(
+                _current_task_failure_counts(rows, selected_label)
+                .get("by_kind_since_success", {})
+                .get("validation_repair", 0)
+            )
+            if repair_failures >= self.daemon_config.validation_repair_failure_budget:
+                self._write_status(
+                    "validation_repair_skipped",
+                    selected_task=selected_label,
+                    validation_repair_failures_since_success=repair_failures,
+                    validation_repair_failure_budget=self.daemon_config.validation_repair_failure_budget,
+                )
+                return LogicPortArtifact(
+                    raw_response=artifact.raw_response,
+                    target_task=artifact.target_task,
+                    errors=[
+                        "Skipped validation repair because this task has repeated validation-repair failures since its last accepted round."
+                    ],
+                )
+
         failed_results = [result.compact(limit=12000) for result in artifact.validation_results if not result.ok]
         attempted_files = []
         current_files = []
@@ -2155,8 +2291,6 @@ Current file contents for likely targets:
             elif path:
                 current_files.append(f"### {path}\n[missing in repository after rollback]")
 
-        selected_task = self._current_plan_task()
-        selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
         repair_prompt = f"""The daemon applied these complete file replacements, but validation failed and the edits were rolled back.
 
 Return ONLY JSON with corrected complete file replacements.
@@ -2453,6 +2587,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--heartbeat-interval", type=float, default=30.0, help="Seconds between status heartbeat writes while a cycle is active.")
     parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
     parser.add_argument("--validation-repair-attempts", type=int, default=1, help="Attempts to repair complete file replacements after validation errors.")
+    parser.add_argument(
+        "--validation-repair-failure-budget",
+        type=int,
+        default=2,
+        help="Skip validation-repair LLM calls for a task after this many validation-repair failures since its last accepted round; 0 disables the adaptive skip.",
+    )
     parser.add_argument("--proposal-attempts", type=int, default=3, help="LLM proposal attempts per daemon cycle before logging a failed round.")
     parser.add_argument("--revisit-blocked-tasks", action="store_true", help="When no needed/in-progress tasks remain, intentionally select blocked port-plan tasks for another autonomous attempt.")
     parser.add_argument("--blocked-backlog-limit", type=int, default=10, help="Number of blocked tasks to summarize in progress, prompts, and the generated task board.")
@@ -2501,6 +2641,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         heartbeat_interval_seconds=max(0.0, args.heartbeat_interval),
         file_repair_attempts=max(0, args.file_repair_attempts),
         validation_repair_attempts=max(0, args.validation_repair_attempts),
+        validation_repair_failure_budget=max(0, args.validation_repair_failure_budget),
         proposal_attempts=max(1, args.proposal_attempts),
         revisit_blocked_tasks=bool(args.revisit_blocked_tasks),
         blocked_backlog_limit=max(0, args.blocked_backlog_limit),

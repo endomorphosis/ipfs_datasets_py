@@ -85,6 +85,7 @@ The supervisor also has a stale-heartbeat watchdog. `WATCHDOG_STALE_AFTER_SECOND
 For a belt-and-suspenders watchdog outside the supervisor itself, run `ensure_logic_port_daemon.sh` periodically from cron or systemd. The script is idempotent: when the daemon is healthy it only records `already_running`; when the health check fails it starts the supervisor with `setsid` and then verifies the new process. The supervisor lock keeps repeated ensure calls from creating duplicate supervisors.
 
 The supervisor can also run a bounded Codex maintenance pass when the daemon is alive but not making meaningful progress. `SUPERVISOR_AGENTIC_MAINTENANCE` defaults to `1`; set it to `0` to disable this behavior. Maintenance triggers when the current task reaches `SUPERVISOR_AGENTIC_TASK_FAILURES` failures since its last success, or when `SUPERVISOR_AGENTIC_STAGNANT_ROUNDS` rounds elapse without a new accepted round. The supervisor stops the child daemon, invokes `codex exec` with `gpt-5.5` against only the daemon/supervisor/docs/tests allowlist, runs shell syntax checks plus the daemon unit tests, records the result under `logic-port-daemon-agentic-maintenance_*.log`, and restarts the daemon. `SUPERVISOR_AGENTIC_COOLDOWN_SECONDS` prevents repeated maintenance loops.
+When maintenance starts, the supervisor records the current progress counters as the new stagnant-round baseline before restarting the daemon. This prevents the same historical no-progress window from retriggering maintenance after the cooldown unless additional rounds complete without accepted work.
 
 ```bash
 PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
@@ -99,6 +100,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --validation-repair-attempts 1 \
+  --validation-repair-failure-budget 2 \
   --revisit-blocked-tasks \
   --blocked-backlog-limit 10 \
   --blocked-task-strategy fewest-failures \
@@ -118,6 +120,8 @@ The daemon also retries unusable proposals inside a cycle. If the model returns 
 
 When complete file replacements apply but fail validation, the daemon now performs one validation-repair attempt before waiting for the next cycle. The repair prompt includes the failed validation output and the attempted file contents, asks for corrected complete file replacements, and reruns the normal validation/rollback flow.
 
+Validation repair is adaptive. After a task accumulates `--validation-repair-failure-budget` validation-repair failures since its last accepted round, the daemon skips additional validation-repair LLM calls for that task and lets the normal task-failure threshold block or advance it faster. This keeps unattended runs moving when a task repeatedly produces malformed TypeScript repairs.
+
 Each proposal prompt includes recent failure context for the selected task plus current contents for likely target files selected from the tracked TypeScript logic tree. This keeps complete-file replacements grounded in the actual code instead of asking the model to infer file shape from filenames alone.
 
 The prompt intentionally asks for one narrow requirement per cycle, at most 180 changed diff lines, and usually one implementation file plus one focused test. It now prefers exact `files` replacements over unified diffs for TypeScript/doc edits. File replacements are path-allowlisted, formatted with Prettier for TypeScript files, and rolled back automatically if validation fails, which keeps overnight runs biased toward changes that can be applied and validated unattended.
@@ -133,6 +137,7 @@ The daemon also writes a progress summary:
 - `ipfs_datasets_py/.daemon/logic-port-daemon.progress.json`
 
 That file records total rounds, valid rounds, acceptance rate, current task, current-task failure counts, active state, plan status counts, failure-kind counts, the latest round, recent failures, and recent accepted changed files. It is written at cycle start, on heartbeat, and after each completed round, so it appears immediately after daemon startup instead of only after the first LLM call returns. Provider/Cloudflare HTML failures are compacted and classified, keeping the progress file readable even when Codex emits long HTTP error pages.
+It also records `stagnant_rounds_since_valid`, which is the daemon-side count of completed work rounds since the latest accepted round. The supervisor uses a persisted baseline for its own maintenance trigger, but this field makes the current no-progress streak visible in health checks and logs.
 
 The daemon blocks the current task after repeated failures in two ways: `--max-task-failures` counts total failures for the task since its last accepted round, while `max_task_failure_rounds` still guards repeated same-kind failures. This prevents a task from spinning forever by alternating between parse, patch, and validation failures.
 
@@ -140,11 +145,12 @@ At the beginning of each supervised cycle, the daemon also checks historical JSO
 
 If every parsed port-plan task is already `[x]` complete or `[!]` blocked, the daemon does not call `llm_router` with an empty target. Without replenishment it writes a terminal `no_eligible_tasks` result to the JSONL log, status file, progress summary, and generated task board. That keeps overnight runs bounded by the plan instead of spending Codex calls on an empty target.
 
-By default, continuous mode now tries to replenish the TypeScript port plan before taking that terminal stop. If no eligible tasks remain, it scans the current Python logic inventory and TypeScript logic implementation state, appends a `Daemon-Discovered Implementation Gaps` section to `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`, refreshes the generated task board, and immediately continues with the newly added task. Use `--plan-replenishment-limit` to bound how many tasks are added in one pass, or `--no-plan-replenishment` to keep the old fail-closed behavior.
+By default, continuous mode now tries to replenish the TypeScript port plan before taking that terminal stop. If no eligible tasks remain, it first scans the current Python logic inventory and TypeScript logic implementation state. When obvious module or capability-marker gaps are exhausted, it then reviews the original browser-native TypeScript/WASM parity goal against accepted-work evidence, progress logs, Python ML/spaCy expectations, public API coverage, and no-server-runtime validation needs. It appends a `Daemon-Discovered Implementation Gaps` section to `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`, refreshes the generated task board, and immediately continues with the newly added task. Use `--plan-replenishment-limit` to bound how many tasks are added in one pass, or `--no-plan-replenishment` to keep the old fail-closed behavior.
 
 Use `--revisit-blocked-tasks` when the normal backlog is exhausted and you intentionally want the daemon to work through blocked tasks again. In that mode, selection still prefers `[ ]` and `[~]` tasks first; only when none remain does it select `[!]` tasks. The stale-failure pre-cycle blocker is disabled for this mode so historical failures do not immediately re-block the task before the new attempt. A successful round marks the blocked source checkbox `[x]`; a failed round leaves it blocked and records the latest failure evidence.
 
 Blocked task selection is controlled by `--blocked-task-strategy`:
+When failure counts tie under `fewest-failures` or `most-failures`, the daemon now prefers the blocked task least recently attempted. That keeps revisit mode rotating across equally stuck tasks instead of repeatedly selecting the first checkbox by markdown order.
 
 - `plan-order` keeps the markdown order and is the conservative default.
 - `fewest-failures` chooses the blocked task with the fewest failures since its last accepted round, which is useful for overnight unblocking runs that should make easier progress first.

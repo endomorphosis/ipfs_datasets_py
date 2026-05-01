@@ -1014,6 +1014,7 @@ def test_progress_summary_records_acceptance_rate_and_current_task(tmp_path):
     assert progress["rounds_total"] == 2
     assert progress["active_state"] == "cycle_failed"
     assert progress["valid_rounds_total"] == 1
+    assert progress["stagnant_rounds_since_valid"] == 1
     assert progress["current_task"] == "Task checkbox-2: Next task"
     assert progress["current_task_failure_counts"]["total_since_success"] == 1
     assert progress["latest_round"]["failure_kind"] == "provider_http_403"
@@ -1496,7 +1497,7 @@ def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
         python_logic_dir=python_logic_dir,
         dry_run=False,
         task_board_doc=plan,
-        plan_replenishment_limit=3,
+        plan_replenishment_limit=1,
     )
 
     added = LogicPortDaemonOptimizer(config)._replenish_plan_from_code_state()
@@ -1508,6 +1509,38 @@ def test_plan_replenishment_adds_missing_python_logic_tasks(tmp_path):
     assert "## Daemon-Discovered Implementation Gaps" in updated
     assert "- [ ] Port remaining Python logic module `logic/unported_feature.py`" in updated
     assert "Current target: `Task checkbox-2: Port remaining Python logic module 'logic/unported_feature.py' to browser-native TypeScript/WASM, including focused validation tests and no server or Python runtime dependency.`" in updated
+
+
+def test_plan_replenishment_reviews_original_goal_when_inventory_gaps_are_exhausted(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (python_logic_dir / "feature.py").write_text("class Feature: pass\n", encoding="utf-8")
+    (logic_dir / "feature.ts").write_text("export class Feature {}\n", encoding="utf-8")
+    plan.write_text("- [x] Existing complete task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        plan_replenishment_limit=3,
+    )
+
+    added = LogicPortDaemonOptimizer(config)._replenish_plan_from_code_state()
+
+    updated = plan.read_text(encoding="utf-8")
+    assert len(added) == 3
+    assert "accepted-work parity evidence" in added[0]
+    assert "original browser-native TypeScript/WASM port goal" in updated
+    assert "Python, spaCy, or server-side calls" in updated
+    assert "Current target: `Task checkbox-2: Create accepted-work parity evidence" in updated
 
 
 def test_supervised_replenishes_empty_plan_and_keeps_running(tmp_path):
@@ -1668,3 +1701,50 @@ def test_patch_mode_rolls_back_when_validation_fails(tmp_path):
     assert result["artifact"]["applied"] is False
     assert not (tmp_path / "generated.txt").exists()
     assert "Patch failed validation and was rolled back." in result["artifact"]["errors"]
+
+def test_revisit_blocked_fewest_failures_rotates_equal_failure_tasks(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] First blocked task\n- [!] Second blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: First blocked task",
+                "summary": "first failed",
+                "failure_kind": "validation",
+            },
+        },
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-2: Second blocked task",
+                "summary": "second failed more recently",
+                "failure_kind": "validation",
+            },
+        },
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "First blocked task"

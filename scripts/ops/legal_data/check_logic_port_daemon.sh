@@ -92,6 +92,7 @@ payload = {
     "current_task": progress.get("current_task") or status.get("selected_task"),
     "plan_status_counts": progress.get("plan_status_counts"),
     "failure_kind_counts": progress.get("failure_kind_counts"),
+    "stagnant_rounds_since_valid": progress.get("stagnant_rounds_since_valid"),
     "latest_round": progress.get("latest_round"),
     "model_name": status.get("model_name") or supervisor.get("model_name"),
     "provider": status.get("provider") or supervisor.get("provider"),
