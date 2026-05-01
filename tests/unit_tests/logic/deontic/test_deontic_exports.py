@@ -5678,3 +5678,65 @@ def test_ir_procedure_event_records_mark_registration_and_enrollment_triggers_as
     assert enrollment_record["support_span"] == element["support_span"]
     assert enrollment_record["is_formula_antecedent"] is True
     assert enrollment_record["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_acceptance_and_acknowledgment_triggers_as_prerequisites():
+    """Acceptance and acknowledgment events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall docket the appeal after acceptance of the filing and after acknowledgment of the notice."
+    )[0])
+    element["action"] = [
+        "docket the appeal after acceptance filing and after acknowledgment notice"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_acceptance_of",
+                "anchor_event": "filing",
+                "raw_text": "after acceptance of the filing",
+                "span": [31, 61],
+            },
+            {
+                "event": "docketing",
+                "relation": "triggered_by_acknowledgment_of",
+                "anchor_event": "notice",
+                "raw_text": "after acknowledgment of the notice",
+                "span": [66, 101],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    acceptance_record = records[0]
+    acknowledgment_record = records[1]
+
+    assert acceptance_record["event_id"].startswith("event:")
+    assert acceptance_record["source_id"] == element["source_id"]
+    assert acceptance_record["event"] == "docketing"
+    assert acceptance_record["event_symbol"] == "Docketing"
+    assert acceptance_record["relation"] == "triggered_by_acceptance_of"
+    assert acceptance_record["anchor_event"] == "filing"
+    assert acceptance_record["anchor_symbol"] == "Filing"
+    assert acceptance_record["raw_text"] == "after acceptance of the filing"
+    assert acceptance_record["span"] == [31, 61]
+    assert acceptance_record["support_span"] == element["support_span"]
+    assert acceptance_record["is_formula_antecedent"] is True
+    assert acceptance_record["proof_role"] == "prerequisite"
+
+    assert acknowledgment_record["event_id"].startswith("event:")
+    assert acknowledgment_record["source_id"] == element["source_id"]
+    assert acknowledgment_record["event"] == "docketing"
+    assert acknowledgment_record["event_symbol"] == "Docketing"
+    assert acknowledgment_record["relation"] == "triggered_by_acknowledgment_of"
+    assert acknowledgment_record["anchor_event"] == "notice"
+    assert acknowledgment_record["anchor_symbol"] == "Notice"
+    assert acknowledgment_record["raw_text"] == "after acknowledgment of the notice"
+    assert acknowledgment_record["span"] == [66, 101]
+    assert acknowledgment_record["support_span"] == element["support_span"]
+    assert acknowledgment_record["is_formula_antecedent"] is True
+    assert acknowledgment_record["proof_role"] == "prerequisite"

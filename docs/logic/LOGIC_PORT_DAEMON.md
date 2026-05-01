@@ -95,7 +95,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --llm-timeout 300 \
   --command-timeout 300 \
   --heartbeat-interval 30 \
-  --max-task-failures 6 \
+  --max-task-failures 4 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --validation-repair-attempts 1 \
@@ -198,7 +198,7 @@ python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --llm-timeout 300 \
   --command-timeout 300 \
   --heartbeat-interval 30 \
-  --max-task-failures 6 \
+  --max-task-failures 4 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
   --validation-repair-attempts 1 \

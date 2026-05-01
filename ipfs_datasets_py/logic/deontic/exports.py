@@ -184,6 +184,8 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
             "triggered_by_renewal_of",
             "triggered_by_registration_of",
             "triggered_by_enrollment_of",
+            "triggered_by_acceptance_of",
+            "triggered_by_acknowledgment_of",
             "triggered_by_inspection_of",
             "triggered_by_expiration_of",
             "triggered_by_termination_of",

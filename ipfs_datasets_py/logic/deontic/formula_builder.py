@@ -492,6 +492,10 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_execution_of": "procedure after execution",
         "triggered_by_recording_of": "procedure after recording",
         "triggered_by_renewal_of": "procedure after renewal",
+        "triggered_by_registration_of": "procedure after registration",
+        "triggered_by_enrollment_of": "procedure after enrollment",
+        "triggered_by_acceptance_of": "procedure after acceptance",
+        "triggered_by_acknowledgment_of": "procedure after acknowledgment",
         "triggered_by_expiration_of": "procedure after expiration",
         "triggered_by_termination_of": "procedure after termination",
         "triggered_by_revocation_of": "procedure after revocation",
@@ -548,6 +552,10 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_execution_of",
         "triggered_by_recording_of",
         "triggered_by_renewal_of",
+        "triggered_by_registration_of",
+        "triggered_by_enrollment_of",
+        "triggered_by_acceptance_of",
+        "triggered_by_acknowledgment_of",
         "triggered_by_expiration_of",
         "triggered_by_termination_of",
         "triggered_by_revocation_of",
@@ -782,6 +790,10 @@ def _procedure_trigger_tail_noun(relation_type: str) -> str:
         "triggered_by_signature_of": "signature",
         "triggered_by_opening_of": "opening",
         "triggered_by_return_of": "return",
+        "triggered_by_registration_of": "registration",
+        "triggered_by_enrollment_of": "enrollment",
+        "triggered_by_acceptance_of": "acceptance",
+        "triggered_by_acknowledgment_of": "acknowledgment",
     }.get(relation_type, "")
 
 

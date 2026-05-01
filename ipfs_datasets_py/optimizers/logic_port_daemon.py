@@ -2144,10 +2144,16 @@ Current file contents for likely targets:
 
         failed_results = [result.compact(limit=12000) for result in artifact.validation_results if not result.ok]
         attempted_files = []
+        current_files = []
         for edit in artifact.files[:6]:
             path = str(edit.get("path", ""))
             content = str(edit.get("content", ""))
             attempted_files.append(f"### {path}\n```\n{content[:20000]}\n```")
+            resolved = self.daemon_config.resolve(Path(path))
+            if path and resolved.exists() and resolved.is_file():
+                current_files.append(f"### {path}\n```\n{_read_text(resolved, limit=20000)}\n```")
+            elif path:
+                current_files.append(f"### {path}\n[missing in repository after rollback]")
 
         selected_task = self._current_plan_task()
         selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
@@ -2171,10 +2177,19 @@ Rules:
 - Do not return a patch.
 - Return complete replacement file contents, not snippets.
 - Fix the exact validation errors below.
+- Base the corrected replacement on the current repository file contents after rollback, not only on the failed attempted replacement.
 - Keep the change focused on the daemon-selected task: {selected_label}
 - Keep browser runtime changes TypeScript/WASM-native with no Python service or server dependency.
 - Use only paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
 - Test files must use Jest globals and must not import vitest or @jest/globals.
+- Preserve valid TypeScript syntax. Every generic utility type must include required type arguments, for example:
+  - Record<string, unknown> instead of Record
+  - Pick<T, "key"> instead of Pick
+  - Omit<T, "key"> instead of Omit
+  - ReadonlySet<string> instead of ReadonlySet
+  - Map<string, Value> instead of Map
+- If diagnostics are syntax errors such as TS1005, TS1003, TS1128, TS1109, TS1144, or TS1434, repair the smallest syntactic region needed and preserve the surrounding current file structure.
+- Do not use Python-style tuple/list/dict syntax, unquoted object keys in type positions, or placeholder ellipses in returned TypeScript.
 
 Session: {context.session_id}
 Original summary:
@@ -2188,6 +2203,9 @@ Validation failures:
 
 Attempted file replacements:
 {chr(10).join(attempted_files)}
+
+Current repository file contents after rollback:
+{chr(10).join(current_files) if current_files else "[No current file contents available.]"}
 """
         self._write_status(
             "validation_repair_started",

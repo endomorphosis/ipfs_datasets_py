@@ -1,5 +1,4 @@
 """Tests for deterministic IR-to-formula generation."""
-
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -3334,4 +3333,84 @@ def test_structured_temporal_duration_without_unit_remains_conservative():
     assert norm.temporal_constraints[0]["value"] == "10 after application"
     assert build_deontic_formula_from_ir(norm) == (
         "O(∀x (Director(x) ∧ Deadline10AfterApplication(x) → IssuePermit(x)))"
+    )
+
+
+def test_structured_registration_and_enrollment_triggers_become_formula_prerequisites():
+    registration_element = dict(extract_normative_elements(
+        "The Clerk shall activate the permit after registration of the applicant."
+    )[0])
+    registration_element["action"] = ["activate the permit after registration applicant"]
+    registration_element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "activation",
+                "relation": "triggered_by_registration_of",
+                "anchor_event": "applicant",
+                "raw_text": "after registration of the applicant",
+                "span": [32, 67],
+            }
+        ],
+    }
+    enrollment_element = dict(extract_normative_elements(
+        "The Clerk shall activate the permit after enrollment of the license."
+    )[0])
+    enrollment_element["action"] = ["activate the permit after enrollment license"]
+    enrollment_element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "activation",
+                "relation": "triggered_by_enrollment_of",
+                "anchor_event": "license",
+                "raw_text": "after enrollment of the license",
+                "span": [32, 63],
+            }
+        ],
+    }
+
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(registration_element)) == (
+        "O(∀x (Clerk(x) ∧ ProcedureAfterRegistrationApplicant(x) → ActivatePermit(x)))"
+    )
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(enrollment_element)) == (
+        "O(∀x (Clerk(x) ∧ ProcedureAfterEnrollmentLicense(x) → ActivatePermit(x)))"
+    )
+
+
+def test_structured_acceptance_and_acknowledgment_triggers_become_formula_prerequisites():
+    acceptance_element = dict(extract_normative_elements(
+        "The Board shall schedule the hearing after acceptance of the appeal."
+    )[0])
+    acceptance_element["action"] = ["schedule the hearing after acceptance appeal"]
+    acceptance_element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "scheduling",
+                "relation": "triggered_by_acceptance_of",
+                "anchor_event": "appeal",
+                "raw_text": "after acceptance of the appeal",
+                "span": [33, 63],
+            }
+        ],
+    }
+    acknowledgment_element = dict(extract_normative_elements(
+        "The Clerk shall docket the filing after acknowledgment of the filing."
+    )[0])
+    acknowledgment_element["action"] = ["docket the filing after acknowledgment filing"]
+    acknowledgment_element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "docketing",
+                "relation": "triggered_by_acknowledgment_of",
+                "anchor_event": "filing",
+                "raw_text": "after acknowledgment of the filing",
+                "span": [31, 66],
+            }
+        ],
+    }
+
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(acceptance_element)) == (
+        "O(∀x (Board(x) ∧ ProcedureAfterAcceptanceAppeal(x) → ScheduleHearing(x)))"
+    )
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(acknowledgment_element)) == (
+        "O(∀x (Clerk(x) ∧ ProcedureAfterAcknowledgmentFiling(x) → DocketFiling(x)))"
     )
