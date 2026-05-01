@@ -25,6 +25,7 @@ PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
 SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
+SUPERVISOR_AGENTIC_PROPOSAL_FAILURES="${SUPERVISOR_AGENTIC_PROPOSAL_FAILURES:-3}"
 SUPERVISOR_AGENTIC_ROLLBACK_FAILURES="${SUPERVISOR_AGENTIC_ROLLBACK_FAILURES:-5}"
 SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES:-3}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
@@ -110,6 +111,7 @@ write_supervisor_status() {
   "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
   "agentic_stagnant_rounds": $SUPERVISOR_AGENTIC_STAGNANT_ROUNDS,
   "agentic_task_failures": $SUPERVISOR_AGENTIC_TASK_FAILURES,
+  "agentic_proposal_failures": $SUPERVISOR_AGENTIC_PROPOSAL_FAILURES,
   "agentic_rollback_failures": $SUPERVISOR_AGENTIC_ROLLBACK_FAILURES,
   "agentic_typescript_quality_failures": $SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
@@ -175,6 +177,7 @@ agentic_maintenance_reason() {
     "$REPO_ROOT/$RESULT_LOG_PATH" \
     "$SUPERVISOR_AGENTIC_STAGNANT_ROUNDS" \
     "$SUPERVISOR_AGENTIC_TASK_FAILURES" \
+    "$SUPERVISOR_AGENTIC_PROPOSAL_FAILURES" \
     "$SUPERVISOR_AGENTIC_ROLLBACK_FAILURES" \
     "$SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES" \
     "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
@@ -188,9 +191,10 @@ state_path = Path(sys.argv[2])
 result_log_path = Path(sys.argv[3])
 stagnant_rounds = int(sys.argv[4])
 task_failures = int(sys.argv[5])
-rollback_failures_threshold = int(sys.argv[6])
-typescript_quality_failures_threshold = int(sys.argv[7])
-cooldown_seconds = int(sys.argv[8])
+proposal_failures_threshold = int(sys.argv[6])
+rollback_failures_threshold = int(sys.argv[7])
+typescript_quality_failures_threshold = int(sys.argv[8])
+cooldown_seconds = int(sys.argv[9])
 now = int(time.time())
 
 
@@ -257,6 +261,13 @@ def is_typescript_quality_failure(result: dict, artifact: dict) -> bool:
     return "TypeScript replacement preflight" in text or "TypeScript parser preflight" in text
 
 
+def is_proposal_quality_failure(result: dict, artifact: dict) -> bool:
+    if result.get("valid") or artifact.get("changed_files"):
+        return False
+    failure_kind = str(artifact.get("failure_kind") or "")
+    return failure_kind in {"parse", "empty_proposal", "invalid_no_change", "no_change"}
+
+
 def is_rollback_quality_failure(result: dict, artifact: dict) -> bool:
     if result.get("valid"):
         return False
@@ -290,6 +301,7 @@ valid_rounds_total = int(progress.get("valid_rounds_total") or 0)
 current_task = str(progress.get("current_task") or "")
 task_failure_total = int((progress.get("current_task_failure_counts") or {}).get("total_since_success") or 0)
 result_rows = read_result_rows(result_log_path)
+proposal_quality_failures = recent_matching_failures(result_rows, is_proposal_quality_failure)
 rollback_quality_failures = recent_matching_failures(result_rows, is_rollback_quality_failure)
 typescript_quality_failures = recent_matching_failures(result_rows, is_typescript_quality_failure)
 last_maintenance_at = int(state.get("last_maintenance_at") or 0)
@@ -304,6 +316,8 @@ stagnant_delta = max(0, rounds_total - baseline_round)
 candidate_reason = ""
 if task_failure_total >= task_failures:
     candidate_reason = f"task_failures:{task_failure_total}:threshold:{task_failures}"
+elif proposal_quality_failures >= proposal_failures_threshold:
+    candidate_reason = f"proposal_quality_failures:{proposal_quality_failures}:threshold:{proposal_failures_threshold}"
 elif typescript_quality_failures >= typescript_quality_failures_threshold:
     candidate_reason = f"typescript_quality_failures:{typescript_quality_failures}:threshold:{typescript_quality_failures_threshold}"
 elif rollback_quality_failures >= rollback_failures_threshold:
@@ -333,6 +347,7 @@ state.update(
         "valid_rounds_total": valid_rounds_total,
         "current_task": current_task,
         "current_task_failure_total": task_failure_total,
+        "proposal_quality_failure_total": proposal_quality_failures,
         "rollback_quality_failure_total": rollback_quality_failures,
         "typescript_quality_failure_total": typescript_quality_failures,
         "stagnant_rounds_since_valid": stagnant_delta,
@@ -405,7 +420,7 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-If the reason mentions rollback_quality_failures or typescript_quality_failures, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, or typescript_quality_failures, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
 

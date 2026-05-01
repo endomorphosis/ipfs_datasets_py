@@ -251,6 +251,7 @@ class LogicPortArtifact:
             "errors": self.errors,
             "changed_files": self.changed_files,
             "failure_kind": self.failure_kind,
+            "raw_response_prefix": self.raw_response[:2000] if self.raw_response else "",
         }
 
 
@@ -786,6 +787,8 @@ Critical correction for attempt {attempt}:
 - Leave `patch` as an empty string.
 - The Codex subprocess may be read-only, but the daemon itself applies the returned `files` contents after validation. Do not refuse because of a read-only sandbox.
 - Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
+- Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.
+- If the previous response was prose, convert that intent into complete file replacements now.
 """
 
     def optimize(
