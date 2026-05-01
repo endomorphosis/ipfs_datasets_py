@@ -229,6 +229,7 @@ def parser_elements_for_metrics(
                 resolved_references_by_source_id.get(str(element.get("source_id") or ""), []),
                 batch_formula_record,
             )
+            _project_formula_record_active_repair_status(element, batch_formula_record)
 
         if inactive_projection:
             projected_readiness = dict(inactive_projection.get("export_readiness") or {})
@@ -2094,6 +2095,47 @@ def _project_same_document_resolved_cross_references(
 
     if projected:
         element["resolved_cross_references"] = projected
+
+
+def _project_formula_record_active_repair_status(
+    element: Dict[str, Any],
+    formula_record: Mapping[str, Any],
+) -> None:
+    """Align metric active-repair flags with deterministic formula readiness.
+
+    Repair-detail evaluation rows can carry stale ``llm_repair.required=True``
+    even after IR/formula projection has a source-grounded deterministic
+    resolution. Metrics should count active repair work, so only clear the flag
+    when the formula record is proof-ready and explicitly carries a deterministic
+    resolution. Unresolved numbered references keep their repair-required state.
+    """
+
+    deterministic_resolution = dict(formula_record.get("deterministic_resolution") or {})
+    if not deterministic_resolution:
+        return
+    if formula_record.get("repair_required") is not False:
+        return
+    if formula_record.get("requires_validation") is not False:
+        return
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    export_readiness["formula_proof_ready"] = True
+    export_readiness["formula_requires_validation"] = False
+    export_readiness["formula_repair_required"] = False
+    export_readiness["metric_requires_validation"] = False
+    export_readiness["metric_repair_required"] = False
+    export_readiness["deterministic_resolution"] = deterministic_resolution
+    element["export_readiness"] = export_readiness
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    llm_repair["required"] = False
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = []
+    llm_repair["deterministically_resolved"] = True
+    llm_repair["deterministic_resolution"] = deterministic_resolution
+    element["llm_repair"] = llm_repair
+    element["active_repair_required"] = False
+    element["active_repair_warnings"] = []
 
 
 def _parser_native_resolved_reference_record(

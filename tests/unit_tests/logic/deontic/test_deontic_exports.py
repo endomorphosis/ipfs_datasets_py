@@ -3276,6 +3276,78 @@ def test_metrics_hydrates_prompt_context_operator_for_detail_only_stale_repair_r
     assert [row["llm_repair"]["required"] for row in projected] == [False, False, False]
 
 
+def test_metrics_projects_formula_resolution_onto_detail_only_active_repair_flags():
+    """Stale detail rows should not remain active after deterministic projection."""
+
+    examples = [
+        (
+            "exception",
+            "The applicant shall obtain a permit unless approval is denied.",
+            "standard_substantive_exception",
+        ),
+        (
+            "override",
+            "Notwithstanding section 5.01.020, the Director may issue a variance.",
+            "pure_precedence_override",
+        ),
+        (
+            "applicability",
+            "This section applies to food carts and mobile vendors.",
+            "local_scope_applicability",
+        ),
+    ]
+    detail_rows = []
+    for sample_id, text, _resolution_type in examples:
+        parsed = extract_normative_elements(text)[0]
+        detail_rows.append(
+            {
+                "sample_id": sample_id,
+                "text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "norm_type": parsed["norm_type"],
+                "modality": None,
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "allow_llm_repair": True,
+                    "reasons": list(parsed["parser_warnings"]),
+                    "prompt_context": {
+                        "source_text": parsed["text"],
+                        "source_id": parsed["source_id"],
+                        "deontic_operator": parsed["deontic_operator"],
+                        "norm_type": parsed["norm_type"],
+                        "subject": list(parsed["subject"]),
+                        "action": list(parsed["action"]),
+                        "conditions": list(parsed.get("condition_details") or []),
+                        "exceptions": list(parsed.get("exception_details") or []),
+                        "override_clauses": list(parsed.get("override_clause_details") or []),
+                        "cross_references": list(parsed.get("cross_reference_details") or []),
+                        "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+                        "parser_warnings": list(parsed["parser_warnings"]),
+                    },
+                },
+            }
+        )
+
+    projected = parser_elements_for_metrics(detail_rows)
+
+    assert [row["active_repair_required"] for row in projected] == [False, False, False]
+    assert [row["active_repair_warnings"] for row in projected] == [[], [], []]
+    assert [row["llm_repair"]["required"] for row in projected] == [False, False, False]
+    assert [row["llm_repair"]["allow_llm_repair"] for row in projected] == [False, False, False]
+    assert [row["llm_repair"]["deterministically_resolved"] for row in projected] == [
+        True,
+        True,
+        True,
+    ]
+    assert [
+        row["export_readiness"]["deterministic_resolution"]["type"] for row in projected
+    ] == [resolution_type for _sample_id, _text, resolution_type in examples]
+    assert [parser_element_has_active_repair(row) for row in projected] == [False, False, False]
+
+
 def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_probes():
     """Only the unresolved numbered reference should remain active repair."""
 
