@@ -4473,6 +4473,7 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
     elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
     for element in elements:
         _clear_standard_substantive_exception_active_repair(element)
+    _apply_active_repair_status(elements)
     return elements
 
 

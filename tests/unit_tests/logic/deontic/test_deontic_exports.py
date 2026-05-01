@@ -3022,6 +3022,8 @@ def test_raw_parser_clears_repair_for_standard_substantive_exception():
     assert element["export_readiness"]["formula_proof_ready"] is True
     assert element["export_readiness"]["formula_requires_validation"] is False
     assert element["export_readiness"]["formula_repair_required"] is False
+    assert element["active_repair_required"] is False
+    assert element["active_repair_warnings"] == []
     assert parser_element_has_active_repair(element) is False
 
 
