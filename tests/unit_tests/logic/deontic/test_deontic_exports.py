@@ -4572,3 +4572,37 @@ def test_ir_procedure_event_records_mark_recording_trigger_as_prerequisite():
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
     assert records[0]["relation_record"]["relation"] == "triggered_by_recording_of"
+
+
+def test_ir_procedure_event_records_mark_inspection_trigger_as_prerequisite():
+    """Inspection of premises is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall renew a permit after inspection of the premises."
+    )[0])
+    element["action"] = ["renew a permit after inspection premises"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_inspection_of",
+                "anchor_event": "premises",
+                "raw_text": "after inspection of the premises",
+                "span": [36, 69],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "renewal"
+    assert records[0]["event_symbol"] == "Renewal"
+    assert records[0]["relation"] == "triggered_by_inspection_of"
+    assert records[0]["anchor_event"] == "premises"
+    assert records[0]["anchor_symbol"] == "Premises"
+    assert records[0]["raw_text"] == "after inspection of the premises"
+    assert records[0]["span"] == [36, 69]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"

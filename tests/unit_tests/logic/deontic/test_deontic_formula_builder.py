@@ -2561,6 +2561,35 @@ def test_structured_procedure_publication_trigger_becomes_formula_prerequisite()
     assert "RenewPermitAfterPublicationNotice" not in formula
 
 
+def test_structured_procedure_inspection_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall renew a permit after inspection of the premises."
+    )[0])
+    element["action"] = ["renew a permit after inspection premises"]
+    element["procedure"] = {
+        "trigger_event": "premises",
+        "terminal_event": "renewal",
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_inspection_of",
+                "anchor_event": "premises",
+                "raw_text": "after inspection of the premises",
+                "span": [36, 69],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterInspectionPremises(x) → RenewPermit(x)))"
+    )
+    assert "Procedureafterinspectionpremises" not in formula
+    assert "RenewPermitAfterInspectionPremises" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
