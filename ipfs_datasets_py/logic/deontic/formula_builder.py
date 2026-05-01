@@ -123,6 +123,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_failure_action(action_text)
     elif _is_refrain_obligation(norm, action_text):
         action_text = _strip_refrain_action(action_text)
+    elif _is_prevention_obligation(norm, action_text):
+        action_text = _strip_prevention_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -149,7 +151,7 @@ def _formula_operator(norm: LegalNormIR, action_text: str) -> str:
 
     if _is_failure_prohibition(norm, action_text):
         return "O"
-    if _is_refrain_obligation(norm, action_text):
+    if _is_refrain_obligation(norm, action_text) or _is_prevention_obligation(norm, action_text):
         return "F"
     return norm.modality
 
@@ -190,6 +192,18 @@ def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
     ))
 
 
+def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether an affirmative prevention duty is a prohibition."""
+
+    if norm.modality != "O":
+        return False
+    return bool(re.match(
+        r"^prevent\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
+
+
 def _strip_refrain_action(action_text: str) -> str:
     """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
@@ -200,6 +214,18 @@ def _strip_refrain_action(action_text: str) -> str:
         flags=re.IGNORECASE,
     ).strip()
     return _normalize_refrain_action_head(embedded)
+
+
+def _strip_prevention_action(action_text: str) -> str:
+    """Remove a prevention wrapper from narrow legally salient actions."""
+
+    embedded = re.sub(
+        r"^prevent\s+",
+        "",
+        str(action_text or "").strip(),
+        flags=re.IGNORECASE,
+    ).strip()
+    return _normalize_prevention_action_head(embedded)
 
 
 def _normalize_refrain_action_head(action_text: str) -> str:
@@ -222,6 +248,27 @@ def _normalize_refrain_action_head(action_text: str) -> str:
     }
     if verb in legal_gerunds:
         parts[0] = legal_gerunds[verb]
+    return " ".join(parts)
+
+
+def _normalize_prevention_action_head(action_text: str) -> str:
+    """Convert nominal prevention objects into proof-friendly action heads."""
+
+    parts = str(action_text or "").strip().split(maxsplit=1)
+    if not parts:
+        return ""
+    noun = parts[0].lower()
+    legal_actions = {
+        "entry": "enter",
+        "access": "access",
+        "discharge": "discharge",
+        "disclosure": "disclose",
+        "removal": "remove",
+        "alteration": "alter",
+        "destruction": "destroy",
+    }
+    if noun in legal_actions:
+        parts[0] = legal_actions[noun]
     return " ".join(parts)
 
 
