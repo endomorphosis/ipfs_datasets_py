@@ -924,6 +924,56 @@ def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_pat
     assert "expected_metric_gain for a real metric" in prompt
 
 
+def test_optimizer_prompt_marks_irreducible_residual_mode(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_converter.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps({"stalled_metric_cycles": 5, "current_feedback": ["repair_required_count: 1"]}),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=10,
+        evaluation={
+            "metrics": {"parity_score": 0.9763, "coverage_gaps": ["repair_required_count: 1"]},
+            "repair_required_details": [
+                {
+                    "sample_id": "cross_reference",
+                    "source_id": "deontic:blocked",
+                    "text": "The Secretary shall publish the notice except as provided in section 552.",
+                    "parser_warnings": [
+                        "cross_reference_requires_resolution",
+                        "exception_requires_scope_review",
+                    ],
+                    "llm_repair": {"required": True, "deterministic_resolution": {}},
+                }
+            ],
+        },
+        feedback=["repair_required_count: 1"],
+    )
+
+    assert '"irreducible_residual_mode": true' in prompt
+    assert "stop chasing repair_required_count" in prompt
+    assert "deterministic_coverage" in prompt
+
+
 def test_evaluation_records_repair_required_details():
     optimizer = LegalParserParityOptimizer(daemon_config=LegalParserDaemonConfig())
 
@@ -1006,7 +1056,7 @@ def test_daemon_retries_metric_stall_proposal_without_expected_metric_gain(tmp_p
     cycle = daemon.run_cycle(cycle_index=1)
 
     assert len(fake_router.calls) == 2
-    assert "metric stall mode requires expected_metric_gain" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert "requires expected_metric_gain" in cycle["proposal_attempts"][0]["retry_reason"]
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
@@ -1300,6 +1350,24 @@ def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):
     assert result["valid"] is True
     assert result["moved_expected_metrics"]["repair_required_count"]["before"] == 2.0
     assert result["moved_expected_metrics"]["repair_required_count"]["after"] == 1.0
+
+
+def test_metric_stall_retention_allows_coverage_gain_for_irreducible_residual(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(expected_metric_gain={"deterministic_coverage": "new parser case"})
+
+    result = daemon._metric_stall_retention_result(
+        proposal=proposal,
+        evaluation={"metrics": {"parity_score": 0.9763, "repair_required_count": 1}},
+        post_evaluation={"metrics": {"parity_score": 0.9763, "repair_required_count": 1}},
+        metric_stall_mode=True,
+        irreducible_residual_mode=True,
+    )
+
+    assert result["valid"] is True
+    assert result["accepted_without_metric_delta"] is True
+    assert "irreducible" in result["reasons"][0]
 
 
 def test_retained_change_summary_detects_no_content_change(tmp_path):

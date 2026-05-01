@@ -29,7 +29,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from ipfs_datasets_py.logic.deontic.metrics import summarize_parser_elements
 from ipfs_datasets_py.logic.deontic.exports import active_repair_details_from_parser_elements
@@ -329,6 +329,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         }
         progress_payload = self._progress_snapshot()
         metric_stall_mode = self._metric_stall_mode(progress_payload)
+        irreducible_repair_blockers = self._irreducible_repair_blockers(evaluation)
+        irreducible_residual_mode = metric_stall_mode and bool(irreducible_repair_blockers)
         payload = {
             "cycle_index": cycle_index,
             "objective": (
@@ -347,12 +349,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
+                "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
                 "Do not move metrics by clearing repair for unresolved, absent, mismatched, partial, or external numbered legal references; those must stay blocked unless exact same-document evidence is present.",
             ],
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
+            "irreducible_residual_mode": irreducible_residual_mode,
+            "irreducible_repair_blockers": irreducible_repair_blockers,
             "test_failure_recovery_mode": test_failure_recovery_mode,
             "metric_no_progress_recovery_mode": metric_no_progress_recovery_mode,
             "recent_failed_patch_files": recent_failed_patch_files,
@@ -386,6 +391,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "The diff must normally touch at least one production parser/export file and at least one deontic test file. "
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
+            "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
             "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
             "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
             "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
@@ -418,6 +424,42 @@ class LegalParserParityOptimizer(BaseOptimizer):
             return int(progress_payload.get("stalled_metric_cycles", 0) or 0) >= 3
         except (TypeError, ValueError):
             return False
+
+    def _irreducible_repair_blockers(self, evaluation: Mapping[str, Any]) -> List[Dict[str, Any]]:
+        """Return repair details that should remain blocked without source evidence."""
+
+        details = evaluation.get("repair_required_details")
+        if not isinstance(details, list) or not details:
+            return []
+
+        blockers: List[Dict[str, Any]] = []
+        for detail in details:
+            if not isinstance(detail, Mapping):
+                return []
+            warnings = {str(item) for item in detail.get("parser_warnings") or []}
+            text = str(detail.get("text") or detail.get("source_text") or "").strip()
+            if "cross_reference_requires_resolution" not in warnings:
+                return []
+            if not re.search(r"\bsection\s+[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*\b", text, re.IGNORECASE):
+                return []
+            llm_repair = detail.get("llm_repair")
+            deterministic_resolution = (
+                llm_repair.get("deterministic_resolution")
+                if isinstance(llm_repair, Mapping)
+                else {}
+            )
+            if deterministic_resolution:
+                return []
+            blockers.append(
+                {
+                    "sample_id": detail.get("sample_id", ""),
+                    "source_id": detail.get("source_id", ""),
+                    "parser_warnings": sorted(warnings),
+                    "text": text,
+                    "reason": "numbered reference lacks exact same-document evidence and must remain active repair",
+                }
+            )
+        return blockers
 
     def _recent_cycle_history(self, *, limit: int = 3) -> List[Dict[str, Any]]:
         cycles_dir = self.daemon_config.resolved_output_dir() / "cycles"
@@ -682,6 +724,11 @@ class LegalParserOptimizerDaemon:
         attempt_feedback = list(feedback)
         patch_stability_mode = self._patch_stability_mode()
         metric_stall_mode = self._metric_stall_mode()
+        irreducible_residual_mode = bool(
+            self.optimizer._irreducible_repair_blockers(evaluation)
+            if isinstance(self.optimizer, LegalParserParityOptimizer)
+            else []
+        )
         test_failure_recovery_mode = self._test_failure_recovery_mode()
         metric_no_progress_recovery_mode = self._metric_no_progress_recovery_mode()
         for attempt_index in range(1, max_attempts + 1):
@@ -698,6 +745,7 @@ class LegalParserOptimizerDaemon:
                 proposal_attempts=max_attempts,
                 patch_stability_mode=patch_stability_mode,
                 metric_stall_mode=metric_stall_mode,
+                irreducible_residual_mode=irreducible_residual_mode,
                 test_failure_recovery_mode=test_failure_recovery_mode,
                 metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
             )
@@ -731,6 +779,7 @@ class LegalParserOptimizerDaemon:
                     candidate_quality = self._enforce_metric_stall_quality(
                         proposal=proposal,
                         proposal_quality=candidate_quality,
+                        irreducible_residual_mode=irreducible_residual_mode,
                     )
                 if metric_no_progress_recovery_mode:
                     candidate_quality = self._enforce_metric_no_progress_recovery_quality(
@@ -813,6 +862,7 @@ class LegalParserOptimizerDaemon:
             proposal_quality = self._enforce_metric_stall_quality(
                 proposal=proposal,
                 proposal_quality=proposal_quality,
+                irreducible_residual_mode=irreducible_residual_mode,
             )
         if metric_no_progress_recovery_mode:
             proposal_quality = self._enforce_metric_no_progress_recovery_quality(
@@ -923,6 +973,7 @@ class LegalParserOptimizerDaemon:
                             evaluation=evaluation,
                             post_evaluation=post_evaluation,
                             metric_stall_mode=metric_stall_mode,
+                            irreducible_residual_mode=irreducible_residual_mode,
                         )
                         if not metric_progress.get("valid"):
                             self._write_current_status(
@@ -1245,6 +1296,7 @@ class LegalParserOptimizerDaemon:
         *,
         proposal: LegalParserCycleProposal,
         proposal_quality: Dict[str, Any],
+        irreducible_residual_mode: bool = False,
     ) -> Dict[str, Any]:
         gain_keys = {str(key) for key in (proposal.expected_metric_gain or {})}
         accepted_metric_keys = {
@@ -1257,6 +1309,12 @@ class LegalParserOptimizerDaemon:
             "parsed_rate",
             "schema_valid_rate",
         }
+        if irreducible_residual_mode:
+            accepted_metric_keys = accepted_metric_keys | {
+                "coverage_expansion",
+                "deterministic_coverage",
+                "parser_capability",
+            }
         if gain_keys & accepted_metric_keys:
             return proposal_quality
         return {
@@ -1264,9 +1322,15 @@ class LegalParserOptimizerDaemon:
             "valid": False,
             "reasons": list(proposal_quality.get("reasons", []))
             + [
-                "metric stall mode requires expected_metric_gain to name a real parser metric"
+                (
+                    "irreducible residual mode requires expected_metric_gain to name "
+                    "deterministic_coverage, parser_capability, coverage_expansion, or a real parser metric"
+                    if irreducible_residual_mode
+                    else "metric stall mode requires expected_metric_gain to name a real parser metric"
+                )
             ],
             "metric_stall_mode": True,
+            "irreducible_residual_mode": irreducible_residual_mode,
         }
 
     def _enforce_metric_no_progress_recovery_quality(
@@ -1365,12 +1429,14 @@ class LegalParserOptimizerDaemon:
         evaluation: Dict[str, Any],
         post_evaluation: Dict[str, Any],
         metric_stall_mode: bool,
+        irreducible_residual_mode: bool = False,
     ) -> Dict[str, Any]:
         pre_metrics = dict(evaluation.get("metrics") or {})
         post_metrics = dict((post_evaluation.get("metrics") or {}) if isinstance(post_evaluation, dict) else {})
         result = {
             "valid": True,
             "metric_stall_mode": metric_stall_mode,
+            "irreducible_residual_mode": irreducible_residual_mode,
             "expected_metric_gain": dict(proposal.expected_metric_gain or {}),
             "pre_metrics": self._selected_metric_snapshot(pre_metrics),
             "post_metrics": self._selected_metric_snapshot(post_metrics),
@@ -1395,12 +1461,22 @@ class LegalParserOptimizerDaemon:
             return result
         if score_delta is not None and score_delta >= self.config.min_score_improvement:
             return result
+        if irreducible_residual_mode and self._claims_deterministic_coverage_gain(proposal):
+            result["accepted_without_metric_delta"] = True
+            result["reasons"] = [
+                "accepted tested deterministic coverage work while residual repair-required gap is irreducible"
+            ]
+            return result
 
         result["valid"] = False
         result["reasons"] = [
             "metric-stall patch passed tests but did not improve claimed metrics, score, or coverage gaps"
         ]
         return result
+
+    def _claims_deterministic_coverage_gain(self, proposal: LegalParserCycleProposal) -> bool:
+        gain_keys = {str(key) for key in (proposal.expected_metric_gain or {})}
+        return bool(gain_keys & {"coverage_expansion", "deterministic_coverage", "parser_capability"})
 
     def _selected_metric_snapshot(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         keys = [
