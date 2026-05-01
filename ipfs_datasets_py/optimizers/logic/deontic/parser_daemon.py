@@ -2397,6 +2397,8 @@ def _summarize_test_failure(stdout: str) -> Dict[str, Any]:
     failed_tests: List[str] = []
     for match in re.finditer(r"FAILED\s+([^\s]+)", stdout):
         name = match.group(1).strip()
+        if name == "[" or "::" not in name:
+            continue
         if name and name not in failed_tests:
             failed_tests.append(name)
 

@@ -745,6 +745,7 @@ def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
                     "stdout": "\n".join(
                         [
                             "E   AssertionError: expected time predicate",
+                            "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py::test_target FAILED [ 90%]",
                             "FAILED tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py::test_target - AssertionError",
                         ]
                     ),
@@ -794,6 +795,7 @@ def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
     assert "repair_phase:" in prompt
     assert "repair_phase_failure:" in prompt
     assert "test_deontic_prover_syntax.py::test_target" in prompt
+    assert "failed_tests=[," not in prompt
     assert "AssertionError" in prompt
 
 
