@@ -224,6 +224,8 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
             "triggered_by_return_of",
             "triggered_by_reinstatement_of",
             "triggered_by_withdrawal_of",
+            "triggered_by_archiving_of",
+            "triggered_by_retention_of",
         }
         proof_role = "prerequisite" if formula_antecedent else "ordering_provenance"
 

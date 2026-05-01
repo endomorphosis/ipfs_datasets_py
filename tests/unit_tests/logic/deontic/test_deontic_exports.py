@@ -5990,3 +5990,67 @@ def test_ir_procedure_event_records_mark_public_comment_and_consultation_trigger
     assert consultation_record["is_formula_antecedent"] is True
     assert consultation_record["proof_role"] == "prerequisite"
     assert consultation_record["relation_record"]["relation"] == "triggered_by_consultation_with"
+
+
+def test_ir_procedure_event_records_mark_archiving_and_retention_triggers_as_prerequisites():
+    """Recordkeeping triggers can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Clerk shall destroy the record after archiving of the file and after retention of the index."
+    )[0])
+    element["action"] = [
+        "destroy the record after archiving file and after retention index"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "destruction",
+                "relation": "triggered_by_archiving_of",
+                "anchor_event": "file",
+                "raw_text": "after archiving of the file",
+                "span": [32, 59],
+            },
+            {
+                "event": "destruction",
+                "relation": "triggered_by_retention_of",
+                "anchor_event": "index",
+                "raw_text": "after retention of the index",
+                "span": [64, 92],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    archiving_record = records[0]
+    retention_record = records[1]
+
+    assert archiving_record["event_id"].startswith("event:")
+    assert archiving_record["source_id"] == element["source_id"]
+    assert archiving_record["event"] == "destruction"
+    assert archiving_record["event_symbol"] == "Destruction"
+    assert archiving_record["relation"] == "triggered_by_archiving_of"
+    assert archiving_record["anchor_event"] == "file"
+    assert archiving_record["anchor_symbol"] == "File"
+    assert archiving_record["raw_text"] == "after archiving of the file"
+    assert archiving_record["span"] == [32, 59]
+    assert archiving_record["support_span"] == element["support_span"]
+    assert archiving_record["is_formula_antecedent"] is True
+    assert archiving_record["proof_role"] == "prerequisite"
+    assert archiving_record["relation_record"]["relation"] == "triggered_by_archiving_of"
+
+    assert retention_record["event_id"].startswith("event:")
+    assert retention_record["source_id"] == element["source_id"]
+    assert retention_record["event"] == "destruction"
+    assert retention_record["event_symbol"] == "Destruction"
+    assert retention_record["relation"] == "triggered_by_retention_of"
+    assert retention_record["anchor_event"] == "index"
+    assert retention_record["anchor_symbol"] == "Index"
+    assert retention_record["raw_text"] == "after retention of the index"
+    assert retention_record["span"] == [64, 92]
+    assert retention_record["support_span"] == element["support_span"]
+    assert retention_record["is_formula_antecedent"] is True
+    assert retention_record["proof_role"] == "prerequisite"
+    assert retention_record["relation_record"]["relation"] == "triggered_by_retention_of"
