@@ -1386,5 +1386,14 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
         "standard_substantive_exception",
         "pure_precedence_override",
     ]
+    assert [row["parser_warnings"] for row in rows[:3]] == [
+        ["cross_reference_requires_resolution"],
+        ["exception_requires_scope_review"],
+        ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
+    ]
+    assert [row["repair_required_warnings"] for row in rows[:3]] == [[], [], []]
+    assert [row["active_repair_warnings"] for row in rows[:3]] == [[], [], []]
+    assert rows[3]["repair_required_warnings"] == rows[3]["parser_warnings"]
+    assert rows[3]["active_repair_warnings"] == rows[3]["parser_warnings"]
     assert rows[3]["llm_repair"]["reasons"]
     assert rows[3]["llm_repair"].get("prompt_context")

@@ -187,11 +187,16 @@ def parser_elements_for_metrics(
             export_readiness["repair_required"] = False
             export_readiness["metric_requires_validation"] = False
             export_readiness["metric_repair_required"] = False
+            element["repair_required_warnings"] = []
+            element["active_repair_warnings"] = []
 
             element["llm_repair"] = _cleared_deterministic_repair_payload(element)
         else:
             export_readiness["metric_requires_validation"] = formula_requires_validation
             export_readiness["metric_repair_required"] = formula_repair_required
+            active_warnings = list(element.get("parser_warnings") or [])
+            element["repair_required_warnings"] = active_warnings
+            element["active_repair_warnings"] = active_warnings
 
         element["export_readiness"] = export_readiness
 
