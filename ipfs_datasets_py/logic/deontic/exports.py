@@ -203,6 +203,59 @@ def parser_elements_for_metrics(
     return metric_elements
 
 
+def active_repair_details_from_parser_elements(
+    elements: Iterable[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return active repair-required detail rows after IR readiness projection.
+
+    The raw parser intentionally preserves conservative warnings and historical
+    repair payloads for auditability. Metric detail collectors, however, should
+    not count a row as active repair work after the IR/formula layer has produced
+    an explicit deterministic no-LLM resolution. This helper gives those
+    collectors a single source-grounded contract: resolved rows keep their
+    warnings, while only still-blocked rows emit repair detail records.
+    """
+
+    details: List[Dict[str, Any]] = []
+    for element in parser_elements_for_metrics(elements):
+        export_readiness = dict(element.get("export_readiness") or {})
+        llm_repair = dict(element.get("llm_repair") or {})
+        active_warnings = list(element.get("active_repair_warnings") or [])
+
+        if not active_warnings and llm_repair.get("required") is True:
+            active_warnings = list(
+                llm_repair.get("reasons")
+                or element.get("repair_required_warnings")
+                or element.get("parser_warnings")
+                or []
+            )
+
+        metric_repair_required = export_readiness.get("metric_repair_required")
+        if metric_repair_required is False and llm_repair.get("required") is not True and not active_warnings:
+            continue
+        if metric_repair_required is not True and llm_repair.get("required") is not True and not active_warnings:
+            continue
+
+        details.append(
+            {
+                "source_id": element.get("source_id", ""),
+                "canonical_citation": element.get("canonical_citation", ""),
+                "text": element.get("text", ""),
+                "support_text": element.get("support_text", ""),
+                "support_span": element.get("support_span", []),
+                "norm_type": element.get("norm_type", ""),
+                "modality": element.get("deontic_operator"),
+                "subject": list(element.get("subject") or []),
+                "action": list(element.get("action") or []),
+                "parser_warnings": list(element.get("parser_warnings") or []),
+                "active_repair_warnings": active_warnings,
+                "llm_repair": llm_repair,
+                "deterministic_resolution": export_readiness.get("deterministic_resolution") or {},
+            }
+        )
+    return details
+
+
 def _cleared_deterministic_repair_payload(element: Mapping[str, Any]) -> Dict[str, Any]:
     """Return an inactive repair payload for deterministically resolved rows.
 

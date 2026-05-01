@@ -1,6 +1,7 @@
 """Tests for IR-derived deterministic export records."""
 
 from ipfs_datasets_py.logic.deontic.exports import (
+    active_repair_details_from_parser_elements,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
@@ -1504,3 +1505,46 @@ def test_parser_elements_for_metrics_clears_only_formula_resolved_repair_markers
     assert rows[3]["active_repair_warnings"] == rows[3]["parser_warnings"]
     assert rows[3]["llm_repair"]["reasons"]
     assert rows[3]["llm_repair"].get("prompt_context")
+
+
+def test_active_repair_details_ignore_formula_resolved_rows():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+
+    details = active_repair_details_from_parser_elements(elements)
+
+    assert len(details) == 1
+    detail = details[0]
+    assert detail["source_id"] == elements[3]["source_id"]
+    assert detail["text"] == elements[3]["text"]
+    assert detail["norm_type"] == "obligation"
+    assert detail["modality"] == "O"
+    assert detail["subject"] == ["Secretary"]
+    assert detail["action"] == ["publish the notice"]
+    assert detail["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert detail["parser_warnings"] == detail["active_repair_warnings"]
+    assert detail["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in detail["llm_repair"]["reasons"]
+    assert detail["llm_repair"].get("prompt_context")
+    assert detail["deterministic_resolution"] == {}
+
+    resolved_rows = parser_elements_for_metrics(elements[:3])
+    assert [row["parser_warnings"] for row in resolved_rows] == [
+        ["cross_reference_requires_resolution"],
+        ["exception_requires_scope_review"],
+        ["cross_reference_requires_resolution", "override_clause_requires_precedence_review"],
+    ]
+    assert active_repair_details_from_parser_elements(elements[:3]) == []
