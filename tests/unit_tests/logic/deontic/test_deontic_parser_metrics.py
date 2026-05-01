@@ -67,6 +67,7 @@ def test_summarize_parser_elements_uses_ir_formula_repair_clearance() -> None:
     assert summary["warning_distribution"]["cross_reference_requires_resolution"] == 3
     assert summary["warning_distribution"]["exception_requires_scope_review"] == 2
     assert summary["warning_distribution"]["override_clause_requires_precedence_review"] == 1
+    assert summary["cross_reference_resolution_rate"] == 0.666667
 
 
 def test_summarize_parser_elements_handles_empty_input() -> None:

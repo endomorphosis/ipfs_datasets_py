@@ -1094,7 +1094,10 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
             "source_id": cited_element["source_id"],
             "resolved_source_id": cited_element["source_id"],
             "resolution_scope": "same_document",
+            "resolved": True,
+            "resolution_status": "resolved",
             "same_document": True,
+            "target_exists": True,
         }
     ]
 
@@ -1128,7 +1131,9 @@ def test_parser_element_readiness_projects_local_applicability_resolution():
             "span": [0, 12],
             "resolution_scope": "local_self",
             "resolved": True,
+            "resolution_status": "resolved",
             "same_document": True,
+            "target_exists": True,
         }
     ]
 
@@ -1162,6 +1167,7 @@ def test_parser_element_readiness_projects_precedence_override_reference_provena
             "span": [16, 32],
             "resolution_scope": "precedence_provenance",
             "resolved": True,
+            "resolution_status": "resolved",
             "precedence_only": True,
             "same_document": False,
         }

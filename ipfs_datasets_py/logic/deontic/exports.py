@@ -295,6 +295,9 @@ def _project_parser_resolved_cross_references(
         normalized = _normalized_reference_record(reference)
         key = _reference_provenance_key(normalized)
         if key and key not in seen:
+            normalized["resolved"] = True
+            normalized["resolution_status"] = "resolved"
+            normalized["target_exists"] = True
             projected.append(normalized)
             seen.add(key)
 
@@ -358,6 +361,8 @@ def _local_scope_parser_resolved_cross_references(
             normalized["resolved"] = True
             normalized["same_document"] = True
             normalized["resolution_scope"] = "local_self"
+            normalized["resolution_status"] = "resolved"
+            normalized["target_exists"] = True
             provenance_key = _reference_provenance_key(normalized)
             if provenance_key and provenance_key in seen:
                 continue
@@ -918,6 +923,7 @@ def _precedence_override_reference_records(norm: LegalNormIR) -> List[Dict[str, 
         normalized["resolved"] = True
         normalized["resolution_scope"] = "precedence_provenance"
         normalized["precedence_only"] = True
+        normalized["resolution_status"] = "resolved"
         normalized["same_document"] = False
         records.append(normalized)
         seen.add(key)
