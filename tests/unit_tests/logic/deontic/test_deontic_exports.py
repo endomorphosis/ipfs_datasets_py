@@ -1,5 +1,6 @@
 """Tests for IR-derived deterministic export records."""
 
+
 from ipfs_datasets_py.logic.deontic.exports import (
     active_repair_details_from_parser_elements,
     build_document_export_tables_from_ir,
@@ -5493,3 +5494,63 @@ def test_ir_procedure_event_records_mark_withdrawal_trigger_as_prerequisite():
     assert records[0]["support_span"] == element["support_span"]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_deposit_and_clearing_triggers_as_prerequisites():
+    """Financial deposit and clearing events can be procedural prerequisites."""
+
+    element = dict(extract_normative_elements(
+        "The Treasurer shall release the bond after deposit of funds and after clearing of payment."
+    )[0])
+    element["action"] = ["release the bond after deposit funds and after clearing payment"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "release",
+                "relation": "triggered_by_deposit_of",
+                "anchor_event": "funds",
+                "raw_text": "after deposit of funds",
+                "span": [41, 63],
+            },
+            {
+                "event": "release",
+                "relation": "triggered_by_clearing_of",
+                "anchor_event": "payment",
+                "raw_text": "after clearing of payment",
+                "span": [68, 93],
+            },
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 2
+    deposit_record = records[0]
+    clearing_record = records[1]
+
+    assert deposit_record["event_id"].startswith("event:")
+    assert deposit_record["source_id"] == element["source_id"]
+    assert deposit_record["event"] == "release"
+    assert deposit_record["event_symbol"] == "Release"
+    assert deposit_record["relation"] == "triggered_by_deposit_of"
+    assert deposit_record["anchor_event"] == "funds"
+    assert deposit_record["anchor_symbol"] == "Funds"
+    assert deposit_record["raw_text"] == "after deposit of funds"
+    assert deposit_record["span"] == [41, 63]
+    assert deposit_record["support_span"] == element["support_span"]
+    assert deposit_record["is_formula_antecedent"] is True
+    assert deposit_record["proof_role"] == "prerequisite"
+
+    assert clearing_record["event_id"].startswith("event:")
+    assert clearing_record["source_id"] == element["source_id"]
+    assert clearing_record["event"] == "release"
+    assert clearing_record["event_symbol"] == "Release"
+    assert clearing_record["relation"] == "triggered_by_clearing_of"
+    assert clearing_record["anchor_event"] == "payment"
+    assert clearing_record["anchor_symbol"] == "Payment"
+    assert clearing_record["raw_text"] == "after clearing of payment"
+    assert clearing_record["span"] == [68, 93]
+    assert clearing_record["support_span"] == element["support_span"]
+    assert clearing_record["is_formula_antecedent"] is True
+    assert clearing_record["proof_role"] == "prerequisite"
