@@ -1665,6 +1665,51 @@ def test_typescript_replacement_preflight_rejects_missing_generic_arguments(tmp_
     assert "TS2314" in errors[0]
 
 
+def test_exhausted_preflight_attempts_do_not_apply_bad_replacement(tmp_path, monkeypatch):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    target = logic_dir / "feature.ts"
+    target.write_text("export const value = 'old';\n", encoding="utf-8")
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    router = FakeRouter(
+        json.dumps(
+            {
+                "summary": "bad syntax",
+                "patch": "",
+                "files": [{"path": "src/lib/logic/feature.ts", "content": "export const value = ;\n"}],
+            }
+        )
+    )
+
+    monkeypatch.setattr(
+        logic_port_daemon.LogicPortDaemonOptimizer,
+        "_typescript_replacement_preflight_errors",
+        lambda self, edits: ["Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree."],
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        validation_commands=(("python3", "-c", "raise SystemExit(99)"),),
+        task_board_doc=plan,
+        proposal_attempts=1,
+    )
+
+    result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="preflight-exhausted")
+
+    assert result["artifact"]["failure_kind"] == "preflight"
+    assert result["artifact"]["validation_results"] == []
+    assert target.read_text(encoding="utf-8") == "export const value = 'old';\n"
+
+
 def test_file_edit_mode_applies_allowed_files_and_rolls_back_on_validation_failure(tmp_path):
     plan = tmp_path / "plan.md"
     status = tmp_path / "status.md"

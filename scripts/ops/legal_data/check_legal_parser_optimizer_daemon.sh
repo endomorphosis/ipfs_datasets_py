@@ -80,6 +80,8 @@ payload = {
     "stalled_metric_cycles": progress.get("stalled_metric_cycles"),
     "cycles_since_meaningful_progress": progress.get("cycles_since_meaningful_progress"),
     "meaningful_progress_definition": progress.get("meaningful_progress_definition"),
+    "rolled_back_since_meaningful_progress": progress.get("rolled_back_since_meaningful_progress"),
+    "rolled_back_reasons_since_meaningful_progress": progress.get("rolled_back_reasons_since_meaningful_progress"),
     "agentic_rejected_tail": supervisor.get("agentic_rejected_tail"),
     "agentic_rolled_back_tail": supervisor.get("agentic_rolled_back_tail"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),

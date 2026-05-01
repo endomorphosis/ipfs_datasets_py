@@ -734,7 +734,69 @@ def test_progress_stall_accounting_resets_after_retained_patch(tmp_path):
 
     assert progress["stalled_metric_cycles"] == 1
     assert progress["cycles_since_meaningful_progress"] == 1
+    assert progress["rolled_back_since_meaningful_progress"] == 0
+    assert progress["rolled_back_reasons_since_meaningful_progress"] == {}
     assert "retained changes reset stall accounting" in progress["meaningful_progress_definition"]
+
+
+def test_progress_summary_counts_rollback_reasons_since_meaningful_progress(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycles = [
+        {
+            "cycle_index": 1,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "post_evaluation": {"metrics": {"parity_score": 0.9}},
+            "patch_check": {"valid": True},
+            "apply_result": {"applied": True},
+            "tests": {"valid": True},
+            "retained_change": {"has_retained_changes": True},
+        },
+        {
+            "cycle_index": 2,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "post_evaluation": {"metrics": {"parity_score": 0.9}},
+            "patch_check": {"valid": True},
+            "apply_result": {
+                "applied": True,
+                "rolled_back": True,
+                "reason": "metric_stall_no_metric_progress",
+            },
+            "tests": {"valid": True},
+        },
+        {
+            "cycle_index": 3,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "post_evaluation": {"metrics": {"parity_score": 0.9}},
+            "patch_check": {"valid": True},
+            "apply_result": {
+                "applied": True,
+                "rolled_back": True,
+                "reason": "post_apply_validation_failed",
+            },
+            "tests": {"valid": False},
+        },
+    ]
+    for cycle in cycles:
+        cycle_dir = tmp_path / f"out/cycles/cycle_{cycle['cycle_index']:04d}"
+        cycle_dir.mkdir(parents=True)
+        (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycles[-1])
+
+    assert progress["rolled_back_count"] == 2
+    assert progress["rolled_back_reason_counts"] == {
+        "metric_stall_no_metric_progress": 1,
+        "post_apply_validation_failed": 1,
+    }
+    assert progress["rolled_back_since_meaningful_progress"] == 2
+    assert progress["rolled_back_reasons_since_meaningful_progress"] == {
+        "metric_stall_no_metric_progress": 1,
+        "post_apply_validation_failed": 1,
+    }
 
 
 def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
@@ -1276,6 +1338,9 @@ def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_pat
         json.dumps(
             {
                 "stalled_metric_cycles": 5,
+                "rolled_back_reasons_since_meaningful_progress": {
+                    "metric_stall_no_metric_progress": 4
+                },
                 "current_score": 0.9763,
                 "current_feedback": ["repair_required_count: 4"],
             }
@@ -1305,6 +1370,7 @@ def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_pat
     )
 
     assert '"metric_stall_mode": true' in prompt
+    assert "metric_stall_no_metric_progress" in prompt
     assert "cross_reference" in prompt
     assert "expected_metric_gain for a real metric" in prompt
 
@@ -1942,6 +2008,8 @@ def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
         "total_cycles": 3,
         "retained_accepted_patch_count": 1,
         "rolled_back_count": 1,
+        "rolled_back_since_meaningful_progress": 1,
+        "rolled_back_reasons_since_meaningful_progress": {"metric_stall_no_metric_progress": 1},
         "rejected_patch_count": 1,
         "current_score": 0.9,
         "score_delta": 0.1,
@@ -1973,5 +2041,6 @@ def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
     assert "def456 legal-parser-daemon" in report
     assert "M ipfs_datasets_py/logic/deontic/formula_builder.py" in report
     assert "Improve formula export." in report
+    assert "metric_stall_no_metric_progress" in report
     assert "repair_required_count: 1" in report
     assert "patch_check_failed:error: patch failed" in report

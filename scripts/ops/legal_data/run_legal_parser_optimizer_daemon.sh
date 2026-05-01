@@ -196,21 +196,32 @@ stalled_metric_cycles = int(progress.get("stalled_metric_cycles") or 0)
 cycles_since_meaningful_progress = int(
     progress.get("cycles_since_meaningful_progress") or stalled_metric_cycles
 )
+rolled_back_reasons_since_progress = progress.get("rolled_back_reasons_since_meaningful_progress")
+if not isinstance(rolled_back_reasons_since_progress, dict):
+    rolled_back_reasons_since_progress = {}
+metric_stall_rollbacks_since_progress = int(
+    rolled_back_reasons_since_progress.get("metric_stall_no_metric_progress") or 0
+)
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
 baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
 baseline_rolled_back = int(state.get("baseline_rolled_back_count") or rolled_back_count)
 baseline_rejected = int(state.get("baseline_rejected_count") or rejected_count)
+baseline_metric_stall_rollbacks = int(
+    state.get("baseline_metric_stall_rollbacks_since_progress") or metric_stall_rollbacks_since_progress
+)
 
 if accepted_count > baseline_accepted:
     baseline_cycle = latest_cycle_index
     baseline_accepted = accepted_count
     baseline_rolled_back = rolled_back_count
     baseline_rejected = rejected_count
+    baseline_metric_stall_rollbacks = metric_stall_rollbacks_since_progress
 
 cycle_delta = max(0, latest_cycle_index - baseline_cycle)
 rolled_back_delta = max(0, rolled_back_count - baseline_rolled_back)
 rejected_delta = max(0, rejected_count - baseline_rejected)
+metric_stall_rollback_delta = max(0, metric_stall_rollbacks_since_progress - baseline_metric_stall_rollbacks)
 updated_epoch = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
 cycle_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
 
@@ -224,6 +235,11 @@ if (
         f"stalled_metric_cycles:{stalled_metric_cycles}:"
         f"cycles_since_meaningful_progress:{cycles_since_meaningful_progress}:"
         f"threshold:{stalled_metric_threshold}"
+    )
+elif not cooling_down and metric_stall_rollback_delta >= rolled_back_tail_threshold:
+    reason = (
+        f"metric_stall_rollbacks_without_acceptance:{metric_stall_rollback_delta}:"
+        f"threshold:{rolled_back_tail_threshold}"
     )
 elif not cooling_down and rolled_back_delta >= rolled_back_tail_threshold:
     reason = f"rolled_back_without_acceptance:{rolled_back_delta}:threshold:{rolled_back_tail_threshold}"
@@ -240,15 +256,18 @@ state.update(
         "baseline_accepted_count": baseline_accepted,
         "baseline_rolled_back_count": baseline_rolled_back,
         "baseline_rejected_count": baseline_rejected,
+        "baseline_metric_stall_rollbacks_since_progress": baseline_metric_stall_rollbacks,
         "latest_cycle_index": latest_cycle_index,
         "accepted_count": accepted_count,
         "rolled_back_count": rolled_back_count,
         "rejected_count": rejected_count,
+        "metric_stall_rollbacks_since_progress": metric_stall_rollbacks_since_progress,
         "stalled_metric_cycles": stalled_metric_cycles,
         "cycles_since_meaningful_progress": cycles_since_meaningful_progress,
         "cycles_since_acceptance": cycle_delta,
         "rolled_back_since_acceptance": rolled_back_delta,
         "rejected_since_acceptance": rejected_delta,
+        "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "cooling_down": cooling_down,
         "candidate_reason": reason,
     }

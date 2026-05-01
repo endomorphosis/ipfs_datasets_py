@@ -350,6 +350,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
+                "When progress_snapshot shows repeated metric_stall_no_metric_progress rollbacks, change the parser capability that produces the measured slot/formula/export instead of adding surrounding tests, docs, or export-only context.",
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When roadmap_pivot_mode is true, stop adding narrow procedural trigger/export variants. Prioritize Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
@@ -417,6 +418,11 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "total_cycles": progress.get("total_cycles", 0),
             "accepted_patch_count": progress.get("accepted_patch_count", 0),
             "rolled_back_count": progress.get("rolled_back_count", 0),
+            "rolled_back_reason_counts": progress.get("rolled_back_reason_counts", {}),
+            "rolled_back_since_meaningful_progress": progress.get("rolled_back_since_meaningful_progress", 0),
+            "rolled_back_reasons_since_meaningful_progress": progress.get(
+                "rolled_back_reasons_since_meaningful_progress", {}
+            ),
             "rejected_patch_count": progress.get("rejected_patch_count", 0),
             "current_score": progress.get("current_score"),
             "score_delta": progress.get("score_delta"),
@@ -1917,6 +1923,10 @@ class LegalParserOptimizerDaemon:
         rolled_back = [
             cycle for cycle in cycles if (cycle.get("apply_result") or {}).get("rolled_back", False)
         ]
+        rolled_back_reason_counts: Dict[str, int] = {}
+        for cycle in rolled_back:
+            reason = _cycle_rejection_reason(cycle)
+            rolled_back_reason_counts[reason] = rolled_back_reason_counts.get(reason, 0) + 1
         rejected = [
             cycle
             for cycle in cycles
@@ -1972,6 +1982,8 @@ class LegalParserOptimizerDaemon:
 
         stalled_metric_cycles = 0
         cycles_since_meaningful_progress = 0
+        rolled_back_since_meaningful_progress = 0
+        rolled_back_reasons_since_meaningful_progress: Dict[str, int] = {}
         current_score_value = _as_float(current_score)
         for cycle in reversed(cycles):
             if _cycle_was_kept(cycle):
@@ -1995,6 +2007,13 @@ class LegalParserOptimizerDaemon:
                 and abs(cycle_score - current_score_value) <= 1e-9
             ):
                 cycles_since_meaningful_progress += 1
+                apply_result = cycle.get("apply_result") or {}
+                if apply_result.get("rolled_back", False):
+                    reason = _cycle_rejection_reason(cycle)
+                    rolled_back_since_meaningful_progress += 1
+                    rolled_back_reasons_since_meaningful_progress[reason] = (
+                        rolled_back_reasons_since_meaningful_progress.get(reason, 0) + 1
+                    )
             else:
                 break
         return {
@@ -2010,6 +2029,9 @@ class LegalParserOptimizerDaemon:
                 )
             ),
             "rolled_back_count": len(rolled_back),
+            "rolled_back_reason_counts": rolled_back_reason_counts,
+            "rolled_back_since_meaningful_progress": rolled_back_since_meaningful_progress,
+            "rolled_back_reasons_since_meaningful_progress": rolled_back_reasons_since_meaningful_progress,
             "rejected_patch_count": len(rejected),
             "current_score": current_score,
             "initial_score": first_score,
@@ -2090,6 +2112,7 @@ class LegalParserOptimizerDaemon:
             f"- Total cycles: `{progress.get('total_cycles', 0)}`",
             f"- Accepted retained patches: `{progress.get('retained_accepted_patch_count', 0)}`",
             f"- Rolled back patches: `{progress.get('rolled_back_count', 0)}`",
+            f"- Rolled back since meaningful progress: `{progress.get('rolled_back_since_meaningful_progress', 0)}`",
             f"- Rejected patches: `{progress.get('rejected_patch_count', 0)}`",
             f"- Current score: `{progress.get('current_score')}`",
             f"- Score delta: `{progress.get('score_delta')}`",
@@ -2129,6 +2152,13 @@ class LegalParserOptimizerDaemon:
             lines.extend(f"- `{item}`" for item in feedback)
         else:
             lines.append("No current feedback items recorded.")
+        rollback_reasons = progress.get("rolled_back_reasons_since_meaningful_progress") or {}
+        if rollback_reasons:
+            lines.extend(["", "Rollback reasons since meaningful progress:"])
+            lines.extend(
+                f"- `{reason}`: `{count}`"
+                for reason, count in sorted(rollback_reasons.items(), key=lambda item: (-int(item[1]), item[0]))
+            )
         lines.extend(["", "## Recent Rejections", ""])
         recent_rejections = progress.get("recent_rejections") or []
         if recent_rejections:

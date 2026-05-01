@@ -83,6 +83,7 @@ TYPESCRIPT_PREFLIGHT_ERROR_CODES = {
     "TS1138",
     "TS1144",
     "TS1434",
+    "TS1442",
     "TS2314",
     "TS2322",
 }
@@ -803,6 +804,9 @@ Critical correction for attempt {attempt}:
                 artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
             if not artifact.errors:
                 artifact.errors.append("No usable patch or file replacement was proposed.")
+            return artifact
+
+        if artifact.errors and artifact.failure_kind in {"preflight", "validation_repair_preflight", "file_repair_preflight"}:
             return artifact
 
         if self.daemon_config.dry_run:
