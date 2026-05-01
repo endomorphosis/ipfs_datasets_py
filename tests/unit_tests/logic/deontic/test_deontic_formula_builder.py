@@ -2356,6 +2356,71 @@ def test_structured_procedure_notice_and_hearing_deduplicates_condition_alias():
     assert formula.count("ProcedureAfterNoticeAndHearing(x)") == 1
 
 
+def test_structured_procedure_approval_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit upon approval of an application."
+    )[0])
+    element["action"] = ["issue a permit upon approval application"]
+    element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_approval_of",
+                "anchor_event": "application",
+                "raw_text": "upon approval of an application",
+                "span": [36, 67],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))"
+    )
+    assert "IssuePermitUponApprovalApplication" not in formula
+
+
+def test_structured_procedure_approval_trigger_deduplicates_condition_alias():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit upon approval of an application."
+    )[0])
+    element["action"] = ["issue a permit upon approval application"]
+    element["condition_details"] = [
+        {
+            "type": "procedure",
+            "value": "procedure upon approval application",
+            "raw_text": "upon approval of an application",
+            "span": [36, 67],
+        }
+    ]
+    element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_approval_of",
+                "anchor_event": "application",
+                "raw_text": "upon approval of an application",
+                "span": [36, 67],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureUponApprovalApplication(x) → IssuePermit(x)))"
+    )
+    assert formula.count("ProcedureUponApprovalApplication(x)") == 1
+    assert "IssuePermitUponApprovalApplication" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."

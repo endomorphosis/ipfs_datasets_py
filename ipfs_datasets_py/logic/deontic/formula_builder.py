@@ -66,7 +66,9 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
             return f"ExpiresAfter({subject}, {normalize_predicate_name(anchor)})"
         return f"Lifecycle({subject}, {normalize_predicate_name(action_text)})"
 
-    action_text = _action_without_mental_state(norm.action or "Action")
+    action_text = _action_without_mental_state(
+        _action_without_procedure_trigger_tail(norm.action or "Action", norm.procedure)
+    )
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
@@ -476,7 +478,56 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_filing_of": "procedure upon filing",
         "triggered_by_submission_of": "procedure upon submission",
         "triggered_by_notice_and_hearing": "procedure after",
+        "triggered_by_approval_of": "procedure upon approval",
     }.get(relation, "")
+
+
+def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any]) -> str:
+    """Remove structured procedural trigger phrases from the action predicate.
+
+    Approval-trigger clauses can arrive from parser or metric fixtures with the
+    operative action slot carrying the already-structured prerequisite, e.g.
+    ``issue permit upon approval application``. The trigger belongs in the
+    antecedent from ``procedure.event_relations``; keeping it in the action
+    predicate fabricates ``IssuePermitUponApprovalApplication``.
+    """
+
+    text = str(action or "").strip()
+    if not text or not isinstance(procedure, dict):
+        return text
+
+    trigger_relations = {
+        "triggered_by_receipt_of",
+        "triggered_by_filing_of",
+        "triggered_by_submission_of",
+        "triggered_by_notice_and_hearing",
+        "triggered_by_approval_of",
+    }
+    cleaned = text
+    for relation in procedure.get("event_relations") or []:
+        if not isinstance(relation, dict):
+            continue
+        relation_type = str(relation.get("relation") or "").strip()
+        if relation_type not in trigger_relations:
+            continue
+
+        raw_text = str(relation.get("raw_text") or "").strip()
+        if raw_text:
+            cleaned = _strip_action_tail_phrase(cleaned, raw_text)
+
+        if relation_type == "triggered_by_approval_of":
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(rf"\s+(?:upon|after)\s+approval\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+    return cleaned or text
+
+
+def _strip_action_tail_phrase(action: str, phrase: str) -> str:
+    words = [re.escape(word) for word in re.findall(r"[0-9A-Za-z]+", phrase or "")]
+    if not words:
+        return action
+    pattern = r"\s+" + r"\s+(?:of\s+)?(?:an?\s+|the\s+)?".join(words) + r"\s*$"
+    return re.sub(pattern, "", action, flags=re.IGNORECASE).strip()
 
 
 def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:
