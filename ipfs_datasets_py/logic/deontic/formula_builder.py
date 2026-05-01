@@ -76,9 +76,10 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
 
+    antecedent_preds = _unique_antecedent_predicates(condition_preds[:3] + modifiers)
+
     inner_parts = [_subject_predicate_expr(norm)]
-    inner_parts.extend(f"{pred}(x)" for pred in condition_preds[:3])
-    inner_parts.extend(f"{pred}(x)" for pred in modifiers)
+    inner_parts.extend(f"{pred}(x)" for pred in antecedent_preds)
     inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:3])
     inner = " ∧ ".join(inner_parts)
     return f"{operator}(∀x ({inner} → {action_pred}(x)))"
@@ -388,6 +389,19 @@ def _unique_predicates(texts: Iterable[str]) -> List[str]:
     return predicates
 
 
+def _unique_antecedent_predicates(predicates: Iterable[str]) -> List[str]:
+    """Return formula antecedents without duplicate structured slot aliases."""
+
+    unique: List[str] = []
+    seen = set()
+    for predicate in predicates:
+        if not predicate or predicate == "P" or predicate in seen:
+            continue
+        unique.append(predicate)
+        seen.add(predicate)
+    return unique
+
+
 def _subject_predicate_expr(norm: LegalNormIR) -> str:
     """Return the antecedent subject expression for one or more actors."""
 
@@ -461,6 +475,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_receipt_of": "procedure upon receipt",
         "triggered_by_filing_of": "procedure upon filing",
         "triggered_by_submission_of": "procedure upon submission",
+        "triggered_by_notice_and_hearing": "procedure after",
     }.get(relation, "")
 
 

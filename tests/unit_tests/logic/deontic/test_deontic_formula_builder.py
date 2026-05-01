@@ -2294,6 +2294,68 @@ def test_structured_procedure_submission_trigger_becomes_formula_prerequisite():
     assert "ProcedureBeforeInspection" not in formula
 
 
+def test_structured_procedure_notice_and_hearing_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after notice and hearing."
+    )[0])
+    element["procedure"] = {
+        "trigger_event": "notice and hearing",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_notice_and_hearing",
+                "anchor_event": "notice and hearing",
+                "raw_text": "after notice and hearing",
+                "span": [36, 60],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))"
+    )
+    assert formula.count("ProcedureAfterNoticeAndHearing(x)") == 1
+
+
+def test_structured_procedure_notice_and_hearing_deduplicates_condition_alias():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after notice and hearing."
+    )[0])
+    element["condition_details"] = [
+        {
+            "type": "procedure",
+            "value": "procedure after notice and hearing",
+            "raw_text": "after notice and hearing",
+            "span": [36, 60],
+        }
+    ]
+    element["procedure"] = {
+        "trigger_event": "notice and hearing",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_notice_and_hearing",
+                "anchor_event": "notice and hearing",
+                "raw_text": "after notice and hearing",
+                "span": [36, 60],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterNoticeAndHearing(x) → IssuePermit(x)))"
+    )
+    assert formula.count("ProcedureAfterNoticeAndHearing(x)") == 1
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
