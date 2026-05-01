@@ -541,7 +541,77 @@ def _parser_element_from_repair_detail(detail: Mapping[str, Any]) -> Dict[str, A
         return {}
 
     candidate["deontic_operator"] = inferred_operator
+    _recover_detail_only_precedence_override_slots(candidate, detail)
     return candidate
+
+
+def _recover_detail_only_precedence_override_slots(
+    candidate: Dict[str, Any],
+    detail: Mapping[str, Any],
+) -> None:
+    """Recover narrow precedence-only override provenance from detail text.
+
+    Metric payloads can contain raw repair detail rows without prompt_context or
+    structured override/cross-reference slots.  For the concrete stalled probe,
+    the source text itself carries all provenance needed by the existing
+    pure-precedence override formula resolution.  Reconstruct only that exact
+    shape; mixed warnings, missing actor/action, or non-``notwithstanding
+    section ...`` text remain conservative.
+    """
+
+    warnings = set(str(warning) for warning in candidate.get("parser_warnings") or [])
+    if candidate.get("norm_type") != "permission" or candidate.get("deontic_operator") != "P":
+        return
+    if warnings != {"cross_reference_requires_resolution", "override_clause_requires_precedence_review"}:
+        return
+    if candidate.get("override_clause_details") or candidate.get("cross_reference_details"):
+        return
+    if not candidate.get("subject") or not candidate.get("action"):
+        return
+
+    text = str(
+        detail.get("text")
+        or detail.get("source_text")
+        or candidate.get("text")
+        or ""
+    ).strip()
+    if not text:
+        return
+
+    match = re.search(
+        r"\bnotwithstanding\s+"
+        r"(section\s+([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*))"
+        r"\s*,\s*(?:the\s+)?(.+?)\s+may\s+(.+?)(?:[.;:]|$)",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        return
+
+    reference_text = match.group(1)
+    section_value = match.group(2)
+    reference_span = [match.start(1), match.end(1)]
+    override_record = {
+        "type": "notwithstanding",
+        "value": reference_text,
+        "raw_text": reference_text,
+        "normalized_text": reference_text.lower(),
+        "span": reference_span,
+        "clause_span": [match.start(), match.end(1)],
+    }
+    reference_record = {
+        "type": "section",
+        "reference_type": "section",
+        "value": section_value,
+        "target": section_value,
+        "raw_text": reference_text,
+        "normalized_text": reference_text.lower(),
+        "canonical_citation": f"section {section_value.lower()}",
+        "span": reference_span,
+    }
+
+    candidate["override_clause_details"] = [override_record]
+    candidate["cross_reference_details"] = [reference_record]
 
 
 def _infer_detail_deontic_operator(detail: Mapping[str, Any]) -> str:
