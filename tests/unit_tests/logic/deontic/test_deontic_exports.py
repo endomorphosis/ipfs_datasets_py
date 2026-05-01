@@ -1062,6 +1062,19 @@ def test_parser_element_readiness_resolves_same_document_reference_exception_fro
     assert aligned[0]["llm_repair"]["required"] is False
     assert aligned[0]["llm_repair"]["allow_llm_repair"] is False
     assert aligned[0]["llm_repair"]["deterministically_resolved"] is True
+    assert aligned[0]["resolved_cross_references"] == [
+        {
+            "reference_type": "section",
+            "target": "552",
+            "canonical_citation": "section 552",
+            "value": "section 552",
+            "span": [61, 72],
+            "source_id": cited_element["source_id"],
+            "resolved_source_id": cited_element["source_id"],
+            "resolution_scope": "same_document",
+            "same_document": True,
+        }
+    ]
 
 
 def test_parser_element_readiness_keeps_mismatched_section_context_reference_blocked():
@@ -1089,6 +1102,7 @@ def test_parser_element_readiness_keeps_mismatched_section_context_reference_blo
     assert aligned[0]["export_readiness"]["deterministic_resolution"] == {}
     assert aligned[0]["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in aligned[0]["llm_repair"]["reasons"]
+    assert aligned[0]["resolved_cross_references"] == reference_element["resolved_cross_references"]
 
 
 def test_document_export_tables_resolve_complete_plural_section_list_exception():

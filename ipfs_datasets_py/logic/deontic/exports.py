@@ -197,10 +197,11 @@ def parser_elements_with_ir_export_readiness(
 
     copied_elements = [dict(element) for element in elements]
     norms = [LegalNormIR.from_parser_element(element) for element in copied_elements]
-    formula_records = build_deontic_formula_records_from_irs(norms)
+    resolved_norms = _with_same_document_reference_resolutions(norms)
+    formula_records = build_deontic_formula_records_from_irs(resolved_norms)
 
     aligned: List[Dict[str, Any]] = []
-    for copied, formula_record in zip(copied_elements, formula_records):
+    for copied, resolved_norm, formula_record in zip(copied_elements, resolved_norms, formula_records):
         deterministic_resolution = formula_record.get("deterministic_resolution") or {}
         formula_requires_validation = bool(formula_record.get("requires_validation"))
         formula_repair_required = bool(formula_record.get("repair_required"))
@@ -239,9 +240,53 @@ def parser_elements_with_ir_export_readiness(
                 if reason not in set(formula_record.get("blockers") or [])
             ]
             copied["llm_repair"] = llm_repair
+            copied["resolved_cross_references"] = _project_parser_resolved_cross_references(
+                copied.get("resolved_cross_references", []),
+                resolved_norm.resolved_cross_references,
+            )
 
         aligned.append(copied)
     return aligned
+
+
+def _project_parser_resolved_cross_references(
+    original_references: Any,
+    resolved_references: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return parser-shaped resolved references after IR same-document repair.
+
+    Parser elements can carry stale unresolved records even after the IR batch
+    has resolved the cited section from same-document context. Metrics and
+    converter callers inspect these copied parser dictionaries directly, so
+    project only explicit same-document resolutions back while preserving any
+    non-stale existing resolved records.
+    """
+
+    projected: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for reference in original_references if isinstance(original_references, list) else []:
+        if not isinstance(reference, dict):
+            continue
+        if reference.get("resolution_status") == "unresolved" or reference.get("target_exists") is False:
+            continue
+        key = _reference_provenance_key(_normalized_reference_record(reference))
+        if key and key not in seen:
+            projected.append(dict(reference))
+            seen.add(key)
+
+    for reference in resolved_references:
+        if not isinstance(reference, Mapping):
+            continue
+        if not _is_same_document_resolved_reference(reference):
+            continue
+        normalized = _normalized_reference_record(reference)
+        key = _reference_provenance_key(normalized)
+        if key and key not in seen:
+            projected.append(normalized)
+            seen.add(key)
+
+    return projected
 
 
 def parser_elements_to_ir_aligned_export_tables(
