@@ -125,6 +125,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_refrain_action(action_text)
     elif _is_prevention_obligation(norm, action_text):
         action_text = _strip_prevention_action(action_text)
+    elif _is_direct_gerund_prohibition(norm, action_text):
+        action_text = _normalize_refrain_action_head(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -177,6 +179,18 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _is_direct_gerund_prohibition(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether a direct prohibition action starts with a normalized legal gerund."""
+
+    if norm.modality != "F":
+        return False
+    return bool(re.match(
+        r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying)\b",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
 
 
 def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
