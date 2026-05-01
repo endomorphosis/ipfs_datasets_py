@@ -683,6 +683,8 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_signature_of",
         "triggered_by_opening_of",
         "triggered_by_return_of",
+        "triggered_by_archiving_of",
+        "triggered_by_retention_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -695,6 +697,15 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         raw_text = str(relation.get("raw_text") or "").strip()
         if raw_text:
             cleaned = _strip_action_tail_phrase(cleaned, raw_text)
+
+        if relation_type in {"triggered_by_archiving_of", "triggered_by_retention_of"}:
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            trigger_word = {
+                "triggered_by_archiving_of": "archiving",
+                "triggered_by_retention_of": "retention",
+            }[relation_type]
+            if anchor:
+                cleaned = _strip_action_tail_trigger_segment(cleaned, trigger_word, anchor)
 
         if relation_type == "triggered_by_approval_of":
             anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
@@ -921,6 +932,31 @@ def _strip_action_tail_phrase(action: str, phrase: str) -> str:
         return action
     pattern = r"\s+" + r"\s+(?:of\s+)?(?:an?\s+|the\s+)?".join(words) + r"\s*$"
     return re.sub(pattern, "", action, flags=re.IGNORECASE).strip()
+
+
+def _strip_action_tail_trigger_segment(action: str, trigger_word: str, anchor: str) -> str:
+    """Remove one structured trigger segment from a compressed action tail.
+
+    Some metric fixtures carry already-structured procedure prerequisites in a
+    compact action slot, for example ``destroy the record after archiving file
+    and after retention index``.  The relation belongs in the antecedent, so the
+    consequent must remove each coordinated trigger segment without relying on
+    raw source-text wording such as ``of the``.
+    """
+
+    text = str(action or "").strip()
+    anchor_words = [re.escape(word) for word in re.findall(r"[A-Za-z0-9]+", anchor or "")]
+    if not text or not trigger_word or not anchor_words:
+        return text
+
+    anchor_pattern = r"\s+(?:of\s+)?(?:an?\s+|the\s+)?".join(anchor_words)
+    pattern = (
+        rf"\s+(?:and\s+)?(?:upon|after|following)\s+{re.escape(trigger_word)}"
+        rf"\s+(?:of\s+)?(?:an?\s+|the\s+)?{anchor_pattern}(?:\s+and\b)?"
+    )
+    cleaned = re.sub(pattern, " ", text, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"\s+and\s*$", "", cleaned, flags=re.IGNORECASE).strip()
+    return re.sub(r"\s{2,}", " ", cleaned)
 
 
 def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:

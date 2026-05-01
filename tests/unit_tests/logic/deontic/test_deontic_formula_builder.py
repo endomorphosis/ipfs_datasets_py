@@ -3763,3 +3763,50 @@ def test_structured_compliance_inspection_triggers_become_formula_prerequisites(
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_structured_recordkeeping_triggers_become_formula_prerequisites_without_action_tail():
+    element = dict(extract_normative_elements(
+        "The Clerk shall destroy the record after archiving of the file and after retention of the index."
+    )[0])
+    element["action"] = [
+        "destroy the record after archiving file and after retention index"
+    ]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "destruction",
+                "relation": "triggered_by_archiving_of",
+                "anchor_event": "file",
+                "raw_text": "after archiving of the file",
+                "span": [32, 59],
+            },
+            {
+                "event": "destruction",
+                "relation": "triggered_by_retention_of",
+                "anchor_event": "index",
+                "raw_text": "after retention of the index",
+                "span": [64, 92],
+            },
+        ]
+    }
+
+    formula = build_deontic_formula_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert formula.startswith("O(∀x (Clerk(x) ∧ ")
+    assert formula.endswith(" → DestroyRecord(x)))")
+    antecedent = formula.removeprefix("O(∀x (").removesuffix(" → DestroyRecord(x)))")
+    assert set(antecedent.split(" ∧ ")) == {
+        "Clerk(x)",
+        "ProcedureAfterArchivingFile(x)",
+        "ProcedureAfterRetentionIndex(x)",
+    }
+    assert "DestroyRecordAfterArchivingFile" not in formula
+    assert "DestroyRecordAfterRetentionIndex" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
