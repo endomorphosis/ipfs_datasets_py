@@ -194,6 +194,58 @@ def test_ir_procedure_event_relation_records_preserve_ordering_provenance_withou
     assert "ProcedureBeforeIssuance" not in formula
 
 
+def test_ir_procedure_event_records_mark_filing_and_submission_triggers_as_prerequisites():
+    element = extract_normative_elements(
+        "The Director shall issue a permit after filing of an application."
+    )[0]
+    element = dict(element)
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_filing_of",
+                "anchor_event": "application",
+                "raw_text": "after filing of an application",
+                "span": [36, 66],
+            },
+            {
+                "event": "issuance",
+                "relation": "triggered_by_submission_of",
+                "anchor_event": "complete application",
+                "raw_text": "after submission of a complete application",
+                "span": [0, 0],
+            },
+            {
+                "event": "issuance",
+                "relation": "after",
+                "anchor_event": "notice",
+                "raw_text": "after notice",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    filing_record = next(
+        record for record in records if record["relation"] == "triggered_by_filing_of"
+    )
+    submission_record = next(
+        record for record in records if record["relation"] == "triggered_by_submission_of"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert filing_record["is_formula_antecedent"] is True
+    assert filing_record["proof_role"] == "prerequisite"
+    assert filing_record["anchor_event"] == "application"
+    assert filing_record["span"] == [36, 66]
+    assert submission_record["is_formula_antecedent"] is True
+    assert submission_record["proof_role"] == "prerequisite"
+    assert submission_record["anchor_event"] == "complete application"
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],

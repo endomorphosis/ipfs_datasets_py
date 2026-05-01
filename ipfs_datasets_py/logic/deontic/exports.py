@@ -165,7 +165,11 @@ def build_procedure_event_records_from_ir(norm: LegalNormIR) -> List[Dict[str, A
         if not isinstance(span, list):
             span = []
         raw_text = str(relation.get("raw_text") or relation.get("value") or "").strip()
-        formula_antecedent = relation_type == "triggered_by_receipt_of"
+        formula_antecedent = relation_type in {
+            "triggered_by_receipt_of",
+            "triggered_by_filing_of",
+            "triggered_by_submission_of",
+        }
         proof_role = "prerequisite" if formula_antecedent else "ordering_provenance"
 
         records.append({

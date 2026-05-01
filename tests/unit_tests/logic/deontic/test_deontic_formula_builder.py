@@ -2233,6 +2233,67 @@ def test_action_recipient_is_not_formula_antecedent_regression():
     assert "RecipientAdvisoryCommittee" not in formula
 
 
+def test_structured_procedure_filing_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after filing of an application."
+    )[0])
+    element["procedure"] = {
+        "trigger_event": "application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_filing_of",
+                "anchor_event": "application",
+                "raw_text": "after filing of an application",
+                "span": [36, 66],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureUponFilingApplication(x) → IssuePermit(x)))"
+    )
+    assert "Recipient" not in formula
+
+
+def test_structured_procedure_submission_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after submission of a complete application."
+    )[0])
+    element["procedure"] = {
+        "trigger_event": "complete application",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_submission_of",
+                "anchor_event": "complete application",
+                "raw_text": "after submission of a complete application",
+                "span": [36, 78],
+            },
+            {
+                "event": "issuance",
+                "relation": "before",
+                "anchor_event": "inspection",
+                "raw_text": "before inspection",
+                "span": [0, 0],
+            },
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureUponSubmissionCompleteApplication(x) → IssuePermit(x)))"
+    )
+    assert "ProcedureBeforeInspection" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."

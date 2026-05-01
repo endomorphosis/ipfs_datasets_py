@@ -436,7 +436,8 @@ def _formula_procedure_predicates(procedure: Dict[str, Any]) -> List[str]:
     for relation in procedure.get("event_relations") or []:
         if not isinstance(relation, dict):
             continue
-        if relation.get("relation") != "triggered_by_receipt_of":
+        prefix = _procedure_trigger_formula_prefix(str(relation.get("relation") or ""))
+        if not prefix:
             continue
 
         anchor_event = str(
@@ -445,12 +446,22 @@ def _formula_procedure_predicates(procedure: Dict[str, Any]) -> List[str]:
         if not anchor_event:
             continue
 
-        predicate = normalize_predicate_name(f"procedure upon receipt {anchor_event}")
+        predicate = normalize_predicate_name(f"{prefix} {anchor_event}")
         if predicate and predicate != "P" and predicate not in seen:
             predicates.append(predicate)
             seen.add(predicate)
 
     return predicates[:3]
+
+
+def _procedure_trigger_formula_prefix(relation: str) -> str:
+    """Return a formula-safe prefix for explicit procedural trigger relations."""
+
+    return {
+        "triggered_by_receipt_of": "procedure upon receipt",
+        "triggered_by_filing_of": "procedure upon filing",
+        "triggered_by_submission_of": "procedure upon submission",
+    }.get(relation, "")
 
 
 def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:
