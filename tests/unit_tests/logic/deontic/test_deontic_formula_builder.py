@@ -1,6 +1,5 @@
 """Tests for deterministic IR-to-formula generation."""
 
-
 from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
@@ -1098,6 +1097,62 @@ def test_after_public_notice_without_hearing_does_not_use_notice_and_hearing_pre
 
 
 def test_public_notice_and_hearing_patch_keeps_numbered_reference_repair_blocked():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    record = build_deontic_formula_record_from_ir(LegalNormIR.from_parser_element(element))
+
+    assert record["proof_ready"] is False
+    assert record["requires_validation"] is True
+    assert record["repair_required"] is True
+    assert record["deterministic_resolution"] == {}
+
+
+def test_parser_and_formula_capture_after_consultation_prerequisite():
+    text = "The Director shall adopt rules after consultation with the advisory committee."
+
+    element = extract_normative_elements(text)[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    consultation_constraints = [
+        constraint
+        for constraint in norm.temporal_constraints
+        if constraint.get("temporal_kind") == "after_consultation"
+    ]
+    assert len(consultation_constraints) == 1
+    consultation = consultation_constraints[0]
+    assert consultation["type"] == "procedure"
+    assert consultation["value"] == "after consultation with the advisory committee"
+    assert consultation["raw_text"] == "after consultation with the advisory committee"
+    assert consultation["normalized_text"] == "after consultation with the advisory committee"
+    assert text[consultation["span"][0] : consultation["span"][1]] == (
+        "after consultation with the advisory committee"
+    )
+    assert norm.actor == "Director"
+    assert norm.action == "adopt rules"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ ProcedureAfterConsultationAdvisoryCommittee(x) "
+        "→ AdoptRules(x)))"
+    )
+
+
+def test_consultation_phrase_without_after_does_not_add_procedure_prerequisite():
+    text = "The Director shall provide consultation with the advisory committee."
+
+    element = extract_normative_elements(text)[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.action == "provide consultation with the advisory committee"
+    assert all(
+        constraint.get("temporal_kind") != "after_consultation"
+        for constraint in norm.temporal_constraints
+    )
+    formula = build_deontic_formula_from_ir(norm)
+    assert formula == "O(∀x (Director(x) → ProvideConsultationAdvisoryCommittee(x)))"
+    assert "ProcedureAfterConsultation" not in formula
+
+
+def test_after_consultation_patch_keeps_numbered_reference_repair_blocked():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
     )[0]

@@ -254,6 +254,7 @@ _TEMPORAL_PATTERNS = [
     ("deadline", "before_date", r"\bbefore\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("deadline", "after_date", r"\bafter\s+((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2})"),
     ("procedure", "after_notice_and_hearing", r"\b(after\s+(?:public\s+)?notice\s+and\s+hearing)\b"),
+    ("procedure", "after_consultation", r"\b(after\s+consultation\s+with\s+(?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})\b"),
     ("period", "annually", r"\b(annually)\b"),
     ("period", "monthly", r"\b(monthly)\b"),
     ("period", "weekly", r"\b(weekly)\b"),
