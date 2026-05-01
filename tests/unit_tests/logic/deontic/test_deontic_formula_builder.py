@@ -2477,6 +2477,34 @@ def test_structured_procedure_effective_date_trigger_becomes_formula_prerequisit
     assert "IssuePermitUponEffectiveDateOrdinance" not in formula
 
 
+def test_structured_procedure_certification_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit upon certification of an inspection."
+    )[0])
+    element["action"] = ["issue a permit upon certification inspection"]
+    element["procedure"] = {
+        "trigger_event": "inspection",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_certification_of",
+                "anchor_event": "inspection",
+                "raw_text": "upon certification of an inspection",
+                "span": [36, 73],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureUponCertificationInspection(x) → IssuePermit(x)))"
+    )
+    assert "IssuePermitUponCertificationInspection" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."

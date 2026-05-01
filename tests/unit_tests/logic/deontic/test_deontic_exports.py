@@ -418,6 +418,50 @@ def test_ir_procedure_event_records_mark_effective_date_trigger_as_prerequisite(
     )
 
 
+def test_ir_procedure_event_records_mark_certification_trigger_as_prerequisite():
+    element = extract_normative_elements(
+        "The Director shall issue a permit upon certification of an inspection."
+    )[0]
+    element = dict(element)
+    element["action"] = ["issue a permit upon certification inspection"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_certification_of",
+                "anchor_event": "inspection",
+                "raw_text": "upon certification of an inspection",
+                "span": [36, 73],
+            },
+            {
+                "event": "issuance",
+                "relation": "after",
+                "anchor_event": "publication",
+                "raw_text": "after publication",
+                "span": [0, 0],
+            },
+        ]
+    }
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = build_procedure_event_records_from_ir(norm)
+    certification_record = next(
+        record for record in records if record["relation"] == "triggered_by_certification_of"
+    )
+    after_record = next(record for record in records if record["relation"] == "after")
+
+    assert certification_record["is_formula_antecedent"] is True
+    assert certification_record["proof_role"] == "prerequisite"
+    assert certification_record["anchor_event"] == "inspection"
+    assert certification_record["anchor_symbol"] == "Inspection"
+    assert certification_record["span"] == [36, 73]
+    assert after_record["is_formula_antecedent"] is False
+    assert after_record["proof_role"] == "ordering_provenance"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ ProcedureUponCertificationInspection(x) → IssuePermit(x)))"
+    )
+
+
 def test_document_export_tables_from_ir_include_repair_rows_only_for_blocked_norms():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],
