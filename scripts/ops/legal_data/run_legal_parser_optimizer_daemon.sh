@@ -186,6 +186,19 @@ if not progress and not status:
 
 state = read_json(state_path)
 last_maintenance_at = int(state.get("last_maintenance_at") or 0)
+run_baseline_head = str(status.get("baseline_head") or "")
+goal_epoch_started_at = str(progress.get("goal_epoch_started_at") or "")
+state_baseline_head = str(state.get("baseline_head") or "")
+state_goal_epoch_started_at = str(state.get("goal_epoch_started_at") or "")
+baseline_context_changed = (
+    (run_baseline_head and run_baseline_head != state_baseline_head)
+    or (
+        goal_epoch_started_at
+        and goal_epoch_started_at != state_goal_epoch_started_at
+    )
+)
+if baseline_context_changed:
+    last_maintenance_at = 0
 cooling_down = last_maintenance_at > 0 and now - last_maintenance_at < cooldown_seconds
 
 latest_cycle_index = int(progress.get("latest_cycle_index") or status.get("cycle_index") or 0)
@@ -211,7 +224,13 @@ baseline_metric_stall_rollbacks = int(
     state.get("baseline_metric_stall_rollbacks_since_progress") or metric_stall_rollbacks_since_progress
 )
 
-if accepted_count > baseline_accepted:
+if baseline_context_changed:
+    baseline_cycle = latest_cycle_index
+    baseline_accepted = accepted_count
+    baseline_rolled_back = rolled_back_count
+    baseline_rejected = rejected_count
+    baseline_metric_stall_rollbacks = metric_stall_rollbacks_since_progress
+elif accepted_count > baseline_accepted:
     baseline_cycle = latest_cycle_index
     baseline_accepted = accepted_count
     baseline_rolled_back = rolled_back_count
@@ -259,6 +278,10 @@ state.update(
         "baseline_rolled_back_count": baseline_rolled_back,
         "baseline_rejected_count": baseline_rejected,
         "baseline_metric_stall_rollbacks_since_progress": baseline_metric_stall_rollbacks,
+        "baseline_head": run_baseline_head,
+        "goal_epoch_started_at": goal_epoch_started_at,
+        "baseline_context_changed": baseline_context_changed,
+        "last_maintenance_at": last_maintenance_at,
         "latest_cycle_index": latest_cycle_index,
         "accepted_count": accepted_count,
         "rolled_back_count": rolled_back_count,
