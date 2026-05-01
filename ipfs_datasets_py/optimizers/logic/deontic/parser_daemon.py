@@ -353,6 +353,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When roadmap_pivot_mode is true, stop adding narrow procedural trigger/export variants. Prioritize Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
+                "When recent_test_failures include py_compile, SyntaxError, or pytest collection failures, make the next patch compile-safe first: fix the exact file and line pattern shown in validation_failure_tail before adding new behavior.",
                 "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
                 "Do not move metrics by clearing repair for unresolved, absent, mismatched, partial, or external numbered legal references; those must stay blocked unless exact same-document evidence is present.",
@@ -397,7 +398,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
             "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
             "If roadmap_pivot_mode is true, implement a Phase 8 encoder/decoder/prover-syntax slice instead of another procedural trigger/export synonym. "
-            "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode. "
+            "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode; py_compile and pytest collection failures are blockers that must be fixed before semantic expansion. "
             "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
             "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false. "
             "Return JSON matching required_json_schema and nothing else.\n"
@@ -521,6 +522,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
             tests = dict(summary.get("tests") or {})
             tests_stdout = str(tests.get("stdout") or "")
             test_failure_summary = _summarize_test_failure(tests_stdout)
+            post_apply_validation = dict(summary.get("post_apply_validation") or {})
+            validation_failure_summary = _summarize_post_apply_validation_failure(post_apply_validation)
             patch_check = dict(summary.get("patch_check") or {})
             apply_result = dict(summary.get("apply_result") or {})
             metric_progress = dict(
@@ -548,6 +551,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "applied": apply_result.get("applied"),
                     "rolled_back": apply_result.get("rolled_back", False),
                     "tests_valid": tests.get("valid"),
+                    "post_apply_validation_valid": post_apply_validation.get("valid"),
+                    "validation_failure_summary": validation_failure_summary,
+                    "validation_failure_tail": validation_failure_summary.get("failure_head", ""),
                     "test_failure_summary": test_failure_summary if not tests.get("valid") else {},
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
@@ -577,16 +583,21 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def _recent_test_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         failures: List[Dict[str, Any]] = []
         for item in recent_cycle_history:
-            if item.get("tests_valid") is not False:
+            validation_failed = item.get("post_apply_validation_valid") is False
+            tests_failed = item.get("tests_valid") is False
+            if not tests_failed and not validation_failed:
                 continue
             summary = dict(item.get("test_failure_summary") or {})
-            if not summary:
+            if not _failure_summary_has_content(summary):
                 summary = _summarize_test_failure(str(item.get("test_failure_tail") or ""))
+            if not _failure_summary_has_content(summary) and validation_failed:
+                summary = dict(item.get("validation_failure_summary") or {})
             failures.append(
                 {
                     "cycle_index": item.get("cycle_index"),
                     "changed_files": item.get("changed_files", []),
                     "rolled_back": item.get("rolled_back", False),
+                    "failure_phase": "post_apply_validation" if validation_failed else "tests",
                     "failed_tests": summary.get("failed_tests", [])[:12],
                     "exception_types": summary.get("exception_types", [])[:8],
                     "failure_head": summary.get("failure_head", ""),
@@ -2379,6 +2390,58 @@ def _summarize_test_failure(stdout: str) -> Dict[str, Any]:
         "exception_types": exception_types,
         "failure_head": "\n".join(interesting_lines)[:2000],
     }
+
+
+def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> Dict[str, Any]:
+    if not validation or validation.get("valid") is not False:
+        return {}
+
+    exception_types: List[str] = []
+    interesting_lines: List[str] = []
+    for check_name in ("compile", "collect"):
+        check = dict(validation.get(check_name) or {})
+        if check.get("valid") is not False:
+            continue
+        stderr = str(check.get("stderr") or "")
+        stdout = str(check.get("stdout") or "")
+        if check_name == "compile" and "py_compile" not in exception_types:
+            exception_types.append("py_compile")
+        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", stderr + "\n" + stdout):
+            name = match.group(1)
+            if name and name not in exception_types:
+                exception_types.append(name)
+        for line in (stderr + "\n" + stdout).splitlines():
+            text = line.strip()
+            if not text:
+                continue
+            if (
+                text.startswith("File ")
+                or text.startswith("E   ")
+                or "SyntaxError" in text
+                or "IndentationError" in text
+                or "pytest" in text
+                or "FAILED " in text
+            ):
+                interesting_lines.append(f"{check_name}: {text}")
+            if len(interesting_lines) >= 12:
+                break
+
+    if not interesting_lines:
+        interesting_lines = [str(reason) for reason in validation.get("reasons") or []]
+
+    return {
+        "failed_tests": [],
+        "exception_types": exception_types[:8],
+        "failure_head": "\n".join(interesting_lines)[:2000],
+    }
+
+
+def _failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
+    return bool(
+        summary.get("failed_tests")
+        or summary.get("exception_types")
+        or str(summary.get("failure_head") or "").strip()
+    )
 
 
 def _json_safe(value: Any) -> Any:

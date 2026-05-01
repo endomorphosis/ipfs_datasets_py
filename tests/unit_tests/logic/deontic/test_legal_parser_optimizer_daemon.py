@@ -666,6 +666,66 @@ def test_recent_cycle_history_summarizes_test_failures_for_recovery_prompt(tmp_p
     assert "do not add tests that assert an extracted legal fact should become empty" in prompt
 
 
+def test_recent_cycle_history_summarizes_post_apply_validation_failures(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9763,
+                "feedback": ["repair_required_count: 1"],
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {
+                    "applied": True,
+                    "rolled_back": True,
+                    "reason": "post_apply_validation_failed",
+                },
+                "changed_files": [
+                    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+                    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+                ],
+                "post_apply_validation": {
+                    "valid": False,
+                    "compile": {
+                        "valid": False,
+                        "stderr": (
+                            '  File "ipfs_datasets_py/logic/deontic/prover_syntax.py", line 194\n'
+                            "    if depth  str:\n"
+                            "              ^^^\n"
+                            "SyntaxError: invalid syntax\n"
+                        ),
+                    },
+                    "collect": {"valid": True, "skipped": True},
+                    "reasons": ["changed Python files failed py_compile"],
+                },
+                "tests": {
+                    "valid": False,
+                    "skipped": True,
+                    "reason": "post_apply_validation_failed",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    history = optimizer._recent_cycle_history(limit=1)
+    recent_failures = optimizer._recent_test_failures(history)
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert history[0]["post_apply_validation_valid"] is False
+    assert "SyntaxError" in history[0]["validation_failure_summary"]["exception_types"]
+    assert recent_failures[0]["failure_phase"] == "post_apply_validation"
+    assert "prover_syntax.py" in recent_failures[0]["failure_head"]
+    assert "py_compile" in recent_failures[0]["exception_types"]
+    assert '"test_failure_recovery_mode": true' in prompt
+    assert "compile-safe first" in prompt
+    assert "SyntaxError" in prompt
+
+
 def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
