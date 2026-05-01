@@ -118,6 +118,10 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_mental_state(
         _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
+    operator = _formula_operator(norm, action_text)
+    if _is_failure_prohibition(norm, action_text):
+        action_text = _strip_failure_action(action_text)
+
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
@@ -136,6 +140,28 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:_FORMULA_EXCEPTION_LIMIT])
     inner = " ∧ ".join(inner_parts)
     return f"{operator}(∀x ({inner} → {action_pred}(x)))"
+
+
+def _formula_operator(norm: LegalNormIR, action_text: str) -> str:
+    """Return the deontic operator after narrow deterministic normalization."""
+
+    if _is_failure_prohibition(norm, action_text):
+        return "O"
+    return norm.modality
+
+
+def _is_failure_prohibition(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether a prohibition of failing to act is a positive duty."""
+
+    if norm.modality != "F":
+        return False
+    return bool(re.match(r"^fail(?:ure)?\s+to\s+\S", str(action_text or "").strip(), re.IGNORECASE))
+
+
+def _strip_failure_action(action_text: str) -> str:
+    """Remove the failure wrapper from a double-negative duty action."""
+
+    return re.sub(r"^fail(?:ure)?\s+to\s+", "", str(action_text or "").strip(), flags=re.IGNORECASE).strip()
 
 
 def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:

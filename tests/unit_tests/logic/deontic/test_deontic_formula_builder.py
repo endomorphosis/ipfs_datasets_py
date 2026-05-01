@@ -655,6 +655,51 @@ def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     assert record["omitted_formula_slots"]["exceptions"][0]["value"] == "as provided in section 552"
 
 
+def test_failure_to_prohibition_becomes_positive_obligation_formula():
+    element = dict(extract_normative_elements(
+        "No person shall fail to maintain records."
+    )[0])
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "F"
+    assert norm.action == "fail to maintain records"
+    assert formula == "O(∀x (Person(x) → MaintainRecords(x)))"
+    assert "FailToMaintainRecords" not in formula
+    assert record["formula"] == formula
+    assert record["modality"] == "F"
+    assert record["proof_ready"] is True
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_ordinary_prohibition_remains_forbidden_formula():
+    element = extract_normative_elements(
+        "No person may discharge pollutants into the sewer."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.modality == "F"
+    assert formula == "F(∀x (Person(x) → DischargePollutantsIntoSewer(x)))"
+    assert "O(" not in formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_formula_record_preserves_alias_only_reference_exception_omission():
     element = dict(extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
