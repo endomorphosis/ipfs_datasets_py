@@ -537,6 +537,75 @@ def test_transmittal_actions_omit_structured_recipient_from_unary_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_notice_duties_omit_structured_recipient_from_object_formula():
+    examples = [
+        (
+            "notify the applicant of the decision",
+            "notify",
+            "decision",
+            "applicant",
+            "O(∀x (Director(x) → NotifyDecision(x)))",
+            "NotifyApplicantDecision",
+        ),
+        (
+            "inform the permittee about the inspection results",
+            "inform",
+            "inspection results",
+            "permittee",
+            "O(∀x (Director(x) → InformInspectionResults(x)))",
+            "InformPermitteeInspectionResults",
+        ),
+        (
+            "advise the owner regarding the permit denial",
+            "advise",
+            "permit denial",
+            "owner",
+            "O(∀x (Director(x) → AdvisePermitDenial(x)))",
+            "AdviseOwnerPermitDenial",
+        ),
+    ]
+
+    for action, verb, action_object, recipient, expected_formula, rejected_predicate in examples:
+        element = dict(extract_normative_elements("The Director shall issue a notice.")[0])
+        element["action"] = [action]
+        element["action_verb"] = verb
+        element["action_object"] = action_object
+        element["action_recipient"] = recipient
+        element["field_spans"] = {
+            **dict(element.get("field_spans") or {}),
+            "action_recipient": [0, 0],
+        }
+
+        norm = LegalNormIR.from_parser_element(element)
+        formula = build_deontic_formula_from_ir(norm)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert formula == expected_formula
+        assert rejected_predicate not in formula
+        assert record["formula"] == expected_formula
+        assert record["omitted_formula_slots"]["recipients"][0]["value"] == recipient
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    recipient_only = dict(extract_normative_elements("The Director shall notify the applicant.")[0])
+    recipient_only["action"] = []
+    recipient_only["action_verb"] = "notify"
+    recipient_only["action_object"] = ""
+    recipient_only["action_recipient"] = "applicant"
+
+    assert build_deontic_formula_from_ir(LegalNormIR.from_parser_element(recipient_only)) == (
+        "O(∀x (Director(x) → NotifyApplicant(x)))"
+    )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_retention_duration_duty_uses_temporal_slot_not_action_tail():
     element = dict(extract_normative_elements(
         "The custodian shall retain records for three years."

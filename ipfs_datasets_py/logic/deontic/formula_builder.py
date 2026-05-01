@@ -135,6 +135,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _normalize_refrain_action_head(action_text)
 
     action_text = _action_without_structured_recipient_tail(norm, action_text)
+    action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -419,6 +420,44 @@ def _action_without_structured_recipient_tail(norm: LegalNormIR, action_text: st
     if not _formula_text_contains_slot(head, action_object):
         return text
     return head
+
+
+def _action_without_structured_notice_recipient(norm: LegalNormIR, action_text: str) -> str:
+    """Remove structured recipients from object-bearing notice duties.
+
+    A clause like ``shall notify the applicant of the decision`` carries both a
+    recipient and a legal object. The current unary consequent should represent
+    the operative notice object as ``NotifyDecision(x)`` while the recipient is
+    preserved as omitted provenance. Recipient-only clauses such as ``shall
+    notify the applicant`` stay unchanged because no object slot grounds a more
+    specific formula.
+    """
+
+    text = str(action_text or "").strip()
+    recipient = str(norm.recipient or "").strip()
+    action_object = str(norm.action_object or "").strip()
+    if not text or not recipient or not action_object:
+        return text
+
+    notice_match = re.match(
+        r"^(notify|inform|advise|alert)\s+(.+?)\s+(?:of|about|regarding)\s+(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if not notice_match:
+        return text
+
+    verb = notice_match.group(1).strip()
+    recipient_phrase = notice_match.group(2).strip()
+    object_phrase = notice_match.group(3).strip()
+    if not recipient_phrase or not object_phrase:
+        return text
+    if not _same_formula_slot_text(recipient_phrase, recipient):
+        return text
+    if not _formula_text_contains_slot(object_phrase, action_object):
+        return text
+
+    return f"{verb} {object_phrase}"
 
 
 def _action_without_temporal_duration_tail(norm: LegalNormIR, action_text: str) -> str:
