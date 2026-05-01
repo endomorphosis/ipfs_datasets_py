@@ -2590,6 +2590,64 @@ def test_structured_procedure_inspection_trigger_becomes_formula_prerequisite():
     assert "RenewPermitAfterInspectionPremises" not in formula
 
 
+def test_structured_procedure_service_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall renew a permit after service of notice."
+    )[0])
+    element["action"] = ["renew a permit after service notice"]
+    element["procedure"] = {
+        "trigger_event": "notice",
+        "terminal_event": "renewal",
+        "event_relations": [
+            {
+                "event": "renewal",
+                "relation": "triggered_by_service_of",
+                "anchor_event": "notice",
+                "raw_text": "after service of notice",
+                "span": [36, 59],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterServiceNotice(x) → RenewPermit(x)))"
+    )
+    assert "Procedureafterservicenotice" not in formula
+    assert "RenewPermitAfterServiceNotice" not in formula
+
+
+def test_structured_procedure_adoption_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall publish guidelines after adoption of rules."
+    )[0])
+    element["action"] = ["publish guidelines after adoption rules"]
+    element["procedure"] = {
+        "trigger_event": "rules",
+        "terminal_event": "publication",
+        "event_relations": [
+            {
+                "event": "publication",
+                "relation": "triggered_by_adoption_of",
+                "anchor_event": "rules",
+                "raw_text": "after adoption of rules",
+                "span": [39, 62],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterAdoptionRules(x) → PublishGuidelines(x)))"
+    )
+    assert "Procedureafteradoptionrules" not in formula
+    assert "PublishGuidelinesAfterAdoptionRules" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
