@@ -4504,3 +4504,37 @@ def test_ir_procedure_event_records_mark_commencement_trigger_as_prerequisite():
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
     assert records[0]["relation_record"]["relation"] == "triggered_by_commencement_of"
+
+
+def test_ir_procedure_event_records_mark_execution_trigger_as_prerequisite():
+    """Execution of an agreement is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a certificate after execution of the agreement."
+    )[0])
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_execution_of",
+                "anchor_event": "agreement",
+                "raw_text": "after execution of the agreement",
+                "span": [39, 72],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_execution_of"
+    assert records[0]["anchor_event"] == "agreement"
+    assert records[0]["anchor_symbol"] == "Agreement"
+    assert records[0]["raw_text"] == "after execution of the agreement"
+    assert records[0]["span"] == [39, 72]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+    assert records[0]["relation_record"]["relation"] == "triggered_by_execution_of"
