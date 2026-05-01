@@ -540,6 +540,35 @@ class TestDeonticConverter:
         assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
         assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
+    def test_corruptly_mens_rea_is_structured_and_reference_blocker_is_preserved(self):
+        """Corrupt mens rea should pivot away from clearing numbered references."""
+        from ipfs_datasets_py.logic.deontic.formula_builder import build_deontic_formula_from_ir
+        from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("No person shall corruptly influence a proceeding.")[0]
+
+        assert element["deontic_operator"] == "F"
+        assert element["subject"] == ["person"]
+        assert element["action"] == ["corruptly influence a proceeding"]
+        assert element["mental_state"] == "corruptly"
+        assert element["action_verb"] == "influence"
+        assert element["action_object"] == "a proceeding"
+        assert element["llm_repair"]["required"] is False
+
+        norm = LegalNormIR.from_parser_element(element)
+        assert norm.mental_state == "corruptly"
+        assert build_deontic_formula_from_ir(norm) == (
+            "F(∀x (Person(x) ∧ Corruptly(x) → InfluenceProceeding(x)))"
+        )
+
+        blocked = extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
     def test_implicit_repeated_subject_modal_clause(self):
         """A second modal joined by 'and shall' should inherit the prior subject."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
