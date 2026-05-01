@@ -555,6 +555,46 @@ def test_ir_formula_builder_uses_detail_only_regulated_object_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_ir_formula_builder_uses_detail_only_regulated_activity_object_slot():
+    element = dict(extract_normative_elements(
+        "The inspector shall monitor regulated activity."
+    )[0])
+    element["action"] = []
+    element["action_verb"] = "monitor"
+    element["action_object"] = ""
+    element["regulated_activity_details"] = [
+        {
+            "type": "regulated_activity",
+            "normalized_text": "regulated activity",
+            "span": [28, 46],
+        }
+    ]
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action_verb"] = [20, 27]
+    field_spans["action_object"] = [28, 46]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.action == ""
+    assert norm.action_verb == "monitor"
+    assert norm.action_object == "regulated activity"
+    assert norm.to_dict()["action_object"] == "regulated activity"
+    assert formula == "O(∀x (Inspector(x) → MonitorRegulatedActivity(x)))"
+    assert "Monitor(x)" not in formula
+    assert "Action(x)" not in formula
+    assert record["formula"] == formula
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_recipient_slot():
     element = dict(extract_normative_elements(
         "The clerk shall notify the applicant."
