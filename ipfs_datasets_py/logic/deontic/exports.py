@@ -294,6 +294,55 @@ def summarize_active_repair_from_parser_elements(
     }
 
 
+def normalize_repair_required_details_from_parser_elements(
+    elements: Iterable[Mapping[str, Any]],
+    raw_details: Iterable[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return active repair details after deterministic IR readiness projection.
+
+    Some metrics pipelines first collect raw parser repair details and only then
+    ask export helpers to normalize them. Raw parser details can contain stale
+    prompt payloads for rows that are now resolved by the deterministic
+    IR/formula layer. This helper keeps that reporting path source-grounded: it
+    preserves still-blocked raw detail metadata, but drops rows whose source ID
+    is no longer active repair work after formula readiness projection.
+    """
+
+    summary = summarize_active_repair_from_parser_elements(elements)
+    active_by_source_id = summary["active_repair_required_by_source_id"]
+    active_detail_by_source_id = {
+        str(detail.get("source_id") or ""): dict(detail)
+        for detail in summary["repair_required_details"]
+    }
+
+    normalized: List[Dict[str, Any]] = []
+    seen_source_ids: set[str] = set()
+    for raw_detail in raw_details:
+        source_id = str(raw_detail.get("source_id") or "")
+        if not source_id or active_by_source_id.get(source_id) is not True:
+            continue
+
+        detail = dict(raw_detail)
+        projected_detail = active_detail_by_source_id.get(source_id, {})
+        if projected_detail:
+            detail["active_repair_warnings"] = list(
+                projected_detail.get("active_repair_warnings") or []
+            )
+            detail["deterministic_resolution"] = (
+                projected_detail.get("deterministic_resolution") or {}
+            )
+            detail["llm_repair"] = projected_detail.get("llm_repair") or detail.get("llm_repair", {})
+
+        normalized.append(detail)
+        seen_source_ids.add(source_id)
+
+    for source_id, projected_detail in active_detail_by_source_id.items():
+        if source_id not in seen_source_ids:
+            normalized.append(dict(projected_detail))
+
+    return normalized
+
+
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
     """Return active repair status for an already metrics-projected row."""
 

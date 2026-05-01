@@ -5,6 +5,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_proof_obligation_record_from_ir,
+    normalize_repair_required_details_from_parser_elements,
     parser_element_has_active_repair,
     parser_elements_to_export_tables,
     parser_elements_for_metrics,
@@ -1635,6 +1636,61 @@ def test_active_repair_summary_counts_only_unresolved_repair_probes():
         "exception_requires_scope_review",
     ]
     assert summary["repair_required_details"][0]["deterministic_resolution"] == {}
+
+
+def test_normalize_repair_required_details_filters_formula_resolved_raw_details():
+    elements = [
+        extract_normative_elements("This section applies to food carts and mobile vendors.")[0],
+        extract_normative_elements(
+            "The applicant shall obtain a permit unless approval is denied."
+        )[0],
+        extract_normative_elements(
+            "Notwithstanding section 5.01.020, the Director may issue a variance."
+        )[0],
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0],
+    ]
+    raw_details = [
+        {
+            "source_id": element["source_id"],
+            "text": element["text"],
+            "norm_type": element["norm_type"],
+            "parser_warnings": list(element["parser_warnings"]),
+            "llm_repair": dict(element["llm_repair"]),
+        }
+        for element in elements
+    ]
+
+    details = normalize_repair_required_details_from_parser_elements(elements, raw_details)
+
+    assert len(details) == 1
+    assert details[0]["source_id"] == elements[3]["source_id"]
+    assert details[0]["text"] == elements[3]["text"]
+    assert details[0]["norm_type"] == "obligation"
+    assert details[0]["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert details[0]["active_repair_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert details[0]["deterministic_resolution"] == {}
+    assert details[0]["llm_repair"]["required"] is True
+
+
+def test_normalize_repair_required_details_adds_missing_active_projected_detail():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    details = normalize_repair_required_details_from_parser_elements([element], [])
+
+    assert len(details) == 1
+    assert details[0]["source_id"] == element["source_id"]
+    assert details[0]["active_repair_warnings"] == element["parser_warnings"]
+    assert details[0]["deterministic_resolution"] == {}
 
 
 def test_raw_parser_clears_llm_prompt_for_formula_resolved_repair_probes():
