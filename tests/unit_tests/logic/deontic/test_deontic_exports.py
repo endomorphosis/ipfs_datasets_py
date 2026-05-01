@@ -135,6 +135,15 @@ def test_canonical_rows_expose_export_repair_status_without_relaxing_parser_gate
         None,
     ]
     assert len(tables["repair_queue"]) == 1
+    repair_row = tables["repair_queue"][0]
+    assert repair_row["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert repair_row["target_logic"] == "deontic"
+    assert repair_row["formula_repair_required"] is True
+    assert repair_row["deterministic_resolution"] == {}
+    assert repair_row["omitted_formula_slots"]["exceptions"][0]["value"] == (
+        "as provided in section 552"
+    )
+    assert "cross_reference_requires_resolution" in repair_row["reasons"]
 
 
 def test_ir_proof_record_uses_formula_level_resolution_for_substantive_exception():
