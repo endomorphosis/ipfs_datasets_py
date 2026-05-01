@@ -587,7 +587,7 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
                     "summary": "Broad patch should be retried.",
                     "requirements_addressed": ["daemon"],
                     "acceptance_criteria": ["stability mode rejects broad patches"],
-                    "expected_metric_gain": {},
+                    "expected_metric_gain": {"repair_required_count": -1},
                     "tests_to_run": [],
                     "unified_diff": broad_diff,
                 }
@@ -597,7 +597,7 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
                     "summary": "Focused patch should pass quality.",
                     "requirements_addressed": ["daemon"],
                     "acceptance_criteria": ["stability mode accepts focused patches"],
-                    "expected_metric_gain": {},
+                    "expected_metric_gain": {"repair_required_count": -1},
                     "tests_to_run": [],
                     "unified_diff": focused_diff,
                 }
@@ -619,6 +619,145 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
 
     assert len(fake_router.calls) == 2
     assert "patch stability mode allows at most two changed files" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
+    assert cycle["proposal_quality"]["valid"] is True
+    assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
+
+
+def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_converter.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "stalled_metric_cycles": 5,
+                "current_score": 0.9763,
+                "current_feedback": ["repair_required_count: 4"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(
+        cycle_index=10,
+        evaluation={
+            "metrics": {"parity_score": 0.9763, "coverage_gaps": ["repair_required_count: 4"]},
+            "repair_required_details": [
+                {
+                    "sample_id": "cross_reference",
+                    "text": "The Secretary shall publish the notice except as provided in section 552.",
+                    "parser_warnings": ["cross_reference_requires_resolution"],
+                }
+            ],
+        },
+        feedback=["repair_required_count: 4"],
+    )
+
+    assert '"metric_stall_mode": true' in prompt
+    assert "cross_reference" in prompt
+    assert "expected_metric_gain for a real metric" in prompt
+
+
+def test_evaluation_records_repair_required_details():
+    optimizer = LegalParserParityOptimizer(daemon_config=LegalParserDaemonConfig())
+
+    evaluation = optimizer.evaluate_current_parser()
+
+    assert evaluation["repair_required_details"]
+    detail = evaluation["repair_required_details"][0]
+    assert {"sample_id", "text", "source_id", "parser_warnings", "llm_repair"} <= set(detail)
+
+
+def test_daemon_retries_metric_stall_proposal_without_expected_metric_gain(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    files = {
+        "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "before_parser\n",
+        "tests/unit_tests/logic/deontic/test_deontic_converter.py": "before_test\n",
+    }
+    for path, body in files.items():
+        full_path = repo / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = repo / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps({"stalled_metric_cycles": 4, "current_score": 0.9763}),
+        encoding="utf-8",
+    )
+    diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "--- a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+            "@@ -1 +1 @@",
+            "-before_parser",
+            "+after_parser",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_converter.py b/tests/unit_tests/logic/deontic/test_deontic_converter.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_converter.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_converter.py",
+            "@@ -1 +1 @@",
+            "-before_test",
+            "+after_test",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "Patch omits metric gain.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["metric stall proposal is rejected"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": diff,
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Patch names metric gain.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["repair-required count moves"],
+                    "expected_metric_gain": {"repair_required_count": -1},
+                    "tests_to_run": [],
+                    "unified_diff": diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=repo,
+        output_dir=out_dir,
+        apply_patches=False,
+        run_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert "metric stall mode requires expected_metric_gain" in cycle["proposal_attempts"][0]["retry_reason"]
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"

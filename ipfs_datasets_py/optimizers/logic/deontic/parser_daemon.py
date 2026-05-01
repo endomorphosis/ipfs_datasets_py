@@ -176,6 +176,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
         all_elements: List[Dict[str, Any]] = []
         unparsed: List[str] = []
         repair_required: List[str] = []
+        repair_required_details: List[Dict[str, Any]] = []
         formula_errors: List[Dict[str, str]] = []
 
         for sample in DEFAULT_PROBE_CORPUS:
@@ -192,6 +193,20 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 all_elements.append(element)
                 if (element.get("llm_repair") or {}).get("required"):
                     repair_required.append(str(element.get("source_id") or sample["id"]))
+                    repair_required_details.append(
+                        {
+                            "sample_id": sample["id"],
+                            "text": text,
+                            "source_id": element.get("source_id"),
+                            "norm_type": element.get("norm_type"),
+                            "modality": element.get("modality"),
+                            "subject": element.get("subject"),
+                            "action": element.get("action"),
+                            "object": element.get("object"),
+                            "parser_warnings": element.get("parser_warnings", []),
+                            "llm_repair": element.get("llm_repair", {}),
+                        }
+                    )
                 try:
                     formulas.append(build_deontic_formula(element))
                 except Exception as exc:
@@ -249,6 +264,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "samples": samples,
             "unparsed": unparsed,
             "repair_required": repair_required,
+            "repair_required_details": repair_required_details,
             "formula_errors": formula_errors,
         }
 
@@ -311,6 +327,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             if (self.daemon_config.repo_root / path).is_file()
         }
         progress_payload = self._progress_snapshot()
+        metric_stall_mode = self._metric_stall_mode(progress_payload)
         payload = {
             "cycle_index": cycle_index,
             "objective": (
@@ -328,8 +345,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Avoid cosmetic churn, one-line metric gaming, and isolated test-only patches.",
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
+                "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
             ],
             "patch_stability_mode": patch_stability_mode,
+            "metric_stall_mode": metric_stall_mode,
             "recent_failed_patch_files": recent_failed_patch_files,
             "docs": docs_payload,
             "evaluation": evaluation,
@@ -356,6 +375,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "while remaining reviewable and fully covered by tests. "
             "The diff must normally touch at least one production parser/export file and at least one deontic test file. "
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
+            "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
             "Prioritize the unresolved repair-required probes before adding more aliases or bookkeeping. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
@@ -380,6 +400,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "accepted_change_summaries": progress.get("accepted_change_summaries", [])[-8:],
             "stalled_metric_cycles": progress.get("stalled_metric_cycles", 0),
         }
+
+    def _metric_stall_mode(self, progress_payload: Dict[str, Any]) -> bool:
+        try:
+            return int(progress_payload.get("stalled_metric_cycles", 0) or 0) >= 3
+        except (TypeError, ValueError):
+            return False
 
     def _recent_cycle_history(self, *, limit: int = 3) -> List[Dict[str, Any]]:
         cycles_dir = self.daemon_config.resolved_output_dir() / "cycles"
@@ -572,6 +598,7 @@ class LegalParserOptimizerDaemon:
         max_attempts = max(1, int(self.config.llm_proposal_attempts))
         attempt_feedback = list(feedback)
         patch_stability_mode = self._patch_stability_mode()
+        metric_stall_mode = self._metric_stall_mode()
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
@@ -585,6 +612,7 @@ class LegalParserOptimizerDaemon:
                 proposal_attempt=attempt_index,
                 proposal_attempts=max_attempts,
                 patch_stability_mode=patch_stability_mode,
+                metric_stall_mode=metric_stall_mode,
             )
             try:
                 proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
@@ -611,6 +639,11 @@ class LegalParserOptimizerDaemon:
                     candidate_quality = self._enforce_patch_stability_quality(
                         proposal_quality=candidate_quality,
                         changed_files=candidate_changed_files,
+                    )
+                if metric_stall_mode:
+                    candidate_quality = self._enforce_metric_stall_quality(
+                        proposal=proposal,
+                        proposal_quality=candidate_quality,
                     )
                 candidate_dirty_touched = self._dirty_touched_files(candidate_changed_files)
                 if self.config.require_clean_touched_files and candidate_dirty_touched:
@@ -682,6 +715,11 @@ class LegalParserOptimizerDaemon:
             proposal_quality = self._enforce_patch_stability_quality(
                 proposal_quality=proposal_quality,
                 changed_files=changed_files,
+            )
+        if metric_stall_mode:
+            proposal_quality = self._enforce_metric_stall_quality(
+                proposal=proposal,
+                proposal_quality=proposal_quality,
             )
         dirty_touched_files = self._dirty_touched_files(changed_files)
         if self.config.require_clean_touched_files and dirty_touched_files:
@@ -1003,6 +1041,11 @@ class LegalParserOptimizerDaemon:
         history = self.optimizer._recent_cycle_history(limit=5)
         return self.optimizer._patch_stability_mode(history)
 
+    def _metric_stall_mode(self) -> bool:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return False
+        return self.optimizer._metric_stall_mode(self.optimizer._progress_snapshot())
+
     def _enforce_patch_stability_quality(
         self,
         *,
@@ -1019,6 +1062,35 @@ class LegalParserOptimizerDaemon:
                 "patch stability mode allows at most two changed files after repeated patch-check failures"
             ],
             "patch_stability_mode": True,
+        }
+
+    def _enforce_metric_stall_quality(
+        self,
+        *,
+        proposal: LegalParserCycleProposal,
+        proposal_quality: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        gain_keys = {str(key) for key in (proposal.expected_metric_gain or {})}
+        accepted_metric_keys = {
+            "parity_score",
+            "repair_required_count",
+            "repair_required_rate",
+            "proof_ready_rate",
+            "cross_reference_resolution_rate",
+            "formula_error_rate",
+            "parsed_rate",
+            "schema_valid_rate",
+        }
+        if gain_keys & accepted_metric_keys:
+            return proposal_quality
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", []))
+            + [
+                "metric stall mode requires expected_metric_gain to name a real parser metric"
+            ],
+            "metric_stall_mode": True,
         }
 
     def _proposal_retry_reason(self, proposal: LegalParserCycleProposal) -> str:
@@ -1144,7 +1216,10 @@ class LegalParserOptimizerDaemon:
         current_metrics = latest_cycle.get("metrics", {})
         post_metrics = (latest_cycle.get("post_evaluation") or {}).get("metrics") or {}
         current_score = post_metrics.get("parity_score", current_metrics.get("parity_score"))
-        current_feedback = current_metrics.get("coverage_gaps", latest_cycle.get("feedback", []))
+        current_feedback = post_metrics.get(
+            "coverage_gaps",
+            current_metrics.get("coverage_gaps", latest_cycle.get("feedback", [])),
+        )
 
         accepted_summaries: List[Dict[str, Any]] = []
         for cycle in accepted_cycles[-20:]:
