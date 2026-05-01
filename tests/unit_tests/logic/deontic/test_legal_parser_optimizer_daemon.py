@@ -352,6 +352,39 @@ def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
     assert progress_payload["latest_cycle"]["commit_result"]["committed"] is False
 
 
+def test_recent_cycle_history_includes_patch_failure_feedback(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    proposal_path = cycle_dir / "proposal.json"
+    proposal_path.write_text(
+        json.dumps({"summary": "Patch stale context.", "requirements_addressed": ["roadmap"]}),
+        encoding="utf-8",
+    )
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9,
+                "feedback": ["gap"],
+                "proposal_path": str(proposal_path),
+                "patch_check": {"valid": False, "stderr": "error: patch failed: file.py:10"},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {"applied": False, "reason": "patch_check_failed"},
+                "tests": {"valid": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    history = optimizer._recent_cycle_history(limit=1)
+
+    assert history[0]["patch_valid"] is False
+    assert "patch failed" in history[0]["patch_failure_tail"]
+    assert history[0]["apply_reason"] == "patch_check_failed"
+
+
 def test_retained_change_summary_detects_no_content_change(tmp_path):
     path = tmp_path / "ipfs_datasets_py/logic/deontic/example.py"
     path.parent.mkdir(parents=True)
@@ -423,6 +456,13 @@ def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
                 "changed_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
             }
         ],
+        "recent_rejections": [
+            {
+                "cycle_index": 4,
+                "reason": "patch_check_failed:error: patch failed",
+                "changed_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+            }
+        ],
     }
 
     report = daemon._format_progress_report(progress)
@@ -431,3 +471,4 @@ def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
     assert "M ipfs_datasets_py/logic/deontic/formula_builder.py" in report
     assert "Improve formula export." in report
     assert "repair_required_count: 1" in report
+    assert "patch_check_failed:error: patch failed" in report

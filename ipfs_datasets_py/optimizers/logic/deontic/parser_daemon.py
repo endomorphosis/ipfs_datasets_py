@@ -321,6 +321,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Keep existing public APIs backward compatible unless the docs explicitly require a migration.",
                 "Choose a coherent implementation slice large enough to matter: parser behavior, IR/export/formula handling, and focused tests should advance together when the roadmap calls for it.",
                 "Avoid cosmetic churn, one-line metric gaming, and isolated test-only patches.",
+                "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
             ],
             "docs": docs_payload,
             "evaluation": evaluation,
@@ -395,6 +396,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     pass
             tests = dict(summary.get("tests") or {})
             tests_stdout = str(tests.get("stdout") or "")
+            patch_check = dict(summary.get("patch_check") or {})
+            apply_result = dict(summary.get("apply_result") or {})
+            proposal_quality = dict(summary.get("proposal_quality") or {})
             summaries.append(
                 {
                     "cycle_index": summary.get("cycle_index"),
@@ -402,9 +406,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "feedback": summary.get("feedback"),
                     "proposal_summary": proposal_summary,
                     "proposal_requirements": proposal_requirements[:6],
-                    "patch_valid": (summary.get("patch_check") or {}).get("valid"),
-                    "applied": (summary.get("apply_result") or {}).get("applied"),
-                    "rolled_back": (summary.get("apply_result") or {}).get("rolled_back", False),
+                    "patch_valid": patch_check.get("valid"),
+                    "patch_failure_tail": str(patch_check.get("stderr") or "")[-4000:]
+                    if not patch_check.get("valid")
+                    else "",
+                    "proposal_quality_valid": proposal_quality.get("valid"),
+                    "proposal_quality_reasons": proposal_quality.get("reasons", []),
+                    "apply_reason": apply_result.get("reason"),
+                    "applied": apply_result.get("applied"),
+                    "rolled_back": apply_result.get("rolled_back", False),
                     "tests_valid": tests.get("valid"),
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
@@ -1039,6 +1049,18 @@ class LegalParserOptimizerDaemon:
                 }
             )
 
+        recent_rejections = [
+            {
+                "cycle_index": cycle.get("cycle_index"),
+                "reason": _cycle_rejection_reason(cycle),
+                "changed_files": cycle.get("changed_files", []),
+                "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
+                "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
+            }
+            for cycle in cycles[-10:]
+            if not _cycle_was_kept(cycle)
+        ]
+
         unchanged_tail = 0
         for cycle in reversed(cycles):
             score = cycle.get("score")
@@ -1076,6 +1098,7 @@ class LegalParserOptimizerDaemon:
                 "baseline_head": self.run_baseline_head,
             },
             "accepted_change_summaries": accepted_summaries,
+            "recent_rejections": recent_rejections,
             "latest_cycle": {
                 "cycle_index": latest_cycle.get("cycle_index"),
                 "status": latest_cycle.get("status", "ok"),
@@ -1170,6 +1193,17 @@ class LegalParserOptimizerDaemon:
             lines.extend(f"- `{item}`" for item in feedback)
         else:
             lines.append("No current feedback items recorded.")
+        lines.extend(["", "## Recent Rejections", ""])
+        recent_rejections = progress.get("recent_rejections") or []
+        if recent_rejections:
+            for item in recent_rejections[-10:]:
+                reason = item.get("reason") or "unknown"
+                files = ", ".join(item.get("changed_files") or [])
+                lines.append(f"- Cycle `{item.get('cycle_index')}`: `{reason}`")
+                if files:
+                    lines.append(f"  Files: `{files}`")
+        else:
+            lines.append("No recent rejected cycles recorded.")
         lines.append("")
         return "\n".join(lines)
 
@@ -1533,6 +1567,35 @@ def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:
         and tests.get("valid") is True
         and retained_ok
     )
+
+
+def _cycle_rejection_reason(cycle_payload: Dict[str, Any]) -> str:
+    if cycle_payload.get("status") == "cycle_error":
+        exception = cycle_payload.get("exception") or {}
+        return f"cycle_error:{exception.get('type') or 'unknown'}"
+    proposal_quality = cycle_payload.get("proposal_quality") or {}
+    if proposal_quality.get("valid") is False:
+        reasons = proposal_quality.get("reasons") or []
+        if reasons:
+            return "proposal_quality_failed:" + "; ".join(str(item) for item in reasons[:3])
+        return "proposal_quality_failed"
+    patch_check = cycle_payload.get("patch_check") or {}
+    if patch_check.get("valid") is False:
+        stderr = str(patch_check.get("stderr") or "").strip().splitlines()
+        first_line = stderr[0] if stderr else "patch_check_failed"
+        return f"patch_check_failed:{first_line}"
+    apply_result = cycle_payload.get("apply_result") or {}
+    if not apply_result.get("applied"):
+        return str(apply_result.get("reason") or "patch_not_applied")
+    if apply_result.get("rolled_back"):
+        return "rolled_back_after_failed_tests"
+    tests = cycle_payload.get("tests") or {}
+    if tests.get("valid") is False:
+        return "tests_failed"
+    retained = cycle_payload.get("retained_change") or {}
+    if retained.get("has_retained_changes") is False:
+        return str(retained.get("reason") or "no_retained_changes")
+    return "unknown"
 
 
 def _append_jsonl(path: Path, record: Dict[str, Any]) -> None:
