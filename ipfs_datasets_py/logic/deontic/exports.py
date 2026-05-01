@@ -566,7 +566,9 @@ def _parser_element_from_repair_detail(detail: Mapping[str, Any]) -> Dict[str, A
     cross-reference warning is preserved without resolution evidence.
     """
 
-    candidate = _parser_element_from_evaluation_sample(detail)
+    candidate = _hydrate_parser_element_from_prompt_context(
+        _parser_element_from_evaluation_sample(detail)
+    )
     if not candidate:
         return {}
 

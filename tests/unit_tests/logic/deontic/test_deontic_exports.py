@@ -2926,6 +2926,80 @@ def test_metrics_hydrate_prompt_context_but_keep_numbered_reference_blocked():
     assert parser_element_has_active_repair(projected[0]) is True
 
 
+def test_normalize_repair_required_evaluation_clears_prompt_context_stalled_probes():
+    """Only the unresolved numbered reference should remain active repair."""
+
+    examples = [
+        ("exception", "The applicant shall obtain a permit unless approval is denied."),
+        ("override", "Notwithstanding section 5.01.020, the Director may issue a variance."),
+        ("applicability", "This section applies to food carts and mobile vendors."),
+        ("cross_reference", "The Secretary shall publish the notice except as provided in section 552."),
+    ]
+    details = []
+    for sample_id, text in examples:
+        parsed = extract_normative_elements(text)[0]
+        prompt_context = {
+            "source_text": parsed["text"],
+            "source_id": parsed["source_id"],
+            "support_text": parsed["support_text"],
+            "support_span": parsed["support_span"],
+            "source_span": parsed.get("source_span", parsed["support_span"]),
+            "deontic_operator": parsed["deontic_operator"],
+            "norm_type": parsed["norm_type"],
+            "subject": list(parsed["subject"]),
+            "action": list(parsed["action"]),
+            "conditions": list(parsed.get("condition_details") or []),
+            "exceptions": list(parsed.get("exception_details") or []),
+            "override_clauses": list(parsed.get("override_clause_details") or []),
+            "cross_references": list(parsed.get("cross_reference_details") or []),
+            "resolved_cross_references": list(parsed.get("resolved_cross_references") or []),
+            "parser_warnings": list(parsed["parser_warnings"]),
+        }
+        details.append(
+            {
+                "sample_id": sample_id,
+                "text": parsed["text"],
+                "source_id": parsed["source_id"],
+                "norm_type": parsed["norm_type"],
+                "modality": None,
+                "subject": list(parsed["subject"]),
+                "action": list(parsed["action"]),
+                "parser_warnings": list(parsed["parser_warnings"]),
+                "llm_repair": {
+                    "required": True,
+                    "reasons": list(parsed["parser_warnings"]),
+                    "prompt_context": prompt_context,
+                },
+            }
+        )
+
+    raw_evaluation = {
+        "repair_required": [detail["source_id"] for detail in details],
+        "repair_required_count": 4,
+        "repair_required_rate": 1.0,
+        "repair_required_details": details,
+        "metrics": {
+            "repair_required_count": 4,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 4"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["coverage_gaps"] == []
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    active_by_id = normalized["active_repair_required_by_source_id"]
+    assert active_by_id[details[0]["source_id"]] is False
+    assert active_by_id[details[1]["source_id"]] is False
+    assert active_by_id[details[2]["source_id"]] is False
+    assert active_by_id[details[3]["source_id"]] is True
+
+
 def test_raw_parser_clears_repair_for_standard_substantive_exception():
     """A single plain unless-clause is deterministic formula structure, not LLM repair."""
 
