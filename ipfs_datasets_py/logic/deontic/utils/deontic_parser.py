@@ -4449,3 +4449,122 @@ def _check_conditional_conflict(elem1: Dict[str, Any], elem2: Dict[str, Any]) ->
                 }
     
     return None
+
+
+_extract_normative_elements_without_substantive_exception_projection = extract_normative_elements
+
+
+def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]]:
+    """Extract parser elements and clear deterministic substantive-exception repair.
+
+    The parser still records ``exception_requires_scope_review`` as an audit
+    warning and keeps ``promotable_to_theorem`` conservative.  A single plain
+    substantive exception such as ``unless approval is denied`` is already
+    represented in the IR formula as a negated antecedent, so it should not stay
+    in the active LLM repair lane at the raw parser boundary.
+    """
+
+    elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
+    for element in elements:
+        _clear_standard_substantive_exception_active_repair(element)
+    return elements
+
+
+def _clear_standard_substantive_exception_active_repair(element: Dict[str, Any]) -> None:
+    if element.get("norm_type") not in {"obligation", "permission", "prohibition"}:
+        return
+    if element.get("deontic_operator") not in {"O", "P", "F"}:
+        return
+    if not _parser_slot_first_text(element.get("subject")) or not _parser_slot_first_text(element.get("action")):
+        return
+    if element.get("conditions") or element.get("condition_details"):
+        return
+    if element.get("override_clauses") or element.get("override_clause_details"):
+        return
+    if element.get("cross_references") or element.get("cross_reference_details"):
+        return
+
+    warnings = list(element.get("parser_warnings") or [])
+    if warnings != ["exception_requires_scope_review"]:
+        return
+
+    exception = _single_parser_exception_record(element)
+    if not exception:
+        return
+    exception_text = _parser_slot_text(exception)
+    if not exception_text or _substantive_exception_requires_external_resolution(exception_text):
+        return
+
+    resolution = {
+        "type": "standard_substantive_exception",
+        "resolved_blockers": ["exception_requires_scope_review"],
+        "exception": exception_text,
+        "exception_span": list(exception.get("span") or []),
+        "reason": "single substantive exception is represented as a negated formula antecedent",
+    }
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    llm_repair["required"] = False
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = []
+    llm_repair["deterministic_resolution"] = resolution
+    element["llm_repair"] = llm_repair
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    export_readiness["formula_proof_ready"] = True
+    export_readiness["formula_requires_validation"] = False
+    export_readiness["formula_repair_required"] = False
+    export_readiness["export_requires_validation"] = False
+    export_readiness["export_repair_required"] = False
+    export_readiness["deterministic_resolution"] = resolution
+    element["export_readiness"] = export_readiness
+
+
+def _single_parser_exception_record(element: Dict[str, Any]) -> Dict[str, Any]:
+    details = element.get("exception_details")
+    if isinstance(details, list) and len(details) == 1 and isinstance(details[0], dict):
+        return dict(details[0])
+
+    exceptions = element.get("exceptions")
+    if isinstance(exceptions, list) and len(exceptions) == 1:
+        value = exceptions[0]
+        if isinstance(value, dict):
+            return dict(value)
+        if value:
+            return {"value": str(value)}
+    return {}
+
+
+def _parser_slot_first_text(value: Any) -> str:
+    if isinstance(value, list):
+        return str(value[0]).strip() if value else ""
+    return str(value or "").strip()
+
+
+def _parser_slot_text(record: Dict[str, Any]) -> str:
+    for key in ("value", "normalized_text", "raw_text", "text"):
+        value = record.get(key)
+        if value:
+            return str(value).strip()
+    return ""
+
+
+def _substantive_exception_requires_external_resolution(text: str) -> bool:
+    normalized = str(text or "").strip().lower()
+    if not normalized:
+        return True
+    if re.search(
+        r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
+        r"[0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*\b",
+        normalized,
+    ):
+        return True
+    return normalized.startswith((
+        "as otherwise provided",
+        "as provided",
+        "otherwise provided in",
+        "provided in",
+        "under ",
+        "pursuant to ",
+        "notwithstanding ",
+    ))

@@ -2490,3 +2490,43 @@ def test_normalize_repair_required_evaluation_keeps_unrecoverable_payload_conser
     assert normalized["repair_required_details"] == []
     assert normalized["metrics"]["repair_required_count"] == 0
     assert normalized["metrics"]["coverage_gaps"] == []
+
+
+def test_raw_parser_clears_repair_for_standard_substantive_exception():
+    """A single plain unless-clause is deterministic formula structure, not LLM repair."""
+
+    element = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+
+    assert element["parser_warnings"] == ["exception_requires_scope_review"]
+    assert element["promotable_to_theorem"] is False
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["deterministic_resolution"] == {
+        "type": "standard_substantive_exception",
+        "resolved_blockers": ["exception_requires_scope_review"],
+        "exception": "approval is denied",
+        "exception_span": element["exception_details"][0].get("span", []),
+        "reason": "single substantive exception is represented as a negated formula antecedent",
+    }
+    assert element["export_readiness"]["formula_proof_ready"] is True
+    assert element["export_readiness"]["formula_requires_validation"] is False
+    assert element["export_readiness"]["formula_repair_required"] is False
+    assert parser_element_has_active_repair(element) is False
+
+
+def test_raw_parser_keeps_numbered_reference_exception_repair_active():
+    """External or unresolved numbered exception references still require repair."""
+
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert element["parser_warnings"] == [
+        "cross_reference_requires_resolution",
+        "exception_requires_scope_review",
+    ]
+    assert element["llm_repair"]["required"] is True
+    assert parser_element_has_active_repair(element) is True
