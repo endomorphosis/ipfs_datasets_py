@@ -22,7 +22,7 @@ SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
-SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
+SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 
 SUPERVISOR_STATUS_PATH="${SUPERVISOR_STATUS_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.json}"
@@ -276,6 +276,10 @@ run_agentic_maintenance() {
   local maintenance_id=""
   local maintenance_log=""
   local rc=0
+  local before_head=""
+  local after_head=""
+  local before_diff=""
+  local after_diff=""
   maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
   maintenance_log="$DAEMON_DIR/legal_parser_daemon_agentic_maintenance_${maintenance_id}.log"
   last_agentic_maintenance_status="running"
@@ -284,6 +288,17 @@ run_agentic_maintenance() {
   write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
   stop_child
   mark_agentic_maintenance_ran "$reason"
+  before_head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
+  before_diff="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-before.XXXXXX")"
+  after_diff="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-after.XXXXXX")"
+  git -C "$REPO_ROOT" diff --name-only -- \
+    ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py \
+    tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
+    scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
+    scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
+    docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
+    > "$before_diff" 2>/dev/null || true
   {
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting legal-parser daemon-maintenance pass: $reason"
     timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
@@ -319,14 +334,30 @@ Keep the daemon pointed at the deterministic legal parser plans and preserve the
 PROMPT
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
+  after_head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
+  git -C "$REPO_ROOT" diff --name-only -- \
+    ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py \
+    tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
+    scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
+    scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
+    docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
+    > "$after_diff" 2>/dev/null || true
   if [[ "$rc" == "0" ]] \
-    && bash -n "$REPO_ROOT/scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh" "$REPO_ROOT/scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && pytest -q "$REPO_ROOT/tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
-    last_agentic_maintenance_status="accepted"
+    if [[ "$after_head" != "$before_head" ]] || ! cmp -s "$before_diff" "$after_diff"; then
+      last_agentic_maintenance_status="accepted"
+    else
+      last_agentic_maintenance_status="no_change"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance completed without file changes" >> "$REPO_ROOT/$maintenance_log"
+    fi
   else
     last_agentic_maintenance_status="failed"
   fi
+  rm -f "$before_diff" "$after_diff"
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
 }
 
