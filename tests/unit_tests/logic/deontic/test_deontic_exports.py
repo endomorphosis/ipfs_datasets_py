@@ -3174,6 +3174,40 @@ def test_raw_parser_clears_repair_for_standard_substantive_exception():
     assert parser_element_has_active_repair(element) is False
 
 
+def test_raw_parser_clears_repair_for_local_applicability_without_hiding_warning():
+    """Local applicability self-references are provenance, not active repair."""
+
+    element = extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0]
+
+    assert element["norm_type"] == "applicability"
+    assert element["deontic_operator"] == "APP"
+    assert element["parser_warnings"] == ["cross_reference_requires_resolution"]
+    assert element["promotable_to_theorem"] is False
+    assert element["resolved_cross_references"] == [
+        {
+            "reference_type": "section",
+            "target": "this",
+            "value": "this section",
+            "raw_text": "This section",
+            "span": [0, 12],
+            "resolution_scope": "local_self",
+            "resolved": True,
+            "resolution_status": "resolved",
+            "same_document": True,
+            "target_exists": True,
+        }
+    ]
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["allow_llm_repair"] is False
+    assert element["llm_repair"]["reasons"] == []
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == "local_scope_applicability"
+    assert element["active_repair_required"] is False
+    assert element["active_repair_warnings"] == []
+    assert parser_element_has_active_repair(element) is False
+
+
 def test_raw_parser_keeps_numbered_reference_exception_repair_active():
     """External or unresolved numbered exception references still require repair."""
 

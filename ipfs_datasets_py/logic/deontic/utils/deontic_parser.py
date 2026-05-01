@@ -4473,6 +4473,7 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
     elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
     for element in elements:
         _clear_standard_substantive_exception_active_repair(element)
+        _clear_local_applicability_active_repair(element)
     _apply_active_repair_status(elements)
     return elements
 
@@ -4523,6 +4524,39 @@ def _clear_standard_substantive_exception_active_repair(element: Dict[str, Any])
     export_readiness["formula_repair_required"] = False
     export_readiness["export_requires_validation"] = False
     export_readiness["export_repair_required"] = False
+    export_readiness["deterministic_resolution"] = resolution
+    element["export_readiness"] = export_readiness
+
+
+def _clear_local_applicability_active_repair(element: Dict[str, Any]) -> None:
+    """Clear active repair for exact local self-scope applicability clauses."""
+
+    if not _is_local_applicability_element(element):
+        return
+
+    local_records = _local_applicability_reference_records(element)
+    if not local_records:
+        return
+
+    resolution = {
+        "type": "local_scope_applicability",
+        "scopes": sorted({record.get("value", "") for record in local_records if record.get("value")}),
+        "reason": "local applicability subject is a self-scope reference exported as provenance",
+    }
+
+    element["resolved_cross_references"] = local_records
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    llm_repair["required"] = False
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = []
+    llm_repair["deterministic_resolution"] = resolution
+    element["llm_repair"] = llm_repair
+
+    export_readiness = dict(element.get("export_readiness") or {})
+    export_readiness["formula_proof_ready"] = True
+    export_readiness["formula_requires_validation"] = False
+    export_readiness["formula_repair_required"] = False
     export_readiness["deterministic_resolution"] = resolution
     element["export_readiness"] = export_readiness
 
