@@ -5423,3 +5423,38 @@ def test_ir_procedure_event_records_mark_return_trigger_as_prerequisite():
     assert records[0]["span"] == [35, 62]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_withdrawal_trigger_as_prerequisite():
+    """Withdrawal of an appeal is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Board shall close the case after withdrawal of the appeal."
+    )[0])
+    element["action"] = ["close the case after withdrawal appeal"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "closure",
+                "relation": "triggered_by_withdrawal_of",
+                "anchor_event": "appeal",
+                "raw_text": "after withdrawal of the appeal",
+                "span": [31, 62],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "closure"
+    assert records[0]["event_symbol"] == "Closure"
+    assert records[0]["relation"] == "triggered_by_withdrawal_of"
+    assert records[0]["anchor_event"] == "appeal"
+    assert records[0]["anchor_symbol"] == "Appeal"
+    assert records[0]["raw_text"] == "after withdrawal of the appeal"
+    assert records[0]["span"] == [31, 62]
+    assert records[0]["support_span"] == element["support_span"]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
