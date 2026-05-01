@@ -2822,6 +2822,35 @@ def test_structured_procedure_termination_trigger_becomes_formula_prerequisite()
     assert "InspectPremisesAfterTerminationLicense" not in formula
 
 
+def test_structured_procedure_revocation_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall inspect the premises after revocation of the license."
+    )[0])
+    element["action"] = ["inspect the premises after revocation license"]
+    element["procedure"] = {
+        "trigger_event": "license",
+        "terminal_event": "inspection",
+        "event_relations": [
+            {
+                "event": "inspection",
+                "relation": "triggered_by_revocation_of",
+                "anchor_event": "license",
+                "raw_text": "after revocation of the license",
+                "span": [40, 72],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterRevocationLicense(x) → InspectPremises(x)))"
+    )
+    assert "Procedureafterrevocationlicense" not in formula
+    assert "InspectPremisesAfterRevocationLicense" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
