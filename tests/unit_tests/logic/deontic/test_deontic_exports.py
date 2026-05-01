@@ -2538,6 +2538,80 @@ def test_normalize_repair_required_evaluation_recovers_detail_only_override_from
     assert normalized["metrics"]["coverage_gaps"] == []
 
 
+def test_normalize_repair_required_evaluation_recovers_operator_bearing_detail_only_override():
+    """Explicit-operator precedence rows should still recover override slots."""
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    override_text = "Notwithstanding section 5.01.020, the Director may issue a variance."
+    override = extract_normative_elements(override_text)[0]
+
+    raw_evaluation = {
+        "repair_required_count": 2,
+        "repair_required_rate": 1.0,
+        "repair_required_details": [
+            {
+                "sample_id": "override",
+                "text": override_text,
+                "source_id": override["source_id"],
+                "canonical_citation": override["canonical_citation"],
+                "support_text": override["support_text"],
+                "support_span": override["support_span"],
+                "source_span": override.get("source_span", override["support_span"]),
+                "norm_type": "permission",
+                "deontic_operator": "P",
+                "subject": ["Director"],
+                "action": ["issue a variance"],
+                "parser_warnings": [
+                    "cross_reference_requires_resolution",
+                    "override_clause_requires_precedence_review",
+                ],
+                "llm_repair": {
+                    "required": True,
+                    "reasons": [
+                        "cross_reference_requires_resolution",
+                        "override_clause_requires_precedence_review",
+                    ],
+                },
+            },
+            {
+                "sample_id": "cross_reference",
+                "text": unresolved["text"],
+                "source_id": unresolved["source_id"],
+                "canonical_citation": unresolved["canonical_citation"],
+                "support_text": unresolved["support_text"],
+                "support_span": unresolved["support_span"],
+                "source_span": unresolved.get("source_span", unresolved["support_span"]),
+                "norm_type": unresolved["norm_type"],
+                "modality": None,
+                "subject": list(unresolved["subject"]),
+                "action": list(unresolved["action"]),
+                "exceptions": list(unresolved.get("exception_details") or []),
+                "cross_references": list(unresolved.get("cross_reference_details") or []),
+                "parser_warnings": list(unresolved["parser_warnings"]),
+                "llm_repair": {"required": True, "reasons": list(unresolved["parser_warnings"])},
+            },
+        ],
+        "metrics": {
+            "repair_required_count": 2,
+            "repair_required_rate": 1.0,
+            "coverage_gaps": ["repair_required_count: 2"],
+        },
+    }
+
+    normalized = normalize_repair_required_evaluation([], raw_evaluation)
+
+    assert normalized["repair_required_count"] == 1
+    assert normalized["repair_required"] == [unresolved["source_id"]]
+    assert [detail["sample_id"] for detail in normalized["repair_required_details"]] == [
+        "cross_reference"
+    ]
+    assert normalized["active_repair_required_by_source_id"][override["source_id"]] is False
+    assert normalized["active_repair_required_by_source_id"][unresolved["source_id"]] is True
+    assert normalized["metrics"]["repair_required_count"] == 1
+    assert normalized["metrics"]["coverage_gaps"] == []
+
+
 def test_normalize_repair_required_evaluation_recovers_prompt_context_override_without_override_slot():
     """Prompt-context precedence rows should recover override slots before metrics."""
 

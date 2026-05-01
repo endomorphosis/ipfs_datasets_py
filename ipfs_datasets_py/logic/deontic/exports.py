@@ -574,6 +574,7 @@ def _parser_element_from_repair_detail(detail: Mapping[str, Any]) -> Dict[str, A
         return {}
 
     if candidate.get("deontic_operator"):
+        _recover_detail_only_precedence_override_slots(candidate, detail)
         return candidate
 
     inferred_operator = _infer_detail_deontic_operator(detail)
