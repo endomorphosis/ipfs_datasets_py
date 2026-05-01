@@ -420,6 +420,41 @@ class TestDeonticConverter:
         assert elements[0]["action_verb"] == "make"
         assert elements[0]["action_object"] == "a false statement"
 
+    def test_maliciously_mens_rea_is_structured_and_formula_grounded(self):
+        """Malicious mens rea should be a slot, not part of the action predicate."""
+        from ipfs_datasets_py.logic.deontic.formula_builder import build_deontic_formula_from_ir
+        from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        elements = extract_normative_elements("No person shall maliciously damage property.")
+
+        assert len(elements) == 1
+        element = elements[0]
+        assert element["deontic_operator"] == "F"
+        assert element["subject"] == ["person"]
+        assert element["action"] == ["maliciously damage property"]
+        assert element["mental_state"] == "maliciously"
+        assert element["action_verb"] == "damage"
+        assert element["action_object"] == "property"
+        assert element["llm_repair"]["required"] is False
+
+        norm = LegalNormIR.from_parser_element(element)
+        assert norm.mental_state == "maliciously"
+        assert build_deontic_formula_from_ir(norm) == (
+            "F(∀x (Person(x) ∧ Maliciously(x) → DamageProperty(x)))"
+        )
+
+    def test_wilfully_spelling_mens_rea_is_structured(self):
+        """British spelling should follow the same deterministic mens rea path."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
+
+        element = extract_normative_elements("No person shall wilfully obstruct an inspection.")[0]
+
+        assert element["deontic_operator"] == "F"
+        assert element["mental_state"] == "wilfully"
+        assert element["action_verb"] == "obstruct"
+        assert element["action_object"] == "an inspection"
+
     def test_implicit_repeated_subject_modal_clause(self):
         """A second modal joined by 'and shall' should inherit the prior subject."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
