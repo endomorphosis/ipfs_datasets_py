@@ -175,6 +175,46 @@ def test_cease_obligation_exports_as_prohibition_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_forbear_from_obligation_exports_as_prohibition_formula():
+    element = extract_normative_elements(
+        "The permittee shall forbear from entering restricted areas."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "forbear from entering restricted areas"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [20, 58]
+    assert formula == "F(∀x (Permittee(x) → EnterRestrictedAreas(x)))"
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+
+def test_avoid_gerund_obligation_exports_as_prohibition_formula():
+    element = extract_normative_elements(
+        "The handler shall avoid contacting the witness."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "avoid contacting the witness"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [18, 46]
+    assert formula == "F(∀x (Handler(x) → ContactWitness(x)))"
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."

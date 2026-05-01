@@ -183,7 +183,8 @@ def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
     if norm.modality != "O":
         return False
     return bool(re.match(
-        r"^(?:(?:refrain|abstain|desist)\s+from|(?:cease|stop))\s+\S",
+        r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop))\s+\S"
+        r"|^avoid\s+(?:contacting|entering|operating|using|discharging|removing|altering|destroying)\b",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
@@ -193,7 +194,7 @@ def _strip_refrain_action(action_text: str) -> str:
     """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
     embedded = re.sub(
-        r"^(?:(?:refrain|abstain|desist)\s+from|(?:cease|stop))\s+",
+        r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop)|avoid)\s+",
         "",
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
