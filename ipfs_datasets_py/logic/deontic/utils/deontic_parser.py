@@ -296,6 +296,7 @@ _MENTAL_STATE_TERMS = {
     "intentionally",
     "knowingly",
     "negligently",
+    "purposely",
     "recklessly",
     "maliciously",
     "willfully",
