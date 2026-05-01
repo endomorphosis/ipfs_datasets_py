@@ -2878,6 +2878,33 @@ def test_structured_procedure_denial_trigger_becomes_formula_prerequisite():
     assert "IssueNoticeAfterDenialApplication" not in formula
 
 
+def test_structured_procedure_payment_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after payment of the fee."
+    )[0])
+    element["action"] = ["issue a permit after payment fee"]
+    element["procedure"] = {
+        "trigger_event": "fee",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_payment_of",
+                "anchor_event": "fee",
+                "raw_text": "after payment of the fee",
+                "span": [36, 60],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == "O(∀x (Director(x) ∧ ProcedureAfterPaymentFee(x) → IssuePermit(x)))"
+    assert "Procedureafterpaymentfee" not in formula
+    assert "IssuePermitAfterPaymentFee" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."

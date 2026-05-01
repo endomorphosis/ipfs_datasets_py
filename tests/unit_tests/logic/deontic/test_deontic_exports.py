@@ -4776,3 +4776,37 @@ def test_ir_procedure_event_records_mark_denial_trigger_as_prerequisite():
     assert records[0]["span"] == [36, 68]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_payment_trigger_as_prerequisite():
+    """Payment of a fee is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after payment of the fee."
+    )[0])
+    element["action"] = ["issue a permit after payment fee"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_payment_of",
+                "anchor_event": "fee",
+                "raw_text": "after payment of the fee",
+                "span": [36, 60],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_payment_of"
+    assert records[0]["anchor_event"] == "fee"
+    assert records[0]["anchor_symbol"] == "Fee"
+    assert records[0]["raw_text"] == "after payment of the fee"
+    assert records[0]["span"] == [36, 60]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
