@@ -273,7 +273,10 @@ def test_parser_element_readiness_clears_substantive_exception_repair_reason():
     aligned = parser_elements_with_ir_export_readiness([element])
 
     assert element["promotable_to_theorem"] is False
-    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["parser_warnings"]
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["deterministically_resolved"] is True
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == "standard_substantive_exception"
     assert aligned[0]["promotable_to_theorem"] is False
     assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
     assert aligned[0]["export_readiness"]["formula_proof_ready"] is True

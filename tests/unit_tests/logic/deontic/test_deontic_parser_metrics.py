@@ -51,9 +51,9 @@ def test_summarize_parser_elements_uses_ir_formula_repair_clearance() -> None:
         False,
     ]
     assert [element["llm_repair"]["required"] for element in elements] == [
-        True,
-        True,
-        True,
+        False,
+        False,
+        False,
         True,
     ]
 

@@ -1159,7 +1159,7 @@ A violation of this section is punishable by a fine of $500."""
         assert tables["reference_records"]
         assert tables["sanction_records"][0]["sanction_type"] == "fine"
         assert all(row["source_id"] for row in tables["canonical"])
-        assert tables["repair_queue"]
+        assert tables["repair_queue"] == []
 
     def test_document_export_manifest_summarizes_table_counts_and_quality(self):
         """Dataset uploads should carry deterministic export metadata."""

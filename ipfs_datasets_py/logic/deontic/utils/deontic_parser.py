@@ -1853,6 +1853,31 @@ def _legacy_temporal_details(items: List[Dict[str, str]]) -> List[Dict[str, Any]
     ]
 
 
+def _deterministic_ir_repair_resolution(element: Dict[str, Any]) -> Dict[str, Any]:
+    """Return formula-layer repair clearance when it is explicitly deterministic."""
+
+    try:
+        from ipfs_datasets_py.logic.deontic.formula_builder import parser_element_to_formula_record
+    except Exception:
+        return {}
+
+    try:
+        formula_record = parser_element_to_formula_record(element)
+    except Exception:
+        return {}
+
+    deterministic_resolution = formula_record.get("deterministic_resolution") or {}
+    if not deterministic_resolution:
+        return {}
+    if formula_record.get("proof_ready") is not True:
+        return {}
+    if formula_record.get("requires_validation") is True:
+        return {}
+    if formula_record.get("repair_required") is True:
+        return {}
+    return deterministic_resolution
+
+
 def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
     """Build a deterministic handoff payload for optional llm_router repair."""
     reasons = list(element.get("parser_warnings", []))
@@ -1863,6 +1888,9 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
     if element.get("promotable_to_theorem") is False and not reasons:
         reasons.append("not_promotable_to_theorem")
 
+    deterministic_resolution = _deterministic_ir_repair_resolution(element)
+    if deterministic_resolution:
+        reasons = []
     required = bool(reasons)
     prompt_context = {
         "source_text": element.get("text", ""),
@@ -1891,6 +1919,8 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
         "kg_relationship_hints": element.get("kg_relationship_hints", []),
         "ontology_terms": element.get("ontology_terms", []),
         "parser_warnings": reasons,
+        "deterministically_resolved": bool(deterministic_resolution),
+        "deterministic_resolution": deterministic_resolution,
     }
     prompt_hash = hashlib.sha256(
         json.dumps(prompt_context, sort_keys=True, default=str).encode("utf-8")
@@ -1900,6 +1930,9 @@ def build_llm_repair_payload(element: Dict[str, Any]) -> Dict[str, Any]:
         "reasons": reasons,
         "target_schema_version": PARSER_SCHEMA_VERSION,
         "suggested_router": "llm_router",
+        "allow_llm_repair": required,
+        "deterministically_resolved": bool(deterministic_resolution),
+        "deterministic_resolution": deterministic_resolution,
         "prompt_template": "legal_deontic_parser_repair_v1",
         "prompt_hash": prompt_hash,
         "prompt_context": prompt_context,

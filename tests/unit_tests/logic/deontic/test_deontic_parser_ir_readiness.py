@@ -97,7 +97,33 @@ def test_parser_ir_readiness_returns_copies_and_preserves_legacy_validation_list
     assert projected is not raw_element
     assert raw_element["llm_repair"] == raw_llm_repair
     assert raw_element["export_readiness"]["requires_validation"] == raw_requires_validation
+    assert raw_element["llm_repair"]["required"] is False
+    assert raw_element["llm_repair"]["deterministically_resolved"] is True
+    assert raw_element["llm_repair"]["deterministic_resolution"]["type"] == "local_scope_applicability"
     assert isinstance(projected["export_readiness"]["requires_validation"], list)
     assert projected["export_readiness"]["requires_validation"] == raw_requires_validation
     assert projected["llm_repair"]["required"] is False
-    assert raw_element["llm_repair"]["required"] is True
+
+
+def test_raw_parser_llm_repair_clears_only_formula_resolved_probe_samples():
+    resolved_samples = [
+        "This section applies to food carts.",
+        "The applicant shall obtain a permit unless approval is denied.",
+        "Notwithstanding section 5.01.020, the Director may issue a variance.",
+    ]
+
+    resolved_elements = [extract_normative_elements(text)[0] for text in resolved_samples]
+    unresolved = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    assert [element["promotable_to_theorem"] for element in resolved_elements] == [False, False, False]
+    assert [element["llm_repair"]["required"] for element in resolved_elements] == [False, False, False]
+    assert [element["llm_repair"]["deterministic_resolution"]["type"] for element in resolved_elements] == [
+        "local_scope_applicability",
+        "standard_substantive_exception",
+        "pure_precedence_override",
+    ]
+    assert unresolved["llm_repair"]["required"] is True
+    assert unresolved["llm_repair"].get("deterministically_resolved") is not True
+    assert "cross_reference_requires_resolution" in unresolved["llm_repair"]["reasons"]
