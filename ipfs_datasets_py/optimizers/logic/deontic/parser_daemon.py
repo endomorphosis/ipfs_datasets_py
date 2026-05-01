@@ -348,6 +348,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
+                "Do not move metrics by clearing repair for unresolved, absent, mismatched, partial, or external numbered legal references; those must stay blocked unless exact same-document evidence is present.",
             ],
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
@@ -732,6 +733,7 @@ class LegalParserOptimizerDaemon:
                     )
                 if metric_no_progress_recovery_mode:
                     candidate_quality = self._enforce_metric_no_progress_recovery_quality(
+                        proposal=proposal,
                         proposal_quality=candidate_quality,
                         changed_files=candidate_changed_files,
                     )
@@ -813,6 +815,7 @@ class LegalParserOptimizerDaemon:
             )
         if metric_no_progress_recovery_mode:
             proposal_quality = self._enforce_metric_no_progress_recovery_quality(
+                proposal=proposal,
                 proposal_quality=proposal_quality,
                 changed_files=changed_files,
             )
@@ -1235,6 +1238,7 @@ class LegalParserOptimizerDaemon:
     def _enforce_metric_no_progress_recovery_quality(
         self,
         *,
+        proposal: LegalParserCycleProposal,
         proposal_quality: Dict[str, Any],
         changed_files: Sequence[str],
     ) -> Dict[str, Any]:
@@ -1245,7 +1249,15 @@ class LegalParserOptimizerDaemon:
             if path != "ipfs_datasets_py/logic/deontic/exports.py"
         ]
         if non_exports_production:
-            return proposal_quality
+            invariant_reasons = self._protected_reference_repair_invariant_reasons(proposal)
+            if not invariant_reasons:
+                return proposal_quality
+            return {
+                **proposal_quality,
+                "valid": False,
+                "reasons": list(proposal_quality.get("reasons", [])) + invariant_reasons,
+                "metric_no_progress_recovery_mode": True,
+            }
         return {
             **proposal_quality,
             "valid": False,
@@ -1255,6 +1267,62 @@ class LegalParserOptimizerDaemon:
             ],
             "metric_no_progress_recovery_mode": True,
         }
+
+    def _protected_reference_repair_invariant_reasons(
+        self,
+        proposal: LegalParserCycleProposal,
+    ) -> List[str]:
+        text = " ".join(
+            [
+                proposal.summary,
+                proposal.focus_area,
+                " ".join(proposal.requirements_addressed),
+                " ".join(proposal.acceptance_criteria),
+            ]
+        ).lower()
+        if not text:
+            return []
+        clear_terms = (
+            "clear",
+            "reclassif",
+            "not active repair",
+            "inactive repair",
+            "stop counting",
+            "reduce repair",
+            "repair_required_count",
+            "repair-required metric",
+            "validation blocker rather than active",
+            "not llm repair",
+        )
+        protected_terms = (
+            "unresolved",
+            "absent",
+            "mismatched",
+            "external",
+            "partial",
+            "numbered reference",
+            "numbered-section",
+            "numbered section",
+            "cross_reference repair",
+            "reference-only exception",
+        )
+        exact_evidence_terms = (
+            "exact same-document",
+            "same-document evidence",
+            "target section exists",
+            "matching section context",
+        )
+        if not any(term in text for term in clear_terms):
+            return []
+        if not any(term in text for term in protected_terms):
+            return []
+        if any(term in text for term in exact_evidence_terms) and not any(
+            term in text for term in ("unresolved", "absent", "mismatched", "external", "partial")
+        ):
+            return []
+        return [
+            "metric no-progress recovery cannot clear active repair for unresolved, absent, mismatched, partial, or external numbered references"
+        ]
 
     def _metric_stall_retention_result(
         self,

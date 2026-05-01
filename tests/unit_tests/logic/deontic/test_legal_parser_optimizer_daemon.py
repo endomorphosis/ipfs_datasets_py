@@ -1168,6 +1168,65 @@ def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp
     ]
 
 
+def test_metric_no_progress_recovery_rejects_clearing_unresolved_reference_repair(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(
+        summary=(
+            "Reclassify unresolved numbered reference-only exceptions as validation blockers "
+            "rather than active LLM repair to reduce repair_required_count."
+        ),
+        acceptance_criteria=["unresolved numbered reference stops counting as active repair"],
+        expected_metric_gain={"repair_required_count": -1},
+    )
+    quality = {
+        "valid": True,
+        "reasons": [],
+        "production_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+        "test_files": ["tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"],
+    }
+
+    result = daemon._enforce_metric_no_progress_recovery_quality(
+        proposal=proposal,
+        proposal_quality=quality,
+        changed_files=[
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+        ],
+    )
+
+    assert result["valid"] is False
+    assert any("cannot clear active repair" in reason for reason in result["reasons"])
+
+
+def test_metric_no_progress_recovery_allows_exact_same_document_reference_fix(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    proposal = LegalParserCycleProposal(
+        summary="Resolve numbered references only when exact same-document evidence proves the target section exists.",
+        acceptance_criteria=["absent and mismatched references remain blocked"],
+        expected_metric_gain={"cross_reference_resolution_rate": 0.1},
+    )
+    quality = {
+        "valid": True,
+        "reasons": [],
+        "production_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+        "test_files": ["tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"],
+    }
+
+    result = daemon._enforce_metric_no_progress_recovery_quality(
+        proposal=proposal,
+        proposal_quality=quality,
+        changed_files=[
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+        ],
+    )
+
+    assert result["valid"] is True
+    assert result["reasons"] == []
+
+
 def test_metric_stall_retention_accepts_claimed_metric_progress(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
