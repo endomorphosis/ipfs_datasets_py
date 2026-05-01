@@ -293,6 +293,14 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     ungrounded_phrase_count = sum(
         1 for phrase in decoded.phrases if not phrase.fixed and not phrase.spans
     )
+    legal_phrase_count = len(phrase_rows) - fixed_phrase_count
+    grounded_phrase_count = legal_phrase_count - ungrounded_phrase_count
+    grounded_phrase_rate = (
+        grounded_phrase_count / legal_phrase_count if legal_phrase_count else 1.0
+    )
+    ungrounded_phrase_rate = (
+        ungrounded_phrase_count / legal_phrase_count if legal_phrase_count else 0.0
+    )
 
     return {
         "reconstruction_id": _stable_id("reconstruction", norm.source_id, decoded.text),
@@ -304,8 +312,12 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "support_span": decoded.support_span,
         "phrase_count": len(phrase_rows),
         "fixed_phrase_count": fixed_phrase_count,
-        "grounded_phrase_count": len(phrase_rows) - fixed_phrase_count - ungrounded_phrase_count,
+        "legal_phrase_count": legal_phrase_count,
+        "grounded_phrase_count": grounded_phrase_count,
         "ungrounded_decoded_phrase_count": ungrounded_phrase_count,
+        "grounded_decoded_phrase_rate": grounded_phrase_rate,
+        "ungrounded_decoded_phrase_rate": ungrounded_phrase_rate,
+        "missing_slot_count": len(decoded.missing_slots),
         "missing_slots": list(decoded.missing_slots),
         "parser_warnings": list(decoded.parser_warnings),
         "phrase_provenance": phrase_rows,

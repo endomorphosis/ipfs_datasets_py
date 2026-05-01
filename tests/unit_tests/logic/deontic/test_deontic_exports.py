@@ -230,8 +230,12 @@ def test_ir_decoder_record_exports_grounded_reconstruction_for_proof_ready_claus
     assert record["requires_validation"] is False
     assert record["phrase_count"] == 3
     assert record["fixed_phrase_count"] == 0
+    assert record["legal_phrase_count"] == 3
     assert record["grounded_phrase_count"] == 3
     assert record["ungrounded_decoded_phrase_count"] == 0
+    assert record["grounded_decoded_phrase_rate"] == 1.0
+    assert record["ungrounded_decoded_phrase_rate"] == 0.0
+    assert record["missing_slot_count"] == 0
     assert [phrase["slot"] for phrase in record["phrase_provenance"]] == [
         "actor",
         "modality",
@@ -255,8 +259,13 @@ def test_ir_decoder_record_preserves_blocked_reference_exception_without_promoti
     assert record["proof_ready"] is False
     assert record["requires_validation"] is True
     assert record["missing_slots"] == []
+    assert record["missing_slot_count"] == 0
     assert "cross_reference_requires_resolution" in record["parser_warnings"]
     assert "exception_requires_scope_review" in record["parser_warnings"]
+    assert record["legal_phrase_count"] == record["grounded_phrase_count"]
+    assert record["ungrounded_decoded_phrase_count"] == 0
+    assert record["grounded_decoded_phrase_rate"] == 1.0
+    assert record["ungrounded_decoded_phrase_rate"] == 0.0
     assert [phrase["slot"] for phrase in record["phrase_provenance"]][-2:] == [
         "exception_connector",
         "exceptions",
