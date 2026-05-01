@@ -134,6 +134,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     elif _is_direct_gerund_prohibition(norm, action_text):
         action_text = _normalize_refrain_action_head(action_text)
 
+    action_text = _action_without_structured_recipient_tail(norm, action_text)
+
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
@@ -363,6 +365,73 @@ def _strip_access_availability_action(action_text: str) -> str:
         return f"provide access to {accessed_object}" if accessed_object else text
 
     return text
+
+
+def _action_without_structured_recipient_tail(norm: LegalNormIR, action_text: str) -> str:
+    """Remove a structured recipient tail from object-bearing transfer duties.
+
+    The deontic formula exporter currently uses unary consequents, so a clause
+    like ``shall send notice to the applicant`` should export the operative act
+    ``SendNotice(x)`` and preserve ``applicant`` as recipient provenance in the
+    formula record. This helper only acts when the IR already has both an
+    ``action_object`` and a recipient slot; recipient-only actions such as
+    ``notify the applicant`` remain unchanged.
+    """
+
+    text = str(action_text or "").strip()
+    recipient = str(norm.recipient or "").strip()
+    action_object = str(norm.action_object or "").strip()
+    if not text or not recipient or not action_object:
+        return text
+
+    if re.match(r"^(?:provide|grant|allow)\s+access\s+to\s+\S", text, re.IGNORECASE):
+        return text
+
+    first_word_match = re.match(r"^([A-Za-z][A-Za-z0-9'’\-]*)\b", text)
+    first_word = first_word_match.group(1).lower() if first_word_match else ""
+    transfer_verbs = {
+        "deliver",
+        "email",
+        "file",
+        "furnish",
+        "mail",
+        "provide",
+        "send",
+        "serve",
+        "submit",
+        "transmit",
+    }
+    if first_word not in transfer_verbs:
+        return text
+
+    tail_match = re.search(r"\s+(?:to|for|with|on|upon)\s+(.+)$", text, re.IGNORECASE)
+    if not tail_match:
+        return text
+
+    tail = tail_match.group(1).strip()
+    if not _same_formula_slot_text(tail, recipient):
+        return text
+
+    head = text[: tail_match.start()].strip()
+    if not head:
+        return text
+    if not _formula_text_contains_slot(head, action_object):
+        return text
+    return head
+
+
+def _same_formula_slot_text(left: str, right: str) -> bool:
+    return _formula_slot_key(left) == _formula_slot_key(right)
+
+
+def _formula_text_contains_slot(text: str, slot: str) -> bool:
+    slot_key = _formula_slot_key(slot)
+    return bool(slot_key and slot_key in _formula_slot_key(text))
+
+
+def _formula_slot_key(text: str) -> str:
+    words = re.findall(r"[A-Za-z0-9]+", str(text or "").lower())
+    return " ".join(word for word in words if word not in {"the", "a", "an"})
 
 
 def _normalize_refrain_action_head(action_text: str) -> str:

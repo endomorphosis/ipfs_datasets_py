@@ -491,6 +491,52 @@ def test_access_and_availability_duties_export_provide_action_formulas():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_transmittal_actions_omit_structured_recipient_from_unary_formula():
+    element = dict(extract_normative_elements(
+        "The Director shall send notice to the applicant."
+    )[0])
+    element["action"] = ["send notice to the applicant"]
+    element["action_verb"] = "send"
+    element["action_object"] = "notice"
+    element["action_recipient"] = "applicant"
+    field_spans = dict(element.get("field_spans") or {})
+    field_spans["action"] = [19, 47]
+    field_spans["action_verb"] = [19, 23]
+    field_spans["action_object"] = [24, 30]
+    field_spans["action_recipient"] = [38, 47]
+    element["field_spans"] = field_spans
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "send notice to the applicant"
+    assert norm.action_object == "notice"
+    assert norm.recipient == "applicant"
+    assert formula == "O(∀x (Director(x) → SendNotice(x)))"
+    assert "SendNoticeApplicant" not in formula
+    assert record["formula"] == formula
+    assert record["omitted_formula_slots"]["recipients"] == [
+        {
+            "value": "applicant",
+            "field": "recipient",
+            "reason": "recipient is preserved in IR but omitted from unary deontic formula consequent",
+            "span": [38, 47],
+        }
+    ]
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots():
     element = dict(extract_normative_elements(
         "The inspector shall approve the discharge."
