@@ -178,22 +178,22 @@ def _strip_failure_action(action_text: str) -> str:
 
 
 def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
-    """Return whether an affirmative duty to refrain/abstain is a prohibition."""
+    """Return whether an affirmative duty not to act is a prohibition."""
 
     if norm.modality != "O":
         return False
     return bool(re.match(
-        r"^(?:refrain|abstain)\s+from\s+\S",
+        r"^(?:(?:refrain|abstain|desist)\s+from|(?:cease|stop))\s+\S",
         str(action_text or "").strip(),
         re.IGNORECASE,
     ))
 
 
 def _strip_refrain_action(action_text: str) -> str:
-    """Remove a refrain/abstain wrapper and normalize a narrow gerund action head."""
+    """Remove a restraint wrapper and normalize a narrow gerund action head."""
 
     embedded = re.sub(
-        r"^(?:refrain|abstain)\s+from\s+",
+        r"^(?:(?:refrain|abstain|desist)\s+from|(?:cease|stop))\s+",
         "",
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
@@ -213,6 +213,8 @@ def _normalize_refrain_action_head(action_text: str) -> str:
         "entering": "enter",
         "operating": "operate",
         "using": "use",
+        "contacting": "contact",
+        "discharging": "discharge",
         "removing": "remove",
         "altering": "alter",
         "destroying": "destroy",
