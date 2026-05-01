@@ -3831,6 +3831,43 @@ def test_structured_temporal_duration_without_unit_remains_conservative():
     )
 
 
+def test_structured_alternative_deadline_options_become_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0])
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {
+            "type": "deadline",
+            "deadline_options": [
+                {"quantity": 10, "unit": "days", "anchor_event": "application"},
+                {"quantity": 5, "unit": "days", "anchor_event": "inspection"},
+            ],
+            "selector": "whichever_is_earlier",
+            "span": [36, 64],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.temporal_constraints[0]["value"] == (
+        "10 days after application or 5 days after inspection whichever is earlier"
+    )
+    assert formula == (
+        "O(∀x (Director(x) ∧ "
+        "Deadline10DaysAfterApplicationOr5DaysAfterInspectionWhicheverIsEarlier(x) "
+        "→ IssuePermit(x)))"
+    )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_structured_registration_and_enrollment_triggers_become_formula_prerequisites():
     registration_element = dict(extract_normative_elements(
         "The Clerk shall activate the permit after registration of the applicant."

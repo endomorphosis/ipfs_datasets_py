@@ -630,12 +630,12 @@ def _with_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
         normalized["value"] = normalized["target"]
         return normalized
 
-    alternatives = normalized.get("alternatives") or normalized.get("alternative_deadlines")
-    if isinstance(alternatives, list):
+    alternatives = _temporal_alternatives(normalized)
+    if alternatives:
         alternative_values = [_temporal_alternative_value(item) for item in alternatives]
         alternative_values = [value for value in alternative_values if value]
         if alternative_values:
-            selector = str(normalized.get("selector") or normalized.get("comparison") or "").strip().lower()
+            selector = _temporal_selector(normalized)
             suffix = f" whichever is {selector}" if selector in {"earlier", "later"} else ""
             normalized["value"] = " or ".join(alternative_values) + suffix
             return normalized
@@ -801,6 +801,35 @@ def _procedure_relation_value(record: Dict[str, Any]) -> str:
     if event:
         return event
     return anchor
+
+
+def _temporal_alternatives(record: Dict[str, Any]) -> List[Any]:
+    """Return structured alternative deadlines from known parser shapes."""
+
+    for key in (
+        "alternatives",
+        "alternative_deadlines",
+        "deadline_alternatives",
+        "deadline_options",
+    ):
+        alternatives = record.get(key)
+        if isinstance(alternatives, list):
+            return alternatives
+    return []
+
+
+def _temporal_selector(record: Dict[str, Any]) -> str:
+    """Return normalized whichever-is-earlier/later selector text."""
+
+    selector = str(
+        record.get("selector")
+        or record.get("comparison")
+        or record.get("whichever")
+        or ""
+    ).strip().lower().replace("-", "_").replace(" ", "_")
+    if selector.startswith("whichever_is_"):
+        selector = selector[len("whichever_is_") :]
+    return selector
 
 
 def _temporal_alternative_value(value: Any) -> str:
