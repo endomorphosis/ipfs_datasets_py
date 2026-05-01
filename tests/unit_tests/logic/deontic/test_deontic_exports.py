@@ -4436,3 +4436,37 @@ def test_ir_procedure_event_records_mark_service_trigger_as_prerequisite():
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
     assert records[0]["relation_record"]["raw_text"] == "after service of notice"
+
+
+def test_ir_procedure_event_records_mark_adoption_trigger_as_prerequisite():
+    """Adoption of rules is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall publish guidelines after adoption of rules."
+    )[0])
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "publication",
+                "relation": "triggered_by_adoption_of",
+                "anchor_event": "rules",
+                "raw_text": "after adoption of rules",
+                "span": [39, 62],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "publication"
+    assert records[0]["event_symbol"] == "Publication"
+    assert records[0]["relation"] == "triggered_by_adoption_of"
+    assert records[0]["anchor_event"] == "rules"
+    assert records[0]["anchor_symbol"] == "Rules"
+    assert records[0]["raw_text"] == "after adoption of rules"
+    assert records[0]["span"] == [39, 62]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
+    assert records[0]["relation_record"]["relation"] == "triggered_by_adoption_of"
