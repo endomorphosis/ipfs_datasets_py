@@ -494,6 +494,7 @@ def _procedure_trigger_formula_prefix(relation: str) -> str:
         "triggered_by_expiration_of": "procedure after expiration",
         "triggered_by_termination_of": "procedure after termination",
         "triggered_by_revocation_of": "procedure after revocation",
+        "triggered_by_denial_of": "procedure after denial",
     }.get(relation, "")
 
 
@@ -532,6 +533,7 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
         "triggered_by_expiration_of",
         "triggered_by_termination_of",
         "triggered_by_revocation_of",
+        "triggered_by_denial_of",
     }
     cleaned = text
     for relation in procedure.get("event_relations") or []:
@@ -680,6 +682,15 @@ def _action_without_procedure_trigger_tail(action: str, procedure: Dict[str, Any
             if anchor:
                 cleaned = re.sub(
                     rf"\s+(?:upon|after|following)\s+revocation\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
+                    "",
+                    cleaned,
+                    flags=re.IGNORECASE,
+                ).strip()
+        if relation_type == "triggered_by_denial_of":
+            anchor = str(relation.get("anchor_event") or procedure.get("trigger_event") or "").strip()
+            if anchor:
+                cleaned = re.sub(
+                    rf"\s+(?:upon|after|following)\s+denial\s+(?:of\s+)?(?:an?\s+|the\s+)?{re.escape(anchor)}\s*$",
                     "",
                     cleaned,
                     flags=re.IGNORECASE,

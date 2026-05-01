@@ -4742,3 +4742,37 @@ def test_ir_procedure_event_records_mark_revocation_trigger_as_prerequisite():
     assert records[0]["span"] == [40, 72]
     assert records[0]["is_formula_antecedent"] is True
     assert records[0]["proof_role"] == "prerequisite"
+
+
+def test_ir_procedure_event_records_mark_denial_trigger_as_prerequisite():
+    """Denial of an application is a procedural prerequisite, not ordering-only provenance."""
+
+    element = dict(extract_normative_elements(
+        "The Director shall issue a notice after denial of the application."
+    )[0])
+    element["action"] = ["issue a notice after denial application"]
+    element["procedure"] = {
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_denial_of",
+                "anchor_event": "application",
+                "raw_text": "after denial of the application",
+                "span": [36, 68],
+            }
+        ]
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    records = build_procedure_event_records_from_ir(norm)
+
+    assert len(records) == 1
+    assert records[0]["event"] == "issuance"
+    assert records[0]["event_symbol"] == "Issuance"
+    assert records[0]["relation"] == "triggered_by_denial_of"
+    assert records[0]["anchor_event"] == "application"
+    assert records[0]["anchor_symbol"] == "Application"
+    assert records[0]["raw_text"] == "after denial of the application"
+    assert records[0]["span"] == [36, 68]
+    assert records[0]["is_formula_antecedent"] is True
+    assert records[0]["proof_role"] == "prerequisite"
