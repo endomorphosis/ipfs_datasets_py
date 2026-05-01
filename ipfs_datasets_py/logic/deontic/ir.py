@@ -30,6 +30,29 @@ def _actor_texts(value: Any) -> List[str]:
     return [text for text in _list_of_strings(value) if text.strip()]
 
 
+def _mental_state_text(element: Dict[str, Any]) -> str:
+    """Return a source-grounded mental-state slot from flat or detail fields."""
+
+    flat_value = str(element.get("mental_state") or "").strip()
+    if flat_value:
+        return flat_value
+
+    for detail_key in ("mental_state_details", "mens_rea_details"):
+        for record in _list_of_dicts(element.get(detail_key)):
+            normalized = _with_value_alias(record)
+            for key in ("value", "normalized_text", "raw_text", "text", "term"):
+                value = str(normalized.get(key) or "").strip()
+                if value:
+                    return value
+
+    for legacy_key in ("mental_states", "mens_rea"):
+        values = _list_of_strings(element.get(legacy_key))
+        if values:
+            return values[0].strip()
+
+    return ""
+
+
 def _enumeration_index(value: Any) -> Optional[int]:
     """Return a deterministic one-based enumeration index when available."""
 
@@ -473,7 +496,7 @@ class LegalNormIR:
             actor=_first_text(element.get("subject")),
             actor_type=str(element.get("actor_type") or element.get("entity_type") or ""),
             action=_first_text(element.get("action")),
-            mental_state=str(element.get("mental_state") or ""),
+            mental_state=_mental_state_text(element),
             action_verb=str(element.get("action_verb") or ""),
             action_object=str(element.get("action_object") or ""),
             recipient=str(element.get("action_recipient") or ""),

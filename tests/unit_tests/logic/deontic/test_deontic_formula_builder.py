@@ -68,6 +68,36 @@ def test_ir_formula_record_carries_proof_ready_provenance():
     assert record["omitted_formula_slots"] == {}
 
 
+def test_ir_formula_builder_uses_detail_only_mental_state_slot():
+    element = dict(extract_normative_elements(
+        "The inspector shall knowingly approve the discharge."
+    )[0])
+    element["mental_state"] = ""
+    element["action"] = ["approve the discharge"]
+    element["action_verb"] = "approve"
+    element["action_object"] = "the discharge"
+    element["mental_state_details"] = [
+        {
+            "type": "mens_rea",
+            "value": "knowingly",
+            "span": [20, 29],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.mental_state == "knowingly"
+    assert formula == "O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))"
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_ir_formula_record_preserves_blocked_reference_exception_slots():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
