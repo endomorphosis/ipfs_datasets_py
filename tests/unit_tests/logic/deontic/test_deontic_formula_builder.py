@@ -2190,3 +2190,61 @@ def test_ir_temporal_value_alias_handles_whichever_earlier_structured_alternativ
         "O(∀x (Director(x) ∧ Deadline10DaysAfterApplicationOr30DaysAfterNoticeWhicheverIsEarlier(x) "
         "→ IssuePermit(x)))"
     )
+
+
+def test_ir_temporal_value_alias_handles_quantity_unit_calendar_deadline():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit within 10 business days after application."
+    )[0])
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {
+            "type": "deadline",
+            "quantity": 10,
+            "unit": "days",
+            "calendar": "business",
+            "anchor_event": "application",
+            "anchor_relation": "after",
+            "span": [34, 80],
+        }
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.temporal_constraints[0]["value"] == "10 business days after application"
+    assert formula == (
+        "O(∀x (Director(x) ∧ Deadline10BusinessDaysAfterApplication(x) "
+        "→ IssuePermit(x)))"
+    )
+
+
+def test_action_recipient_is_not_formula_antecedent_regression():
+    element = dict(extract_normative_elements(
+        "The Director shall provide consultation with the advisory committee."
+    )[0])
+    element["action_recipient"] = "advisory committee"
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.recipient == "advisory committee"
+    assert formula == "O(∀x (Director(x) → ProvideConsultationAdvisoryCommittee(x)))"
+    assert "RecipientAdvisoryCommittee" not in formula
+
+
+def test_structured_temporal_duration_without_unit_remains_conservative():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0])
+    element["temporal_constraints"] = []
+    element["temporal_constraint_details"] = [
+        {"type": "deadline", "quantity": 10, "anchor_event": "application"}
+    ]
+
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert norm.temporal_constraints[0]["value"] == "10 after application"
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Director(x) ∧ Deadline10AfterApplication(x) → IssuePermit(x)))"
+    )

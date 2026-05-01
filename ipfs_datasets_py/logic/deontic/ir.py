@@ -138,7 +138,7 @@ def _with_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
             normalized["value"] = " or ".join(alternative_values) + suffix
             return normalized
 
-    duration = normalized.get("duration") or normalized.get("deadline") or normalized.get("quantity")
+    duration = _temporal_duration_value(normalized)
     anchor = normalized.get("anchor") or normalized.get("anchor_event") or normalized.get("event")
     if duration and anchor:
         relation = _temporal_anchor_relation(normalized)
@@ -310,7 +310,7 @@ def _temporal_alternative_value(value: Any) -> str:
             if text:
                 return text
 
-        duration = value.get("duration") or value.get("deadline") or value.get("quantity")
+        duration = _temporal_duration_value(value)
         anchor = value.get("anchor") or value.get("anchor_event") or value.get("event")
         if duration and anchor:
             relation = _temporal_anchor_relation(value)
@@ -318,6 +318,28 @@ def _temporal_alternative_value(value: Any) -> str:
         return str(duration or anchor or "").strip()
 
     return str(value or "").strip()
+
+
+def _temporal_duration_value(record: Dict[str, Any]) -> str:
+    """Return a compact duration phrase from structured temporal fields."""
+
+    for key in ("duration", "deadline"):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+
+    quantity = record.get("quantity")
+    unit = str(record.get("unit") or record.get("time_unit") or "").strip()
+    calendar = str(record.get("calendar") or "").strip()
+    if quantity is None or quantity == "":
+        return ""
+
+    parts = [str(quantity).strip()]
+    if calendar:
+        parts.append(calendar)
+    if unit:
+        parts.append(unit)
+    return " ".join(part for part in parts if part)
 
 
 def _temporal_anchor_relation(record: Dict[str, Any]) -> str:

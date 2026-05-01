@@ -625,7 +625,7 @@ def _temporal_predicate_text(item: Dict[str, Any]) -> str:
     if value:
         return f"{temporal_type} {value}"
 
-    duration = item.get("duration") or item.get("deadline") or item.get("quantity")
+    duration = _temporal_duration_value(item)
     anchor = item.get("anchor") or item.get("anchor_event") or item.get("event")
     anchor_relation = _temporal_anchor_relation(item)
     if duration and anchor:
@@ -635,6 +635,28 @@ def _temporal_predicate_text(item: Dict[str, Any]) -> str:
     if anchor:
         return f"{temporal_type} {anchor}"
     return temporal_type
+
+
+def _temporal_duration_value(item: Dict[str, Any]) -> str:
+    """Return a source-grounded duration phrase from structured deadline slots."""
+
+    for key in ("duration", "deadline"):
+        value = str(item.get(key) or "").strip()
+        if value:
+            return value
+
+    quantity = item.get("quantity")
+    unit = str(item.get("unit") or item.get("time_unit") or "").strip()
+    calendar = str(item.get("calendar") or "").strip()
+    if quantity is None or quantity == "":
+        return ""
+
+    parts = [str(quantity).strip()]
+    if calendar:
+        parts.append(calendar)
+    if unit:
+        parts.append(unit)
+    return " ".join(part for part in parts if part)
 
 
 def _temporal_anchor_relation(item: Dict[str, Any]) -> str:
