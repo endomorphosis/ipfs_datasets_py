@@ -175,8 +175,9 @@ def parser_elements_for_metrics(
     projection used by converter/export callers.
     """
 
-    source_elements = [dict(element) for element in elements]
-    source_norms = [LegalNormIR.from_parser_element(element) for element in source_elements]
+    all_source_elements = [dict(element) for element in elements]
+    source_elements = [element for element in all_source_elements if not _is_context_only_parser_element(element)]
+    source_norms = [LegalNormIR.from_parser_element(element) for element in all_source_elements]
     resolved_norms = _with_same_document_reference_resolutions(source_norms)
     resolved_references_by_source_id = {
         norm.source_id: list(norm.resolved_cross_references)
@@ -492,6 +493,11 @@ def _evaluation_parser_elements(
             )
             continue
 
+        context_candidate = _parser_context_element_from_text_only_section_sample(sample)
+        if context_candidate and not _sample_has_parser_norm_slots(sample):
+            recovered.append(context_candidate)
+            continue
+
         candidate = _parser_element_from_evaluation_sample(sample)
         if candidate:
             recovered.append(candidate)
@@ -730,12 +736,83 @@ def _parser_element_from_evaluation_sample(sample: Mapping[str, Any]) -> Dict[st
     }
 
 
+def _sample_has_parser_norm_slots(sample: Mapping[str, Any]) -> bool:
+    return any(
+        key in sample
+        for key in ("norm_type", "deontic_operator", "modality", "subject", "action")
+    )
+
+
+def _parser_context_element_from_text_only_section_sample(sample: Mapping[str, Any]) -> Dict[str, Any]:
+    """Recover same-document section context from text-only evaluation samples.
+
+    Metric payloads may include a cited section as a sample with only raw text,
+    while the active repair detail carries the parser-shaped reference row.  The
+    text-only sample is not itself a norm and must not become a repair metric
+    denominator, but it is source-grounded evidence that a numbered reference is
+    resolvable in the same evaluation batch.
+    """
+
+    text = str(sample.get("text") or sample.get("source_text") or "").strip()
+    if not text:
+        return {}
+
+    citation = ""
+    for key in ("canonical_citation", "citation", "section_citation"):
+        citation = _canonical_section_citation(str(sample.get(key) or ""))
+        if citation:
+            break
+    if not citation:
+        citations = _section_citations_from_text(text)
+        citation = citations[0] if citations else ""
+    if not citation:
+        return {}
+
+    section = citation[len("section ") :]
+    source_id = str(sample.get("source_id") or "").strip()
+    if not source_id:
+        source_id = _stable_id("context", str(sample.get("sample_id") or ""), citation, text)
+
+    return {
+        "schema_version": str(sample.get("schema_version") or ""),
+        "source_id": source_id,
+        "canonical_citation": citation,
+        "sample_id": sample.get("sample_id", ""),
+        "text": text,
+        "support_text": text,
+        "support_span": [0, len(text)],
+        "source_span": [0, len(text)],
+        "field_spans": {},
+        "norm_type": "document_context",
+        "deontic_operator": "",
+        "subject": [],
+        "action": [],
+        "section_context": {"section": section, "canonical_citation": citation},
+        "parser_warnings": [],
+        "llm_repair": {"required": False, "reasons": []},
+        "export_readiness": {},
+        "promotable_to_theorem": False,
+        "context_only": True,
+        "extraction_method": "evaluation_text_section_context",
+    }
+
+
 def _list_field(value: Any) -> List[Any]:
     if isinstance(value, list):
         return list(value)
     if value:
         return [value]
     return []
+
+
+def _is_context_only_parser_element(element: Mapping[str, Any]) -> bool:
+    if element.get("context_only") is True:
+        return True
+
+    norm_type = str(element.get("norm_type") or "").strip().lower()
+    if norm_type not in {"document_context", "section_context"}:
+        return False
+    return not _list_field(element.get("subject")) and not _list_field(element.get("action"))
 
 
 def _metric_row_has_active_repair(element: Mapping[str, Any]) -> bool:
