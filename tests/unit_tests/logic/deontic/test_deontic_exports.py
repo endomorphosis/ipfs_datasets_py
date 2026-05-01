@@ -264,6 +264,28 @@ def test_parser_elements_with_ir_export_readiness_clears_formula_resolved_repair
     assert "cross_reference_requires_resolution" in aligned[3]["llm_repair"]["reasons"]
 
 
+def test_parser_element_readiness_clears_substantive_exception_repair_reason():
+    element = extract_normative_elements(
+        "The applicant shall obtain a permit unless approval is denied."
+    )[0]
+
+    aligned = parser_elements_with_ir_export_readiness([element])
+
+    assert element["promotable_to_theorem"] is False
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert aligned[0]["promotable_to_theorem"] is False
+    assert aligned[0]["export_readiness"]["parser_proof_ready"] is False
+    assert aligned[0]["export_readiness"]["formula_proof_ready"] is True
+    assert aligned[0]["export_readiness"]["proof_ready"] is True
+    assert aligned[0]["export_readiness"]["deterministic_resolution"]["type"] == (
+        "standard_substantive_exception"
+    )
+    assert aligned[0]["llm_repair"]["required"] is False
+    assert aligned[0]["llm_repair"]["allow_llm_repair"] is False
+    assert aligned[0]["llm_repair"]["reasons"] == []
+    assert aligned[0]["llm_repair"]["deterministically_resolved"] is True
+
+
 def test_document_export_tables_skip_repair_row_for_resolved_reference_exception():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

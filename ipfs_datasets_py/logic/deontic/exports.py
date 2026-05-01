@@ -244,6 +244,7 @@ def parser_elements_with_ir_export_readiness(
                 copied.get("resolved_cross_references", []),
                 resolved_norm.resolved_cross_references,
             )
+            _clear_parser_exception_repair_if_formula_resolved(copied, deterministic_resolution)
 
         aligned.append(copied)
     return aligned
@@ -287,6 +288,36 @@ def _project_parser_resolved_cross_references(
             seen.add(key)
 
     return projected
+
+
+def _clear_parser_exception_repair_if_formula_resolved(
+    element: Dict[str, Any],
+    deterministic_resolution: Mapping[str, Any],
+) -> None:
+    """Clear stale exception repair metadata for formula-resolved exceptions.
+
+    Parser theorem promotion remains conservative, but metrics and converter
+    callers should not count a standard substantive exception as requiring LLM
+    repair once the formula layer has represented it as a negated antecedent.
+    Reference exceptions are intentionally excluded because they require source
+    resolution provenance before repair can be cleared.
+    """
+
+    if deterministic_resolution.get("type") != "standard_substantive_exception":
+        return
+
+    llm_repair = dict(element.get("llm_repair") or {})
+    reasons = [
+        reason
+        for reason in llm_repair.get("reasons", [])
+        if reason != "exception_requires_scope_review"
+    ]
+    llm_repair["required"] = bool(reasons)
+    llm_repair["allow_llm_repair"] = False
+    llm_repair["reasons"] = reasons
+    llm_repair["deterministically_resolved"] = True
+    llm_repair["deterministic_resolution"] = dict(deterministic_resolution)
+    element["llm_repair"] = llm_repair
 
 
 def parser_elements_to_ir_aligned_export_tables(
