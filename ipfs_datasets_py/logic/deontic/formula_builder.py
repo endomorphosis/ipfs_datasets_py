@@ -73,7 +73,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
     temporal_preds = _formula_temporal_predicates(norm.temporal_constraints)
     modifiers = temporal_preds + _formula_procedure_predicates(norm.procedure)
-    mental_state_pred = normalize_predicate_name(norm.mental_state)
+    mental_state_pred = _mental_state_predicate(norm)
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
 
@@ -643,6 +643,19 @@ def _action_without_mental_state(action: str) -> str:
     if words and words[0].lower() in _MENTAL_STATE_TERMS:
         return " ".join(words[1:]).strip()
     return action
+
+
+def _mental_state_predicate(norm: LegalNormIR) -> str:
+    """Return a mens rea predicate from structured slots when source-grounded."""
+
+    explicit = normalize_predicate_name(norm.mental_state)
+    if explicit and explicit != "P":
+        return explicit
+
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", norm.action or "")
+    if words and words[0].lower() in _MENTAL_STATE_TERMS:
+        return normalize_predicate_name(words[0])
+    return ""
 
 
 def _applicability_target(action: str) -> str:

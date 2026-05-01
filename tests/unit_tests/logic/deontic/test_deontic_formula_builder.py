@@ -1221,6 +1221,39 @@ def test_apply_action_is_preserved_for_non_applicability_obligations():
     assert formula == "O(∀x (Director(x) → ApplyStandards(x)))"
 
 
+def test_formula_recovers_leading_mens_rea_from_action_slot():
+    element = extract_normative_elements(
+        "No person may knowingly discharge pollutants into the sewer."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.action == "knowingly discharge pollutants into the sewer"
+    assert formula == (
+        "F(∀x (Person(x) ∧ Knowingly(x) → DischargePollutantsIntoSewer(x)))"
+    )
+    assert "KnowinglyDischargePollutantsIntoSewer" not in formula
+
+
+def test_formula_prefers_structured_mens_rea_slot_over_action_fallback():
+    element = extract_normative_elements(
+        "No person may knowingly discharge pollutants into the sewer."
+    )[0]
+    element = dict(element)
+    element["mental_state"] = "willfully"
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert norm.mental_state == "willfully"
+    assert norm.action == "knowingly discharge pollutants into the sewer"
+    assert formula == (
+        "F(∀x (Person(x) ∧ Willfully(x) → DischargePollutantsIntoSewer(x)))"
+    )
+    assert "Knowingly(x)" not in formula
+
+
 def test_ir_preserves_legacy_slot_lists_when_detail_records_are_absent():
     element = extract_normative_elements(
         "The Director shall issue a permit if all requirements are met within 10 days after application "
