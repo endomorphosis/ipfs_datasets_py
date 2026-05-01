@@ -72,7 +72,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
     exception_preds = _unique_predicates(_formula_exception_texts(norm))
     temporal_preds = _formula_temporal_predicates(norm.temporal_constraints)
-    modifiers = temporal_preds
+    modifiers = temporal_preds + _formula_procedure_predicates(norm.procedure)
     mental_state_pred = normalize_predicate_name(norm.mental_state)
     if mental_state_pred and mental_state_pred != "P":
         modifiers.append(mental_state_pred)
@@ -403,6 +403,40 @@ def _formula_temporal_predicates(items: Iterable[Dict[str, Any]]) -> List[str]:
         predicates.append(predicate)
         seen.add(predicate)
     return _suppress_subsumed_whichever_deadlines(predicates)[:3]
+
+
+def _formula_procedure_predicates(procedure: Dict[str, Any]) -> List[str]:
+    """Return formula predicates from structured procedure relations.
+
+    Procedure extraction already records source-grounded event ordering such as
+    ``Upon receipt of an application`` as a ``triggered_by_receipt_of`` relation.
+    Preserve that prerequisite in the formula antecedent without reparsing raw
+    legal text or treating every procedure event as a factual condition.
+    """
+
+    if not isinstance(procedure, dict):
+        return []
+
+    predicates: List[str] = []
+    seen = set()
+    for relation in procedure.get("event_relations") or []:
+        if not isinstance(relation, dict):
+            continue
+        if relation.get("relation") != "triggered_by_receipt_of":
+            continue
+
+        anchor_event = str(
+            relation.get("anchor_event") or procedure.get("trigger_event") or ""
+        ).strip()
+        if not anchor_event:
+            continue
+
+        predicate = normalize_predicate_name(f"procedure upon receipt {anchor_event}")
+        if predicate and predicate != "P" and predicate not in seen:
+            predicates.append(predicate)
+            seen.add(predicate)
+
+    return predicates[:3]
 
 
 def _suppress_subsumed_whichever_deadlines(predicates: List[str]) -> List[str]:

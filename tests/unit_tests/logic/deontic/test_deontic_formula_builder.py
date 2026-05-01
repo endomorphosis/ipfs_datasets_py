@@ -1003,6 +1003,41 @@ def test_parser_and_formula_capture_after_notice_and_hearing_prerequisite():
     )
 
 
+def test_parser_and_formula_capture_upon_receipt_prerequisite():
+    element = extract_normative_elements(
+        "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    assert element["procedure"]["trigger_event"] == "application"
+    assert {
+        "event": "inspection",
+        "relation": "triggered_by_receipt_of",
+        "anchor_event": "application",
+        "raw_text": "Upon receipt of an application",
+        "span": [0, 30],
+    } in element["procedure"]["event_relations"]
+    assert build_deontic_formula_from_ir(norm) == (
+        "O(∀x (Bureau(x) ∧ ProcedureUponReceiptApplication(x) → InspectPremises(x)))"
+    )
+
+
+def test_non_receipt_procedure_ordering_does_not_add_receipt_prerequisite():
+    element = extract_normative_elements(
+        "The Bureau shall inspect the premises before approval."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert all(
+        relation.get("relation") != "triggered_by_receipt_of"
+        for relation in element.get("procedure", {}).get("event_relations", [])
+    )
+    assert formula == "O(∀x (Bureau(x) → InspectPremises(x)))"
+    assert "ProcedureUponReceipt" not in formula
+
+
 def test_after_notice_without_hearing_does_not_use_notice_and_hearing_prerequisite():
     element = extract_normative_elements(
         "The Commission shall adopt rules after notice is mailed."
