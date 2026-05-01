@@ -331,6 +331,81 @@ def test_daemon_retries_patch_check_failures_with_feedback(tmp_path):
     assert "previous proposal attempt 1 was rejected" in fake_router.calls[1]["prompt"]
 
 
+def test_daemon_retries_candidate_that_fails_fast_post_apply_validation(tmp_path):
+    (tmp_path / "x.py").write_text("def value():\n    return 1\n", encoding="utf-8")
+    invalid_diff = "\n".join(
+        [
+            "diff --git a/x.py b/x.py",
+            "--- a/x.py",
+            "+++ b/x.py",
+            "@@ -1,2 +1,2 @@",
+            " def value():",
+            "-    return 1",
+            "+    if depth  str:",
+            "",
+        ]
+    )
+    valid_diff = "\n".join(
+        [
+            "diff --git a/x.py b/x.py",
+            "--- a/x.py",
+            "+++ b/x.py",
+            "@@ -1,2 +1,2 @@",
+            " def value():",
+            "-    return 1",
+            "+    return 2",
+            "",
+        ]
+    )
+    fake_router = _SequencedRouter(
+        [
+            json.dumps(
+                {
+                    "summary": "First patch compiles badly.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["candidate validation retries"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": invalid_diff,
+                }
+            ),
+            json.dumps(
+                {
+                    "summary": "Second patch compiles.",
+                    "requirements_addressed": ["daemon"],
+                    "acceptance_criteria": ["candidate validation passes"],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": valid_diff,
+                }
+            ),
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=2,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert len(fake_router.calls) == 2
+    assert cycle["proposal_attempts"][0]["retry_reason"].startswith(
+        "candidate_post_apply_validation_failed:"
+    )
+    assert cycle["proposal_attempts"][0]["candidate_validation_valid"] is False
+    assert "SyntaxError" in cycle["proposal_attempts"][0]["retry_reason"]
+    assert cycle["proposal_attempts"][1]["candidate_validation_valid"] is True
+    assert (tmp_path / "x.py").read_text(encoding="utf-8") == "def value():\n    return 2\n"
+    assert "candidate_post_apply_validation_failed" in fake_router.calls[1]["prompt"]
+
+
 def test_daemon_heartbeat_refreshes_current_status_while_blocked(tmp_path):
     config = LegalParserDaemonConfig(
         repo_root=tmp_path,

@@ -862,6 +862,23 @@ class LegalParserOptimizerDaemon:
                     patch_check=candidate_patch_check,
                     proposal_quality=candidate_quality,
                 )
+                candidate_validation: Dict[str, Any] = {
+                    "valid": True,
+                    "skipped": True,
+                    "reason": "candidate_not_ready_for_validation",
+                }
+                if (
+                    not retry_reason
+                    and self.config.apply_patches
+                    and candidate_changed_files
+                    and any(path.endswith(".py") for path in candidate_changed_files)
+                ):
+                    candidate_validation = self._candidate_post_apply_validation(
+                        proposal.unified_diff,
+                        candidate_changed_files,
+                    )
+                    if not candidate_validation.get("valid"):
+                        retry_reason = self._candidate_validation_retry_reason(candidate_validation)
                 attempt_record.update(
                     {
                         "retry_reason": retry_reason,
@@ -869,6 +886,8 @@ class LegalParserOptimizerDaemon:
                         "patch_stderr_tail": str(candidate_patch_check.get("stderr") or "")[-2000:],
                         "proposal_quality_valid": candidate_quality.get("valid"),
                         "proposal_quality_reasons": candidate_quality.get("reasons", []),
+                        "candidate_validation_valid": candidate_validation.get("valid"),
+                        "candidate_validation_reasons": candidate_validation.get("reasons", []),
                         "changed_files": candidate_changed_files,
                     }
                 )
@@ -1777,6 +1796,46 @@ class LegalParserOptimizerDaemon:
             first_line = stderr_lines[0] if stderr_lines else "patch_check_failed"
             return f"patch_check_failed:{first_line}"
         return ""
+
+    def _candidate_post_apply_validation(
+        self,
+        unified_diff: str,
+        changed_files: Sequence[str],
+    ) -> Dict[str, Any]:
+        pre_apply_diff = self._working_tree_diff()
+        pre_apply_files = self._snapshot_patch_paths(unified_diff)
+        apply_result = self.optimizer.apply_patch(unified_diff)
+        if not apply_result.get("applied"):
+            rollback = self._restore_patch_paths(pre_apply_files)
+            if not rollback.get("valid"):
+                rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+            return {
+                "valid": False,
+                "reason": "candidate_apply_failed",
+                "apply": apply_result,
+                "rollback": rollback,
+                "reasons": ["candidate patch failed to apply during validation"],
+            }
+        validation = self._post_apply_validation(changed_files)
+        rollback = self._restore_patch_paths(pre_apply_files)
+        if not rollback.get("valid"):
+            rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+        return {
+            **validation,
+            "rollback": rollback,
+            "reason": "candidate_post_apply_validation",
+        }
+
+    def _candidate_validation_retry_reason(self, validation: Mapping[str, Any]) -> str:
+        summary = _summarize_post_apply_validation_failure(validation)
+        head = " ".join(str(summary.get("failure_head") or "").split())
+        exceptions = ", ".join(str(item) for item in summary.get("exception_types") or [])
+        if head:
+            return f"candidate_post_apply_validation_failed:{head[:500]}"
+        if exceptions:
+            return f"candidate_post_apply_validation_failed:{exceptions}"
+        reasons = "; ".join(str(item) for item in validation.get("reasons") or [])
+        return f"candidate_post_apply_validation_failed:{reasons}" if reasons else "candidate_post_apply_validation_failed"
 
     def _record_progress(self, cycle_payload: Dict[str, Any]) -> None:
         accepted = _cycle_was_kept(cycle_payload)
