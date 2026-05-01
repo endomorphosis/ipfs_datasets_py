@@ -2421,6 +2421,34 @@ def test_structured_procedure_approval_trigger_deduplicates_condition_alias():
     assert "IssuePermitUponApprovalApplication" not in formula
 
 
+def test_structured_procedure_completion_trigger_becomes_formula_prerequisite():
+    element = dict(extract_normative_elements(
+        "The Director shall issue a permit after completion of an inspection."
+    )[0])
+    element["action"] = ["issue a permit after completion inspection"]
+    element["procedure"] = {
+        "trigger_event": "inspection",
+        "terminal_event": "issuance",
+        "event_relations": [
+            {
+                "event": "issuance",
+                "relation": "triggered_by_completion_of",
+                "anchor_event": "inspection",
+                "raw_text": "after completion of an inspection",
+                "span": [36, 70],
+            }
+        ],
+    }
+
+    norm = LegalNormIR.from_parser_element(element)
+    formula = build_deontic_formula_from_ir(norm)
+
+    assert formula == (
+        "O(∀x (Director(x) ∧ ProcedureAfterCompletionInspection(x) → IssuePermit(x)))"
+    )
+    assert "IssuePermitAfterCompletionInspection" not in formula
+
+
 def test_structured_temporal_duration_without_unit_remains_conservative():
     element = dict(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."
