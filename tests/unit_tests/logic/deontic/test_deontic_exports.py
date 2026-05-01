@@ -1943,6 +1943,9 @@ The Secretary shall publish the notice except as provided in section 552."""
             "target_section": "552",
             "target_heading": "Publication rules",
             "target_hierarchy_path": ["section:552", "heading:Publication rules"],
+            "resolved": True,
+            "same_document": True,
+            "resolution_scope": "same_document",
         }
     ]
     assert reference["llm_repair"]["required"] is False
@@ -1969,6 +1972,31 @@ def test_raw_parser_keeps_active_repair_for_standalone_numbered_reference_except
     assert reference["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in reference["active_repair_warnings"]
     assert "exception_requires_scope_review" in reference["active_repair_warnings"]
+
+
+def test_raw_parser_same_document_reference_metadata_survives_ir_metrics_projection():
+    text = """Section 552. Publication rules
+The agency shall keep records.
+Section 553. Notice rule
+The Secretary shall publish the notice except as provided in section 552."""
+
+    elements = extract_normative_elements(text)
+    reference = next(
+        element for element in elements if element["action"] == ["publish the notice"]
+    )
+
+    projected = parser_elements_for_metrics([reference])[0]
+
+    assert reference["active_repair_required"] is False
+    assert projected["active_repair_required"] is False
+    assert projected["repair_required"] is False
+    assert projected["llm_repair"]["required"] is False
+    assert projected["resolved_cross_references"][0]["resolution_status"] == "resolved"
+    assert projected["resolved_cross_references"][0]["target_exists"] is True
+    assert projected["resolved_cross_references"][0]["resolved"] is True
+    assert projected["resolved_cross_references"][0]["same_document"] is True
+    assert projected["resolved_cross_references"][0]["resolution_scope"] == "same_document"
+    assert projected["export_readiness"]["metric_repair_required"] is False
 
 
 def test_metrics_projection_is_idempotent_for_resolved_numbered_reference_exception():

@@ -464,6 +464,7 @@ def _apply_same_document_reference_repair_clearance(elements: List[Dict[str, Any
     for element in elements or []:
         if not _has_resolved_same_document_reference_exception(element):
             continue
+        _mark_same_document_reference_resolutions(element)
 
         resolution = {
             "type": "resolved_same_document_reference_exception",
@@ -503,6 +504,28 @@ def _has_resolved_same_document_reference_exception(element: Dict[str, Any]) -> 
         and str(ref.get("resolution_status") or "").lower() == "resolved"
         for ref in element.get("resolved_cross_references") or []
     )
+
+
+def _mark_same_document_reference_resolutions(element: Dict[str, Any]) -> None:
+    """Expose same-document resolution in parser-native reference records."""
+
+    resolved_references: List[Dict[str, Any]] = []
+    for ref in element.get("resolved_cross_references") or []:
+        if not isinstance(ref, dict):
+            continue
+        if (
+            ref.get("target_exists") is True
+            and str(ref.get("resolution_status") or "").lower() == "resolved"
+        ):
+            enriched = dict(ref)
+            enriched["resolved"] = True
+            enriched["same_document"] = True
+            enriched.setdefault("resolution_scope", "same_document")
+            resolved_references.append(enriched)
+        else:
+            resolved_references.append(dict(ref))
+
+    element["resolved_cross_references"] = resolved_references
 
 
 def _same_document_reference_values(element: Dict[str, Any]) -> List[str]:
