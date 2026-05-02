@@ -157,6 +157,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
+    action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -334,6 +335,27 @@ def _normalize_approval_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"approve {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_denial_light_verb_action(action_text: str) -> str:
+    """Collapse denial nominalizations into operative denial acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:issue|issues|issued|issuing|make|makes|made|making|enter|enters|entered|entering|render|renders|rendered|rendering)\s+"
+        r"(?:a\s+|the\s+)?denial\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:issue|issues|issued|issuing|make|makes|made|making|enter|enters|entered|entering|render|renders|rendered|rendering)\s+"
+        r"denials\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"deny {match.group(1).strip()}"
 
     return text
 
