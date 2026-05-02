@@ -2139,10 +2139,13 @@ class LegalParserOptimizerDaemon:
                 "changed_files": cycle.get("changed_files", []),
                 "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
                 "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
+                "dirty_touched_files": (cycle.get("proposal_quality") or {}).get("dirty_touched_files", []),
             }
             for cycle in epoch_cycles[-10:]
             if not _cycle_was_kept(cycle)
         ]
+        dirty_rejection_files = _dirty_files_from_rejections(recent_rejections)
+        active_dirty_touched_files = self._dirty_touched_files(dirty_rejection_files)
 
         stalled_metric_cycles = 0
         cycles_since_meaningful_progress = 0
@@ -2223,6 +2226,10 @@ class LegalParserOptimizerDaemon:
             },
             "accepted_change_summaries": accepted_summaries,
             "recent_rejections": recent_rejections,
+            "dirty_touched_file_rejection_count": sum(
+                1 for item in recent_rejections if item.get("dirty_touched_files")
+            ),
+            "active_dirty_touched_files": active_dirty_touched_files,
             "latest_cycle": {
                 "cycle_index": latest_cycle.get("cycle_index"),
                 "status": latest_cycle.get("status", "ok"),
@@ -2324,6 +2331,10 @@ class LegalParserOptimizerDaemon:
             lines.extend(f"- `{item}`" for item in feedback)
         else:
             lines.append("No current feedback items recorded.")
+        active_dirty = progress.get("active_dirty_touched_files") or []
+        if active_dirty:
+            lines.extend(["", "Active dirty touched files blocking proposals:"])
+            lines.extend(f"- `{path}`" for path in active_dirty)
         rollback_reasons = progress.get("rolled_back_reasons_since_meaningful_progress") or {}
         if rollback_reasons:
             lines.extend(["", "Rollback reasons since meaningful progress:"])
@@ -2950,6 +2961,19 @@ def _cycle_rejection_reason(cycle_payload: Dict[str, Any]) -> str:
     if retained.get("has_retained_changes") is False:
         return str(retained.get("reason") or "no_retained_changes")
     return "unknown"
+
+
+def _dirty_files_from_rejections(rejections: Sequence[Mapping[str, Any]]) -> List[str]:
+    files: List[str] = []
+    for item in rejections:
+        dirty_files = item.get("dirty_touched_files") or []
+        if not dirty_files:
+            continue
+        for path in dirty_files:
+            text = str(path).strip()
+            if text and text not in files:
+                files.append(text)
+    return files
 
 
 def _append_jsonl(path: Path, record: Dict[str, Any]) -> None:

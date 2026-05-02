@@ -226,6 +226,40 @@ def dirty_legal_parser_targets() -> list[str]:
     return dirty
 
 
+def git_dirty_files(paths: list[str]) -> list[str]:
+    if not paths:
+        return []
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--", *paths],
+            cwd=repo_root,
+            text=True,
+            capture_output=True,
+            timeout=30,
+        )
+    except Exception:
+        return []
+    dirty: list[str] = []
+    for line in result.stdout.splitlines():
+        path = line[3:].strip()
+        if path and path not in dirty:
+            dirty.append(path)
+    return dirty
+
+
+def dirty_rejection_files(rejections: list[dict]) -> list[str]:
+    files: list[str] = []
+    for item in rejections:
+        if "pre-existing uncommitted changes" not in json.dumps(item, sort_keys=True):
+            continue
+        candidate_files = item.get("dirty_touched_files") or item.get("changed_files") or []
+        for path in candidate_files:
+            text = str(path).strip()
+            if text and text not in files:
+                files.append(text)
+    return files
+
+
 progress = read_json(progress_path)
 status = read_json(status_path)
 if not progress and not status:
@@ -271,6 +305,7 @@ dirty_preexisting_rejections = [
     if "pre-existing uncommitted changes" in json.dumps(item, sort_keys=True)
 ]
 dirty_targets = dirty_legal_parser_targets()
+dirty_rejection_targets = git_dirty_files(dirty_rejection_files(dirty_preexisting_rejections))
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
 baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
@@ -305,10 +340,10 @@ status_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
 reason = ""
 if dirty_targets:
     reason = "dirty_legal_parser_targets:" + ",".join(dirty_targets[:8])
-elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold:
+elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold and dirty_rejection_targets:
     reason = (
         f"dirty_touched_file_rejections:{len(dirty_preexisting_rejections)}:"
-        f"threshold:{dirty_rejection_threshold}"
+        f"threshold:{dirty_rejection_threshold}:active_dirty_files:{','.join(dirty_rejection_targets[:8])}"
     )
 elif (
     not cooling_down
@@ -358,6 +393,7 @@ state.update(
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "dirty_legal_parser_targets": dirty_targets,
         "dirty_touched_file_rejections": len(dirty_preexisting_rejections),
+        "dirty_rejection_active_targets": dirty_rejection_targets,
         "phase_stall_age_seconds": phase_stall_age,
         "status_stall_age_seconds": status_stall_age,
         "cooling_down": cooling_down,

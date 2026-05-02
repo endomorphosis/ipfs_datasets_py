@@ -82,6 +82,8 @@ payload = {
     "meaningful_progress_definition": progress.get("meaningful_progress_definition"),
     "rolled_back_since_meaningful_progress": progress.get("rolled_back_since_meaningful_progress"),
     "rolled_back_reasons_since_meaningful_progress": progress.get("rolled_back_reasons_since_meaningful_progress"),
+    "active_dirty_touched_files": progress.get("active_dirty_touched_files"),
+    "dirty_touched_file_rejection_count": progress.get("dirty_touched_file_rejection_count"),
     "agentic_rejected_tail": supervisor.get("agentic_rejected_tail"),
     "agentic_rolled_back_tail": supervisor.get("agentic_rolled_back_tail"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),

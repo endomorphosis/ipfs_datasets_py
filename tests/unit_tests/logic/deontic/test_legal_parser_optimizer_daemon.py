@@ -2300,6 +2300,88 @@ def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
     assert dirty == ["ipfs_datasets_py/logic/deontic/example.py"]
 
 
+def test_progress_summary_exposes_active_dirty_touched_rejection_files(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("before\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    target.write_text("stranded\n", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle = {
+        "cycle_index": 1,
+        "score": 0.9,
+        "metrics": {"parity_score": 0.9},
+        "patch_check": {"valid": False},
+        "proposal_quality": {
+            "valid": False,
+            "reasons": [
+                "patch touches files with pre-existing uncommitted changes: "
+                "ipfs_datasets_py/logic/deontic/formula_builder.py"
+            ],
+            "dirty_touched_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+        },
+        "apply_result": {"applied": False, "reason": "proposal_quality_failed"},
+        "tests": {"valid": True},
+    }
+    cycle_dir = repo / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycle)
+
+    assert progress["dirty_touched_file_rejection_count"] == 1
+    assert progress["active_dirty_touched_files"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    ]
+    assert progress["recent_rejections"][0]["dirty_touched_files"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    ]
+
+
+def test_progress_summary_does_not_report_stale_dirty_rejection_files_as_active(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("clean\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle = {
+        "cycle_index": 1,
+        "score": 0.9,
+        "metrics": {"parity_score": 0.9},
+        "patch_check": {"valid": False},
+        "proposal_quality": {
+            "valid": False,
+            "reasons": [
+                "patch touches files with pre-existing uncommitted changes: "
+                "ipfs_datasets_py/logic/deontic/formula_builder.py"
+            ],
+            "dirty_touched_files": ["ipfs_datasets_py/logic/deontic/formula_builder.py"],
+        },
+        "apply_result": {"applied": False, "reason": "proposal_quality_failed"},
+        "tests": {"valid": True},
+    }
+    cycle_dir = repo / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycle)
+
+    assert progress["dirty_touched_file_rejection_count"] == 1
+    assert progress["active_dirty_touched_files"] == []
+
+
 def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
