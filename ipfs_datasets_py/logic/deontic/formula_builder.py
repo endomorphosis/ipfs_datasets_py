@@ -164,6 +164,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
+    action_text = _normalize_renewal_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -666,6 +667,27 @@ def _normalize_remittance_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"remit {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_renewal_light_verb_action(action_text: str) -> str:
+    """Collapse legal renewal nominalizations into operative renewal acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:make|makes|made|making|grant|grants|granted|granting|issue|issues|issued|issuing|approve|approves|approved|approving|complete|completes|completed|completing)\s+"
+        r"(?:a\s+|an\s+|the\s+)?renewal\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|grant|grants|granted|granting|issue|issues|issued|issuing|approve|approves|approved|approving|complete|completes|completed|completing)\s+"
+        r"renewals\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"renew {match.group(1).strip()}"
 
     return text
 
