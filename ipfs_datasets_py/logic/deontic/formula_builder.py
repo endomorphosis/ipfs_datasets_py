@@ -179,6 +179,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_forfeiture_disgorgement_light_verb_action(action_text)
     action_text = _normalize_annulment_vacatur_light_verb_action(action_text)
     action_text = _normalize_recodification_renumbering_light_verb_action(action_text)
+    action_text = _normalize_conversion_transmittal_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4859,6 +4860,42 @@ def _normalize_recodification_renumbering_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"renumber {target}" if target else text
+
+    return text
+
+
+def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str:
+    """Project conversion and transmittal administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    conversion_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+        r"(?:a\s+|the\s+)?conversion\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+        r"conversions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^conversion\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in conversion_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"convert {target}" if target else text
+
+    transmittal_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+        r"(?:a\s+|the\s+)?transmittal\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+        r"transmittals\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^transmittal\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in transmittal_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"transmit {target}" if target else text
 
     return text
 
