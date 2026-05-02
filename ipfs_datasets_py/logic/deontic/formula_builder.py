@@ -123,6 +123,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_mental_state(
         _action_without_procedure_trigger_tail(_formula_action_text(norm), norm.procedure)
     )
+    action_text = _normalize_duty_assignment_gerund_action(action_text)
     operator = _formula_operator(norm, action_text)
     if _is_failure_prohibition(norm, action_text):
         action_text = _strip_failure_action(action_text)
@@ -4564,6 +4565,61 @@ def _normalize_delegation_reservation_light_verb_action(action_text: str) -> str
             return f"reserve {target}" if target else text
 
     return text
+
+
+def _normalize_duty_assignment_gerund_action(action_text: str) -> str:
+    """Project common duty-assignment gerund heads to operative base verbs.
+
+    Parser slots intentionally preserve source text such as ``maintaining
+    records``. Formula predicates should represent the operative act, so this
+    narrow projection only rewrites the first action head when it is a common
+    legal gerund and leaves the rest of the source-grounded action phrase
+    unchanged.
+    """
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    gerund_bases = {
+        "administering": "administer",
+        "adopting": "adopt",
+        "approving": "approve",
+        "archiving": "archive",
+        "certifying": "certify",
+        "conducting": "conduct",
+        "delivering": "deliver",
+        "destroying": "destroy",
+        "docketing": "docket",
+        "filing": "file",
+        "inspecting": "inspect",
+        "issuing": "issue",
+        "maintaining": "maintain",
+        "monitoring": "monitor",
+        "notifying": "notify",
+        "preserving": "preserve",
+        "publishing": "publish",
+        "recording": "record",
+        "retaining": "retain",
+        "reviewing": "review",
+        "scheduling": "schedule",
+        "serving": "serve",
+        "submitting": "submit",
+        "verifying": "verify",
+    }
+
+    match = re.match(r"^([A-Za-z][A-Za-z0-9'’-]*)(\b.*)$", text)
+    if not match:
+        return text
+
+    head = match.group(1)
+    base = gerund_bases.get(head.lower())
+    if not base:
+        return text
+
+    if head[:1].isupper():
+        base = base.capitalize()
+    return f"{base}{match.group(2)}"
 
 
 def _normalized_light_verb_target(target: str) -> str:

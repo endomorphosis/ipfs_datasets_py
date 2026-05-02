@@ -2490,13 +2490,13 @@ A violation is punishable by a fine of $500."""
                 "The custodian is responsible for maintaining records.",
                 "custodian",
                 "maintaining records",
-                "O(∀x (Custodian(x) → MaintainingRecords(x)))",
+                "O(∀x (Custodian(x) → MaintainRecords(x)))",
             ),
             (
                 "The officer is responsible for preserving evidence.",
                 "officer",
                 "preserving evidence",
-                "O(∀x (Officer(x) → PreservingEvidence(x)))",
+                "O(∀x (Officer(x) → PreserveEvidence(x)))",
             ),
         ]
 
@@ -2541,13 +2541,13 @@ A violation is punishable by a fine of $500."""
                 "The custodian is accountable for maintaining records.",
                 "custodian",
                 "maintaining records",
-                "O(∀x (Custodian(x) → MaintainingRecords(x)))",
+                "O(∀x (Custodian(x) → MaintainRecords(x)))",
             ),
             (
                 "The officers are accountable for preserving evidence.",
                 "officers",
                 "preserving evidence",
-                "O(∀x (Officers(x) → PreservingEvidence(x)))",
+                "O(∀x (Officers(x) → PreserveEvidence(x)))",
             ),
         ]
 
@@ -2592,13 +2592,13 @@ A violation is punishable by a fine of $500."""
                 "The custodian is tasked with maintaining records.",
                 "custodian",
                 "maintaining records",
-                "O(∀x (Custodian(x) → MaintainingRecords(x)))",
+                "O(∀x (Custodian(x) → MaintainRecords(x)))",
             ),
             (
                 "The inspectors are tasked with conducting inspections.",
                 "inspectors",
                 "conducting inspections",
-                "O(∀x (Inspectors(x) → ConductingInspections(x)))",
+                "O(∀x (Inspectors(x) → ConductInspections(x)))",
             ),
         ]
 

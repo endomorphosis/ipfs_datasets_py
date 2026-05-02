@@ -97,6 +97,52 @@ def test_ir_formula_builder_uses_detail_only_mental_state_slot():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_duty_assignment_gerunds_export_base_action_predicates():
+    examples = [
+        (
+            "The custodian is responsible for maintaining records.",
+            "maintaining records",
+            "O(∀x (Custodian(x) → MaintainRecords(x)))",
+            "MaintainingRecords",
+        ),
+        (
+            "The officer is accountable for preserving evidence.",
+            "preserving evidence",
+            "O(∀x (Officer(x) → PreserveEvidence(x)))",
+            "PreservingEvidence",
+        ),
+        (
+            "The inspectors are tasked with conducting inspections.",
+            "conducting inspections",
+            "O(∀x (Inspectors(x) → ConductInspections(x)))",
+            "ConductingInspections",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        action_span = element["field_spans"]["action"]
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_submission_light_verb_duty_exports_operative_submit_predicate():
     element = extract_normative_elements(
         "The applicant shall make a submission of the annual report."
