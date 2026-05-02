@@ -148,6 +148,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _normalize_notice_service_light_verb_action(action_text)
     action_text = _normalize_publication_light_verb_action(action_text)
+    action_text = _normalize_public_notice_display_light_verb_action(action_text)
     action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
@@ -6231,6 +6232,55 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
+
+    return text
+
+
+def _normalize_public_notice_display_light_verb_action(action_text: str) -> str:
+    """Project public-facing notice/display nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    posting_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|issue|issues|issued|issuing)\s+"
+        r"(?:a\s+|the\s+)?posting\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|issue|issues|issued|issuing)\s+"
+        r"postings\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^posting\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in posting_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"post {target}" if target else text
+
+    display_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing)\s+"
+        r"(?:a\s+|the\s+)?display\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing)\s+"
+        r"displays\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^display\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in display_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"display {target}" if target else text
+
+    announcement_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|issue|issues|issued|issuing)\s+"
+        r"(?:an?\s+|the\s+)?announcement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|issue|issues|issued|issuing)\s+"
+        r"announcements\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^announcement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in announcement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"announce {target}" if target else text
 
     return text
 
