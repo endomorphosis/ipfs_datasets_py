@@ -644,6 +644,96 @@ def build_decoder_slot_grounding_audit_record_from_ir(
     )
 
 
+def build_decoder_slot_grounding_audit_records_from_irs(
+    norms: Iterable[LegalNormIR],
+    required_slots: Sequence[str] = ("actor", "action"),
+) -> List[Dict[str, Any]]:
+    """Build ordered decoder slot-grounding audit rows for typed legal IR.
+
+    Phase 8 reconstruction reports need batch-level diagnostics, not just
+    per-row audit records. This helper keeps the audit source-grounded by
+    deriving each row from the existing deterministic decoder record path.
+    """
+
+    return [
+        build_decoder_slot_grounding_audit_record_from_ir(norm, required_slots)
+        for norm in norms
+    ]
+
+
+def summarize_decoder_slot_grounding_audit_records(
+    records: Iterable[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize decoded-slot grounding audit rows for export reports.
+
+    The summary is diagnostic metadata for encoder/decoder quality reporting.
+    It does not alter parser warnings, theorem promotion, or repair status.
+    """
+
+    rows = [dict(record) for record in records if isinstance(record, Mapping)]
+    required_slots: List[str] = []
+    grounded_slots: Dict[str, int] = {}
+    missing_slots: Dict[str, int] = {}
+    ungrounded_slots: Dict[str, int] = {}
+    blocker_distribution: Dict[str, int] = {}
+
+    complete_count = 0
+    requires_validation_count = 0
+    proof_ready_count = 0
+    total_required_slot_mentions = 0
+    grounded_required_slot_mentions = 0
+
+    for row in rows:
+        if row.get("slot_grounding_complete") is True:
+            complete_count += 1
+        if row.get("requires_validation") is True:
+            requires_validation_count += 1
+        if row.get("proof_ready") is True:
+            proof_ready_count += 1
+
+        for slot in row.get("required_slots") or []:
+            slot_name = str(slot)
+            if slot_name and slot_name not in required_slots:
+                required_slots.append(slot_name)
+            total_required_slot_mentions += 1
+
+        for slot in row.get("grounded_slots") or []:
+            slot_name = str(slot)
+            grounded_slots[slot_name] = grounded_slots.get(slot_name, 0) + 1
+            grounded_required_slot_mentions += 1
+
+        for slot in row.get("missing_slots") or []:
+            slot_name = str(slot)
+            missing_slots[slot_name] = missing_slots.get(slot_name, 0) + 1
+
+        for slot in row.get("ungrounded_slots") or []:
+            slot_name = str(slot)
+            ungrounded_slots[slot_name] = ungrounded_slots.get(slot_name, 0) + 1
+
+        for blocker in row.get("grounding_blockers") or []:
+            blocker_text = str(blocker)
+            blocker_distribution[blocker_text] = blocker_distribution.get(blocker_text, 0) + 1
+
+    record_count = len(rows)
+    return {
+        "record_count": record_count,
+        "proof_ready_count": proof_ready_count,
+        "slot_grounding_complete_count": complete_count,
+        "requires_validation_count": requires_validation_count,
+        "required_slots": required_slots,
+        "grounded_slot_distribution": grounded_slots,
+        "missing_slot_distribution": missing_slots,
+        "ungrounded_slot_distribution": ungrounded_slots,
+        "grounding_blocker_distribution": blocker_distribution,
+        "slot_grounding_complete_rate": complete_count / record_count if record_count else 0.0,
+        "grounded_required_slot_rate": (
+            grounded_required_slot_mentions / total_required_slot_mentions
+            if total_required_slot_mentions
+            else 1.0
+        ),
+    }
+
+
 def _normalized_decoder_required_slots(required_slots: Sequence[str]) -> List[str]:
     slots: List[str] = []
     for slot in required_slots or []:
