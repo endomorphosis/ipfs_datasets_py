@@ -86,9 +86,13 @@ payload = {
     "meaningful_progress_definition": progress.get("meaningful_progress_definition"),
     "rolled_back_since_meaningful_progress": progress.get("rolled_back_since_meaningful_progress"),
     "rolled_back_reasons_since_meaningful_progress": progress.get("rolled_back_reasons_since_meaningful_progress"),
+    "current_dirty_legal_parser_targets": current.get("dirty_legal_parser_targets"),
+    "progress_dirty_legal_parser_targets": progress.get("dirty_legal_parser_targets"),
     "active_dirty_touched_files": progress.get("active_dirty_touched_files"),
     "dirty_touched_file_rejection_count": progress.get("dirty_touched_file_rejection_count"),
     "supervisor_dirty_legal_parser_targets": supervisor_state.get("dirty_legal_parser_targets"),
+    "supervisor_dirty_legal_parser_targets_deferred": supervisor_state.get("dirty_legal_parser_targets_deferred"),
+    "supervisor_dirty_legal_parser_targets_defer_phase": supervisor_state.get("dirty_legal_parser_targets_defer_phase"),
     "supervisor_dirty_rejection_active_targets": supervisor_state.get("dirty_rejection_active_targets"),
     "supervisor_effective_phase_stall_threshold_seconds": supervisor_state.get(
         "effective_phase_stall_threshold_seconds"

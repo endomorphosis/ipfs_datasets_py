@@ -2337,6 +2337,75 @@ def test_dirty_touched_files_reports_uncommitted_target_file(tmp_path):
     assert dirty == ["ipfs_datasets_py/logic/deontic/example.py"]
 
 
+def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    maintenance_test = repo / "tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py"
+    unrelated = repo / "scripts/ops/legal_data/run_logic_port_daemon.sh"
+    target.parent.mkdir(parents=True)
+    maintenance_test.parent.mkdir(parents=True)
+    unrelated.parent.mkdir(parents=True)
+    target.write_text("before\n", encoding="utf-8")
+    maintenance_test.write_text("before\n", encoding="utf-8")
+    unrelated.write_text("before\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    target.write_text("after\n", encoding="utf-8")
+    maintenance_test.write_text("after\n", encoding="utf-8")
+    unrelated.write_text("after\n", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle_dir = repo / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+    )
+    status = json.loads((repo / "out/current_status.json").read_text(encoding="utf-8"))
+    progress = daemon._build_progress_summary(
+        latest_cycle={
+            "cycle_index": 1,
+            "score": 0.9,
+            "metrics": {"parity_score": 0.9},
+            "apply_result": {"applied": False, "reason": "apply_patches_disabled"},
+            "patch_check": {"valid": False},
+            "tests": {"valid": True},
+        }
+    )
+
+    assert status["dirty_legal_parser_targets"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    ]
+    assert progress["dirty_legal_parser_targets"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    ]
+
+
+def test_progress_report_lists_dirty_legal_parser_recovery_targets(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+
+    report = daemon._format_progress_report(
+        {
+            "dirty_legal_parser_targets": [
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+            ],
+            "git_retained_work": {},
+            "run": {},
+        }
+    )
+
+    assert "Dirty legal-parser recovery targets:" in report
+    assert "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py" in report
+
+
 def test_progress_summary_exposes_active_dirty_touched_rejection_files(tmp_path):
     repo = tmp_path
     __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)

@@ -65,6 +65,17 @@ DEFAULT_PROBE_CORPUS: List[Dict[str, str]] = [
     {"id": "cross_reference", "text": "The Secretary shall publish the notice except as provided in section 552."},
 ]
 
+LEGAL_PARSER_RECOVERY_TARGETS: Tuple[str, ...] = (
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+)
+
 
 @dataclass
 class LegalParserDaemonConfig:
@@ -1375,6 +1386,7 @@ class LegalParserOptimizerDaemon:
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
+            "dirty_legal_parser_targets": self._dirty_legal_parser_targets(),
             **{key: _json_safe(value) for key, value in details.items()},
         }
         with self._status_lock:
@@ -2247,6 +2259,7 @@ class LegalParserOptimizerDaemon:
                 "stall accounting even when parity_score is unchanged"
             ),
             "git_retained_work": self._git_retained_work_snapshot(),
+            "dirty_legal_parser_targets": self._dirty_legal_parser_targets(),
             "run": {
                 "run_id": self.run_id,
                 "started_at": self.run_started_at,
@@ -2363,6 +2376,10 @@ class LegalParserOptimizerDaemon:
         if active_dirty:
             lines.extend(["", "Active dirty touched files blocking proposals:"])
             lines.extend(f"- `{path}`" for path in active_dirty)
+        dirty_parser_targets = progress.get("dirty_legal_parser_targets") or []
+        if dirty_parser_targets:
+            lines.extend(["", "Dirty legal-parser recovery targets:"])
+            lines.extend(f"- `{path}`" for path in dirty_parser_targets)
         rollback_reasons = progress.get("rolled_back_reasons_since_meaningful_progress") or {}
         if rollback_reasons:
             lines.extend(["", "Rollback reasons since meaningful progress:"])
@@ -2507,6 +2524,21 @@ class LegalParserOptimizerDaemon:
             )
             if str(result.get("stdout") or "").strip():
                 dirty.append(rel_path)
+        return dirty
+
+    def _dirty_legal_parser_targets(self) -> List[str]:
+        """Return dirty files in the legal-parser target set tracked by recovery."""
+
+        result = _run_command(
+            ["git", "status", "--porcelain", "--", *LEGAL_PARSER_RECOVERY_TARGETS],
+            cwd=self.config.repo_root,
+            timeout=30,
+        )
+        dirty: List[str] = []
+        for line in str(result.get("stdout") or "").splitlines():
+            path = line[3:].strip()
+            if path and path not in dirty:
+                dirty.append(path)
         return dirty
 
     def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:

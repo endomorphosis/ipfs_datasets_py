@@ -36,6 +36,7 @@ SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
+SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}"
 
@@ -123,6 +124,8 @@ write_supervisor_status() {
   "agentic_typescript_quality_failures": $SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
+  "agentic_sandbox": "$SUPERVISOR_AGENTIC_SANDBOX",
+  "agentic_fallback_sandbox": "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX",
   "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
   "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
   "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
@@ -409,6 +412,20 @@ path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="ut
 PY
 }
 
+run_agentic_codex_exec() {
+  local sandbox="$1"
+  local sandbox_args=()
+  if [[ -n "$sandbox" ]] && [[ "$sandbox" != "auto" ]]; then
+    sandbox_args=(--sandbox "$sandbox")
+  fi
+  timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
+    --skip-git-repo-check \
+    "${sandbox_args[@]}" \
+    -m "$MODEL_NAME" \
+    -C "$REPO_ROOT" \
+    -
+}
+
 run_agentic_maintenance() {
   local reason="$1"
   local maintenance_id=""
@@ -424,12 +441,7 @@ run_agentic_maintenance() {
   mark_agentic_maintenance_ran "$reason"
   {
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting agentic daemon-maintenance pass: $reason"
-    timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
-      --skip-git-repo-check \
-      --sandbox "$SUPERVISOR_AGENTIC_SANDBOX" \
-      -m "$MODEL_NAME" \
-      -C "$REPO_ROOT" \
-      - <<PROMPT
+    run_agentic_codex_exec "$SUPERVISOR_AGENTIC_SANDBOX" <<PROMPT
 You are maintaining the logic-port daemon infrastructure for the browser-native TypeScript/WASM port.
 
 The supervisor detected that the daemon may be stuck or not making meaningful progress.
@@ -464,6 +476,28 @@ Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not
 PROMPT
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
+  if [[ "$rc" != "0" ]] && [[ "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" != "$SUPERVISOR_AGENTIC_SANDBOX" ]]; then
+    {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance exited with code $rc; retrying with sandbox=$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX"
+      run_agentic_codex_exec "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" <<PROMPT
+You are maintaining the logic-port daemon infrastructure for the browser-native TypeScript/WASM port.
+
+The previous maintenance attempt failed before it could make the daemon more robust. Retry the same maintenance task, but avoid exploratory shell work if the environment blocks sandboxed commands.
+
+Reason: $reason
+
+Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
+
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures and stale supervisor exits.
+
+Run validation if possible:
+- bash -n ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
+- PYTHONPATH=ipfs_datasets_py python3 -m py_compile ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
+- PYTHONPATH=ipfs_datasets_py pytest -q ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py
+PROMPT
+    } >> "$REPO_ROOT/$maintenance_log" 2>&1
+    rc=$?
+  fi
   if [[ "$rc" == "0" ]] \
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
@@ -476,6 +510,7 @@ PROMPT
     last_agentic_maintenance_status="failed"
   fi
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
+  return 0
 }
 
 heartbeat_is_stale() {

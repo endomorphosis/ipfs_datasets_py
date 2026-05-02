@@ -343,9 +343,26 @@ except (TypeError, ValueError):
 effective_phase_stall_threshold = cycle_stall_seconds
 if phase_status_budget > 0:
     effective_phase_stall_threshold = max(cycle_stall_seconds, phase_status_budget)
+phase_stale = bool(
+    effective_phase_stall_threshold > 0
+    and phase_stall_age >= effective_phase_stall_threshold
+)
+dirty_defer_phases = {
+    "applying_patch",
+    "post_apply_validation",
+    "running_tests",
+    "evaluating_retained_change",
+    "rolling_back_metric_stall_no_progress",
+}
+current_phase = str(status.get("phase") or "")
+dirty_targets_deferred = bool(
+    dirty_targets
+    and current_phase in dirty_defer_phases
+    and not phase_stale
+)
 
 reason = ""
-if dirty_targets:
+if dirty_targets and not dirty_targets_deferred:
     reason = "dirty_legal_parser_targets:" + ",".join(dirty_targets[:8])
 elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold and dirty_rejection_targets:
     reason = (
@@ -373,12 +390,10 @@ elif not cooling_down and rejected_delta >= rejected_tail_threshold:
     reason = f"rejected_without_acceptance:{rejected_delta}:threshold:{rejected_tail_threshold}"
 elif (
     not cooling_down
-    and effective_phase_stall_threshold > 0
-    and phase_stall_age >= effective_phase_stall_threshold
+    and phase_stale
 ):
-    phase = status.get("phase") or "unknown"
     reason = (
-        f"phase_stale:{phase_stall_age}s:phase:{phase}:"
+        f"phase_stale:{phase_stall_age}s:phase:{current_phase or 'unknown'}:"
         f"threshold:{effective_phase_stall_threshold}"
     )
 
@@ -406,6 +421,8 @@ state.update(
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "dirty_legal_parser_targets": dirty_targets,
+        "dirty_legal_parser_targets_deferred": dirty_targets_deferred,
+        "dirty_legal_parser_targets_defer_phase": current_phase if dirty_targets_deferred else "",
         "dirty_touched_file_rejections": len(dirty_preexisting_rejections),
         "dirty_rejection_active_targets": dirty_rejection_targets,
         "phase_stall_age_seconds": phase_stall_age,
