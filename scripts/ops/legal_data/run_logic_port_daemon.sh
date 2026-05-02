@@ -9,6 +9,7 @@ PROVIDER="${PROVIDER:-}"
 # selection and fallback policy. Set PROVIDER=codex_cli or another registered
 # router provider only when you need to force a specific backend.
 SLICE_MODE="${SLICE_MODE:-balanced}"
+LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-0}"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
