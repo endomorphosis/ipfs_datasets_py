@@ -171,6 +171,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
+    action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4563,6 +4564,42 @@ def _normalize_delegation_reservation_light_verb_action(action_text: str) -> str
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reserve {target}" if target else text
+
+    return text
+
+
+def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> str:
+    """Project ratification and confirmation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    ratification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|issue|issues|issued|issuing|approve|approves|approved|approving|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?ratification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|issue|issues|issued|issuing|approve|approves|approved|approving|record|records|recorded|recording)\s+"
+        r"ratifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^ratification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in ratification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"ratify {target}" if target else text
+
+    confirmation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|issue|issues|issued|issuing|approve|approves|approved|approving|record|records|recorded|recording|provide|provides|provided|providing)\s+"
+        r"(?:a\s+|the\s+)?confirmation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|issue|issues|issued|issuing|approve|approves|approved|approving|record|records|recorded|recording|provide|provides|provided|providing)\s+"
+        r"confirmations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^confirmation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in confirmation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"confirm {target}" if target else text
 
     return text
 
