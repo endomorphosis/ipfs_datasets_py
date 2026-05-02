@@ -71,6 +71,81 @@ DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
 
 DEFAULT_IR_SLOT_PROVENANCE_EXPORT_SLOTS = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS
 
+DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+)
+
+
+def build_deterministic_parser_capability_profile_record(
+    norm: LegalNormIR,
+    slots: Sequence[str] = DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS,
+) -> Dict[str, Any]:
+    """Build a source-grounded parser capability profile row for one norm.
+
+    Phase 8 reports need family-level coverage visibility that is independent
+    of repair-count movement. This diagnostic row classifies the deterministic
+    parser construction represented by an IR norm and records whether its core
+    parser slots are source-grounded. It does not change repair status,
+    theorem promotion, or cross-reference resolution.
+    """
+
+    formula_record = build_deontic_formula_record_from_ir(norm)
+    audit = legal_norm_ir_slot_provenance(norm, slots)
+    checked_slots = list(audit["checked_slots"])
+    grounded_slots = list(audit["grounded_slots"])
+    missing_slots = list(audit["missing_slots"])
+    ungrounded_slots = list(audit["ungrounded_slots"])
+    checked_count = len(checked_slots)
+    grounded_count = len(grounded_slots)
+    capability_family = _deterministic_norm_family(norm)
+
+    return {
+        "parser_capability_profile_id": _stable_id(
+            "parser-capability-profile",
+            norm.source_id,
+            capability_family,
+            formula_record["formula"],
+        ),
+        "source_id": norm.source_id,
+        "target_logic": "deterministic_parser_capability",
+        "capability_family": capability_family,
+        "norm_type": norm.norm_type,
+        "modality": norm.modality,
+        "formula": formula_record["formula"],
+        "formula_proof_ready": bool(formula_record["proof_ready"]),
+        "parser_proof_ready": bool(norm.proof_ready),
+        "requires_validation": bool(formula_record["requires_validation"]),
+        "repair_required": bool(formula_record["repair_required"]),
+        "blockers": list(formula_record["blockers"]),
+        "parser_warnings": list(norm.quality.parser_warnings),
+        "parent_source_id": norm.parent_source_id,
+        "is_enumerated_child": norm.is_enumerated_child,
+        "enumeration_label": norm.enumeration_label,
+        "enumeration_index": norm.enumeration_index,
+        "checked_slots": checked_slots,
+        "grounded_slots": grounded_slots,
+        "missing_slots": missing_slots,
+        "ungrounded_slots": ungrounded_slots,
+        "source_grounded_slot_rate": round(grounded_count / checked_count, 6)
+        if checked_count
+        else 0.0,
+        "slot_grounding": audit["slot_grounding"],
+        "support_span": norm.support_span.to_list(),
+        "field_spans": dict(norm.field_spans),
+        "schema_version": norm.schema_version,
+    }
+
+
+def build_deterministic_parser_capability_profile_records(
+    norms: Sequence[LegalNormIR],
+    slots: Sequence[str] = DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS,
+) -> List[Dict[str, Any]]:
+    """Build parser capability profile rows while preserving norm order."""
+
+    return [build_deterministic_parser_capability_profile_record(norm, slots) for norm in norms]
+
 
 def summarize_ir_slot_provenance_audit_records(
     records: Sequence[Mapping[str, Any]],
@@ -3554,3 +3629,24 @@ def _slot_grounding_records(record: Mapping[str, Any]) -> List[Mapping[str, Any]
         if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
             return [value for value in values if isinstance(value, Mapping)]
     return []
+
+
+def _deterministic_norm_family(norm: LegalNormIR) -> str:
+    if norm.is_enumerated_child:
+        return "enumerated_child_duty"
+
+    legal_frame = norm.legal_frame if isinstance(norm.legal_frame, Mapping) else {}
+    category = str(legal_frame.get("category") or "").strip().lower()
+    if norm.modality == "P" and category == "authority":
+        return "authority_grant"
+    if norm.modality == "O" and norm.norm_type == "obligation":
+        return "ordinary_duty"
+    if norm.modality == "F" or norm.norm_type == "prohibition":
+        return "prohibition"
+    if norm.norm_type in {"applicability", "exemption"}:
+        return "scope_rule"
+    if norm.norm_type == "instrument_lifecycle":
+        return "instrument_lifecycle"
+    if norm.norm_type == "definition":
+        return "definition"
+    return norm.norm_type or norm.modality or "unknown"

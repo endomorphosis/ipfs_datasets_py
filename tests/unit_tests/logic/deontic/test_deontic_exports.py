@@ -6,6 +6,8 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_decoder_record_from_ir,
     build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
+    build_deterministic_parser_capability_profile_record,
+    build_deterministic_parser_capability_profile_records,
     build_formal_logic_record_from_ir,
     build_ir_slot_provenance_audit_record,
     build_phase8_quality_summary_record,
@@ -80,6 +82,63 @@ def test_ir_export_records_preserve_enumerated_child_provenance():
         assert record["proof_ready"] is True
         assert record["requires_validation"] is False
         assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations():
+    duty = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The tenant must pay rent monthly."
+    )[0])
+    authority = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The Director is delegated authority to approve permits."
+    )[0])
+    enumerated = [
+        LegalNormIR.from_parser_element(element)
+        for element in extract_normative_elements(
+            "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records.",
+            expand_enumerations=True,
+        )
+    ]
+
+    records = build_deterministic_parser_capability_profile_records(
+        [duty, authority, *enumerated]
+    )
+
+    assert [record["source_id"] for record in records] == [
+        duty.source_id,
+        authority.source_id,
+        *[norm.source_id for norm in enumerated],
+    ]
+    assert [record["capability_family"] for record in records] == [
+        "ordinary_duty",
+        "authority_grant",
+        "enumerated_child_duty",
+        "enumerated_child_duty",
+        "enumerated_child_duty",
+    ]
+    assert records[0]["formula"] == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
+    assert records[1]["formula"] == "P(∀x (Director(x) → ApprovePermits(x)))"
+    assert [record["formula"] for record in records[2:]] == [
+        "O(∀x (Secretary(x) → EstablishProcedures(x)))",
+        "O(∀x (Secretary(x) → SubmitReport(x)))",
+        "O(∀x (Secretary(x) → MaintainRecords(x)))",
+    ]
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+    assert records[2]["parent_source_id"] == enumerated[0].parent_source_id
+    assert [record["enumeration_index"] for record in records[2:]] == [1, 2, 3]
+    assert records[2]["parser_capability_profile_id"].startswith("parser-capability-profile:")
+    assert build_deterministic_parser_capability_profile_record(duty) == records[0]
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
