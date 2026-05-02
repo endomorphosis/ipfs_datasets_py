@@ -3,6 +3,16 @@
 This module is intentionally dependency-light at import time.  PyMuPDF is only
 required by functions that read or write PDFs, while schema inference and
 overflow validation remain pure Python and easy to test.
+
+New in this version:
+- :func:`classify_pdf` — lightweight document-type classifier.
+- :func:`infer_field_data_type` extended with i18n token tables for Spanish,
+  French, German, Portuguese and Italian labels.
+- Grid/table form field detection (:func:`_fields_from_grid_tables`).
+- Radio-group and dropdown detection inside :func:`_fields_from_drawings`.
+- XFA (XML Forms Architecture) extraction path (:func:`_fields_from_xfa`).
+- ``LayoutProvider`` callback accepted by :func:`analyze_pdf_form`, enabling
+  vision-model or rule-based page-layout passes on scanned PDFs.
 """
 
 from __future__ import annotations
@@ -18,6 +28,10 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 Rect = tuple[float, float, float, float]
 OCRProvider = Callable[[Any, int], str]
 VLMFieldProvider = Callable[[Mapping[str, Any]], Iterable[Mapping[str, Any]]]
+# LayoutProvider receives a page-context dict (same schema as vlm_field_provider)
+# and returns a sequence of layout-block dicts.  Each block may contain:
+#   {"kind": "line"|"table"|"form_region", "rect": [...], "text": "...", ...}
+LayoutProvider = Callable[[Mapping[str, Any]], Iterable[Mapping[str, Any]]]
 
 
 class PDFFormError(RuntimeError):
@@ -142,8 +156,87 @@ def rect_height(rect: Sequence[float]) -> float:
     return max(0.0, y1 - y0)
 
 
+_I18N_TOKENS: dict[str, list[tuple[str, str]]] = {
+    # (token, data_type) pairs for non-English labels
+    "signature": [
+        ("firma", "signature"),          # ES/IT
+        ("signature", "signature"),      # FR
+        ("unterschrift", "signature"),   # DE
+        ("assinatura", "signature"),     # PT
+    ],
+    "email": [
+        ("correo electrónico", "email"), # ES
+        ("courriel", "email"),           # FR
+        ("e-mail", "email"),
+    ],
+    "phone": [
+        ("teléfono", "phone"),           # ES
+        ("téléphone", "phone"),          # FR
+        ("telefon", "phone"),            # DE
+        ("telefone", "phone"),           # PT
+    ],
+    "date": [
+        ("fecha", "date"),               # ES
+        ("date", "date"),                # FR
+        ("datum", "date"),               # DE
+        ("data", "date"),                # PT/IT
+        ("naissance", "date"),           # FR (date of birth)
+        ("nacimiento", "date"),          # ES (date of birth)
+    ],
+    "currency": [
+        ("importe", "currency"),         # ES
+        ("montant", "currency"),         # FR
+        ("betrag", "currency"),          # DE
+        ("valor", "currency"),           # PT/ES
+        ("totale", "currency"),          # IT
+        ("salario", "currency"),         # ES/PT
+    ],
+    "postal_code": [
+        ("código postal", "postal_code"), # ES
+        ("code postal", "postal_code"),   # FR
+        ("postleitzahl", "postal_code"),  # DE
+        ("cep", "postal_code"),           # PT
+        ("cap", "postal_code"),           # IT
+    ],
+    "person_name": [
+        ("nombre", "person_name"),        # ES
+        ("nom", "person_name"),           # FR
+        ("name", "person_name"),          # DE (overlaps EN)
+        ("nome", "person_name"),          # IT/PT
+        ("apellido", "person_name"),      # ES (surname)
+        ("prénom", "person_name"),        # FR (first name)
+        ("vorname", "person_name"),       # DE (first name)
+        ("solicitante", "person_name"),   # ES
+    ],
+    "address": [
+        ("dirección", "address"),         # ES
+        ("adresse", "address"),           # FR/DE
+        ("endereço", "address"),          # PT
+        ("indirizzo", "address"),         # IT
+    ],
+    "place": [
+        ("ciudad", "place"),              # ES
+        ("ville", "place"),               # FR
+        ("stadt", "place"),               # DE
+        ("cidade", "place"),              # PT
+        ("città", "place"),               # IT
+    ],
+}
+
+# Flattened list for O(n) scan
+_I18N_FLAT: list[tuple[str, str]] = [
+    (token, dtype)
+    for pairs in _I18N_TOKENS.values()
+    for token, dtype in pairs
+]
+
+
 def infer_field_data_type(label: str, *, options: Sequence[str] = ()) -> str:
-    """Infer the data type a form field expects from its label text."""
+    """Infer the data type a form field expects from its label text.
+
+    Supports English labels and a best-effort pass over Spanish, French,
+    German, Portuguese, and Italian label tokens.
+    """
 
     text = label.lower()
     if options:
@@ -174,6 +267,10 @@ def infer_field_data_type(label: str, *, options: Sequence[str] = ()) -> str:
         return "person_name"
     if any(token in text for token in ("yes", "no", "check", "box")):
         return "boolean"
+    # i18n fallback pass
+    for token, dtype in _I18N_FLAT:
+        if token in text:
+            return dtype
     return "string"
 
 
@@ -301,16 +398,31 @@ def analyze_pdf_form(
     pdf_path: str | Path,
     *,
     ocr_provider: OCRProvider | None = None,
+    layout_provider: LayoutProvider | None = None,
     vlm_field_provider: VLMFieldProvider | None = None,
     include_native_widgets: bool = True,
+    include_xfa: bool = True,
     include_heuristics: bool = True,
+    include_grid_tables: bool = True,
 ) -> FormAnalysisResult:
     """Analyze a blank form PDF and infer fields plus a dependency graph.
 
-    ``ocr_provider`` can supply page text for scanned pages.  It receives the
-    PyMuPDF page object and zero-based page index.  ``vlm_field_provider`` can
-    add or correct fields from a vision-language model; it receives a page
-    context dictionary with text, words, and drawing rectangles.
+    Args:
+        pdf_path: Path to the PDF file.
+        ocr_provider: Supplies page text for scanned pages.  Receives the
+            PyMuPDF page object and zero-based page index.
+        layout_provider: Returns structured layout blocks (lines, tables,
+            form regions) for a page.  Receives a page-context dict identical
+            to the one passed to ``vlm_field_provider``.  Each yielded dict
+            should carry at least ``{"kind": str, "rect": [...], "text": str}``.
+            Useful for integrating a vision-model or rule-based layout engine
+            on scanned documents.
+        vlm_field_provider: Adds or corrects fields from a vision-language
+            model.  Receives the same page-context dict as ``layout_provider``.
+        include_native_widgets: Extract AcroForm widget annotations.
+        include_xfa: Attempt to extract fields from XFA streams (if present).
+        include_heuristics: Run underline and drawing-box heuristics.
+        include_grid_tables: Detect fields embedded in grid/table layouts.
     """
 
     fitz = _require_fitz()
@@ -319,35 +431,55 @@ def analyze_pdf_form(
     page_text: list[str] = []
 
     with fitz.open(source) as document:
+        # XFA extraction is document-level
+        if include_xfa:
+            fields.extend(_fields_from_xfa(document))
+
         for page_index, page in enumerate(document):
             native_text = page.get_text("text") or ""
+            ocr_words: list[dict[str, Any]] = []
             if ocr_provider is not None:
                 ocr_text = ocr_provider(page, page_index) or ""
+                # Attempt word-level OCR for better spatial heuristics
+                ocr_words = _ocr_words_from_provider(ocr_provider, page, page_index)
                 text = "\n".join(part for part in (native_text, ocr_text) if part).strip()
             else:
                 text = native_text
             page_text.append(text)
 
             words = _page_words(page)
+            # Merge OCR words for scanned pages where native words are sparse
+            if ocr_words and len(words) < len(ocr_words) // 2:
+                words = ocr_words + words
             drawings = _page_drawing_rects(page)
+            page_ctx: dict[str, Any] = {
+                "page_index": page_index,
+                "text": text,
+                "words": words,
+                "drawing_rects": drawings,
+                "width": float(page.rect.width),
+                "height": float(page.rect.height),
+            }
+
             if include_native_widgets:
                 fields.extend(_fields_from_widgets(page, page_index))
             if include_heuristics:
                 fields.extend(_fields_from_underlines(words, page_index))
                 fields.extend(_fields_from_drawings(drawings, words, page_index))
+            if include_grid_tables:
+                fields.extend(_fields_from_grid_tables(page, words, page_index))
+            if layout_provider is not None:
+                fields.extend(
+                    _fields_from_layout_blocks(
+                        layout_provider(page_ctx),
+                        words,
+                        page_index,
+                    )
+                )
             if vlm_field_provider is not None:
                 fields.extend(
                     _fields_from_vlm(
-                        vlm_field_provider(
-                            {
-                                "page_index": page_index,
-                                "text": text,
-                                "words": words,
-                                "drawing_rects": drawings,
-                                "width": float(page.rect.width),
-                                "height": float(page.rect.height),
-                            }
-                        ),
+                        vlm_field_provider(page_ctx),
                         page_index,
                     )
                 )
@@ -562,13 +694,63 @@ def _fields_from_drawings(
     page_index: int,
 ) -> list[FormFieldSpec]:
     fields: list[FormFieldSpec] = []
-    for index, rect in enumerate(drawing_rects):
+    # Separate small checkbox/radio candidates from larger fill boxes
+    checkbox_rects: list[Rect] = []
+    fill_rects: list[Rect] = []
+    for rect in drawing_rects:
         width = rect_width(rect)
         height = rect_height(rect)
         if width < 8 or height < 6 or height > 120:
             continue
+        if width <= 20 and height <= 20:
+            checkbox_rects.append(rect)
+        else:
+            fill_rects.append(rect)
+
+    # Cluster checkboxes/radio buttons that share the same vertical band
+    radio_groups = _cluster_radio_rects(checkbox_rects)
+    for group_index, group in enumerate(radio_groups):
+        if len(group) == 1:
+            # Single isolated checkbox
+            rect = group[0]
+            label = _nearby_label(words, rect) or f"Checkbox {group_index + 1}"
+            font_size = min(12.0, max(7.0, rect_height(rect) * 0.65))
+            fields.append(
+                _make_field_spec(
+                    label,
+                    page_index,
+                    rect,
+                    source="drawing",
+                    confidence=0.6,
+                    font_size=font_size,
+                    fallback=f"page_{page_index + 1}_checkbox_{group_index + 1}",
+                )
+            )
+        else:
+            # Radio group or checkbox group
+            group_label = _nearby_label(words, group[0]) or f"Option group {group_index + 1}"
+            for option_index, rect in enumerate(group):
+                option_label = _nearby_label(words, rect) or f"{group_label} option {option_index + 1}"
+                font_size = min(12.0, max(7.0, rect_height(rect) * 0.65))
+                fields.append(
+                    FormFieldSpec(
+                        name=slugify_field_name(option_label, fallback=f"page_{page_index + 1}_radio_{group_index + 1}_{option_index + 1}"),
+                        label=option_label,
+                        page_index=page_index,
+                        rect=rect,
+                        data_type="boolean",
+                        required=False,
+                        max_chars=1,
+                        font_size=font_size,
+                        source="drawing_radio",
+                        confidence=0.65,
+                        dependencies=(slugify_field_name(group_label),),
+                    )
+                )
+
+    for index, rect in enumerate(fill_rects):
         label = _nearby_label(words, rect) or f"Box {index + 1}"
-        font_size = min(12.0, max(7.0, height * 0.65))
+        font_size = min(12.0, max(7.0, rect_height(rect) * 0.65))
         fields.append(
             _make_field_spec(
                 label,
@@ -578,10 +760,31 @@ def _fields_from_drawings(
                 confidence=0.6,
                 font_size=font_size,
                 fallback=f"page_{page_index + 1}_box_{index + 1}",
-                multiline=height > 24,
+                multiline=rect_height(rect) > 24,
             )
         )
     return fields
+
+
+def _cluster_radio_rects(rects: Sequence[Rect]) -> list[list[Rect]]:
+    """Cluster small checkbox/radio rects that lie on the same horizontal band."""
+    if not rects:
+        return []
+    # Sort by vertical centre
+    sorted_rects = sorted(rects, key=lambda r: (r[1] + r[3]) / 2)
+    groups: list[list[Rect]] = []
+    current_group: list[Rect] = [sorted_rects[0]]
+    current_cy = (sorted_rects[0][1] + sorted_rects[0][3]) / 2
+    for rect in sorted_rects[1:]:
+        cy = (rect[1] + rect[3]) / 2
+        if abs(cy - current_cy) <= 16:  # same horizontal band (≈ 16 pt tolerance)
+            current_group.append(rect)
+        else:
+            groups.append(current_group)
+            current_group = [rect]
+            current_cy = cy
+    groups.append(current_group)
+    return groups
 
 
 def _fields_from_vlm(raw_fields: Iterable[Mapping[str, Any]], page_index: int) -> list[FormFieldSpec]:
@@ -739,18 +942,357 @@ def _insert_text_in_rect(page: Any, spec: FormFieldSpec, text: str) -> None:
         raise PDFFormTextOverflowError(f"Value for field '{spec.name}' overflowed the PDF rectangle.")
 
 
+def _ocr_words_from_provider(
+    ocr_provider: OCRProvider,
+    page: Any,
+    page_index: int,
+) -> list[dict[str, Any]]:
+    """Attempt to extract word-level bounding boxes from an OCR provider.
+
+    Falls back to an empty list if the provider does not support the
+    ``get_words`` mode (most providers only return a plain string).
+    """
+    try:
+        result = ocr_provider(page, page_index)
+        if isinstance(result, list):
+            words: list[dict[str, Any]] = []
+            for item in result:
+                if isinstance(item, dict) and "rect" in item and "text" in item:
+                    words.append({"rect": normalize_rect(item["rect"]), "text": str(item["text"])})
+            return words
+    except Exception:
+        pass
+    return []
+
+
+def _fields_from_xfa(document: Any) -> list[FormFieldSpec]:
+    """Extract form fields from an XFA stream embedded in the PDF.
+
+    XFA (XML Forms Architecture) is used by many government / IRS forms.
+    Falls back gracefully when the document has no XFA or when the XML
+    cannot be parsed.
+    """
+    fields: list[FormFieldSpec] = []
+    try:
+        xfa_data: Any = getattr(document, "get_xfa", lambda: None)()
+        if not xfa_data:
+            return fields
+        # get_xfa() may return bytes or a dict
+        xml_bytes: bytes | None = None
+        if isinstance(xfa_data, bytes):
+            xml_bytes = xfa_data
+        elif isinstance(xfa_data, dict):
+            # PyMuPDF ≥ 1.23 returns {node_name: bytes, ...}
+            for value in xfa_data.values():
+                if isinstance(value, bytes) and b"<" in value:
+                    xml_bytes = value
+                    break
+        if not xml_bytes:
+            return fields
+        fields.extend(_parse_xfa_xml(xml_bytes))
+    except Exception:
+        pass
+    return fields
+
+
+def _parse_xfa_xml(xml_bytes: bytes) -> list[FormFieldSpec]:
+    """Parse XFA XML and extract field specs.  Pure-Python, no extra deps."""
+    try:
+        import xml.etree.ElementTree as ET  # stdlib
+    except ImportError:
+        return []
+
+    fields: list[FormFieldSpec] = []
+    try:
+        root = ET.fromstring(xml_bytes)
+    except ET.ParseError:
+        return []
+
+    # XFA namespace prefixes vary; strip them for tag matching
+    _ns_strip = re.compile(r"\{[^}]*\}")
+
+    def _tag(elem: Any) -> str:
+        return _ns_strip.sub("", elem.tag)
+
+    def _walk(elem: Any, page_index: int = 0) -> None:
+        tag = _tag(elem)
+        if tag == "pageArea":
+            # Attempt to read page index from parent
+            pass
+        if tag in ("field", "exclGroup"):
+            name_attr = elem.get("name", "")
+            # Try to get the caption sub-element
+            caption_text = ""
+            for child in elem:
+                if _tag(child) == "caption":
+                    for value_child in child:
+                        if _tag(value_child) == "value":
+                            for text_child in value_child:
+                                caption_text = text_child.text or ""
+                                break
+                        if not caption_text and value_child.text:
+                            caption_text = value_child.text
+            label = caption_text.strip() or name_attr or f"xfa_field_{len(fields) + 1}"
+            # Infer data type from the field's value/ui child
+            data_type = "string"
+            for child in elem:
+                child_tag = _tag(child)
+                if child_tag == "ui":
+                    for ui_child in child:
+                        ui_tag = _tag(ui_child)
+                        if "checkButton" in ui_tag:
+                            data_type = "boolean"
+                        elif "dateTimeEdit" in ui_tag or "dateField" in ui_tag:
+                            data_type = "date"
+                        elif "numericEdit" in ui_tag:
+                            data_type = "currency"
+                        elif "textEdit" in ui_tag:
+                            data_type = infer_field_data_type(label)
+            if data_type == "string":
+                data_type = infer_field_data_type(label)
+
+            # XFA does not reliably encode pixel rects in the XML; use a
+            # placeholder rect so the field is still discoverable.
+            placeholder_rect: Rect = (0.0, float(len(fields)) * 20.0, 200.0, float(len(fields)) * 20.0 + 18.0)
+            fields.append(
+                FormFieldSpec(
+                    name=slugify_field_name(name_attr or label, fallback=f"xfa_{len(fields) + 1}"),
+                    label=label,
+                    page_index=page_index,
+                    rect=placeholder_rect,
+                    data_type=data_type,
+                    required=elem.get("presence", "") == "required",
+                    source="xfa",
+                    confidence=0.9,
+                )
+            )
+        for child in elem:
+            _walk(child, page_index)
+
+    _walk(root)
+    return fields
+
+
+def _fields_from_grid_tables(
+    page: Any,
+    words: Sequence[Mapping[str, Any]],
+    page_index: int,
+) -> list[FormFieldSpec]:
+    """Detect form fields embedded in grid/table layouts.
+
+    Looks for horizontally aligned pairs of (label-cell, value-cell) that
+    repeat across rows, which is a common pattern in official government forms.
+    """
+    fields: list[FormFieldSpec] = []
+    try:
+        tables = page.find_tables()
+    except AttributeError:
+        # find_tables() requires PyMuPDF ≥ 1.23.
+        return fields
+    if not tables:
+        return fields
+
+    for table in tables:
+        try:
+            table_data = table.extract()
+        except Exception:
+            continue
+        if not table_data:
+            continue
+        # Infer bbox for each cell using the table's cell_rects attribute if available
+        cell_rects = getattr(table, "cells", None) or []
+        for row_index, row in enumerate(table_data):
+            for col_index, cell_text in enumerate(row):
+                if not cell_text or not str(cell_text).strip():
+                    # Blank cell — likely a fill-in field
+                    label = ""
+                    # Look left for a label cell
+                    if col_index > 0 and row[col_index - 1]:
+                        label = str(row[col_index - 1]).strip()
+                    # Look above for a header label
+                    if not label and row_index > 0 and table_data[row_index - 1]:
+                        above = table_data[row_index - 1]
+                        if col_index < len(above) and above[col_index]:
+                            label = str(above[col_index]).strip()
+                    if not label:
+                        label = f"cell r{row_index + 1} c{col_index + 1}"
+
+                    # Attempt to get cell rect
+                    rect: Rect = (0.0, 0.0, 100.0, 20.0)
+                    if cell_rects:
+                        flat_index = row_index * len(row) + col_index
+                        if flat_index < len(cell_rects) and cell_rects[flat_index]:
+                            try:
+                                rect = normalize_rect(tuple(cell_rects[flat_index]))
+                            except Exception:
+                                pass
+
+                    font_size = _font_size_from_rect(rect)
+                    fields.append(
+                        _make_field_spec(
+                            label,
+                            page_index,
+                            rect,
+                            source="grid_table",
+                            confidence=0.7,
+                            font_size=font_size,
+                            fallback=f"page_{page_index + 1}_table_{row_index + 1}_{col_index + 1}",
+                        )
+                    )
+    return fields
+
+
+def _fields_from_layout_blocks(
+    layout_blocks: Iterable[Mapping[str, Any]],
+    words: Sequence[Mapping[str, Any]],
+    page_index: int,
+) -> list[FormFieldSpec]:
+    """Create field specs from structured layout blocks supplied by a LayoutProvider."""
+    fields: list[FormFieldSpec] = []
+    for index, block in enumerate(layout_blocks or ()):
+        kind = str(block.get("kind") or "")
+        raw_rect = block.get("rect") or block.get("bbox") or block.get("box")
+        if raw_rect is None:
+            continue
+        try:
+            rect = normalize_rect(raw_rect)
+        except Exception:
+            continue
+        label = str(block.get("label") or block.get("text") or "").strip()
+        if not label:
+            label = _nearby_label(words, rect) or f"Layout block {index + 1}"
+        font_size = float(block.get("font_size") or _font_size_from_rect(rect))
+        data_type = str(block.get("data_type") or infer_field_data_type(label))
+        multiline = kind in ("paragraph", "textarea") or rect_height(rect) > font_size * 1.8
+        fields.append(
+            FormFieldSpec(
+                name=slugify_field_name(label, fallback=f"page_{page_index + 1}_layout_{index + 1}"),
+                label=label,
+                page_index=page_index,
+                rect=rect,
+                data_type=data_type,
+                required=bool(block.get("required", False)),
+                max_chars=estimate_max_chars(rect, font_size, multiline=multiline),
+                font_size=font_size,
+                multiline=multiline,
+                source="layout",
+                confidence=float(block.get("confidence", 0.75)),
+            )
+        )
+    return fields
+
+
+# ---------------------------------------------------------------------------
+# Document classification
+# ---------------------------------------------------------------------------
+
+
+class PDFDocumentType:
+    """Constants for :func:`classify_pdf` return values."""
+
+    FILLABLE_FORM = "fillable_form"
+    """AcroForm or XFA with interactive widgets."""
+    SCANNED_FORM = "scanned_form"
+    """Image-only pages that appear to be a paper form."""
+    STRUCTURED_DOCUMENT = "structured_document"
+    """Text-rich document (report, contract, etc.) with no detectable form fields."""
+    MIXED = "mixed"
+    """Combination of the above (e.g., partly scanned, partly interactive)."""
+
+
+def classify_pdf(
+    pdf_path: str | Path,
+    *,
+    ocr_provider: OCRProvider | None = None,
+) -> str:
+    """Lightweight heuristic classifier that identifies a PDF's primary type.
+
+    Returns one of the :class:`PDFDocumentType` constants:
+
+    * ``"fillable_form"`` — has AcroForm or XFA widgets.
+    * ``"scanned_form"`` — image-only pages with form-like visual structure.
+    * ``"structured_document"`` — dense text, no detectable form fields.
+    * ``"mixed"`` — cannot be classified as a single type.
+
+    The classification is fast (no OCR by default) and dependency-light.
+    Providing an *ocr_provider* enables better detection of scanned forms.
+    """
+    fitz = _require_fitz()
+    source = str(pdf_path)
+
+    has_acroform_widgets = False
+    has_xfa = False
+    total_pages = 0
+    image_only_pages = 0
+    form_drawing_pages = 0
+    text_rich_pages = 0
+
+    with fitz.open(source) as document:
+        total_pages = len(document)
+        # Check for XFA
+        xfa_data = getattr(document, "get_xfa", lambda: None)()
+        has_xfa = bool(xfa_data)
+
+        for page in document:
+            widget_list = list(page.widgets() or ())
+            if widget_list:
+                has_acroform_widgets = True
+
+            native_text = (page.get_text("text") or "").strip()
+            images = page.get_images(full=False)
+
+            is_image_only = bool(images) and len(native_text) < 30
+            has_drawings = bool(page.get_drawings())
+
+            if is_image_only:
+                image_only_pages += 1
+            elif len(native_text) > 200:
+                text_rich_pages += 1
+            if has_drawings and not is_image_only:
+                form_drawing_pages += 1
+
+    if has_acroform_widgets or has_xfa:
+        return PDFDocumentType.FILLABLE_FORM
+
+    if total_pages == 0:
+        return PDFDocumentType.STRUCTURED_DOCUMENT
+
+    image_ratio = image_only_pages / total_pages
+    drawing_ratio = form_drawing_pages / total_pages
+    text_ratio = text_rich_pages / total_pages
+
+    if image_ratio >= 0.8:
+        return PDFDocumentType.SCANNED_FORM
+
+    if text_ratio >= 0.8 and drawing_ratio < 0.2:
+        return PDFDocumentType.STRUCTURED_DOCUMENT
+
+    if drawing_ratio >= 0.4:
+        return PDFDocumentType.SCANNED_FORM
+
+    if image_ratio > 0.2 and text_ratio > 0.2:
+        return PDFDocumentType.MIXED
+
+    return PDFDocumentType.STRUCTURED_DOCUMENT
+
+
 __all__ = [
     "FormAnalysisResult",
     "FormDependencyEdge",
     "FormDependencyGraph",
     "FormFieldSpec",
+    "LayoutProvider",
+    "OCRProvider",
+    "PDFDocumentType",
     "PDFFormDependencyError",
     "PDFFormError",
     "PDFFormFieldError",
     "PDFFormTextOverflowError",
+    "VLMFieldProvider",
     "analyze_pdf_form",
     "build_form_dependency_graph",
     "build_tesseract_ocr_provider",
+    "classify_pdf",
     "convert_pdf_to_fillable",
     "estimate_max_chars",
     "fill_pdf_fields",
