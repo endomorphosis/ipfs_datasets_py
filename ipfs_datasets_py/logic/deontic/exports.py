@@ -48,6 +48,93 @@ _SECTION_HEADING_RE = re.compile(
     re.IGNORECASE,
 )
 
+LOCAL_PROVER_SYNTAX_TARGETS = (
+    "frame_logic",
+    "deontic_cec",
+    "fol",
+    "deontic_fol",
+    "deontic_temporal_fol",
+)
+
+
+def summarize_prover_syntax_target_coverage(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize required local prover-syntax target coverage.
+
+    Phase 8 reports need to distinguish a passing formula from a complete
+    prover-target report. A missing required local target is an exporter/report
+    coverage defect even when every present record is syntax-valid.
+    """
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    status_by_target: Dict[str, str] = {}
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        if not target:
+            continue
+        status = _prover_syntax_record_status(record)
+        current = status_by_target.get(target)
+        if current == "failed" or status == current:
+            continue
+        if status == "failed" or current is None:
+            status_by_target[target] = status
+        elif current == "skipped" and status == "passed":
+            status_by_target[target] = status
+
+    passed_targets = sorted(
+        target for target in required if status_by_target.get(target) == "passed"
+    )
+    failed_targets = sorted(
+        target for target in required if status_by_target.get(target) == "failed"
+    )
+    skipped_targets = sorted(
+        target for target in required if status_by_target.get(target) == "skipped"
+    )
+    missing_targets = sorted(target for target in required if target not in status_by_target)
+    present_required_count = len(required) - len(missing_targets)
+
+    return {
+        "required_targets": list(required),
+        "record_count": len([record for record in records or [] if isinstance(record, Mapping)]),
+        "present_required_target_count": present_required_count,
+        "passed_targets": passed_targets,
+        "failed_targets": failed_targets,
+        "skipped_targets": skipped_targets,
+        "missing_targets": missing_targets,
+        "all_required_passed": bool(required)
+        and len(passed_targets) == len(required)
+        and not failed_targets
+        and not skipped_targets
+        and not missing_targets,
+        "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
+    }
+
+
+def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:
+    for key in ("target", "target_name", "target_logic", "prover_target"):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
+    status = str(record.get("status") or record.get("parse_status") or "").strip().lower()
+    if status in {"skipped", "skip", "unavailable"} or record.get("skipped") is True:
+        return "skipped"
+    if status in {"failed", "failure", "invalid", "error"}:
+        return "failed"
+    if record.get("syntax_valid") is False or record.get("valid") is False:
+        return "failed"
+    if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
+        return "passed"
+    return "failed"
+
 
 def build_formal_logic_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     """Build a parquet-safe formal-logic row from typed legal IR."""
