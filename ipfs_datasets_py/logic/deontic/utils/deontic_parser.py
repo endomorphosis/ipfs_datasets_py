@@ -135,6 +135,7 @@ _MODAL_RE = re.compile(
         is\s+prohibited\s+from|are\s+prohibited\s+from|
         is\s+forbidden\s+to|are\s+forbidden\s+to|
         shall|must|required\s+to|is\s+required\s+to|are\s+required\s+to|
+        is\s+required\s+by\s+law\s+to|are\s+required\s+by\s+law\s+to|
         has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
         has\s+(?:a\s+|the\s+)?responsibility\s+to|
         have\s+(?:a\s+|the\s+)?responsibility\s+to|
@@ -154,6 +155,7 @@ _MODAL_RE = re.compile(
         bears\s+(?:an?\s+|the\s+)?obligation\s+to|bear\s+(?:an?\s+|the\s+)?obligation\s+to|
         is\s+assigned\s+(?:a\s+|the\s+)?responsibility\s+for|
         are\s+assigned\s+(?:a\s+|the\s+)?responsibility\s+for|
+        is\s+obligated\s+by\s+law\s+to|are\s+obligated\s+by\s+law\s+to|
         is\s+assigned\s+(?:an?\s+|the\s+)?duty\s+to|
         are\s+assigned\s+(?:an?\s+|the\s+)?duty\s+to|
         is\s+duty-bound\s+to|are\s+duty-bound\s+to|
@@ -4650,7 +4652,7 @@ def _normalize_express_duty_obligation(element: Dict[str, Any]) -> None:
 
     modal = str(element.get("modal") or "").strip().lower()
     if not re.search(
-        r"\b(?:is|are)\s+(?:(?:obligated|under\s+a\s+duty|liable|bound|duty-bound|duty\s+bound)\s+to|subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|(?:responsible|accountable|answerable)\s+for|(?:tasked|entrusted)\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b|\b(?:owes|owe)\s+(?:a\s+|the\s+)?duty\s+to\b|\b(?:bears|bear)\s+(?:a\s+|the\s+)?responsibility\s+for\b|\b(?:bears|bear)\s+(?:an?\s+|the\s+)?obligation\s+to\b",
+        r"\b(?:is|are)\s+(?:(?:(?:required|obligated)\s+by\s+law|obligated|under\s+a\s+duty|liable|bound|duty-bound|duty\s+bound)\s+to|subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|(?:responsible|accountable|answerable)\s+for|(?:tasked|entrusted)\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b|\b(?:owes|owe)\s+(?:a\s+|the\s+)?duty\s+to\b|\b(?:bears|bear)\s+(?:a\s+|the\s+)?responsibility\s+for\b|\b(?:bears|bear)\s+(?:an?\s+|the\s+)?obligation\s+to\b",
         modal,
         re.IGNORECASE,
     ):
