@@ -152,6 +152,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
+    action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -4970,6 +4971,42 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"impose {target}" if target else text
+
+    return text
+
+
+def _normalize_allocation_apportionment_light_verb_action(action_text: str) -> str:
+    """Project allocation and apportionment administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    allocation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving)\s+"
+        r"(?:an?\s+|the\s+)?allocation\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving)\s+"
+        r"allocations\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+        r"^allocation\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in allocation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"allocate {target}" if target else text
+
+    apportionment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving)\s+"
+        r"(?:an?\s+|the\s+)?apportionment\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving)\s+"
+        r"apportionments\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+        r"^apportionment\s+(?:of|for|to|among|between)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in apportionment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"apportion {target}" if target else text
 
     return text
 
