@@ -171,6 +171,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
+    action_text = _normalize_correction_adjustment_light_verb_action(action_text)
     action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
@@ -721,6 +722,43 @@ def _normalize_classification_categorization_light_verb_action(action_text: str)
             r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
             r"categorizations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
             "categorize",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_correction_adjustment_light_verb_action(action_text: str) -> str:
+    """Collapse correction and adjustment nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|record|records|recorded|recording|issue|issues|issued|issuing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?correction\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "correct",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|record|records|recorded|recording|issue|issues|issued|issuing)\s+"
+            r"corrections\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "correct",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|record|records|recorded|recording|issue|issues|issued|issuing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?adjustment\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+            "adjust",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|record|records|recorded|recording|issue|issues|issued|issuing)\s+"
+            r"adjustments\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+            "adjust",
         ),
     ]
     for pattern, verb in patterns:
