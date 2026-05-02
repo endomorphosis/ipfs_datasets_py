@@ -165,6 +165,8 @@ _MODAL_RE = re.compile(
         is\s+directed\s+to|are\s+directed\s+to|
         is\s+instructed\s+to|are\s+instructed\s+to|
         is\s+ordered\s+to|are\s+ordered\s+to|
+        is\s+mandated\s+to|are\s+mandated\s+to|
+        is\s+commanded\s+to|are\s+commanded\s+to|
         is\s+designated\s+to|are\s+designated\s+to|
         is\s+appointed\s+to|are\s+appointed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
@@ -4605,11 +4607,11 @@ def _normalize_authorized_and_directed_obligation(element: Dict[str, Any]) -> No
 
 
 def _normalize_instruction_order_obligation(element: Dict[str, Any]) -> None:
-    """Classify instructed-to and ordered-to directive clauses as duties."""
+    """Classify instruction/order/mandate directive clauses as duties."""
 
     modal = str(element.get("modal") or "").strip().lower()
     if not re.search(
-        r"\b(?:is|are)\s+(?:instructed|ordered)\s+to\b",
+        r"\b(?:is|are)\s+(?:instructed|ordered|mandated|commanded)\s+to\b",
         modal,
         re.IGNORECASE,
     ):
