@@ -165,6 +165,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_designation_appointment_light_verb_action(action_text)
     action_text = _normalize_issuance_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
+    action_text = _normalize_docketing_calendaring_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
@@ -711,6 +712,43 @@ def _normalize_submission_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
+    return text
+
+
+def _normalize_docketing_calendaring_light_verb_action(action_text: str) -> str:
+    """Collapse docketing and calendaring nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|enter|enters|entered|entering|perform|performs|performed|performing|complete|completes|completed|completing|record|records|recorded|recording)\s+"
+            r"(?:a\s+|an\s+|the\s+)?docketing\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "docket",
+        ),
+        (
+            r"^(?:make|makes|made|making|enter|enters|entered|entering|perform|performs|performed|performing|complete|completes|completed|completing|record|records|recorded|recording)\s+"
+            r"docketings\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "docket",
+        ),
+        (
+            r"^(?:make|makes|made|making|enter|enters|entered|entering|perform|performs|performed|performing|complete|completes|completed|completing|record|records|recorded|recording|schedule|schedules|scheduled|scheduling)\s+"
+            r"(?:a\s+|an\s+|the\s+)?calendaring\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "calendar",
+        ),
+        (
+            r"^(?:make|makes|made|making|enter|enters|entered|entering|perform|performs|performed|performing|complete|completes|completed|completing|record|records|recorded|recording|schedule|schedules|scheduled|scheduling)\s+"
+            r"calendarings\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "calendar",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
     return text
 
 
