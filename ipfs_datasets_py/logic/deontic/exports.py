@@ -552,6 +552,177 @@ def build_decoder_records_from_irs(norms: Iterable[LegalNormIR]) -> List[Dict[st
     return [build_decoder_record_from_ir(norm) for norm in norms]
 
 
+def build_decoder_slot_grounding_audit_record(
+    decoder_record: Mapping[str, Any],
+    required_slots: Sequence[str] = ("actor", "action"),
+) -> Dict[str, Any]:
+    """Build a deterministic audit row for decoded IR-slot grounding.
+
+    Decoder reconstruction rows are useful only when legally salient phrases can
+    be traced back to IR slots and source spans. This helper consumes an
+    existing decoder row and reports whether required decoded slots are present
+    and source-grounded. It is diagnostic export metadata only; it does not
+    change parser warnings, repair status, or theorem-promotion gates.
+    """
+
+    required = _normalized_decoder_required_slots(required_slots)
+    phrase_rows = [
+        dict(phrase)
+        for phrase in decoder_record.get("phrase_provenance") or []
+        if isinstance(phrase, Mapping)
+    ]
+
+    slot_status: Dict[str, Dict[str, Any]] = {}
+    missing_slots: List[str] = []
+    ungrounded_slots: List[str] = []
+    grounded_slots: List[str] = []
+
+    for slot in required:
+        slot_phrases = [
+            phrase for phrase in phrase_rows if slot in _decoder_phrase_slot_names(phrase)
+        ]
+        grounded_phrases = [
+            phrase for phrase in slot_phrases if _decoder_phrase_has_source_span(phrase)
+        ]
+        present = bool(slot_phrases)
+        grounded = bool(grounded_phrases)
+        if not present:
+            missing_slots.append(slot)
+        elif not grounded:
+            ungrounded_slots.append(slot)
+        else:
+            grounded_slots.append(slot)
+
+        slot_status[slot] = {
+            "present": present,
+            "grounded": grounded,
+            "phrase_count": len(slot_phrases),
+            "grounded_phrase_count": len(grounded_phrases),
+        }
+
+    blockers = [f"missing_decoded_slot:{slot}" for slot in missing_slots]
+    blockers.extend(f"ungrounded_decoded_slot:{slot}" for slot in ungrounded_slots)
+    source_id = str(decoder_record.get("source_id") or "").strip()
+
+    return {
+        "decoder_slot_grounding_audit_id": _stable_id(
+            "decoder-slot-grounding",
+            source_id,
+            "|".join(required),
+            str(decoder_record.get("reconstruction_id") or ""),
+        ),
+        "source_id": source_id,
+        "reconstruction_id": str(decoder_record.get("reconstruction_id") or ""),
+        "decoded_text": str(decoder_record.get("decoded_text") or ""),
+        "required_slots": required,
+        "grounded_slots": grounded_slots,
+        "missing_slots": missing_slots,
+        "ungrounded_slots": ungrounded_slots,
+        "slot_status": slot_status,
+        "slot_grounding_complete": not missing_slots and not ungrounded_slots,
+        "requires_validation": bool(
+            decoder_record.get("requires_validation") is True
+            or missing_slots
+            or ungrounded_slots
+        ),
+        "grounding_blockers": blockers,
+        "proof_ready": bool(decoder_record.get("proof_ready")),
+        "parser_warnings": list(decoder_record.get("parser_warnings") or []),
+        "schema_version": str(decoder_record.get("schema_version") or ""),
+    }
+
+
+def build_decoder_slot_grounding_audit_record_from_ir(
+    norm: LegalNormIR,
+    required_slots: Sequence[str] = ("actor", "action"),
+) -> Dict[str, Any]:
+    """Build a decoder slot-grounding audit row from typed legal IR."""
+
+    return build_decoder_slot_grounding_audit_record(
+        build_decoder_record_from_ir(norm),
+        required_slots,
+    )
+
+
+def _normalized_decoder_required_slots(required_slots: Sequence[str]) -> List[str]:
+    slots: List[str] = []
+    for slot in required_slots or []:
+        value = str(slot or "").strip()
+        if value and value not in slots:
+            slots.append(value)
+    return slots
+
+
+def _decoder_phrase_slot_names(phrase: Mapping[str, Any]) -> set[str]:
+    names: set[str] = set()
+
+    def add_value(value: Any) -> None:
+        if isinstance(value, str):
+            text = value.strip()
+            if text:
+                names.add(text)
+        elif isinstance(value, Mapping):
+            for nested_key in (
+                "slot",
+                "slots",
+                "source_slot",
+                "source_slots",
+                "field",
+                "fields",
+                "source_field",
+                "source_fields",
+                "ir_slot",
+                "slot_name",
+            ):
+                add_value(value.get(nested_key))
+        elif isinstance(value, Iterable) and not isinstance(value, (bytes, bytearray)):
+            for item in value:
+                add_value(item)
+
+    for key in (
+        "slot",
+        "slots",
+        "source_slot",
+        "source_slots",
+        "field",
+        "fields",
+        "source_field",
+        "source_fields",
+        "ir_slot",
+        "slot_name",
+        "provenance",
+        "sources",
+    ):
+        add_value(phrase.get(key))
+    return names
+
+
+def _decoder_phrase_has_source_span(phrase: Mapping[str, Any]) -> bool:
+    if phrase.get("fixed") is True:
+        return False
+
+    for key in ("spans", "source_spans", "field_spans"):
+        spans = phrase.get(key)
+        if isinstance(spans, Sequence) and not isinstance(spans, (str, bytes, bytearray)):
+            if any(_span_like(span) for span in spans):
+                return True
+
+    for key in ("span", "source_span", "support_span", "field_span"):
+        if _span_like(phrase.get(key)):
+            return True
+    return False
+
+
+def _span_like(value: Any) -> bool:
+    return (
+        isinstance(value, Sequence)
+        and not isinstance(value, (str, bytes, bytearray))
+        and len(value) == 2
+        and value[0] is not None
+        and value[1] is not None
+    )
+
+
 def summarize_decoder_reconstruction_records(
     records: Iterable[Mapping[str, Any]],
 ) -> Dict[str, Any]:
