@@ -2684,6 +2684,59 @@ A violation is punishable by a fine of $500."""
         assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
         assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
+    def test_bound_to_modals_are_obligation_norms(self):
+        """Bound-to duty phrases should parse as source-grounded obligations."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        examples = [
+            (
+                "The carrier is bound to preserve cargo.",
+                "carrier",
+                "preserve cargo",
+                [24, 38],
+                "O(∀x (Carrier(x) → PreserveCargo(x)))",
+            ),
+            (
+                "The trustees are bound to account for funds.",
+                "trustees",
+                "account for funds",
+                [26, 43],
+                "O(∀x (Trustees(x) → AccountFunds(x)))",
+            ),
+        ]
+
+        for text, actor, action, action_span, expected_formula in examples:
+            element = extract_normative_elements(text)[0]
+
+            assert element["deontic_operator"] == "O"
+            assert element["modality"] == "O"
+            assert element["norm_type"] == "obligation"
+            assert element["subject"] == [actor]
+            assert element["action"] == [action]
+            assert element["field_spans"]["action"] == action_span
+            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["legal_frame"]["category"] == "duty_assignment"
+            assert element["legal_frame"]["deontic_operator"] == "O"
+            assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
+                "kg_relationship_hints"
+            ]
+            assert {"subject": actor, "predicate": "performsAction", "object": action} in element[
+                "kg_relationship_hints"
+            ]
+            assert element["llm_repair"]["required"] is False
+            assert element["export_readiness"]["proof_ready"] is True
+            assert build_deontic_formula(element) == expected_formula
+
+        blocked = extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
