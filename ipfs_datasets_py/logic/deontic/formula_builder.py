@@ -146,6 +146,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_recipient_tail(norm, action_text)
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _normalize_notice_service_light_verb_action(action_text)
+    action_text = _normalize_publication_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -440,6 +441,36 @@ def _normalize_notice_service_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"notice {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_publication_light_verb_action(action_text: str) -> str:
+    """Collapse legal publication nominalizations into operative publish acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    nominalization_patterns = [
+        r"^(?:cause|causes|caused|causing|make|makes|made|making|provide|provides|provided|providing|complete|completes|completed|completing)\s+"
+        r"(?:a\s+|the\s+)?publication\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:cause|causes|caused|causing|make|makes|made|making|provide|provides|provided|providing|complete|completes|completed|completing)\s+"
+        r"publications\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in nominalization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"publish {match.group(1).strip()}"
+
+    passive_match = re.match(
+        r"^(?:cause|causes|caused|causing|require|requires|required|requiring|order|orders|ordered|ordering)\s+"
+        r"(?:the\s+)?(.+?)\s+to\s+be\s+published$",
+        text,
+        re.IGNORECASE,
+    )
+    if passive_match and passive_match.group(1).strip():
+        return f"publish {passive_match.group(1).strip()}"
 
     return text
 
