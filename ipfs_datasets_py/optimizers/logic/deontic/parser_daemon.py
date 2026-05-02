@@ -333,10 +333,17 @@ class LegalParserParityOptimizer(BaseOptimizer):
         finally:
             restore_result = self._restore_working_tree_diff(pre_llm_diff)
             if not restore_result.get("valid"):
-                raise RuntimeError(
-                    "llm proposal generation changed the working tree and automatic restore failed: "
-                    + str(restore_result)
-                )
+                legal_target_status = self._dirty_legal_parser_target_status()
+                if not legal_target_status.get("valid") or legal_target_status.get("paths"):
+                    raise RuntimeError(
+                        "llm proposal generation changed legal-parser targets and automatic restore failed: "
+                        + str(
+                            {
+                                "restore": restore_result,
+                                "dirty_legal_parser_targets": legal_target_status,
+                            }
+                        )
+                    )
         return parse_cycle_proposal(raw_response)
 
     def _read_only_codex_cli_generation(self) -> "_TemporaryEnv":
@@ -381,6 +388,43 @@ class LegalParserParityOptimizer(BaseOptimizer):
             result["reapply_preexisting"] = reapply_result
             result["valid"] = bool(reapply_result.get("valid"))
         return result
+
+    def _dirty_legal_parser_target_status(self) -> Dict[str, Any]:
+        """Return dirty legal-parser files after an LLM-generation side effect."""
+
+        result = _run_command(
+            ["git", "status", "--porcelain", "--", *LEGAL_PARSER_RECOVERY_TARGETS],
+            cwd=self.daemon_config.repo_root,
+            timeout=30,
+        )
+        checked_at = _utc_now()
+        if not result.get("valid"):
+            stderr = str(result.get("stderr") or "").strip()
+            return {
+                "valid": False,
+                "paths": [],
+                "source": "fresh_git_status_porcelain",
+                "checked_at": checked_at,
+                "fingerprint": "",
+                "error": {
+                    "returncode": result.get("returncode"),
+                    "stderr_tail": stderr[-1000:],
+                },
+            }
+        stdout = str(result.get("stdout") or "")
+        paths = _paths_from_git_status_porcelain(stdout)
+        return {
+            "valid": True,
+            "paths": paths,
+            "source": "fresh_git_status_porcelain",
+            "checked_at": checked_at,
+            "fingerprint": _dirty_target_fingerprint(
+                repo_root=self.daemon_config.repo_root,
+                status_stdout=stdout,
+                paths=paths,
+            ),
+            "error": {},
+        }
 
     def build_patch_prompt(
         self,
@@ -2780,33 +2824,22 @@ class LegalParserOptimizerDaemon:
             "paths": paths,
             "source": "fresh_git_status_porcelain",
             "checked_at": checked_at,
-            "fingerprint": self._dirty_target_fingerprint(status_stdout=stdout, paths=paths),
+            "fingerprint": _dirty_target_fingerprint(
+                repo_root=self.config.repo_root,
+                status_stdout=stdout,
+                paths=paths,
+            ),
             "error": {},
         }
 
     def _dirty_target_fingerprint(self, *, status_stdout: str, paths: Sequence[str]) -> str:
         """Return a content-sensitive fingerprint for stranded parser target diffs."""
 
-        if not paths:
-            return ""
-        digest = hashlib.sha256()
-        digest.update(status_stdout.encode("utf-8", errors="replace"))
-        diff_result = _run_command(
-            ["git", "diff", "--binary", "--", *paths],
-            cwd=self.config.repo_root,
-            timeout=60,
+        return _dirty_target_fingerprint(
+            repo_root=self.config.repo_root,
+            status_stdout=status_stdout,
+            paths=paths,
         )
-        digest.update(str(diff_result.get("stdout") or "").encode("utf-8", errors="replace"))
-        for rel_path in sorted(paths):
-            path = self.config.repo_root / rel_path
-            digest.update(rel_path.encode("utf-8", errors="replace"))
-            try:
-                digest.update(path.read_bytes())
-            except FileNotFoundError:
-                digest.update(b"__missing__")
-            except OSError as exc:
-                digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
-        return digest.hexdigest()
 
     def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:
         """Run fast structural checks before expensive tests or retention."""
@@ -3214,6 +3247,31 @@ def _production_files(paths: Sequence[str]) -> List[str]:
 
 def _test_files(paths: Sequence[str]) -> List[str]:
     return [path for path in paths if path.startswith("tests/unit_tests/logic/deontic/")]
+
+
+def _dirty_target_fingerprint(*, repo_root: Path, status_stdout: str, paths: Sequence[str]) -> str:
+    """Return a content-sensitive fingerprint for stranded parser target diffs."""
+
+    if not paths:
+        return ""
+    digest = hashlib.sha256()
+    digest.update(status_stdout.encode("utf-8", errors="replace"))
+    diff_result = _run_command(
+        ["git", "diff", "--binary", "--", *paths],
+        cwd=repo_root,
+        timeout=60,
+    )
+    digest.update(str(diff_result.get("stdout") or "").encode("utf-8", errors="replace"))
+    for rel_path in sorted(paths):
+        path = repo_root / rel_path
+        digest.update(rel_path.encode("utf-8", errors="replace"))
+        try:
+            digest.update(path.read_bytes())
+        except FileNotFoundError:
+            digest.update(b"__missing__")
+        except OSError as exc:
+            digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
+    return digest.hexdigest()
 
 
 def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:

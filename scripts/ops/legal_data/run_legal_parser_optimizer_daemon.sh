@@ -743,6 +743,12 @@ terminate_competing_daemons() {
       fi
     done < <(tmux ls 2>/dev/null || true)
   fi
+  if command -v systemctl >/dev/null 2>&1; then
+    if systemctl --user is-active --quiet logic-port-daemon.service 2>/dev/null; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing user service logic-port-daemon.service" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+      systemctl --user stop logic-port-daemon.service 2>/dev/null || true
+    fi
+  fi
   while read -r pid args; do
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]] || [[ "$pid" == "${child_pid:-}" ]]; then
       continue

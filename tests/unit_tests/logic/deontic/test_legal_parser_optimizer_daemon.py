@@ -108,6 +108,8 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert 'SUPERVISOR_STOP_COMPETING_DAEMONS" != "1"' in function_body
     assert "tmux kill-session" in function_body
     assert "logic-port-daemon" in function_body
+    assert "logic-port-daemon.service" in function_body
+    assert "systemctl --user stop" in function_body
     assert "ppd/daemon/ppd_daemon.py" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
     assert script.index("terminate_matching_legal_parser_daemons") < script.index(
@@ -277,6 +279,89 @@ def test_optimizer_restores_worktree_after_llm_side_effects(tmp_path):
         check=False,
         capture_output=True,
     ).returncode == 0
+
+
+def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):
+    __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "No-op patch for test.",
+                "requirements_addressed": [],
+                "acceptance_criteria": ["proposal parsed despite unrelated restore warning"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": "",
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        model_name="gpt-5.5",
+        provider="llm_router",
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    monkeypatch.setattr(
+        optimizer,
+        "_restore_working_tree_diff",
+        lambda _expected: {"valid": False, "reverse": {"stderr": "unrelated diff restore failed"}},
+    )
+    monkeypatch.setattr(
+        optimizer,
+        "_dirty_legal_parser_target_status",
+        lambda: {
+            "valid": True,
+            "paths": [],
+            "source": "test",
+            "checked_at": "now",
+            "fingerprint": "",
+            "error": {},
+        },
+    )
+
+    proposal = optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert proposal.summary == "No-op patch for test."
+
+
+def test_optimizer_rejects_restore_failure_when_legal_targets_are_dirty(tmp_path, monkeypatch):
+    __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "No-op patch for test.",
+                "requirements_addressed": [],
+                "acceptance_criteria": ["should not be accepted"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": "",
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    monkeypatch.setattr(optimizer, "_restore_working_tree_diff", lambda _expected: {"valid": False})
+    monkeypatch.setattr(
+        optimizer,
+        "_dirty_legal_parser_target_status",
+        lambda: {
+            "valid": True,
+            "paths": ["ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"],
+            "source": "test",
+            "checked_at": "now",
+            "fingerprint": "dirty",
+            "error": {},
+        },
+    )
+
+    try:
+        optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+    except RuntimeError as exc:
+        assert "changed legal-parser targets" in str(exc)
+    else:
+        raise AssertionError("expected legal target restore failure to raise")
 
 
 def test_optimizer_scales_test_timeout_from_recent_suite_duration(tmp_path):
