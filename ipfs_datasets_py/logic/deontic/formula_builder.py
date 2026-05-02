@@ -191,6 +191,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
     action_text = _normalize_encryption_decryption_light_verb_action(action_text)
     action_text = _normalize_sealing_unsealing_light_verb_action(action_text)
+    action_text = _normalize_expungement_destruction_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3992,6 +3993,36 @@ def _normalize_sealing_unsealing_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"unseal {target}" if target else text
+
+    return text
+
+
+def _normalize_expungement_destruction_light_verb_action(action_text: str) -> str:
+    """Project expungement and destruction nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    expungement_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out|order)\s+(?:an?\s+|the\s+)?expungement\s+of\s+(.+)$",
+        r"^expungement\s+of\s+(.+)$",
+    ]
+    for pattern in expungement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"expunge {target}" if target else text
+
+    destruction_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out|order)\s+(?:a\s+|the\s+)?destruction\s+of\s+(.+)$",
+        r"^destruction\s+of\s+(.+)$",
+    ]
+    for pattern in destruction_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"destroy {target}" if target else text
 
     return text
 
