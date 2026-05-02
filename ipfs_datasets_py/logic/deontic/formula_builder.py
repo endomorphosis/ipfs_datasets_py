@@ -175,6 +175,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_mediation_arbitration_light_verb_action(action_text)
     action_text = _normalize_training_orientation_light_verb_action(action_text)
     action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
+    action_text = _normalize_remediation_abatement_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
@@ -6066,6 +6067,55 @@ def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"negotiate {target}" if target else text
+
+    return text
+
+
+def _normalize_remediation_abatement_light_verb_action(action_text: str) -> str:
+    """Project environmental/enforcement nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    remediation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"(?:a\s+|the\s+)?remediation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"remediations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^remediation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in remediation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"remediate {target}" if target else text
+
+    abatement_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"(?:an?\s+|the\s+)?abatement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"abatements\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^abatement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in abatement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"abate {target}" if target else text
+
+    mitigation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"(?:a\s+|the\s+)?mitigation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+        r"mitigations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^mitigation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in mitigation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"mitigate {target}" if target else text
 
     return text
 
