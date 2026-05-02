@@ -370,6 +370,48 @@ def test_investigation_light_verb_duties_export_operative_investigate_predicates
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_evaluation_light_verb_duties_export_operative_evaluate_and_assess_predicates():
+    examples = [
+        (
+            "The Director shall conduct an evaluation of the application.",
+            "conduct an evaluation of the application",
+            [19, 59],
+            "O(∀x (Director(x) → EvaluateApplication(x)))",
+            "ConductEvaluationApplication",
+        ),
+        (
+            "The Bureau shall perform an assessment of the fee.",
+            "perform an assessment of the fee",
+            [17, 49],
+            "O(∀x (Bureau(x) → AssessFee(x)))",
+            "PerformAssessmentFee",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_notice_service_light_verb_duties_export_operative_notice_predicates():
     examples = [
         (

@@ -155,6 +155,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_investigation_light_verb_action(action_text)
+    action_text = _normalize_evaluation_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
@@ -265,6 +266,43 @@ def _normalize_investigation_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"investigate {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_evaluation_light_verb_action(action_text: str) -> str:
+    """Collapse evaluation and assessment nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|make|makes|made|making)\s+"
+            r"(?:an?\s+|the\s+)?evaluation\s+(?:of|on)\s+(?:the\s+)?(.+)$",
+            "evaluate",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|make|makes|made|making)\s+"
+            r"evaluations\s+(?:of|on)\s+(?:the\s+)?(.+)$",
+            "evaluate",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|make|makes|made|making)\s+"
+            r"(?:an?\s+|the\s+)?assessment\s+(?:of|on)\s+(?:the\s+)?(.+)$",
+            "assess",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|make|makes|made|making)\s+"
+            r"assessments\s+(?:of|on)\s+(?:the\s+)?(.+)$",
+            "assess",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
 
     return text
 
