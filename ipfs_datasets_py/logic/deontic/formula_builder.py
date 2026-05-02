@@ -188,6 +188,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_preservation_restoration_light_verb_action(action_text)
     action_text = _normalize_archival_retention_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
+    action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3879,6 +3880,36 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"anonymize {target}" if target else text
+
+    return text
+
+
+def _normalize_masking_pseudonymization_light_verb_action(action_text: str) -> str:
+    """Project masking and pseudonymization nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    masking_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?masking\s+of\s+(.+)$",
+        r"^masking\s+of\s+(.+)$",
+    ]
+    for pattern in masking_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"mask {target}" if target else text
+
+    pseudonymization_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?pseudonymi[sz]ation\s+of\s+(.+)$",
+        r"^pseudonymi[sz]ation\s+of\s+(.+)$",
+    ]
+    for pattern in pseudonymization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"pseudonymize {target}" if target else text
 
     return text
 
