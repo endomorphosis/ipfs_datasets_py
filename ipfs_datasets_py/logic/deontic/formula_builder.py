@@ -157,6 +157,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_waiver_extension_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
+    action_text = _normalize_classification_reclassification_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_translation_interpretation_light_verb_action(action_text)
     action_text = _normalize_transcription_summarization_light_verb_action(action_text)
@@ -5162,6 +5163,42 @@ def _normalize_indexing_cataloging_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"catalog {target}" if target else text
+
+    return text
+
+
+def _normalize_classification_reclassification_light_verb_action(action_text: str) -> str:
+    """Project administrative classification nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    classification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?classification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"classifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^classification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in classification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"classify {target}" if target else text
+
+    reclassification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?reclassification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"reclassifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^reclassification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in reclassification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"reclassify {target}" if target else text
 
     return text
 
