@@ -7,6 +7,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
+    build_reconstruction_slot_loss_records,
     build_reconstruction_slot_loss_record,
     build_prover_syntax_summary_record_from_ir,
     build_proof_obligation_record_from_ir,
@@ -221,6 +222,64 @@ def test_reconstruction_slot_loss_record_is_stable_and_validation_ready():
         "conditions",
         "exceptions",
     ]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_reconstruction_slot_loss_records_group_by_source_id():
+    records = [
+        {
+            "source_id": "deontic:a",
+            "grounded_slots": ["actor", "modality", "action"],
+            "slot_grounding": [
+                {"slot": "conditions", "status": "missing"},
+                {"slot": "exceptions", "status": "missing"},
+                {"slot": "temporal_constraints", "grounded": True},
+                {"slot": "cross_references", "grounded": True},
+            ],
+        },
+        {
+            "source_id": "deontic:b",
+            "grounded_slots": [
+                "actor",
+                "modality",
+                "action",
+                "conditions",
+                "exceptions",
+                "temporal_constraints",
+                "cross_references",
+            ],
+        },
+        {
+            "source_id": "deontic:a",
+            "decoded_phrase_provenance": [
+                {"slot": "penalty", "text": "civil fine"},
+            ],
+        },
+        {
+            "grounded_slots": ["actor", "modality", "action"],
+        },
+    ]
+
+    rows = build_reconstruction_slot_loss_records(records)
+
+    assert [row["source_id"] for row in rows] == ["deontic:a", "deontic:b"]
+    assert rows[0]["record_count"] == 2
+    assert rows[0]["slot_reconstruction_complete"] is False
+    assert rows[0]["coverage_blockers"] == [
+        "missing_reconstruction_slot:conditions",
+        "missing_reconstruction_slot:exceptions",
+        "ungrounded_decoded_slot:penalty",
+    ]
+    assert rows[1]["record_count"] == 1
+    assert rows[1]["slot_reconstruction_complete"] is True
+    assert rows[1]["requires_validation"] is False
+    assert rows[1]["coverage_blockers"] == []
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

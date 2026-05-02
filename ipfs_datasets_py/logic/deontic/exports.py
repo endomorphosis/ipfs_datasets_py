@@ -3216,6 +3216,34 @@ def build_reconstruction_slot_loss_record(
     }
 
 
+def build_reconstruction_slot_loss_records(
+    records: Sequence[Mapping[str, Any]],
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+) -> List[Dict[str, Any]]:
+    """Build stable decoder slot-loss export rows grouped by source norm.
+
+    Corpus-level Phase 8 reports receive a flat stream of decoder reconstruction
+    and slot-grounding records. This helper groups those records by their
+    source_id and emits one primary-keyed slot-loss row per source norm. Records
+    without a source_id are ignored because the export row must remain
+    source-grounded and must not invent provenance.
+    """
+
+    grouped: Dict[str, List[Mapping[str, Any]]] = {}
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        grouped.setdefault(source_id, []).append(record)
+
+    return [
+        build_reconstruction_slot_loss_record(source_id, grouped[source_id], required_slots)
+        for source_id in sorted(grouped)
+    ]
+
+
 def _slot_names_from_record(record: Mapping[str, Any], key: str) -> set[str]:
     values = record.get(key) or []
     if isinstance(values, Mapping):
