@@ -173,6 +173,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
     action_text = _normalize_codification_consolidation_light_verb_action(action_text)
+    action_text = _normalize_revocation_suspension_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4637,6 +4638,42 @@ def _normalize_codification_consolidation_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"consolidate {target}" if target else text
+
+    return text
+
+
+def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
+    """Project revocation and suspension nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    revocation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording)\s+"
+        r"revocations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in revocation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"revoke {target}" if target else text
+
+    suspension_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording)\s+"
+        r"suspensions\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in suspension_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"suspend {target}" if target else text
 
     return text
 
