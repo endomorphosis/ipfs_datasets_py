@@ -354,6 +354,55 @@ def test_testing_light_verb_duties_export_operative_test_predicates():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_monitoring_light_verb_duties_export_operative_monitor_predicates():
+    examples = [
+        (
+            "The Inspector shall conduct monitoring of the discharge.",
+            "conduct monitoring of the discharge",
+            [20, 55],
+            "O(∀x (Inspector(x) → MonitorDischarge(x)))",
+            "ConductMonitoringDischarge",
+        ),
+        (
+            "The Bureau shall perform monitoring on the outfall.",
+            "perform monitoring on the outfall",
+            [17, 50],
+            "O(∀x (Bureau(x) → MonitorOutfall(x)))",
+            "PerformMonitoringOutfall",
+        ),
+        (
+            "The Operator shall run a monitoring program for the meter.",
+            "run a monitoring program for the meter",
+            [19, 57],
+            "O(∀x (Operator(x) → MonitorMeter(x)))",
+            "RunMonitoringProgramMeter",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_payment_light_verb_duty_exports_operative_payment_predicate():
     element = extract_normative_elements(
         "The licensee shall make payment of the renewal fee."

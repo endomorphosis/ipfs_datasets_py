@@ -150,6 +150,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
+    action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -301,6 +302,37 @@ def _normalize_testing_light_verb_action(action_text: str) -> str:
             r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
             r"(?:an\s+|the\s+)?analysis\s+of\s+(.+)$",
             r"test \1",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
+        if normalized != text:
+            return normalized
+    return text
+
+
+def _normalize_monitoring_light_verb_action(action_text: str) -> str:
+    """Collapse monitoring light-verb phrases into the operative monitor act."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"monitoring\s+of\s+(.+)$",
+            r"monitor \1",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"monitoring\s+(?:on|for)\s+(.+)$",
+            r"monitor \1",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|run|runs|ran|running)\s+"
+            r"(?:a\s+|an\s+|the\s+)?monitoring\s+program\s+(?:of|on|for)\s+(.+)$",
+            r"monitor \1",
         ),
     ]
     for pattern, replacement in patterns:
