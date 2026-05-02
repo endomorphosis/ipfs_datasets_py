@@ -189,6 +189,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_archival_retention_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
+    action_text = _normalize_encryption_decryption_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3910,6 +3911,56 @@ def _normalize_masking_pseudonymization_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"pseudonymize {target}" if target else text
+
+    return text
+
+
+def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
+    """Project encryption, decryption, and tokenization nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    encryption_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?encryption\s+of\s+(.+)$",
+        r"^encryption\s+of\s+(.+)$",
+    ]
+    for pattern in encryption_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"encrypt {target}" if target else text
+
+    decryption_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:a\s+|the\s+)?decryption\s+of\s+(.+)$",
+        r"^decryption\s+of\s+(.+)$",
+    ]
+    for pattern in decryption_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"decrypt {target}" if target else text
+
+    tokenization_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:a\s+|the\s+)?tokeni[sz]ation\s+of\s+(.+)$",
+        r"^tokeni[sz]ation\s+of\s+(.+)$",
+    ]
+    for pattern in tokenization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"tokenize {target}" if target else text
+
+    detokenization_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:a\s+|the\s+)?detokeni[sz]ation\s+of\s+(.+)$",
+        r"^detokeni[sz]ation\s+of\s+(.+)$",
+    ]
+    for pattern in detokenization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"detokenize {target}" if target else text
 
     return text
 
