@@ -412,6 +412,50 @@ def test_causation_prohibitions_export_embedded_prohibited_action_formulas():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_coercion_prohibitions_export_embedded_prohibited_action_formulas():
+    examples = [
+        (
+            "The agency shall not require any person to disclose records.",
+            "require any person to disclose records",
+            "F(∀x (Agency(x) → DiscloseRecords(x)))",
+            "RequireAnyPersonDiscloseRecords",
+        ),
+        (
+            "The officer may not compel the applicant to remove signs.",
+            "compel the applicant to remove signs",
+            "F(∀x (Officer(x) → RemoveSigns(x)))",
+            "CompelApplicantRemoveSigns",
+        ),
+        (
+            "The Board shall not direct the permittee to destroy documents.",
+            "direct the permittee to destroy documents",
+            "F(∀x (Board(x) → DestroyDocuments(x)))",
+            "DirectPermitteeDestroyDocuments",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "F"
+        assert norm.action == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prevent_entry_obligation_exports_as_prohibition_formula():
     element = extract_normative_elements(
         "The owner shall prevent entry into the restricted area."
