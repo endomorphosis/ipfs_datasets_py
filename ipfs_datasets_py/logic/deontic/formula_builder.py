@@ -179,6 +179,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
     action_text = _normalize_authentication_attestation_light_verb_action(action_text)
     action_text = _normalize_approval_authorization_light_verb_action(action_text)
+    action_text = _normalize_revocation_suspension_light_verb_action(action_text)
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
@@ -5643,6 +5644,42 @@ def _normalize_approval_authorization_light_verb_action(action_text: str) -> str
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"authorize {target}" if target else text
+
+    return text
+
+
+def _normalize_revocation_suspension_light_verb_action(action_text: str) -> str:
+    """Project revocation and suspension nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    revocation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"revocations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^revocation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in revocation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"revoke {target}" if target else text
+
+    suspension_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"suspensions\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^suspension\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in suspension_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"suspend {target}" if target else text
 
     return text
 
