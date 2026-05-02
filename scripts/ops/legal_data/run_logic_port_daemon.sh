@@ -53,6 +53,15 @@ LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.lat
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 
+LEGAL_PARSER_SUPERVISOR_PID_PATH="${LEGAL_PARSER_SUPERVISOR_PID_PATH:-$REPO_ROOT/ipfs_datasets_py/.daemon/legal_parser_daemon_supervisor.pid}"
+if [[ "${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-0}" != "1" ]] && [[ -f "$LEGAL_PARSER_SUPERVISOR_PID_PATH" ]]; then
+  legal_parser_pid="$(tr -dc '0-9' < "$LEGAL_PARSER_SUPERVISOR_PID_PATH" 2>/dev/null || true)"
+  if [[ -n "$legal_parser_pid" ]] && kill -0 "$legal_parser_pid" 2>/dev/null; then
+    echo "logic-port daemon suppressed because legal-parser daemon supervisor is running with PID $legal_parser_pid"
+    exit 0
+  fi
+fi
+
 if [[ ! -f "$REPO_ROOT/package.json" ]] || [[ ! -d "$REPO_ROOT/ipfs_datasets_py" ]]; then
   echo "REPO_ROOT must point at the outer project root containing package.json and ipfs_datasets_py/: $REPO_ROOT" >&2
   exit 2
