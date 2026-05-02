@@ -71,6 +71,84 @@ DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
 DEFAULT_IR_SLOT_PROVENANCE_EXPORT_SLOTS = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS
 
 
+def summarize_ir_slot_provenance_audit_records(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize persisted IR slot-provenance audit rows.
+
+    The row builder records provenance for one norm at a time. Phase 8 reports
+    also need a corpus-level view that can show whether legally salient IR slots
+    were source-grounded, missing, or present without spans. This helper only
+    aggregates already-built audit records; it does not change parser repair or
+    proof-readiness gates.
+    """
+
+    source_ids: set[str] = set()
+    checked_slots: set[str] = set()
+    grounded_slots: set[str] = set()
+    missing_slots: set[str] = set()
+    ungrounded_slots: set[str] = set()
+    blockers: set[str] = set()
+    valid_records = 0
+    checked_slot_instances = 0
+    grounded_slot_instances = 0
+    missing_slot_instances = 0
+    ungrounded_slot_instances = 0
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        valid_records += 1
+
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            source_ids.add(source_id)
+
+        record_checked = _slot_names_from_record(record, "checked_slots")
+        record_grounded = _slot_names_from_record(record, "grounded_slots")
+        record_missing = _slot_names_from_record(record, "missing_slots")
+        record_ungrounded = _slot_names_from_record(record, "ungrounded_slots")
+        checked_slots.update(record_checked)
+        grounded_slots.update(record_grounded)
+        missing_slots.update(record_missing)
+        ungrounded_slots.update(record_ungrounded)
+
+        checked_slot_instances += int(record.get("checked_slot_count") or len(record_checked))
+        grounded_slot_instances += int(record.get("grounded_slot_count") or len(record_grounded))
+        missing_slot_instances += int(record.get("missing_slot_count") or len(record_missing))
+        ungrounded_slot_instances += int(record.get("ungrounded_slot_count") or len(record_ungrounded))
+
+        for blocker in record.get("coverage_blockers") or []:
+            blocker_text = str(blocker or "").strip()
+            if blocker_text:
+                blockers.add(blocker_text)
+
+    return {
+        "source_ids": sorted(source_ids),
+        "record_count": valid_records,
+        "checked_slots": sorted(checked_slots),
+        "grounded_slots": sorted(grounded_slots),
+        "missing_slots": sorted(missing_slots),
+        "ungrounded_slots": sorted(ungrounded_slots),
+        "checked_slot_instance_count": checked_slot_instances,
+        "grounded_slot_instance_count": grounded_slot_instances,
+        "missing_slot_instance_count": missing_slot_instances,
+        "ungrounded_slot_instance_count": ungrounded_slot_instances,
+        "grounded_slot_rate": round(grounded_slot_instances / checked_slot_instances, 6)
+        if checked_slot_instances
+        else 0.0,
+        "ungrounded_slot_rate": round(ungrounded_slot_instances / checked_slot_instances, 6)
+        if checked_slot_instances
+        else 0.0,
+        "all_checked_slots_grounded": checked_slot_instances > 0
+        and grounded_slot_instances == checked_slot_instances
+        and missing_slot_instances == 0
+        and ungrounded_slot_instances == 0,
+        "requires_validation": bool(missing_slot_instances or ungrounded_slot_instances),
+        "coverage_blockers": sorted(blockers),
+    }
+
+
 def summarize_prover_syntax_target_coverage(
     records: Sequence[Mapping[str, Any]],
     required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,

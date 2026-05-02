@@ -9,6 +9,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_formal_logic_record_from_ir,
     build_ir_slot_provenance_audit_record,
     build_ir_slot_provenance_audit_records,
+    summarize_ir_slot_provenance_audit_records,
     build_reconstruction_slot_loss_records,
     build_reconstruction_slot_loss_record,
     build_prover_syntax_summary_record_from_ir,
@@ -202,6 +203,47 @@ def test_ir_slot_provenance_audit_records_preserve_norm_order():
     assert [record["all_checked_slots_grounded"] for record in records] == [True, True]
     assert [record["requires_validation"] for record in records] == [False, False]
     assert [record["coverage_blockers"] for record in records] == [[], []]
+
+
+def test_ir_slot_provenance_audit_summary_aggregates_grounding_status():
+    elements = extract_normative_elements(
+        "The Secretary shall (1) establish procedures; (2) submit a report.",
+        expand_enumerations=True,
+    )
+    norms = [LegalNormIR.from_parser_element(element) for element in elements]
+    records = build_ir_slot_provenance_audit_records(
+        norms,
+        slots=("actor", "modality", "action"),
+    )
+
+    missing_exception_record = build_ir_slot_provenance_audit_record(
+        norms[0],
+        slots=("actor", "exceptions"),
+    )
+    summary = summarize_ir_slot_provenance_audit_records(records + [missing_exception_record])
+
+    assert summary["source_ids"] == sorted(norm.source_id for norm in norms)
+    assert summary["record_count"] == 3
+    assert summary["checked_slots"] == ["action", "actor", "exceptions", "modality"]
+    assert summary["grounded_slots"] == ["action", "actor", "modality"]
+    assert summary["missing_slots"] == ["exceptions"]
+    assert summary["ungrounded_slots"] == []
+    assert summary["checked_slot_instance_count"] == 8
+    assert summary["grounded_slot_instance_count"] == 7
+    assert summary["missing_slot_instance_count"] == 1
+    assert summary["ungrounded_slot_instance_count"] == 0
+    assert summary["grounded_slot_rate"] == 0.875
+    assert summary["ungrounded_slot_rate"] == 0.0
+    assert summary["all_checked_slots_grounded"] is False
+    assert summary["requires_validation"] is True
+    assert summary["coverage_blockers"] == ["missing_ir_slot_provenance:exceptions"]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
 def test_reconstruction_slot_loss_summary_reports_missing_and_ungrounded_slots():
