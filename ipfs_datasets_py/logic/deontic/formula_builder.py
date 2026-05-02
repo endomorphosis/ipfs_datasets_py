@@ -171,6 +171,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_determination_light_verb_action(action_text)
     action_text = _normalize_calculation_computation_light_verb_action(action_text)
     action_text = _normalize_audit_examination_light_verb_action(action_text)
+    action_text = _normalize_adjudication_hearing_light_verb_action(action_text)
     action_text = _normalize_mediation_arbitration_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
@@ -5880,6 +5881,42 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"accredit {target}" if target else text
+
+    return text
+
+
+def _normalize_adjudication_hearing_light_verb_action(action_text: str) -> str:
+    """Project adjudication and hearing nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    adjudication_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|issue|issues|issued|issuing|render|renders|rendered|rendering|enter|enters|entered|entering)\s+"
+        r"(?:an?\s+|the\s+)?adjudication\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|issue|issues|issued|issuing|render|renders|rendered|rendering|enter|enters|entered|entering)\s+"
+        r"adjudications\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^adjudication\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in adjudication_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"adjudicate {target}" if target else text
+
+    hearing_patterns = [
+        r"^(?:hold|holds|held|holding|conduct|conducts|conducted|conducting|schedule|schedules|scheduled|scheduling|convene|convenes|convened|convening|provide|provides|provided|providing)\s+"
+        r"(?:a\s+|the\s+)?hearing\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:hold|holds|held|holding|conduct|conducts|conducted|conducting|schedule|schedules|scheduled|scheduling|convene|convenes|convened|convening|provide|provides|provided|providing)\s+"
+        r"hearings\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^hearing\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in hearing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"hear {target}" if target else text
 
     return text
 
