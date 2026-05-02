@@ -95,10 +95,19 @@ payload = {
     "active_dirty_touched_files": progress.get("active_dirty_touched_files"),
     "dirty_touched_file_rejection_count": progress.get("dirty_touched_file_rejection_count"),
     "supervisor_dirty_legal_parser_targets": supervisor_state.get("dirty_legal_parser_targets"),
+    "supervisor_previous_dirty_legal_parser_targets": supervisor_state.get(
+        "previous_dirty_legal_parser_targets"
+    ),
+    "supervisor_dirty_legal_parser_targets_confirmed": supervisor_state.get(
+        "dirty_legal_parser_targets_confirmed"
+    ),
     "supervisor_dirty_target_detection_valid": supervisor_state.get("dirty_target_detection_valid"),
     "supervisor_dirty_target_detection_errors": supervisor_state.get("dirty_target_detection_errors"),
     "supervisor_dirty_legal_parser_targets_deferred": supervisor_state.get("dirty_legal_parser_targets_deferred"),
     "supervisor_dirty_legal_parser_targets_defer_phase": supervisor_state.get("dirty_legal_parser_targets_defer_phase"),
+    "supervisor_dirty_legal_parser_targets_pending_confirmation": supervisor_state.get(
+        "dirty_legal_parser_targets_pending_confirmation"
+    ),
     "supervisor_dirty_rejection_active_targets": supervisor_state.get("dirty_rejection_active_targets"),
     "supervisor_effective_phase_stall_threshold_seconds": supervisor_state.get(
         "effective_phase_stall_threshold_seconds"

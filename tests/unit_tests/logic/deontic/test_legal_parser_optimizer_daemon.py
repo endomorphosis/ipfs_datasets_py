@@ -2435,8 +2435,12 @@ def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
     ]
     assert status["dirty_legal_parser_targets_valid"] is True
     assert status["dirty_legal_parser_targets_error"] == {}
+    assert status["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
+    assert status["dirty_legal_parser_targets_checked_at"]
     assert progress["dirty_legal_parser_targets_valid"] is True
     assert progress["dirty_legal_parser_targets_error"] == {}
+    assert progress["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
+    assert progress["dirty_legal_parser_targets_checked_at"]
 
 
 def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeypatch):
@@ -2477,7 +2481,10 @@ def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeyp
     assert status["dirty_legal_parser_targets_valid"] is False
     assert status["dirty_legal_parser_targets_error"]["returncode"] == 128
     assert "not a git repository" in status["dirty_legal_parser_targets_error"]["stderr_tail"]
+    assert status["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
+    assert status["dirty_legal_parser_targets_checked_at"]
     assert progress["dirty_legal_parser_targets_valid"] is False
+    assert progress["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
 
 
 def test_progress_report_lists_dirty_legal_parser_recovery_targets(tmp_path):

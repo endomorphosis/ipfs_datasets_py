@@ -1390,6 +1390,8 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets": dirty_target_status["paths"],
             "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
             "dirty_legal_parser_targets_error": dirty_target_status["error"],
+            "dirty_legal_parser_targets_source": dirty_target_status["source"],
+            "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
             **{key: _json_safe(value) for key, value in details.items()},
         }
         with self._status_lock:
@@ -2266,6 +2268,8 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets": dirty_target_status["paths"],
             "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
             "dirty_legal_parser_targets_error": dirty_target_status["error"],
+            "dirty_legal_parser_targets_source": dirty_target_status["source"],
+            "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
             "run": {
                 "run_id": self.run_id,
                 "started_at": self.run_started_at,
@@ -2560,11 +2564,14 @@ class LegalParserOptimizerDaemon:
             cwd=self.config.repo_root,
             timeout=30,
         )
+        checked_at = _utc_now()
         if not result.get("valid"):
             stderr = str(result.get("stderr") or "").strip()
             return {
                 "valid": False,
                 "paths": [],
+                "source": "fresh_git_status_porcelain",
+                "checked_at": checked_at,
                 "error": {
                     "returncode": result.get("returncode"),
                     "stderr_tail": stderr[-1000:],
@@ -2573,6 +2580,8 @@ class LegalParserOptimizerDaemon:
         return {
             "valid": True,
             "paths": _paths_from_git_status_porcelain(str(result.get("stdout") or "")),
+            "source": "fresh_git_status_porcelain",
+            "checked_at": checked_at,
             "error": {},
         }
 

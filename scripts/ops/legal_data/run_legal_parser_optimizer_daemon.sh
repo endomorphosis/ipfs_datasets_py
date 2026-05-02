@@ -327,6 +327,15 @@ dirty_preexisting_rejections = [
 ]
 dirty_targets = dirty_legal_parser_targets()
 dirty_rejection_targets = git_dirty_files(dirty_rejection_files(dirty_preexisting_rejections))
+previous_dirty_payload = state.get("dirty_legal_parser_targets")
+previous_dirty_targets = [
+    str(path)
+    for path in previous_dirty_payload
+] if isinstance(previous_dirty_payload, list) else []
+dirty_targets_confirmed = bool(
+    dirty_targets
+    and sorted(previous_dirty_targets) == sorted(dirty_targets)
+)
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
 baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
@@ -381,10 +390,17 @@ dirty_targets_deferred = bool(
     and current_phase in dirty_defer_phases
     and not phase_stale
 )
+dirty_targets_pending_confirmation = bool(
+    dirty_targets
+    and not dirty_targets_deferred
+    and not dirty_targets_confirmed
+)
 
 reason = ""
-if dirty_targets and not dirty_targets_deferred:
+if dirty_targets and not dirty_targets_deferred and dirty_targets_confirmed:
     reason = "dirty_legal_parser_targets:" + ",".join(dirty_targets[:8])
+elif dirty_targets_pending_confirmation:
+    reason = ""
 elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold and dirty_rejection_targets:
     reason = (
         f"dirty_touched_file_rejections:{len(dirty_preexisting_rejections)}:"
@@ -442,10 +458,13 @@ state.update(
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "dirty_legal_parser_targets": dirty_targets,
+        "previous_dirty_legal_parser_targets": previous_dirty_targets,
+        "dirty_legal_parser_targets_confirmed": dirty_targets_confirmed,
         "dirty_target_detection_valid": not dirty_status_errors,
         "dirty_target_detection_errors": dirty_status_errors,
         "dirty_legal_parser_targets_deferred": dirty_targets_deferred,
         "dirty_legal_parser_targets_defer_phase": current_phase if dirty_targets_deferred else "",
+        "dirty_legal_parser_targets_pending_confirmation": dirty_targets_pending_confirmation,
         "dirty_touched_file_rejections": len(dirty_preexisting_rejections),
         "dirty_rejection_active_targets": dirty_rejection_targets,
         "phase_stall_age_seconds": phase_stall_age,
