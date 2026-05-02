@@ -187,6 +187,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_deletion_erasure_light_verb_action(action_text)
     action_text = _normalize_preservation_restoration_light_verb_action(action_text)
     action_text = _normalize_archival_retention_light_verb_action(action_text)
+    action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3848,6 +3849,36 @@ def _normalize_archival_retention_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"retain {target}" if target else text
+
+    return text
+
+
+def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> str:
+    """Project redaction and anonymization nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    redaction_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?redaction\s+of\s+(.+)$",
+        r"^redaction\s+of\s+(.+)$",
+    ]
+    for pattern in redaction_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"redact {target}" if target else text
+
+    anonymization_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?anonymi[sz]ation\s+of\s+(.+)$",
+        r"^anonymi[sz]ation\s+of\s+(.+)$",
+    ]
+    for pattern in anonymization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"anonymize {target}" if target else text
 
     return text
 
