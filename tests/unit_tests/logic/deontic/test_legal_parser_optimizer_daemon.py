@@ -347,6 +347,43 @@ def test_current_status_tracks_phase_age_separately_from_heartbeat_updates(tmp_p
     assert next_attempt["phase_started_at"] > same_phase["phase_started_at"]
 
 
+def test_current_status_exposes_phase_specific_stall_budget(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        llm_timeout_seconds=900,
+        test_timeout_seconds=600,
+        heartbeat_interval_seconds=10,
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_llm_patch",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+    )
+    llm_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    daemon._write_current_status(
+        status="running",
+        phase="running_tests",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+    )
+    test_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+
+    assert llm_status["phase_stale_after_seconds"] == 960
+    assert llm_status["phase_stale_after_reason"] == "llm_timeout_seconds_plus_heartbeat_slack"
+    assert test_status["phase_stale_after_seconds"] == 660
+    assert test_status["phase_stale_after_reason"] == "effective_test_timeout_seconds_plus_heartbeat_slack"
+
+
 def test_evaluation_uses_active_repair_projection_for_probe_metrics(tmp_path):
     """Daemon repair details should not use stale raw llm_repair flags."""
 

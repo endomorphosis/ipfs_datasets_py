@@ -4,10 +4,10 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-codex_cli}"
-# Provider preference: codex_cli first, then copilot_cli via llm_router fallback chain.
-# Do not pin IPFS_DATASETS_PY_LLM_PROVIDER so that generate_text() can fall back to
-# copilot_cli / AccelerateManager / p2p when codex credits are exhausted.
+PROVIDER="${PROVIDER:-}"
+# Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
+# selection and fallback policy. Set PROVIDER=codex_cli or another registered
+# router provider only when you need to force a specific backend.
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
@@ -27,6 +27,7 @@ BLOCKED_BACKLOG_LIMIT="${BLOCKED_BACKLOG_LIMIT:-10}"
 BLOCKED_TASK_STRATEGY="${BLOCKED_TASK_STRATEGY:-fewest-failures}"
 PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
+SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
 SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
 SUPERVISOR_AGENTIC_PROPOSAL_FAILURES="${SUPERVISOR_AGENTIC_PROPOSAL_FAILURES:-3}"
@@ -114,6 +115,7 @@ write_supervisor_status() {
   "child_pid_path": "$CHILD_PID_PATH",
   "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
   "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
+  "agentic_startup_maintenance_enabled": $SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE,
   "agentic_stagnant_rounds": $SUPERVISOR_AGENTIC_STAGNANT_ROUNDS,
   "agentic_task_failures": $SUPERVISOR_AGENTIC_TASK_FAILURES,
   "agentic_proposal_failures": $SUPERVISOR_AGENTIC_PROPOSAL_FAILURES,
@@ -341,10 +343,12 @@ def reason_family(value: str) -> str:
 
 
 last_reason = str(state.get("last_maintenance_reason") or "")
+last_task = str(state.get("last_maintenance_task") or "")
 cooling_down = (
     last_maintenance_at > 0
     and now - last_maintenance_at < cooldown_seconds
     and reason_family(candidate_reason) == reason_family(last_reason)
+    and current_task == last_task
 )
 reason = "" if cooling_down else candidate_reason
 
@@ -364,6 +368,7 @@ state.update(
         "cooling_down": cooling_down,
         "suppressed_candidate_reason": candidate_reason if cooling_down else "",
         "candidate_reason": reason,
+        "cooldown_scoped_to_task": current_task,
     }
 )
 state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -396,6 +401,7 @@ try:
     progress = json.loads(progress_path.read_text(encoding="utf-8"))
 except Exception:
     progress = {}
+state["last_maintenance_task"] = str(progress.get("current_task") or "")
 state["baseline_rounds_total"] = int(progress.get("rounds_total") or state.get("rounds_total") or 0)
 state["baseline_valid_rounds_total"] = int(progress.get("valid_rounds_total") or state.get("valid_rounds_total") or 0)
 path.parent.mkdir(parents=True, exist_ok=True)
@@ -430,7 +436,11 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
+
 If the reason mentions proposal_quality_failures, rollback_quality_failures, or typescript_quality_failures, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+
+If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child.
 
 Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
 
@@ -545,6 +555,15 @@ trap 'cleanup; exit 143' TERM INT
 trap 'cleanup' EXIT
 
 terminate_matching_logic_port_daemons
+
+if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
+  startup_maintenance_reason="$(agentic_maintenance_reason || true)"
+  if [[ -n "$startup_maintenance_reason" ]]; then
+    last_recycle_reason="startup_agentic_maintenance"
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking startup agentic maintenance: $startup_maintenance_reason" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+    run_agentic_maintenance "$startup_maintenance_reason"
+  fi
+fi
 
 while true; do
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"

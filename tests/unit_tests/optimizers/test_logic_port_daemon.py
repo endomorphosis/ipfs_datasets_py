@@ -468,7 +468,7 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
 
     assert router.calls
     assert router.calls[0]["kwargs"]["model_name"] == "gpt-5.5"
-    assert router.calls[0]["kwargs"]["provider"] == "codex_cli"
+    assert router.calls[0]["kwargs"]["provider"] is None
     assert router.calls[0]["kwargs"]["allow_local_fallback"] is False
     assert router.calls[0]["kwargs"]["max_new_tokens"] == 4096
     assert router.calls[0]["kwargs"]["timeout"] == 300
@@ -481,6 +481,34 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     assert result["valid"] is True
     assert result["artifact"]["has_patch"] is True
     assert not (tmp_path / "new-file.txt").exists()
+
+
+def test_daemon_can_pin_explicit_llm_router_provider(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port deterministic parser IR\n", encoding="utf-8")
+    status.write_text("| ZKP | partial |\n", encoding="utf-8")
+
+    router = FakeRouter(json.dumps({"summary": "Noop", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        provider="codex_cli",
+        dry_run=True,
+        max_iterations=1,
+        validation_commands=tuple(),
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="explicit-provider")
+
+    assert router.calls[0]["kwargs"]["provider"] == "codex_cli"
 
 
 def test_build_prompt_uses_focused_task_board_excerpt(tmp_path):
@@ -1877,7 +1905,10 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
     def fake_syntax_preflight(self, edits):
         content = "\n".join(str(edit.get("content", "")) for edit in edits)
         if "value = ;" in content:
-            return ["Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree."]
+            return [
+                "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree:\n"
+                "src/lib/logic/feature.ts(1,22): error TS1005: Expression expected."
+            ]
         return []
 
     monkeypatch.setattr(logic_port_daemon.LogicPortDaemonOptimizer, "_typescript_replacement_preflight_errors", fake_syntax_preflight)
@@ -1898,6 +1929,8 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
     assert result["valid"] is True
     assert len(router.calls) == 2
     assert "TypeScript replacement preflight" in router.calls[1]["prompt"]
+    assert "typescript_diagnostic_context=" in router.calls[1]["prompt"]
+    assert "> 1: export const value = ;" in router.calls[1]["prompt"]
     assert target.read_text(encoding="utf-8") == 'export const value = "new";\n'
 
 

@@ -336,6 +336,13 @@ phase_epoch = parse_epoch(status.get("phase_started_at") or "")
 updated_epoch = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
 phase_stall_age = max(0, now - phase_epoch) if phase_epoch else 0
 status_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
+try:
+    phase_status_budget = int(status.get("phase_stale_after_seconds") or 0)
+except (TypeError, ValueError):
+    phase_status_budget = 0
+effective_phase_stall_threshold = cycle_stall_seconds
+if phase_status_budget > 0:
+    effective_phase_stall_threshold = max(cycle_stall_seconds, phase_status_budget)
 
 reason = ""
 if dirty_targets:
@@ -364,9 +371,16 @@ elif not cooling_down and rolled_back_delta >= rolled_back_tail_threshold:
     reason = f"rolled_back_without_acceptance:{rolled_back_delta}:threshold:{rolled_back_tail_threshold}"
 elif not cooling_down and rejected_delta >= rejected_tail_threshold:
     reason = f"rejected_without_acceptance:{rejected_delta}:threshold:{rejected_tail_threshold}"
-elif not cooling_down and cycle_stall_seconds > 0 and phase_stall_age >= cycle_stall_seconds:
+elif (
+    not cooling_down
+    and effective_phase_stall_threshold > 0
+    and phase_stall_age >= effective_phase_stall_threshold
+):
     phase = status.get("phase") or "unknown"
-    reason = f"phase_stale:{phase_stall_age}s:phase:{phase}:threshold:{cycle_stall_seconds}"
+    reason = (
+        f"phase_stale:{phase_stall_age}s:phase:{phase}:"
+        f"threshold:{effective_phase_stall_threshold}"
+    )
 
 state.update(
     {
@@ -396,6 +410,8 @@ state.update(
         "dirty_rejection_active_targets": dirty_rejection_targets,
         "phase_stall_age_seconds": phase_stall_age,
         "status_stall_age_seconds": status_stall_age,
+        "phase_status_budget_seconds": phase_status_budget,
+        "effective_phase_stall_threshold_seconds": effective_phase_stall_threshold,
         "cooling_down": cooling_down,
         "candidate_reason": reason,
     }

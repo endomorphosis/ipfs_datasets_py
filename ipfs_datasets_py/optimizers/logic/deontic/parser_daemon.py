@@ -1362,6 +1362,7 @@ class LegalParserOptimizerDaemon:
             "phase_key": phase_key,
             "phase_started_at": phase_started_at,
             "phase_updated_at": now,
+            **self._phase_stall_budget(phase),
             "cycle_index": cycle_index,
             "cycle_dir": str(cycle_dir),
             "started_at": started_at,
@@ -1379,6 +1380,33 @@ class LegalParserOptimizerDaemon:
         with self._status_lock:
             self._status_payload = dict(payload)
             self._write_status_file_atomic(payload)
+
+    def _phase_stall_budget(self, phase: str) -> Dict[str, Any]:
+        """Return the supervisor-facing stale budget for the current phase."""
+
+        llm_timeout = max(1, int(self.config.llm_timeout_seconds))
+        test_timeout = max(1, int(self.config.test_timeout_seconds))
+        effective_test_timeout = test_timeout
+        if hasattr(self.optimizer, "effective_test_timeout_seconds"):
+            effective_test_timeout = max(test_timeout, int(self.optimizer.effective_test_timeout_seconds()))
+        heartbeat_interval = max(1, int(float(self.config.heartbeat_interval_seconds) or 1))
+        slack = max(60, heartbeat_interval * 3)
+        if phase in {"requesting_llm_patch", "retrying_llm_patch", "repairing_failed_patch"}:
+            budget = llm_timeout + slack
+            reason = "llm_timeout_seconds_plus_heartbeat_slack"
+        elif phase in {"running_tests", "running_tests_patch_only"}:
+            budget = effective_test_timeout + slack
+            reason = "effective_test_timeout_seconds_plus_heartbeat_slack"
+        elif phase in {"post_apply_validation", "evaluating_retained_change"}:
+            budget = min(max(180, test_timeout), 600) + slack
+            reason = "fast_validation_budget_plus_heartbeat_slack"
+        else:
+            budget = 0
+            reason = "supervisor_default_cycle_stall_seconds"
+        return {
+            "phase_stale_after_seconds": budget,
+            "phase_stale_after_reason": reason,
+        }
 
     def _status_phase_key(self, *, phase: str, cycle_index: int, details: Mapping[str, Any]) -> str:
         """Return a stable key for supervisor phase-age accounting."""

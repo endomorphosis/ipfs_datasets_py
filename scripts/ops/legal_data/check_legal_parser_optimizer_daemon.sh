@@ -46,6 +46,7 @@ def pid_alive(pid):
 current = read_json(status_path)
 supervisor = read_json(supervisor_path)
 progress = read_json(progress_path)
+supervisor_state = read_json(supervisor.get("agentic_state_path", "")) if supervisor else {}
 now = datetime.now(timezone.utc)
 heartbeat_at = parse_ts(current.get("heartbeat_at") or current.get("updated_at"))
 heartbeat_age = None
@@ -75,6 +76,9 @@ payload = {
     "watchdog_stale_after_seconds": supervisor.get("watchdog_stale_after_seconds"),
     "watchdog_startup_grace_seconds": supervisor.get("watchdog_startup_grace_seconds"),
     "last_recycle_reason": supervisor.get("last_recycle_reason"),
+    "phase_started_at": current.get("phase_started_at"),
+    "phase_stale_after_seconds": current.get("phase_stale_after_seconds"),
+    "phase_stale_after_reason": current.get("phase_stale_after_reason"),
     "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
     "agentic_stalled_metric_cycles": supervisor.get("agentic_stalled_metric_cycles"),
     "stalled_metric_cycles": progress.get("stalled_metric_cycles"),
@@ -84,6 +88,11 @@ payload = {
     "rolled_back_reasons_since_meaningful_progress": progress.get("rolled_back_reasons_since_meaningful_progress"),
     "active_dirty_touched_files": progress.get("active_dirty_touched_files"),
     "dirty_touched_file_rejection_count": progress.get("dirty_touched_file_rejection_count"),
+    "supervisor_dirty_legal_parser_targets": supervisor_state.get("dirty_legal_parser_targets"),
+    "supervisor_dirty_rejection_active_targets": supervisor_state.get("dirty_rejection_active_targets"),
+    "supervisor_effective_phase_stall_threshold_seconds": supervisor_state.get(
+        "effective_phase_stall_threshold_seconds"
+    ),
     "agentic_rejected_tail": supervisor.get("agentic_rejected_tail"),
     "agentic_rolled_back_tail": supervisor.get("agentic_rolled_back_tail"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),

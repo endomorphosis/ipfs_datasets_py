@@ -946,13 +946,78 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         return min(score, 1.0), feedback
 
     def _proposal_feedback(self, artifact: LogicPortArtifact) -> str:
+        diagnostic_context = self._typescript_diagnostic_context(artifact)
         parts = [
             f"summary={artifact.summary or '<empty>'}",
             f"failure_kind={artifact.failure_kind or '<empty>'}",
             f"errors={'; '.join(artifact.errors[:3]) if artifact.errors else '<none>'}",
+            f"typescript_diagnostic_context={diagnostic_context or '<none>'}",
             f"response_prefix={artifact.raw_response[:1200]}",
         ]
         return "\n".join(parts)
+
+    def _typescript_diagnostic_context(self, artifact: LogicPortArtifact, *, radius: int = 2, limit: int = 6000) -> str:
+        """Render failing replacement lines around TypeScript diagnostics for retry prompts."""
+
+        if not artifact.files or not artifact.errors:
+            return ""
+        edits_by_path = {str(edit.get("path") or ""): str(edit.get("content") or "") for edit in artifact.files}
+        if not edits_by_path:
+            return ""
+        return self._render_typescript_diagnostic_context(
+            "\n".join(str(error) for error in artifact.errors),
+            edits_by_path,
+            radius=radius,
+            limit=limit,
+        )
+
+    def _render_typescript_diagnostic_context(
+        self,
+        text: str,
+        edits_by_path: Dict[str, str],
+        *,
+        radius: int = 2,
+        limit: int = 6000,
+    ) -> str:
+        if not edits_by_path:
+            return ""
+        snippets: List[str] = []
+        seen: set[Tuple[str, int]] = set()
+        for match in re.finditer(r"([^\s:()]+\.tsx?)\((\d+),(\d+)\):\s*error\s+(TS\d+):\s*([^\n]+)", text):
+            diagnostic_path = match.group(1)
+            line_number = int(match.group(2))
+            column = int(match.group(3))
+            code = match.group(4)
+            message = match.group(5).strip()
+            edit_path = self._match_diagnostic_edit_path(diagnostic_path, edits_by_path)
+            if edit_path is None or (edit_path, line_number) in seen:
+                continue
+            seen.add((edit_path, line_number))
+            lines = edits_by_path[edit_path].splitlines()
+            if not (1 <= line_number <= len(lines)):
+                continue
+            start = max(1, line_number - radius)
+            end = min(len(lines), line_number + radius)
+            rendered = [f"{edit_path}:{line_number}:{column} {code}: {message}"]
+            for current in range(start, end + 1):
+                marker = ">" if current == line_number else " "
+                rendered.append(f"{marker} {current}: {lines[current - 1]}")
+            snippets.append("\n".join(rendered))
+            if sum(len(item) for item in snippets) > limit:
+                break
+        return "\n\n".join(snippets)[:limit]
+
+    @staticmethod
+    def _match_diagnostic_edit_path(diagnostic_path: str, edits_by_path: Dict[str, str]) -> Optional[str]:
+        normalized = diagnostic_path.replace("\\", "/")
+        for edit_path in edits_by_path:
+            candidate = edit_path.replace("\\", "/")
+            if normalized.endswith(candidate) or candidate.endswith(normalized):
+                return edit_path
+            basename = candidate.rsplit("/", 1)[-1]
+            if basename and normalized.endswith(basename):
+                return edit_path
+        return None
 
     def _build_retry_prompt(self, original_prompt: str, previous_feedback: str, *, attempt: int, attempts: int) -> str:
         return f"""{original_prompt}
@@ -2388,10 +2453,17 @@ Critical correction for attempt {attempt}:
                 syntax_lines.append(line)
         if not syntax_lines:
             return []
+        context = self._typescript_preflight_diagnostic_context(syntax_lines, ts_edits)
+        suffix = f"\n\nReplacement diagnostic context:\n{context}" if context else ""
         return [
             "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree:\n"
             + "\n".join(syntax_lines[:20])
+            + suffix
         ]
+
+    def _typescript_preflight_diagnostic_context(self, diagnostics: Sequence[str], edits: Sequence[Dict[str, str]]) -> str:
+        edits_by_path = {str(edit.get("path") or ""): str(edit.get("content") or "") for edit in edits}
+        return self._render_typescript_diagnostic_context("\n".join(diagnostics), edits_by_path)
 
     def _recent_failure_context(self, selected_task: Optional[PlanTask], *, limit: int = 3) -> str:
         if selected_task is None or self.daemon_config.result_log_path is None:
@@ -2427,6 +2499,12 @@ Critical correction for attempt {attempt}:
             if len(snippets) >= limit:
                 break
         return "\n\n---\n\n".join(reversed(snippets)) if snippets else "[No recent failures for selected task.]"
+
+    def _selected_task_failure_counts(self, selected_task: Optional[PlanTask]) -> Dict[str, Any]:
+        if selected_task is None or self.daemon_config.result_log_path is None:
+            return {"total_since_success": 0, "by_kind_since_success": {}}
+        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        return _current_task_failure_counts(rows, selected_task.label)
 
     def _relevant_file_context(self, selected_task: Optional[PlanTask], tracked_files: str) -> str:
         tokens = _task_tokens(selected_task)
@@ -2791,8 +2869,6 @@ Current repository file contents after rollback:
     def _resolved_provider(self) -> Optional[str]:
         if self.daemon_config.provider:
             return self.daemon_config.provider
-        if self.daemon_config.model_name.strip().lower().startswith("gpt-"):
-            return "codex_cli"
         return None
 
     def _build_prompt(self, *, input_data: Any, context: OptimizationContext) -> str:
@@ -2834,6 +2910,17 @@ Current repository file contents after rollback:
             timeout_seconds=30,
         )
         recent_failure_context = self._recent_failure_context(selected_task)
+        task_failure_counts = self._selected_task_failure_counts(selected_task)
+        repeated_typescript_failures = int(task_failure_counts.get("by_kind_since_success", {}).get("typescript_quality", 0))
+        recovery_mode_context = "[No repeated TypeScript-quality failure recovery mode active.]"
+        if repeated_typescript_failures >= 2:
+            recovery_mode_context = (
+                f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
+                "Recovery mode is active: land the smallest compileable TypeScript contract first, avoid large feature-complete files, "
+                "avoid advanced generic types, avoid custom JSON recursive unions unless already present in the current file, "
+                "and include only one focused test that proves the contract. Prefer simple interfaces, string/number/boolean/null arrays/records, "
+                "and fail-closed stubs that can be expanded in later tasks."
+            )
         relevant_file_context = self._relevant_file_context(selected_task, file_inventory.stdout)
         blocked_backlog_context = "[No blocked backlog context available.]"
         if self.daemon_config.task_board_doc is not None:
@@ -2864,6 +2951,7 @@ Hard constraints:
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
 - The daemon-selected task for this cycle is: {selected_task_text}
+- If recovery mode below is active, prioritize a small compileable scaffold over a broad implementation.
 - Work only on that daemon-selected task unless the repository already satisfies it; if it is already satisfied, update docs/tests for that task rather than jumping ahead.
 - Prefer implementation changes under src/lib/logic/ whenever the selected task asks for functionality, not only docs.
 - Fixture-only work is acceptable only when the selected port-plan checkbox explicitly asks for fixtures or generated Python parity captures.
@@ -2908,6 +2996,9 @@ Relevant tracked files:
 
 Recent daemon failures for the selected task:
 {recent_failure_context}
+
+Task recovery mode:
+{recovery_mode_context}
 
 Blocked backlog context:
 {blocked_backlog_context}
