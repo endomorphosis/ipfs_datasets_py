@@ -2,6 +2,7 @@
 
 import json
 import time
+from pathlib import Path
 
 import ipfs_datasets_py.optimizers.logic.deontic.parser_daemon as parser_daemon_module
 from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
@@ -71,6 +72,28 @@ class _MetricGateOptimizer(LegalParserParityOptimizer):
 
     def run_tests(self):
         return {"valid": True, "returncode": 0, "stdout": "passed", "stderr": ""}
+
+
+def test_supervisor_revalidates_agentic_reason_after_stopping_child():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    function_start = script.index("run_agentic_maintenance() {")
+    function_end = script.index("\nheartbeat_is_stale() {", function_start)
+    function_body = script[function_start:function_end]
+
+    assert function_body.index("stop_child") < function_body.index(
+        'refreshed_reason="$(agentic_maintenance_reason || true)"'
+    )
+    assert "skipped_stale_trigger" in function_body
+    assert "trigger cleared after child stop" in function_body
+    assert function_body.index('if [[ -z "$refreshed_reason" ]]') < function_body.index(
+        'mark_agentic_maintenance_ran "$reason"'
+    )
+    assert function_body.index('if [[ "$refreshed_reason" != "$reason" ]]') < function_body.index(
+        'mark_agentic_maintenance_ran "$reason"'
+    )
 
 
 def test_parse_cycle_proposal_accepts_strict_json():

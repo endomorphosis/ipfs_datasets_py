@@ -545,6 +545,7 @@ PY
 
 run_agentic_maintenance() {
   local reason="$1"
+  local refreshed_reason=""
   local maintenance_id=""
   local maintenance_log=""
   local rc=0
@@ -559,6 +560,20 @@ run_agentic_maintenance() {
   last_agentic_maintenance_log_path="$maintenance_log"
   write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
   stop_child
+  refreshed_reason="$(agentic_maintenance_reason || true)"
+  if [[ -z "$refreshed_reason" ]]; then
+    last_agentic_maintenance_status="skipped_stale_trigger"
+    last_agentic_maintenance_reason="$reason"
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) skipping agentic maintenance because trigger cleared after child stop: $reason" >> "$REPO_ROOT/$maintenance_log"
+    write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" 0
+    return 0
+  fi
+  if [[ "$refreshed_reason" != "$reason" ]]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance reason refreshed after child stop: $reason -> $refreshed_reason" >> "$REPO_ROOT/$maintenance_log"
+    reason="$refreshed_reason"
+    last_agentic_maintenance_reason="$reason"
+    write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
+  fi
   mark_agentic_maintenance_ran "$reason"
   before_head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
   before_diff="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-before.XXXXXX")"
