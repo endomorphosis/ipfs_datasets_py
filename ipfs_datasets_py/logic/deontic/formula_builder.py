@@ -151,6 +151,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
+    action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
@@ -213,6 +214,29 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _normalize_measurement_light_verb_action(action_text: str) -> str:
+    """Collapse measurement nominalizations into operative measurement acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    patterns = [
+        r"^(?:conduct|perform|carry\s+out|complete|undertake)\s+(?:a\s+)?measurement\s+of\s+(.+)$",
+        r"^(?:conduct|perform|carry\s+out|complete|undertake)\s+measurements\s+(?:of|on)\s+(.+)$",
+        r"^(?:take|make|record)\s+(?:a\s+)?measurement\s+of\s+(.+)$",
+        r"^(?:take|make|record)\s+measurements\s+(?:of|on)\s+(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, flags=re.IGNORECASE)
+        if match:
+            measured_object = match.group(1).strip()
+            if measured_object:
+                return f"measure {measured_object}"
+
+    return text
 
 
 def _normalize_submission_light_verb_action(action_text: str) -> str:

@@ -139,6 +139,55 @@ def test_filing_light_verb_duty_exports_operative_file_predicate():
     assert record["repair_required"] is False
 
 
+def test_measurement_light_verb_duty_exports_operative_measure_predicate():
+    element = extract_normative_elements(
+        "The operator shall conduct measurement of the discharge."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "conduct measurement of the discharge"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [19, 55]
+    assert formula == "O(∀x (Operator(x) → MeasureDischarge(x)))"
+    assert "ConductMeasurement" not in formula
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+
+def test_plural_measurements_light_verb_duty_exports_operative_measure_predicate():
+    element = extract_normative_elements(
+        "The inspector shall take measurements of the effluent."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "take measurements of the effluent"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [20, 53]
+    assert formula == "O(∀x (Inspector(x) → MeasureEffluent(x)))"
+    assert "TakeMeasurements" not in formula
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_refrain_from_obligation_exports_as_prohibition_formula():
     element = extract_normative_elements(
         "The employee shall refrain from disclosing confidential information."
