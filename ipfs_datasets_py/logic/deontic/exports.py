@@ -56,6 +56,16 @@ LOCAL_PROVER_SYNTAX_TARGETS = (
     "deontic_temporal_fol",
 )
 
+DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+    "conditions",
+    "exceptions",
+    "temporal_constraints",
+    "cross_references",
+)
+
 
 def summarize_prover_syntax_target_coverage(
     records: Sequence[Mapping[str, Any]],
@@ -3067,3 +3077,121 @@ def _matching_parser_reference(
 def _stable_id(prefix: str, *parts: str) -> str:
     seed = "|".join(str(part) for part in parts)
     return f"{prefix}:" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:24]
+
+
+def summarize_reconstruction_slot_loss(
+    records: Sequence[Mapping[str, Any]],
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+) -> Dict[str, Any]:
+    """Summarize legally salient slot loss in decoder reconstruction records.
+
+    Phase 8 reconstruction reports need a deterministic way to distinguish a
+    readable decoded sentence from a legally complete one. This helper consumes
+    export-style reconstruction or grounding records and reports which required
+    IR slots were grounded, missing, or decoded without provenance. It does not
+    change parser proof-readiness or repair gates.
+    """
+
+    required = tuple(dict.fromkeys(str(slot) for slot in required_slots if slot))
+    grounded_slots: set[str] = set()
+    missing_slots: set[str] = set()
+    ungrounded_slots: set[str] = set()
+    source_ids: set[str] = set()
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            source_ids.add(source_id)
+
+        grounded_slots.update(_slot_names_from_record(record, "grounded_slots"))
+        missing_slots.update(_slot_names_from_record(record, "missing_slots"))
+        ungrounded_slots.update(_slot_names_from_record(record, "ungrounded_slots"))
+
+        for slot_record in _slot_grounding_records(record):
+            slot_name = str(
+                slot_record.get("slot")
+                or slot_record.get("slot_name")
+                or slot_record.get("field")
+                or ""
+            ).strip()
+            if not slot_name:
+                continue
+            status = str(
+                slot_record.get("status")
+                or slot_record.get("grounding_status")
+                or ""
+            ).strip().lower()
+            if slot_record.get("grounded") is True or status in {"grounded", "present"}:
+                grounded_slots.add(slot_name)
+            elif slot_record.get("ungrounded") is True or status in {"ungrounded", "unprovenanced"}:
+                ungrounded_slots.add(slot_name)
+            elif slot_record.get("missing") is True or status in {"missing", "omitted"}:
+                missing_slots.add(slot_name)
+
+        provenance = record.get("decoded_phrase_provenance") or record.get("phrase_provenance")
+        if isinstance(provenance, Sequence) and not isinstance(provenance, (str, bytes)):
+            for phrase in provenance:
+                if not isinstance(phrase, Mapping):
+                    continue
+                slot_name = str(phrase.get("slot") or phrase.get("slot_name") or "").strip()
+                if not slot_name:
+                    continue
+                spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
+                if spans:
+                    grounded_slots.add(slot_name)
+                elif phrase.get("fixed_connective") is not True:
+                    ungrounded_slots.add(slot_name)
+
+    grounded_required = sorted(slot for slot in required if slot in grounded_slots)
+    missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)
+    extra_ungrounded = sorted(slot for slot in ungrounded_slots if slot not in required)
+    ungrounded_required = sorted(slot for slot in required if slot in ungrounded_slots)
+    blockers = [f"missing_reconstruction_slot:{slot}" for slot in missing_required]
+    blockers.extend(f"ungrounded_reconstruction_slot:{slot}" for slot in ungrounded_required)
+    blockers.extend(f"ungrounded_decoded_slot:{slot}" for slot in extra_ungrounded)
+
+    required_count = len(required)
+    grounded_count = len(grounded_required)
+    ungrounded_count = len(ungrounded_required) + len(extra_ungrounded)
+
+    return {
+        "source_ids": sorted(source_ids),
+        "record_count": len([record for record in records or [] if isinstance(record, Mapping)]),
+        "required_slots": list(required),
+        "grounded_required_slots": grounded_required,
+        "missing_required_slots": missing_required,
+        "ungrounded_required_slots": ungrounded_required,
+        "extra_ungrounded_slots": extra_ungrounded,
+        "required_slot_count": required_count,
+        "grounded_required_slot_count": grounded_count,
+        "missing_required_slot_count": len(missing_required),
+        "ungrounded_slot_count": ungrounded_count,
+        "slot_reconstruction_complete": required_count > 0 and grounded_count == required_count and ungrounded_count == 0,
+        "grounded_required_slot_rate": round(grounded_count / required_count, 6) if required_count else 0.0,
+        "ungrounded_decoded_slot_rate": round(ungrounded_count / (grounded_count + ungrounded_count), 6)
+        if grounded_count + ungrounded_count
+        else 0.0,
+        "coverage_blockers": blockers,
+    }
+
+
+def _slot_names_from_record(record: Mapping[str, Any], key: str) -> set[str]:
+    values = record.get(key) or []
+    if isinstance(values, Mapping):
+        values = values.keys()
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, Sequence):
+        return set()
+    return {str(value).strip() for value in values if str(value).strip()}
+
+
+def _slot_grounding_records(record: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    for key in ("slot_grounding", "slot_grounding_records", "slot_audits"):
+        values = record.get(key) or []
+        if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+            return [value for value in values if isinstance(value, Mapping)]
+    return []

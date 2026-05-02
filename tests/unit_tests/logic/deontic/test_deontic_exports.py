@@ -14,6 +14,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     normalize_repair_required_evaluation,
     normalize_repair_required_details_from_parser_elements,
     summarize_decoder_reconstruction_records,
+    summarize_reconstruction_slot_loss,
     parser_element_has_active_repair,
     parser_elements_to_export_tables,
     parser_elements_for_metrics,
@@ -120,6 +121,65 @@ def test_ir_formal_logic_record_preserves_deterministic_resolution_metadata():
     assert record["repair_required"] is False
     assert record["deterministic_resolution"]["type"] == "local_scope_applicability"
     assert "cross_reference_requires_resolution" in record["blockers"]
+
+
+def test_reconstruction_slot_loss_summary_reports_missing_and_ungrounded_slots():
+    records = [
+        {
+            "source_id": "deontic:complete",
+            "grounded_slots": ["actor", "modality", "action", "conditions"],
+            "slot_grounding": [
+                {"slot": "exceptions", "status": "missing"},
+                {"slot": "temporal_constraints", "grounded": True},
+                {"slot": "cross_references", "grounded": True},
+            ],
+        },
+        {
+            "source_id": "deontic:lossy",
+            "decoded_phrase_provenance": [
+                {"slot": "penalty", "text": "civil fine"},
+                {"slot": "fixed_connective", "text": "shall", "fixed_connective": True},
+            ],
+        },
+    ]
+
+    summary = summarize_reconstruction_slot_loss(records)
+
+    assert summary["source_ids"] == ["deontic:complete", "deontic:lossy"]
+    assert summary["record_count"] == 2
+    assert summary["required_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "conditions",
+        "exceptions",
+        "temporal_constraints",
+        "cross_references",
+    ]
+    assert summary["grounded_required_slots"] == [
+        "action",
+        "actor",
+        "conditions",
+        "cross_references",
+        "modality",
+        "temporal_constraints",
+    ]
+    assert summary["missing_required_slots"] == ["exceptions"]
+    assert summary["extra_ungrounded_slots"] == ["penalty"]
+    assert summary["slot_reconstruction_complete"] is False
+    assert summary["grounded_required_slot_rate"] == 0.857143
+    assert summary["ungrounded_decoded_slot_rate"] == 0.142857
+    assert summary["coverage_blockers"] == [
+        "missing_reconstruction_slot:exceptions",
+        "ungrounded_decoded_slot:penalty",
+    ]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
 def test_ir_proof_record_uses_formula_level_resolution_for_local_applicability():
