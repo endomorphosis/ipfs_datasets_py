@@ -178,6 +178,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_reconciliation_restitution_light_verb_action(action_text)
     action_text = _normalize_forfeiture_disgorgement_light_verb_action(action_text)
     action_text = _normalize_annulment_vacatur_light_verb_action(action_text)
+    action_text = _normalize_recodification_renumbering_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4822,6 +4823,42 @@ def _normalize_annulment_vacatur_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"vacate {target}" if target else text
+
+    return text
+
+
+def _normalize_recodification_renumbering_light_verb_action(action_text: str) -> str:
+    """Project recodification and renumbering code-maintenance nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    recodification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|adopt|adopts|adopted|adopting)\s+"
+        r"(?:a\s+|the\s+)?recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|adopt|adopts|adopted|adopting)\s+"
+        r"recodifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recodification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"recodify {target}" if target else text
+
+    renumbering_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|adopt|adopts|adopted|adopting)\s+"
+        r"(?:a\s+|the\s+)?renumbering\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|adopt|adopts|adopted|adopting)\s+"
+        r"renumberings\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^renumbering\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in renumbering_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"renumber {target}" if target else text
 
     return text
 
