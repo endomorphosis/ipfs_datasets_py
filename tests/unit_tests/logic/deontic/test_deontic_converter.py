@@ -2276,6 +2276,57 @@ A violation is punishable by a fine of $500."""
         assert stats is not None
         assert isinstance(stats, dict)
 
+    def test_authority_grant_modals_are_permission_norms(self):
+        """Express legal-power grants should parse as permissions, not duties."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        examples = [
+            (
+                "The Director has authority to adopt rules.",
+                "Director",
+                "adopt rules",
+                "P(∀x (Director(x) → AdoptRules(x)))",
+            ),
+            (
+                "The Board has the power to issue subpoenas.",
+                "Board",
+                "issue subpoenas",
+                "P(∀x (Board(x) → IssueSubpoenas(x)))",
+            ),
+            (
+                "The Bureau is empowered to inspect premises.",
+                "Bureau",
+                "inspect premises",
+                "P(∀x (Bureau(x) → InspectPremises(x)))",
+            ),
+        ]
+
+        for text, actor, action, expected_formula in examples:
+            element = extract_normative_elements(text)[0]
+            action_span = element["field_spans"]["action"]
+
+            assert element["deontic_operator"] == "P"
+            assert element["modality"] == "P"
+            assert element["norm_type"] == "permission"
+            assert element["subject"] == [actor]
+            assert element["action"] == [action]
+            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["legal_frame"]["category"] == "authority"
+            assert element["legal_frame"]["deontic_operator"] == "P"
+            assert element["llm_repair"]["required"] is False
+            assert element["export_readiness"]["proof_ready"] is True
+            assert build_deontic_formula(element) == expected_formula
+
+        blocked = extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

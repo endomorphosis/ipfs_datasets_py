@@ -136,6 +136,8 @@ _MODAL_RE = re.compile(
         is\s+forbidden\s+to|are\s+forbidden\s+to|
         shall|must|required\s+to|is\s+required\s+to|are\s+required\s+to|
         has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
+        has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
+        is\s+empowered\s+to|are\s+empowered\s+to|
         may|is\s+authorized\s+to|are\s+authorized\s+to|
         is\s+permitted\s+to|are\s+permitted\s+to|
         is\s+entitled\s+to|are\s+entitled\s+to
@@ -4509,11 +4511,57 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
 
     elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
     for element in elements:
+        _normalize_authority_grant_permission(element)
         _clear_standard_substantive_exception_active_repair(element)
         _clear_local_applicability_active_repair(element)
         _clear_pure_precedence_override_active_repair(element)
     _apply_active_repair_status(elements)
     return elements
+
+
+def _normalize_authority_grant_permission(element: Dict[str, Any]) -> None:
+    """Classify express authority and power grants as permission norms."""
+
+    modal = str(element.get("modal") or "").strip().lower()
+    if not re.search(
+        r"\b(?:has|have)\s+(?:the\s+)?(?:authority|power)\s+to\b|\b(?:is|are)\s+empowered\s+to\b",
+        modal,
+        re.IGNORECASE,
+    ):
+        return
+    if not _parser_slot_first_text(element.get("subject")):
+        return
+    if not _parser_slot_first_text(element.get("action")):
+        return
+
+    element["norm_type"] = "permission"
+    element["deontic_operator"] = "P"
+    element["modality"] = "P"
+
+    formal_terms = dict(element.get("formal_terms") or {})
+    formal_terms["norm_predicate"] = "Permission"
+    element["formal_terms"] = formal_terms
+
+    legal_frame = dict(element.get("legal_frame") or {})
+    legal_frame["category"] = "authority"
+    legal_frame["norm_type"] = "permission"
+    legal_frame["deontic_operator"] = "P"
+    element["legal_frame"] = legal_frame
+
+    hints = list(element.get("kg_relationship_hints") or [])
+    actor = _parser_slot_first_text(element.get("subject"))
+    action = _parser_slot_first_text(element.get("action"))
+    grant_hint = {
+        "subject": "law",
+        "predicate": "grantsAuthorityTo",
+        "object": actor,
+    }
+    if grant_hint not in hints:
+        hints.append(grant_hint)
+    action_hint = {"subject": actor, "predicate": "hasAuthorityFor", "object": action}
+    if action_hint not in hints:
+        hints.append(action_hint)
+    element["kg_relationship_hints"] = hints
 
 
 def _clear_standard_substantive_exception_active_repair(element: Dict[str, Any]) -> None:
