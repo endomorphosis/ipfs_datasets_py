@@ -115,6 +115,54 @@ def summarize_prover_syntax_target_coverage(
     }
 
 
+def build_prover_syntax_target_coverage_record(
+    source_id: str,
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Build a stable export row for required prover-target coverage.
+
+    Syntax-valid formulas are not enough for Phase 8 reporting unless every
+    required local target has been checked. This record makes missing, skipped,
+    and failed targets explicit so downstream metrics do not count partial
+    prover validation as complete formal syntax coverage.
+    """
+
+    summary = summarize_prover_syntax_target_coverage(records, required_targets)
+    blockers: List[str] = []
+    blockers.extend(
+        f"missing_prover_syntax_target:{target}"
+        for target in summary["missing_targets"]
+    )
+    blockers.extend(
+        f"failed_prover_syntax_target:{target}"
+        for target in summary["failed_targets"]
+    )
+    blockers.extend(
+        f"skipped_prover_syntax_target:{target}"
+        for target in summary["skipped_targets"]
+    )
+
+    normalized_source_id = str(source_id or "").strip()
+    return {
+        "prover_syntax_summary_id": _stable_id(
+            "prover-syntax-coverage",
+            normalized_source_id,
+            "|".join(summary["required_targets"]),
+        ),
+        "source_id": normalized_source_id,
+        "target_logic": "local_prover_syntax",
+        "required_targets": summary["required_targets"],
+        "present_required_target_count": summary["present_required_target_count"],
+        "record_count": summary["record_count"],
+        "syntax_valid_rate": summary["syntax_valid_rate"],
+        "formal_syntax_valid": summary["all_required_passed"],
+        "requires_validation": not summary["all_required_passed"],
+        "coverage_blockers": blockers,
+        "coverage_summary": summary,
+    }
+
+
 def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:
     for key in ("target", "target_name", "target_logic", "prover_target"):
         value = str(record.get(key) or "").strip()
