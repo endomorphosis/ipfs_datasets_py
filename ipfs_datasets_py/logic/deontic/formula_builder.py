@@ -173,6 +173,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_audit_examination_light_verb_action(action_text)
     action_text = _normalize_mediation_arbitration_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
+    action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
@@ -5421,6 +5422,42 @@ def _normalize_delegation_assignment_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"assign {target}" if target else text
+
+    return text
+
+
+def _normalize_recordation_memorialization_light_verb_action(action_text: str) -> str:
+    """Project legal-recording nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    recordation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"recordations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recordation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"record {target}" if target else text
+
+    memorialization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"memorializations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in memorialization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"memorialize {target}" if target else text
 
     return text
 
