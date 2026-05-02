@@ -2843,6 +2843,59 @@ A violation is punishable by a fine of $500."""
         assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
         assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
+    def test_answerable_for_and_entrusted_with_modals_are_obligation_norms(self):
+        """Accountability and entrustment phrases should parse as duties."""
+        from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
+            build_deontic_formula,
+            extract_normative_elements,
+        )
+
+        examples = [
+            (
+                "The custodian is answerable for maintaining records.",
+                "custodian",
+                "maintaining records",
+                [32, 51],
+                "O(∀x (Custodian(x) → MaintainRecords(x)))",
+            ),
+            (
+                "The officer is entrusted with preserving evidence.",
+                "officer",
+                "preserving evidence",
+                [30, 49],
+                "O(∀x (Officer(x) → PreserveEvidence(x)))",
+            ),
+        ]
+
+        for text, actor, action, action_span, expected_formula in examples:
+            element = extract_normative_elements(text)[0]
+
+            assert element["deontic_operator"] == "O"
+            assert element["modality"] == "O"
+            assert element["norm_type"] == "obligation"
+            assert element["subject"] == [actor]
+            assert element["action"] == [action]
+            assert element["field_spans"]["action"] == action_span
+            assert element["text"][action_span[0]:action_span[1]] == action
+            assert element["legal_frame"]["category"] == "duty_assignment"
+            assert element["legal_frame"]["deontic_operator"] == "O"
+            assert {"subject": "law", "predicate": "imposesDutyOn", "object": actor} in element[
+                "kg_relationship_hints"
+            ]
+            assert {"subject": actor, "predicate": "performsAction", "object": action} in element[
+                "kg_relationship_hints"
+            ]
+            assert element["llm_repair"]["required"] is False
+            assert element["export_readiness"]["proof_ready"] is True
+            assert build_deontic_formula(element) == expected_formula
+
+        blocked = extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
     def test_subject_to_duty_modals_are_obligation_norms_without_condition_noise(self):
         """Subject-to-duty phrases should parse as duties, not conditional norms."""
         from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
