@@ -274,7 +274,7 @@ def is_proposal_quality_failure(result: dict, artifact: dict) -> bool:
     if result.get("valid") or artifact.get("changed_files"):
         return False
     failure_kind = str(artifact.get("failure_kind") or "")
-    return failure_kind in {"parse", "empty_proposal", "invalid_no_change", "no_change"}
+    return failure_kind in {"parse", "codex_empty_event_stream", "empty_proposal", "invalid_no_change", "no_change"}
 
 
 def is_rollback_quality_failure(result: dict, artifact: dict) -> bool:

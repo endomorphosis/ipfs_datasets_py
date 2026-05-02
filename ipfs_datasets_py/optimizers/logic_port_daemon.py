@@ -397,6 +397,33 @@ def _extract_text_from_codex_event_object(value: Any) -> str:
     return ""
 
 
+def _looks_like_empty_codex_event_stream(text: str) -> bool:
+    if not text.strip():
+        return False
+    saw_codex_event = False
+    saw_assistant_text = False
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("{") or not line.endswith("}"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        event_type = str(event.get("type") or "")
+        if event_type.startswith(("thread.", "turn.", "item.")):
+            saw_codex_event = True
+        if (
+            _extract_text_from_codex_event_object(event)
+            or _extract_text_from_codex_event_object(event.get("item"))
+            or _extract_text_from_codex_event_object(event.get("message"))
+        ):
+            saw_assistant_text = True
+    return saw_codex_event and not saw_assistant_text
+
+
 def parse_llm_patch_response(text: str) -> LogicPortArtifact:
     """Parse a model response into a patch artifact.
 
@@ -426,6 +453,13 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
     diff_match = DIFF_BLOCK_RE.search(text)
     if diff_match:
         return LogicPortArtifact(summary="Patch extracted from fenced diff block.", patch=diff_match.group(1), raw_response=text)
+
+    if _looks_like_empty_codex_event_stream(text):
+        return LogicPortArtifact(
+            raw_response=text,
+            errors=["Codex returned JSONL startup events without an assistant proposal."],
+            failure_kind="codex_empty_event_stream",
+        )
 
     return LogicPortArtifact(raw_response=text, errors=["LLM response did not contain JSON or a fenced diff patch."])
 
@@ -875,7 +909,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 continue
             if artifact.files or artifact.patch.strip():
                 return artifact
-            artifact.failure_kind = "parse" if artifact.errors else "empty_proposal"
+            artifact.failure_kind = artifact.failure_kind or ("parse" if artifact.errors else "empty_proposal")
             previous_feedback = self._proposal_feedback(artifact)
             self._write_status(
                 "proposal_attempt_rejected",

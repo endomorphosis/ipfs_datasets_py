@@ -119,6 +119,20 @@ def test_parse_llm_patch_response_from_codex_event_stream():
     assert artifact.errors == []
 
 
+def test_parse_llm_patch_response_marks_empty_codex_event_stream():
+    response = "\n".join(
+        [
+            json.dumps({"type": "thread.started", "thread_id": "example"}),
+            json.dumps({"type": "turn.started"}),
+        ]
+    )
+
+    artifact = parse_llm_patch_response(response)
+
+    assert artifact.failure_kind == "codex_empty_event_stream"
+    assert artifact.errors == ["Codex returned JSONL startup events without an assistant proposal."]
+
+
 def test_extract_plan_tasks_reads_status_from_markdown():
     tasks = extract_plan_tasks(
         """
