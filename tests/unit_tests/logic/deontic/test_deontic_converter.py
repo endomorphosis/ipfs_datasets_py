@@ -70,6 +70,8 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["ir_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
+        assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 1
+        assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 1
         assert result.metadata["deterministic_parser"]["proof_ready"] is True
         assert result.metadata["deterministic_parser"]["blockers"] == []
 
@@ -84,6 +86,23 @@ class TestDeonticConverter:
         assert result.metadata["legal_formula_records"][0]["source_id"] == parser_element["source_id"]
         assert result.metadata["legal_formula_records"][0]["proof_ready"] is True
 
+        coverage_records = result.metadata["legal_prover_syntax_target_coverage_records"]
+        assert len(coverage_records) == 1
+        coverage_record = coverage_records[0]
+        assert coverage_record["source_id"] == parser_element["source_id"]
+        assert coverage_record["target_logic"] == "local_prover_syntax"
+        assert coverage_record["required_targets"] == [
+            "frame_logic",
+            "deontic_cec",
+            "fol",
+            "deontic_fol",
+            "deontic_temporal_fol",
+        ]
+        assert coverage_record["formal_syntax_valid"] is True
+        assert coverage_record["requires_validation"] is False
+        assert coverage_record["coverage_blockers"] == []
+        assert coverage_record["coverage_summary"]["all_required_passed"] is True
+
     def test_non_normative_conversion_exposes_empty_parser_metadata(self):
         """Unparsed text should not pretend to have a legal IR."""
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)
@@ -96,8 +115,12 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["ir_count"] == 0
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 0
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 0
+        assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 0
+        assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 0
         assert result.metadata["legal_norm_irs"] == []
         assert result.metadata["legal_formula_records"] == []
+        assert result.metadata["legal_prover_syntax_target_coverage_records"] == []
+        assert result.metadata["legal_formal_syntax_valid_count"] == 0
         assert "parser_element" not in result.metadata
         assert "legal_norm_ir" not in result.metadata
 

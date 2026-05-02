@@ -24,7 +24,10 @@ from ..types.deontic_types import DeonticFormula, DeonticOperator
 from ..types.common_types import ConfidenceScore
 from .ir import LegalNormIR
 from .formula_builder import build_deontic_formula_records_from_irs
-from .exports import parser_elements_with_ir_export_readiness
+from .exports import (
+    build_prover_syntax_target_coverage_records_from_irs,
+    parser_elements_with_ir_export_readiness,
+)
 
 # Import existing deontic utilities
 from .utils.deontic_parser import (
@@ -199,6 +202,17 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "legal_formula_record_proof_ready_count",
                 sum(1 for record in formula_records if record.get("proof_ready") is True),
             )
+            prover_coverage_records = build_prover_syntax_target_coverage_records_from_irs(
+                legal_norm_irs
+            )
+            result.metadata.setdefault(
+                "legal_prover_syntax_target_coverage_records",
+                prover_coverage_records,
+            )
+            result.metadata.setdefault(
+                "legal_formal_syntax_valid_count",
+                sum(1 for record in prover_coverage_records if record.get("formal_syntax_valid") is True),
+            )
             if legal_norm_irs:
                 legal_norm_ir = legal_norm_irs[0]
                 output.legal_norm_ir = legal_norm_ir  # type: ignore[attr-defined]
@@ -215,6 +229,8 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "ir_count": len(legal_norm_irs),
                 "formula_record_count": len(result.metadata.get("legal_formula_records", [])),
                 "formula_record_proof_ready_count": result.metadata.get("legal_formula_record_proof_ready_count", 0),
+                "prover_syntax_target_coverage_record_count": len(result.metadata.get("legal_prover_syntax_target_coverage_records", [])),
+                "formal_syntax_valid_count": result.metadata.get("legal_formal_syntax_valid_count", 0),
                 "proof_ready": bool(getattr(legal_norm_ir, "proof_ready", False)),
                 "blockers": list(getattr(legal_norm_ir, "blockers", [])),
             },
