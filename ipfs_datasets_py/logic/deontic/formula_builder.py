@@ -199,6 +199,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
+    action_text = _normalize_procurement_award_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
     action_text = _normalize_codification_consolidation_light_verb_action(action_text)
     action_text = _normalize_revocation_suspension_light_verb_action(action_text)
@@ -450,6 +451,53 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
             r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|issue|issues|issued|issuing|prepare|prepares|prepared|preparing|deliver|delivers|delivered|delivering)\s+"
             r"referrals\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
             "refer",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_procurement_award_light_verb_action(action_text: str) -> str:
+    """Collapse procurement and contract-award nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+            r"(?:a\s+|an\s+|the\s+)?procurement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "procure",
+        ),
+        (
+            r"^(?:make|makes|made|making|conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+            r"procurements\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "procure",
+        ),
+        (
+            r"^(?:issue|issues|issued|issuing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|make|makes|made|making|post|posts|posted|posting|release|releases|released|releasing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?solicitation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "solicit",
+        ),
+        (
+            r"^(?:issue|issues|issued|issuing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|make|makes|made|making|post|posts|posted|posting|release|releases|released|releasing)\s+"
+            r"solicitations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "solicit",
+        ),
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|approve|approves|approved|approving|grant|grants|granted|granting|record|records|recorded|recording)\s+"
+            r"(?:a\s+|an\s+|the\s+)?award\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "award",
+        ),
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|approve|approves|approved|approving|grant|grants|granted|granting|record|records|recorded|recording)\s+"
+            r"awards\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "award",
         ),
     ]
     for pattern, verb in patterns:
