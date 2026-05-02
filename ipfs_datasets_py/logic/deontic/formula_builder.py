@@ -158,6 +158,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
     action_text = _normalize_determination_light_verb_action(action_text)
+    action_text = _normalize_calculation_computation_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
@@ -330,6 +331,43 @@ def _normalize_determination_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"determine {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_calculation_computation_light_verb_action(action_text: str) -> str:
+    """Collapse calculation and computation nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|conduct|conducts|conducted|conducting|complete|completes|completed|completing|prepare|prepares|prepared|preparing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?calculation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "calculate",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|conduct|conducts|conducted|conducting|complete|completes|completed|completing|prepare|prepares|prepared|preparing)\s+"
+            r"calculations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "calculate",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|conduct|conducts|conducted|conducting|complete|completes|completed|completing|prepare|prepares|prepared|preparing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?computation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "compute",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|conduct|conducts|conducted|conducting|complete|completes|completed|completing|prepare|prepares|prepared|preparing)\s+"
+            r"computations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "compute",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
 
     return text
 
