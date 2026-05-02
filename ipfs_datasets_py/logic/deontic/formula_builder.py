@@ -193,6 +193,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_sealing_unsealing_light_verb_action(action_text)
     action_text = _normalize_expungement_destruction_light_verb_action(action_text)
     action_text = _normalize_enforcement_remedy_light_verb_action(action_text)
+    action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4077,6 +4078,42 @@ def _normalize_enforcement_remedy_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"{verb} {target}" if target else text
+
+    return text
+
+
+def _normalize_recordation_memorialization_light_verb_action(action_text: str) -> str:
+    """Project legal recordation and memorialization nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    recordation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"recordations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recordation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"record {target}" if target else text
+
+    memorialization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"memorializations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in memorialization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"memorialize {target}" if target else text
 
     return text
 
