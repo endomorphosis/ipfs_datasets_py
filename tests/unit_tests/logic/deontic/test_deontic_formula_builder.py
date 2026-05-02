@@ -7932,3 +7932,44 @@ def test_aggregation_tabulation_light_verb_duties_export_operative_predicates():
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_segregation_sequestration_light_verb_duties_export_operative_predicates():
+    examples = [
+        (
+            "The custodian shall perform segregation of the funds.",
+            "perform segregation of the funds",
+            "O(∀x (Custodian(x) → SegregateFunds(x)))",
+            "PerformSegregationFunds",
+        ),
+        (
+            "The receiver shall complete sequestration of the property.",
+            "complete sequestration of the property",
+            "O(∀x (Receiver(x) → SequesterProperty(x)))",
+            "CompleteSequestrationProperty",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        action_span = element["field_spans"]["action"]
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]

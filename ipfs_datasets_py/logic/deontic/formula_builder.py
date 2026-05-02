@@ -202,6 +202,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_codification_recodification_light_verb_action(action_text)
     action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
     action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
+    action_text = _normalize_segregation_sequestration_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4414,6 +4415,42 @@ def _normalize_aggregation_tabulation_light_verb_action(action_text: str) -> str
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"tabulate {target}" if target else text
+
+    return text
+
+
+def _normalize_segregation_sequestration_light_verb_action(action_text: str) -> str:
+    """Project segregation and sequestration nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    segregation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|maintain|maintains|maintained|maintaining|order|orders|ordered|ordering)\s+"
+        r"(?:a\s+|the\s+)?segregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|maintain|maintains|maintained|maintaining|order|orders|ordered|ordering)\s+"
+        r"segregations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^segregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in segregation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"segregate {target}" if target else text
+
+    sequestration_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|maintain|maintains|maintained|maintaining|order|orders|ordered|ordering)\s+"
+        r"(?:a\s+|the\s+)?sequestration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|maintain|maintains|maintained|maintaining|order|orders|ordered|ordering)\s+"
+        r"sequestrations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^sequestration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in sequestration_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"sequester {target}" if target else text
 
     return text
 
