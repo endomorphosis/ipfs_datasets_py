@@ -177,6 +177,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
     action_text = _normalize_segregation_separation_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
+    action_text = _normalize_authentication_attestation_light_verb_action(action_text)
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
@@ -5569,6 +5570,42 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
+
+    return text
+
+
+def _normalize_authentication_attestation_light_verb_action(action_text: str) -> str:
+    """Project authentication and attestation nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    authentication_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?authentication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"authentications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^authentication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in authentication_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"authenticate {target}" if target else text
+
+    attestation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?attestation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"attestations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^attestation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in attestation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"attest {target}" if target else text
 
     return text
 
