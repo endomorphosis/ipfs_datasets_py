@@ -185,6 +185,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_recommendation_referral_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_deletion_erasure_light_verb_action(action_text)
+    action_text = _normalize_preservation_restoration_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3784,6 +3785,36 @@ def _normalize_deletion_erasure_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"erase {target}" if target else text
+
+    return text
+
+
+def _normalize_preservation_restoration_light_verb_action(action_text: str) -> str:
+    """Project preservation/restoration nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    preservation_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?preservation\s+of\s+(.+)$",
+        r"^preservation\s+of\s+(.+)$",
+    ]
+    for pattern in preservation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"preserve {target}" if target else text
+
+    restoration_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?restoration\s+of\s+(.+)$",
+        r"^restoration\s+of\s+(.+)$",
+    ]
+    for pattern in restoration_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"restore {target}" if target else text
 
     return text
 
