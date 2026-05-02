@@ -166,6 +166,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_remittance_light_verb_action(action_text)
     action_text = _normalize_renewal_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
+    action_text = _normalize_instrument_status_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -720,6 +721,53 @@ def _normalize_registration_enrollment_light_verb_action(action_text: str) -> st
             r"^(?:make|makes|made|making|complete|completes|completed|completing|submit|submits|submitted|submitting|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
             r"enrollments\s+of\s+(?:the\s+)?(.+)$",
             "enroll",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_instrument_status_light_verb_action(action_text: str) -> str:
+    """Collapse instrument-status nominalizations into operative status acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?revocation\s+of\s+(?:the\s+)?(.+)$",
+            "revoke",
+        ),
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"revocations\s+of\s+(?:the\s+)?(.+)$",
+            "revoke",
+        ),
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?suspension\s+of\s+(?:the\s+)?(.+)$",
+            "suspend",
+        ),
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"suspensions\s+of\s+(?:the\s+)?(.+)$",
+            "suspend",
+        ),
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?cancellation\s+of\s+(?:the\s+)?(.+)$",
+            "cancel",
+        ),
+        (
+            r"^(?:make|makes|made|making|order|orders|ordered|ordering|issue|issues|issued|issuing|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"cancellations\s+of\s+(?:the\s+)?(.+)$",
+            "cancel",
         ),
     ]
     for pattern, verb in patterns:
