@@ -89,7 +89,7 @@ class LegalParserDaemonConfig:
     llm_timeout_seconds: int = 900
     llm_proposal_attempts: int = 3
     heartbeat_interval_seconds: float = 15.0
-    test_timeout_seconds: int = 180
+    test_timeout_seconds: int = 600
     require_production_and_tests: bool = True
     docs: Tuple[str, ...] = (
         "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md",
@@ -692,11 +692,44 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def run_tests(self) -> Dict[str, Any]:
         if not self.daemon_config.run_tests:
             return {"valid": True, "skipped": True, "command": list(self.daemon_config.test_command)}
-        return _run_command(
+        timeout = self.effective_test_timeout_seconds()
+        result = _run_command(
             list(self.daemon_config.test_command),
             cwd=self.daemon_config.repo_root,
-            timeout=self.daemon_config.test_timeout_seconds,
+            timeout=timeout,
         )
+        result["timeout_seconds"] = timeout
+        return result
+
+    def effective_test_timeout_seconds(self) -> int:
+        """Scale full-suite validation timeout as the daemon adds tests."""
+
+        configured_timeout = max(1, int(self.daemon_config.test_timeout_seconds))
+        recent_durations = self._recent_test_durations(limit=8)
+        if not recent_durations:
+            return configured_timeout
+        observed_timeout = int(max(recent_durations) * 2) + 60
+        return min(3600, max(configured_timeout, observed_timeout))
+
+    def _recent_test_durations(self, *, limit: int) -> List[float]:
+        cycles_dir = self.daemon_config.resolved_output_dir() / "cycles"
+        if not cycles_dir.exists():
+            return []
+        durations: List[float] = []
+        for summary_path in sorted(cycles_dir.glob("cycle_*/cycle_summary.json"), reverse=True):
+            if len(durations) >= limit:
+                break
+            try:
+                payload = json.loads(summary_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            tests = payload.get("tests")
+            if not isinstance(tests, dict) or tests.get("skipped"):
+                continue
+            duration = _as_float(tests.get("duration_seconds"))
+            if duration and duration > 0:
+                durations.append(duration)
+        return durations
 
 
 class LegalParserOptimizerDaemon:
@@ -2855,7 +2888,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--llm-timeout-seconds", type=int, default=900)
     parser.add_argument("--llm-proposal-attempts", type=int, default=3)
     parser.add_argument("--heartbeat-interval-seconds", type=float, default=15.0)
-    parser.add_argument("--test-timeout-seconds", type=int, default=180)
+    parser.add_argument("--test-timeout-seconds", type=int, default=600)
     parser.add_argument(
         "--allow-patches-without-tests",
         action="store_true",
