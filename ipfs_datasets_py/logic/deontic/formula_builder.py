@@ -180,6 +180,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_annulment_vacatur_light_verb_action(action_text)
     action_text = _normalize_recodification_renumbering_light_verb_action(action_text)
     action_text = _normalize_conversion_transmittal_light_verb_action(action_text)
+    action_text = _normalize_acknowledgment_attestation_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4896,6 +4897,42 @@ def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"transmit {target}" if target else text
+
+    return text
+
+
+def _normalize_acknowledgment_attestation_light_verb_action(action_text: str) -> str:
+    """Project acknowledgment and attestation administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    acknowledgment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|submit|submits|submitted|submitting|file|files|filed|filing)\s+"
+        r"(?:an?\s+|the\s+)?acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|submit|submits|submitted|submitting|file|files|filed|filing)\s+"
+        r"acknowledg(?:e)?ments\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in acknowledgment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"acknowledge {target}" if target else text
+
+    attestation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|submit|submits|submitted|submitting|file|files|filed|filing)\s+"
+        r"(?:an?\s+|the\s+)?attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|submit|submits|submitted|submitting|file|files|filed|filing)\s+"
+        r"attestations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in attestation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"attest {target}" if target else text
 
     return text
 
