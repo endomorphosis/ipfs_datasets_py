@@ -19,6 +19,7 @@ WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
 WATCHDOG_STARTUP_GRACE_SECONDS="${WATCHDOG_STARTUP_GRACE_SECONDS:-120}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
 SUPERVISOR_STOP_COMPETING_DAEMONS="${SUPERVISOR_STOP_COMPETING_DAEMONS:-1}"
+SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE="${SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE:-1}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
@@ -90,6 +91,7 @@ write_supervisor_status() {
   "watchdog_startup_grace_seconds": $WATCHDOG_STARTUP_GRACE_SECONDS,
   "stop_grace_seconds": $STOP_GRACE_SECONDS,
   "stop_competing_daemons": $(json_bool "$SUPERVISOR_STOP_COMPETING_DAEMONS"),
+  "disable_competing_systemd_service": $(json_bool "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE"),
   "run_id": "$run_id",
   "log_path": "$log_path",
   "current_status_path": "$CURRENT_STATUS_PATH",
@@ -746,7 +748,16 @@ terminate_competing_daemons() {
   if command -v systemctl >/dev/null 2>&1; then
     if systemctl --user is-active --quiet logic-port-daemon.service 2>/dev/null; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing user service logic-port-daemon.service" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
-      systemctl --user stop logic-port-daemon.service 2>/dev/null || true
+      if [[ "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" == "1" ]]; then
+        systemctl --user disable --now logic-port-daemon.service 2>/dev/null || true
+      else
+        systemctl --user stop logic-port-daemon.service 2>/dev/null || true
+      fi
+      systemctl --user kill --signal=TERM logic-port-daemon.service 2>/dev/null || true
+      systemctl --user reset-failed logic-port-daemon.service 2>/dev/null || true
+    elif [[ "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" == "1" ]] && systemctl --user is-enabled --quiet logic-port-daemon.service 2>/dev/null; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) disabling competing user service logic-port-daemon.service" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+      systemctl --user disable logic-port-daemon.service 2>/dev/null || true
     fi
   fi
   while read -r pid args; do

@@ -109,7 +109,9 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "tmux kill-session" in function_body
     assert "logic-port-daemon" in function_body
     assert "logic-port-daemon.service" in function_body
-    assert "systemctl --user stop" in function_body
+    assert "systemctl --user disable --now" in function_body
+    assert "systemctl --user kill --signal=TERM" in function_body
+    assert "SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" in function_body
     assert "ppd/daemon/ppd_daemon.py" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
     assert script.index("terminate_matching_legal_parser_daemons") < script.index(
