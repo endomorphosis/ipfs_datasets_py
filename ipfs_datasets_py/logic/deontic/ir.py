@@ -1140,3 +1140,139 @@ def parser_element_to_ir(element: Dict[str, Any]) -> LegalNormIR:
     """Compatibility helper for callers that prefer a function API."""
 
     return LegalNormIR.from_parser_element(element)
+
+
+DEFAULT_IR_PROVENANCE_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+    "mental_state",
+    "recipient",
+    "conditions",
+    "exceptions",
+    "temporal_constraints",
+    "cross_references",
+)
+
+_FIELD_SPAN_ALIASES = {
+    "actor": ("actor", "subject"),
+    "modality": ("modality", "deontic_operator", "modal"),
+    "action": ("action",),
+    "mental_state": ("mental_state", "mens_rea"),
+    "recipient": ("recipient", "action_recipient", "beneficiary"),
+    "conditions": ("conditions", "condition"),
+    "exceptions": ("exceptions", "exception"),
+    "temporal_constraints": ("temporal_constraints", "temporal_constraint"),
+    "cross_references": ("cross_references", "cross_reference"),
+}
+
+
+def legal_norm_ir_slot_provenance(
+    norm: LegalNormIR,
+    slots: Sequence[str] = DEFAULT_IR_PROVENANCE_SLOTS,
+) -> Dict[str, Any]:
+    """Return deterministic source-grounding records for legally salient IR slots.
+
+    The decoder/reconstruction quality loop needs to audit whether decoded legal
+    phrases came from source-grounded IR slots. This helper reports each checked
+    slot as grounded, missing, or ungrounded without changing proof-readiness or
+    parser repair gates.
+    """
+
+    records: List[Dict[str, Any]] = []
+    for slot in dict.fromkeys(str(slot) for slot in slots if slot):
+        value = getattr(norm, slot, None)
+        present = not _ir_slot_value_is_empty(value)
+        spans = _ir_slot_spans(norm, slot, value)
+        status = "grounded" if spans else "ungrounded" if present else "missing"
+        records.append(
+            {
+                "slot": slot,
+                "status": status,
+                "present": present,
+                "grounded": status == "grounded",
+                "missing": status == "missing",
+                "ungrounded": status == "ungrounded",
+                "spans": spans,
+                "value": _ir_slot_export_value(value),
+            }
+        )
+
+    return {
+        "source_id": norm.source_id,
+        "support_span": norm.support_span.to_list(),
+        "checked_slots": [record["slot"] for record in records],
+        "grounded_slots": [record["slot"] for record in records if record["grounded"]],
+        "missing_slots": [record["slot"] for record in records if record["missing"]],
+        "ungrounded_slots": [record["slot"] for record in records if record["ungrounded"]],
+        "slot_grounding": records,
+    }
+
+
+def _ir_slot_value_is_empty(value: Any) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, (list, tuple, dict, set)):
+        return len(value) == 0
+    return False
+
+
+def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
+    spans: List[List[int]] = []
+    for field_name in _FIELD_SPAN_ALIASES.get(slot, (slot,)):
+        spans.extend(_normalized_span_records(norm.field_spans.get(field_name)))
+    spans.extend(_nested_slot_spans(value))
+    return _dedupe_spans(spans)
+
+
+def _nested_slot_spans(value: Any) -> List[List[int]]:
+    spans: List[List[int]] = []
+    if isinstance(value, dict):
+        for key in ("span", "source_span", "support_span", "clause_span"):
+            spans.extend(_normalized_span_records(value.get(key)))
+        for nested in value.values():
+            if isinstance(nested, (dict, list, tuple)):
+                spans.extend(_nested_slot_spans(nested))
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            spans.extend(_nested_slot_spans(item))
+    return spans
+
+
+def _normalized_span_records(value: Any) -> List[List[int]]:
+    if isinstance(value, (list, tuple)) and len(value) == 2 and all(
+        isinstance(item, int) for item in value
+    ):
+        return [[int(value[0]), int(value[1])]]
+    if isinstance(value, (list, tuple)):
+        spans: List[List[int]] = []
+        for item in value:
+            spans.extend(_normalized_span_records(item))
+        return spans
+    return []
+
+
+def _dedupe_spans(spans: List[List[int]]) -> List[List[int]]:
+    seen = set()
+    deduped: List[List[int]] = []
+    for span in spans:
+        key = tuple(span)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(span)
+    return deduped
+
+
+def _ir_slot_export_value(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, list):
+        return [_ir_slot_export_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_ir_slot_export_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _ir_slot_export_value(item) for key, item in value.items()}
+    return str(value)
