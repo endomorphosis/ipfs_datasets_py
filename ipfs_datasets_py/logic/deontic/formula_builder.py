@@ -162,6 +162,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
+    action_text = _normalize_designation_appointment_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
@@ -476,6 +477,43 @@ def _normalize_adoption_promulgation_light_verb_action(action_text: str) -> str:
             r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|issue|issues|issued|issuing|publish|publishes|published|publishing)\s+"
             r"promulgations\s+of\s+(?:the\s+)?(.+)$",
             "promulgate",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_designation_appointment_light_verb_action(action_text: str) -> str:
+    """Collapse designation and appointment nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|issue|issues|issued|issuing)\s+"
+            r"(?:a\s+|the\s+)?designation\s+of\s+(?:the\s+)?(.+)$",
+            "designate",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|issue|issues|issued|issuing)\s+"
+            r"designations\s+of\s+(?:the\s+)?(.+)$",
+            "designate",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|order|orders|ordered|ordering)\s+"
+            r"(?:an?\s+|the\s+)?appointment\s+of\s+(?:the\s+)?(.+)$",
+            "appoint",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|order|orders|ordered|ordering)\s+"
+            r"appointments\s+of\s+(?:the\s+)?(.+)$",
+            "appoint",
         ),
     ]
     for pattern, verb in patterns:
