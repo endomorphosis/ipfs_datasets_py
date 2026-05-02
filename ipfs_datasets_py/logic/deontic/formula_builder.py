@@ -151,6 +151,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
+    action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -212,6 +213,38 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _normalize_submission_light_verb_action(action_text: str) -> str:
+    """Collapse submission and filing nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|provide|furnish|deliver|submit)\s+(?:a|an|the)\s+submission\s+of\s+(?:the\s+)?(.+)$",
+            "submit",
+        ),
+        (
+            r"^(?:make|provide|furnish|deliver|submit)\s+submission\s+of\s+(?:the\s+)?(.+)$",
+            "submit",
+        ),
+        (
+            r"^(?:make|provide|furnish|deliver|file)\s+(?:a|an|the)\s+filing\s+of\s+(?:the\s+)?(.+)$",
+            "file",
+        ),
+        (
+            r"^(?:make|provide|furnish|deliver|file)\s+filing\s+of\s+(?:the\s+)?(.+)$",
+            "file",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+    return text
 
 
 def _normalize_inspection_light_verb_action(action_text: str) -> str:
