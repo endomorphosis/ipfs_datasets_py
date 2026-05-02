@@ -197,6 +197,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
     action_text = _normalize_attestation_notarization_light_verb_action(action_text)
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
+    action_text = _normalize_summarization_indexing_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4225,6 +4226,46 @@ def _normalize_acknowledgment_authentication_light_verb_action(action_text: str)
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"authenticate {target}" if target else text
+
+    return text
+
+
+def _normalize_summarization_indexing_light_verb_action(action_text: str) -> str:
+    """Project summarization and indexing nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    summarization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"(?:a\s+|the\s+)?summary\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"summaries\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"(?:a\s+|the\s+)?summarization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^summar(?:y|ization)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in summarization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"summarize {target}" if target else text
+
+    indexing_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|create|creates|created|creating|maintain|maintains|maintained|maintaining|file|files|filed|filing)\s+"
+        r"(?:an?\s+|the\s+)?index\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|create|creates|created|creating|maintain|maintains|maintained|maintaining|file|files|filed|filing)\s+"
+        r"indexes\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|create|creates|created|creating|maintain|maintains|maintained|maintaining|file|files|filed|filing)\s+"
+        r"(?:an?\s+|the\s+)?indexing\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^index(?:es|ing)?\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in indexing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"index {target}" if target else text
 
     return text
 
