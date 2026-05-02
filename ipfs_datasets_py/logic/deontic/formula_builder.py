@@ -151,6 +151,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
+    action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -4933,6 +4934,42 @@ def _normalize_acknowledgment_attestation_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"attest {target}" if target else text
+
+    return text
+
+
+def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
+    """Project assessment and imposition administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    assessment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|conduct|conducts|conducted|conducting|levy|levies|levied|levying)\s+"
+        r"(?:an?\s+|the\s+)?assessment\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|conduct|conducts|conducted|conducting|levy|levies|levied|levying)\s+"
+        r"assessments\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^assessment\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in assessment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"assess {target}" if target else text
+
+    imposition_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing)\s+"
+        r"(?:an?\s+|the\s+)?imposition\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing)\s+"
+        r"impositions\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^imposition\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in imposition_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"impose {target}" if target else text
 
     return text
 
