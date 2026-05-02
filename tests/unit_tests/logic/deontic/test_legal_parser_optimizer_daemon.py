@@ -2437,10 +2437,14 @@ def test_current_status_exposes_dirty_legal_parser_targets(tmp_path):
     assert status["dirty_legal_parser_targets_error"] == {}
     assert status["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
     assert status["dirty_legal_parser_targets_checked_at"]
+    assert status["dirty_legal_parser_targets_fingerprint"]
     assert progress["dirty_legal_parser_targets_valid"] is True
     assert progress["dirty_legal_parser_targets_error"] == {}
     assert progress["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
     assert progress["dirty_legal_parser_targets_checked_at"]
+    assert progress["dirty_legal_parser_targets_fingerprint"] == status[
+        "dirty_legal_parser_targets_fingerprint"
+    ]
 
 
 def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeypatch):
@@ -2483,8 +2487,36 @@ def test_current_status_exposes_dirty_target_detection_failure(tmp_path, monkeyp
     assert "not a git repository" in status["dirty_legal_parser_targets_error"]["stderr_tail"]
     assert status["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
     assert status["dirty_legal_parser_targets_checked_at"]
+    assert status["dirty_legal_parser_targets_fingerprint"] == ""
     assert progress["dirty_legal_parser_targets_valid"] is False
     assert progress["dirty_legal_parser_targets_source"] == "fresh_git_status_porcelain"
+    assert progress["dirty_legal_parser_targets_fingerprint"] == ""
+
+
+def test_dirty_legal_parser_target_fingerprint_changes_with_untracked_content(tmp_path):
+    repo = tmp_path
+    __import__("subprocess").run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    __import__("subprocess").run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    tracked = repo / "README.md"
+    tracked.write_text("tracked\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "."], cwd=repo, check=True)
+    __import__("subprocess").run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True)
+    target = repo / "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("first\n", encoding="utf-8")
+    config = LegalParserDaemonConfig(repo_root=repo, output_dir=repo / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+
+    first = daemon._dirty_legal_parser_target_status()
+    target.write_text("second\n", encoding="utf-8")
+    second = daemon._dirty_legal_parser_target_status()
+
+    assert first["paths"] == ["ipfs_datasets_py/logic/deontic/formula_builder.py"]
+    assert second["paths"] == first["paths"]
+    assert first["fingerprint"]
+    assert second["fingerprint"]
+    assert second["fingerprint"] != first["fingerprint"]
 
 
 def test_progress_report_lists_dirty_legal_parser_recovery_targets(tmp_path):

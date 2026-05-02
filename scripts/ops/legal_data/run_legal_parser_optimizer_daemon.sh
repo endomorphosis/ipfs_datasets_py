@@ -205,6 +205,7 @@ LEGAL_PARSER_TARGETS = [
 ]
 
 dirty_status_errors: list[dict] = []
+dirty_target_fingerprint = ""
 
 
 def paths_from_git_status_porcelain(stdout: str) -> list[str]:
@@ -219,6 +220,7 @@ def paths_from_git_status_porcelain(stdout: str) -> list[str]:
 
 
 def dirty_legal_parser_targets() -> list[str]:
+    global dirty_target_fingerprint
     if not dirty_target_detection:
         return []
     try:
@@ -240,7 +242,39 @@ def dirty_legal_parser_targets() -> list[str]:
             }
         )
         return []
-    return paths_from_git_status_porcelain(result.stdout)
+    paths = paths_from_git_status_porcelain(result.stdout)
+    dirty_target_fingerprint = legal_parser_target_fingerprint(result.stdout, paths)
+    return paths
+
+
+def legal_parser_target_fingerprint(status_stdout: str, paths: list[str]) -> str:
+    if not paths:
+        return ""
+    import hashlib
+
+    digest = hashlib.sha256()
+    digest.update(status_stdout.encode("utf-8", errors="replace"))
+    try:
+        diff = subprocess.run(
+            ["git", "diff", "--binary", "--", *paths],
+            cwd=repo_root,
+            text=False,
+            capture_output=True,
+            timeout=60,
+        )
+        digest.update(diff.stdout or b"")
+    except Exception as exc:
+        digest.update(f"__diff_error__:{exc}".encode("utf-8", errors="replace"))
+    for path_text in sorted(paths):
+        digest.update(path_text.encode("utf-8", errors="replace"))
+        path = repo_root / path_text
+        try:
+            digest.update(path.read_bytes())
+        except FileNotFoundError:
+            digest.update(b"__missing__")
+        except OSError as exc:
+            digest.update(f"__read_error__:{exc}".encode("utf-8", errors="replace"))
+    return digest.hexdigest()
 
 
 def git_dirty_files(paths: list[str]) -> list[str]:
@@ -332,9 +366,11 @@ previous_dirty_targets = [
     str(path)
     for path in previous_dirty_payload
 ] if isinstance(previous_dirty_payload, list) else []
+previous_dirty_fingerprint = str(state.get("dirty_legal_parser_targets_fingerprint") or "")
 dirty_targets_confirmed = bool(
     dirty_targets
     and sorted(previous_dirty_targets) == sorted(dirty_targets)
+    and previous_dirty_fingerprint == dirty_target_fingerprint
 )
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
@@ -458,7 +494,9 @@ state.update(
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "dirty_legal_parser_targets": dirty_targets,
+        "dirty_legal_parser_targets_fingerprint": dirty_target_fingerprint,
         "previous_dirty_legal_parser_targets": previous_dirty_targets,
+        "previous_dirty_legal_parser_targets_fingerprint": previous_dirty_fingerprint,
         "dirty_legal_parser_targets_confirmed": dirty_targets_confirmed,
         "dirty_target_detection_valid": not dirty_status_errors,
         "dirty_target_detection_errors": dirty_status_errors,

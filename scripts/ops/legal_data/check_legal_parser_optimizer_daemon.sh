@@ -89,14 +89,20 @@ payload = {
     "current_dirty_legal_parser_targets": current.get("dirty_legal_parser_targets"),
     "current_dirty_legal_parser_targets_valid": current.get("dirty_legal_parser_targets_valid"),
     "current_dirty_legal_parser_targets_error": current.get("dirty_legal_parser_targets_error"),
+    "current_dirty_legal_parser_targets_fingerprint": current.get("dirty_legal_parser_targets_fingerprint"),
     "progress_dirty_legal_parser_targets": progress.get("dirty_legal_parser_targets"),
     "progress_dirty_legal_parser_targets_valid": progress.get("dirty_legal_parser_targets_valid"),
     "progress_dirty_legal_parser_targets_error": progress.get("dirty_legal_parser_targets_error"),
+    "progress_dirty_legal_parser_targets_fingerprint": progress.get("dirty_legal_parser_targets_fingerprint"),
     "active_dirty_touched_files": progress.get("active_dirty_touched_files"),
     "dirty_touched_file_rejection_count": progress.get("dirty_touched_file_rejection_count"),
     "supervisor_dirty_legal_parser_targets": supervisor_state.get("dirty_legal_parser_targets"),
+    "supervisor_dirty_legal_parser_targets_fingerprint": supervisor_state.get("dirty_legal_parser_targets_fingerprint"),
     "supervisor_previous_dirty_legal_parser_targets": supervisor_state.get(
         "previous_dirty_legal_parser_targets"
+    ),
+    "supervisor_previous_dirty_legal_parser_targets_fingerprint": supervisor_state.get(
+        "previous_dirty_legal_parser_targets_fingerprint"
     ),
     "supervisor_dirty_legal_parser_targets_confirmed": supervisor_state.get(
         "dirty_legal_parser_targets_confirmed"

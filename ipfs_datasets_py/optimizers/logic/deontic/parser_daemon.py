@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import traceback
 import os
@@ -1392,6 +1393,7 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets_error": dirty_target_status["error"],
             "dirty_legal_parser_targets_source": dirty_target_status["source"],
             "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
+            "dirty_legal_parser_targets_fingerprint": dirty_target_status["fingerprint"],
             **{key: _json_safe(value) for key, value in details.items()},
         }
         with self._status_lock:
@@ -2270,6 +2272,7 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets_error": dirty_target_status["error"],
             "dirty_legal_parser_targets_source": dirty_target_status["source"],
             "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
+            "dirty_legal_parser_targets_fingerprint": dirty_target_status["fingerprint"],
             "run": {
                 "run_id": self.run_id,
                 "started_at": self.run_started_at,
@@ -2572,18 +2575,46 @@ class LegalParserOptimizerDaemon:
                 "paths": [],
                 "source": "fresh_git_status_porcelain",
                 "checked_at": checked_at,
+                "fingerprint": "",
                 "error": {
                     "returncode": result.get("returncode"),
                     "stderr_tail": stderr[-1000:],
                 },
             }
+        stdout = str(result.get("stdout") or "")
+        paths = _paths_from_git_status_porcelain(stdout)
         return {
             "valid": True,
-            "paths": _paths_from_git_status_porcelain(str(result.get("stdout") or "")),
+            "paths": paths,
             "source": "fresh_git_status_porcelain",
             "checked_at": checked_at,
+            "fingerprint": self._dirty_target_fingerprint(status_stdout=stdout, paths=paths),
             "error": {},
         }
+
+    def _dirty_target_fingerprint(self, *, status_stdout: str, paths: Sequence[str]) -> str:
+        """Return a content-sensitive fingerprint for stranded parser target diffs."""
+
+        if not paths:
+            return ""
+        digest = hashlib.sha256()
+        digest.update(status_stdout.encode("utf-8", errors="replace"))
+        diff_result = _run_command(
+            ["git", "diff", "--binary", "--", *paths],
+            cwd=self.config.repo_root,
+            timeout=60,
+        )
+        digest.update(str(diff_result.get("stdout") or "").encode("utf-8", errors="replace"))
+        for rel_path in sorted(paths):
+            path = self.config.repo_root / rel_path
+            digest.update(rel_path.encode("utf-8", errors="replace"))
+            try:
+                digest.update(path.read_bytes())
+            except FileNotFoundError:
+                digest.update(b"__missing__")
+            except OSError as exc:
+                digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
+        return digest.hexdigest()
 
     def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:
         """Run fast structural checks before expensive tests or retention."""
