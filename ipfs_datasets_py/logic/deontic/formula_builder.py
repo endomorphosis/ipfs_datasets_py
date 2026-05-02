@@ -190,6 +190,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
     action_text = _normalize_encryption_decryption_light_verb_action(action_text)
+    action_text = _normalize_sealing_unsealing_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3961,6 +3962,36 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"detokenize {target}" if target else text
+
+    return text
+
+
+def _normalize_sealing_unsealing_light_verb_action(action_text: str) -> str:
+    """Project sealing and unsealing nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    sealing_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out|order)\s+(?:a\s+|the\s+)?sealing\s+of\s+(.+)$",
+        r"^sealing\s+of\s+(.+)$",
+    ]
+    for pattern in sealing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"seal {target}" if target else text
+
+    unsealing_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out|order)\s+(?:an?\s+|the\s+)?unsealing\s+of\s+(.+)$",
+        r"^unsealing\s+of\s+(.+)$",
+    ]
+    for pattern in unsealing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"unseal {target}" if target else text
 
     return text
 
