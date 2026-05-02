@@ -172,6 +172,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
+    action_text = _normalize_codification_consolidation_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4600,6 +4601,42 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
+
+    return text
+
+
+def _normalize_codification_consolidation_light_verb_action(action_text: str) -> str:
+    """Project codification and consolidation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    codification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|publish|publishes|published|publishing|prepare|prepares|prepared|preparing)\s+"
+        r"(?:a\s+|the\s+)?codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|publish|publishes|published|publishing|prepare|prepares|prepared|preparing)\s+"
+        r"codifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in codification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"codify {target}" if target else text
+
+    consolidation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|prepare|prepares|prepared|preparing)\s+"
+        r"(?:a\s+|the\s+)?consolidation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|prepare|prepares|prepared|preparing)\s+"
+        r"consolidations\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+        r"^consolidation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in consolidation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"consolidate {target}" if target else text
 
     return text
 
