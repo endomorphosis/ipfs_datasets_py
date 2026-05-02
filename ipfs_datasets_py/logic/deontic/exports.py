@@ -32,6 +32,7 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "repair_queue": {"primary_key": "repair_id", "requires_source_id": True},
     "decoder_reconstructions": {"primary_key": "reconstruction_id", "requires_source_id": True},
     "prover_syntax_summaries": {"primary_key": "prover_syntax_summary_id", "requires_source_id": True},
+    "reconstruction_slot_loss": {"primary_key": "reconstruction_slot_loss_id", "requires_source_id": True},
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -3175,6 +3176,43 @@ def summarize_reconstruction_slot_loss(
         if grounded_count + ungrounded_count
         else 0.0,
         "coverage_blockers": blockers,
+    }
+
+
+def build_reconstruction_slot_loss_record(
+    source_id: str,
+    records: Sequence[Mapping[str, Any]],
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+) -> Dict[str, Any]:
+    """Build a stable export row for decoder slot-loss diagnostics.
+
+    The summary helper is useful inside tests and reports, but Phase 8 export
+    consumers also need a primary-keyed row that can be persisted alongside
+    decoder reconstruction records. This row keeps missing and ungrounded legal
+    slots explicit without changing parser repair or proof-readiness gates.
+    """
+
+    summary = summarize_reconstruction_slot_loss(records, required_slots)
+    normalized_source_id = str(source_id or "").strip()
+    if not normalized_source_id and len(summary["source_ids"]) == 1:
+        normalized_source_id = summary["source_ids"][0]
+
+    return {
+        "reconstruction_slot_loss_id": _stable_id(
+            "reconstruction-slot-loss",
+            normalized_source_id,
+            "|".join(summary["required_slots"]),
+        ),
+        "source_id": normalized_source_id,
+        "target_logic": "decoder_reconstruction",
+        "record_count": summary["record_count"],
+        "required_slots": summary["required_slots"],
+        "grounded_required_slot_rate": summary["grounded_required_slot_rate"],
+        "ungrounded_decoded_slot_rate": summary["ungrounded_decoded_slot_rate"],
+        "slot_reconstruction_complete": summary["slot_reconstruction_complete"],
+        "requires_validation": not summary["slot_reconstruction_complete"],
+        "coverage_blockers": summary["coverage_blockers"],
+        "coverage_summary": summary,
     }
 
 

@@ -7,6 +7,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
+    build_reconstruction_slot_loss_record,
     build_prover_syntax_summary_record_from_ir,
     build_proof_obligation_record_from_ir,
     build_procedure_event_records_from_ir,
@@ -172,6 +173,53 @@ def test_reconstruction_slot_loss_summary_reports_missing_and_ungrounded_slots()
     assert summary["coverage_blockers"] == [
         "missing_reconstruction_slot:exceptions",
         "ungrounded_decoded_slot:penalty",
+    ]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_reconstruction_slot_loss_record_is_stable_and_validation_ready():
+    records = [
+        {
+            "source_id": "deontic:lossy",
+            "grounded_slots": ["actor", "modality", "action"],
+            "slot_grounding": [
+                {"slot": "conditions", "status": "missing"},
+                {"slot": "exceptions", "status": "missing"},
+                {"slot": "temporal_constraints", "grounded": True},
+                {"slot": "cross_references", "grounded": True},
+            ],
+            "decoded_phrase_provenance": [
+                {"slot": "penalty", "text": "civil fine"},
+            ],
+        }
+    ]
+
+    record = build_reconstruction_slot_loss_record("deontic:lossy", records)
+    repeated = build_reconstruction_slot_loss_record("deontic:lossy", records)
+
+    assert record == repeated
+    assert record["reconstruction_slot_loss_id"].startswith("reconstruction-slot-loss:")
+    assert record["source_id"] == "deontic:lossy"
+    assert record["target_logic"] == "decoder_reconstruction"
+    assert record["record_count"] == 1
+    assert record["slot_reconstruction_complete"] is False
+    assert record["requires_validation"] is True
+    assert record["grounded_required_slot_rate"] == 0.714286
+    assert record["ungrounded_decoded_slot_rate"] == 0.166667
+    assert record["coverage_blockers"] == [
+        "missing_reconstruction_slot:conditions",
+        "missing_reconstruction_slot:exceptions",
+        "ungrounded_decoded_slot:penalty",
+    ]
+    assert record["coverage_summary"]["missing_required_slots"] == [
+        "conditions",
+        "exceptions",
     ]
 
     blocked = extract_normative_elements(
