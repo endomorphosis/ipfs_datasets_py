@@ -138,6 +138,8 @@ _MODAL_RE = re.compile(
         has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
         has\s+(?:a\s+|the\s+)?responsibility\s+to|
         have\s+(?:a\s+|the\s+)?responsibility\s+to|
+        owes\s+(?:a\s+|the\s+)?duty\s+to|
+        owe\s+(?:a\s+|the\s+)?duty\s+to|
         is\s+charged\s+with\s+the\s+duty\s+to|are\s+charged\s+with\s+the\s+duty\s+to|
         is\s+responsible\s+for|are\s+responsible\s+for|
         is\s+accountable\s+for|are\s+accountable\s+for|
@@ -4589,7 +4591,7 @@ def _normalize_express_duty_obligation(element: Dict[str, Any]) -> None:
 
     modal = str(element.get("modal") or "").strip().lower()
     if not re.search(
-        r"\b(?:is|are)\s+(?:(?:obligated|under\s+a\s+duty|liable|bound)\s+to|(?:responsible|accountable)\s+for|tasked\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b",
+        r"\b(?:is|are)\s+(?:(?:obligated|under\s+a\s+duty|liable|bound)\s+to|(?:responsible|accountable)\s+for|tasked\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b|\b(?:owes|owe)\s+(?:a\s+|the\s+)?duty\s+to\b",
         modal,
         re.IGNORECASE,
     ):
