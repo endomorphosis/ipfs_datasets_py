@@ -136,6 +136,7 @@ _MODAL_RE = re.compile(
         is\s+forbidden\s+to|are\s+forbidden\s+to|
         shall|must|required\s+to|is\s+required\s+to|are\s+required\s+to|
         has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
+        is\s+charged\s+with\s+the\s+duty\s+to|are\s+charged\s+with\s+the\s+duty\s+to|
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
         is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
