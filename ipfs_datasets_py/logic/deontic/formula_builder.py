@@ -176,6 +176,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
     action_text = _normalize_renewal_light_verb_action(action_text)
+    action_text = _normalize_rescission_withdrawal_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_instrument_status_light_verb_action(action_text)
 
@@ -238,6 +239,43 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _normalize_rescission_withdrawal_light_verb_action(action_text: str) -> str:
+    """Collapse rescission and withdrawal nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+            r"(?:a\s+|an\s+|the\s+)?rescission\s+(?:of|from)\s+(?:the\s+)?(.+)$",
+            "rescind",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+            r"rescissions\s+(?:of|from)\s+(?:the\s+)?(.+)$",
+            "rescind",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording|accept|accepts|accepted|accepting)\s+"
+            r"(?:a\s+|an\s+|the\s+)?withdrawal\s+(?:of|from)\s+(?:the\s+)?(.+)$",
+            "withdraw",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording|accept|accepts|accepted|accepting)\s+"
+            r"withdrawals\s+(?:of|from)\s+(?:the\s+)?(.+)$",
+            "withdraw",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
 
 
 def _normalize_measurement_light_verb_action(action_text: str) -> str:
