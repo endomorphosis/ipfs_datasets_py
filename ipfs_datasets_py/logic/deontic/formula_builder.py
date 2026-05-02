@@ -205,6 +205,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_segregation_sequestration_light_verb_action(action_text)
     action_text = _normalize_assignment_allocation_light_verb_action(action_text)
     action_text = _normalize_prioritization_scheduling_light_verb_action(action_text)
+    action_text = _normalize_delegation_reservation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4525,6 +4526,42 @@ def _normalize_prioritization_scheduling_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"schedule {target}" if target else text
+
+    return text
+
+
+def _normalize_delegation_reservation_light_verb_action(action_text: str) -> str:
+    """Project delegation and reservation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    delegation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?delegation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"delegations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^delegation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in delegation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"delegate {target}" if target else text
+
+    reservation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|approve|approves|approved|approving|issue|issues|issued|issuing|record|records|recorded|recording|maintain|maintains|maintained|maintaining)\s+"
+        r"(?:a\s+|the\s+)?reservation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|approve|approves|approved|approving|issue|issues|issued|issuing|record|records|recorded|recording|maintain|maintains|maintained|maintaining)\s+"
+        r"reservations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^reservation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in reservation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"reserve {target}" if target else text
 
     return text
 
