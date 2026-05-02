@@ -163,6 +163,28 @@ def build_prover_syntax_target_coverage_record(
     }
 
 
+def build_prover_syntax_target_coverage_records_from_irs(
+    norms: Sequence[LegalNormIR],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> List[Dict[str, Any]]:
+    """Build stable prover-target coverage rows for a sequence of IR norms.
+
+    This is a Phase 8 reporting bridge: syntax records remain target-specific,
+    while these rows make required local target completeness explicit for every
+    source norm in batch exports. Missing, skipped, or failed local targets stay
+    visible as coverage blockers and do not change parser proof-readiness gates.
+    """
+
+    return [
+        build_prover_syntax_target_coverage_record(
+            norm.source_id,
+            build_prover_syntax_records_from_ir(norm),
+            required_targets,
+        )
+        for norm in norms
+    ]
+
+
 def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:
     for key in ("target", "target_name", "target_logic", "prover_target"):
         value = str(record.get(key) or "").strip()
