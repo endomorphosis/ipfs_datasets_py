@@ -7119,3 +7119,45 @@ def test_public_participation_triggers_become_formula_prerequisites_without_acti
     }
     assert "AdoptRuleAfterPublicCommentProposal" not in formula
     assert "AdoptRuleAfterConsultationBoard" not in formula
+
+
+def test_assessment_imposition_light_verb_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Director shall make an assessment of the fee.",
+            "make an assessment of the fee",
+            [19, 48],
+            "O(∀x (Director(x) → AssessFee(x)))",
+            "MakeAssessmentFee",
+        ),
+        (
+            "The Board shall make an imposition of the civil penalty.",
+            "make an imposition of the civil penalty",
+            [16, 55],
+            "O(∀x (Board(x) → ImposeCivilPenalty(x)))",
+            "MakeImpositionCivilPenalty",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]

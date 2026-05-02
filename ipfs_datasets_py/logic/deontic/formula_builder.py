@@ -183,6 +183,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_abatement_remediation_light_verb_action(action_text)
     action_text = _normalize_notification_disclosure_light_verb_action(action_text)
     action_text = _normalize_recommendation_referral_light_verb_action(action_text)
+    action_text = _normalize_assessment_imposition_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3722,3 +3723,43 @@ def _exception_text_needs_external_resolution(text: str) -> bool:
         "pursuant to ",
         "notwithstanding ",
     ))
+
+
+def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
+    """Project assessment/imposition nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    assessment_patterns = [
+        r"^(?:make|perform|conduct|complete|issue|provide|prepare)\s+an?\s+assessment\s+of\s+(.+)$",
+        r"^(?:make|perform|conduct|complete|issue|provide|prepare)\s+the\s+assessment\s+of\s+(.+)$",
+        r"^assessment\s+of\s+(.+)$",
+    ]
+    for pattern in assessment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"assess {target}" if target else text
+
+    imposition_patterns = [
+        r"^(?:make|perform|complete|enter|issue|provide)\s+an?\s+imposition\s+of\s+(.+)$",
+        r"^(?:make|perform|complete|enter|issue|provide)\s+the\s+imposition\s+of\s+(.+)$",
+        r"^imposition\s+of\s+(.+)$",
+    ]
+    for pattern in imposition_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"impose {target}" if target else text
+
+    return text
+
+
+def _normalized_light_verb_target(target: str) -> str:
+    """Return a compact source-grounded nominalization target."""
+
+    normalized = re.sub(r"\s+", " ", str(target or "").strip())
+    normalized = re.sub(r"^(?:of|for|to)\s+", "", normalized, flags=re.IGNORECASE)
+    return normalized.rstrip(" .,;:")
