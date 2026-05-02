@@ -153,6 +153,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
+    action_text = _normalize_referral_remand_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -5007,6 +5008,42 @@ def _normalize_allocation_apportionment_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"apportion {target}" if target else text
+
+    return text
+
+
+def _normalize_referral_remand_light_verb_action(action_text: str) -> str:
+    """Project referral and remand adjudicative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    referral_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|submit|submits|submitted|submitting)\s+"
+        r"(?:an?\s+|the\s+)?referral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|submit|submits|submitted|submitting)\s+"
+        r"referrals\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^referral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in referral_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"refer {target}" if target else text
+
+    remand_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|direct|directs|directed|directing)\s+"
+        r"(?:an?\s+|the\s+)?remand\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|direct|directs|directed|directing)\s+"
+        r"remands\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^remand\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in remand_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"remand {target}" if target else text
 
     return text
 
