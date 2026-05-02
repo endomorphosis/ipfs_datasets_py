@@ -298,6 +298,43 @@ def test_payment_light_verb_duty_exports_operative_payment_predicate():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_recordkeeping_light_verb_duty_exports_operative_record_predicate_and_preserves_apply_for():
+    element = extract_normative_elements(
+        "The Clerk shall make a record of the hearing."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "make a record of the hearing"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [16, 44]
+    assert formula == "O(∀x (Clerk(x) → RecordHearing(x)))"
+    assert "MakeRecord" not in formula
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+    apply_element = extract_normative_elements(
+        "The applicant shall apply for a permit."
+    )[0]
+    apply_norm = LegalNormIR.from_parser_element(apply_element)
+    assert apply_norm.action == "apply for a permit"
+    assert build_deontic_formula_from_ir(apply_norm) == (
+        "O(∀x (Applicant(x) → ApplyForPermit(x)))"
+    )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_coordinated_failure_prohibitions_export_affirmative_duty_formulas():
     examples = [
         (

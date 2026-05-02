@@ -148,6 +148,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
+    action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -255,6 +256,32 @@ def _normalize_payment_light_verb_action(action_text: str) -> str:
         (
             r"^(?:make|makes|made|making)\s+(?:a\s+|an\s+|the\s+)?payment\s+for\s+(.+)$",
             r"pay for \1",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
+        if normalized != text:
+            return normalized
+    return text
+
+
+def _normalize_recordkeeping_light_verb_action(action_text: str) -> str:
+    """Collapse recordmaking light-verb phrases into the operative record act."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|create|creates|created|creating|prepare|prepares|prepared|preparing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?(?:written\s+)?record\s+of\s+(.+)$",
+            r"record \1",
+        ),
+        (
+            r"^(?:make|makes|made|making|create|creates|created|creating|prepare|prepares|prepared|preparing)\s+"
+            r"(?:written\s+)?records\s+of\s+(.+)$",
+            r"record \1",
         ),
     ]
     for pattern, replacement in patterns:
@@ -1048,10 +1075,18 @@ def normalize_predicate_name(name: str) -> str:
     name = re.sub(r"[_\-]+", " ", str(name))
     name = re.sub(r"[^0-9A-Za-z\s]", "", name)
     words = name.strip().split()
+    protected_word_indices = set()
+    if (
+        len(words) >= 2
+        and words[0].lower() in {"apply", "applies", "applied", "applying"}
+        and words[1].lower() == "for"
+    ):
+        protected_word_indices.add(1)
+    stop_words = {"the", "a", "an", "of", "in", "on", "at", "to", "for", "with", "by"}
     filtered_words = [
         word
-        for word in words
-        if word.lower() not in ["the", "a", "an", "of", "in", "on", "at", "to", "for", "with", "by"]
+        for index, word in enumerate(words)
+        if index in protected_word_indices or word.lower() not in stop_words
     ]
     if not filtered_words:
         return "P"
