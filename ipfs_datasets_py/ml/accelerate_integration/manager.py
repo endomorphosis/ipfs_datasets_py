@@ -52,6 +52,16 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Provider names that should be submitted as ``llm.generate`` task type rather
+# than ``text-generation``.  Workers use their local credentials (copilot, codex,
+# etc.) to fulfil these tasks, so the model_name should be the LLM model string
+# (e.g. "gpt-4o-mini"), not the provider name.
+_LLM_PROVIDER_NAMES: frozenset = frozenset({
+    "copilot_cli", "copilot_sdk", "codex_cli", "codex",
+    "openai", "claude_code", "claude_py", "gemini_cli", "gemini_py",
+    "hf_inference_api", "openrouter",
+})
+
 
 # ---------------------------------------------------------------------------
 # ipfs_accelerate_py import
@@ -876,7 +886,19 @@ except Exception as e:
             return None
 
         extra = extra_kwargs or {}
-        payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
+        is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
+        if is_llm_provider:
+            # model_name is actually a provider name; use llm.generate task type
+            # with the provider in the payload and no explicit model override.
+            p2p_task_type = "llm.generate"
+            p2p_model_name = extra.get("llm_model") or ""
+            payload = {"prompt": prompt, "provider": model_name}
+            if p2p_model_name:
+                payload["model"] = p2p_model_name
+        else:
+            p2p_task_type = "text-generation"
+            p2p_model_name = model_name
+            payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
         for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
             if k in extra:
                 payload[k] = extra[k]
@@ -898,8 +920,8 @@ async def _run():
     payload = {json.dumps(payload)}
     info = await submit_task_with_info(
         remote=remote,
-        task_type="text-generation",
-        model_name={model_name!r},
+        task_type={p2p_task_type!r},
+        model_name={p2p_model_name!r},
         payload=payload,
     )
     task_id = info.get("task_id") or ""
@@ -981,7 +1003,17 @@ print(json.dumps({{"result": result}}))
 
         if p2p_in_process:
             remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
-            payload: Dict[str, Any] = {"prompt": prompt, "max_new_tokens": max_new_tokens}
+            is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
+            if is_llm_provider:
+                p2p_task_type = "llm.generate"
+                p2p_model_name = kwargs.get("llm_model") or ""
+                payload = {"prompt": prompt, "provider": model_name}
+                if p2p_model_name:
+                    payload["model"] = p2p_model_name
+            else:
+                p2p_task_type = "text-generation"
+                p2p_model_name = model_name
+                payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
             for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
                 if k in kwargs:
                     payload[k] = kwargs[k]
@@ -989,8 +1021,8 @@ print(json.dumps({{"result": result}}))
             async def _run() -> Optional[str]:
                 info = await submit_task_with_info(
                     remote=remote,
-                    task_type="text-generation",
-                    model_name=model_name,
+                    task_type=p2p_task_type,
+                    model_name=p2p_model_name,
                     payload=payload,
                 )
                 task_id = info.get("task_id") or ""

@@ -148,6 +148,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _normalize_notice_service_light_verb_action(action_text)
     action_text = _normalize_publication_light_verb_action(action_text)
+    action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
@@ -6230,6 +6231,64 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
+
+    return text
+
+
+def _normalize_dissemination_distribution_light_verb_action(action_text: str) -> str:
+    """Project public-information nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    dissemination_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"(?:a\s+|the\s+)?dissemination\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|publish|publishes|published|publishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"disseminations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^dissemination\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in dissemination_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"disseminate {target}" if target else text
+
+    distribution_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"(?:a\s+|the\s+)?distribution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"distributions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^distribution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in distribution_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"distribute {target}" if target else text
+
+    circulation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing)\s+"
+        r"(?:a\s+|the\s+)?circulation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^circulation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in circulation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"circulate {target}" if target else text
+
+    transmission_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing)\s+"
+        r"(?:a\s+|the\s+)?transmission\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^transmission\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in transmission_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"transmit {target}" if target else text
 
     return text
 

@@ -300,7 +300,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         return parse_cycle_proposal(raw_response)
 
     def _read_only_codex_cli_generation(self) -> "_TemporaryEnv":
-        if str(self.daemon_config.provider).strip().lower() not in {"codex", "codex_cli"}:
+        provider = str(self.daemon_config.provider or "").strip().lower()
+        if provider and provider not in {"codex", "codex_cli"}:
             return _TemporaryEnv({})
         return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
 
