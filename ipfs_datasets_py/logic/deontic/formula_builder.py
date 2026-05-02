@@ -163,6 +163,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
+    action_text = _normalize_remittance_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -645,6 +646,27 @@ def _normalize_payment_light_verb_action(action_text: str) -> str:
         normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
         if normalized != text:
             return normalized
+    return text
+
+
+def _normalize_remittance_light_verb_action(action_text: str) -> str:
+    """Collapse remittance nominalizations into operative remit acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|deliver|delivers|delivered|delivering)\s+"
+        r"(?:a\s+|an\s+|the\s+)?remittance\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|deliver|delivers|delivered|delivering)\s+"
+        r"remittances\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"remit {match.group(1).strip()}"
+
     return text
 
 
