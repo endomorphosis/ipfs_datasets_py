@@ -45,6 +45,41 @@ def test_ir_formal_logic_record_preserves_provenance_for_proof_ready_clause():
     assert record["blockers"] == []
 
 
+def test_ir_export_records_preserve_enumerated_child_provenance():
+    elements = extract_normative_elements(
+        "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records.",
+        expand_enumerations=True,
+    )
+    norm = LegalNormIR.from_parser_element(elements[1])
+
+    formal_record = build_formal_logic_record_from_ir(norm)
+    proof_record = build_proof_obligation_record_from_ir(norm)
+
+    assert norm.is_enumerated_child is True
+    assert norm.parent_source_id
+    assert norm.enumeration_label == "2"
+    assert norm.enumeration_index == 2
+    assert formal_record["formula"] == "O(∀x (Secretary(x) → SubmitReport(x)))"
+    assert proof_record["formula"] == formal_record["formula"]
+
+    for record in (formal_record, proof_record):
+        assert record["source_id"] == norm.source_id
+        assert record["parent_source_id"] == norm.parent_source_id
+        assert record["enumeration_label"] == "2"
+        assert record["enumeration_index"] == 2
+        assert record["is_enumerated_child"] is True
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_scoped_definition_ir_and_canonical_export_preserve_definition_scope():
     element = dict(extract_normative_elements(
         'In this section, the term "food cart" means a mobile food vending unit.'
