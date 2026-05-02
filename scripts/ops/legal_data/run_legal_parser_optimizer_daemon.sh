@@ -4,7 +4,7 @@ set -uo pipefail
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 OUTPUT_DIR="${OUTPUT_DIR:-artifacts/legal_parser_optimizer_daemon}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-codex_cli}"
+PROVIDER="${PROVIDER:-}"
 RESTART_BACKOFF_SECONDS="${RESTART_BACKOFF_SECONDS:-30}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-900}"
 TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-600}"
@@ -505,23 +505,26 @@ while true; do
 
   (
     cd "$REPO_ROOT" || exit 2
+    python3_args=(
+      python3 -u -m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon
+      --repo-root .
+      --output-dir "$OUTPUT_DIR"
+      --max-cycles 0
+      --cycle-interval-seconds 0
+      --error-backoff-seconds "$RESTART_BACKOFF_SECONDS"
+      --llm-timeout-seconds "$LLM_TIMEOUT_SECONDS"
+      --llm-proposal-attempts "$LLM_PROPOSAL_ATTEMPTS"
+      --heartbeat-interval-seconds "$HEARTBEAT_INTERVAL_SECONDS"
+      --test-timeout-seconds "$TEST_TIMEOUT_SECONDS"
+      --apply-patches
+      --commit-accepted-patches
+    )
+    [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
+    python3_args+=(--model-name "$MODEL_NAME")
     PYTHONUNBUFFERED=1 \
       IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME" \
       IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}" \
-      python3 -u -m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon \
-      --repo-root . \
-      --output-dir "$OUTPUT_DIR" \
-      --max-cycles 0 \
-      --cycle-interval-seconds 0 \
-      --error-backoff-seconds "$RESTART_BACKOFF_SECONDS" \
-      --llm-timeout-seconds "$LLM_TIMEOUT_SECONDS" \
-      --llm-proposal-attempts "$LLM_PROPOSAL_ATTEMPTS" \
-      --heartbeat-interval-seconds "$HEARTBEAT_INTERVAL_SECONDS" \
-      --test-timeout-seconds "$TEST_TIMEOUT_SECONDS" \
-      --apply-patches \
-      --commit-accepted-patches \
-      --provider "$PROVIDER" \
-      --model-name "$MODEL_NAME"
+      "${python3_args[@]}"
   ) >> "$REPO_ROOT/$log_path" 2>&1 &
   child_pid=$!
   child_started_at=$SECONDS

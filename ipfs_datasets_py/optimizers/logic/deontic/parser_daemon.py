@@ -73,7 +73,7 @@ class LegalParserDaemonConfig:
     repo_root: Path = field(default_factory=lambda: Path.cwd())
     output_dir: Path = field(default_factory=lambda: Path("artifacts/legal_parser_optimizer_daemon"))
     model_name: str = "gpt-5.5"
-    provider: str = "codex_cli"
+    provider: Optional[str] = None
     max_cycles: int = 1
     cycle_interval_seconds: float = 0.0
     error_backoff_seconds: float = 30.0
@@ -2909,7 +2909,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", default=".", help="Repository root for ipfs_datasets_py.")
     parser.add_argument("--output-dir", default="artifacts/legal_parser_optimizer_daemon")
     parser.add_argument("--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", "gpt-5.5"))
-    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER", "codex_cli"))
+    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or None)
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)
@@ -2950,7 +2950,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         repo_root=Path(args.repo_root),
         output_dir=Path(args.output_dir),
         model_name=str(args.model_name),
-        provider=str(args.provider),
+        provider=str(args.provider) if args.provider else None,
         max_cycles=int(args.max_cycles),
         cycle_interval_seconds=float(args.cycle_interval_seconds),
         error_backoff_seconds=float(args.error_backoff_seconds),
