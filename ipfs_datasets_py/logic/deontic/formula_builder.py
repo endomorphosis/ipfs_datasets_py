@@ -179,6 +179,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_rescission_withdrawal_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_instrument_status_light_verb_action(action_text)
+    action_text = _normalize_abatement_remediation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -268,6 +269,43 @@ def _normalize_rescission_withdrawal_light_verb_action(action_text: str) -> str:
             r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|enter|enters|entered|entering|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording|accept|accepts|accepted|accepting)\s+"
             r"withdrawals\s+(?:of|from)\s+(?:the\s+)?(.+)$",
             "withdraw",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_abatement_remediation_light_verb_action(action_text: str) -> str:
+    """Collapse abatement and remediation nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|order|orders|ordered|ordering|require|requires|required|requiring|cause|causes|caused|causing|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"(?:an?\s+|the\s+)?abatement\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+            "abate",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|order|orders|ordered|ordering|require|requires|required|requiring|cause|causes|caused|causing|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"abatements\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+            "abate",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|order|orders|ordered|ordering|require|requires|required|requiring|cause|causes|caused|causing|conduct|conducts|conducted|conducting|perform|performs|performed|performing|undertake|undertakes|undertook|undertaken|undertaking)\s+"
+            r"(?:a\s+|the\s+)?remediation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "remediate",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|order|orders|ordered|ordering|require|requires|required|requiring|cause|causes|caused|causing|conduct|conducts|conducted|conducting|perform|performs|performed|performing|undertake|undertakes|undertook|undertaken|undertaking)\s+"
+            r"remediations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "remediate",
         ),
     ]
     for pattern, verb in patterns:
