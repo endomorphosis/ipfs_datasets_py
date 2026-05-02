@@ -168,6 +168,8 @@ _MODAL_RE = re.compile(
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
         is\s+(?:delegated|granted)\s+(?:the\s+)?(?:authority|power)\s+to|
         are\s+(?:delegated|granted)\s+(?:the\s+)?(?:authority|power)\s+to|
+        is\s+(?:vested\s+with|conferred)\s+(?:the\s+)?(?:authority|power)\s+to|
+        are\s+(?:vested\s+with|conferred)\s+(?:the\s+)?(?:authority|power)\s+to|
         is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|
         is\s+directed\s+to|are\s+directed\s+to|
         is\s+instructed\s+to|are\s+instructed\s+to|
@@ -4744,7 +4746,7 @@ def _normalize_authority_grant_permission(element: Dict[str, Any]) -> None:
 
     modal = str(element.get("modal") or "").strip().lower()
     if not re.search(
-        r"\b(?:has|have)\s+(?:the\s+)?(?:authority|power)\s+to\b|\b(?:is|are)\s+(?:(?:delegated|granted)\s+(?:the\s+)?(?:authority|power)|empowered)\s+to\b",
+        r"\b(?:has|have)\s+(?:the\s+)?(?:authority|power)\s+to\b|\b(?:is|are)\s+(?:(?:(?:delegated|granted|conferred)\s+(?:the\s+)?(?:authority|power))|(?:vested\s+with\s+(?:the\s+)?(?:authority|power))|empowered)\s+to\b",
         modal,
         re.IGNORECASE,
     ):
