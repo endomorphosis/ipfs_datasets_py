@@ -203,6 +203,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
     action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
     action_text = _normalize_segregation_sequestration_light_verb_action(action_text)
+    action_text = _normalize_assignment_allocation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4451,6 +4452,42 @@ def _normalize_segregation_sequestration_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"sequester {target}" if target else text
+
+    return text
+
+
+def _normalize_assignment_allocation_light_verb_action(action_text: str) -> str:
+    """Project assignment and allocation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    assignment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|execute|executes|executed|executing|record|records|recorded|recording|file|files|filed|filing|approve|approves|approved|approving|issue|issues|issued|issuing)\s+"
+        r"(?:an?\s+|the\s+)?assignment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|effect|effects|effected|effecting|execute|executes|executed|executing|record|records|recorded|recording|file|files|filed|filing|approve|approves|approved|approving|issue|issues|issued|issuing)\s+"
+        r"assignments\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^assignment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in assignment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"assign {target}" if target else text
+
+    allocation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"(?:an?\s+|the\s+)?allocation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"allocations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^allocation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in allocation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"allocate {target}" if target else text
 
     return text
 
