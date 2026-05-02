@@ -8,6 +8,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
     build_ir_slot_provenance_audit_record,
+    build_phase8_quality_summary_record,
     build_ir_slot_provenance_audit_records,
     summarize_ir_slot_provenance_audit_records,
     build_reconstruction_slot_loss_records,
@@ -223,6 +224,51 @@ def test_phase8_quality_summary_combines_reconstruction_prover_and_provenance():
     assert summary["reconstruction_slot_loss"]["slot_reconstruction_complete"] is True
     assert summary["prover_syntax_target_coverage"]["all_required_passed"] is True
     assert summary["ir_slot_provenance"]["all_checked_slots_grounded"] is True
+
+    record = build_phase8_quality_summary_record(
+        norm.source_id,
+        decoder_records=[decoder_record],
+        prover_syntax_records=prover_records,
+        ir_slot_provenance_records=[provenance_record],
+        required_slots=("actor", "modality", "action", "temporal_constraints"),
+    )
+
+    assert record["phase8_quality_summary_id"].startswith("phase8-quality-summary:")
+    assert record["source_id"] == norm.source_id
+    assert record["target_logic"] == "phase8_encoder_decoder_prover_quality"
+    assert record["phase8_quality_complete"] is True
+    assert record["requires_validation"] is False
+    assert record["coverage_blockers"] == []
+    assert record["coverage_summary"] == summary
+
+    incomplete_record = build_phase8_quality_summary_record(
+        "",
+        decoder_records=[{"source_id": norm.source_id, "grounded_slots": ["actor"]}],
+        prover_syntax_records=prover_records[:-1],
+        ir_slot_provenance_records=[
+            build_ir_slot_provenance_audit_record(norm, slots=("actor", "exceptions"))
+        ],
+        required_slots=("actor", "modality", "action"),
+    )
+
+    assert incomplete_record["source_id"] == norm.source_id
+    assert incomplete_record["phase8_quality_complete"] is False
+    assert incomplete_record["requires_validation"] is True
+    assert "missing_reconstruction_slot:action" in incomplete_record["coverage_blockers"]
+    assert "missing_reconstruction_slot:modality" in incomplete_record["coverage_blockers"]
+    assert "missing_prover_syntax_target:deontic_temporal_fol" in incomplete_record[
+        "coverage_blockers"
+    ]
+    assert "missing_ir_slot_provenance:exceptions" in incomplete_record[
+        "coverage_blockers"
+    ]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
     incomplete = summarize_phase8_quality_records(
         decoder_records=[{"source_id": norm.source_id, "grounded_slots": ["actor"]}],

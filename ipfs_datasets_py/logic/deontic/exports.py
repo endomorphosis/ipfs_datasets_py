@@ -34,6 +34,7 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "prover_syntax_summaries": {"primary_key": "prover_syntax_summary_id", "requires_source_id": True},
     "reconstruction_slot_loss": {"primary_key": "reconstruction_slot_loss_id", "requires_source_id": True},
     "ir_slot_provenance_audits": {"primary_key": "ir_slot_provenance_audit_id", "requires_source_id": True},
+    "phase8_quality_summaries": {"primary_key": "phase8_quality_summary_id", "requires_source_id": True},
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -196,6 +197,54 @@ def summarize_phase8_quality_records(
         "reconstruction_slot_loss": reconstruction,
         "prover_syntax_target_coverage": prover,
         "ir_slot_provenance": provenance,
+    }
+
+
+def build_phase8_quality_summary_record(
+    source_id: str,
+    decoder_records: Sequence[Mapping[str, Any]] = (),
+    prover_syntax_records: Sequence[Mapping[str, Any]] = (),
+    ir_slot_provenance_records: Sequence[Mapping[str, Any]] = (),
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Build a primary-keyed Phase 8 aggregate quality export row.
+
+    The summary helper is useful for in-memory reports, but corpus exports need
+    a stable row that can be persisted alongside decoder, prover-syntax, and IR
+    provenance records. This record is diagnostic only; it does not change
+    parser repair status or theorem promotion.
+    """
+
+    summary = summarize_phase8_quality_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_syntax_records,
+        ir_slot_provenance_records=ir_slot_provenance_records,
+        required_slots=required_slots,
+        required_targets=required_targets,
+    )
+    normalized_source_id = str(source_id or "").strip()
+    if not normalized_source_id:
+        source_ids = set(summary["reconstruction_slot_loss"].get("source_ids") or [])
+        source_ids.update(summary["ir_slot_provenance"].get("source_ids") or [])
+        if len(source_ids) == 1:
+            normalized_source_id = next(iter(source_ids))
+
+    required_slot_key = "|".join(str(slot) for slot in required_slots if slot)
+    required_target_key = "|".join(str(target) for target in required_targets if target)
+    return {
+        "phase8_quality_summary_id": _stable_id(
+            "phase8-quality-summary",
+            normalized_source_id,
+            required_slot_key,
+            required_target_key,
+        ),
+        "source_id": normalized_source_id,
+        "target_logic": "phase8_encoder_decoder_prover_quality",
+        "phase8_quality_complete": summary["phase8_quality_complete"],
+        "requires_validation": summary["requires_validation"],
+        "coverage_blockers": summary["coverage_blockers"],
+        "coverage_summary": summary,
     }
 
 
