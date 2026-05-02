@@ -152,6 +152,10 @@ _MODAL_RE = re.compile(
         are\s+subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|
         bears\s+(?:a\s+|the\s+)?responsibility\s+for|bear\s+(?:a\s+|the\s+)?responsibility\s+for|
         bears\s+(?:an?\s+|the\s+)?obligation\s+to|bear\s+(?:an?\s+|the\s+)?obligation\s+to|
+        is\s+assigned\s+(?:a\s+|the\s+)?responsibility\s+for|
+        are\s+assigned\s+(?:a\s+|the\s+)?responsibility\s+for|
+        is\s+assigned\s+(?:an?\s+|the\s+)?duty\s+to|
+        are\s+assigned\s+(?:an?\s+|the\s+)?duty\s+to|
         is\s+duty-bound\s+to|are\s+duty-bound\s+to|
         is\s+duty\s+bound\s+to|are\s+duty\s+bound\s+to|
         is\s+liable\s+to|are\s+liable\s+to|
