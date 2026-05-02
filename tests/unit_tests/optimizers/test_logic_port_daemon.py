@@ -191,9 +191,9 @@ def test_daemon_selection_skips_blocked_tasks(tmp_path):
         repo_root=tmp_path,
         plan_docs=(plan,),
         status_docs=(status,),
+        task_board_doc=plan,
         typescript_logic_dir=logic_dir,
         python_logic_dir=python_logic_dir,
-        task_board_doc=plan,
     )
 
     selected = LogicPortDaemonOptimizer(config)._current_plan_task()
@@ -215,9 +215,9 @@ def test_daemon_selection_can_revisit_blocked_tasks_when_enabled(tmp_path):
         repo_root=tmp_path,
         plan_docs=(plan,),
         status_docs=(status,),
+        task_board_doc=plan,
         typescript_logic_dir=logic_dir,
         python_logic_dir=python_logic_dir,
-        task_board_doc=plan,
         revisit_blocked_tasks=True,
     )
 
@@ -254,9 +254,9 @@ def test_revisit_blocked_skips_capability_cleanup_until_ml_nlp_prereqs_are_done(
         repo_root=tmp_path,
         plan_docs=(plan,),
         status_docs=(status,),
+        task_board_doc=plan,
         typescript_logic_dir=logic_dir,
         python_logic_dir=python_logic_dir,
-        task_board_doc=plan,
         revisit_blocked_tasks=True,
         blocked_task_strategy="fewest-failures",
     )
@@ -554,6 +554,96 @@ def test_build_prompt_uses_focused_task_board_excerpt(tmp_path):
     assert "[task-board excerpt centered on daemon-selected task]" in prompt
     assert "Selected browser-native profiler parity" in prompt
     assert "Later task marker" not in prompt
+
+
+def test_balanced_slice_mode_keeps_recovery_from_tiny_scaffolds(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    task_label = "Task checkbox-1: Port DCEC wrapper"
+    plan.write_text("- [ ] Port DCEC wrapper\n", encoding="utf-8")
+    status.write_text("status notes\n", encoding="utf-8")
+    log_path.parent.mkdir(parents=True)
+    failure = {
+        "valid": False,
+        "artifact": {
+            "target_task": task_label,
+            "summary": "bad ts",
+            "failure_kind": "typescript_quality",
+            "changed_files": [],
+            "errors": ["src/lib/logic/cec/dcecWrapper.ts(1,1): error TS1005: ';' expected."],
+        },
+    }
+    log_path.write_text(json.dumps({"results": [failure, failure]}) + "\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "Noop", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        result_log_path=log_path,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="balanced-slice")
+
+    prompt = router.calls[0]["prompt"]
+    assert "Slice mode requested by daemon: balanced" in prompt
+    assert "balanced slice mode should still land a useful vertical slice rather than a tiny scaffold" in prompt
+    assert "smallest compileable TypeScript contract" not in prompt
+    assert "usually 1-3 related implementation/test files" in prompt
+
+
+def test_small_slice_mode_preserves_minimal_recovery_prompt(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    task_label = "Task checkbox-1: Port DCEC wrapper"
+    plan.write_text("- [ ] Port DCEC wrapper\n", encoding="utf-8")
+    status.write_text("status notes\n", encoding="utf-8")
+    log_path.parent.mkdir(parents=True)
+    failure = {
+        "valid": False,
+        "artifact": {
+            "target_task": task_label,
+            "summary": "bad ts",
+            "failure_kind": "typescript_quality",
+            "changed_files": [],
+            "errors": ["src/lib/logic/cec/dcecWrapper.ts(1,1): error TS1005: ';' expected."],
+        },
+    }
+    log_path.write_text(json.dumps({"results": [failure, failure]}) + "\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "Noop", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        slice_mode="small",
+        dry_run=True,
+        validation_commands=tuple(),
+        result_log_path=log_path,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="small-slice")
+
+    prompt = router.calls[0]["prompt"]
+    assert "Slice mode requested by daemon: small" in prompt
+    assert "smallest compileable TypeScript contract" in prompt
+    assert "Prefer one implementation file plus one focused test file" in prompt
 
 
 def test_daemon_reports_router_failures_without_traceback(tmp_path):

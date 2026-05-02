@@ -177,6 +177,7 @@ class LogicPortDaemonConfig:
     python_logic_dir: Path = Path("ipfs_datasets_py/ipfs_datasets_py/logic")
     model_name: str = "gpt-5.5"
     provider: Optional[str] = None
+    slice_mode: str = "balanced"
     max_iterations: int = 1
     interval_seconds: float = 0.0
     target_score: float = 0.99
@@ -1799,6 +1800,7 @@ Critical correction for attempt {attempt}:
             "current_task_failure_counts": current_task_counts,
             "blocked_backlog": blocked_backlog,
             "blocked_task_strategy": self.daemon_config.blocked_task_strategy,
+            "slice_mode": self.daemon_config.slice_mode,
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "typescript_quality_failures": typescript_quality_failures,
@@ -1886,6 +1888,7 @@ Critical correction for attempt {attempt}:
             "pid": os.getpid(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "state": state,
+            "slice_mode": self.daemon_config.slice_mode,
             **details,
         }
         if state != "heartbeat":
@@ -2912,15 +2915,45 @@ Current repository file contents after rollback:
         recent_failure_context = self._recent_failure_context(selected_task)
         task_failure_counts = self._selected_task_failure_counts(selected_task)
         repeated_typescript_failures = int(task_failure_counts.get("by_kind_since_success", {}).get("typescript_quality", 0))
+        slice_mode = self.daemon_config.slice_mode if self.daemon_config.slice_mode in {"small", "balanced", "broad"} else "balanced"
+        if slice_mode == "small":
+            slice_guidance = (
+                "Slice mode: small. Prefer one implementation file plus one focused test file, and keep the diff as compact as possible."
+            )
+        elif slice_mode == "broad":
+            slice_guidance = (
+                "Slice mode: broad. Prefer a complete coherent parity chunk for the selected task; it may span 2-5 related runtime/test files "
+                "when that is necessary for browser-native behavior, but it must still stay compileable and under the diff-line budget."
+            )
+        else:
+            slice_guidance = (
+                "Slice mode: balanced. Prefer a useful vertical slice for the selected task, usually 1-3 related implementation/test files, "
+                "so the result is directly exercised by validation without becoming a broad rewrite."
+            )
         recovery_mode_context = "[No repeated TypeScript-quality failure recovery mode active.]"
         if repeated_typescript_failures >= 2:
-            recovery_mode_context = (
-                f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
-                "Recovery mode is active: land the smallest compileable TypeScript contract first, avoid large feature-complete files, "
-                "avoid advanced generic types, avoid custom JSON recursive unions unless already present in the current file, "
-                "and include only one focused test that proves the contract. Prefer simple interfaces, string/number/boolean/null arrays/records, "
-                "and fail-closed stubs that can be expanded in later tasks."
-            )
+            if slice_mode == "small":
+                recovery_mode_context = (
+                    f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
+                    "Recovery mode is active: land the smallest compileable TypeScript contract first, avoid large feature-complete files, "
+                    "avoid advanced generic types, avoid custom JSON recursive unions unless already present in the current file, "
+                    "and include only one focused test that proves the contract. Prefer simple interfaces, string/number/boolean/null arrays/records, "
+                    "and fail-closed stubs that can be expanded in later tasks."
+                )
+            elif slice_mode == "broad":
+                recovery_mode_context = (
+                    f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
+                    "Recovery mode is active, but broad slice mode should not collapse the work into a tiny placeholder. "
+                    "Land one compileable multi-file parity chunk for the daemon-selected task when the task naturally needs it, "
+                    "avoid advanced generic types and fragile recursive JSON unions, and include focused tests that exercise the runtime contract."
+                )
+            else:
+                recovery_mode_context = (
+                    f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
+                    "Recovery mode is active, but balanced slice mode should still land a useful vertical slice rather than a tiny scaffold. "
+                    "Implement one coherent browser-native contract for the selected task, typically with 1-3 related implementation/test files, "
+                    "avoid advanced generic types and fragile recursive JSON unions, and include focused tests that exercise the runtime behavior."
+                )
         relevant_file_context = self._relevant_file_context(selected_task, file_inventory.stdout)
         blocked_backlog_context = "[No blocked backlog context available.]"
         if self.daemon_config.task_board_doc is not None:
@@ -2951,7 +2984,7 @@ Hard constraints:
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
 - The daemon-selected task for this cycle is: {selected_task_text}
-- If recovery mode below is active, prioritize a small compileable scaffold over a broad implementation.
+- Follow the slice mode guidance below; recovery mode should keep changes compileable without shrinking below the selected task's useful parity boundary.
 - Work only on that daemon-selected task unless the repository already satisfies it; if it is already satisfied, update docs/tests for that task rather than jumping ahead.
 - Prefer implementation changes under src/lib/logic/ whenever the selected task asks for functionality, not only docs.
 - Fixture-only work is acceptable only when the selected port-plan checkbox explicitly asks for fixtures or generated Python parity captures.
@@ -2961,7 +2994,7 @@ Hard constraints:
 - Fixture/capture/parity proposals that do not update a src/lib/logic/*.test.ts file will be rejected.
 - Explain the concrete impact of the changed files in the JSON impact field.
 - Limit the patch to at most {self.daemon_config.max_patch_lines} changed diff lines.
-- Prefer one implementation file plus one focused test file.
+- {slice_guidance}
 - Do not include prose inside the patch string. When using `files`, include the full file content exactly as it should exist after the edit.
 - Generate the patch against the exact current file contents shown by repository status and tracked-file inventory.
 - Use valid unified-diff hunk headers and include enough unchanged context for git apply.
@@ -2985,6 +3018,7 @@ Only use paths under src/lib/logic/, docs/, or ipfs_datasets_py/docs/logic/.
 Session: {context.session_id}
 Model requested by daemon: {self.daemon_config.model_name}
 Provider requested by daemon: {self._resolved_provider() or "auto"}
+Slice mode requested by daemon: {slice_mode}
 Dry run: {self.daemon_config.dry_run}
 
 Current git status:
@@ -3033,6 +3067,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", default=".", help="Repository root containing package.json and ipfs_datasets_py/")
     parser.add_argument("--model", default="gpt-5.5", help="llm_router model name")
     parser.add_argument("--provider", default=None, help="Optional llm_router provider")
+    parser.add_argument(
+        "--slice-mode",
+        choices=("small", "balanced", "broad"),
+        default="balanced",
+        help="How much work the daemon should ask for per LLM cycle; balanced keeps recovery compileable without forcing tiny scaffolds.",
+    )
     parser.add_argument("--iterations", type=int, default=1, help="Maximum daemon iterations")
     parser.add_argument("--interval", type=float, default=0.0, help="Seconds to sleep between iterations")
     parser.add_argument("--apply", action="store_true", help="Apply model-generated patches. Default is dry-run.")
@@ -3089,6 +3129,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         repo_root=Path(args.repo_root).resolve(),
         model_name=args.model,
         provider=args.provider,
+        slice_mode=args.slice_mode,
         max_iterations=max(1, args.iterations),
         interval_seconds=max(0.0, args.interval),
         dry_run=not args.apply,

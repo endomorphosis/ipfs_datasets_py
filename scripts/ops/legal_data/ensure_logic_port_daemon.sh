@@ -10,7 +10,7 @@ SUPERVISOR_OUT_PATH="${SUPERVISOR_OUT_PATH:-$DAEMON_DIR/logic-port-daemon-superv
 SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.pid}"
 SUPERVISOR_STATUS_PATH="${SUPERVISOR_STATUS_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.status.json}"
 ENSURE_STARTUP_WAIT_SECONDS="${ENSURE_STARTUP_WAIT_SECONDS:-20}"
-ENSURE_LAUNCH_MODE="${ENSURE_LAUNCH_MODE:-auto}"
+ENSURE_LAUNCH_MODE="${ENSURE_LAUNCH_MODE:-nohup}"
 ENSURE_TMUX_RESTART_DELAY_SECONDS="${ENSURE_TMUX_RESTART_DELAY_SECONDS:-5}"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-logic-port-daemon}"
 
@@ -73,7 +73,7 @@ launch_supervisor() {
   local command_text=""
   launch_mode="nohup_setsid"
   launcher_pid=""
-  if [[ "$ENSURE_LAUNCH_MODE" != "nohup" ]] && command -v tmux >/dev/null 2>&1; then
+  if [[ "$ENSURE_LAUNCH_MODE" == "tmux" ]] && command -v tmux >/dev/null 2>&1; then
     if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
       tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
     fi

@@ -8,6 +8,7 @@ PROVIDER="${PROVIDER:-}"
 # Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
 # selection and fallback policy. Set PROVIDER=codex_cli or another registered
 # router provider only when you need to force a specific backend.
+SLICE_MODE="${SLICE_MODE:-balanced}"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
@@ -27,7 +28,7 @@ BLOCKED_BACKLOG_LIMIT="${BLOCKED_BACKLOG_LIMIT:-10}"
 BLOCKED_TASK_STRATEGY="${BLOCKED_TASK_STRATEGY:-fewest-failures}"
 PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
-SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE:-1}"
+SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE:-0}"
 SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
 SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
 SUPERVISOR_AGENTIC_PROPOSAL_FAILURES="${SUPERVISOR_AGENTIC_PROPOSAL_FAILURES:-3}"
@@ -35,7 +36,7 @@ SUPERVISOR_AGENTIC_ROLLBACK_FAILURES="${SUPERVISOR_AGENTIC_ROLLBACK_FAILURES:-5}
 SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES:-3}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
-SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
+SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}"
@@ -134,6 +135,7 @@ write_supervisor_status() {
   "last_orphaned_llm_cleanup_count": $last_orphaned_llm_cleanup_count,
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
+  "slice_mode": "$SLICE_MODE",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
   "command_timeout_seconds": $COMMAND_TIMEOUT_SECONDS,
   "max_prompt_chars": $MAX_PROMPT_CHARS,
@@ -479,6 +481,8 @@ Allowed files:
 
 Focus on changes that help unattended operation make real progress: better stuck detection, better task selection, better validation repair prompts, safer restart behavior, clearer status/progress accounting, or better documentation for those behaviors.
 
+Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
+
 After editing, run:
 - bash -n ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
 - PYTHONPATH=ipfs_datasets_py python3 -m py_compile ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
@@ -488,6 +492,10 @@ Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not
 PROMPT
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
+  if [[ "$rc" == "0" ]] && grep -Eq "bwrap: loopback|Failed RTM_NEWADDR|couldn.t perform this maintenance pass|could not inspect files|could not .*run the requested validation" "$REPO_ROOT/$maintenance_log"; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance reported sandbox failure despite exit code 0" >> "$REPO_ROOT/$maintenance_log"
+    rc=70
+  fi
   if [[ "$rc" != "0" ]] && [[ "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" != "$SUPERVISOR_AGENTIC_SANDBOX" ]]; then
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance exited with code $rc; retrying with sandbox=$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX"
@@ -502,6 +510,8 @@ Improve only the daemon/supervisor implementation, tests, or docs from the allow
 
 Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
+Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
+
 Run validation if possible:
 - bash -n ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
 - PYTHONPATH=ipfs_datasets_py python3 -m py_compile ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
@@ -509,6 +519,10 @@ Run validation if possible:
 PROMPT
     } >> "$REPO_ROOT/$maintenance_log" 2>&1
     rc=$?
+    if [[ "$rc" == "0" ]] && grep -Eq "bwrap: loopback|Failed RTM_NEWADDR|couldn.t perform this maintenance pass|could not inspect files|could not .*run the requested validation" "$REPO_ROOT/$maintenance_log"; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) fallback agentic maintenance reported sandbox failure despite exit code 0" >> "$REPO_ROOT/$maintenance_log"
+      rc=70
+    fi
   fi
   if [[ "$rc" == "0" ]] \
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
@@ -704,7 +718,11 @@ trap 'cleanup' EXIT
 
 terminate_matching_logic_port_daemons
 if terminate_orphaned_logic_port_llm_calls; then
-  run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:startup_cleanup" || true
+  if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
+    run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:startup_cleanup" || true
+  else
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaned up $last_orphaned_llm_cleanup_count startup orphaned logic-port LLM calls; startup maintenance disabled so continuing to daemon launch" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+  fi
 fi
 
 if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
@@ -734,6 +752,7 @@ while true; do
       python3 -u -m ipfs_datasets_py.optimizers.logic_port_daemon
       --repo-root .
       --model "$MODEL_NAME"
+      --slice-mode "$SLICE_MODE"
     )
     [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
     python3_args+=(
@@ -777,10 +796,6 @@ while true; do
       last_recycle_reason="agentic_maintenance"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking agentic maintenance: $maintenance_reason" >> "$REPO_ROOT/$run_log"
       run_agentic_maintenance "$maintenance_reason"
-      break
-    fi
-    if terminate_orphaned_logic_port_llm_calls; then
-      run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:active_cycle_cleanup" || true
       break
     fi
     sleep "$SUPERVISOR_HEARTBEAT_SECONDS"
