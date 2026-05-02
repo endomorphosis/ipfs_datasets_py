@@ -169,6 +169,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
+    action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
@@ -682,6 +683,43 @@ def _normalize_authorization_accreditation_light_verb_action(action_text: str) -
             r"^(?:grant|grants|granted|granting|give|gives|gave|given|giving|issue|issues|issued|issuing|make|makes|made|making|provide|provides|provided|providing|approve|approves|approved|approving)\s+"
             r"accreditations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
             "accredit",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_classification_categorization_light_verb_action(action_text: str) -> str:
+    """Collapse classification and categorization nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?classification\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "classify",
+        ),
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
+            r"classifications\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "classify",
+        ),
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?categorization\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "categorize",
+        ),
+        (
+            r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
+            r"categorizations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "categorize",
         ),
     ]
     for pattern, verb in patterns:

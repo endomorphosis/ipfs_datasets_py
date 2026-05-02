@@ -307,6 +307,48 @@ def test_authorization_and_accreditation_light_verb_duties_export_operative_pred
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_classification_and_categorization_light_verb_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Director shall make a classification of the application.",
+            "make a classification of the application",
+            [19, 59],
+            "O(∀x (Director(x) → ClassifyApplication(x)))",
+            "MakeClassificationApplication",
+        ),
+        (
+            "The Board shall assign categorization of the facility.",
+            "assign categorization of the facility",
+            [16, 53],
+            "O(∀x (Board(x) → CategorizeFacility(x)))",
+            "AssignCategorizationFacility",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_denial_light_verb_duties_export_operative_deny_predicates():
     examples = [
         (
