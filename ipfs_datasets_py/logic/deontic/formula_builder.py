@@ -148,6 +148,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _normalize_notice_service_light_verb_action(action_text)
     action_text = _normalize_publication_light_verb_action(action_text)
+    action_text = _normalize_objection_response_comment_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -6229,6 +6230,56 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
+
+    return text
+
+
+def _normalize_objection_response_comment_light_verb_action(action_text: str) -> str:
+    """Project procedural participation nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    objection_patterns = [
+        r"^(?:file|files|filed|filing|make|makes|made|making|submit|submits|submitted|submitting|lodge|lodges|lodged|lodging|raise|raises|raised|raising)\s+"
+        r"(?:an?\s+|the\s+)?objection\s+(?:to|against|of)\s+(?:the\s+)?(.+)$",
+        r"^(?:file|files|filed|filing|make|makes|made|making|submit|submits|submitted|submitting|lodge|lodges|lodged|lodging|raise|raises|raised|raising)\s+"
+        r"objections\s+(?:to|against|of)\s+(?:the\s+)?(.+)$",
+        r"^objection\s+(?:to|against|of)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in objection_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"object {target}" if target else text
+
+    response_patterns = [
+        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
+        r"(?:a\s+|the\s+)?response\s+(?:to|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
+        r"responses\s+(?:to|for|on)\s+(?:the\s+)?(.+)$",
+        r"^response\s+(?:to|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in response_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"respond {target}" if target else text
+
+    comment_patterns = [
+        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"(?:a\s+|the\s+)?comment\s+(?:on|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
+        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"comments\s+(?:on|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
+        r"^comment\s+(?:on|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
+        r"^comments\s+(?:on|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in comment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"comment {target}" if target else text
 
     return text
 
