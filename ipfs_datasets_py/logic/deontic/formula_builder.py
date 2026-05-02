@@ -184,6 +184,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_notification_disclosure_light_verb_action(action_text)
     action_text = _normalize_recommendation_referral_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
+    action_text = _normalize_deletion_erasure_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -3753,6 +3754,36 @@ def _normalize_assessment_imposition_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"impose {target}" if target else text
+
+    return text
+
+
+def _normalize_deletion_erasure_light_verb_action(action_text: str) -> str:
+    """Project deletion/erasure nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    deletion_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?deletion\s+of\s+(.+)$",
+        r"^deletion\s+of\s+(.+)$",
+    ]
+    for pattern in deletion_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"delete {target}" if target else text
+
+    erasure_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:an?\s+|the\s+)?erasure\s+of\s+(.+)$",
+        r"^erasure\s+of\s+(.+)$",
+    ]
+    for pattern in erasure_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"erase {target}" if target else text
 
     return text
 
