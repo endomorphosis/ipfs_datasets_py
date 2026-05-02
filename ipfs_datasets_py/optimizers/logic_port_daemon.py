@@ -87,6 +87,13 @@ TYPESCRIPT_PREFLIGHT_ERROR_CODES = {
     "TS2314",
     "TS2322",
 }
+TYPESCRIPT_QUALITY_ERROR_CODES = TYPESCRIPT_PREFLIGHT_ERROR_CODES | {
+    "TS2339",
+    "TS2345",
+    "TS2365",
+    "TS7006",
+}
+
 
 ALLOWED_WRITE_PREFIXES = (
     "src/lib/logic/",
@@ -593,8 +600,6 @@ def _compact_message(value: Any, *, limit: int = 600) -> str:
 
 def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
     explicit = str(artifact.get("failure_kind") or "")
-    if explicit:
-        return explicit
     errors = " ".join(str(error) for error in artifact.get("errors", []) if error)
     validation = artifact.get("validation_results", [])
     validation_text = errors
@@ -603,6 +608,10 @@ def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
             if isinstance(item, dict):
                 validation_text += " " + str(item.get("stdout", "")) + " " + str(item.get("stderr", ""))
     lower = validation_text.lower()
+    if _has_typescript_quality_diagnostics(validation_text):
+        return "typescript_quality"
+    if explicit:
+        return explicit
     if "cloudflare" in lower or "403 forbidden" in lower or "plugins/featured" in lower or "analytics-events" in lower:
         return "provider_http_403"
     if "timed out" in lower:
@@ -613,6 +622,37 @@ def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
         return "validation"
     return "invalid_no_change"
 
+
+def _has_typescript_quality_diagnostics(text: str) -> bool:
+    if not text:
+        return False
+    return any(code in text for code in TYPESCRIPT_QUALITY_ERROR_CODES)
+
+
+def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[str, Any]:
+    total = 0
+    consecutive = 0
+    by_task: Dict[str, int] = {}
+    for result, artifact in rows:
+        if result.get("valid") or artifact.get("changed_files"):
+            continue
+        if _classify_failure_kind(artifact) != "typescript_quality":
+            continue
+        total += 1
+        task = str(artifact.get("target_task") or "")
+        if task:
+            by_task[task] = by_task.get(task, 0) + 1
+    for result, artifact in reversed(rows):
+        if result.get("valid"):
+            break
+        if artifact.get("changed_files") or _classify_failure_kind(artifact) != "typescript_quality":
+            break
+        consecutive += 1
+    return {
+        "total": total,
+        "consecutive": consecutive,
+        "by_task": by_task,
+    }
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
     return any(path.startswith(RUNTIME_LOGIC_PREFIX) and not path.startswith(PARITY_FIXTURE_PREFIX) for path in paths)
@@ -814,6 +854,8 @@ Critical correction for attempt {attempt}:
             return artifact
 
         preflight_errors = self._preflight_artifact(artifact, selected_task=self._current_plan_task())
+        if artifact.files:
+            preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
         if preflight_errors:
             artifact.errors.extend(preflight_errors)
             artifact.failure_kind = "preflight"
@@ -834,6 +876,7 @@ Critical correction for attempt {attempt}:
                     repaired = self._repair_file_edits_after_validation(artifact, context=context)
                     if repaired.files:
                         preflight_errors = self._preflight_artifact(repaired, selected_task=self._current_plan_task())
+                        preflight_errors.extend(self._typescript_replacement_preflight_errors(repaired.files))
                         if preflight_errors:
                             artifact.errors.extend(preflight_errors)
                             artifact.failure_kind = "validation_repair_preflight"
@@ -854,10 +897,12 @@ Critical correction for attempt {attempt}:
                             artifact.failure_kind = ""
                             artifact.errors = []
                             return artifact
-                        artifact.failure_kind = "validation_repair"
+                        artifact.failure_kind = _classify_failure_kind(artifact.to_dict()) if _classify_failure_kind(artifact.to_dict()) == "typescript_quality" else "validation_repair"
                     artifact.errors.append("File edits failed validation and were rolled back.")
                     if not artifact.failure_kind:
-                        artifact.failure_kind = "validation"
+                        artifact.failure_kind = _classify_failure_kind(artifact.to_dict())
+                        if artifact.failure_kind == "invalid_no_change":
+                            artifact.failure_kind = "validation"
             else:
                 artifact.changed_files = changed_files
             return artifact
@@ -1525,6 +1570,7 @@ Critical correction for attempt {attempt}:
         current_task = self._current_plan_task()
         tasks = self._current_plan_tasks()
         current_task_counts = _current_task_failure_counts(rows, current_task.label) if current_task else {}
+        typescript_quality_failures = _typescript_quality_failure_counts(work_rows)
         blocked_backlog = self._blocked_task_backlog(tasks, rows)
         status_counts: Dict[str, int] = {}
         for task in tasks:
@@ -1550,6 +1596,7 @@ Critical correction for attempt {attempt}:
             "blocked_task_strategy": self.daemon_config.blocked_task_strategy,
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
+            "typescript_quality_failures": typescript_quality_failures,
             "latest_round": {
                 "valid": bool(latest_result.get("valid")),
                 "score": latest_result.get("score"),
@@ -1625,7 +1672,7 @@ Critical correction for attempt {attempt}:
                 "impact": artifact.get("impact", ""),
                 "valid_changed_files": artifact.get("changed_files", []),
                 "errors": artifact.get("errors", [])[:5] if isinstance(artifact.get("errors", []), list) else artifact.get("errors", []),
-                "failure_kind": artifact.get("failure_kind", ""),
+                "failure_kind": _classify_failure_kind(artifact),
                 "validation_passed": artifact.get("validation_passed", False),
             }
         payload = {
@@ -1822,6 +1869,7 @@ Critical correction for attempt {attempt}:
                     "total_failures_since_success": summary.get("total_since_success", 0),
                     "failure_kinds_since_success": summary.get("by_kind_since_success", {}),
                     "latest_failure": summary.get("latest_failure", {}),
+                    "failure_budget_exhausted": self._task_failure_budget_exhausted(task, rows),
                 }
             )
             if len(backlog) >= limit:
@@ -1843,6 +1891,8 @@ Critical correction for attempt {attempt}:
             task_label = str(item.get("task", "")).replace("`", "'")
             lines.append(f"- `{task_label}`")
             lines.append(f"  - failures since success: `{item.get('total_failures_since_success', 0)}`")
+            if item.get("failure_budget_exhausted"):
+                lines.append("  - autonomous revisit: `skipped; task failure budget exhausted`")
             kinds = item.get("failure_kinds_since_success", {})
             if kinds:
                 lines.append(f"  - failure kinds: `{json.dumps(kinds, sort_keys=True)}`")
@@ -1864,23 +1914,38 @@ Critical correction for attempt {attempt}:
         return None
 
     def _select_blocked_plan_task(self, tasks: Sequence[PlanTask]) -> Optional[PlanTask]:
-        blocked = [
-            (index, task)
-            for index, task in enumerate(tasks)
-            if task.status == "blocked" and not self._blocked_task_dependency_reason(task, tasks)
-        ]
+        rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+        if self.daemon_config.result_log_path is not None:
+            rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        blocked = []
+        for index, task in enumerate(tasks):
+            if task.status != "blocked":
+                continue
+            if self._blocked_task_dependency_reason(task, tasks):
+                continue
+            if self._task_failure_budget_exhausted(task, rows):
+                continue
+            blocked.append((index, task))
         if not blocked:
             return None
         strategy = self.daemon_config.blocked_task_strategy
         if strategy == "plan-order" or self.daemon_config.result_log_path is None:
             return blocked[0][1]
 
-        rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         if strategy == "fewest-failures":
             return min(blocked, key=lambda item: (_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
         if strategy == "most-failures":
             return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
         return blocked[0][1]
+
+    def _task_failure_budget_exhausted(
+        self,
+        task: PlanTask,
+        rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
+    ) -> bool:
+        if self.daemon_config.max_task_total_failure_rounds <= 0:
+            return False
+        return _recent_total_failure_count(rows, task.label) >= self.daemon_config.max_task_total_failure_rounds
 
     def _blocked_task_dependency_reason(self, task: PlanTask, tasks: Sequence[PlanTask]) -> str:
         title = task.title.lower()
@@ -2013,6 +2078,8 @@ Critical correction for attempt {attempt}:
                 task_label = str(item.get("task", "")).replace("`", "'")
                 lines.append(f"- `{task_label}`")
                 lines.append(f"  - Failures since success: `{item.get('total_failures_since_success', 0)}`")
+                if item.get("failure_budget_exhausted"):
+                    lines.append("  - Autonomous revisit: `skipped; task failure budget exhausted`")
                 if kinds:
                     lines.append(f"  - Failure kinds: `{json.dumps(kinds, sort_keys=True)}`")
                 if latest_failure.get("failure_kind"):

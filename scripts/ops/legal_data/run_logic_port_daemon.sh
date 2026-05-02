@@ -249,6 +249,10 @@ TYPESCRIPT_QUALITY_CODES = (
     "TS1434",
     "TS2314",
     "TS2322",
+    "TS2339",
+    "TS2345",
+    "TS2365",
+    "TS7006",
 )
 
 
@@ -274,7 +278,7 @@ def is_rollback_quality_failure(result: dict, artifact: dict) -> bool:
     if artifact.get("changed_files"):
         return False
     failure_kind = str(artifact.get("failure_kind") or "")
-    if failure_kind in {"apply_check", "validation", "validation_repair", "file_repair_validation", "validation_repair_preflight", "preflight"}:
+    if failure_kind in {"apply_check", "validation", "validation_repair", "file_repair_validation", "validation_repair_preflight", "preflight", "typescript_quality"}:
         return True
     return is_typescript_quality_failure(result, artifact)
 

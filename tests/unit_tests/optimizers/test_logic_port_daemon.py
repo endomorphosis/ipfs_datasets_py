@@ -2036,3 +2036,142 @@ def test_revisit_blocked_fewest_failures_rotates_equal_failure_tasks(tmp_path):
 
     assert selected is not None
     assert selected.title == "First blocked task"
+
+def test_revisit_blocked_skips_tasks_after_failure_budget(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Exhausted blocked task\n- [!] Fresh blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Exhausted blocked task",
+                "summary": f"failed {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(6)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+        max_task_total_failure_rounds=6,
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+
+    assert selected is not None
+    assert selected.title == "Fresh blocked task"
+
+
+def test_revisit_blocked_stops_when_all_blocked_tasks_exhaust_failure_budget(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [x] Complete task\n- [!] Exhausted blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-2: Exhausted blocked task",
+                "summary": f"failed {index}",
+                "failure_kind": "validation",
+            },
+        }
+        for index in range(6)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        replenish_plan_when_empty=False,
+        max_task_total_failure_rounds=6,
+    )
+    optimizer = LogicPortDaemonOptimizer(config)
+
+    assert optimizer._current_plan_task() is None
+    result = optimizer._no_eligible_task_result()
+    assert result is not None
+    assert result["artifact"]["failure_kind"] == "no_eligible_tasks"
+    backlog = optimizer._blocked_task_backlog(optimizer._current_plan_tasks(), logic_port_daemon._read_daemon_results(log_path))
+    assert backlog[0]["failure_budget_exhausted"] is True
+
+def test_progress_summary_classifies_typescript_quality_failures(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    progress_path = tmp_path / "daemon" / "progress.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port DCEC wrapper\n", encoding="utf-8")
+    status.write_text("| cec | partial |\n", encoding="utf-8")
+    latest = {
+        "valid": False,
+        "score": 0.0,
+        "artifact": {
+            "target_task": "Task checkbox-1: Port DCEC wrapper",
+            "summary": "bad repair",
+            "failure_kind": "validation_repair",
+            "changed_files": [],
+            "errors": ["File edits failed validation and were rolled back."],
+            "validation_results": [
+                {
+                    "command": ["npx", "tsc", "--noEmit"],
+                    "returncode": 2,
+                    "stdout": (
+                        "src/lib/logic/cec/dcecWrapper.ts(8,35): error TS2314: Generic type 'Record' requires 2 type argument(s).\n"
+                        "src/lib/logic/cec/dcecWrapper.ts(91,43): error TS2345: Argument of type 'DcecFormula' is not assignable.\n"
+                    ),
+                    "stderr": "",
+                }
+            ],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        result_log_path=log_path,
+        progress_path=progress_path,
+        task_board_doc=plan,
+    )
+
+    LogicPortDaemonOptimizer(config)._write_progress_summary(cycle_results=[latest], completed_cycles=1)
+
+    progress = json.loads(progress_path.read_text(encoding="utf-8"))
+    assert progress["failure_kind_counts"]["typescript_quality"] == 1
+    assert progress["latest_round"]["failure_kind"] == "typescript_quality"
+    assert progress["current_task_failure_counts"]["by_kind_since_success"]["typescript_quality"] == 1
+    assert progress["typescript_quality_failures"]["consecutive"] == 1
