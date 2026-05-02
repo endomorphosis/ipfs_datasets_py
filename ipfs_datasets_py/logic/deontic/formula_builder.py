@@ -195,6 +195,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_enforcement_remedy_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
+    action_text = _normalize_attestation_notarization_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4151,6 +4152,42 @@ def _normalize_ratification_confirmation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"confirm {target}" if target else text
+
+    return text
+
+
+def _normalize_attestation_notarization_light_verb_action(action_text: str) -> str:
+    """Project attestation and notarization nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    attestation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|issue|issues|issued|issuing|provide|provides|provided|providing|file|files|filed|filing)\s+"
+        r"(?:an?\s+|the\s+)?attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|issue|issues|issued|issuing|provide|provides|provided|providing|file|files|filed|filing)\s+"
+        r"attestations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in attestation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"attest {target}" if target else text
+
+    notarization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|perform|performs|performed|performing|provide|provides|provided|providing|file|files|filed|filing)\s+"
+        r"(?:a\s+|the\s+)?notarization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|enter|enters|entered|entering|perform|performs|performed|performing|provide|provides|provided|providing|file|files|filed|filing)\s+"
+        r"notarizations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^notarization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in notarization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"notarize {target}" if target else text
 
     return text
 
