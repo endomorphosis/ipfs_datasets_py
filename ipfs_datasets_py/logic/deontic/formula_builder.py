@@ -148,6 +148,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
+    action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -232,6 +233,37 @@ def _normalize_inspection_light_verb_action(action_text: str) -> str:
             r"^(?:carry|carries|carried|carrying)\s+out\s+"
             r"(?:a\s+|an\s+|the\s+)?inspection\s+of\s+(.+)$",
             r"inspect \1",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
+        if normalized != text:
+            return normalized
+    return text
+
+
+def _normalize_sampling_light_verb_action(action_text: str) -> str:
+    """Collapse sampling light-verb phrases into the operative sample act."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:take|takes|took|taken|taking|collect|collects|collected|collecting|obtain|obtains|obtained|obtaining)\s+"
+            r"(?:a\s+|an\s+|the\s+)?sample\s+of\s+(.+)$",
+            r"sample \1",
+        ),
+        (
+            r"^(?:take|takes|took|taken|taking|collect|collects|collected|collecting|obtain|obtains|obtained|obtaining)\s+"
+            r"(?:a\s+|an\s+|the\s+)?sample\s+from\s+(.+)$",
+            r"sample \1",
+        ),
+        (
+            r"^(?:take|takes|took|taken|taking|collect|collects|collected|collecting|obtain|obtains|obtained|obtaining)\s+"
+            r"samples\s+(?:of|from)\s+(.+)$",
+            r"sample \1",
         ),
     ]
     for pattern, replacement in patterns:
