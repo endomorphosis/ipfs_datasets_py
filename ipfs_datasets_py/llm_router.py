@@ -3128,13 +3128,14 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
         class _AccelerateLLMProvider:
             def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
                 # AccelerateManager routes through: ipfs_accelerate_py → p2p_task_queue
-                # (copilot_cli/codex_cli/hf) → http peers.  Any of those may succeed.
+                # (codex_cli/copilot_cli/hf) → http peers.  Any of those may succeed.
+                # Do NOT pass task_type here — AccelerateManager auto-detects llm.generate
+                # vs text-generation based on whether model_name is an LLM provider name.
                 effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
                 payload = {"prompt": prompt, **kwargs}
                 result = manager.run_inference(  # type: ignore[union-attr]
                     effective_model,
                     payload,
-                    task_type="text-generation",
                 )
                 text = _extract_generated_text(result)
                 if isinstance(text, str) and text:

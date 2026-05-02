@@ -57,6 +57,9 @@ logger = logging.getLogger(__name__)
 # They make AccelerateManager work out-of-the-box without any manual env config.
 # ---------------------------------------------------------------------------
 _ENV_DEFAULTS: Dict[str, str] = {
+    # Prevent auto-installer from triggering git clones at import time.
+    # llm_router imports this module; a blocking git fetch would stall callers.
+    "IPFS_DATASETS_AUTO_INSTALL": "0",
     # Use the local task worker (copilot_cli by default) for llm.generate tasks.
     "IPFS_ACCELERATE_PY_TASK_WORKER_ENABLE_COPILOT_CLI": "1",
     "IPFS_DATASETS_PY_TASK_WORKER_ENABLE_COPILOT_CLI": "1",
@@ -801,8 +804,10 @@ except Exception as e:
 
         errors: List[str] = []
 
-        # 1. ipfs_accelerate_py HF inference
-        if self._accelerate_available and _accel_llm_router is not None:
+        # 1. ipfs_accelerate_py HF inference — only for real HF model IDs, not provider names.
+        # LLM provider names (codex_cli, copilot_cli, etc.) must go via p2p_task_queue so the
+        # worker uses its own credentials; sending them to the HF backend causes gpt2 fallback.
+        if self._accelerate_available and _accel_llm_router is not None and model_name.lower() not in _LLM_PROVIDER_NAMES:
             try:
                 result = self._try_ipfs_accelerate(model_name, prompt, **kwargs)
                 if result:
