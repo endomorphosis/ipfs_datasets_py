@@ -192,6 +192,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_encryption_decryption_light_verb_action(action_text)
     action_text = _normalize_sealing_unsealing_light_verb_action(action_text)
     action_text = _normalize_expungement_destruction_light_verb_action(action_text)
+    action_text = _normalize_enforcement_remedy_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4023,6 +4024,59 @@ def _normalize_expungement_destruction_light_verb_action(action_text: str) -> st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"destroy {target}" if target else text
+
+    return text
+
+
+def _normalize_enforcement_remedy_light_verb_action(action_text: str) -> str:
+    """Project enforcement remedy nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    remedy_patterns = [
+        (
+            r"^(?:file|files|filed|filing|record|records|recorded|recording|place|places|placed|placing|impose|imposes|imposed|imposing|enter|enters|entered|entering)\s+"
+            r"(?:a\s+|the\s+)?lien\s+(?:on|against|upon)\s+(?:the\s+)?(.+)$",
+            "lien",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|the\s+)?lien\s+(?:on|against|upon)\s+(?:the\s+)?(.+)$",
+            "lien",
+        ),
+        (
+            r"^(?:impose|imposes|imposed|imposing|make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|order|orders|ordered|ordering)\s+"
+            r"(?:a\s+|the\s+)?levy\s+(?:on|against|upon)\s+(?:the\s+)?(.+)$",
+            "levy",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|order|orders|ordered|ordering|declare|declares|declared|declaring|enter|enters|entered|entering)\s+"
+            r"(?:a\s+|the\s+)?forfeiture\s+(?:of|on)\s+(?:the\s+)?(.+)$",
+            "forfeit",
+        ),
+        (
+            r"^(?:order|orders|ordered|ordering|conduct|conducts|conducted|conducting|make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+            r"(?:a\s+|the\s+)?seizure\s+(?:of|from)\s+(?:the\s+)?(.+)$",
+            "seize",
+        ),
+        (
+            r"^(?:order|orders|ordered|ordering|conduct|conducts|conducted|conducting|make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out)\s+"
+            r"(?:an?\s+|the\s+)?impoundment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "impound",
+        ),
+        (r"^(?:lien)\s+(?:on|against|upon)\s+(?:the\s+)?(.+)$", "lien"),
+        (r"^(?:levy)\s+(?:on|against|upon)\s+(?:the\s+)?(.+)$", "levy"),
+        (r"^forfeiture\s+(?:of|on)\s+(?:the\s+)?(.+)$", "forfeit"),
+        (r"^seizure\s+(?:of|from)\s+(?:the\s+)?(.+)$", "seize"),
+        (r"^impoundment\s+(?:of|for)\s+(?:the\s+)?(.+)$", "impound"),
+    ]
+    for pattern, verb in remedy_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 
