@@ -182,6 +182,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_instrument_status_light_verb_action(action_text)
     action_text = _normalize_abatement_remediation_light_verb_action(action_text)
     action_text = _normalize_notification_disclosure_light_verb_action(action_text)
+    action_text = _normalize_recommendation_referral_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -350,6 +351,43 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering)[ ]+"
             r"disclosures[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
             "disclose",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_recommendation_referral_light_verb_action(action_text: str) -> str:
+    """Collapse recommendation and referral nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|issue|issues|issued|issuing|prepare|prepares|prepared|preparing|deliver|delivers|delivered|delivering)\s+"
+            r"(?:a\s+|an\s+|the\s+)?recommendation\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "recommend",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|issue|issues|issued|issuing|prepare|prepares|prepared|preparing|deliver|delivers|delivered|delivering)\s+"
+            r"recommendations\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "recommend",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|issue|issues|issued|issuing|prepare|prepares|prepared|preparing|deliver|delivers|delivered|delivering)\s+"
+            r"(?:a\s+|an\s+|the\s+)?referral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "refer",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|issue|issues|issued|issuing|prepare|prepares|prepared|preparing|deliver|delivers|delivered|delivering)\s+"
+            r"referrals\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "refer",
         ),
     ]
     for pattern, verb in patterns:
