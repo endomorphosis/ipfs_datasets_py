@@ -96,6 +96,27 @@ def test_supervisor_revalidates_agentic_reason_after_stopping_child():
     )
 
 
+def test_supervisor_stops_competing_automation_before_and_during_run():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    function_start = script.index("terminate_competing_daemons() {")
+    function_end = script.index("\nstop_child() {", function_start)
+    function_body = script[function_start:function_end]
+
+    assert 'SUPERVISOR_STOP_COMPETING_DAEMONS" != "1"' in function_body
+    assert "tmux kill-session" in function_body
+    assert "logic-port-daemon" in function_body
+    assert "ppd/daemon/ppd_daemon.py" in function_body
+    assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
+    assert script.index("terminate_matching_legal_parser_daemons") < script.index(
+        "terminate_competing_daemons\n\nwhile true; do"
+    )
+    loop_start = script.index("while kill -0 \"$child_pid\"")
+    assert loop_start < script.index("terminate_competing_daemons", loop_start)
+
+
 def test_parse_cycle_proposal_accepts_strict_json():
     raw = json.dumps(
         {

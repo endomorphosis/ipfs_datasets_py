@@ -18,6 +18,7 @@ SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
 WATCHDOG_STARTUP_GRACE_SECONDS="${WATCHDOG_STARTUP_GRACE_SECONDS:-120}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
+SUPERVISOR_STOP_COMPETING_DAEMONS="${SUPERVISOR_STOP_COMPETING_DAEMONS:-1}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
@@ -88,6 +89,7 @@ write_supervisor_status() {
   "watchdog_stale_after_seconds": $WATCHDOG_STALE_AFTER_SECONDS,
   "watchdog_startup_grace_seconds": $WATCHDOG_STARTUP_GRACE_SECONDS,
   "stop_grace_seconds": $STOP_GRACE_SECONDS,
+  "stop_competing_daemons": $(json_bool "$SUPERVISOR_STOP_COMPETING_DAEMONS"),
   "run_id": "$run_id",
   "log_path": "$log_path",
   "current_status_path": "$CURRENT_STATUS_PATH",
@@ -727,6 +729,33 @@ terminate_matching_legal_parser_daemons() {
   done < <(ps -eo pid=,args=)
 }
 
+terminate_competing_daemons() {
+  local pid=""
+  local args=""
+  if [[ "$SUPERVISOR_STOP_COMPETING_DAEMONS" != "1" ]]; then
+    return 0
+  fi
+  if command -v tmux >/dev/null 2>&1; then
+    while IFS=: read -r session _rest; do
+      if [[ "$session" == "logic-port-daemon" ]]; then
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing tmux session $session" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+        tmux kill-session -t "$session" 2>/dev/null || true
+      fi
+    done < <(tmux ls 2>/dev/null || true)
+  fi
+  while read -r pid args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]] || [[ "$pid" == "${child_pid:-}" ]]; then
+      continue
+    fi
+    case "$args" in
+      *"ppd/daemon/ppd_daemon.py"*|*"ipfs_datasets_py.optimizers.logic_port_daemon"*|*"run_logic_port_daemon.sh"*|*"ensure_logic_port_daemon.sh"*)
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing automation $pid: $args" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+        terminate_pid_tree "$pid"
+        ;;
+    esac
+  done < <(ps -eo pid=,args=)
+}
+
 stop_child() {
   local stopped_pid="${child_pid:-}"
   if [[ -n "${child_pid:-}" ]] && kill -0 "$child_pid" 2>/dev/null; then
@@ -756,6 +785,7 @@ trap 'cleanup; exit 143' TERM INT
 trap 'cleanup' EXIT
 
 terminate_matching_legal_parser_daemons
+terminate_competing_daemons
 
 while true; do
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -792,6 +822,7 @@ while true; do
   printf '%s\n' "$child_pid" > "$REPO_ROOT/$CHILD_PID_PATH"
 
   while kill -0 "$child_pid" 2>/dev/null; do
+    terminate_competing_daemons
     write_supervisor_status "running" "$run_id" "$log_path" null
     if [[ $((SECONDS - child_started_at)) -ge "$WATCHDOG_STARTUP_GRACE_SECONDS" ]] && heartbeat_is_stale; then
       last_recycle_reason="stale_heartbeat"
