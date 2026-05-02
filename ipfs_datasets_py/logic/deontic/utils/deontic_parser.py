@@ -163,6 +163,8 @@ _MODAL_RE = re.compile(
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
         is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|
         is\s+directed\s+to|are\s+directed\s+to|
+        is\s+instructed\s+to|are\s+instructed\s+to|
+        is\s+ordered\s+to|are\s+ordered\s+to|
         is\s+designated\s+to|are\s+designated\s+to|
         is\s+appointed\s+to|are\s+appointed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
@@ -4540,6 +4542,7 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
     elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
     for element in elements:
         _normalize_authorized_and_directed_obligation(element)
+        _normalize_instruction_order_obligation(element)
         _normalize_express_duty_obligation(element)
         _normalize_authority_grant_permission(element)
         _clear_standard_substantive_exception_active_repair(element)
@@ -4596,6 +4599,45 @@ def _normalize_authorized_and_directed_obligation(element: Dict[str, Any]) -> No
     if authority_hint not in hints:
         hints.append(authority_hint)
     action_hint = {"subject": actor, "predicate": "hasAuthorityFor", "object": action}
+    if action_hint not in hints:
+        hints.append(action_hint)
+    element["kg_relationship_hints"] = hints
+
+
+def _normalize_instruction_order_obligation(element: Dict[str, Any]) -> None:
+    """Classify instructed-to and ordered-to directive clauses as duties."""
+
+    modal = str(element.get("modal") or "").strip().lower()
+    if not re.search(
+        r"\b(?:is|are)\s+(?:instructed|ordered)\s+to\b",
+        modal,
+        re.IGNORECASE,
+    ):
+        return
+    actor = _parser_slot_first_text(element.get("subject"))
+    action = _parser_slot_first_text(element.get("action"))
+    if not actor or not action:
+        return
+
+    element["norm_type"] = "obligation"
+    element["deontic_operator"] = "O"
+    element["modality"] = "O"
+
+    formal_terms = dict(element.get("formal_terms") or {})
+    formal_terms["norm_predicate"] = "Obligation"
+    element["formal_terms"] = formal_terms
+
+    legal_frame = dict(element.get("legal_frame") or {})
+    legal_frame["category"] = "directive_duty"
+    legal_frame["norm_type"] = "obligation"
+    legal_frame["deontic_operator"] = "O"
+    element["legal_frame"] = legal_frame
+
+    hints = list(element.get("kg_relationship_hints") or [])
+    duty_hint = {"subject": "law", "predicate": "imposesDutyOn", "object": actor}
+    if duty_hint not in hints:
+        hints.append(duty_hint)
+    action_hint = {"subject": actor, "predicate": "performsAction", "object": action}
     if action_hint not in hints:
         hints.append(action_hint)
     element["kg_relationship_hints"] = hints
