@@ -173,6 +173,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_audit_examination_light_verb_action(action_text)
     action_text = _normalize_adjudication_hearing_light_verb_action(action_text)
     action_text = _normalize_mediation_arbitration_light_verb_action(action_text)
+    action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
@@ -5917,6 +5918,55 @@ def _normalize_adjudication_hearing_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"hear {target}" if target else text
+
+    return text
+
+
+def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> str:
+    """Project dispute-resolution nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    settlement_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|execute|executes|executed|executing|enter|enters|entered|entering|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"(?:a\s+|the\s+)?settlement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|execute|executes|executed|executing|enter|enters|entered|entering|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"settlements\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^settlement\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in settlement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"settle {target}" if target else text
+
+    conciliation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"(?:a\s+|the\s+)?conciliation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"conciliations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^conciliation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in conciliation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"conciliate {target}" if target else text
+
+    negotiation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"(?:a\s+|the\s+)?negotiation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|facilitate|facilitates|facilitated|facilitating)\s+"
+        r"negotiations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+        r"^negotiation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in negotiation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"negotiate {target}" if target else text
 
     return text
 
