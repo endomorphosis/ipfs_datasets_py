@@ -155,6 +155,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_referral_remand_light_verb_action(action_text)
     action_text = _normalize_waiver_extension_light_verb_action(action_text)
+    action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -5081,6 +5082,42 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"extend {target}" if target else text
+
+    return text
+
+
+def _normalize_registration_enrollment_light_verb_action(action_text: str) -> str:
+    """Project registration and enrollment administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    registration_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+        r"(?:an?\s+|the\s+)?registration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+        r"registrations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^registration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in registration_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"register {target}" if target else text
+
+    enrollment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+        r"(?:an?\s+|the\s+)?enrollment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+        r"enrollments\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^enrollment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in enrollment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"enroll {target}" if target else text
 
     return text
 
