@@ -204,6 +204,19 @@ LEGAL_PARSER_TARGETS = [
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
 ]
 
+dirty_status_errors: list[dict] = []
+
+
+def paths_from_git_status_porcelain(stdout: str) -> list[str]:
+    paths: list[str] = []
+    for line in stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in paths:
+            paths.append(path)
+    return paths
+
 
 def dirty_legal_parser_targets() -> list[str]:
     if not dirty_target_detection:
@@ -218,12 +231,16 @@ def dirty_legal_parser_targets() -> list[str]:
         )
     except Exception:
         return []
-    dirty: list[str] = []
-    for line in result.stdout.splitlines():
-        path = line[3:].strip()
-        if path:
-            dirty.append(path)
-    return dirty
+    if result.returncode != 0:
+        dirty_status_errors.append(
+            {
+                "scope": "legal_parser_targets",
+                "returncode": result.returncode,
+                "stderr_tail": result.stderr[-1000:],
+            }
+        )
+        return []
+    return paths_from_git_status_porcelain(result.stdout)
 
 
 def git_dirty_files(paths: list[str]) -> list[str]:
@@ -239,12 +256,16 @@ def git_dirty_files(paths: list[str]) -> list[str]:
         )
     except Exception:
         return []
-    dirty: list[str] = []
-    for line in result.stdout.splitlines():
-        path = line[3:].strip()
-        if path and path not in dirty:
-            dirty.append(path)
-    return dirty
+    if result.returncode != 0:
+        dirty_status_errors.append(
+            {
+                "scope": "dirty_rejection_files",
+                "returncode": result.returncode,
+                "stderr_tail": result.stderr[-1000:],
+            }
+        )
+        return []
+    return paths_from_git_status_porcelain(result.stdout)
 
 
 def dirty_rejection_files(rejections: list[dict]) -> list[str]:
@@ -421,6 +442,8 @@ state.update(
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
         "dirty_legal_parser_targets": dirty_targets,
+        "dirty_target_detection_valid": not dirty_status_errors,
+        "dirty_target_detection_errors": dirty_status_errors,
         "dirty_legal_parser_targets_deferred": dirty_targets_deferred,
         "dirty_legal_parser_targets_defer_phase": current_phase if dirty_targets_deferred else "",
         "dirty_touched_file_rejections": len(dirty_preexisting_rejections),

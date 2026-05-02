@@ -1367,6 +1367,7 @@ class LegalParserOptimizerDaemon:
         previous_phase_started_at = str(previous_payload.get("phase_started_at") or "")
         previous_phase_key = str(previous_payload.get("phase_key") or "")
         phase_started_at = previous_phase_started_at if previous_phase_key == phase_key else now
+        dirty_target_status = self._dirty_legal_parser_target_status()
         payload = {
             "status": status,
             "phase": phase,
@@ -1386,7 +1387,9 @@ class LegalParserOptimizerDaemon:
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
-            "dirty_legal_parser_targets": self._dirty_legal_parser_targets(),
+            "dirty_legal_parser_targets": dirty_target_status["paths"],
+            "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
+            "dirty_legal_parser_targets_error": dirty_target_status["error"],
             **{key: _json_safe(value) for key, value in details.items()},
         }
         with self._status_lock:
@@ -2223,6 +2226,7 @@ class LegalParserOptimizerDaemon:
                     )
             else:
                 break
+        dirty_target_status = self._dirty_legal_parser_target_status()
         return {
             "updated_at": _utc_now(),
             "total_cycles": len(cycles),
@@ -2259,7 +2263,9 @@ class LegalParserOptimizerDaemon:
                 "stall accounting even when parity_score is unchanged"
             ),
             "git_retained_work": self._git_retained_work_snapshot(),
-            "dirty_legal_parser_targets": self._dirty_legal_parser_targets(),
+            "dirty_legal_parser_targets": dirty_target_status["paths"],
+            "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
+            "dirty_legal_parser_targets_error": dirty_target_status["error"],
             "run": {
                 "run_id": self.run_id,
                 "started_at": self.run_started_at,
@@ -2380,6 +2386,18 @@ class LegalParserOptimizerDaemon:
         if dirty_parser_targets:
             lines.extend(["", "Dirty legal-parser recovery targets:"])
             lines.extend(f"- `{path}`" for path in dirty_parser_targets)
+        if progress.get("dirty_legal_parser_targets_valid") is False:
+            error = progress.get("dirty_legal_parser_targets_error") or {}
+            lines.extend(
+                [
+                    "",
+                    "Dirty legal-parser target detection failed:",
+                    f"- returncode: `{error.get('returncode')}`",
+                ]
+            )
+            stderr_tail = str(error.get("stderr_tail") or "").strip()
+            if stderr_tail:
+                lines.append(f"- stderr tail: `{stderr_tail}`")
         rollback_reasons = progress.get("rolled_back_reasons_since_meaningful_progress") or {}
         if rollback_reasons:
             lines.extend(["", "Rollback reasons since meaningful progress:"])
@@ -2522,24 +2540,41 @@ class LegalParserOptimizerDaemon:
                 cwd=self.config.repo_root,
                 timeout=30,
             )
-            if str(result.get("stdout") or "").strip():
-                dirty.append(rel_path)
+            status_paths = _paths_from_git_status_porcelain(str(result.get("stdout") or ""))
+            if status_paths:
+                dirty_path = status_paths[-1] if len(status_paths) == 1 else rel_path
+                if dirty_path not in dirty:
+                    dirty.append(dirty_path)
         return dirty
 
     def _dirty_legal_parser_targets(self) -> List[str]:
         """Return dirty files in the legal-parser target set tracked by recovery."""
+
+        return self._dirty_legal_parser_target_status()["paths"]
+
+    def _dirty_legal_parser_target_status(self) -> Dict[str, Any]:
+        """Return dirty legal-parser targets plus status-command health."""
 
         result = _run_command(
             ["git", "status", "--porcelain", "--", *LEGAL_PARSER_RECOVERY_TARGETS],
             cwd=self.config.repo_root,
             timeout=30,
         )
-        dirty: List[str] = []
-        for line in str(result.get("stdout") or "").splitlines():
-            path = line[3:].strip()
-            if path and path not in dirty:
-                dirty.append(path)
-        return dirty
+        if not result.get("valid"):
+            stderr = str(result.get("stderr") or "").strip()
+            return {
+                "valid": False,
+                "paths": [],
+                "error": {
+                    "returncode": result.get("returncode"),
+                    "stderr_tail": stderr[-1000:],
+                },
+            }
+        return {
+            "valid": True,
+            "paths": _paths_from_git_status_porcelain(str(result.get("stdout") or "")),
+            "error": {},
+        }
 
     def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:
         """Run fast structural checks before expensive tests or retention."""
@@ -2910,6 +2945,19 @@ def _run_command(
             "stderr": f"timeout after {timeout}s",
             "duration_seconds": round(time.time() - started, 3),
         }
+
+
+def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
+    """Return unique paths from plain ``git status --porcelain`` output."""
+
+    paths: List[str] = []
+    for line in stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in paths:
+            paths.append(path)
+    return paths
 
 
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:
