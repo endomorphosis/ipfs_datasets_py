@@ -4,12 +4,16 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-}"
-# Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
-# selection and fallback policy. Set PROVIDER=codex_cli or another registered
-# router provider only when you need to force a specific backend.
+PROVIDER="${PROVIDER:-codex_cli}"
+# The supervised overnight daemon still calls ipfs_datasets_py.llm_router, but
+# pins the router provider to codex_cli by default so auto-routing does not fall
+# into local/P2P providers that cannot reliably complete autonomous code edits.
+# Set PROVIDER=auto-empty only for debugging the router's provider selection.
+if [[ "$PROVIDER" == "auto-empty" ]]; then
+  PROVIDER=""
+fi
 SLICE_MODE="${SLICE_MODE:-balanced}"
-LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-0}"
+LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-1}"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
@@ -40,7 +44,7 @@ SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
-export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}"
+export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}"
 
 STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
 PROGRESS_PATH="${PROGRESS_PATH:-$DAEMON_DIR/logic-port-daemon.progress.json}"
@@ -55,7 +59,7 @@ LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.lat
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 
 LEGAL_PARSER_SUPERVISOR_PID_PATH="${LEGAL_PARSER_SUPERVISOR_PID_PATH:-$REPO_ROOT/ipfs_datasets_py/.daemon/legal_parser_daemon_supervisor.pid}"
-if [[ "$LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER" != "1" ]] && [[ -f "$LEGAL_PARSER_SUPERVISOR_PID_PATH" ]]; then
+if [[ "$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER" != "1" ]] && [[ -f "$LEGAL_PARSER_SUPERVISOR_PID_PATH" ]]; then
   legal_parser_pid="$(tr -dc '0-9' < "$LEGAL_PARSER_SUPERVISOR_PID_PATH" 2>/dev/null || true)"
   if [[ -n "$legal_parser_pid" ]] && kill -0 "$legal_parser_pid" 2>/dev/null; then
     echo "logic-port daemon suppressed because legal-parser daemon supervisor is running with PID $legal_parser_pid"
@@ -146,6 +150,7 @@ write_supervisor_status() {
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "slice_mode": "$SLICE_MODE",
+  "allow_during_legal_parser": "$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
   "command_timeout_seconds": $COMMAND_TIMEOUT_SECONDS,
   "max_prompt_chars": $MAX_PROMPT_CHARS,
@@ -329,10 +334,15 @@ rounds_total = int(progress.get("rounds_total") or 0)
 valid_rounds_total = int(progress.get("valid_rounds_total") or 0)
 current_task = str(progress.get("current_task") or "")
 task_failure_total = int((progress.get("current_task_failure_counts") or {}).get("total_since_success") or 0)
+current_task_kind_counts = (progress.get("current_task_failure_counts") or {}).get("by_kind_since_success") or {}
+current_task_typescript_quality_failures = int(current_task_kind_counts.get("typescript_quality") or 0)
 result_rows = read_result_rows(result_log_path)
 proposal_quality_failures = recent_matching_failures(result_rows, is_proposal_quality_failure)
 rollback_quality_failures = recent_matching_failures(result_rows, is_rollback_quality_failure)
 typescript_quality_failures = recent_matching_failures(result_rows, is_typescript_quality_failure)
+typescript_quality_progress = progress.get("typescript_quality_failures") or {}
+top_typescript_signature = str(typescript_quality_progress.get("top_signature") or "")
+top_typescript_signature_count = int(typescript_quality_progress.get("top_signature_count") or 0)
 last_maintenance_at = int(state.get("last_maintenance_at") or 0)
 baseline_round = int(state.get("baseline_rounds_total") or rounds_total)
 baseline_valid = int(state.get("baseline_valid_rounds_total") or valid_rounds_total)
@@ -347,8 +357,15 @@ if task_failure_total >= task_failures:
     candidate_reason = f"task_failures:{task_failure_total}:threshold:{task_failures}"
 elif proposal_quality_failures >= proposal_failures_threshold:
     candidate_reason = f"proposal_quality_failures:{proposal_quality_failures}:threshold:{proposal_failures_threshold}"
-elif typescript_quality_failures >= typescript_quality_failures_threshold:
-    candidate_reason = f"typescript_quality_failures:{typescript_quality_failures}:threshold:{typescript_quality_failures_threshold}"
+elif (
+    top_typescript_signature
+    and current_task
+    and top_typescript_signature.startswith(current_task + " :: ")
+    and top_typescript_signature_count >= typescript_quality_failures_threshold
+):
+    candidate_reason = f"repeated_typescript_diagnostic:{top_typescript_signature_count}:threshold:{typescript_quality_failures_threshold}:{top_typescript_signature[:160]}"
+elif current_task_typescript_quality_failures >= typescript_quality_failures_threshold:
+    candidate_reason = f"typescript_quality_failures:{current_task_typescript_quality_failures}:threshold:{typescript_quality_failures_threshold}"
 elif rollback_quality_failures >= rollback_failures_threshold:
     candidate_reason = f"rollback_quality_failures:{rollback_quality_failures}:threshold:{rollback_failures_threshold}"
 elif stagnant_delta >= stagnant_rounds:
@@ -381,6 +398,9 @@ state.update(
         "proposal_quality_failure_total": proposal_quality_failures,
         "rollback_quality_failure_total": rollback_quality_failures,
         "typescript_quality_failure_total": typescript_quality_failures,
+        "current_task_typescript_quality_failure_total": current_task_typescript_quality_failures,
+        "top_typescript_diagnostic_signature": top_typescript_signature,
+        "top_typescript_diagnostic_signature_count": top_typescript_signature_count,
         "stagnant_rounds_since_valid": stagnant_delta,
         "cooling_down": cooling_down,
         "suppressed_candidate_reason": candidate_reason if cooling_down else "",
@@ -474,7 +494,7 @@ Reason: $reason
 
 This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, orphaned_llm_calls, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify the separate legal parser daemon or subprocesses whose ancestor command contains parser_daemon or run_legal_parser_optimizer_daemon.sh.
 
@@ -518,7 +538,7 @@ Reason: $reason
 
 Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
 
-Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
 Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
 

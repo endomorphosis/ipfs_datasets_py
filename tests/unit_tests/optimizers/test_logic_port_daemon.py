@@ -2020,6 +2020,8 @@ def test_generate_retries_file_replacement_after_typescript_replacement_prefligh
     assert len(router.calls) == 2
     assert "TypeScript replacement preflight" in router.calls[1]["prompt"]
     assert "typescript_diagnostic_context=" in router.calls[1]["prompt"]
+    assert "Record<string, unknown>" in router.calls[0]["prompt"]
+    assert "Promise<ResultType>" in router.calls[1]["prompt"]
     assert "> 1: export const value = ;" in router.calls[1]["prompt"]
     assert target.read_text(encoding="utf-8") == 'export const value = "new";\n'
 
@@ -2389,3 +2391,5 @@ def test_progress_summary_classifies_typescript_quality_failures(tmp_path):
     assert progress["latest_round"]["failure_kind"] == "typescript_quality"
     assert progress["current_task_failure_counts"]["by_kind_since_success"]["typescript_quality"] == 1
     assert progress["typescript_quality_failures"]["consecutive"] == 1
+    assert progress["typescript_quality_failures"]["top_signature_count"] == 1
+    assert "TS2314:Generic type '<symbol>' requires 2 type argument(s)." in progress["typescript_quality_failures"]["top_signature"]

@@ -770,10 +770,39 @@ def _has_typescript_quality_diagnostics(text: str) -> bool:
     return any(code in text for code in TYPESCRIPT_QUALITY_ERROR_CODES)
 
 
+def _typescript_diagnostic_signatures(text: str) -> List[str]:
+    """Return stable diagnostic families for repeated TypeScript failure loops."""
+
+    signatures: List[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(r"error\s+(TS\d+):\s*([^\n]+)", text):
+        code = match.group(1)
+        message = re.sub(r"'[^']+'", "'<symbol>'", match.group(2).strip())
+        message = re.sub(r"\s+", " ", message)
+        signature = f"{code}:{message[:120]}"
+        if signature not in seen:
+            seen.add(signature)
+            signatures.append(signature)
+    return signatures
+
+
+def _artifact_validation_text(artifact: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    parts.extend(str(error) for error in artifact.get("errors", []) if error)
+    validation = artifact.get("validation_results", [])
+    if isinstance(validation, list):
+        for item in validation:
+            if isinstance(item, dict):
+                parts.append(str(item.get("stdout") or ""))
+                parts.append(str(item.get("stderr") or ""))
+    return "\n".join(parts)
+
+
 def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[str, Any]:
     total = 0
     consecutive = 0
     by_task: Dict[str, int] = {}
+    by_signature: Dict[str, int] = {}
     for result, artifact in rows:
         if result.get("valid") or artifact.get("changed_files"):
             continue
@@ -783,6 +812,9 @@ def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict
         task = str(artifact.get("target_task") or "")
         if task:
             by_task[task] = by_task.get(task, 0) + 1
+        for signature in _typescript_diagnostic_signatures(_artifact_validation_text(artifact)):
+            key = f"{task} :: {signature}" if task else signature
+            by_signature[key] = by_signature.get(key, 0) + 1
     for result, artifact in reversed(rows):
         if result.get("valid"):
             break
@@ -793,6 +825,9 @@ def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict
         "total": total,
         "consecutive": consecutive,
         "by_task": by_task,
+        "by_signature": by_signature,
+        "top_signature": max(by_signature.items(), key=lambda item: item[1])[0] if by_signature else "",
+        "top_signature_count": max(by_signature.values()) if by_signature else 0,
     }
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
@@ -1034,6 +1069,8 @@ Critical correction for attempt {attempt}:
 - Leave `patch` as an empty string.
 - The Codex subprocess may be read-only, but the daemon itself applies the returned `files` contents after validation. Do not refuse because of a read-only sandbox.
 - Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
+- Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
+- For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
 - Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.
 - If the previous response was prose, convert that intent into complete file replacements now.
 """
@@ -2981,6 +3018,8 @@ Hard constraints:
 - The Codex subprocess may run in a read-only sandbox. That only prevents the subprocess from editing files directly; it does not prevent this daemon from applying the JSON `files` replacements that you return. Never refuse because of a read-only sandbox.
 - Do not run exploratory shell commands in the Codex subprocess. Use the current file context below and return the JSON proposal promptly so the 300 second daemon timeout is spent on implementation, not browsing.
 - Do not include shell commands that mutate files.
+- Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
+- For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
 - The daemon-selected task for this cycle is: {selected_task_text}
