@@ -20,6 +20,8 @@ WATCHDOG_STARTUP_GRACE_SECONDS="${WATCHDOG_STARTUP_GRACE_SECONDS:-120}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
 SUPERVISOR_STOP_COMPETING_DAEMONS="${SUPERVISOR_STOP_COMPETING_DAEMONS:-1}"
 SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE="${SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE:-1}"
+SUPERVISOR_STOP_LOGIC_PORT_DAEMON="${SUPERVISOR_STOP_LOGIC_PORT_DAEMON:-0}"
+SUPERVISOR_DIRTY_TARGET_RECOVERY="${SUPERVISOR_DIRTY_TARGET_RECOVERY:-1}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
@@ -92,6 +94,8 @@ write_supervisor_status() {
   "stop_grace_seconds": $STOP_GRACE_SECONDS,
   "stop_competing_daemons": $(json_bool "$SUPERVISOR_STOP_COMPETING_DAEMONS"),
   "disable_competing_systemd_service": $(json_bool "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE"),
+  "stop_logic_port_daemon": $(json_bool "$SUPERVISOR_STOP_LOGIC_PORT_DAEMON"),
+  "dirty_target_recovery_enabled": $(json_bool "$SUPERVISOR_DIRTY_TARGET_RECOVERY"),
   "run_id": "$run_id",
   "log_path": "$log_path",
   "current_status_path": "$CURRENT_STATUS_PATH",
@@ -547,6 +551,211 @@ path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="ut
 PY
 }
 
+confirmed_dirty_target_reason() {
+  if [[ "$SUPERVISOR_DIRTY_TARGET_RECOVERY" != "1" ]]; then
+    return 1
+  fi
+  python3 - \
+    "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$REPO_ROOT" \
+    "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" <<'PY'
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+state_path = Path(sys.argv[1])
+repo_root = Path(sys.argv[2])
+dirty_target_detection = str(sys.argv[3]).strip() == "1"
+
+LEGAL_PARSER_TARGETS = [
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+]
+
+
+def read_state() -> dict:
+    try:
+        return json.loads(state_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def paths_from_status(stdout: str) -> list[str]:
+    paths: list[str] = []
+    for line in stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in paths:
+            paths.append(path)
+    return paths
+
+
+def fingerprint(status_stdout: str, paths: list[str]) -> str:
+    if not paths:
+        return ""
+    digest = hashlib.sha256()
+    digest.update(status_stdout.encode("utf-8", errors="replace"))
+    diff = subprocess.run(
+        ["git", "diff", "--binary", "--", *paths],
+        cwd=repo_root,
+        text=False,
+        capture_output=True,
+        timeout=60,
+    )
+    digest.update(diff.stdout or b"")
+    for text in sorted(paths):
+        path = repo_root / text
+        digest.update(text.encode("utf-8", errors="replace"))
+        try:
+            digest.update(path.read_bytes())
+        except FileNotFoundError:
+            digest.update(b"__missing__")
+    return digest.hexdigest()
+
+
+if not dirty_target_detection:
+    raise SystemExit(1)
+result = subprocess.run(
+    ["git", "status", "--porcelain", "--", *LEGAL_PARSER_TARGETS],
+    cwd=repo_root,
+    text=True,
+    capture_output=True,
+    timeout=30,
+)
+if result.returncode != 0:
+    raise SystemExit(1)
+paths = paths_from_status(result.stdout)
+fp = fingerprint(result.stdout, paths)
+state = read_state()
+previous = [str(path) for path in state.get("dirty_legal_parser_targets") or []]
+previous_fp = str(state.get("dirty_legal_parser_targets_fingerprint") or "")
+if paths and sorted(paths) == sorted(previous) and fp == previous_fp:
+    print("dirty_legal_parser_targets:" + ",".join(paths[:8]))
+    raise SystemExit(0)
+state.update(
+    {
+        "dirty_legal_parser_targets": paths,
+        "dirty_legal_parser_targets_fingerprint": fp,
+        "dirty_legal_parser_targets_pending_confirmation": bool(paths),
+    }
+)
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+raise SystemExit(1)
+PY
+}
+
+recover_dirty_legal_parser_targets() {
+  local reason="$1"
+  local recovery_id=""
+  local recovery_log=""
+  local targets_file=""
+  local py_files_file=""
+  local test_files_file=""
+  local rc=0
+  recovery_id="$(date -u +%Y%m%dT%H%M%SZ)"
+  recovery_log="$DAEMON_DIR/legal_parser_daemon_dirty_recovery_${recovery_id}.log"
+  last_agentic_maintenance_status="dirty_recovery_running"
+  last_agentic_maintenance_reason="$reason"
+  last_agentic_maintenance_log_path="$recovery_log"
+  write_supervisor_status "dirty_target_recovery_started" "$recovery_id" "$recovery_log" null
+  stop_child
+  targets_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-targets.XXXXXX")"
+  py_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-py.XXXXXX")"
+  test_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-tests.XXXXXX")"
+  python3 - "$REPO_ROOT" "$targets_file" "$py_files_file" "$test_files_file" <<'PY'
+import subprocess
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+targets_path = Path(sys.argv[2])
+py_path = Path(sys.argv[3])
+tests_path = Path(sys.argv[4])
+targets = [
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+]
+result = subprocess.run(
+    ["git", "status", "--porcelain", "--", *targets],
+    cwd=repo_root,
+    text=True,
+    capture_output=True,
+    timeout=30,
+)
+if result.returncode != 0:
+    raise SystemExit(result.returncode)
+paths = []
+for line in result.stdout.splitlines():
+    path = line[3:].strip()
+    if " -> " in path:
+        path = path.rsplit(" -> ", 1)[1].strip()
+    if path and path not in paths:
+        paths.append(path)
+targets_path.write_text("\n".join(paths) + ("\n" if paths else ""), encoding="utf-8")
+py_files = [path for path in paths if path.endswith(".py") and (repo_root / path).exists()]
+test_files = [path for path in paths if path.startswith("tests/unit_tests/logic/deontic/") and path.endswith(".py")]
+py_path.write_text("\n".join(py_files) + ("\n" if py_files else ""), encoding="utf-8")
+tests_path.write_text("\n".join(test_files) + ("\n" if test_files else ""), encoding="utf-8")
+PY
+  if [[ ! -s "$targets_file" ]]; then
+    last_agentic_maintenance_status="dirty_recovery_skipped_clean"
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target recovery skipped because targets are clean: $reason" >> "$REPO_ROOT/$recovery_log"
+    write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" 0
+    rm -f "$targets_file" "$py_files_file" "$test_files_file"
+    return 0
+  fi
+  {
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting dirty legal-parser target recovery: $reason"
+    echo "Dirty targets:"
+    sed 's/^/- /' "$targets_file"
+    if [[ -s "$py_files_file" ]]; then
+      echo "Running py_compile for dirty Python targets"
+      xargs -r python3 -m py_compile < "$py_files_file"
+    fi
+    if [[ -s "$test_files_file" ]]; then
+      echo "Running focused pytest for dirty deontic tests"
+      xargs -r pytest -q < "$test_files_file"
+    fi
+  } >> "$REPO_ROOT/$recovery_log" 2>&1
+  rc=$?
+  if [[ "$rc" == "0" ]]; then
+    {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target validation passed; committing recovered daemon slice"
+      xargs -r git -C "$REPO_ROOT" add -- < "$targets_file"
+      git -C "$REPO_ROOT" commit -m "legal-parser-daemon: recover stranded parser target slice"
+    } >> "$REPO_ROOT/$recovery_log" 2>&1
+    rc=$?
+    last_agentic_maintenance_status="dirty_recovery_committed"
+  else
+    {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target validation failed with rc=$rc; restoring only dirty legal-parser targets"
+      xargs -r git -C "$REPO_ROOT" restore --source=HEAD -- < "$targets_file"
+    } >> "$REPO_ROOT/$recovery_log" 2>&1
+    last_agentic_maintenance_status="dirty_recovery_restored"
+    rc=0
+  fi
+  mark_agentic_maintenance_ran "$reason"
+  write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" "$rc"
+  rm -f "$targets_file" "$py_files_file" "$test_files_file"
+  return "$rc"
+}
+
 run_agentic_maintenance() {
   local reason="$1"
   local refreshed_reason=""
@@ -737,7 +946,7 @@ terminate_competing_daemons() {
   if [[ "$SUPERVISOR_STOP_COMPETING_DAEMONS" != "1" ]]; then
     return 0
   fi
-  if command -v tmux >/dev/null 2>&1; then
+  if [[ "$SUPERVISOR_STOP_LOGIC_PORT_DAEMON" == "1" ]] && command -v tmux >/dev/null 2>&1; then
     while IFS=: read -r session _rest; do
       if [[ "$session" == "logic-port-daemon" ]]; then
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing tmux session $session" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
@@ -745,7 +954,7 @@ terminate_competing_daemons() {
       fi
     done < <(tmux ls 2>/dev/null || true)
   fi
-  if command -v systemctl >/dev/null 2>&1; then
+  if [[ "$SUPERVISOR_STOP_LOGIC_PORT_DAEMON" == "1" ]] && command -v systemctl >/dev/null 2>&1; then
     if systemctl --user is-active --quiet logic-port-daemon.service 2>/dev/null; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing user service logic-port-daemon.service" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
       if [[ "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" == "1" ]]; then
@@ -765,9 +974,15 @@ terminate_competing_daemons() {
       continue
     fi
     case "$args" in
-      *"ppd/daemon/ppd_daemon.py"*|*"ipfs_datasets_py.optimizers.logic_port_daemon"*|*"run_logic_port_daemon.sh"*|*"ensure_logic_port_daemon.sh"*)
+      *"ppd/daemon/ppd_daemon.py"*)
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing automation $pid: $args" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
         terminate_pid_tree "$pid"
+        ;;
+      *"ipfs_datasets_py.optimizers.logic_port_daemon"*|*"run_logic_port_daemon.sh"*|*"ensure_logic_port_daemon.sh"*)
+        if [[ "$SUPERVISOR_STOP_LOGIC_PORT_DAEMON" == "1" ]]; then
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing automation $pid: $args" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+          terminate_pid_tree "$pid"
+        fi
         ;;
     esac
   done < <(ps -eo pid=,args=)
@@ -845,6 +1060,13 @@ while true; do
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$log_path"
       stop_child
+      break
+    fi
+    dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"
+    if [[ -n "$dirty_recovery_reason" ]]; then
+      last_recycle_reason="dirty_target_recovery"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor recovering dirty legal-parser targets: $dirty_recovery_reason" >> "$REPO_ROOT/$log_path"
+      recover_dirty_legal_parser_targets "$dirty_recovery_reason"
       break
     fi
     maintenance_reason="$(agentic_maintenance_reason || true)"

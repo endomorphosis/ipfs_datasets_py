@@ -96,6 +96,28 @@ def test_supervisor_revalidates_agentic_reason_after_stopping_child():
     )
 
 
+def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    recovery_start = script.index("confirmed_dirty_target_reason() {")
+    recovery_end = script.index("\nrun_agentic_maintenance() {", recovery_start)
+    recovery_body = script[recovery_start:recovery_end]
+    loop_start = script.index("while kill -0 \"$child_pid\"")
+    dirty_reason_pos = script.index('dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start)
+    maintenance_reason_pos = script.index('maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start)
+
+    assert "SUPERVISOR_DIRTY_TARGET_RECOVERY" in script
+    assert '"dirty_target_recovery_enabled"' in script
+    assert "recover_dirty_legal_parser_targets()" in recovery_body
+    assert "dirty_recovery_committed" in recovery_body
+    assert "dirty_recovery_restored" in recovery_body
+    assert "pytest -q" in recovery_body
+    assert "git -C \"$REPO_ROOT\" restore --source=HEAD --" in recovery_body
+    assert dirty_reason_pos < maintenance_reason_pos
+
+
 def test_supervisor_stops_competing_automation_before_and_during_run():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
