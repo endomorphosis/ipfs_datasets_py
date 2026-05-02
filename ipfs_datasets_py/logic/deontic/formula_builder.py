@@ -198,6 +198,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_attestation_notarization_light_verb_action(action_text)
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
+    action_text = _normalize_transcription_translation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4266,6 +4267,42 @@ def _normalize_summarization_indexing_light_verb_action(action_text: str) -> str
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"index {target}" if target else text
+
+    return text
+
+
+def _normalize_transcription_translation_light_verb_action(action_text: str) -> str:
+    """Project transcription and translation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    transcription_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|file|files|filed|filing|record|records|recorded|recording)\s+"
+        r"transcriptions\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in transcription_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"transcribe {target}" if target else text
+
+    translation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|file|files|filed|filing|issue|issues|issued|issuing|furnish|furnishes|furnished|furnishing)\s+"
+        r"(?:a\s+|the\s+)?translation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|provide|provides|provided|providing|file|files|filed|filing|issue|issues|issued|issuing|furnish|furnishes|furnished|furnishing)\s+"
+        r"translations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^translation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in translation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"translate {target}" if target else text
 
     return text
 
