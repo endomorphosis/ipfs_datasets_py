@@ -801,33 +801,68 @@ except Exception as e:
     def _find_p2p_venv_python() -> Optional[str]:
         """Find a Python interpreter that has ipfs_accelerate_py.p2p_tasks installed.
 
-        Checks known locations where the full ipfs_accelerate_py package with p2p_tasks
-        may be installed (e.g. HACC editable installs).
+        Search order (most canonical first):
+          1. ``IPFS_ACCELERATE_PY_VENV_PYTHON`` env var — explicit override
+          2. ``~/ipfs_accelerate_py/.venv/bin/python`` — canonical location per
+             ``deployments/systemd/ipfs-accelerate-task-worker.service``
+          3. ``~/ipfs_datasets_py/.venv/bin/python`` — sibling project venv
+          4. Python executable of the *running* p2p_tasks worker process (reliable
+             even when the venv is elsewhere, e.g. during transition periods)
+          5. ``~/HACC/.venv/bin/python`` — legacy non-canonical fallback
         """
         import shutil
+        import subprocess
 
-        # Env override
-        env_py = os.environ.get("IPFS_ACCELERATE_PY_VENV_PYTHON") or ""
-        if env_py and os.path.isfile(env_py.strip()):
-            return env_py.strip()
+        # 1. Env override
+        env_py = (os.environ.get("IPFS_ACCELERATE_PY_VENV_PYTHON") or "").strip()
+        if env_py and os.path.isfile(env_py):
+            return env_py
 
         home = os.path.expanduser("~")
-        candidates = [
-            os.path.join(home, "HACC", ".venv", "bin", "python"),
-            os.path.join(home, "HACC", ".venv", "bin", "python3"),
+
+        # 2 & 3. Canonical venv locations
+        preferred = [
             os.path.join(home, "ipfs_accelerate_py", ".venv", "bin", "python"),
             os.path.join(home, "ipfs_accelerate_py", ".venv", "bin", "python3"),
-            os.path.join(home, ".venv", "bin", "python"),
+            os.path.join(home, "ipfs_datasets_py", ".venv", "bin", "python"),
+            os.path.join(home, "ipfs_datasets_py", ".venv", "bin", "python3"),
         ]
-        for py in candidates:
+        for py in preferred:
             if os.path.isfile(py):
                 return py
 
-        # Check PATH for any python that has p2p_tasks
-        for py_name in ("python3", "python"):
-            py = shutil.which(py_name)
-            if py:
+        # 4. Detect the python used by the currently-running p2p_tasks worker
+        try:
+            result = subprocess.run(
+                ["ps", "aux"],
+                capture_output=True, text=True, timeout=3,
+            )
+            for line in result.stdout.splitlines():
+                if "p2p_tasks.worker" in line or "p2p_tasks" in line:
+                    parts = line.split()
+                    # ps aux: USER PID ... COMMAND args — exe is the first word of COMMAND
+                    # Find the python executable (column 10 in ps aux)
+                    if len(parts) >= 11:
+                        exe = parts[10]
+                        if ("python" in os.path.basename(exe)) and os.path.isfile(exe):
+                            return exe
+        except Exception:
+            pass
+
+        # 5. Legacy fallback — non-canonical but currently deployed path
+        legacy = [
+            os.path.join(home, "HACC", ".venv", "bin", "python"),
+            os.path.join(home, "HACC", ".venv", "bin", "python3"),
+        ]
+        for py in legacy:
+            if os.path.isfile(py):
+                logger.debug(
+                    "_find_p2p_venv_python: using non-canonical HACC venv (%s). "
+                    "Consider creating ~/ipfs_accelerate_py/.venv and setting "
+                    "IPFS_ACCELERATE_PY_VENV_PYTHON to override.", py
+                )
                 return py
+
         return None
 
     def _try_p2p_task_queue_subprocess(
