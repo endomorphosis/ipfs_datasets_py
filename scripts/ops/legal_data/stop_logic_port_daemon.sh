@@ -8,6 +8,7 @@ STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
 SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.pid}"
 CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/logic-port-daemon.pid}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
+TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-logic-port-daemon}"
 
 terminate_pid_tree() {
   local pid="$1"
@@ -42,6 +43,45 @@ terminate_matching_logic_port_daemons() {
   done < <(ps -eo pid=,args=)
 }
 
+pid_has_parser_daemon_ancestor() {
+  local pid="$1"
+  local parent=""
+  local args=""
+  while [[ -n "$pid" ]] && [[ "$pid" != "0" ]] && [[ "$pid" != "1" ]]; do
+    args="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+    if [[ "$args" == *"parser_daemon"* ]] || [[ "$args" == *"run_legal_parser_optimizer_daemon.sh"* ]]; then
+      return 0
+    fi
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -dc '0-9' || true)"
+    if [[ -z "$parent" ]] || [[ "$parent" == "$pid" ]]; then
+      return 1
+    fi
+    pid="$parent"
+  done
+  return 1
+}
+
+terminate_repo_local_logic_codex_execs() {
+  local pid=""
+  local args=""
+  local cwd=""
+  while read -r pid args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
+      continue
+    fi
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+      continue
+    fi
+    if pid_has_parser_daemon_ancestor "$pid"; then
+      continue
+    fi
+    cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
+    if [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" ]]; then
+      terminate_pid_tree "$pid"
+    fi
+  done < <(ps -eo pid=,args=)
+}
+
 cd "$REPO_ROOT" || exit 2
 
 supervisor_pid=""
@@ -62,5 +102,9 @@ else
 fi
 
 terminate_matching_logic_port_daemons
+terminate_repo_local_logic_codex_execs
+if command -v tmux >/dev/null 2>&1 && tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
+  tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
+fi
 sleep 1
 rm -f "$SUPERVISOR_PID_PATH" "$CHILD_PID_PATH"

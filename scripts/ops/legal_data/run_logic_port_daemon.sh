@@ -84,6 +84,7 @@ last_recycle_reason=""
 last_agentic_maintenance_status=""
 last_agentic_maintenance_reason=""
 last_agentic_maintenance_log_path=""
+last_orphaned_llm_cleanup_count=0
 
 write_supervisor_status() {
   local status="$1"
@@ -130,6 +131,7 @@ write_supervisor_status() {
   "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
   "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
   "last_agentic_maintenance_log_path": "$last_agentic_maintenance_log_path",
+  "last_orphaned_llm_cleanup_count": $last_orphaned_llm_cleanup_count,
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
@@ -430,9 +432,19 @@ run_agentic_maintenance() {
   local reason="$1"
   local maintenance_id=""
   local maintenance_log=""
+  local maintenance_backup_dir=""
   local rc=0
   maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
   maintenance_log="$DAEMON_DIR/logic-port-daemon-agentic-maintenance_${maintenance_id}.log"
+  maintenance_backup_dir="$(mktemp -d "$REPO_ROOT/$DAEMON_DIR/logic-port-maintenance-backup.XXXXXX")"
+  mkdir -p "$maintenance_backup_dir/scripts/ops/legal_data" "$maintenance_backup_dir/ipfs_datasets_py/optimizers" "$maintenance_backup_dir/tests/unit_tests/optimizers" "$maintenance_backup_dir/docs/logic"
+  cp "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" "$maintenance_backup_dir/scripts/ops/legal_data/run_logic_port_daemon.sh" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" "$maintenance_backup_dir/scripts/ops/legal_data/check_logic_port_daemon.sh" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" "$maintenance_backup_dir/scripts/ops/legal_data/ensure_logic_port_daemon.sh" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" "$maintenance_backup_dir/scripts/ops/legal_data/stop_logic_port_daemon.sh" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py" "$maintenance_backup_dir/ipfs_datasets_py/optimizers/logic_port_daemon.py" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" "$maintenance_backup_dir/tests/unit_tests/optimizers/test_logic_port_daemon.py" 2>/dev/null || true
+  cp "$REPO_ROOT/ipfs_datasets_py/docs/logic/LOGIC_PORT_DAEMON.md" "$maintenance_backup_dir/docs/logic/LOGIC_PORT_DAEMON.md" 2>/dev/null || true
   last_agentic_maintenance_status="running"
   last_agentic_maintenance_reason="$reason"
   last_agentic_maintenance_log_path="$maintenance_log"
@@ -448,11 +460,11 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, or typescript_quality_failures, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, orphaned_llm_calls, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
-If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child.
+If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify the separate legal parser daemon or subprocesses whose ancestor command contains parser_daemon or run_legal_parser_optimizer_daemon.sh.
 
 Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
 
@@ -488,7 +500,7 @@ Reason: $reason
 
 Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
 
-Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures and stale supervisor exits.
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
 Run validation if possible:
 - bash -n ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
@@ -503,12 +515,25 @@ PROMPT
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && grep -q "launch_mode=\\\"tmux\\\"" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" \
+    && grep -q "terminate_orphaned_logic_port_llm_calls" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" \
+    && grep -q "pid_has_parser_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" \
+    && grep -q "pid_has_parser_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" \
     && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" pytest -q "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
     last_agentic_maintenance_status="accepted"
   else
     last_agentic_maintenance_status="failed"
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) maintenance validation failed; restoring daemon/supervisor files from $maintenance_backup_dir" >> "$REPO_ROOT/$maintenance_log"
+    cp "$maintenance_backup_dir/scripts/ops/legal_data/run_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" 2>/dev/null || true
+    cp "$maintenance_backup_dir/scripts/ops/legal_data/check_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" 2>/dev/null || true
+    cp "$maintenance_backup_dir/scripts/ops/legal_data/ensure_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" 2>/dev/null || true
+    cp "$maintenance_backup_dir/scripts/ops/legal_data/stop_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" 2>/dev/null || true
+    cp "$maintenance_backup_dir/ipfs_datasets_py/optimizers/logic_port_daemon.py" "$REPO_ROOT/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py" 2>/dev/null || true
+    cp "$maintenance_backup_dir/tests/unit_tests/optimizers/test_logic_port_daemon.py" "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" 2>/dev/null || true
+    cp "$maintenance_backup_dir/docs/logic/LOGIC_PORT_DAEMON.md" "$REPO_ROOT/ipfs_datasets_py/docs/logic/LOGIC_PORT_DAEMON.md" 2>/dev/null || true
   fi
+  rm -rf "$maintenance_backup_dir"
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
   return 0
 }
@@ -561,6 +586,93 @@ terminate_matching_logic_port_daemons() {
   done < <(ps -eo pid=,args=)
 }
 
+pid_has_ancestor() {
+  local pid="$1"
+  local ancestor="$2"
+  local parent=""
+  if [[ -z "$pid" ]] || [[ -z "$ancestor" ]]; then
+    return 1
+  fi
+  while [[ -n "$pid" ]] && [[ "$pid" != "0" ]] && [[ "$pid" != "1" ]]; do
+    if [[ "$pid" == "$ancestor" ]]; then
+      return 0
+    fi
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -dc '0-9' || true)"
+    if [[ -z "$parent" ]] || [[ "$parent" == "$pid" ]]; then
+      return 1
+    fi
+    pid="$parent"
+  done
+  return 1
+}
+
+pid_has_parser_daemon_ancestor() {
+  local pid="$1"
+  local parent=""
+  local args=""
+  while [[ -n "$pid" ]] && [[ "$pid" != "0" ]] && [[ "$pid" != "1" ]]; do
+    args="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+    if [[ "$args" == *"parser_daemon"* ]] || [[ "$args" == *"run_legal_parser_optimizer_daemon.sh"* ]]; then
+      return 0
+    fi
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -dc '0-9' || true)"
+    if [[ -z "$parent" ]] || [[ "$parent" == "$pid" ]]; then
+      return 1
+    fi
+    pid="$parent"
+  done
+  return 1
+}
+
+process_cwd_is_logic_repo_local() {
+  local pid="$1"
+  local cwd=""
+  cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
+  [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" ]]
+}
+
+terminate_orphaned_logic_port_llm_calls() {
+  local pid=""
+  local args=""
+  local cleaned=0
+  while read -r pid args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
+      continue
+    fi
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
+      continue
+    fi
+    if pid_has_parser_daemon_ancestor "$pid"; then
+      continue
+    fi
+    if [[ -n "${child_pid:-}" ]] && pid_has_ancestor "$pid" "$child_pid"; then
+      continue
+    fi
+    if ! process_cwd_is_logic_repo_local "$pid"; then
+      continue
+    fi
+    cleaned=$((cleaned + 1))
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaning up orphaned logic-port LLM call $pid before supervisor start/restart" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+    terminate_pid_tree "$pid"
+  done < <(ps -eo pid=,args=)
+  last_orphaned_llm_cleanup_count=$cleaned
+  [[ "$cleaned" -gt 0 ]]
+}
+
+run_infrastructure_maintenance_if_needed() {
+  local reason="$1"
+  if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]] || [[ -z "$reason" ]]; then
+    return 1
+  fi
+  last_recycle_reason="supervisor_infrastructure_maintenance"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking infrastructure maintenance: $reason" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+  run_agentic_maintenance "$reason"
+  return 0
+}
+
 stop_child() {
   local stopped_pid="${child_pid:-}"
   if [[ -n "${child_pid:-}" ]] && kill -0 "$child_pid" 2>/dev/null; then
@@ -571,6 +683,7 @@ stop_child() {
     rm -f "$REPO_ROOT/$CHILD_PID_PATH"
   fi
   child_pid=""
+  terminate_orphaned_logic_port_llm_calls || true
 }
 
 cleanup() {
@@ -590,6 +703,9 @@ trap 'cleanup; exit 143' TERM INT
 trap 'cleanup' EXIT
 
 terminate_matching_logic_port_daemons
+if terminate_orphaned_logic_port_llm_calls; then
+  run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:startup_cleanup" || true
+fi
 
 if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
   startup_maintenance_reason="$(agentic_maintenance_reason || true)"
@@ -601,6 +717,9 @@ if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
 fi
 
 while true; do
+  if terminate_orphaned_logic_port_llm_calls; then
+    run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:pre_cycle_cleanup" || true
+  fi
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"
   run_log="$DAEMON_DIR/logic-port-daemon-supervised_${run_id}.log"
   ln -sfn "$(basename "$run_log")" "$REPO_ROOT/$LATEST_LOG_PATH"
@@ -660,6 +779,10 @@ while true; do
       run_agentic_maintenance "$maintenance_reason"
       break
     fi
+    if terminate_orphaned_logic_port_llm_calls; then
+      run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:active_cycle_cleanup" || true
+      break
+    fi
     sleep "$SUPERVISOR_HEARTBEAT_SECONDS"
   done
 
@@ -679,4 +802,7 @@ while true; do
     sleep "$RESTART_DELAY_SECONDS"
   fi
   terminate_matching_logic_port_daemons
+  if terminate_orphaned_logic_port_llm_calls; then
+    run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:restart_cleanup" || true
+  fi
 done
