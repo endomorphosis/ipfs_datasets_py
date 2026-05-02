@@ -130,18 +130,36 @@ def _p2p_remote_peer_id() -> str:
 
 
 def _read_task_p2p_announce() -> Optional[Dict[str, Any]]:
-    """Load the announce JSON written by a local task-queue service."""
+    """Load the announce JSON written by a local task-queue service.
+
+    Searches (in order):
+    1. ``IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE`` / ``IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE`` env var
+    2. ``<IPFS_ACCELERATE_PY_STATE_DIR>/task_p2p_announce.json`` if set
+    3. ``~/ipfs_accelerate_py/state/task_p2p_announce.json`` (default worker state dir)
+    4. ``~/.cache/ipfs_accelerate_py/task_p2p_announce.json``
+    5. ``~/.cache/ipfs_datasets_py/task_p2p_announce.json``
+    """
     raw = (
         os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE")
         or os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE")
     )
     if raw is not None and str(raw).strip().lower() in {"0", "false", "no", "off"}:
         return None
-    cache_root = os.environ.get("XDG_CACHE_HOME") or os.path.join(os.path.expanduser("~"), ".cache")
+    home = os.path.expanduser("~")
+    cache_root = os.environ.get("XDG_CACHE_HOME") or os.path.join(home, ".cache")
+    state_dir = (
+        os.environ.get("IPFS_ACCELERATE_PY_STATE_DIR")
+        or os.environ.get("IPFS_DATASETS_PY_STATE_DIR")
+        or ""
+    ).strip()
     candidates: List[str] = []
     if raw:
         candidates.append(raw.strip())
+    if state_dir:
+        candidates.append(os.path.join(state_dir, "task_p2p_announce.json"))
     candidates += [
+        os.path.join(home, "ipfs_accelerate_py", "state", "task_p2p_announce.json"),
+        os.path.join(home, "ipfs_datasets_py", "state", "task_p2p_announce.json"),
         os.path.join(cache_root, "ipfs_accelerate_py", "task_p2p_announce.json"),
         os.path.join(cache_root, "ipfs_datasets_py", "task_p2p_announce.json"),
     ]
@@ -154,6 +172,7 @@ def _read_task_p2p_announce() -> Optional[Dict[str, Any]]:
                 continue
             info = json.loads(text)
             if isinstance(info, dict) and "/p2p/" in str(info.get("multiaddr", "")):
+                logger.debug("Found p2p announce at %s: peer=%s", path, info.get("peer_id", "?"))
                 return info
         except Exception:
             continue
@@ -748,7 +767,8 @@ class AccelerateManager:
 
         Requires ``ipfs_accelerate_py.p2p_tasks`` to be installed and either:
           - ``IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR`` set, OR
-          - a valid announce file present at the default location.
+          - a valid announce file present at the default location
+            (``~/ipfs_accelerate_py/state/task_p2p_announce.json`` etc).
         """
         multiaddr = _p2p_remote_multiaddr()
         peer_id = _p2p_remote_peer_id()
@@ -765,7 +785,6 @@ class AccelerateManager:
         max_new_tokens = int(kwargs.get("max_new_tokens") or kwargs.get("max_tokens") or 512)
 
         try:
-            import anyio
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
                 RemoteQueue,
                 submit_task_with_info,
@@ -775,13 +794,12 @@ class AccelerateManager:
             raise RuntimeError(f"p2p_task_client not available: {exc}") from exc
 
         remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
-        payload: Dict[str, Any] = {
-            "prompt": prompt,
-            "max_new_tokens": max_new_tokens,
-        }
+        payload: Dict[str, Any] = {"prompt": prompt, "max_new_tokens": max_new_tokens}
         for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
             if k in kwargs:
                 payload[k] = kwargs[k]
+
+        logger.info("AccelerateManager: submitting p2p task to %s", multiaddr)
 
         async def _run() -> Optional[str]:
             info = await submit_task_with_info(
@@ -792,13 +810,26 @@ class AccelerateManager:
             )
             task_id = info.get("task_id") or ""
             if not task_id:
+                logger.warning("p2p_task_queue: no task_id in response: %s", info)
                 return None
+            logger.debug("p2p task submitted: id=%s via %s", task_id, multiaddr)
             result = await wait_task(remote=remote, task_id=task_id, timeout_s=timeout)
             if result is None:
                 return None
             return _extract_text(result)
 
-        text = anyio.run(_run, backend="trio")
+        # The libp2p client internals use trio nurseries directly, so we must
+        # run under trio.run() — not anyio.run(..., backend="trio").
+        try:
+            import trio as _trio
+            text = _trio.run(_run)
+        except ImportError:
+            try:
+                import anyio as _anyio
+                text = _anyio.run(_run, backend="trio")
+            except Exception as exc:
+                raise RuntimeError(f"Cannot run async p2p task (no trio/anyio): {exc}") from exc
+
         if not text:
             raise RuntimeError(f"p2p_task_queue peer {multiaddr!r} returned no text for {model_name!r}")
         logger.info("AccelerateManager: p2p_task_queue served %s via %s", model_name, multiaddr)
