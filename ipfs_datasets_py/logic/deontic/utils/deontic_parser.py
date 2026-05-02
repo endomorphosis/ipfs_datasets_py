@@ -146,6 +146,8 @@ _MODAL_RE = re.compile(
         is\s+tasked\s+with|are\s+tasked\s+with|
         is\s+obligated\s+to|are\s+obligated\s+to|
         is\s+under\s+a\s+duty\s+to|are\s+under\s+a\s+duty\s+to|
+        is\s+subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|
+        are\s+subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|
         is\s+liable\s+to|are\s+liable\s+to|
         is\s+bound\s+to|are\s+bound\s+to|
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
@@ -4591,7 +4593,7 @@ def _normalize_express_duty_obligation(element: Dict[str, Any]) -> None:
 
     modal = str(element.get("modal") or "").strip().lower()
     if not re.search(
-        r"\b(?:is|are)\s+(?:(?:obligated|under\s+a\s+duty|liable|bound)\s+to|(?:responsible|accountable)\s+for|tasked\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b|\b(?:owes|owe)\s+(?:a\s+|the\s+)?duty\s+to\b",
+        r"\b(?:is|are)\s+(?:(?:obligated|under\s+a\s+duty|liable|bound)\s+to|subject\s+to\s+(?:a\s+|the\s+)?duty\s+to|(?:responsible|accountable)\s+for|tasked\s+with)\b|\b(?:has|have)\s+(?:a\s+|the\s+)?responsibility\s+to\b|\b(?:owes|owe)\s+(?:a\s+|the\s+)?duty\s+to\b",
         modal,
         re.IGNORECASE,
     ):
@@ -4615,6 +4617,7 @@ def _normalize_express_duty_obligation(element: Dict[str, Any]) -> None:
     legal_frame["deontic_operator"] = "O"
     element["legal_frame"] = legal_frame
 
+    _clear_subject_to_duty_condition_noise(element)
     hints = list(element.get("kg_relationship_hints") or [])
     duty_hint = {"subject": "law", "predicate": "imposesDutyOn", "object": actor}
     if duty_hint not in hints:
@@ -4623,6 +4626,53 @@ def _normalize_express_duty_obligation(element: Dict[str, Any]) -> None:
     if action_hint not in hints:
         hints.append(action_hint)
     element["kg_relationship_hints"] = hints
+
+
+def _clear_subject_to_duty_condition_noise(element: Dict[str, Any]) -> None:
+    """Remove condition noise created by the generic ``subject to`` pattern.
+
+    In clauses such as ``The owner is subject to a duty to maintain the
+    sidewalk``, ``subject to`` is part of the modal phrase, not a separate
+    condition. The parser should preserve the operative action without adding a
+    duplicate ``DutyMaintainSidewalk`` antecedent to the formula.
+    """
+
+    modal = str(element.get("modal") or "").strip().lower()
+    if not re.search(
+        r"\b(?:is|are)\s+subject\s+to\s+(?:a\s+|the\s+)?duty\s+to\b",
+        modal,
+        re.IGNORECASE,
+    ):
+        return
+
+    action = _parser_slot_first_text(element.get("action")).strip().lower()
+    if not action:
+        return
+
+    def is_noise(value: Any) -> bool:
+        text = str(value or "").strip().lower()
+        text = re.sub(r"^(?:a|the)\s+", "", text)
+        return text == f"duty to {action}"
+
+    conditions = [
+        condition
+        for condition in element.get("conditions") or []
+        if not is_noise(condition)
+    ]
+    element["conditions"] = conditions
+
+    condition_details = [
+        detail
+        for detail in element.get("condition_details") or []
+        if not is_noise(_parser_slot_text(detail) if isinstance(detail, dict) else detail)
+    ]
+    element["condition_details"] = condition_details
+
+    if not conditions and not condition_details:
+        field_spans = dict(element.get("field_spans") or {})
+        field_spans.pop("conditions", None)
+        field_spans.pop("condition", None)
+        element["field_spans"] = field_spans
 
 
 def _normalize_authority_grant_permission(element: Dict[str, Any]) -> None:
