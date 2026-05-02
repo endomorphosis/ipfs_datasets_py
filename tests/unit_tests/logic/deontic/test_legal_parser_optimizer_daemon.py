@@ -129,6 +129,32 @@ def test_optimizer_builds_gpt55_router_request_without_calling_real_llm(tmp_path
     assert call["router_kwargs"]["disable_model_retry"] is True
 
 
+def test_optimizer_scales_test_timeout_from_recent_suite_duration(tmp_path):
+    out_dir = tmp_path / "out"
+    cycle_dir = out_dir / "cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "tests": {
+                    "valid": True,
+                    "duration_seconds": 171.5,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        test_timeout_seconds=180,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    assert optimizer.effective_test_timeout_seconds() == 403
+
+
 def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):
     fake_router = _FakeRouter(
         json.dumps(
