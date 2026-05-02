@@ -2651,8 +2651,6 @@ Current repository file contents after rollback:
     def _resolved_provider(self) -> Optional[str]:
         if self.daemon_config.provider:
             return self.daemon_config.provider
-        if self.daemon_config.model_name.strip().lower().startswith("gpt-"):
-            return "codex_cli"
         return None
 
     def _build_prompt(self, *, input_data: Any, context: OptimizationContext) -> str:

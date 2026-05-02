@@ -4,7 +4,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-codex_cli}"
+PROVIDER="${PROVIDER:-}"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
@@ -551,29 +551,34 @@ while true; do
     export PYTHONUNBUFFERED=1
     export PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}"
     export IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME"
-    python3 -u -m ipfs_datasets_py.optimizers.logic_port_daemon \
-      --repo-root . \
-      --model "$MODEL_NAME" \
-      --provider "$PROVIDER" \
-      --apply \
-      --watch \
-      --cycles 0 \
-      --retry-interval 0 \
-      --llm-timeout "$LLM_TIMEOUT_SECONDS" \
-      --command-timeout "$COMMAND_TIMEOUT_SECONDS" \
-      --heartbeat-interval "$HEARTBEAT_INTERVAL_SECONDS" \
-      --max-task-failures "$MAX_TASK_FAILURES" \
-      --proposal-attempts "$PROPOSAL_ATTEMPTS" \
-      --file-repair-attempts "$FILE_REPAIR_ATTEMPTS" \
-      --validation-repair-attempts "$VALIDATION_REPAIR_ATTEMPTS" \
-      --validation-repair-failure-budget "$VALIDATION_REPAIR_FAILURE_BUDGET" \
-      --revisit-blocked-tasks \
-      --blocked-backlog-limit "$BLOCKED_BACKLOG_LIMIT" \
-      --blocked-task-strategy "$BLOCKED_TASK_STRATEGY" \
-      --plan-replenishment-limit "$PLAN_REPLENISHMENT_LIMIT" \
-      --status-file "$STATUS_PATH" \
-      --progress-file "$PROGRESS_PATH" \
+    python3_args=(
+      python3 -u -m ipfs_datasets_py.optimizers.logic_port_daemon
+      --repo-root .
+      --model "$MODEL_NAME"
+    )
+    [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
+    python3_args+=(
+      --apply
+      --watch
+      --cycles 0
+      --retry-interval 0
+      --llm-timeout "$LLM_TIMEOUT_SECONDS"
+      --command-timeout "$COMMAND_TIMEOUT_SECONDS"
+      --heartbeat-interval "$HEARTBEAT_INTERVAL_SECONDS"
+      --max-task-failures "$MAX_TASK_FAILURES"
+      --proposal-attempts "$PROPOSAL_ATTEMPTS"
+      --file-repair-attempts "$FILE_REPAIR_ATTEMPTS"
+      --validation-repair-attempts "$VALIDATION_REPAIR_ATTEMPTS"
+      --validation-repair-failure-budget "$VALIDATION_REPAIR_FAILURE_BUDGET"
+      --revisit-blocked-tasks
+      --blocked-backlog-limit "$BLOCKED_BACKLOG_LIMIT"
+      --blocked-task-strategy "$BLOCKED_TASK_STRATEGY"
+      --plan-replenishment-limit "$PLAN_REPLENISHMENT_LIMIT"
+      --status-file "$STATUS_PATH"
+      --progress-file "$PROGRESS_PATH"
       --log-file "$RESULT_LOG_PATH"
+    )
+    "${python3_args[@]}"
   ) >> "$REPO_ROOT/$run_log" 2>&1 &
   child_pid=$!
   child_started_at=$SECONDS
