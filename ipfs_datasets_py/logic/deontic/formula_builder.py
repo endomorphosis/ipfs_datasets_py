@@ -155,6 +155,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
+    action_text = _normalize_verification_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
@@ -290,6 +291,27 @@ def _normalize_certification_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"certify {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_verification_light_verb_action(action_text: str) -> str:
+    """Collapse verification nominalizations into operative verification acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|complete|completes|completed|completing|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+        r"(?:a\s+|an\s+|the\s+)?verification\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|complete|completes|completed|completing|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+        r"verifications\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"verify {match.group(1).strip()}"
 
     return text
 
