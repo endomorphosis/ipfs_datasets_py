@@ -175,6 +175,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_codification_consolidation_light_verb_action(action_text)
     action_text = _normalize_revocation_suspension_light_verb_action(action_text)
     action_text = _normalize_expungement_sealing_light_verb_action(action_text)
+    action_text = _normalize_reconciliation_restitution_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
     action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_correction_adjustment_light_verb_action(action_text)
@@ -4711,6 +4712,42 @@ def _normalize_expungement_sealing_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"seal {target}" if target else text
+
+    return text
+
+
+def _normalize_reconciliation_restitution_light_verb_action(action_text: str) -> str:
+    """Project reconciliation and restitution nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    reconciliation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring)\s+"
+        r"(?:a\s+|the\s+)?reconciliation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring)\s+"
+        r"reconciliations\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+        r"^reconciliation\s+(?:of|for|with)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in reconciliation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"reconcile {target}" if target else text
+
+    restitution_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring)\s+"
+        r"(?:a\s+|the\s+)?restitution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring)\s+"
+        r"restitutions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^restitution\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in restitution_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"restitute {target}" if target else text
 
     return text
 
