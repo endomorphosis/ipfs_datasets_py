@@ -9,6 +9,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_formal_logic_record_from_ir,
     build_ir_slot_provenance_audit_record,
     build_phase8_quality_summary_record,
+    build_phase8_quality_summary_records,
     build_ir_slot_provenance_audit_records,
     summarize_ir_slot_provenance_audit_records,
     build_reconstruction_slot_loss_records,
@@ -183,6 +184,72 @@ def test_ir_slot_provenance_audit_record_exports_grounding_status():
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_phase8_quality_summary_records_group_flat_records_by_source_id():
+    first = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The tenant must pay rent monthly."
+    )[0])
+    second = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0])
+    required_slots = ("actor", "modality", "action")
+    required_targets = (
+        "frame_logic",
+        "deontic_cec",
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+    )
+    decoder_records = [
+        {
+            "source_id": first.source_id,
+            "grounded_slots": list(required_slots),
+            "missing_slots": [],
+            "ungrounded_slots": [],
+        },
+        {
+            "source_id": second.source_id,
+            "grounded_slots": ["actor", "modality"],
+            "missing_slots": ["action"],
+            "ungrounded_slots": [],
+        },
+        {"grounded_slots": list(required_slots)},
+    ]
+    prover_records = [
+        {
+            "source_id": first.source_id,
+            "target_logic": target,
+            "syntax_valid": True,
+            "status": "passed",
+        }
+        for target in required_targets
+    ]
+    provenance_records = [
+        build_ir_slot_provenance_audit_record(first, slots=required_slots),
+        build_ir_slot_provenance_audit_record(second, slots=required_slots),
+    ]
+
+    records = build_phase8_quality_summary_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_records,
+        ir_slot_provenance_records=provenance_records,
+        required_slots=required_slots,
+        required_targets=required_targets,
+    )
+
+    assert [record["source_id"] for record in records] == sorted([
+        first.source_id,
+        second.source_id,
+    ])
+    complete = next(record for record in records if record["source_id"] == first.source_id)
+    incomplete = next(record for record in records if record["source_id"] == second.source_id)
+    assert complete["phase8_quality_complete"] is True
+    assert complete["requires_validation"] is False
+    assert incomplete["phase8_quality_complete"] is False
+    assert incomplete["requires_validation"] is True
+    assert "missing_reconstruction_slot:action" in incomplete["coverage_blockers"]
+    assert "missing_prover_syntax_target:frame_logic" in incomplete["coverage_blockers"]
 
 
 def test_phase8_quality_summary_combines_reconstruction_prover_and_provenance():

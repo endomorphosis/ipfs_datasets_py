@@ -200,6 +200,60 @@ def summarize_phase8_quality_records(
     }
 
 
+def build_phase8_quality_summary_records(
+    decoder_records: Sequence[Mapping[str, Any]] = (),
+    prover_syntax_records: Sequence[Mapping[str, Any]] = (),
+    ir_slot_provenance_records: Sequence[Mapping[str, Any]] = (),
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> List[Dict[str, Any]]:
+    """Build Phase 8 aggregate quality rows grouped by source norm.
+
+    Corpus exports receive flat decoder, prover-syntax, and IR provenance
+    records. This helper groups those records by ``source_id`` and emits one
+    primary-keyed diagnostic row per norm without inventing provenance for
+    records that cannot be tied back to a source clause.
+    """
+
+    decoder_by_source: Dict[str, List[Mapping[str, Any]]] = {}
+    prover_by_source: Dict[str, List[Mapping[str, Any]]] = {}
+    provenance_by_source: Dict[str, List[Mapping[str, Any]]] = {}
+
+    for record in decoder_records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            decoder_by_source.setdefault(source_id, []).append(record)
+
+    for record in prover_syntax_records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            prover_by_source.setdefault(source_id, []).append(record)
+
+    for record in ir_slot_provenance_records or []:
+        if not isinstance(record, Mapping):
+            continue
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            provenance_by_source.setdefault(source_id, []).append(record)
+
+    source_ids = sorted(set(decoder_by_source) | set(prover_by_source) | set(provenance_by_source))
+    return [
+        build_phase8_quality_summary_record(
+            source_id,
+            decoder_records=decoder_by_source.get(source_id, []),
+            prover_syntax_records=prover_by_source.get(source_id, []),
+            ir_slot_provenance_records=provenance_by_source.get(source_id, []),
+            required_slots=required_slots,
+            required_targets=required_targets,
+        )
+        for source_id in source_ids
+    ]
+
+
 def build_phase8_quality_summary_record(
     source_id: str,
     decoder_records: Sequence[Mapping[str, Any]] = (),

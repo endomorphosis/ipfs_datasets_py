@@ -150,7 +150,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_publication_light_verb_action(action_text)
     action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
-    action_text = _normalize_administrative_review_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -6340,72 +6339,6 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"comment {target}" if target else text
-
-    return text
-
-
-def _normalize_administrative_review_light_verb_action(action_text: str) -> str:
-    """Project administrative review nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    appeal_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|take|takes|taken|taking|lodge|lodges|lodged|lodging)\s+"
-        r"(?:an?\s+|the\s+)?appeal\s+(?:of|from|to|for|against)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|take|takes|taken|taking|lodge|lodges|lodged|lodging)\s+"
-        r"appeals\s+(?:of|from|to|for|against)\s+(?:the\s+)?(.+)$",
-        r"^appeal\s+(?:of|from|to|for|against)\s+(?:the\s+)?(.+)$",
-        r"^appeals\s+(?:of|from|to|for|against)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in appeal_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"appeal {target}" if target else text
-
-    petition_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|lodge|lodges|lodged|lodging)\s+"
-        r"(?:a\s+|the\s+)?petition\s+(?:for|of|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|lodge|lodges|lodged|lodging)\s+"
-        r"petitions\s+(?:for|of|to)\s+(?:the\s+)?(.+)$",
-        r"^petition\s+(?:for|of|to)\s+(?:the\s+)?(.+)$",
-        r"^petitions\s+(?:for|of|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in petition_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"petition {target}" if target else text
-
-    reconsideration_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making)\s+"
-        r"(?:a\s+|the\s+)?request\s+for\s+reconsideration\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making)\s+"
-        r"requests\s+for\s+reconsideration\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^request\s+for\s+reconsideration\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^requests\s+for\s+reconsideration\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in reconsideration_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"request reconsideration {target}" if target else text
-
-    review_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making)\s+"
-        r"(?:a\s+|the\s+)?request\s+for\s+review\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making)\s+"
-        r"requests\s+for\s+review\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^request\s+for\s+review\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-        r"^requests\s+for\s+review\s+(?:of|from|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in review_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"request review {target}" if target else text
 
     return text
 
