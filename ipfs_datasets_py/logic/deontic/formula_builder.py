@@ -201,6 +201,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_transcription_translation_light_verb_action(action_text)
     action_text = _normalize_codification_recodification_light_verb_action(action_text)
     action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
+    action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4377,6 +4378,42 @@ def _normalize_consolidation_reconciliation_light_verb_action(action_text: str) 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reconcile {target}" if target else text
+
+    return text
+
+
+def _normalize_aggregation_tabulation_light_verb_action(action_text: str) -> str:
+    """Project aggregation and tabulation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    aggregation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"(?:an?\s+|the\s+)?aggregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"aggregations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^aggregation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in aggregation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"aggregate {target}" if target else text
+
+    tabulation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"(?:a\s+|the\s+)?tabulation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"tabulations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^tabulation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in tabulation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"tabulate {target}" if target else text
 
     return text
 
