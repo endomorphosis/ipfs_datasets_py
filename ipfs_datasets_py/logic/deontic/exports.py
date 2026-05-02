@@ -149,6 +149,56 @@ def summarize_ir_slot_provenance_audit_records(
     }
 
 
+def summarize_phase8_quality_records(
+    decoder_records: Sequence[Mapping[str, Any]] = (),
+    prover_syntax_records: Sequence[Mapping[str, Any]] = (),
+    ir_slot_provenance_records: Sequence[Mapping[str, Any]] = (),
+    required_slots: Sequence[str] = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS,
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize Phase 8 reconstruction, prover, and provenance quality.
+
+    Encoder/decoder reports need a single deterministic quality gate that can
+    show whether readable reconstruction, local prover-target coverage, and IR
+    source grounding are all complete. This helper aggregates existing export
+    records only; it does not alter parser repair status or theorem promotion.
+    """
+
+    reconstruction = summarize_reconstruction_slot_loss(decoder_records, required_slots)
+    prover = summarize_prover_syntax_target_coverage(prover_syntax_records, required_targets)
+    provenance = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
+
+    blockers = set(reconstruction.get("coverage_blockers") or [])
+    blockers.update(
+        f"missing_prover_syntax_target:{target}"
+        for target in prover.get("missing_targets", [])
+    )
+    blockers.update(
+        f"failed_prover_syntax_target:{target}"
+        for target in prover.get("failed_targets", [])
+    )
+    blockers.update(
+        f"skipped_prover_syntax_target:{target}"
+        for target in prover.get("skipped_targets", [])
+    )
+    blockers.update(provenance.get("coverage_blockers") or [])
+
+    complete = (
+        reconstruction.get("slot_reconstruction_complete") is True
+        and prover.get("all_required_passed") is True
+        and provenance.get("all_checked_slots_grounded") is True
+    )
+
+    return {
+        "phase8_quality_complete": complete,
+        "requires_validation": not complete,
+        "coverage_blockers": sorted(blockers),
+        "reconstruction_slot_loss": reconstruction,
+        "prover_syntax_target_coverage": prover,
+        "ir_slot_provenance": provenance,
+    }
+
+
 def summarize_prover_syntax_target_coverage(
     records: Sequence[Mapping[str, Any]],
     required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
