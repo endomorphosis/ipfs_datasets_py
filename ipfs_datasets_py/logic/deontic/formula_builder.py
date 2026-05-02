@@ -204,6 +204,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
     action_text = _normalize_segregation_sequestration_light_verb_action(action_text)
     action_text = _normalize_assignment_allocation_light_verb_action(action_text)
+    action_text = _normalize_prioritization_scheduling_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4488,6 +4489,42 @@ def _normalize_assignment_allocation_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"allocate {target}" if target else text
+
+    return text
+
+
+def _normalize_prioritization_scheduling_light_verb_action(action_text: str) -> str:
+    """Project prioritization and scheduling nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    prioritization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"(?:a\s+|the\s+)?prioriti[sz]ation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
+        r"prioriti[sz]ations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^prioriti[sz]ation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in prioritization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"prioritize {target}" if target else text
+
+    scheduling_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording|enter|enters|entered|entering)\s+"
+        r"(?:a\s+|the\s+)?scheduling\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|order|orders|ordered|ordering|issue|issues|issued|issuing|record|records|recorded|recording|enter|enters|entered|entering)\s+"
+        r"schedulings\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^scheduling\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in scheduling_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"schedule {target}" if target else text
 
     return text
 
