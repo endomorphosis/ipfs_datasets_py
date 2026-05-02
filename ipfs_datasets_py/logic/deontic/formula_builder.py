@@ -176,6 +176,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_training_orientation_light_verb_action(action_text)
     action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
     action_text = _normalize_remediation_abatement_light_verb_action(action_text)
+    action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
+    action_text = _normalize_codification_compilation_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
@@ -6178,6 +6180,55 @@ def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"repeal {target}" if target else text
+
+    return text
+
+
+def _normalize_codification_compilation_light_verb_action(action_text: str) -> str:
+    """Project code-maintenance nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    codification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"(?:a\s+|the\s+)?codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"codifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in codification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"codify {target}" if target else text
+
+    recodification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"(?:a\s+|the\s+)?recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"recodifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recodification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"recodify {target}" if target else text
+
+    compilation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"(?:a\s+|the\s+)?compilation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining)\s+"
+        r"compilations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^compilation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in compilation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"compile {target}" if target else text
 
     return text
 
