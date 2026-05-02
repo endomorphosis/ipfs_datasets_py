@@ -189,6 +189,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
+    action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
     action_text = _normalize_designation_appointment_light_verb_action(action_text)
     action_text = _normalize_issuance_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
@@ -5967,6 +5968,68 @@ def _normalize_settlement_conciliation_light_verb_action(action_text: str) -> st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"negotiate {target}" if target else text
+
+    return text
+
+
+def _normalize_rulemaking_enactment_light_verb_action(action_text: str) -> str:
+    """Project legislative and rulemaking nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    rulemaking_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|initiate|initiates|initiated|initiating|prepare|prepares|prepared|preparing)\s+"
+        r"(?:a\s+|the\s+)?rulemaking\s+(?:for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|undertake|undertakes|undertook|undertaken|undertaking|initiate|initiates|initiated|initiating|prepare|prepares|prepared|preparing)\s+"
+        r"rulemakings\s+(?:for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^rulemaking\s+(?:for|on|concerning)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in rulemaking_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"make rule {target}" if target else text
+
+    enactment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|adopt|adopts|adopted|adopting|pass|passes|passed|passing|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"(?:an?\s+|the\s+)?enactment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|adopt|adopts|adopted|adopting|pass|passes|passed|passing|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"enactments\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^enactment\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in enactment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"enact {target}" if target else text
+
+    amendment_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"(?:an?\s+|the\s+)?amendment\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"amendments\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+        r"^amendment\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in amendment_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"amend {target}" if target else text
+
+    repeal_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"(?:a\s+|the\s+)?repeal\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|effectuate|effectuates|effectuated|effectuating)\s+"
+        r"repeals\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^repeal\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in repeal_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"repeal {target}" if target else text
 
     return text
 
