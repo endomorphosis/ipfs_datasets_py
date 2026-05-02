@@ -163,6 +163,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
     action_text = _normalize_designation_appointment_light_verb_action(action_text)
+    action_text = _normalize_issuance_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
@@ -520,6 +521,40 @@ def _normalize_designation_appointment_light_verb_action(action_text: str) -> st
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_issuance_light_verb_action(action_text: str) -> str:
+    """Collapse issuance nominalizations into operative issue acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+        r"(?:an?\s+|the\s+)?issuance\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+        r"issuances\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:cause|causes|caused|causing|require|requires|required|requiring|order|orders|ordered|ordering)\s+"
+        r"(?:an?\s+|the\s+)?issuance\s+of\s+(?:the\s+)?(.+)$",
+        r"^(?:cause|causes|caused|causing|require|requires|required|requiring|order|orders|ordered|ordering)\s+"
+        r"issuances\s+of\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"issue {match.group(1).strip()}"
+
+    passive_match = re.match(
+        r"^(?:cause|causes|caused|causing|require|requires|required|requiring|order|orders|ordered|ordering)\s+"
+        r"(?:the\s+)?(.+?)\s+to\s+be\s+issued$",
+        text,
+        re.IGNORECASE,
+    )
+    if passive_match and passive_match.group(1).strip():
+        return f"issue {passive_match.group(1).strip()}"
 
     return text
 
