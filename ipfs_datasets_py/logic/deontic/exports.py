@@ -18,7 +18,7 @@ from .formula_builder import (
     build_deontic_formula_record_from_ir,
     build_deontic_formula_records_from_irs,
 )
-from .ir import LegalNormIR
+from .ir import LegalNormIR, legal_norm_ir_slot_provenance
 from .prover_syntax import validate_ir_with_provers
 
 
@@ -33,6 +33,7 @@ EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
     "decoder_reconstructions": {"primary_key": "reconstruction_id", "requires_source_id": True},
     "prover_syntax_summaries": {"primary_key": "prover_syntax_summary_id", "requires_source_id": True},
     "reconstruction_slot_loss": {"primary_key": "reconstruction_slot_loss_id", "requires_source_id": True},
+    "ir_slot_provenance_audits": {"primary_key": "ir_slot_provenance_audit_id", "requires_source_id": True},
 }
 
 _SECTION_REFERENCE_RE = re.compile(
@@ -66,6 +67,8 @@ DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
     "temporal_constraints",
     "cross_references",
 )
+
+DEFAULT_IR_SLOT_PROVENANCE_EXPORT_SLOTS = DEFAULT_RECONSTRUCTION_LEGAL_SLOTS
 
 
 def summarize_prover_syntax_target_coverage(
@@ -215,6 +218,65 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
+
+
+def build_ir_slot_provenance_audit_record(
+    norm: LegalNormIR,
+    slots: Sequence[str] = DEFAULT_IR_SLOT_PROVENANCE_EXPORT_SLOTS,
+) -> Dict[str, Any]:
+    """Build a stable export row for source-grounded IR slot provenance.
+
+    The IR helper reports grounded, missing, and ungrounded slots for decoder
+    audits. This export row persists that audit with stable identifiers and
+    explicit blockers so reports can distinguish a readable reconstruction from
+    one that omitted or invented legally salient IR slots.
+    """
+
+    audit = legal_norm_ir_slot_provenance(norm, slots)
+    checked_slots = list(audit["checked_slots"])
+    grounded_slots = list(audit["grounded_slots"])
+    missing_slots = list(audit["missing_slots"])
+    ungrounded_slots = list(audit["ungrounded_slots"])
+    blockers = [f"missing_ir_slot_provenance:{slot}" for slot in missing_slots]
+    blockers.extend(f"ungrounded_ir_slot_provenance:{slot}" for slot in ungrounded_slots)
+
+    checked_count = len(checked_slots)
+    grounded_count = len(grounded_slots)
+    ungrounded_count = len(ungrounded_slots)
+
+    return {
+        "ir_slot_provenance_audit_id": _stable_id(
+            "ir-slot-provenance-audit",
+            norm.source_id,
+            "|".join(checked_slots),
+        ),
+        "source_id": norm.source_id,
+        "target_logic": "legal_norm_ir",
+        "support_span": norm.support_span.to_list(),
+        "checked_slots": checked_slots,
+        "grounded_slots": grounded_slots,
+        "missing_slots": missing_slots,
+        "ungrounded_slots": ungrounded_slots,
+        "checked_slot_count": checked_count,
+        "grounded_slot_count": grounded_count,
+        "missing_slot_count": len(missing_slots),
+        "ungrounded_slot_count": ungrounded_count,
+        "all_checked_slots_grounded": checked_count > 0 and grounded_count == checked_count and ungrounded_count == 0,
+        "grounded_slot_rate": round(grounded_count / checked_count, 6) if checked_count else 0.0,
+        "ungrounded_slot_rate": round(ungrounded_count / checked_count, 6) if checked_count else 0.0,
+        "requires_validation": bool(blockers),
+        "coverage_blockers": blockers,
+        "slot_grounding": audit["slot_grounding"],
+    }
+
+
+def build_ir_slot_provenance_audit_records(
+    norms: Sequence[LegalNormIR],
+    slots: Sequence[str] = DEFAULT_IR_SLOT_PROVENANCE_EXPORT_SLOTS,
+) -> List[Dict[str, Any]]:
+    """Build IR slot-provenance audit rows for a stable sequence of norms."""
+
+    return [build_ir_slot_provenance_audit_record(norm, slots) for norm in norms]
 
 
 def build_formal_logic_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:

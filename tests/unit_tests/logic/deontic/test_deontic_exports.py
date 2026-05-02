@@ -7,6 +7,8 @@ from ipfs_datasets_py.logic.deontic.exports import (
     build_decoder_records_from_irs,
     build_document_export_tables_from_ir,
     build_formal_logic_record_from_ir,
+    build_ir_slot_provenance_audit_record,
+    build_ir_slot_provenance_audit_records,
     build_reconstruction_slot_loss_records,
     build_reconstruction_slot_loss_record,
     build_prover_syntax_summary_record_from_ir,
@@ -123,6 +125,83 @@ def test_ir_formal_logic_record_preserves_deterministic_resolution_metadata():
     assert record["repair_required"] is False
     assert record["deterministic_resolution"]["type"] == "local_scope_applicability"
     assert "cross_reference_requires_resolution" in record["blockers"]
+
+
+def test_ir_slot_provenance_audit_record_exports_grounding_status():
+    element = extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_ir_slot_provenance_audit_record(
+        norm,
+        slots=("actor", "modality", "action", "temporal_constraints", "exceptions"),
+    )
+    repeated = build_ir_slot_provenance_audit_record(
+        norm,
+        slots=("actor", "modality", "action", "temporal_constraints", "exceptions"),
+    )
+
+    assert record == repeated
+    assert record["ir_slot_provenance_audit_id"].startswith("ir-slot-provenance-audit:")
+    assert record["source_id"] == element["source_id"]
+    assert record["target_logic"] == "legal_norm_ir"
+    assert record["support_span"] == element["support_span"]
+    assert record["checked_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "temporal_constraints",
+        "exceptions",
+    ]
+    assert record["grounded_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "temporal_constraints",
+    ]
+    assert record["missing_slots"] == ["exceptions"]
+    assert record["ungrounded_slots"] == []
+    assert record["checked_slot_count"] == 5
+    assert record["grounded_slot_count"] == 4
+    assert record["missing_slot_count"] == 1
+    assert record["ungrounded_slot_count"] == 0
+    assert record["grounded_slot_rate"] == 0.8
+    assert record["ungrounded_slot_rate"] == 0.0
+    assert record["all_checked_slots_grounded"] is False
+    assert record["requires_validation"] is True
+    assert record["coverage_blockers"] == ["missing_ir_slot_provenance:exceptions"]
+    assert record["slot_grounding"][0]["slot"] == "actor"
+    assert record["slot_grounding"][0]["status"] == "grounded"
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_ir_slot_provenance_audit_records_preserve_norm_order():
+    elements = extract_normative_elements(
+        "The Secretary shall (1) establish procedures; (2) submit a report.",
+        expand_enumerations=True,
+    )
+    norms = [LegalNormIR.from_parser_element(element) for element in elements]
+
+    records = build_ir_slot_provenance_audit_records(
+        norms,
+        slots=("actor", "modality", "action"),
+    )
+
+    assert [record["source_id"] for record in records] == [norm.source_id for norm in norms]
+    assert [record["checked_slots"] for record in records] == [
+        ["actor", "modality", "action"],
+        ["actor", "modality", "action"],
+    ]
+    assert [record["all_checked_slots_grounded"] for record in records] == [True, True]
+    assert [record["requires_validation"] for record in records] == [False, False]
+    assert [record["coverage_blockers"] for record in records] == [[], []]
 
 
 def test_reconstruction_slot_loss_summary_reports_missing_and_ungrounded_slots():
