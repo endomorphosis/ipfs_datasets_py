@@ -154,6 +154,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_referral_remand_light_verb_action(action_text)
+    action_text = _normalize_waiver_extension_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -5044,6 +5045,42 @@ def _normalize_referral_remand_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"remand {target}" if target else text
+
+    return text
+
+
+def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
+    """Project waiver and extension administrative nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    waiver_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+        r"(?:an?\s+|the\s+)?waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+        r"waivers\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+        r"^waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in waiver_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"waive {target}" if target else text
+
+    extension_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+        r"(?:an?\s+|the\s+)?extension\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+        r"extensions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^extension\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in extension_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"extend {target}" if target else text
 
     return text
 
