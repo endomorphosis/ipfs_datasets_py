@@ -159,6 +159,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_translation_interpretation_light_verb_action(action_text)
+    action_text = _normalize_transcription_summarization_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
@@ -5233,6 +5234,45 @@ def _normalize_translation_interpretation_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"interpret {target}" if target else text
+
+    return text
+
+
+def _normalize_transcription_summarization_light_verb_action(action_text: str) -> str:
+    """Project record-preparation nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    transcription_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"transcriptions\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^transcription\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in transcription_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"transcribe {target}" if target else text
+
+    summarization_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?summari[sz]ation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"summari[sz]ations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^summari[sz]ation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?summary\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^summary\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in summarization_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"summarize {target}" if target else text
 
     return text
 
