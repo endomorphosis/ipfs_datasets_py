@@ -3764,10 +3764,14 @@ def generate_text(
         _cache_result(str(result), used_model_name=model_name)
         return result
     except Exception as initial_exc:
-        # When provider selection is automatic, a failed accelerate attempt should
-        # still fall through to the existing remote-provider order before giving up
-        # or considering heavyweight local fallback.
-        if provider is None:
+        # When provider selection is automatic, OR when an explicitly-pinned optional
+        # provider fails (e.g. codex credits exhausted), fall through to other providers
+        # in priority order before giving up.
+        _pinned_optional = (
+            provider is not None
+            and provider.strip().lower() in {p.lower() for p in _UNPINNED_OPTIONAL_PROVIDER_ORDER}
+        )
+        if provider is None or _pinned_optional:
             for fallback_name, fallback_provider in _iter_unpinned_optional_providers():
                 if fallback_provider is backend:
                     continue
@@ -3785,8 +3789,26 @@ def generate_text(
                 except Exception:
                     pass
 
+        # If a pinned optional provider (and its siblings above) all failed, also try AccelerateManager.
+        if _pinned_optional:
+            try:
+                accelerate_provider = _get_accelerate_provider(resolved_deps)
+                if accelerate_provider is not None and accelerate_provider is not backend:
+                    result = _generate_with_provider_fallbacks(
+                        "ipfs_accelerate_py",
+                        accelerate_provider,
+                        prompt,
+                        model_name=model_name,
+                        kwargs=dict(kwargs),
+                    )
+                    _set_last_generation_trace(provider_name="ipfs_accelerate_py", model_name=model_name)
+                    _cache_result(str(result), used_model_name=model_name)
+                    return result
+            except Exception:
+                pass
+
         # Fall back to local HF provider if optional provider fails.
-        if allow_local_fallback and provider is None:
+        if allow_local_fallback and (provider is None or _pinned_optional):
             local_hf = _get_local_hf_provider(deps=resolved_deps)
             if local_hf is not None and backend is not local_hf:
                 try:

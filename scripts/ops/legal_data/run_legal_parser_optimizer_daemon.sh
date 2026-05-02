@@ -5,8 +5,9 @@ REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 OUTPUT_DIR="${OUTPUT_DIR:-artifacts/legal_parser_optimizer_daemon}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
 PROVIDER="${PROVIDER:-codex_cli}"
-# Bypass AccelerateManager; copilot_cli is available and preferred over HF inference loop
-export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-codex_cli}"
+# Provider preference: codex_cli first, then copilot_cli via llm_router fallback chain.
+# Do not pin IPFS_DATASETS_PY_LLM_PROVIDER so that generate_text() can fall back to
+# copilot_cli / AccelerateManager / p2p when codex credits are exhausted.
 RESTART_BACKOFF_SECONDS="${RESTART_BACKOFF_SECONDS:-30}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-900}"
 TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-600}"

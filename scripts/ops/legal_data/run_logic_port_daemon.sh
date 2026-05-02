@@ -5,8 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
 PROVIDER="${PROVIDER:-codex_cli}"
-# Bypass AccelerateManager and pin the logic-port daemon to Codex CLI for GPT models.
-export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-$PROVIDER}"
+# Provider preference: codex_cli first, then copilot_cli via llm_router fallback chain.
+# Do not pin IPFS_DATASETS_PY_LLM_PROVIDER so that generate_text() can fall back to
+# copilot_cli / AccelerateManager / p2p when codex credits are exhausted.
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
