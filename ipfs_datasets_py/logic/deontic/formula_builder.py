@@ -170,6 +170,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_classification_categorization_light_verb_action(action_text)
+    action_text = _normalize_transfer_conveyance_light_verb_action(action_text)
     action_text = _normalize_denial_light_verb_action(action_text)
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
@@ -720,6 +721,43 @@ def _normalize_classification_categorization_light_verb_action(action_text: str)
             r"^(?:make|makes|made|making|issue|issues|issued|issuing|enter|enters|entered|entering|assign|assigns|assigned|assigning|provide|provides|provided|providing)\s+"
             r"categorizations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
             "categorize",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_transfer_conveyance_light_verb_action(action_text: str) -> str:
+    """Collapse transfer and conveyance nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|record|records|recorded|recording|execute|executes|executed|executing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?transfer\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "transfer",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|record|records|recorded|recording|execute|executes|executed|executing)\s+"
+            r"transfers\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "transfer",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|record|records|recorded|recording|execute|executes|executed|executing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?conveyance\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "convey",
+        ),
+        (
+            r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|approve|approves|approved|approving|record|records|recorded|recording|execute|executes|executed|executing)\s+"
+            r"conveyances\s+(?:of|to)\s+(?:the\s+)?(.+)$",
+            "convey",
         ),
     ]
     for pattern, verb in patterns:
