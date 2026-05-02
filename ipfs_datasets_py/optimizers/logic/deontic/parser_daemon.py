@@ -268,34 +268,43 @@ class LegalParserParityOptimizer(BaseOptimizer):
         """Ask llm_router for a legal-parser improvement patch."""
 
         prompt = self.build_patch_prompt(cycle_index=cycle_index, evaluation=evaluation, feedback=feedback)
-        with self._read_only_codex_cli_generation():
-            if self.llm_backend is not None:
-                raw_response = self.llm_backend.generate(
-                    prompt,
-                    method=OptimizationMethod.TEST_DRIVEN,
-                    max_tokens=self.daemon_config.llm_max_tokens,
-                    temperature=self.daemon_config.llm_temperature,
-                    router_kwargs={
-                        "provider": self.daemon_config.provider,
-                        "model_name": self.daemon_config.model_name,
-                        "allow_local_fallback": False,
-                        "disable_model_retry": True,
-                        "timeout": self.daemon_config.llm_timeout_seconds,
-                        "sandbox": "read-only",
-                    },
-                )
-            else:
-                from ipfs_datasets_py import llm_router
+        pre_llm_diff = self._working_tree_diff()
+        try:
+            with self._read_only_codex_cli_generation():
+                if self.llm_backend is not None:
+                    raw_response = self.llm_backend.generate(
+                        prompt,
+                        method=OptimizationMethod.TEST_DRIVEN,
+                        max_tokens=self.daemon_config.llm_max_tokens,
+                        temperature=self.daemon_config.llm_temperature,
+                        router_kwargs={
+                            "provider": self.daemon_config.provider,
+                            "model_name": self.daemon_config.model_name,
+                            "allow_local_fallback": False,
+                            "disable_model_retry": True,
+                            "timeout": self.daemon_config.llm_timeout_seconds,
+                            "sandbox": "read-only",
+                        },
+                    )
+                else:
+                    from ipfs_datasets_py import llm_router
 
-                raw_response = llm_router.generate_text(
-                    prompt,
-                    provider=self.daemon_config.provider,
-                    model_name=self.daemon_config.model_name,
-                    max_tokens=self.daemon_config.llm_max_tokens,
-                    temperature=self.daemon_config.llm_temperature,
-                    timeout=self.daemon_config.llm_timeout_seconds,
-                    allow_local_fallback=False,
-                    disable_model_retry=True,
+                    raw_response = llm_router.generate_text(
+                        prompt,
+                        provider=self.daemon_config.provider,
+                        model_name=self.daemon_config.model_name,
+                        max_tokens=self.daemon_config.llm_max_tokens,
+                        temperature=self.daemon_config.llm_temperature,
+                        timeout=self.daemon_config.llm_timeout_seconds,
+                        allow_local_fallback=False,
+                        disable_model_retry=True,
+                    )
+        finally:
+            restore_result = self._restore_working_tree_diff(pre_llm_diff)
+            if not restore_result.get("valid"):
+                raise RuntimeError(
+                    "llm proposal generation changed the working tree and automatic restore failed: "
+                    + str(restore_result)
                 )
         return parse_cycle_proposal(raw_response)
 
@@ -304,6 +313,43 @@ class LegalParserParityOptimizer(BaseOptimizer):
         if provider and provider not in {"codex", "codex_cli"}:
             return _TemporaryEnv({})
         return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
+
+    def _working_tree_diff(self) -> str:
+        result = _run_command(
+            ["git", "diff", "--binary"],
+            cwd=self.daemon_config.repo_root,
+            timeout=60,
+        )
+        return str(result.get("stdout") or "")
+
+    def _restore_working_tree_diff(self, expected_diff: str) -> Dict[str, Any]:
+        current_diff = self._working_tree_diff()
+        if current_diff == expected_diff:
+            return {"valid": True, "changed": False, "reason": "working_tree_unchanged"}
+        reverse_result = _run_command(
+            ["git", "apply", "-R", "-"],
+            cwd=self.daemon_config.repo_root,
+            input_text=current_diff,
+            timeout=60,
+        )
+        if not reverse_result.get("valid"):
+            return {"valid": False, "changed": False, "reverse": reverse_result}
+        result: Dict[str, Any] = {
+            "valid": True,
+            "changed": True,
+            "reason": "restored_after_llm_side_effects",
+            "reverse": reverse_result,
+        }
+        if expected_diff.strip():
+            reapply_result = _run_command(
+                ["git", "apply", "-"],
+                cwd=self.daemon_config.repo_root,
+                input_text=expected_diff,
+                timeout=60,
+            )
+            result["reapply_preexisting"] = reapply_result
+            result["valid"] = bool(reapply_result.get("valid"))
+        return result
 
     def build_patch_prompt(
         self,

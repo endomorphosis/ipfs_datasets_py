@@ -182,7 +182,7 @@ class LogicPortDaemonConfig:
     target_score: float = 0.99
     dry_run: bool = True
     validation_commands: Tuple[Tuple[str, ...], ...] = DEFAULT_VALIDATION_COMMANDS
-    max_prompt_chars: int = 50000
+    max_prompt_chars: int = 32000
     max_context_file_chars: int = 12000
     max_context_files: int = 6
     max_patch_lines: int = 180
@@ -270,12 +270,75 @@ def _read_text(path: Path, *, limit: Optional[int] = None) -> str:
     return text
 
 
+def _truncate_text(text: str, *, limit: Optional[int]) -> str:
+    if limit is not None and len(text) > limit:
+        return text[:limit] + "\n\n[truncated]\n"
+    return text
+
+
+def _focused_task_board_excerpt(markdown: str, selected_task: Optional[PlanTask], *, limit: int) -> str:
+    """Return a compact task-board excerpt centered on the selected task."""
+
+    if limit <= 0 or len(markdown) <= limit:
+        return markdown
+    if selected_task is None:
+        return _truncate_text(markdown, limit=limit)
+
+    lines = markdown.splitlines(keepends=True)
+    target_line_index: Optional[int] = None
+    if selected_task.task_id.startswith("checkbox-"):
+        try:
+            target_checkbox_index = int(selected_task.task_id.removeprefix("checkbox-"))
+        except ValueError:
+            target_checkbox_index = -1
+        current_checkbox_index = 0
+        for index, line in enumerate(lines):
+            if CHECKBOX_TASK_RE.match(line.rstrip("\n")):
+                current_checkbox_index += 1
+                if current_checkbox_index == target_checkbox_index:
+                    target_line_index = index
+                    break
+
+    if target_line_index is None:
+        needle = selected_task.title.strip()
+        for index, line in enumerate(lines):
+            if needle and needle in line:
+                target_line_index = index
+                break
+
+    if target_line_index is None:
+        return _truncate_text(markdown, limit=limit)
+
+    header = "[task-board excerpt centered on daemon-selected task]\n"
+    footer = "\n[task-board excerpt truncated around selected task]\n"
+    available = max(0, limit - len(header) - len(footer))
+    start = target_line_index
+    end = target_line_index + 1
+    excerpt = lines[target_line_index]
+
+    while len(excerpt) < available and (start > 0 or end < len(lines)):
+        grew = False
+        if start > 0 and len(excerpt) + len(lines[start - 1]) <= available:
+            start -= 1
+            excerpt = lines[start] + excerpt
+            grew = True
+        if end < len(lines) and len(excerpt) + len(lines[end]) <= available:
+            excerpt += lines[end]
+            end += 1
+            grew = True
+        if not grew:
+            break
+
+    return header + excerpt + footer
+
+
 def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
     match = JSON_BLOCK_RE.search(text)
     candidates = [match.group(1)] if match else []
     stripped = text.strip()
     if stripped.startswith("{") and stripped.endswith("}"):
         candidates.append(stripped)
+    candidates.extend(_extract_codex_event_text_candidates(stripped))
     start = stripped.find("{")
     end = stripped.rfind("}")
     if start >= 0 and end > start:
@@ -289,6 +352,49 @@ def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
         except json.JSONDecodeError:
             continue
     return None
+
+
+def _extract_codex_event_text_candidates(text: str) -> List[str]:
+    """Extract assistant text candidates from Codex JSONL event streams."""
+
+    candidates: List[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("{") or not line.endswith("}"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        for value in (
+            _extract_text_from_codex_event_object(event),
+            _extract_text_from_codex_event_object(event.get("item")),
+            _extract_text_from_codex_event_object(event.get("message")),
+        ):
+            if value:
+                candidates.append(value)
+    return list(reversed(candidates))
+
+
+def _extract_text_from_codex_event_object(value: Any) -> str:
+    if not isinstance(value, dict):
+        return ""
+    value_type = value.get("type")
+    if value_type in {"agent_message", "assistant_message"} and isinstance(value.get("text"), str):
+        return value["text"].strip()
+    if value_type == "message" and value.get("role") == "assistant":
+        content = value.get("content")
+        if isinstance(content, list):
+            parts: List[str] = []
+            for item in content:
+                if isinstance(item, dict) and item.get("type") in {"text", "output_text"} and isinstance(item.get("text"), str):
+                    parts.append(item["text"])
+            return "".join(parts).strip()
+        if isinstance(value.get("text"), str):
+            return value["text"].strip()
+    return ""
 
 
 def parse_llm_patch_response(text: str) -> LogicPortArtifact:
@@ -2651,23 +2757,37 @@ Current repository file contents after rollback:
     def _resolved_provider(self) -> Optional[str]:
         if self.daemon_config.provider:
             return self.daemon_config.provider
+        if self.daemon_config.model_name.strip().lower().startswith("gpt-"):
+            return "codex_cli"
         return None
 
     def _build_prompt(self, *, input_data: Any, context: OptimizationContext) -> str:
-        doc_sections = []
         budget = self.daemon_config.max_prompt_chars
         plan_tasks: List[PlanTask] = []
+        source_docs: List[Tuple[Path, Path, str]] = []
+        task_board_resolved = (
+            self.daemon_config.resolve(self.daemon_config.task_board_doc)
+            if self.daemon_config.task_board_doc is not None
+            else None
+        )
         for path in [*self.daemon_config.plan_docs, *self.daemon_config.status_docs]:
             resolved = self.daemon_config.resolve(path)
             if not resolved.exists():
                 continue
-            text = _read_text(resolved, limit=max(2000, budget // 4))
-            doc_sections.append(f"## {path}\n{text}")
-            if self.daemon_config.task_board_doc is not None and resolved == self.daemon_config.resolve(self.daemon_config.task_board_doc):
-                plan_tasks = extract_plan_tasks(_strip_daemon_task_board(resolved.read_text(encoding="utf-8")))
+            text = resolved.read_text(encoding="utf-8")
+            source_docs.append((path, resolved, text))
+            if task_board_resolved is not None and resolved == task_board_resolved:
+                plan_tasks = extract_plan_tasks(_strip_daemon_task_board(text))
 
         selected_task = self._select_next_plan_task(plan_tasks)
         selected_task_text = selected_task.label if selected_task else "No markdown task could be selected."
+        doc_sections = []
+        for path, resolved, text in source_docs:
+            if task_board_resolved is not None and resolved == task_board_resolved:
+                rendered = _focused_task_board_excerpt(text, selected_task, limit=max(4000, budget // 5))
+            else:
+                rendered = _truncate_text(text, limit=max(1200, budget // 10))
+            doc_sections.append(f"## {path}\n{rendered}")
 
         git_status = run_command(
             ("git", "status", "--short"),
@@ -2705,6 +2825,7 @@ Hard constraints:
 - Prefer the JSON `files` array with complete replacement file contents. For this daemon run, `files` is the primary output channel because it produces auditable changed files and avoids malformed patch cycles.
 - Leave `patch` empty unless a complete file replacement would be unsafe or impossible.
 - The Codex subprocess may run in a read-only sandbox. That only prevents the subprocess from editing files directly; it does not prevent this daemon from applying the JSON `files` replacements that you return. Never refuse because of a read-only sandbox.
+- Do not run exploratory shell commands in the Codex subprocess. Use the current file context below and return the JSON proposal promptly so the 300 second daemon timeout is spent on implementation, not browsing.
 - Do not include shell commands that mutate files.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
@@ -2797,6 +2918,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-task-failures", type=int, default=6, help="Block the current task after N failures since its last accepted round, regardless of failure kind.")
     parser.add_argument("--llm-timeout", type=int, default=300, help="Seconds before a single LLM/Codex call times out.")
     parser.add_argument("--command-timeout", type=int, default=300, help="Seconds before validation/git commands time out.")
+    parser.add_argument("--max-prompt-chars", type=int, default=32000, help="Maximum prompt characters sent to a single LLM/Codex call.")
     parser.add_argument("--log-file", default=None, help="Optional file for JSON results from each daemon invocation.")
     parser.add_argument("--status-file", default=None, help="Optional heartbeat/status JSON file. Defaults to .daemon status path.")
     parser.add_argument("--progress-file", default=None, help="Optional progress summary JSON file. Defaults to .daemon progress path.")
@@ -2846,6 +2968,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         interval_seconds=max(0.0, args.interval),
         dry_run=not args.apply,
         validation_commands=validation_commands,
+        max_prompt_chars=max(4000, args.max_prompt_chars),
         llm_timeout_seconds=max(1, args.llm_timeout),
         command_timeout_seconds=max(1, args.command_timeout),
         retry_interval_seconds=max(0.0, args.retry_interval),

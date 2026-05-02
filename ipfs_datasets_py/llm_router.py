@@ -3083,42 +3083,21 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
     if enable_value is not None and enable_value.strip() and not _truthy(enable_value):
         return None
 
-    # If ipfs_accelerate_py isn't installed, skip without initializing anything.
+    # Prefer the local AccelerateManager (always available in this repo) over
+    # importing the external ipfs_accelerate_py package, which may not be installed
+    # or may lack the llm_router module in some configurations.
     try:
-        # Best-effort support for vendored submodule layouts.
-        # In this repo, ipfs_accelerate_py lives at:
-        #   <submodule_root>/ipfs_accelerate_py/ipfs_accelerate_py/
-        # so we need to add <submodule_root>/ipfs_accelerate_py to sys.path.
-        from pathlib import Path
-        import sys
+        from ipfs_datasets_py.ml.accelerate_integration.manager import AccelerateManager as _LocalAccelerateManager
 
-        submodule_root = Path(__file__).resolve().parents[1]
-        candidate = submodule_root / "ipfs_accelerate_py"
-        if candidate.is_dir():
-            candidate_str = str(candidate)
-            if candidate_str not in sys.path:
-                sys.path.insert(0, candidate_str)
-
-        import importlib.util
-
-        if importlib.util.find_spec("ipfs_accelerate_py") is None:
-            return None
-    except Exception:
-        return None
-
-    try:
-        manager = deps.get_accelerate_manager(
-            purpose="llm_router",
-            enable_distributed=True,
-            resources={"purpose": "llm_router"},
-        )
-        if manager is None:
-            return None
+        manager: object = _LocalAccelerateManager()
 
         def _extract_generated_text(result: object) -> Optional[str]:
             if isinstance(result, str) and result.strip():
                 return result
             if isinstance(result, dict):
+                # Skip progress/heartbeat dicts — no real text content.
+                if "heartbeat_ts" in result or ("phase" in result and "worker_id" in result):
+                    return None
                 for key in ("text", "generated_text", "output_text", "completion", "content"):
                     value = result.get(key)
                     if isinstance(value, str) and value.strip():
@@ -3148,11 +3127,12 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
 
         class _AccelerateLLMProvider:
             def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
-                # Best-effort hook: if accelerate cannot produce an answer, raise so
-                # the router can fall back.
+                # AccelerateManager routes through: ipfs_accelerate_py → p2p_task_queue
+                # (copilot_cli/codex_cli/hf) → http peers.  Any of those may succeed.
+                effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
                 payload = {"prompt": prompt, **kwargs}
-                result = manager.run_inference(
-                    model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                result = manager.run_inference(  # type: ignore[union-attr]
+                    effective_model,
                     payload,
                     task_type="text-generation",
                 )
@@ -3163,9 +3143,59 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                     message = result.get("message")
                     if isinstance(message, str) and message.strip():
                         raise RuntimeError(message.strip())
-                raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
+                raise RuntimeError("AccelerateManager provider did not return generated text")
 
         return _AccelerateLLMProvider()
+    except Exception:
+        pass
+
+    # Fallback: try the external ipfs_accelerate_py package (may be installed separately).
+    try:
+        from pathlib import Path as _Path
+        import sys as _sys
+
+        submodule_root = _Path(__file__).resolve().parents[1]
+        candidate = submodule_root / "ipfs_accelerate_py"
+        if candidate.is_dir():
+            candidate_str = str(candidate)
+            if candidate_str not in _sys.path:
+                _sys.path.insert(0, candidate_str)
+
+        if importlib.util.find_spec("ipfs_accelerate_py") is None:
+            return None
+    except Exception:
+        return None
+
+    try:
+        manager = deps.get_accelerate_manager(
+            purpose="llm_router",
+            enable_distributed=True,
+            resources={"purpose": "llm_router"},
+        )
+        if manager is None:
+            return None
+
+        class _ExternalAccelerateLLMProvider:
+            def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
+                payload = {"prompt": prompt, **kwargs}
+                result = manager.run_inference(
+                    model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", ""),
+                    payload,
+                    task_type="text-generation",
+                )
+                if isinstance(result, str) and result.strip():
+                    return result
+                if isinstance(result, dict):
+                    for key in ("text", "generated_text", "output_text", "completion", "content"):
+                        value = result.get(key)
+                        if isinstance(value, str) and value.strip():
+                            return value
+                    message = result.get("message")
+                    if isinstance(message, str) and message.strip():
+                        raise RuntimeError(message.strip())
+                raise RuntimeError("ipfs_accelerate_py provider did not return generated text")
+
+        return _ExternalAccelerateLLMProvider()
     except Exception:
         return None
 

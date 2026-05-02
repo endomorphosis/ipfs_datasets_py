@@ -88,6 +88,37 @@ def test_parse_llm_patch_response_from_fenced_diff():
     assert artifact.errors == []
 
 
+def test_parse_llm_patch_response_from_codex_event_stream():
+    payload = {
+        "summary": "Event JSON",
+        "impact": "Codex event stream assistant content is parsed.",
+        "patch": "",
+        "files": [{"path": "src/lib/logic/event.ts", "content": "export const value = 1;\n"}],
+    }
+    response = "\n".join(
+        [
+            json.dumps({"type": "thread.started", "thread_id": "example"}),
+            json.dumps({"type": "turn.started"}),
+            json.dumps(
+                {
+                    "type": "item.completed",
+                    "item": {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [{"type": "output_text", "text": json.dumps(payload)}],
+                    },
+                }
+            ),
+        ]
+    )
+
+    artifact = parse_llm_patch_response(response)
+
+    assert artifact.summary == "Event JSON"
+    assert artifact.files == [{"path": "src/lib/logic/event.ts", "content": "export const value = 1;\n"}]
+    assert artifact.errors == []
+
+
 def test_extract_plan_tasks_reads_status_from_markdown():
     tasks = extract_plan_tasks(
         """
@@ -432,9 +463,55 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     assert "DETERMINISTIC" not in router.calls[0]["prompt"] or "Port deterministic parser IR" in router.calls[0]["prompt"]
     assert "Do not add Node-only, Rust FFI, filesystem, subprocess, RPC, or server fallbacks" in router.calls[0]["prompt"]
     assert 'For tasks phrased "where feasible"' in router.calls[0]["prompt"]
+    assert "Do not run exploratory shell commands in the Codex subprocess" in router.calls[0]["prompt"]
     assert result["valid"] is True
     assert result["artifact"]["has_patch"] is True
     assert not (tmp_path / "new-file.txt").exists()
+
+
+def test_build_prompt_uses_focused_task_board_excerpt(tmp_path):
+    plan = tmp_path / "docs" / "IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    plan.parent.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text(
+        "\n".join(
+            [
+                "# Port Plan",
+                "- [x] Already complete",
+                *[f"early filler {index}" for index in range(250)],
+                "- [ ] Selected browser-native profiler parity",
+                *[f"late filler {index}" for index in range(250)],
+                "- [ ] Later task marker",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    status.write_text("status notes\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "Noop", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        max_prompt_chars=9000,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="focused-prompt")
+
+    prompt = router.calls[0]["prompt"]
+    assert len(prompt) <= 9050
+    assert "Task checkbox-2: Selected browser-native profiler parity" in prompt
+    assert "[task-board excerpt centered on daemon-selected task]" in prompt
+    assert "Selected browser-native profiler parity" in prompt
+    assert "Later task marker" not in prompt
 
 
 def test_daemon_reports_router_failures_without_traceback(tmp_path):

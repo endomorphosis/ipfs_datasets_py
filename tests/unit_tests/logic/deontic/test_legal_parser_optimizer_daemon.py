@@ -188,6 +188,50 @@ def test_optimizer_forces_default_codex_generation_read_only(tmp_path, monkeypat
     assert __import__("os").environ["IPFS_DATASETS_PY_CODEX_SANDBOX"] == "workspace-write"
 
 
+def test_optimizer_restores_worktree_after_llm_side_effects(tmp_path):
+    __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    touched = tmp_path / "tracked.txt"
+    touched.write_text("before\n", encoding="utf-8")
+    __import__("subprocess").run(["git", "add", "tracked.txt"], cwd=tmp_path, check=True, capture_output=True)
+
+    class _MutatingRouter:
+        calls = []
+
+        def generate(self, prompt, method, max_tokens=2000, temperature=0.7, router_kwargs=None):
+            self.calls.append({"prompt": prompt, "router_kwargs": router_kwargs or {}})
+            touched.write_text("after\n", encoding="utf-8")
+            return json.dumps(
+                {
+                    "summary": "No-op patch for test.",
+                    "requirements_addressed": [],
+                    "expected_metric_gain": {},
+                    "tests_to_run": [],
+                    "unified_diff": "",
+                }
+            )
+
+    router = _MutatingRouter()
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        model_name="gpt-5.5",
+        provider="codex_cli",
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=router)
+
+    proposal = optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert proposal.summary == "No-op patch for test."
+    assert touched.read_text(encoding="utf-8") == "before\n"
+    assert __import__("subprocess").run(
+        ["git", "diff", "--quiet"],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+    ).returncode == 0
+
+
 def test_optimizer_scales_test_timeout_from_recent_suite_duration(tmp_path):
     out_dir = tmp_path / "out"
     cycle_dir = out_dir / "cycles/cycle_0001"

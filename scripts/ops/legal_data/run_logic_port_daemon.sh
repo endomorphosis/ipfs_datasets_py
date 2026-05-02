@@ -4,13 +4,14 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-}"
-# Bypass AccelerateManager; copilot_cli is available and preferred over HF inference loop
-export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-copilot_cli}"
+PROVIDER="${PROVIDER:-codex_cli}"
+# Bypass AccelerateManager and pin the logic-port daemon to Codex CLI for GPT models.
+export IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-$PROVIDER}"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
 COMMAND_TIMEOUT_SECONDS="${COMMAND_TIMEOUT_SECONDS:-300}"
+MAX_PROMPT_CHARS="${MAX_PROMPT_CHARS:-32000}"
 HEARTBEAT_INTERVAL_SECONDS="${HEARTBEAT_INTERVAL_SECONDS:-30}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
@@ -34,6 +35,7 @@ SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-workspace-write}"
 CODEX_BIN="${CODEX_BIN:-codex}"
+export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}"
 
 STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
 PROGRESS_PATH="${PROGRESS_PATH:-$DAEMON_DIR/logic-port-daemon.progress.json}"
@@ -126,6 +128,7 @@ write_supervisor_status() {
   "provider": "$PROVIDER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
   "command_timeout_seconds": $COMMAND_TIMEOUT_SECONDS,
+  "max_prompt_chars": $MAX_PROMPT_CHARS,
   "last_exit_code": $last_exit_code,
   "last_recycle_reason": "$last_recycle_reason"
 }
@@ -566,6 +569,7 @@ while true; do
       --retry-interval 0
       --llm-timeout "$LLM_TIMEOUT_SECONDS"
       --command-timeout "$COMMAND_TIMEOUT_SECONDS"
+      --max-prompt-chars "$MAX_PROMPT_CHARS"
       --heartbeat-interval "$HEARTBEAT_INTERVAL_SECONDS"
       --max-task-failures "$MAX_TASK_FAILURES"
       --proposal-attempts "$PROPOSAL_ATTEMPTS"

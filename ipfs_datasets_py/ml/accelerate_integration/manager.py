@@ -31,7 +31,7 @@ IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE / IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_F
     and ``~/.cache/ipfs_datasets_py/task_p2p_announce.json``.
 
 IPFS_DATASETS_PY_ACCELERATE_TIMEOUT
-    HTTP and task-queue timeout in seconds (default: 30).
+    HTTP and task-queue timeout in seconds (default: 300).
 
 IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S / IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S
     Override wait timeout for the libp2p task queue specifically.
@@ -51,6 +51,40 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Baked-in ENV defaults — these apply when the variable is NOT set externally.
+# They make AccelerateManager work out-of-the-box without any manual env config.
+# ---------------------------------------------------------------------------
+_ENV_DEFAULTS: Dict[str, str] = {
+    # Use the local task worker (copilot_cli by default) for llm.generate tasks.
+    "IPFS_ACCELERATE_PY_TASK_WORKER_ENABLE_COPILOT_CLI": "1",
+    "IPFS_DATASETS_PY_TASK_WORKER_ENABLE_COPILOT_CLI": "1",
+    # Allow codex_cli first, then copilot_cli as fallback (workers use local creds).
+    "IPFS_ACCELERATE_PY_TASK_WORKER_ALLOWED_LLM_PROVIDERS": "codex_cli,codex,copilot_cli,copilot_sdk",
+    "IPFS_DATASETS_PY_TASK_WORKER_ALLOWED_LLM_PROVIDERS": "codex_cli,codex,copilot_cli,copilot_sdk",
+    # Wait up to 5 min for slow providers (copilot takes ~90s per request).
+    "IPFS_DATASETS_PY_ACCELERATE_TIMEOUT": "300",
+    "IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S": "300",
+    "IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S": "300",
+    # Enable p2p auto-discovery so local workers are found automatically.
+    "IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY": "1",
+    "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY": "1",
+    # Default LLM model/provider: prefer codex_cli, then copilot_cli via p2p.
+    # Routes: llm_router → AccelerateManager → p2p → local worker → codex_cli.
+    # Set IPFS_DATASETS_PY_LLM_MODEL to override (e.g. a HuggingFace model ID).
+    "IPFS_DATASETS_PY_LLM_MODEL": "codex_cli",
+    # Prefer AccelerateManager (p2p routing) over direct CLI invocation.
+    "IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE": "1",
+}
+
+def _apply_env_defaults() -> None:
+    """Apply baked-in defaults for any env var that is not already set."""
+    for key, value in _ENV_DEFAULTS.items():
+        if not os.environ.get(key):
+            os.environ[key] = value
+
+_apply_env_defaults()
 
 # Provider names that should be submitted as ``llm.generate`` task type rather
 # than ``text-generation``.  Workers use their local credentials (copilot, codex,
@@ -103,12 +137,12 @@ def _p2p_timeout() -> float:
         os.environ.get("IPFS_DATASETS_PY_ACCELERATE_TIMEOUT")
         or os.environ.get("IPFS_DATASETS_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
         or os.environ.get("IPFS_ACCELERATE_PY_TASK_QUEUE_WAIT_TIMEOUT_S")
-        or "30"
+        or "300"
     )
     try:
         return max(1.0, float(raw))
     except ValueError:
-        return 30.0
+        return 300.0
 
 
 def _http_peer_endpoints() -> List[str]:
@@ -189,11 +223,29 @@ def _read_task_p2p_announce() -> Optional[Dict[str, Any]]:
     return None
 
 
+def _is_progress_heartbeat(obj: Any) -> bool:
+    """Return True if the dict looks like a progress heartbeat (no real text content)."""
+    if not isinstance(obj, dict):
+        return False
+    # Worker emits {heartbeat_ts, phase, task_type, ts, worker_id} as progress updates.
+    return "heartbeat_ts" in obj or ("phase" in obj and "worker_id" in obj)
+
+
 def _extract_text(obj: Any) -> Optional[str]:
     """Recursively pull generated text from an API response object."""
     if isinstance(obj, str) and obj.strip():
         return obj.strip()
     if isinstance(obj, dict):
+        # Skip progress heartbeat dicts — they contain no generated text.
+        if _is_progress_heartbeat(obj):
+            return None
+        # Also skip task-queue status records that are still in-progress.
+        if obj.get("status") in ("running", "pending", "queued") and "result" in obj:
+            inner = obj.get("result")
+            if isinstance(inner, dict) and _is_progress_heartbeat(inner):
+                return None
+            if inner is None or (isinstance(inner, dict) and not inner.get("text")):
+                return None
         for key in ("text", "generated_text", "output_text", "completion", "content", "response"):
             val = obj.get(key)
             if isinstance(val, str) and val.strip():
@@ -731,7 +783,11 @@ except Exception as e:
 
         _GENERATION_TASKS = {
             "text-generation", "text_generation", "generation", "generate", "completion",
+            "llm.generate", "llm_generate", "chat", "chat-completion",
         }
+        # For known LLM provider names, default to text-generation task type.
+        if not normalized_task and model_name.lower() in _LLM_PROVIDER_NAMES:
+            normalized_task = "text-generation"
         if normalized_task not in _GENERATION_TASKS:
             raise RuntimeError(
                 f"AccelerateManager: unsupported task type {task_type!r} for {model_name}; "
@@ -904,7 +960,7 @@ except Exception as e:
                 payload[k] = extra[k]
 
         script = f"""
-import sys, json, os
+import sys, json, os, time
 # Suppress info logs from ipfs_accelerate_py
 import logging
 logging.disable(logging.WARNING)
@@ -927,8 +983,24 @@ async def _run():
     task_id = info.get("task_id") or ""
     if not task_id:
         return None
-    result = await wait_task(remote=remote, task_id=task_id, timeout_s={timeout!r})
-    return result
+    deadline = time.monotonic() + {timeout!r}
+    poll_window = min(30.0, {timeout!r} / 2)
+    while time.monotonic() < deadline:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        result = await wait_task(remote=remote, task_id=task_id, timeout_s=min(poll_window, remaining))
+        if result is None:
+            return None
+        status = result.get("status") if isinstance(result, dict) else None
+        if status in ("completed", "done", "succeeded"):
+            return result
+        if status == "failed":
+            return None
+        if status in ("running", "pending", "queued"):
+            continue
+        return result
+    return None
 
 result = trio.run(_run)
 print(json.dumps({{"result": result}}))
@@ -938,7 +1010,7 @@ print(json.dumps({{"result": result}}))
                 [py, "-c", script],
                 capture_output=True,
                 text=True,
-                timeout=timeout + 10,
+                timeout=timeout + 30,  # extra headroom for poll loop overhead
             )
             if proc.returncode != 0:
                 logger.debug("p2p subprocess failed: %s", proc.stderr[:500])
@@ -1019,6 +1091,7 @@ print(json.dumps({{"result": result}}))
                     payload[k] = kwargs[k]
 
             async def _run() -> Optional[str]:
+                import time as _time
                 info = await submit_task_with_info(
                     remote=remote,
                     task_type=p2p_task_type,
@@ -1030,10 +1103,44 @@ print(json.dumps({{"result": result}}))
                     logger.warning("p2p_task_queue: no task_id in response: %s", info)
                     return None
                 logger.debug("p2p task submitted: id=%s via %s", task_id, multiaddr)
-                result = await wait_task(remote=remote, task_id=task_id, timeout_s=timeout)
-                if result is None:
-                    return None
-                return _extract_text(result)
+                deadline = _time.monotonic() + timeout
+                poll_window = min(30.0, timeout / 2)
+                while _time.monotonic() < deadline:
+                    remaining = deadline - _time.monotonic()
+                    if remaining <= 0:
+                        break
+                    result = await wait_task(
+                        remote=remote,
+                        task_id=task_id,
+                        timeout_s=min(poll_window, remaining),
+                    )
+                    if result is None:
+                        logger.debug("p2p wait_task returned None for %s; stopping", task_id)
+                        return None
+                    status = result.get("status") if isinstance(result, dict) else None
+                    if status in ("completed", "done", "succeeded"):
+                        text = _extract_text(result)
+                        if text:
+                            return text
+                        # Extract from nested result field
+                        inner = result.get("result") if isinstance(result, dict) else None
+                        return _extract_text(inner)
+                    if status == "failed":
+                        err = result.get("error") if isinstance(result, dict) else None
+                        logger.warning("p2p task %s failed: %s", task_id, err)
+                        return None
+                    if status in ("running", "pending", "queued"):
+                        logger.debug(
+                            "p2p task %s still %s, %.0fs remaining; polling again",
+                            task_id, status, deadline - _time.monotonic(),
+                        )
+                        continue
+                    # Unknown status — try extracting text directly
+                    text = _extract_text(result)
+                    if text:
+                        return text
+                logger.warning("p2p task %s timed out after %.0fs", task_id, timeout)
+                return None
 
             # Use trio.run() directly — libp2p internals use trio nurseries
             try:
@@ -1051,7 +1158,10 @@ print(json.dumps({{"result": result}}))
             )
 
         if not text:
-            raise RuntimeError(f"p2p_task_queue peer {multiaddr!r} returned no text for {model_name!r}")
+            raise RuntimeError(
+                f"p2p_task_queue peer {multiaddr!r} returned no text for {model_name!r}. "
+                "Delegating to llm_router fallback chain."
+            )
         logger.info("AccelerateManager: p2p_task_queue served %s via %s", model_name, multiaddr)
         return {"status": "success", "backend": "p2p_task_queue", "model": model_name, "text": text, "peer": multiaddr}
 
