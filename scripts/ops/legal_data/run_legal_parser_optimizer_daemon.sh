@@ -4,10 +4,10 @@ set -uo pipefail
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 OUTPUT_DIR="${OUTPUT_DIR:-artifacts/legal_parser_optimizer_daemon}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-codex_cli}"
-# Provider preference: codex_cli first, then copilot_cli via llm_router fallback chain.
-# Do not pin IPFS_DATASETS_PY_LLM_PROVIDER so that generate_text() can fall back to
-# copilot_cli / AccelerateManager / p2p when codex credits are exhausted.
+PROVIDER="${PROVIDER:-llm_router}"
+# Call llm_router by default. The router backend defaults to codex_cli, but callers
+# can override it with IPFS_DATASETS_PY_LLM_PROVIDER without changing daemon wiring.
+IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-codex_cli}"
 RESTART_BACKOFF_SECONDS="${RESTART_BACKOFF_SECONDS:-30}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-900}"
 TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-600}"
@@ -22,6 +22,8 @@ SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
 SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
+SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-1}"
+SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL="${SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL:-3}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
@@ -96,6 +98,8 @@ write_supervisor_status() {
   "agentic_stalled_metric_cycles": $SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES,
   "agentic_rejected_tail": $SUPERVISOR_AGENTIC_REJECTED_TAIL,
   "agentic_rolled_back_tail": $SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL,
+  "agentic_dirty_target_files_enabled": $(json_bool "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES"),
+  "agentic_dirty_rejection_tail": $SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL,
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
@@ -144,12 +148,16 @@ agentic_maintenance_reason() {
     "$REPO_ROOT/$PROGRESS_PATH" \
     "$REPO_ROOT/$CURRENT_STATUS_PATH" \
     "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$REPO_ROOT" \
     "$SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES" \
     "$SUPERVISOR_AGENTIC_REJECTED_TAIL" \
     "$SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL" \
     "$SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS" \
-    "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
+    "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" \
+    "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
+    "$SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL" <<'PY'
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -158,11 +166,14 @@ from datetime import datetime, timezone
 progress_path = Path(sys.argv[1])
 status_path = Path(sys.argv[2])
 state_path = Path(sys.argv[3])
-stalled_metric_threshold = int(sys.argv[4])
-rejected_tail_threshold = int(sys.argv[5])
-rolled_back_tail_threshold = int(sys.argv[6])
-cycle_stall_seconds = int(sys.argv[7])
-cooldown_seconds = int(sys.argv[8])
+repo_root = Path(sys.argv[4])
+stalled_metric_threshold = int(sys.argv[5])
+rejected_tail_threshold = int(sys.argv[6])
+rolled_back_tail_threshold = int(sys.argv[7])
+cycle_stall_seconds = int(sys.argv[8])
+cooldown_seconds = int(sys.argv[9])
+dirty_target_detection = str(sys.argv[10]).strip() == "1"
+dirty_rejection_threshold = int(sys.argv[11])
 now = int(time.time())
 
 
@@ -180,6 +191,39 @@ def parse_epoch(value) -> int:
         return int(datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp())
     except ValueError:
         return 0
+
+
+LEGAL_PARSER_TARGETS = [
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+]
+
+
+def dirty_legal_parser_targets() -> list[str]:
+    if not dirty_target_detection:
+        return []
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--", *LEGAL_PARSER_TARGETS],
+            cwd=repo_root,
+            text=True,
+            capture_output=True,
+            timeout=30,
+        )
+    except Exception:
+        return []
+    dirty: list[str] = []
+    for line in result.stdout.splitlines():
+        path = line[3:].strip()
+        if path:
+            dirty.append(path)
+    return dirty
 
 
 progress = read_json(progress_path)
@@ -218,6 +262,15 @@ if not isinstance(rolled_back_reasons_since_progress, dict):
 metric_stall_rollbacks_since_progress = int(
     rolled_back_reasons_since_progress.get("metric_stall_no_metric_progress") or 0
 )
+recent_rejections = progress.get("recent_rejections")
+if not isinstance(recent_rejections, list):
+    recent_rejections = []
+dirty_preexisting_rejections = [
+    item
+    for item in recent_rejections
+    if "pre-existing uncommitted changes" in json.dumps(item, sort_keys=True)
+]
+dirty_targets = dirty_legal_parser_targets()
 
 baseline_cycle = int(state.get("baseline_cycle_index") or latest_cycle_index)
 baseline_accepted = int(state.get("baseline_accepted_count") or accepted_count)
@@ -250,7 +303,14 @@ phase_stall_age = max(0, now - phase_epoch) if phase_epoch else 0
 status_stall_age = max(0, now - updated_epoch) if updated_epoch else 0
 
 reason = ""
-if (
+if dirty_targets:
+    reason = "dirty_legal_parser_targets:" + ",".join(dirty_targets[:8])
+elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold:
+    reason = (
+        f"dirty_touched_file_rejections:{len(dirty_preexisting_rejections)}:"
+        f"threshold:{dirty_rejection_threshold}"
+    )
+elif (
     not cooling_down
     and stalled_metric_cycles >= stalled_metric_threshold
     and cycles_since_meaningful_progress >= stalled_metric_threshold
@@ -296,6 +356,8 @@ state.update(
         "rolled_back_since_acceptance": rolled_back_delta,
         "rejected_since_acceptance": rejected_delta,
         "metric_stall_rollbacks_since_acceptance": metric_stall_rollback_delta,
+        "dirty_legal_parser_targets": dirty_targets,
+        "dirty_touched_file_rejections": len(dirty_preexisting_rejections),
         "phase_stall_age_seconds": phase_stall_age,
         "status_stall_age_seconds": status_stall_age,
         "cooling_down": cooling_down,
@@ -357,6 +419,14 @@ run_agentic_maintenance() {
     tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
     scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
     scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    ipfs_datasets_py/logic/deontic/utils/deontic_parser.py \
+    ipfs_datasets_py/logic/deontic/ir.py \
+    ipfs_datasets_py/logic/deontic/formula_builder.py \
+    ipfs_datasets_py/logic/deontic/converter.py \
+    ipfs_datasets_py/logic/deontic/exports.py \
+    tests/unit_tests/logic/deontic/test_deontic_formula_builder.py \
+    tests/unit_tests/logic/deontic/test_deontic_converter.py \
+    tests/unit_tests/logic/deontic/test_deontic_exports.py \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$before_diff" 2>/dev/null || true
@@ -376,11 +446,26 @@ Reason: $reason
 
 Improve only daemon/supervisor programming, tests, or docs in this maintenance pass. Do not implement a new legal parser feature here unless it is strictly required to repair daemon progress logic.
 
+If the reason mentions dirty_legal_parser_targets or dirty_touched_file_rejections,
+first inspect the stranded legal-parser diff. If it is a coherent parser slice,
+run the focused tests and commit it with a legal-parser-daemon recovery message.
+If it is incoherent, safely restore only those stranded legal-parser target files
+to the current HEAD so future daemon proposals are not rejected as touching
+pre-existing uncommitted changes. Do not touch unrelated dirty files.
+
 Allowed files:
 - ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
 - tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
 - scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh
 - scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh
+- ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+- ipfs_datasets_py/logic/deontic/ir.py
+- ipfs_datasets_py/logic/deontic/formula_builder.py
+- ipfs_datasets_py/logic/deontic/converter.py
+- ipfs_datasets_py/logic/deontic/exports.py
+- tests/unit_tests/logic/deontic/test_deontic_formula_builder.py
+- tests/unit_tests/logic/deontic/test_deontic_converter.py
+- tests/unit_tests/logic/deontic/test_deontic_exports.py
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md
 
@@ -401,6 +486,14 @@ PROMPT
     tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
     scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
     scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    ipfs_datasets_py/logic/deontic/utils/deontic_parser.py \
+    ipfs_datasets_py/logic/deontic/ir.py \
+    ipfs_datasets_py/logic/deontic/formula_builder.py \
+    ipfs_datasets_py/logic/deontic/converter.py \
+    ipfs_datasets_py/logic/deontic/exports.py \
+    tests/unit_tests/logic/deontic/test_deontic_formula_builder.py \
+    tests/unit_tests/logic/deontic/test_deontic_converter.py \
+    tests/unit_tests/logic/deontic/test_deontic_exports.py \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$after_diff" 2>/dev/null || true
@@ -463,7 +556,7 @@ terminate_matching_legal_parser_daemons() {
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]] || [[ "$pid" == "${child_pid:-}" ]]; then
       continue
     fi
-    if [[ "$args" == *"ipfs_datasets_py.optimizers.logic.deontic.parser_daemon"* ]]; then
+    if [[ "$args" == *"python"* && "$args" == *"-m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon"* ]]; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaning up orphaned legal-parser daemon $pid before supervisor start/restart" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
       terminate_pid_tree "$pid"
     fi
@@ -525,6 +618,7 @@ while true; do
     [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
     python3_args+=(--model-name "$MODEL_NAME")
     PYTHONUNBUFFERED=1 \
+      IPFS_DATASETS_PY_LLM_PROVIDER="$IPFS_DATASETS_PY_LLM_PROVIDER" \
       IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME" \
       IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}" \
       "${python3_args[@]}"

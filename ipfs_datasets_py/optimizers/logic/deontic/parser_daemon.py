@@ -111,6 +111,24 @@ class LegalParserDaemonConfig:
     def resolved_output_dir(self) -> Path:
         return _resolve_path(self.repo_root, self.output_dir)
 
+    def provider_label(self) -> str:
+        """Return the human-facing provider label used in daemon status files."""
+
+        provider = str(self.provider or "").strip()
+        return provider or "llm_router"
+
+    def llm_router_provider(self) -> Optional[str]:
+        """Return the concrete provider argument for ``llm_router.generate_text``.
+
+        ``llm_router`` is a supervisor-facing alias meaning: call the router and
+        let its normal env/default backend selection choose the concrete provider.
+        """
+
+        provider = str(self.provider or "").strip()
+        if not provider or provider.lower() in {"llm_router", "router", "auto"}:
+            return None
+        return provider
+
 
 @dataclass
 class LegalParserCycleProposal:
@@ -278,7 +296,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
                         max_tokens=self.daemon_config.llm_max_tokens,
                         temperature=self.daemon_config.llm_temperature,
                         router_kwargs={
-                            "provider": self.daemon_config.provider,
+                            "provider": self.daemon_config.llm_router_provider(),
+                            "provider_label": self.daemon_config.provider_label(),
                             "model_name": self.daemon_config.model_name,
                             "allow_local_fallback": False,
                             "disable_model_retry": True,
@@ -291,7 +310,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
 
                     raw_response = llm_router.generate_text(
                         prompt,
-                        provider=self.daemon_config.provider,
+                        provider=self.daemon_config.llm_router_provider(),
                         model_name=self.daemon_config.model_name,
                         max_tokens=self.daemon_config.llm_max_tokens,
                         temperature=self.daemon_config.llm_temperature,
@@ -310,7 +329,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
 
     def _read_only_codex_cli_generation(self) -> "_TemporaryEnv":
         provider = str(self.daemon_config.provider or "").strip().lower()
-        if provider and provider not in {"codex", "codex_cli"}:
+        if provider and provider not in {"codex", "codex_cli", "llm_router", "router", "auto"}:
             return _TemporaryEnv({})
         return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
 
@@ -1255,7 +1274,7 @@ class LegalParserOptimizerDaemon:
             "run_id": self.run_id,
             "run_baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
-            "provider": self.config.provider,
+            "provider": self.config.provider_label(),
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -1313,7 +1332,7 @@ class LegalParserOptimizerDaemon:
             "started_at": started,
             "pid": os.getpid(),
             "model_name": self.config.model_name,
-            "provider": self.config.provider,
+            "provider": self.config.provider_label(),
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -1351,7 +1370,7 @@ class LegalParserOptimizerDaemon:
             "run_id": self.run_id,
             "baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
-            "provider": self.config.provider,
+            "provider": self.config.provider_label(),
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
@@ -1432,7 +1451,7 @@ class LegalParserOptimizerDaemon:
             "run_id": self.run_id,
             "run_baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
-            "provider": self.config.provider,
+            "provider": self.config.provider_label(),
             "apply_patches": self.config.apply_patches,
             "metrics": {},
             "score": 0.0,
@@ -2224,7 +2243,7 @@ class LegalParserOptimizerDaemon:
             "started_at": self.run_started_at,
             "baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
-            "provider": self.config.provider,
+            "provider": self.config.provider_label(),
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "require_clean_touched_files": self.config.require_clean_touched_files,
@@ -2956,7 +2975,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo-root", default=".", help="Repository root for ipfs_datasets_py.")
     parser.add_argument("--output-dir", default="artifacts/legal_parser_optimizer_daemon")
     parser.add_argument("--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", "gpt-5.5"))
-    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or None)
+    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or "llm_router")
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)

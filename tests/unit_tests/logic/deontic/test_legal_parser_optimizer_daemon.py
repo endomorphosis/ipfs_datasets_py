@@ -176,14 +176,15 @@ def test_optimizer_forces_default_codex_generation_read_only(tmp_path, monkeypat
         repo_root=tmp_path,
         output_dir=tmp_path / "out",
         model_name="gpt-5.5",
-        provider="",
+        provider="llm_router",
         run_tests=False,
     )
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
 
     optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
 
-    assert fake_router.calls[0]["router_kwargs"]["provider"] == ""
+    assert fake_router.calls[0]["router_kwargs"]["provider"] is None
+    assert fake_router.calls[0]["router_kwargs"]["provider_label"] == "llm_router"
     assert fake_router.calls[0]["router_kwargs"]["sandbox"] == "read-only"
     assert __import__("os").environ["IPFS_DATASETS_PY_CODEX_SANDBOX"] == "workspace-write"
 
