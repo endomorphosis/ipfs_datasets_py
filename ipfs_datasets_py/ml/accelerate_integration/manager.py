@@ -349,6 +349,9 @@ class AccelerateManager:
                 multiaddr = str(announce.get("multiaddr") or "").strip()
                 peer_id = peer_id or str(announce.get("peer_id") or "").strip()
         if multiaddr:
+            # Try in-process import first; fall back to subprocess via HACC venv
+            caps: Any = None
+            p2p_err: Optional[str] = None
             try:
                 from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
                     RemoteQueue,
@@ -358,17 +361,51 @@ class AccelerateManager:
                     remote=RemoteQueue(peer_id=peer_id, multiaddr=multiaddr),
                     timeout_s=timeout,
                 )
+            except ImportError:
+                # p2p_tasks not in current Python; probe via subprocess
+                py = self._find_p2p_venv_python()
+                if py:
+                    import subprocess as _sp
+                    script = f"""
+import sys, json, logging
+logging.disable(logging.WARNING)
+try:
+    import trio
+    from ipfs_accelerate_py.p2p_tasks.client import RemoteQueue, get_capabilities_sync
+    caps = get_capabilities_sync(remote=RemoteQueue(peer_id={peer_id!r}, multiaddr={multiaddr!r}), timeout_s={timeout!r})
+    print(json.dumps({{"caps": caps}}))
+except Exception as e:
+    print(json.dumps({{"error": str(e)}}))
+"""
+                    try:
+                        proc = _sp.run([py, "-c", script], capture_output=True, text=True, timeout=timeout + 5)
+                        for line in reversed(proc.stdout.strip().splitlines()):
+                            if line.strip().startswith("{"):
+                                data = json.loads(line.strip())
+                                if "error" in data:
+                                    p2p_err = data["error"]
+                                else:
+                                    caps = data.get("caps")
+                                break
+                    except Exception as sub_exc:
+                        p2p_err = f"subprocess probe failed: {sub_exc}"
+                else:
+                    p2p_err = "ipfs_accelerate_py.p2p_tasks not importable; no venv fallback found"
+            except Exception as exc:
+                p2p_err = str(exc)
+
+            if p2p_err is not None:
+                report["p2p_task_queue"] = {
+                    "status": "error",
+                    "detail": f"peer {multiaddr} unreachable: {p2p_err}",
+                    "multiaddr": multiaddr,
+                }
+            else:
                 report["p2p_task_queue"] = {
                     "status": "ok",
                     "detail": f"peer {multiaddr} responded",
                     "multiaddr": multiaddr,
                     "capabilities": caps,
-                }
-            except Exception as exc:
-                report["p2p_task_queue"] = {
-                    "status": "error",
-                    "detail": f"peer {multiaddr} unreachable: {exc}",
-                    "multiaddr": multiaddr,
                 }
         else:
             report["p2p_task_queue"] = {
@@ -760,6 +797,109 @@ class AccelerateManager:
     # Backend: libp2p p2p_task_queue
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _find_p2p_venv_python() -> Optional[str]:
+        """Find a Python interpreter that has ipfs_accelerate_py.p2p_tasks installed.
+
+        Checks known locations where the full ipfs_accelerate_py package with p2p_tasks
+        may be installed (e.g. HACC editable installs).
+        """
+        import shutil
+
+        # Env override
+        env_py = os.environ.get("IPFS_ACCELERATE_PY_VENV_PYTHON") or ""
+        if env_py and os.path.isfile(env_py.strip()):
+            return env_py.strip()
+
+        home = os.path.expanduser("~")
+        candidates = [
+            os.path.join(home, "HACC", ".venv", "bin", "python"),
+            os.path.join(home, "HACC", ".venv", "bin", "python3"),
+            os.path.join(home, "ipfs_accelerate_py", ".venv", "bin", "python"),
+            os.path.join(home, "ipfs_accelerate_py", ".venv", "bin", "python3"),
+            os.path.join(home, ".venv", "bin", "python"),
+        ]
+        for py in candidates:
+            if os.path.isfile(py):
+                return py
+
+        # Check PATH for any python that has p2p_tasks
+        for py_name in ("python3", "python"):
+            py = shutil.which(py_name)
+            if py:
+                return py
+        return None
+
+    def _try_p2p_task_queue_subprocess(
+        self, model_name: str, prompt: str, multiaddr: str, peer_id: str, timeout: float, max_new_tokens: int, extra_kwargs: Optional[Dict[str, Any]] = None
+    ) -> Optional[str]:
+        """Submit a p2p task via subprocess using a venv that has ipfs_accelerate_py.p2p_tasks."""
+        import subprocess
+
+        py = self._find_p2p_venv_python()
+        if not py:
+            return None
+
+        extra = extra_kwargs or {}
+        payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
+        for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
+            if k in extra:
+                payload[k] = extra[k]
+
+        script = f"""
+import sys, json, os
+# Suppress info logs from ipfs_accelerate_py
+import logging
+logging.disable(logging.WARNING)
+try:
+    import trio
+    from ipfs_accelerate_py.p2p_tasks.client import RemoteQueue, submit_task_with_info, wait_task
+except ImportError as e:
+    print(json.dumps({{"error": str(e)}}))
+    sys.exit(1)
+
+async def _run():
+    remote = RemoteQueue(peer_id={peer_id!r}, multiaddr={multiaddr!r})
+    payload = {json.dumps(payload)}
+    info = await submit_task_with_info(
+        remote=remote,
+        task_type="text-generation",
+        model_name={model_name!r},
+        payload=payload,
+    )
+    task_id = info.get("task_id") or ""
+    if not task_id:
+        return None
+    result = await wait_task(remote=remote, task_id=task_id, timeout_s={timeout!r})
+    return result
+
+result = trio.run(_run)
+print(json.dumps({{"result": result}}))
+"""
+        try:
+            proc = subprocess.run(
+                [py, "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=timeout + 10,
+            )
+            if proc.returncode != 0:
+                logger.debug("p2p subprocess failed: %s", proc.stderr[:500])
+                return None
+            # Parse last JSON line from stdout (there may be log noise before it)
+            for line in reversed(proc.stdout.strip().splitlines()):
+                line = line.strip()
+                if not line.startswith("{"):
+                    continue
+                data = json.loads(line)
+                if "error" in data:
+                    logger.debug("p2p subprocess error: %s", data["error"])
+                    return None
+                return _extract_text(data.get("result"))
+        except (subprocess.TimeoutExpired, Exception) as exc:
+            logger.debug("p2p subprocess exception: %s", exc)
+            return None
+
     def _try_p2p_task_queue(
         self, model_name: str, prompt: str, **kwargs: Any
     ) -> Optional[Dict[str, Any]]:
@@ -769,6 +909,10 @@ class AccelerateManager:
           - ``IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR`` set, OR
           - a valid announce file present at the default location
             (``~/ipfs_accelerate_py/state/task_p2p_announce.json`` etc).
+
+        If ``ipfs_accelerate_py.p2p_tasks`` is not importable in the current
+        Python, falls back to a subprocess using the HACC venv (or the interpreter
+        pointed to by ``IPFS_ACCELERATE_PY_VENV_PYTHON``).
         """
         multiaddr = _p2p_remote_multiaddr()
         peer_id = _p2p_remote_peer_id()
@@ -783,52 +927,61 @@ class AccelerateManager:
 
         timeout = _p2p_timeout()
         max_new_tokens = int(kwargs.get("max_new_tokens") or kwargs.get("max_tokens") or 512)
+        logger.info("AccelerateManager: submitting p2p task to %s", multiaddr)
 
+        # Check whether the underlying ipfs_accelerate_py.p2p_tasks is available in
+        # the current process (this requires HACC venv, not system Python).
+        p2p_in_process = False
         try:
+            import importlib as _il
+            _il.import_module("ipfs_accelerate_py.p2p_tasks.client")
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import (
                 RemoteQueue,
                 submit_task_with_info,
                 wait_task,
             )
-        except ImportError as exc:
-            raise RuntimeError(f"p2p_task_client not available: {exc}") from exc
+            p2p_in_process = True
+        except (ImportError, AttributeError):
+            pass
 
-        remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
-        payload: Dict[str, Any] = {"prompt": prompt, "max_new_tokens": max_new_tokens}
-        for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
-            if k in kwargs:
-                payload[k] = kwargs[k]
+        if p2p_in_process:
+            remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
+            payload: Dict[str, Any] = {"prompt": prompt, "max_new_tokens": max_new_tokens}
+            for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
+                if k in kwargs:
+                    payload[k] = kwargs[k]
 
-        logger.info("AccelerateManager: submitting p2p task to %s", multiaddr)
+            async def _run() -> Optional[str]:
+                info = await submit_task_with_info(
+                    remote=remote,
+                    task_type="text-generation",
+                    model_name=model_name,
+                    payload=payload,
+                )
+                task_id = info.get("task_id") or ""
+                if not task_id:
+                    logger.warning("p2p_task_queue: no task_id in response: %s", info)
+                    return None
+                logger.debug("p2p task submitted: id=%s via %s", task_id, multiaddr)
+                result = await wait_task(remote=remote, task_id=task_id, timeout_s=timeout)
+                if result is None:
+                    return None
+                return _extract_text(result)
 
-        async def _run() -> Optional[str]:
-            info = await submit_task_with_info(
-                remote=remote,
-                task_type="text-generation",
-                model_name=model_name,
-                payload=payload,
-            )
-            task_id = info.get("task_id") or ""
-            if not task_id:
-                logger.warning("p2p_task_queue: no task_id in response: %s", info)
-                return None
-            logger.debug("p2p task submitted: id=%s via %s", task_id, multiaddr)
-            result = await wait_task(remote=remote, task_id=task_id, timeout_s=timeout)
-            if result is None:
-                return None
-            return _extract_text(result)
-
-        # The libp2p client internals use trio nurseries directly, so we must
-        # run under trio.run() — not anyio.run(..., backend="trio").
-        try:
-            import trio as _trio
-            text = _trio.run(_run)
-        except ImportError:
+            # Use trio.run() directly — libp2p internals use trio nurseries
             try:
+                import trio as _trio
+                text: Optional[str] = _trio.run(_run)
+            except ImportError:
                 import anyio as _anyio
                 text = _anyio.run(_run, backend="trio")
-            except Exception as exc:
-                raise RuntimeError(f"Cannot run async p2p task (no trio/anyio): {exc}") from exc
+        else:
+            # Fallback: subprocess using a venv that has ipfs_accelerate_py.p2p_tasks
+            logger.debug("p2p_tasks not importable in current Python; trying subprocess fallback")
+            text = self._try_p2p_task_queue_subprocess(
+                model_name, prompt, multiaddr, peer_id, timeout, max_new_tokens,
+                extra_kwargs={k: v for k, v in kwargs.items() if k not in ("max_new_tokens", "max_tokens")},
+            )
 
         if not text:
             raise RuntimeError(f"p2p_task_queue peer {multiaddr!r} returned no text for {model_name!r}")
