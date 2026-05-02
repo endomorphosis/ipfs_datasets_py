@@ -154,6 +154,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
+    action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_submission_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
@@ -241,6 +242,29 @@ def _normalize_measurement_light_verb_action(action_text: str) -> str:
             measured_object = match.group(1).strip()
             if measured_object:
                 return f"measure {measured_object}"
+
+    return text
+
+
+def _normalize_investigation_light_verb_action(action_text: str) -> str:
+    """Collapse investigation nominalizations into operative investigation acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out|complete|completes|completed|completing|undertake|undertakes|undertook|undertaken|undertaking)\s+"
+        r"(?:an?\s+|the\s+)?investigation\s+(?:of|into)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|open|opens|opened|opening|initiate|initiates|initiated|initiating|commence|commences|commenced|commencing)\s+"
+        r"(?:an?\s+|the\s+)?investigation\s+(?:of|into)\s+(?:the\s+)?(.+)$",
+        r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing)\s+"
+        r"investigations\s+(?:of|into)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"investigate {match.group(1).strip()}"
 
     return text
 

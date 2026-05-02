@@ -328,6 +328,48 @@ def test_measurement_light_verb_duty_exports_operative_measure_predicate():
     assert record["repair_required"] is False
 
 
+def test_investigation_light_verb_duties_export_operative_investigate_predicates():
+    examples = [
+        (
+            "The Inspector shall conduct an investigation of the complaint.",
+            "conduct an investigation of the complaint",
+            [20, 61],
+            "O(∀x (Inspector(x) → InvestigateComplaint(x)))",
+            "ConductInvestigationComplaint",
+        ),
+        (
+            "The Bureau shall open investigation into the discharge.",
+            "open investigation into the discharge",
+            [17, 54],
+            "O(∀x (Bureau(x) → InvestigateDischarge(x)))",
+            "OpenInvestigationDischarge",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_notice_service_light_verb_duties_export_operative_notice_predicates():
     examples = [
         (
