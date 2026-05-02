@@ -199,6 +199,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
     action_text = _normalize_transcription_translation_light_verb_action(action_text)
+    action_text = _normalize_codification_recodification_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4303,6 +4304,42 @@ def _normalize_transcription_translation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"translate {target}" if target else text
+
+    return text
+
+
+def _normalize_codification_recodification_light_verb_action(action_text: str) -> str:
+    """Project codification and recodification nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    codification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|adopt|adopts|adopted|adopting|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"(?:a\s+|the\s+)?codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|adopt|adopts|adopted|adopting|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"codifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in codification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"codify {target}" if target else text
+
+    recodification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|adopt|adopts|adopted|adopting|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"(?:a\s+|the\s+)?recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|adopt|adopts|adopted|adopting|issue|issues|issued|issuing|file|files|filed|filing)\s+"
+        r"recodifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recodification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"recodify {target}" if target else text
 
     return text
 
