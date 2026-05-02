@@ -158,6 +158,7 @@ _MODAL_RE = re.compile(
         is\s+bound\s+to|are\s+bound\s+to|
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
         is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|
+        is\s+directed\s+to|are\s+directed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
         may|is\s+authorized\s+to|are\s+authorized\s+to|
         is\s+permitted\s+to|are\s+permitted\s+to|
