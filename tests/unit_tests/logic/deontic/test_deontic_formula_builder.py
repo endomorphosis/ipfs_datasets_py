@@ -324,6 +324,50 @@ def test_interference_gerund_prohibitions_export_base_action_formulas():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_direct_interference_prohibitions_export_normalized_action_formulas():
+    examples = [
+        (
+            "No person may interfere with inspection of the premises.",
+            "interfere with inspection of the premises",
+            "F(∀x (Person(x) → InterfereInspectionPremises(x)))",
+            "InterfereWithInspectionPremises",
+        ),
+        (
+            "The permittee shall not obstruct access to the facility.",
+            "obstruct access to the facility",
+            "F(∀x (Permittee(x) → ObstructAccessFacility(x)))",
+            "ObstructAccessToFacility",
+        ),
+        (
+            "The operator may not impede inspection.",
+            "impede inspection",
+            "F(∀x (Operator(x) → ImpedeInspection(x)))",
+            "ImpedeWithInspection",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+
+        assert norm.modality == "F"
+        assert norm.action == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_facilitation_prohibitions_export_embedded_prohibited_action_formulas():
     examples = [
         (

@@ -140,6 +140,8 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
         action_text = _strip_permission_facilitation_action(action_text)
     elif _is_direct_gerund_prohibition(norm, action_text):
         action_text = _normalize_refrain_action_head(action_text)
+    elif _is_direct_interference_prohibition(norm, action_text):
+        action_text = _strip_direct_interference_action(action_text)
 
     action_text = _action_without_structured_recipient_tail(norm, action_text)
     action_text = _action_without_structured_notice_recipient(norm, action_text)
@@ -291,6 +293,18 @@ def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> b
     )
 
 
+def _is_direct_interference_prohibition(norm: LegalNormIR, action_text: str) -> bool:
+    """Return whether a direct prohibition targets interference with a legal process."""
+
+    if norm.modality != "F":
+        return False
+    return bool(re.match(
+        r"^(?:interfere|interferes|obstruct|obstructs|impede|impedes)\s+(?:with\s+)?\S",
+        str(action_text or "").strip(),
+        re.IGNORECASE,
+    ))
+
+
 def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a prohibition targets facilitating or causing a regulated act."""
 
@@ -393,6 +407,21 @@ def _strip_access_availability_action(action_text: str) -> str:
         return f"provide access to {accessed_object}" if accessed_object else text
 
     return text
+
+
+def _strip_direct_interference_action(action_text: str) -> str:
+    """Normalize direct interference prohibitions without changing the legal object."""
+
+    text = str(action_text or "").strip()
+    match = re.match(
+        r"^(interfere|interferes|obstruct|obstructs|impede|impedes)\s+(?:with\s+)?(.+)$",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        return text
+    verb = match.group(1).lower().rstrip("s")
+    return f"{verb} {match.group(2).strip()}"
 
 
 def _strip_permission_facilitation_action(action_text: str) -> str:
