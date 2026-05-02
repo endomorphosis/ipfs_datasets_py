@@ -173,6 +173,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_audit_examination_light_verb_action(action_text)
     action_text = _normalize_adjudication_hearing_light_verb_action(action_text)
     action_text = _normalize_mediation_arbitration_light_verb_action(action_text)
+    action_text = _normalize_training_orientation_light_verb_action(action_text)
     action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
@@ -5919,6 +5920,55 @@ def _normalize_adjudication_hearing_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"hear {target}" if target else text
+
+    return text
+
+
+def _normalize_training_orientation_light_verb_action(action_text: str) -> str:
+    """Project administrative education nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    training_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"(?:a\s+|the\s+)?training\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"trainings\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^training\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in training_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"train {target}" if target else text
+
+    orientation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"(?:an?\s+|the\s+)?orientation\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"orientations\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^orientation\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in orientation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"orient {target}" if target else text
+
+    instruction_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"(?:an?\s+|the\s+)?instruction\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|deliver|delivers|delivered|delivering)\s+"
+        r"instructions\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+        r"^instruction\s+(?:of|for|on|concerning)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in instruction_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"instruct {target}" if target else text
 
     return text
 
