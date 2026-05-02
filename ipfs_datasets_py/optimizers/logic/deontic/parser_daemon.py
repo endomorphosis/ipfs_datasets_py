@@ -417,6 +417,14 @@ class LegalParserParityOptimizer(BaseOptimizer):
         roadmap_pivot_mode = self._roadmap_pivot_mode(progress_payload)
         irreducible_repair_blockers = self._irreducible_repair_blockers(evaluation)
         irreducible_residual_mode = metric_stall_mode and bool(irreducible_repair_blockers)
+        slice_scale_contract = self._slice_scale_contract(
+            progress_payload=progress_payload,
+            patch_stability_mode=patch_stability_mode,
+            metric_stall_mode=metric_stall_mode,
+            roadmap_pivot_mode=roadmap_pivot_mode,
+            test_failure_recovery_mode=test_failure_recovery_mode,
+            metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
+        )
         payload = {
             "cycle_index": cycle_index,
             "objective": (
@@ -431,9 +439,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Prefer deterministic source-grounded parsing over broad opaque heuristics.",
                 "Keep existing public APIs backward compatible unless the docs explicitly require a migration.",
                 "Choose a coherent implementation slice large enough to matter: parser behavior, IR/export/formula handling, and focused tests should advance together when the roadmap calls for it.",
+                "Follow slice_scale_contract. Normal progress must cover a family of related legal constructions, not one synonym, one predicate spelling, or a single narrow example.",
+                "In expanded_slice mode, target 3+ related constructions with 6-10 focused examples/assertions and a real production parser/formula/IR/export change.",
+                "In patch_stability_family mode, stay within one production file plus one matching test file when possible, but still implement a family-sized change with 3+ related constructions.",
                 "Avoid cosmetic churn, one-line metric gaming, and isolated test-only patches.",
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
-                "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply.",
+                "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply, but single-phrase micro-patches are also rejected.",
                 "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
                 "When progress_snapshot shows repeated metric_stall_no_metric_progress rollbacks, change the parser capability that produces the measured slot/formula/export instead of adding surrounding tests, docs, or export-only context.",
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
@@ -451,6 +462,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "irreducible_repair_blockers": irreducible_repair_blockers,
             "test_failure_recovery_mode": test_failure_recovery_mode,
             "metric_no_progress_recovery_mode": metric_no_progress_recovery_mode,
+            "slice_scale_contract": slice_scale_contract,
             "recent_failed_patch_files": recent_failed_patch_files,
             "recent_test_failed_files": recent_test_failed_files,
             "recent_test_failures": recent_test_failures,
@@ -481,6 +493,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "while remaining reviewable and fully covered by tests. "
             "The diff must normally touch at least one production parser/export file and at least one deontic test file. "
             "If patch_stability_mode is true, make the smallest useful patch that can apply cleanly against the provided snapshots. "
+            "Smallest useful still means family-sized: 3+ related constructions and 6-10 focused assertions unless the prompt is explicitly in repair-only mode. "
             "If metric_stall_mode is true, do not propose harmless refactors; pick a concrete repair-required sample and name the metric expected to move. "
             "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
             "If roadmap_pivot_mode is true, implement a Phase 8 encoder/decoder/prover-syntax slice instead of another procedural trigger/export synonym. "
@@ -490,6 +503,83 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
         )
+
+    def _slice_scale_contract(
+        self,
+        *,
+        progress_payload: Mapping[str, Any],
+        patch_stability_mode: bool,
+        metric_stall_mode: bool,
+        roadmap_pivot_mode: bool,
+        test_failure_recovery_mode: bool,
+        metric_no_progress_recovery_mode: bool,
+    ) -> Dict[str, Any]:
+        """Describe how large the next autonomous implementation slice should be."""
+
+        if test_failure_recovery_mode:
+            return {
+                "mode": "repair_first",
+                "minimum_related_constructions": 1,
+                "minimum_focused_examples_or_assertions": 2,
+                "file_scope": "the failing production/test files named in recent_test_failures",
+                "instruction": (
+                    "Fix the concrete validation failure first; after it compiles, fold in only "
+                    "nearby assertions needed to prevent the same failure."
+                ),
+            }
+        if roadmap_pivot_mode:
+            return {
+                "mode": "phase8_cross_stack_slice",
+                "minimum_related_constructions": 2,
+                "minimum_focused_examples_or_assertions": 6,
+                "file_scope": "encoder/decoder/prover syntax production code plus matching tests",
+                "instruction": (
+                    "Implement an encoder/decoder or theorem-prover syntax-check path that can "
+                    "round-trip IR and exercise frame logic, deontic CEC, FOL, deontic FOL, or "
+                    "deontic temporal FOL."
+                ),
+            }
+        if patch_stability_mode:
+            return {
+                "mode": "patch_stability_family",
+                "minimum_related_constructions": 3,
+                "minimum_focused_examples_or_assertions": 6,
+                "file_scope": "prefer one production file and one matching test file",
+                "instruction": (
+                    "Keep the patch easy to apply, but do not shrink it to one synonym or one "
+                    "predicate spelling; cover a legal-construction family in the chosen file pair."
+                ),
+            }
+        try:
+            score = float(progress_payload.get("current_score") or 0.0)
+        except (TypeError, ValueError):
+            score = 0.0
+        try:
+            stalled_cycles = int(progress_payload.get("cycles_since_meaningful_progress", 0) or 0)
+        except (TypeError, ValueError):
+            stalled_cycles = 0
+        expanded = metric_stall_mode or metric_no_progress_recovery_mode or score >= 0.95 or stalled_cycles >= 3
+        if expanded:
+            return {
+                "mode": "expanded_slice",
+                "minimum_related_constructions": 3,
+                "minimum_focused_examples_or_assertions": 6,
+                "target_focused_examples_or_assertions": "6-10",
+                "file_scope": "one to three production files plus matching deontic tests",
+                "instruction": (
+                    "Make one material capability advance, such as a parser/formula/IR/export family "
+                    "or encoder/decoder/prover-syntax integration, with enough examples to move metrics."
+                ),
+            }
+        return {
+            "mode": "standard_material_slice",
+            "minimum_related_constructions": 2,
+            "minimum_focused_examples_or_assertions": 4,
+            "file_scope": "at least one production file plus matching deontic tests",
+            "instruction": (
+                "Implement a coherent parser capability rather than a cosmetic or isolated single-case patch."
+            ),
+        }
 
     def _progress_snapshot(self) -> Dict[str, Any]:
         progress_path = self.daemon_config.resolved_output_dir() / "progress_summary.json"
@@ -919,6 +1009,13 @@ class LegalParserOptimizerDaemon:
         if repair_phase_feedback:
             attempt_feedback = list(feedback) + repair_phase_feedback
             test_failure_recovery_mode = True
+        slice_scale_contract = self._slice_scale_contract(
+            patch_stability_mode=patch_stability_mode,
+            metric_stall_mode=metric_stall_mode,
+            roadmap_pivot_mode=roadmap_pivot_mode,
+            test_failure_recovery_mode=test_failure_recovery_mode,
+            metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
+        )
         final_retry_reason = ""
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
@@ -939,6 +1036,7 @@ class LegalParserOptimizerDaemon:
                 irreducible_residual_mode=irreducible_residual_mode,
                 test_failure_recovery_mode=test_failure_recovery_mode,
                 metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
+                slice_scale_contract=slice_scale_contract,
             )
             try:
                 proposal = self.optimizer.optimize(evaluation, score, attempt_feedback, context)
@@ -960,12 +1058,20 @@ class LegalParserOptimizerDaemon:
             if not retry_reason:
                 candidate_patch_check = self.optimizer.check_patch(proposal.unified_diff)
                 candidate_changed_files = _paths_from_unified_diff(proposal.unified_diff)
+                candidate_patch_stats = _unified_diff_stats(proposal.unified_diff)
                 candidate_quality = self._assess_proposal_quality(proposal, candidate_changed_files)
                 if patch_stability_mode:
                     candidate_quality = self._enforce_patch_stability_quality(
                         proposal_quality=candidate_quality,
                         changed_files=candidate_changed_files,
                     )
+                candidate_quality = self._enforce_material_slice_quality(
+                    proposal_quality=candidate_quality,
+                    patch_stats=candidate_patch_stats,
+                    patch_stability_mode=patch_stability_mode,
+                    test_failure_recovery_mode=test_failure_recovery_mode,
+                    material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
+                )
                 if metric_stall_mode:
                     candidate_quality = self._enforce_metric_stall_quality(
                         proposal=proposal,
@@ -1024,6 +1130,7 @@ class LegalParserOptimizerDaemon:
                         "patch_stderr_tail": str(candidate_patch_check.get("stderr") or "")[-2000:],
                         "proposal_quality_valid": candidate_quality.get("valid"),
                         "proposal_quality_reasons": candidate_quality.get("reasons", []),
+                        "slice_scale_contract": slice_scale_contract,
                         "candidate_validation_valid": candidate_validation.get("valid"),
                         "candidate_validation_reasons": candidate_validation.get("reasons", []),
                         "changed_files": candidate_changed_files,
@@ -1049,6 +1156,11 @@ class LegalParserOptimizerDaemon:
                         " Roadmap pivot mode is active; propose Phase 8 encoder/decoder "
                         "reconstruction or local theorem-prover syntax validation work, not another "
                         "procedural trigger/export synonym."
+                    )
+                if "material_slice_too_small" in retry_reason:
+                    retry_instruction += (
+                        " Enlarge the slice: cover the slice_scale_contract family with 3+ related "
+                        "legal constructions and 6-10 focused assertions, while preserving clean hunks."
                     )
                 attempt_feedback = list(feedback) + repair_phase_feedback + [
                     (
@@ -1098,6 +1210,13 @@ class LegalParserOptimizerDaemon:
                 proposal_quality=proposal_quality,
                 changed_files=changed_files,
             )
+        proposal_quality = self._enforce_material_slice_quality(
+            proposal_quality=proposal_quality,
+            patch_stats=patch_stats,
+            patch_stability_mode=patch_stability_mode,
+            test_failure_recovery_mode=test_failure_recovery_mode,
+            material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
+        )
         if metric_stall_mode:
             proposal_quality = self._enforce_metric_stall_quality(
                 proposal=proposal,
@@ -1663,6 +1782,26 @@ class LegalParserOptimizerDaemon:
         history = self.optimizer._recent_cycle_history(limit=5)
         return bool(self.optimizer._recent_metric_stall_failures(history))
 
+    def _slice_scale_contract(
+        self,
+        *,
+        patch_stability_mode: bool,
+        metric_stall_mode: bool,
+        roadmap_pivot_mode: bool,
+        test_failure_recovery_mode: bool,
+        metric_no_progress_recovery_mode: bool,
+    ) -> Dict[str, Any]:
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return {"mode": "standard_material_slice"}
+        return self.optimizer._slice_scale_contract(
+            progress_payload=self.optimizer._progress_snapshot(),
+            patch_stability_mode=patch_stability_mode,
+            metric_stall_mode=metric_stall_mode,
+            roadmap_pivot_mode=roadmap_pivot_mode,
+            test_failure_recovery_mode=test_failure_recovery_mode,
+            metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
+        )
+
     def _enforce_patch_stability_quality(
         self,
         *,
@@ -1679,6 +1818,59 @@ class LegalParserOptimizerDaemon:
                 "patch stability mode allows at most two changed files after repeated patch-check failures"
             ],
             "patch_stability_mode": True,
+        }
+
+    def _enforce_material_slice_quality(
+        self,
+        *,
+        proposal_quality: Dict[str, Any],
+        patch_stats: Mapping[str, Any],
+        patch_stability_mode: bool,
+        test_failure_recovery_mode: bool,
+        material_slice_gate_active: bool,
+    ) -> Dict[str, Any]:
+        if not material_slice_gate_active:
+            return proposal_quality
+        if test_failure_recovery_mode:
+            return proposal_quality
+        try:
+            insertions = int(patch_stats.get("insertions", 0) or 0)
+            deletions = int(patch_stats.get("deletions", 0) or 0)
+        except (TypeError, ValueError):
+            insertions = 0
+            deletions = 0
+        changed_files = list(patch_stats.get("changed_files") or [])
+        if not changed_files:
+            return proposal_quality
+        minimum_insertions = 18 if patch_stability_mode else 30
+        if insertions >= minimum_insertions and insertions + deletions >= minimum_insertions:
+            return proposal_quality
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", []))
+            + [
+                (
+                    "material_slice_too_small: autonomous parser progress must cover a family-sized "
+                    f"change; got {insertions} insertions/{deletions} deletions across "
+                    f"{len(changed_files)} file(s), expected at least {minimum_insertions} insertions "
+                    "with 3+ related legal constructions and focused tests"
+                )
+            ],
+            "material_slice_quality": {
+                "valid": False,
+                "minimum_insertions": minimum_insertions,
+                "insertions": insertions,
+                "deletions": deletions,
+                "changed_files": changed_files,
+                "patch_stability_mode": patch_stability_mode,
+            },
+        }
+
+    def _material_slice_gate_active(self, slice_scale_contract: Mapping[str, Any]) -> bool:
+        return str(slice_scale_contract.get("mode") or "") in {
+            "patch_stability_family",
+            "phase8_cross_stack_slice",
         }
 
     def _enforce_metric_stall_quality(

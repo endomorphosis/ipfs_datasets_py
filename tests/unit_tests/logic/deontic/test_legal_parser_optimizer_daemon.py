@@ -1587,8 +1587,77 @@ def test_optimizer_enters_patch_stability_mode_after_repeated_patch_check_failur
     assert optimizer._patch_stability_mode(history) is True
     assert optimizer._recent_failed_patch_files(history) == [target_file, test_file]
     assert '"patch_stability_mode": true' in prompt
+    assert '"mode": "patch_stability_family"' in prompt
+    assert '"minimum_related_constructions": 3' in prompt
+    assert "single-phrase micro-patches are also rejected" in prompt
     assert '"recent_failed_patch_files": [' in prompt
     assert "prefer one production file plus one matching test file" in prompt
+
+
+def test_optimizer_prompt_expands_slice_contract_when_metrics_are_stalled(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_converter.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "current_score": 0.976,
+                "stalled_metric_cycles": 4,
+                "cycles_since_meaningful_progress": 5,
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert '"slice_scale_contract": {' in prompt
+    assert '"mode": "expanded_slice"' in prompt
+    assert '"minimum_related_constructions": 3' in prompt
+    assert '"target_focused_examples_or_assertions": "6-10"' in prompt
+    assert "not one synonym, one predicate spelling, or a single narrow example" in prompt
+
+
+def test_daemon_rejects_material_slice_that_is_too_small(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    quality = {"valid": True, "reasons": []}
+
+    assessed = daemon._enforce_material_slice_quality(
+        proposal_quality=quality,
+        patch_stats={
+            "insertions": 4,
+            "deletions": 0,
+            "changed_files": [
+                "ipfs_datasets_py/logic/deontic/formula_builder.py",
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            ],
+        },
+        patch_stability_mode=False,
+        test_failure_recovery_mode=False,
+        material_slice_gate_active=True,
+    )
+
+    assert assessed["valid"] is False
+    assert assessed["material_slice_quality"]["minimum_insertions"] == 30
+    assert any("material_slice_too_small" in reason for reason in assessed["reasons"])
 
 
 def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path):
@@ -1648,15 +1717,31 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
             "diff --git a/ipfs_datasets_py/logic/deontic/formula_builder.py b/ipfs_datasets_py/logic/deontic/formula_builder.py",
             "--- a/ipfs_datasets_py/logic/deontic/formula_builder.py",
             "+++ b/ipfs_datasets_py/logic/deontic/formula_builder.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,10 @@",
             "-before_formula",
             "+after_formula",
+            "+after_formula_notice",
+            "+after_formula_appeal",
+            "+after_formula_petition",
+            "+after_formula_application",
+            "+after_formula_remittance",
+            "+after_formula_reimbursement",
+            "+after_formula_processing",
+            "+after_formula_publication",
+            "+after_formula_mailing",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,8 @@",
             "-before_test",
             "+after_test",
+            "+after_test_notice",
+            "+after_test_appeal",
+            "+after_test_petition",
+            "+after_test_application",
+            "+after_test_remittance",
+            "+after_test_reimbursement",
+            "+after_test_processing",
             "",
         ]
     )
