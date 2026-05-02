@@ -145,6 +145,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
 
     action_text = _action_without_structured_recipient_tail(norm, action_text)
     action_text = _action_without_structured_notice_recipient(norm, action_text)
+    action_text = _normalize_notice_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
@@ -268,6 +269,27 @@ def _normalize_submission_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
+    return text
+
+
+def _normalize_notice_service_light_verb_action(action_text: str) -> str:
+    """Collapse notice-service light-verb phrases into operative notice acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
+        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:of|about|regarding)\s+(.+)$",
+        r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
+        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:to|upon|on)\s+(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"notice {match.group(1).strip()}"
+
     return text
 
 
