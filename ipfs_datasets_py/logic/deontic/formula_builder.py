@@ -147,6 +147,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
+    action_text = _normalize_inspection_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -207,6 +208,36 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _normalize_inspection_light_verb_action(action_text: str) -> str:
+    """Collapse inspection light-verb phrases into the operative inspect act."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?inspection\s+of\s+(.+)$",
+            r"inspect \1",
+        ),
+        (
+            r"^(?:make|makes|made|making)\s+(?:a\s+|an\s+|the\s+)?inspection\s+of\s+(.+)$",
+            r"inspect \1",
+        ),
+        (
+            r"^(?:carry|carries|carried|carrying)\s+out\s+"
+            r"(?:a\s+|an\s+|the\s+)?inspection\s+of\s+(.+)$",
+            r"inspect \1",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
+        if normalized != text:
+            return normalized
+    return text
 
 
 def _normalize_payment_light_verb_action(action_text: str) -> str:

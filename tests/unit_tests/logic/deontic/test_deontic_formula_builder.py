@@ -242,6 +242,34 @@ def test_direct_gerund_prohibition_exports_base_action_formula():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_inspection_light_verb_duty_exports_operative_inspect_predicate():
+    element = extract_normative_elements(
+        "The Bureau shall conduct an inspection of the premises."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    formula = build_deontic_formula_from_ir(norm)
+    record = build_deontic_formula_record_from_ir(norm)
+
+    assert norm.modality == "O"
+    assert norm.action == "conduct an inspection of the premises"
+    assert norm.support_span == norm.source_span
+    assert element["field_spans"]["action"] == [17, 54]
+    assert formula == "O(∀x (Bureau(x) → InspectPremises(x)))"
+    assert "ConductInspection" not in formula
+    assert record["formula"] == formula
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_payment_light_verb_duty_exports_operative_payment_predicate():
     element = extract_normative_elements(
         "The licensee shall make payment of the renewal fee."
