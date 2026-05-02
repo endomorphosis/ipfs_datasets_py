@@ -561,13 +561,17 @@ class AccelerateManager:
 
             elif kind == "key":
                 envs: List[str] = check.get("env", [])
+                cred_files: List[str] = check.get("credential_files", [])
                 api_key = next((os.environ.get(e) for e in envs if os.environ.get(e)), None)
-                if not api_key:
+                cred_file = next((f for f in cred_files if os.path.isfile(f)), None) if not api_key else None
+                if not api_key and not cred_file:
+                    env_names = ", ".join(envs)
                     provider_report[name] = {"status": "unavailable",
-                                             "detail": f"no API key ({', '.join(envs)})"}
+                                             "detail": f"no API key ({env_names})"}
                     continue
+                cred_source = f"credentials via {next(e for e in envs if os.environ.get(e))}" if api_key else f"credentials at {os.path.basename(cred_file)}"  # type: ignore[arg-type]
                 ping = str(check.get("ping", ""))
-                if ping:
+                if ping and api_key:
                     auth_header = str(check.get("auth_header", "Authorization"))
                     auth_prefix = str(check.get("auth_prefix", "Bearer "))
                     req = urllib.request.Request(ping, method="GET",
@@ -577,8 +581,8 @@ class AccelerateManager:
                         with urllib.request.urlopen(req, timeout=timeout) as resp:
                             body = json.loads(resp.read().decode())
                         # Surface useful info from whoami / models endpoints
-                        detail = (str(body.get("name") or body.get("id") or "API key valid")
-                                  if isinstance(body, dict) else "API key valid")
+                        detail = (str(body.get("name") or body.get("id") or cred_source)
+                                  if isinstance(body, dict) else cred_source)
                         provider_report[name] = {"status": "ok", "detail": detail}
                     except urllib.error.HTTPError as exc:
                         if exc.code == 401:
@@ -587,12 +591,12 @@ class AccelerateManager:
                             provider_report[name] = {"status": "error", "detail": "API key forbidden (403)"}
                         else:
                             provider_report[name] = {"status": "ok",
-                                                     "detail": f"key set; ping returned HTTP {exc.code}"}
+                                                     "detail": f"{cred_source}; ping returned HTTP {exc.code}"}
                     except Exception as exc:
                         provider_report[name] = {"status": "ok",
-                                                 "detail": f"key set; ping failed ({exc})"}
+                                                 "detail": f"{cred_source}; ping failed ({exc})"}
                 else:
-                    provider_report[name] = {"status": "ok", "detail": "API key present"}
+                    provider_report[name] = {"status": "ok", "detail": cred_source}
 
             else:
                 # Fallback: just check if llm_router returns a provider object
