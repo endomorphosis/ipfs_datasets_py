@@ -165,6 +165,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_recordkeeping_light_verb_action(action_text)
     action_text = _normalize_remittance_light_verb_action(action_text)
     action_text = _normalize_renewal_light_verb_action(action_text)
+    action_text = _normalize_registration_enrollment_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -688,6 +689,43 @@ def _normalize_renewal_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"renew {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_registration_enrollment_light_verb_action(action_text: str) -> str:
+    """Collapse registration and enrollment nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|file|files|filed|filing|submit|submits|submitted|submitting|approve|approves|approved|approving)\s+"
+            r"(?:a\s+|an\s+|the\s+)?registration\s+of\s+(?:the\s+)?(.+)$",
+            "register",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|file|files|filed|filing|submit|submits|submitted|submitting|approve|approves|approved|approving)\s+"
+            r"registrations\s+of\s+(?:the\s+)?(.+)$",
+            "register",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|submit|submits|submitted|submitting|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+            r"(?:a\s+|an\s+|the\s+)?enrollment\s+of\s+(?:the\s+)?(.+)$",
+            "enroll",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|submit|submits|submitted|submitting|approve|approves|approved|approving|accept|accepts|accepted|accepting)\s+"
+            r"enrollments\s+of\s+(?:the\s+)?(.+)$",
+            "enroll",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
 
     return text
 
