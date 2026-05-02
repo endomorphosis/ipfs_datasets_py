@@ -146,6 +146,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _action_without_structured_recipient_tail(norm, action_text)
     action_text = _action_without_structured_notice_recipient(norm, action_text)
     action_text = _normalize_notice_service_light_verb_action(action_text)
+    action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
@@ -377,6 +378,27 @@ def _normalize_notice_service_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"notice {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_service_light_verb_action(action_text: str) -> str:
+    """Collapse legal service nominalizations into operative service acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|perfect|perfects|perfected|perfecting)\s+"
+        r"(?:a\s+|the\s+)?service\s+(?:of|on|upon|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|effect|effects|effected|effecting|complete|completes|completed|completing|perfect|perfects|perfected|perfecting)\s+"
+        r"service\s+(?:of|on|upon|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"serve {match.group(1).strip()}"
 
     return text
 
