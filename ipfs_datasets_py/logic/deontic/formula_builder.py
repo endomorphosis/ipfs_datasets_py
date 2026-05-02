@@ -182,6 +182,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_revocation_suspension_light_verb_action(action_text)
     action_text = _normalize_cancellation_termination_light_verb_action(action_text)
     action_text = _normalize_renewal_reissuance_light_verb_action(action_text)
+    action_text = _normalize_codification_recodification_light_verb_action(action_text)
     action_text = _normalize_collection_compilation_light_verb_action(action_text)
     action_text = _normalize_delivery_distribution_light_verb_action(action_text)
     action_text = _normalize_adoption_promulgation_light_verb_action(action_text)
@@ -5767,6 +5768,55 @@ def _normalize_renewal_reissuance_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reissue {target}" if target else text
+
+    republication_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?republication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"republications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^republication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in republication_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"republish {target}" if target else text
+
+    return text
+
+
+def _normalize_codification_recodification_light_verb_action(action_text: str) -> str:
+    """Project codification nominalizations to operative code-maintenance predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    codification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"codifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^codification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in codification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"codify {target}" if target else text
+
+    recodification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"recodifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^recodification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in recodification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"recodify {target}" if target else text
 
     republication_patterns = [
         r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
