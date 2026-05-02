@@ -268,34 +268,41 @@ class LegalParserParityOptimizer(BaseOptimizer):
         """Ask llm_router for a legal-parser improvement patch."""
 
         prompt = self.build_patch_prompt(cycle_index=cycle_index, evaluation=evaluation, feedback=feedback)
-        if self.llm_backend is not None:
-            raw_response = self.llm_backend.generate(
-                prompt,
-                method=OptimizationMethod.TEST_DRIVEN,
-                max_tokens=self.daemon_config.llm_max_tokens,
-                temperature=self.daemon_config.llm_temperature,
-                router_kwargs={
-                    "provider": self.daemon_config.provider,
-                    "model_name": self.daemon_config.model_name,
-                    "allow_local_fallback": False,
-                    "disable_model_retry": True,
-                    "timeout": self.daemon_config.llm_timeout_seconds,
-                },
-            )
-        else:
-            from ipfs_datasets_py import llm_router
+        with self._read_only_codex_cli_generation():
+            if self.llm_backend is not None:
+                raw_response = self.llm_backend.generate(
+                    prompt,
+                    method=OptimizationMethod.TEST_DRIVEN,
+                    max_tokens=self.daemon_config.llm_max_tokens,
+                    temperature=self.daemon_config.llm_temperature,
+                    router_kwargs={
+                        "provider": self.daemon_config.provider,
+                        "model_name": self.daemon_config.model_name,
+                        "allow_local_fallback": False,
+                        "disable_model_retry": True,
+                        "timeout": self.daemon_config.llm_timeout_seconds,
+                        "sandbox": "read-only",
+                    },
+                )
+            else:
+                from ipfs_datasets_py import llm_router
 
-            raw_response = llm_router.generate_text(
-                prompt,
-                provider=self.daemon_config.provider,
-                model_name=self.daemon_config.model_name,
-                max_tokens=self.daemon_config.llm_max_tokens,
-                temperature=self.daemon_config.llm_temperature,
-                timeout=self.daemon_config.llm_timeout_seconds,
-                allow_local_fallback=False,
-                disable_model_retry=True,
-            )
+                raw_response = llm_router.generate_text(
+                    prompt,
+                    provider=self.daemon_config.provider,
+                    model_name=self.daemon_config.model_name,
+                    max_tokens=self.daemon_config.llm_max_tokens,
+                    temperature=self.daemon_config.llm_temperature,
+                    timeout=self.daemon_config.llm_timeout_seconds,
+                    allow_local_fallback=False,
+                    disable_model_retry=True,
+                )
         return parse_cycle_proposal(raw_response)
+
+    def _read_only_codex_cli_generation(self) -> "_TemporaryEnv":
+        if str(self.daemon_config.provider).strip().lower() not in {"codex", "codex_cli"}:
+            return _TemporaryEnv({})
+        return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
 
     def build_patch_prompt(
         self,
@@ -2697,6 +2704,27 @@ def _json_safe(value: Any) -> Any:
     if isinstance(value, (list, tuple)):
         return [_json_safe(item) for item in value]
     return value
+
+
+class _TemporaryEnv:
+    """Temporarily set environment variables for a narrow call boundary."""
+
+    def __init__(self, updates: Mapping[str, str]) -> None:
+        self._updates = dict(updates)
+        self._previous: Dict[str, Optional[str]] = {}
+
+    def __enter__(self) -> "_TemporaryEnv":
+        for key, value in self._updates.items():
+            self._previous[key] = os.environ.get(key)
+            os.environ[key] = value
+        return self
+
+    def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> None:
+        for key, previous in self._previous.items():
+            if previous is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = previous
 
 
 def _as_float(value: Any) -> Optional[float]:

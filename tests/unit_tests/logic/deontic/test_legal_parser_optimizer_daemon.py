@@ -127,6 +127,36 @@ def test_optimizer_builds_gpt55_router_request_without_calling_real_llm(tmp_path
     assert call["router_kwargs"]["model_name"] == "gpt-5.5"
     assert call["router_kwargs"]["allow_local_fallback"] is False
     assert call["router_kwargs"]["disable_model_retry"] is True
+    assert call["router_kwargs"]["sandbox"] == "read-only"
+
+
+def test_optimizer_forces_codex_cli_generation_read_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "workspace-write")
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "No-op patch for test.",
+                "requirements_addressed": [],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": "",
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        model_name="gpt-5.5",
+        provider="codex_cli",
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+
+    optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert fake_router.calls[0]["router_kwargs"]["sandbox"] == "read-only"
+    assert fake_router.calls[0]["prompt"]
+    assert __import__("os").environ["IPFS_DATASETS_PY_CODEX_SANDBOX"] == "workspace-write"
 
 
 def test_optimizer_scales_test_timeout_from_recent_suite_duration(tmp_path):

@@ -505,7 +505,10 @@ while true; do
 
   (
     cd "$REPO_ROOT" || exit 2
-    PYTHONUNBUFFERED=1 IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME" python3 -u -m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon \
+    PYTHONUNBUFFERED=1 \
+      IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME" \
+      IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-read-only}" \
+      python3 -u -m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon \
       --repo-root . \
       --output-dir "$OUTPUT_DIR" \
       --max-cycles 0 \
