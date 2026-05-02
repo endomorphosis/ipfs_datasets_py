@@ -200,6 +200,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
     action_text = _normalize_transcription_translation_light_verb_action(action_text)
     action_text = _normalize_codification_recodification_light_verb_action(action_text)
+    action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -4340,6 +4341,42 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"recodify {target}" if target else text
+
+    return text
+
+
+def _normalize_consolidation_reconciliation_light_verb_action(action_text: str) -> str:
+    """Project consolidation and reconciliation nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    consolidation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"(?:a\s+|the\s+)?consolidation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"consolidations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^consolidation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in consolidation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"consolidate {target}" if target else text
+
+    reconciliation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"(?:a\s+|the\s+)?reconciliation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|prepare|prepares|prepared|preparing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|file|files|filed|filing|submit|submits|submitted|submitting|provide|provides|provided|providing|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+        r"reconciliations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^reconciliation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in reconciliation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"reconcile {target}" if target else text
 
     return text
 
