@@ -80,6 +80,17 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     mental_state = _clean_text(norm.mental_state)
     modal = _modal_phrase(norm.modality)
 
+    for override in norm.overrides:
+        override_text = _slot_text(override)
+        if not override_text:
+            continue
+        if override_text.lower().startswith("notwithstanding "):
+            phrases.append(_detail_phrase(override_text, "overrides", override, norm))
+        else:
+            phrases.append(_fixed_phrase("notwithstanding", "override_connector"))
+            phrases.append(_detail_phrase(override_text, "overrides", override, norm))
+        phrases.append(_fixed_phrase(",", "override_punctuation"))
+
     if actor:
         phrases.append(_phrase(actor, "actor", norm))
     else:

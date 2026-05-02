@@ -138,6 +138,37 @@ def test_decoder_preserves_unresolved_reference_exception_without_clearing_repai
     assert exception_phrase.spans == [element["exception_details"][0]["span"]]
 
 
+def test_decoder_preserves_precedence_override_with_provenance():
+    element, norm, decoded = _decode(
+        "Notwithstanding section 5.01.020, the Director may issue a variance."
+    )
+
+    assert decoded.text == (
+        "Notwithstanding section 5.01.020, Director may issue a variance."
+    )
+    assert norm.proof_ready is False
+    assert element["llm_repair"]["required"] is False
+    assert element["llm_repair"]["deterministic_resolution"]["type"] == (
+        "pure_precedence_override"
+    )
+
+    override_phrase = next(phrase for phrase in decoded.phrases if phrase.slot == "overrides")
+    assert override_phrase.text == "section 5.01.020"
+    assert override_phrase.spans == [element["override_clause_details"][0]["span"]]
+    assert [phrase.slot for phrase in decoded.phrases[:3]] == [
+        "override_connector",
+        "overrides",
+        "override_punctuation",
+    ]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_decoder_makes_lossy_temporal_ir_visible():
     _, norm, decoded = _decode(
         "The Director shall issue a permit within 10 days after application."
