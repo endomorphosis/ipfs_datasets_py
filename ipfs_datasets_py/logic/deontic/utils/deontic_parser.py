@@ -137,6 +137,7 @@ _MODAL_RE = re.compile(
         shall|must|required\s+to|is\s+required\s+to|are\s+required\s+to|
         has\s+a\s+duty\s+to|have\s+a\s+duty\s+to|
         has\s+(?:the\s+)?(?:authority|power)\s+to|have\s+(?:the\s+)?(?:authority|power)\s+to|
+        is\s+authorized\s+and\s+directed\s+to|are\s+authorized\s+and\s+directed\s+to|
         is\s+empowered\s+to|are\s+empowered\s+to|
         may|is\s+authorized\s+to|are\s+authorized\s+to|
         is\s+permitted\s+to|are\s+permitted\s+to|
@@ -4511,12 +4512,65 @@ def extract_normative_elements(*args: Any, **kwargs: Any) -> List[Dict[str, Any]
 
     elements = _extract_normative_elements_without_substantive_exception_projection(*args, **kwargs)
     for element in elements:
+        _normalize_authorized_and_directed_obligation(element)
         _normalize_authority_grant_permission(element)
         _clear_standard_substantive_exception_active_repair(element)
         _clear_local_applicability_active_repair(element)
         _clear_pure_precedence_override_active_repair(element)
     _apply_active_repair_status(elements)
     return elements
+
+
+def _normalize_authorized_and_directed_obligation(element: Dict[str, Any]) -> None:
+    """Classify hybrid authority-direction clauses as mandatory duties.
+
+    Statutes often grant authority and impose a duty in the same modal phrase,
+    e.g. ``is authorized and directed to``. The directive component is the
+    operative deontic force, so the clause should export as an obligation while
+    still retaining authority provenance in KG hints.
+    """
+
+    modal = str(element.get("modal") or "").strip().lower()
+    if not re.search(
+        r"\b(?:is|are)\s+authorized\s+and\s+directed\s+to\b",
+        modal,
+        re.IGNORECASE,
+    ):
+        return
+    actor = _parser_slot_first_text(element.get("subject"))
+    action = _parser_slot_first_text(element.get("action"))
+    if not actor or not action:
+        return
+
+    element["norm_type"] = "obligation"
+    element["deontic_operator"] = "O"
+    element["modality"] = "O"
+
+    formal_terms = dict(element.get("formal_terms") or {})
+    formal_terms["norm_predicate"] = "Obligation"
+    element["formal_terms"] = formal_terms
+
+    legal_frame = dict(element.get("legal_frame") or {})
+    legal_frame["category"] = "authority_duty"
+    legal_frame["norm_type"] = "obligation"
+    legal_frame["deontic_operator"] = "O"
+    element["legal_frame"] = legal_frame
+
+    hints = list(element.get("kg_relationship_hints") or [])
+    duty_hint = {
+        "subject": "law",
+        "predicate": "imposesDutyOn",
+        "object": actor,
+    }
+    if duty_hint not in hints:
+        hints.append(duty_hint)
+    authority_hint = {"subject": "law", "predicate": "grantsAuthorityTo", "object": actor}
+    if authority_hint not in hints:
+        hints.append(authority_hint)
+    action_hint = {"subject": actor, "predicate": "hasAuthorityFor", "object": action}
+    if action_hint not in hints:
+        hints.append(action_hint)
+    element["kg_relationship_hints"] = hints
 
 
 def _normalize_authority_grant_permission(element: Dict[str, Any]) -> None:
