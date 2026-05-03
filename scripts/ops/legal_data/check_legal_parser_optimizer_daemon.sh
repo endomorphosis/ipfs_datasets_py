@@ -129,6 +129,7 @@ payload = {
     "proposal_transport": current.get("proposal_transport") or supervisor.get("proposal_transport"),
     "worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds") or supervisor.get("worktree_edit_timeout_seconds"),
     "worktree_stale_after_seconds": current.get("worktree_stale_after_seconds") or supervisor.get("worktree_stale_after_seconds"),
+    "worktree_codex_sandbox": current.get("worktree_codex_sandbox") or supervisor.get("worktree_codex_sandbox"),
     "supervisor_status": supervisor.get("status"),
     "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
     "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),

@@ -17,6 +17,7 @@ LLM_PROPOSAL_ATTEMPTS="${LLM_PROPOSAL_ATTEMPTS:-3}"
 PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"
 WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-1200}"
 WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
+WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-danger-full-access}"
 DAEMON_DIR="${DAEMON_DIR:-.daemon}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
@@ -284,6 +285,7 @@ write_supervisor_status() {
   "proposal_transport": "$PROPOSAL_TRANSPORT",
   "worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS,
   "worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS,
+  "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
   "last_exit_code": $last_exit_code,
   "last_recycle_reason": "$last_recycle_reason"
 }
@@ -2296,6 +2298,7 @@ while true; do
       --proposal-transport "$PROPOSAL_TRANSPORT"
       --worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"
       --worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"
+      --worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"
       --codex-bin "$CODEX_BIN"
       --heartbeat-interval-seconds "$HEARTBEAT_INTERVAL_SECONDS"
       --test-timeout-seconds "$TEST_TIMEOUT_SECONDS"

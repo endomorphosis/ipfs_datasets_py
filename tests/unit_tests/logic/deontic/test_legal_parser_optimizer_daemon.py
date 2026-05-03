@@ -203,21 +203,27 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"' in script
     assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-1200}"' in script
     assert 'WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"' in script
+    assert 'WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-danger-full-access}"' in script
     assert '"proposal_transport": "$PROPOSAL_TRANSPORT"' in script
     assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
     assert '"worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS' in script
+    assert '"worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX"' in script
     assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
     assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
     assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
+    assert '--worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"' in script
     assert '--codex-bin "$CODEX_BIN"' in script
 
 
 def test_cli_defaults_to_worktree_transport(monkeypatch):
     monkeypatch.delenv("LEGAL_PARSER_DAEMON_PROPOSAL_TRANSPORT", raising=False)
+    monkeypatch.delenv("LEGAL_PARSER_DAEMON_WORKTREE_CODEX_SANDBOX", raising=False)
+    monkeypatch.delenv("SUPERVISOR_AGENTIC_SANDBOX", raising=False)
 
     args = build_arg_parser().parse_args([])
 
     assert args.proposal_transport == "worktree"
+    assert args.worktree_codex_sandbox == "danger-full-access"
 
 
 def test_check_script_reports_worktree_transport_health_fields():
@@ -229,6 +235,7 @@ def test_check_script_reports_worktree_transport_health_fields():
     assert '"proposal_transport": current.get("proposal_transport")' in script
     assert '"worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds")' in script
     assert '"worktree_stale_after_seconds": current.get("worktree_stale_after_seconds")' in script
+    assert '"worktree_codex_sandbox": current.get("worktree_codex_sandbox")' in script
 
 
 def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
@@ -865,6 +872,7 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
         output_dir=tmp_path / "out",
         proposal_transport="worktree",
         worktree_edit_timeout_seconds=77,
+        worktree_codex_sandbox="danger-full-access",
         codex_bin="codex-test",
         target_files=(production_path, test_path),
     )
@@ -884,6 +892,7 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
     codex_call = next(call for call in calls if call["cmd"][0] == "codex-test")
     assert codex_call["timeout"] == 77
     assert "-C" in codex_call["cmd"]
+    assert codex_call["cmd"][codex_call["cmd"].index("--sandbox") + 1] == "danger-full-access"
     assert "Do not output or hand-author a patch" in codex_call["input_text"]
     assert ".legal_parser_worktree_proposal.json" in codex_call["input_text"]
     assert any(call["cmd"][:3] == ["git", "add", "-N"] for call in calls)

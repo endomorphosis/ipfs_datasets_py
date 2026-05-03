@@ -129,6 +129,12 @@ class LegalParserDaemonConfig:
     proposal_transport: str = "patch"
     worktree_edit_timeout_seconds: int = 1200
     worktree_stale_after_seconds: int = 7200
+    worktree_codex_sandbox: str = field(
+        default_factory=lambda: os.environ.get(
+            "LEGAL_PARSER_DAEMON_WORKTREE_CODEX_SANDBOX",
+            os.environ.get("SUPERVISOR_AGENTIC_SANDBOX", "danger-full-access"),
+        )
+    )
     worktree_root: Path = field(default_factory=lambda: Path(".daemon/legal-parser-worktrees"))
     codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
     heartbeat_interval_seconds: float = 15.0
@@ -491,7 +497,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "exec",
                     "--skip-git-repo-check",
                     "--sandbox",
-                    "workspace-write",
+                    self.daemon_config.worktree_codex_sandbox,
                     "-m",
                     self.daemon_config.model_name,
                     "-C",
@@ -730,6 +736,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "created_at": _utc_now(),
             "created_at_epoch": time.time(),
             "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
         }
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -2428,6 +2435,7 @@ class LegalParserOptimizerDaemon:
             "proposal_transport": self.config.proposal_transport_mode(),
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
+            "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -2504,6 +2512,7 @@ class LegalParserOptimizerDaemon:
             "proposal_transport": self.config.proposal_transport_mode(),
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
+            "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -5004,6 +5013,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Age after which dead daemon-created proposal worktrees are pruned.",
     )
     parser.add_argument(
+        "--worktree-codex-sandbox",
+        default=os.environ.get(
+            "LEGAL_PARSER_DAEMON_WORKTREE_CODEX_SANDBOX",
+            os.environ.get("SUPERVISOR_AGENTIC_SANDBOX", "danger-full-access"),
+        ),
+        help="Codex sandbox mode used for direct-edit proposal worktrees.",
+    )
+    parser.add_argument(
         "--worktree-root",
         default=os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees"),
         help="Directory for throwaway direct-edit Git worktrees.",
@@ -5057,6 +5074,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         proposal_transport=str(args.proposal_transport),
         worktree_edit_timeout_seconds=int(args.worktree_edit_timeout_seconds),
         worktree_stale_after_seconds=int(args.worktree_stale_after_seconds),
+        worktree_codex_sandbox=str(args.worktree_codex_sandbox),
         worktree_root=Path(args.worktree_root),
         codex_bin=str(args.codex_bin),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),

@@ -110,6 +110,13 @@ before creating a new worktree, the optimizer also prunes stale daemon-created
 worktrees under `.daemon/legal-parser-worktrees`. The stale threshold defaults
 to two hours and can be tuned with `WORKTREE_STALE_AFTER_SECONDS`.
 
+The worktree Codex process defaults to `danger-full-access` through
+`WORKTREE_CODEX_SANDBOX`. The daemon previously used `workspace-write`, but that
+mode can fail before file access on hosts where the Codex bubblewrap helper
+cannot create its loopback network namespace. The worktree is already detached
+and throwaway, so the full-access sandbox avoids silent no-diff cycles while Git
+still constrains what the main worktree receives.
+
 ## Formal Logic Target Scope
 
 Autonomous parser work is allowed to move across the whole deterministic formal
