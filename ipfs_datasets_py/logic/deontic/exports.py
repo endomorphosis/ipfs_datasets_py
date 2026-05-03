@@ -3639,6 +3639,12 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     category = str(legal_frame.get("category") or "").strip().lower()
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
+    if norm.norm_type == "penalty" or norm.penalty:
+        return "sanction_clause"
+    if norm.procedure:
+        return "procedural_event_duty"
+    if norm.temporal_constraints:
+        return "temporal_deadline_duty"
     if norm.modality == "O" and norm.norm_type == "obligation":
         return "ordinary_duty"
     if norm.modality == "F" or norm.norm_type == "prohibition":

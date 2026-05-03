@@ -94,6 +94,16 @@ TYPESCRIPT_QUALITY_ERROR_CODES = TYPESCRIPT_PREFLIGHT_ERROR_CODES | {
     "TS7006",
 }
 
+ROLLBACK_QUALITY_FAILURE_KINDS = {
+    "apply_check",
+    "validation",
+    "validation_repair",
+    "file_repair_validation",
+    "validation_repair_preflight",
+    "preflight",
+    "typescript_quality",
+}
+
 
 ALLOWED_WRITE_PREFIXES = (
     "src/lib/logic/",
@@ -491,6 +501,7 @@ def _repair_common_typescript_text_damage(content: str) -> str:
         "Record": "Record<string, unknown>",
         "Map": "Map<string, unknown>",
         "Set": "Set<unknown>",
+        "ReadonlySet": "ReadonlySet<unknown>",
         "Promise": "Promise<unknown>",
     }
     for name, replacement in generic_defaults.items():
@@ -505,6 +516,21 @@ def _repair_common_typescript_text_damage(content: str) -> str:
     repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+\{", r"|| Number(\1) < 0) {", repaired)
     repaired = re.sub(r"\|\|\s*weight\s+\)", "|| weight < 0)", repaired)
     repaired = re.sub(r"for \(let index = 0; index = ([A-Za-z_$][\w$.]*\.length);", r"for (let index = 0; index < \1;", repaired)
+    repaired = re.sub(
+        r"for \(let (?P<var>[A-Za-z_$][\w$]*) = (?P<start>\d+); (?P=var)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length);",
+        r"for (let \g<var> = \g<start>; \g<var> < \g<bound>;",
+        repaired,
+    )
+    repaired = re.sub(
+        r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length)\)",
+        r"while (\g<var> < \g<bound>)",
+        repaired,
+    )
+    repaired = re.sub(
+        r"if \((?P<var>[A-Za-z_$][\w$]*) = (?P<bound>[A-Za-z_$][\w$.]*\.length) \|\|",
+        r"if (\g<var> >= \g<bound> ||",
+        repaired,
+    )
     repaired = re.sub(r"for \(let index = 1; index \): number \{", "for (let index = 1; index < utterances.length; index += 1) {", repaired)
     repaired = re.sub(r"for \(let index = 0; index >> 0\)\.toString", "return (hash >>> 0).toString", repaired)
     return repaired
@@ -601,7 +627,7 @@ def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
             continue
         if result.get("valid"):
             break
-        row_failure_kind = str(artifact.get("failure_kind") or "invalid_no_change")
+        row_failure_kind = _classify_failure_kind(artifact)
         if row_failure_kind == failure_kind:
             count += 1
             continue
@@ -872,6 +898,37 @@ def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict
         "top_signature": max(by_signature.items(), key=lambda item: item[1])[0] if by_signature else "",
         "top_signature_count": max(by_signature.values()) if by_signature else 0,
     }
+
+
+def _rollback_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[str, Any]:
+    total = 0
+    consecutive = 0
+    by_task: Dict[str, int] = {}
+    by_kind: Dict[str, int] = {}
+    for result, artifact in rows:
+        if result.get("valid") or artifact.get("changed_files"):
+            continue
+        kind = _classify_failure_kind(artifact)
+        if kind not in ROLLBACK_QUALITY_FAILURE_KINDS:
+            continue
+        total += 1
+        by_kind[kind] = by_kind.get(kind, 0) + 1
+        task = str(artifact.get("target_task") or "")
+        if task:
+            by_task[task] = by_task.get(task, 0) + 1
+    for result, artifact in reversed(rows):
+        if result.get("valid"):
+            break
+        if artifact.get("changed_files") or _classify_failure_kind(artifact) not in ROLLBACK_QUALITY_FAILURE_KINDS:
+            break
+        consecutive += 1
+    return {
+        "total": total,
+        "consecutive": consecutive,
+        "by_task": by_task,
+        "by_kind": by_kind,
+    }
+
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
     return any(path.startswith(RUNTIME_LOGIC_PREFIX) and not path.startswith(PARITY_FIXTURE_PREFIX) for path in paths)
@@ -1881,6 +1938,7 @@ Critical correction for attempt {attempt}:
         tasks = self._current_plan_tasks()
         current_task_counts = _current_task_failure_counts(rows, current_task.label) if current_task else {}
         typescript_quality_failures = _typescript_quality_failure_counts(work_rows)
+        rollback_quality_failures = _rollback_quality_failure_counts(work_rows)
         blocked_backlog = self._blocked_task_backlog(tasks, rows)
         status_counts: Dict[str, int] = {}
         for task in tasks:
@@ -1908,6 +1966,7 @@ Critical correction for attempt {attempt}:
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "typescript_quality_failures": typescript_quality_failures,
+            "rollback_quality_failures": rollback_quality_failures,
             "latest_round": {
                 "valid": bool(latest_result.get("valid")),
                 "score": latest_result.get("score"),
@@ -2144,12 +2203,12 @@ Critical correction for attempt {attempt}:
         if self.daemon_config.max_task_failure_rounds <= 0 and self.daemon_config.max_task_total_failure_rounds <= 0:
             return False
         artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
-        failure_kind = str(artifact.get("failure_kind") or "invalid_no_change")
         if self.daemon_config.result_log_path is None:
             return False
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         # The current result is appended after the board update, so include it.
         rows = [*rows, (latest, artifact)]
+        failure_kind = _classify_failure_kind(artifact)
         same_kind_blocked = (
             self.daemon_config.max_task_failure_rounds > 0
             and _recent_failure_count(rows, task.label, failure_kind) >= self.daemon_config.max_task_failure_rounds
@@ -2380,7 +2439,7 @@ Critical correction for attempt {attempt}:
         if latest_errors:
             lines.append(f"- Errors: {'; '.join(str(error) for error in latest_errors[:3])}")
         if latest_artifact.get("failure_kind"):
-            lines.append(f"- Failure kind: `{latest_artifact.get('failure_kind')}`")
+            lines.append(f"- Failure kind: `{_classify_failure_kind(latest_artifact)}`")
 
         lines.extend(["", "### Blocked Backlog", ""])
         if blocked_backlog:

@@ -169,6 +169,30 @@ export class CecDiscourseAnalyzer {
     assert "for (let index = 1; index < utterances.length; index += 1)" in repaired
 
 
+def test_repair_common_typescript_text_damage_fills_stripped_loop_bounds():
+    damaged = """
+export function count(input: string): number {
+  let total = 0;
+  for (let index = 0; index  input.length; index += 1) {
+    total += input[index] === "a" ? 1 : 0;
+  }
+  while (total  input.length) {
+    total += 1;
+  }
+  if (total = input.length || input.length === 0) {
+    return total;
+  }
+  return total;
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "for (let index = 0; index < input.length; index += 1)" in repaired
+    assert "while (total < input.length)" in repaired
+    assert "if (total >= input.length || input.length === 0)" in repaired
+
+
 def test_extract_plan_tasks_reads_status_from_markdown():
     tasks = extract_plan_tasks(
         """
@@ -1648,6 +1672,65 @@ def test_task_board_blocks_after_total_failures_across_kinds(tmp_path):
     assert "- [!] Mixed failure task" in updated
 
 
+def test_task_board_blocks_repeated_classified_typescript_quality_across_raw_kinds(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Malformed TypeScript task\n- [ ] Next task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    previous = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Malformed TypeScript task",
+            "summary": "validation repair failed",
+            "failure_kind": "validation_repair",
+            "changed_files": [],
+            "validation_results": [
+                {
+                    "command": ["npx", "tsc", "--noEmit"],
+                    "returncode": 2,
+                    "stdout": "src/lib/logic/example.ts(1,8): error TS2314: Generic type 'Record' requires 2 type argument(s).\n",
+                    "stderr": "",
+                }
+            ],
+        },
+    }
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": [previous]}) + "\n", encoding="utf-8")
+    latest = {
+        "valid": False,
+        "artifact": {
+            "target_task": "Task checkbox-1: Malformed TypeScript task",
+            "summary": "preflight failed",
+            "failure_kind": "preflight",
+            "changed_files": [],
+            "errors": ["src/lib/logic/example.ts(2,10): error TS1005: ';' expected."],
+        },
+    }
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        max_task_failure_rounds=2,
+        max_task_total_failure_rounds=10,
+    )
+
+    LogicPortDaemonOptimizer(config)._update_task_board([latest])
+
+    updated = plan.read_text(encoding="utf-8")
+    assert "- [!] Malformed TypeScript task" in updated
+    assert "Failure kind: `typescript_quality`" in updated
+
+
 def test_supervised_blocks_stale_failed_task_before_llm_call(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
@@ -2493,3 +2576,6 @@ def test_progress_summary_classifies_typescript_quality_failures(tmp_path):
     assert progress["typescript_quality_failures"]["consecutive"] == 1
     assert progress["typescript_quality_failures"]["top_signature_count"] == 1
     assert "TS2314:Generic type '<symbol>' requires 2 type argument(s)." in progress["typescript_quality_failures"]["top_signature"]
+    assert progress["rollback_quality_failures"]["total"] == 1
+    assert progress["rollback_quality_failures"]["consecutive"] == 1
+    assert progress["rollback_quality_failures"]["by_kind"]["typescript_quality"] == 1

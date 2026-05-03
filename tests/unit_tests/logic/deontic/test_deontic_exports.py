@@ -148,6 +148,58 @@ def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enume
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_sanctions():
+    temporal = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The Director shall issue a permit within 10 days after application."
+    )[0])
+    procedure = LegalNormIR.from_parser_element(extract_normative_elements(
+        "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+    )[0])
+    sanction = LegalNormIR.from_parser_element(extract_normative_elements(
+        "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+    )[0])
+
+    records = build_deterministic_parser_capability_profile_records([
+        temporal,
+        procedure,
+        sanction,
+    ])
+
+    assert [record["capability_family"] for record in records] == [
+        "temporal_deadline_duty",
+        "procedural_event_duty",
+        "sanction_clause",
+    ]
+    assert [record["formula"] for record in records] == [
+        "O(∀x (Director(x) ∧ Deadline10DaysAfterApplication(x) → IssuePermit(x)))",
+        "O(∀x (Bureau(x) ∧ ProcedureUponReceiptApplication(x) → InspectPremises(x)))",
+        "O(∀x (Violation(x) → IncurCivilFineNotLessThan100AndNotMoreThan500PerViolation(x)))",
+    ]
+    assert [record["norm_type"] for record in records] == [
+        "obligation",
+        "obligation",
+        "penalty",
+    ]
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["parser_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+    assert temporal.temporal_constraints
+    assert procedure.procedure["event_relations"]
+    assert sanction.penalty["classification"] == "civil"
+    assert build_deterministic_parser_capability_profile_record(temporal) == records[0]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_scoped_definition_ir_and_canonical_export_preserve_definition_scope():
     element = dict(extract_normative_elements(
         'In this section, the term "food cart" means a mobile food vending unit.'
