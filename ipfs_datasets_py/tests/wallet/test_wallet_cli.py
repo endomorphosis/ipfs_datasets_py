@@ -623,9 +623,39 @@ def test_wallet_cli_export_grant_invocation_and_bundle(tmp_path, capsys) -> None
     ]) == 0
     exported = json.loads(capsys.readouterr().out)
     assert exported["record_count"] == 1
+    assert exported["bundle_id"] == f"export-{exported['bundle_hash'][:24]}"
     bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    assert bundle["bundle_hash"] == exported["bundle_hash"]
     assert bundle["records"][0]["record_id"] == record_id
     assert "cli export confidential text" not in json.dumps(bundle)
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "verify-export-bundle",
+        "--path",
+        str(bundle_path),
+    ]) == 0
+    verified = json.loads(capsys.readouterr().out)
+    assert verified["valid"] is True
+    assert verified["computed_hash"] == bundle["bundle_hash"]
+
+    bundle["records"] = []
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "verify-export-bundle",
+        "--path",
+        str(bundle_path),
+    ]) == 0
+    assert json.loads(capsys.readouterr().out)["valid"] is False
 
 
 def test_wallet_cli_revoked_export_grant_blocks_invocation(tmp_path, capsys) -> None:

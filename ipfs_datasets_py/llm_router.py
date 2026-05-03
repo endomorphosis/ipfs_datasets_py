@@ -924,6 +924,26 @@ def _coerce_text_sequence(value: object) -> list[str]:
     return [str(value)]
 
 
+def _render_multimodal_prompt_for_text_provider(
+    *,
+    prompt: str,
+    image_paths: Sequence[str] | None = None,
+    image_urls: Sequence[str] | None = None,
+    system_prompt: Optional[str] = None,
+    additional_text_blocks: Sequence[str] | None = None,
+) -> str:
+    sections: list[str] = []
+    if system_prompt and str(system_prompt).strip():
+        sections.append(str(system_prompt).strip())
+    sections.append(str(prompt or "").strip())
+    sections.extend(_coerce_text_sequence(additional_text_blocks))
+    for path in image_paths or ():
+        sections.append(f"[image attachment: {path}]")
+    for url in image_urls or ():
+        sections.append(f"[image: {url}]")
+    return "\n\n".join(section for section in sections if section)
+
+
 def _resolve_transformers_module(*, deps: Optional[RouterDeps] = None, module_override: object | None = None) -> object | None:
     """Resolve the transformers module with optional RouterDeps injection/caching."""
 
@@ -3216,20 +3236,81 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                     if key in call_options:
                         payload[key] = call_options.pop(key)
 
-                result = manager.run_inference(  # type: ignore[union-attr]
-                    effective_model,
-                    payload,
-                    task_type="multimodal-generation",
-                    **call_options,
+                def _try_direct_multimodal_provider(provider_name: str) -> Optional[str]:
+                    candidate = _builtin_provider_by_name(provider_name)
+                    if candidate is None or candidate is self:
+                        return None
+                    if isinstance(candidate, NativeMultimodalProvider):
+                        return candidate.generate_multimodal(
+                            prompt,
+                            model_name=None,
+                            image_paths=image_paths,
+                            image_urls=image_urls,
+                            system_prompt=system_prompt,
+                            additional_text_blocks=additional_text_blocks,
+                            messages=messages,
+                            **call_options,
+                        )
+                    return candidate.generate(
+                        _render_multimodal_prompt_for_text_provider(
+                            prompt=prompt,
+                            image_paths=image_paths,
+                            image_urls=image_urls,
+                            system_prompt=system_prompt,
+                            additional_text_blocks=additional_text_blocks,
+                        ),
+                        model_name=None,
+                        **call_options,
+                    )
+
+                manager_error: Exception | None = None
+                try:
+                    result = manager.run_inference(  # type: ignore[union-attr]
+                        effective_model,
+                        payload,
+                        task_type="multimodal-generation",
+                        **call_options,
+                    )
+                    text = _extract_generated_text(result)
+                    if isinstance(text, str) and text:
+                        return text
+                    if isinstance(result, dict):
+                        message = result.get("message")
+                        if isinstance(message, str) and message.strip():
+                            raise RuntimeError(message.strip())
+                    raise RuntimeError("AccelerateManager multimodal provider did not return generated text")
+                except Exception as exc:
+                    manager_error = exc
+
+                provider_candidates: list[str] = []
+                if effective_model.strip().lower() in {
+                    "codex_cli", "copilot_cli", "copilot_sdk", "openai", "hf_inference_api",
+                    "openrouter", "gemini_cli", "gemini_py", "claude_code", "claude_py",
+                }:
+                    provider_candidates.append(effective_model.strip().lower())
+                if remote_provider is not None:
+                    provider_candidates.append(str(remote_provider).strip().lower())
+                provider_candidates.extend(name for name, _ in _iter_unpinned_optional_providers())
+
+                seen: set[str] = set()
+                provider_errors: list[str] = []
+                for provider_name in provider_candidates:
+                    if not provider_name or provider_name in seen:
+                        continue
+                    seen.add(provider_name)
+                    try:
+                        text = _try_direct_multimodal_provider(provider_name)
+                        if isinstance(text, str) and text.strip():
+                            return text
+                    except Exception as exc:
+                        provider_errors.append(f"{provider_name}: {exc}")
+
+                details = "; ".join(provider_errors)
+                raise RuntimeError(
+                    "AccelerateManager multimodal provider failed and no direct provider fallback succeeded. "
+                    f"AccelerateManager error: {manager_error}. "
+                    f"Provider errors: {details or 'none'}"
                 )
-                text = _extract_generated_text(result)
-                if isinstance(text, str) and text:
-                    return text
-                if isinstance(result, dict):
-                    message = result.get("message")
-                    if isinstance(message, str) and message.strip():
-                        raise RuntimeError(message.strip())
-                raise RuntimeError("AccelerateManager multimodal provider did not return generated text")
 
         return _AccelerateLLMProvider()
     except Exception:

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import importlib
+import os
 from pathlib import Path
+
+
+os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL", "0")
 
 
 def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
     monkeypatch.setenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
+    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL", "0")
     monkeypatch.setenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE", "1")
 
     llm_router = importlib.import_module("ipfs_datasets_py.llm_router")
@@ -26,6 +31,7 @@ def test_accelerate_provider_accepts_generated_text_shape(monkeypatch) -> None:
 
 def test_accelerate_provider_accepts_multimodal_payload(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
+    monkeypatch.setenv("IPFS_DATASETS_AUTO_INSTALL", "0")
     monkeypatch.setenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE", "1")
 
     llm_router = importlib.import_module("ipfs_datasets_py.llm_router")

@@ -663,6 +663,14 @@ class DataWalletService:
         self._assert_controller(wallet, actor_did)
         grant = self.grants[grant_id]
         grant.status = "revoked"
+        for request in self.access_requests.values():
+            if request.wallet_id == wallet_id and request.grant_id == grant_id and request.status == "approved":
+                request.status = "revoked"
+                request.decided_at = utc_now()
+                request.decided_by = actor_did
+                request.details = {**request.details, "revoked_by_grant_id": grant_id}
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
@@ -1402,6 +1410,9 @@ class DataWalletService:
                 else []
             ),
         }
+        bundle_hash = self.export_bundle_hash(bundle)
+        bundle["bundle_hash"] = bundle_hash
+        bundle["bundle_id"] = f"export-{bundle_hash[:24]}"
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
@@ -1413,10 +1424,26 @@ class DataWalletService:
                 "record_ids": requested_ids,
                 "include_proofs": include_proofs,
                 "include_derived_artifacts": include_derived_artifacts,
+                "bundle_id": bundle["bundle_id"],
+                "bundle_hash": bundle_hash,
             },
             grant_id=grant_id,
         )
         return bundle
+
+    def export_bundle_hash(self, bundle: Dict[str, Any]) -> str:
+        """Return the deterministic hash covered by an export bundle receipt."""
+
+        unsigned = dict(bundle)
+        unsigned.pop("bundle_hash", None)
+        unsigned.pop("bundle_id", None)
+        return sha256_hex(canonical_bytes(unsigned))
+
+    def verify_export_bundle(self, bundle: Dict[str, Any]) -> bool:
+        """Verify the bundle's embedded hash without trusting JSON key order."""
+
+        expected = bundle.get("bundle_hash")
+        return isinstance(expected, str) and self.export_bundle_hash(bundle) == expected
 
     def _export_wallet_descriptor(self, wallet: Wallet, *, actor_did: str) -> Dict[str, Any]:
         if actor_did == wallet.owner_did:

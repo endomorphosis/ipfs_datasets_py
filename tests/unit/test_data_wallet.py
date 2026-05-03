@@ -314,6 +314,8 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     )
 
     assert bundle["bundle_type"] == "wallet_export_v1"
+    assert bundle["bundle_id"] == f"export-{bundle['bundle_hash'][:24]}"
+    assert service.verify_export_bundle(bundle) is True
     assert "controller_dids" not in bundle["wallet"]
     assert "device_dids" not in bundle["wallet"]
     assert [record["record_id"] for record in bundle["records"]] == [document.record_id, location.record_id]
@@ -322,6 +324,8 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     assert "Eviction notice" not in public_export
     assert "45.515232" not in public_export
     assert "-122.678385" not in public_export
+    tampered = {**bundle, "records": []}
+    assert service.verify_export_bundle(tampered) is False
 
     service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
     with pytest.raises(AccessDeniedError):
@@ -607,6 +611,10 @@ def test_access_request_revocation_updates_request_and_blocks_invocation(tmp_pat
     assert revoked.details["revocation_reason"] == "user withdrew consent"
     assert service.grants[approved.grant_id].status == "revoked"
     assert service.list_access_requests(wallet.wallet_id, status="revoked")[0].request_id == request.request_id
+    restored = WalletService(storage_dir=tmp_path)
+    restored.import_wallet_snapshot(service.export_wallet_snapshot(wallet.wallet_id))
+    assert restored.access_requests[request.request_id].status == "revoked"
+    assert restored.grants[approved.grant_id].status == "revoked"
     with pytest.raises(AccessDeniedError, match="not active"):
         service.decrypt_record_with_invocation(
             wallet.wallet_id,

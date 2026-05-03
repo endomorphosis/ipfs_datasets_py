@@ -230,6 +230,9 @@ def build_parser() -> argparse.ArgumentParser:
     export_bundle.add_argument("--exclude-proofs", action="store_true")
     export_bundle.add_argument("--exclude-derived-artifacts", action="store_true")
 
+    verify_export_bundle = subparsers.add_parser("verify-export-bundle", help="Verify an encrypted export bundle receipt")
+    verify_export_bundle.add_argument("--path", type=Path, required=True)
+
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
     access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending")
@@ -358,6 +361,22 @@ def main(argv: Optional[list[str]] = None) -> int:
     try:
         if args.command == "generate-key":
             _emit({"status": "ok", "key_hex": random_key().hex()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "verify-export-bundle":
+            service = _service(args.blob_dir)
+            bundle = json.loads(args.path.read_text(encoding="utf-8"))
+            computed_hash = service.export_bundle_hash(bundle)
+            _emit(
+                {
+                    "status": "ok",
+                    "valid": service.verify_export_bundle(bundle),
+                    "bundle_id": bundle.get("bundle_id"),
+                    "bundle_hash": bundle.get("bundle_hash"),
+                    "computed_hash": computed_hash,
+                },
+                json_output=args.json_output,
+            )
             return 0
 
         if args.command == "create":
@@ -728,6 +747,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                     "status": "ok",
                     "out": str(args.out),
                     "wallet_id": args.wallet_id,
+                    "bundle_id": bundle["bundle_id"],
+                    "bundle_hash": bundle["bundle_hash"],
                     "record_count": len(bundle["records"]),
                     "proof_count": len(bundle["proofs"]),
                     "derived_artifact_count": len(bundle["derived_artifacts"]),
