@@ -1972,6 +1972,46 @@ def test_dirty_legal_parser_target_status_summarizes_deletion_heavy_stranded_dif
     assert "deletion-heavy files" in report
 
 
+def test_daemon_rejects_deletion_heavy_parser_patch_before_apply(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    unified_diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
+            "--- a/ipfs_datasets_py/logic/deontic/exports.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
+            "@@ -1,36 +1,2 @@",
+            *[f"-OLD_EXPORT_HELPER_{index} = True" for index in range(36)],
+            "+NEW_EXPORT_HELPER = True",
+            "+NEW_EXPORT_HELPER_TESTED = True",
+            "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
+            "@@ -1,8 +1 @@",
+            *[f"-def test_old_export_{index}(): pass" for index in range(8)],
+            "+def test_new_export(): pass",
+        ]
+    )
+    patch_stats = parser_daemon_module._unified_diff_stats(unified_diff)
+
+    quality = daemon._enforce_deletion_heavy_patch_quality(
+        proposal_quality={"valid": True, "reasons": []},
+        patch_stats=patch_stats,
+    )
+
+    assert patch_stats["deletions"] == 44
+    assert patch_stats["insertions"] == 3
+    assert patch_stats["production_deletion_heavy_files"] == [
+        "ipfs_datasets_py/logic/deontic/exports.py"
+    ]
+    assert patch_stats["test_deletion_heavy_files"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    ]
+    assert quality["valid"] is False
+    assert "deletion_heavy_patch" in quality["reasons"][-1]
+    assert quality["deletion_heavy_patch_quality"]["deletions"] == 44
+
+
 def test_progress_stall_accounting_resets_after_retained_patch(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())

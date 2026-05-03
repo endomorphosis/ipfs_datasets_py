@@ -2012,6 +2012,10 @@ class LegalParserOptimizerDaemon:
                     test_failure_recovery_mode=test_failure_recovery_mode,
                     material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
                 )
+                candidate_quality = self._enforce_deletion_heavy_patch_quality(
+                    proposal_quality=candidate_quality,
+                    patch_stats=candidate_patch_stats,
+                )
                 if metric_stall_mode:
                     candidate_quality = self._enforce_metric_stall_quality(
                         proposal=proposal,
@@ -2081,6 +2085,7 @@ class LegalParserOptimizerDaemon:
                         "proposal_quality_valid": candidate_quality.get("valid"),
                         "proposal_quality_reasons": candidate_quality.get("reasons", []),
                         "slice_scale_contract": slice_scale_contract,
+                        "patch_stats": candidate_patch_stats,
                         "candidate_validation_valid": candidate_validation.get("valid"),
                         "candidate_validation_reasons": candidate_validation.get("reasons", []),
                         "candidate_validation_summary": candidate_validation_summary,
@@ -2118,6 +2123,11 @@ class LegalParserOptimizerDaemon:
                     retry_instruction += (
                         " Enlarge the slice: cover the slice_scale_contract family with 3+ related "
                         "legal constructions and 6-10 focused assertions, while preserving clean hunks."
+                    )
+                if "deletion_heavy_patch" in retry_reason:
+                    retry_instruction += (
+                        " Preserve accepted deterministic parser/export work; produce an additive or "
+                        "equivalent replacement repair instead of deleting established helpers or tests."
                     )
                 attempt_feedback = list(feedback) + repair_phase_feedback + [
                     (
@@ -2236,6 +2246,10 @@ class LegalParserOptimizerDaemon:
             slice_scale_mode=str(slice_scale_contract.get("mode") or ""),
             test_failure_recovery_mode=test_failure_recovery_mode,
             material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
+        )
+        proposal_quality = self._enforce_deletion_heavy_patch_quality(
+            proposal_quality=proposal_quality,
+            patch_stats=patch_stats,
         )
         if metric_stall_mode:
             proposal_quality = self._enforce_metric_stall_quality(
@@ -2937,6 +2951,50 @@ class LegalParserOptimizerDaemon:
                 "deletions": deletions,
                 "changed_files": changed_files,
                 "patch_stability_mode": patch_stability_mode,
+            },
+        }
+
+    def _enforce_deletion_heavy_patch_quality(
+        self,
+        *,
+        proposal_quality: Dict[str, Any],
+        patch_stats: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Reject rollback-shaped parser patches before apply/validation."""
+
+        try:
+            insertions = int(patch_stats.get("insertions", 0) or 0)
+            deletions = int(patch_stats.get("deletions", 0) or 0)
+        except (TypeError, ValueError):
+            insertions = 0
+            deletions = 0
+        if deletions < 30 or deletions <= max(insertions * 3, insertions + 20):
+            return proposal_quality
+
+        changed_files = list(patch_stats.get("changed_files") or [])
+        production_deletion_heavy = list(patch_stats.get("production_deletion_heavy_files") or [])
+        test_deletion_heavy = list(patch_stats.get("test_deletion_heavy_files") or [])
+        if not production_deletion_heavy:
+            return proposal_quality
+
+        reason = (
+            "deletion_heavy_patch: candidate deletes "
+            f"{deletions} lines with only {insertions} insertions across "
+            f"{len(changed_files)} file(s); preserve accepted deterministic parser/export work "
+            "and submit an additive repair or an equivalent tested replacement"
+        )
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", [])) + [reason],
+            "deletion_heavy_patch_quality": {
+                "valid": False,
+                "insertions": insertions,
+                "deletions": deletions,
+                "changed_files": changed_files,
+                "production_deletion_heavy_files": production_deletion_heavy,
+                "test_deletion_heavy_files": test_deletion_heavy,
+                "per_file": list(patch_stats.get("per_file") or []),
             },
         }
 
@@ -4700,18 +4758,43 @@ def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:
     files = _paths_from_unified_diff(unified_diff)
     insertions = 0
     deletions = 0
+    per_file: List[Dict[str, Any]] = []
+    current_file: Optional[Dict[str, Any]] = None
     for line in unified_diff.splitlines():
+        match = re.match(r"^diff --git a/(.+?) b/(.+?)$", line)
+        if match:
+            path = match.group(2) if match.group(2) != "/dev/null" else match.group(1)
+            current_file = {
+                "path": path,
+                "insertions": 0,
+                "deletions": 0,
+                "deletion_heavy": False,
+            }
+            per_file.append(current_file)
+            continue
         if line.startswith("+++") or line.startswith("---"):
             continue
         if line.startswith("+"):
             insertions += 1
+            if current_file is not None:
+                current_file["insertions"] = int(current_file["insertions"]) + 1
         elif line.startswith("-"):
             deletions += 1
+            if current_file is not None:
+                current_file["deletions"] = int(current_file["deletions"]) + 1
+    for item in per_file:
+        item["deletion_heavy"] = int(item["deletions"]) > int(item["insertions"]) and int(item["deletions"]) > 0
+    deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
     return {
         "files_changed": len(files),
         "insertions": insertions,
         "deletions": deletions,
         "changed_files": files,
+        "deletion_heavy": deletions > insertions and deletions > 0,
+        "deletion_heavy_files": deletion_heavy_files,
+        "test_deletion_heavy_files": _test_files(deletion_heavy_files),
+        "production_deletion_heavy_files": _production_files(deletion_heavy_files),
+        "per_file": per_file,
     }
 
 
