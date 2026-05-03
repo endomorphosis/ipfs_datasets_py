@@ -225,6 +225,41 @@ export function scan(input: string): string {
     assert "while (firstParen < input.length && input[firstParen] !== \"(\")" in repaired
 
 
+def test_repair_common_typescript_text_damage_recovers_integer_upper_bounds():
+    damaged = """
+const MAX_ARITY = 64;
+
+export function validateArity(arity: number): boolean {
+  return Number.isInteger(arity) && arity >= 0 && !(arity  MAX_ARITY);
+}
+
+export function assertArity(arity: number): void {
+  if (!Number.isInteger(arity) || arity  MAX_ARITY) {
+    throw new Error('bad arity');
+  }
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "arity > MAX_ARITY" in repaired
+    assert "if (!Number.isInteger(arity) || arity > MAX_ARITY)" in repaired
+
+
+def test_obvious_typescript_text_damage_detects_stripped_operator_artifacts():
+    damaged = """
+export function validateArity(arity: number): void {
+  if (arity  'Entity');
+  const metadata: Record = {};
+}
+"""
+
+    findings = logic_port_daemon._obvious_typescript_text_damage(damaged)
+
+    assert any("missing comparison operator before a string literal" in finding for finding in findings)
+    assert any("bare TypeScript generic alias" in finding for finding in findings)
+
+
 def test_extract_plan_tasks_reads_status_from_markdown():
     tasks = extract_plan_tasks(
         """
@@ -1904,6 +1939,56 @@ def test_supervised_blocks_stale_failed_task_before_llm_call(tmp_path):
     assert status_payload["state"] == "task_blocked_before_cycle"
 
 
+def test_supervised_blocks_stale_task_after_same_kind_failures_before_llm_call(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    status_path = tmp_path / "daemon" / "status.json"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Repeated malformed task\n- [ ] Fresh task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Repeated malformed task",
+                "summary": f"failed {index}",
+                "failure_kind": "preflight",
+                "changed_files": [],
+                "errors": ["src/lib/logic/example.ts(1,8): error TS1005: ';' expected."],
+            },
+        }
+        for index in range(3)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        status_path=status_path,
+        max_task_failure_rounds=3,
+        max_task_total_failure_rounds=6,
+    )
+
+    blocked = LogicPortDaemonOptimizer(config, llm_router=FailingRouter())._block_current_task_if_stale_failed()
+
+    updated = plan.read_text(encoding="utf-8")
+    status_payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert blocked is True
+    assert "- [!] Repeated malformed task" in updated
+    assert "Current target: `Task checkbox-2: Fresh task`" in updated
+    assert status_payload["state"] == "task_blocked_before_cycle"
+
+
 def test_daemon_stops_without_llm_when_no_eligible_tasks_remain(tmp_path):
     plan = tmp_path / "port-plan.md"
     status = tmp_path / "status.md"
@@ -2602,6 +2687,56 @@ def test_revisit_blocked_skips_tasks_after_failure_budget(tmp_path):
 
     assert selected is not None
     assert selected.title == "Fresh blocked task"
+
+
+def test_revisit_blocked_skips_tasks_after_same_kind_failure_budget(tmp_path):
+    plan = tmp_path / "port-plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [!] Repeated bad TypeScript task\n- [!] Fresh blocked task\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Repeated bad TypeScript task",
+                "summary": f"failed {index}",
+                "failure_kind": "preflight",
+                "changed_files": [],
+                "errors": ["src/lib/logic/example.ts(1,8): error TS2314: Generic type 'Record' requires 2 type argument(s)."],
+            },
+        }
+        for index in range(3)
+    ]
+    log_path.parent.mkdir(parents=True)
+    log_path.write_text(json.dumps({"pid": 1, "results": rows}) + "\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        task_board_doc=plan,
+        result_log_path=log_path,
+        revisit_blocked_tasks=True,
+        blocked_task_strategy="fewest-failures",
+        max_task_failure_rounds=3,
+        max_task_total_failure_rounds=6,
+    )
+
+    selected = LogicPortDaemonOptimizer(config)._current_plan_task()
+    backlog = LogicPortDaemonOptimizer(config)._blocked_task_backlog(
+        LogicPortDaemonOptimizer(config)._current_plan_tasks(),
+        logic_port_daemon._read_daemon_results(log_path),
+    )
+
+    assert selected is not None
+    assert selected.title == "Fresh blocked task"
+    assert backlog[0]["failure_budget_exhausted"] is True
 
 
 def test_task_failure_counts_normalize_markdown_backticks():

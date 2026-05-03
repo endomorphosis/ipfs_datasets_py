@@ -68,11 +68,42 @@ status_daemon_pid = status.get("heartbeat_pid") or status.get("pid")
 daemon_pid = supervisor_daemon_pid if supervisor_alive and supervisor_daemon_pid else status_daemon_pid
 daemon_alive = bool(daemon_pid and pid_alive(daemon_pid))
 fresh = heartbeat_age is not None and heartbeat_age <= stale_after
-alive = bool(supervisor_alive and daemon_alive and fresh)
+supervisor_status = str(supervisor.get("status") or "")
+maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
+if not isinstance(maintenance_timeout, (int, float)) or maintenance_timeout <= 0:
+    maintenance_reason = str(supervisor.get("last_agentic_maintenance_reason") or "")
+    if maintenance_reason.startswith(("stuck_phase:", "stuck_llm_subprocess:")):
+        maintenance_timeout = supervisor.get("agentic_stuck_maintenance_timeout_seconds")
+    else:
+        maintenance_timeout = supervisor.get("agentic_timeout_seconds")
+try:
+    maintenance_timeout = float(maintenance_timeout)
+except Exception:
+    maintenance_timeout = 0.0
+maintenance_started_at = parse_ts(
+    supervisor.get("active_agentic_maintenance_started_at")
+    or supervisor.get("updated_at")
+)
+maintenance_age = None
+maintenance_fresh = False
+if (
+    supervisor_alive
+    and supervisor_status == "agentic_maintenance_started"
+    and str(supervisor.get("last_agentic_maintenance_status") or "") == "running"
+    and maintenance_started_at is not None
+    and maintenance_timeout > 0
+):
+    maintenance_age = max(0.0, (now - maintenance_started_at).total_seconds())
+    maintenance_fresh = maintenance_age <= maintenance_timeout + 60.0
+alive = bool(supervisor_alive and ((daemon_alive and fresh) or maintenance_fresh))
+status_label = "running" if alive else "stale_or_stopped"
+if maintenance_fresh:
+    status_label = "maintenance_running"
+active_state = status.get("active_state") or status.get("state") or progress.get("active_state")
 
 payload = {
     "alive": alive,
-    "status": "running" if alive else "stale_or_stopped",
+    "status": status_label,
     "checked_at": now.isoformat(),
     "stale_after_seconds": stale_after,
     "heartbeat_age_seconds": None if heartbeat_age is None else round(heartbeat_age, 3),
@@ -89,7 +120,7 @@ payload = {
     "phase_stuck_grace_seconds": supervisor.get("phase_stuck_grace_seconds"),
     "stop_grace_seconds": supervisor.get("stop_grace_seconds"),
     "last_recycle_reason": supervisor.get("last_recycle_reason"),
-    "active_state": progress.get("active_state") or status.get("active_state") or status.get("state"),
+    "active_state": active_state,
     "active_state_started_at": status.get("active_state_started_at") or status.get("state_started_at"),
     "current_task": progress.get("current_task") or status.get("selected_task"),
     "plan_status_counts": progress.get("plan_status_counts"),
@@ -114,6 +145,10 @@ payload = {
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
     "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
     "agentic_stuck_maintenance_timeout_seconds": supervisor.get("agentic_stuck_maintenance_timeout_seconds"),
+    "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
+    "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),
+    "active_agentic_maintenance_age_seconds": None if maintenance_age is None else round(maintenance_age, 3),
+    "active_agentic_maintenance_fresh": maintenance_fresh,
     "agentic_state_path": supervisor.get("agentic_state_path"),
     "last_agentic_maintenance_status": supervisor.get("last_agentic_maintenance_status"),
     "last_agentic_maintenance_reason": supervisor.get("last_agentic_maintenance_reason"),

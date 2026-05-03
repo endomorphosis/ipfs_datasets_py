@@ -50,7 +50,7 @@ SUPERVISOR_AGENTIC_PROPOSAL_FAILURES="${SUPERVISOR_AGENTIC_PROPOSAL_FAILURES:-3}
 SUPERVISOR_AGENTIC_ROLLBACK_FAILURES="${SUPERVISOR_AGENTIC_ROLLBACK_FAILURES:-5}"
 SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES:-3}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
-SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
+SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-300}"
 SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS="${SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS:-360}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
@@ -111,6 +111,8 @@ last_recycle_reason=""
 last_agentic_maintenance_status=""
 last_agentic_maintenance_reason=""
 last_agentic_maintenance_log_path=""
+active_agentic_maintenance_started_at=""
+active_agentic_maintenance_timeout_seconds="null"
 last_orphaned_llm_cleanup_count=0
 
 write_supervisor_status() {
@@ -160,6 +162,8 @@ write_supervisor_status() {
   "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
   "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
   "last_agentic_maintenance_log_path": "$last_agentic_maintenance_log_path",
+  "active_agentic_maintenance_started_at": "$active_agentic_maintenance_started_at",
+  "active_agentic_maintenance_timeout_seconds": $active_agentic_maintenance_timeout_seconds,
   "last_orphaned_llm_cleanup_count": $last_orphaned_llm_cleanup_count,
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
@@ -347,6 +351,18 @@ def recent_matching_failures(rows: list[tuple[dict, dict]], predicate) -> int:
     return count
 
 
+def recent_matching_failure_tasks(rows: list[tuple[dict, dict]], predicate) -> list[str]:
+    tasks: list[str] = []
+    for result, artifact in reversed(rows):
+        if result.get("valid"):
+            break
+        if predicate(result, artifact):
+            tasks.append(str(artifact.get("target_task") or ""))
+            continue
+        break
+    return tasks
+
+
 progress = read_json(progress_path)
 if not progress:
     raise SystemExit(1)
@@ -361,6 +377,9 @@ current_task_typescript_quality_failures = int(current_task_kind_counts.get("typ
 result_rows = read_result_rows(result_log_path)
 proposal_quality_failures = recent_matching_failures(result_rows, is_proposal_quality_failure)
 rollback_quality_failures = recent_matching_failures(result_rows, is_rollback_quality_failure)
+rollback_quality_failure_tasks = recent_matching_failure_tasks(result_rows, is_rollback_quality_failure)
+current_task_rollback_quality_failures = sum(1 for task in rollback_quality_failure_tasks if task == current_task)
+rollback_quality_failure_distinct_tasks = len({task for task in rollback_quality_failure_tasks if task})
 typescript_quality_failures = recent_matching_failures(result_rows, is_typescript_quality_failure)
 typescript_quality_progress = progress.get("typescript_quality_failures") or {}
 top_typescript_signature = str(typescript_quality_progress.get("top_signature") or "")
@@ -388,7 +407,13 @@ elif (
     candidate_reason = f"repeated_typescript_diagnostic:{top_typescript_signature_count}:threshold:{typescript_quality_failures_threshold}:{top_typescript_signature[:160]}"
 elif current_task_typescript_quality_failures >= typescript_quality_failures_threshold:
     candidate_reason = f"typescript_quality_failures:{current_task_typescript_quality_failures}:threshold:{typescript_quality_failures_threshold}"
-elif rollback_quality_failures >= rollback_failures_threshold:
+elif (
+    rollback_quality_failures >= rollback_failures_threshold
+    and (
+        current_task_rollback_quality_failures >= rollback_failures_threshold
+        or rollback_quality_failure_distinct_tasks <= 1
+    )
+):
     candidate_reason = f"rollback_quality_failures:{rollback_quality_failures}:threshold:{rollback_failures_threshold}"
 elif stagnant_delta >= stagnant_rounds:
     candidate_reason = f"stagnant_rounds:{stagnant_delta}:threshold:{stagnant_rounds}"
@@ -419,6 +444,8 @@ state.update(
         "current_task_failure_total": task_failure_total,
         "proposal_quality_failure_total": proposal_quality_failures,
         "rollback_quality_failure_total": rollback_quality_failures,
+        "current_task_rollback_quality_failure_total": current_task_rollback_quality_failures,
+        "rollback_quality_failure_distinct_tasks": rollback_quality_failure_distinct_tasks,
         "typescript_quality_failure_total": typescript_quality_failures,
         "current_task_typescript_quality_failure_total": current_task_typescript_quality_failures,
         "top_typescript_diagnostic_signature": top_typescript_signature,
@@ -509,6 +536,8 @@ run_agentic_maintenance() {
   last_agentic_maintenance_status="running"
   last_agentic_maintenance_reason="$reason"
   last_agentic_maintenance_log_path="$maintenance_log"
+  active_agentic_maintenance_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  active_agentic_maintenance_timeout_seconds="$maintenance_timeout"
   write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
   stop_child
   mark_agentic_maintenance_ran "$reason"
@@ -618,6 +647,8 @@ PROMPT
     cp "$maintenance_backup_dir/docs/logic/LOGIC_PORT_DAEMON.md" "$REPO_ROOT/ipfs_datasets_py/docs/logic/LOGIC_PORT_DAEMON.md" 2>/dev/null || true
   fi
   rm -rf "$maintenance_backup_dir"
+  active_agentic_maintenance_started_at=""
+  active_agentic_maintenance_timeout_seconds="null"
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
   return 0
 }

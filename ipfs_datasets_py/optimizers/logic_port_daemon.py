@@ -516,6 +516,16 @@ def _repair_common_typescript_text_damage(content: str) -> str:
     repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+typeof\b", r"|| Number(\1) < 0 || typeof", repaired)
     repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+\{", r"|| Number(\1) < 0) {", repaired)
     repaired = re.sub(r"\|\|\s*weight\s+\)", "|| weight < 0)", repaired)
+    repaired = re.sub(
+        r"(?P<prefix>!\s*Number\.isInteger\((?P<var>[A-Za-z_$][\w$]*)\)\s*\|\|\s*)(?P=var)\s+(?P<bound>[A-Z_$][A-Z0-9_$]*)",
+        r"\g<prefix>\g<var> > \g<bound>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"!\((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Z_$][A-Z0-9_$]*)\)",
+        r"!(\g<var> > \g<bound>)",
+        repaired,
+    )
     repaired = re.sub(r"for \(let index = 0; index = ([A-Za-z_$][\w$.]*\.length);", r"for (let index = 0; index < \1;", repaired)
     repaired = re.sub(
         r"for \(let (?P<var>[A-Za-z_$][\w$]*) = (?P<start>\d+); (?P=var)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length);",
@@ -567,6 +577,40 @@ def _repair_common_typescript_file_edits(edits: Sequence[Dict[str, str]]) -> Lis
         else:
             repaired.append(dict(edit))
     return repaired
+
+
+def _obvious_typescript_text_damage(content: str) -> List[str]:
+    """Return deterministic diagnostics for recurring malformed TS proposal text."""
+
+    if not isinstance(content, str) or not content:
+        return []
+    findings: List[str] = []
+    patterns = (
+        (
+            "missing comparison operator before .length",
+            re.compile(r"\b(?:index|offset|position|cursor|start|end|count|arity)\s{2,}[A-Za-z_$][\w$.]*\.length\b"),
+        ),
+        (
+            "missing comparison operator before a numeric bound",
+            re.compile(r"\b(?:index|offset|position|cursor|start|end|count|arity|weight|score)\s{2,}\d+\b"),
+        ),
+        (
+            "missing comparison operator before a string literal",
+            re.compile(r"\b(?:arity|sort|kind|type|name|label|operation)\s{2,}['\"][^'\"]+['\"]"),
+        ),
+        (
+            "bare TypeScript generic alias",
+            re.compile(r"\b(?:Record|Array|Promise|Omit|Pick|Map|Set|ReadonlySet)\s*(?=[=;,){}]|$)"),
+        ),
+    )
+    for line_number, line in enumerate(content.splitlines(), start=1):
+        for label, pattern in patterns:
+            if pattern.search(line):
+                findings.append(f"line {line_number}: {label}: {line.strip()[:220]}")
+                break
+        if len(findings) >= 12:
+            break
+    return findings
 
 
 def _strip_daemon_task_board(text: str) -> str:
@@ -672,6 +716,21 @@ def _recent_total_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, A
         if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
             continue
         if result.get("valid"):
+            break
+        count += 1
+    return count
+
+
+def _recent_rollback_quality_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
+    count = 0
+    for result, artifact in reversed(rows):
+        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
+            continue
+        if result.get("valid"):
+            break
+        if artifact.get("changed_files"):
+            break
+        if _classify_failure_kind(artifact) not in ROLLBACK_QUALITY_FAILURE_KINDS:
             break
         count += 1
     return count
@@ -1222,7 +1281,7 @@ Critical correction for attempt {attempt}:
 - Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
 - Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
 - For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
-- Before returning JSON, inspect the replacement contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Before returning JSON, inspect the replacement contents for stripped operators or generic arguments such as `index  items.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`. If you find one, simplify that block into explicit guards or named interfaces before returning.
 - Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 - Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.
 - If the previous response was prose, convert that intent into complete file replacements now.
@@ -1884,7 +1943,10 @@ Critical correction for attempt {attempt}:
             return False
         if self.daemon_config.revisit_blocked_tasks:
             return False
-        if self.daemon_config.max_task_total_failure_rounds <= 0 or self.daemon_config.result_log_path is None:
+        if (
+            self.daemon_config.max_task_total_failure_rounds <= 0
+            and self.daemon_config.max_task_failure_rounds <= 0
+        ) or self.daemon_config.result_log_path is None:
             return False
         path = self.daemon_config.resolve(self.daemon_config.task_board_doc)
         if not path.exists():
@@ -1896,7 +1958,7 @@ Critical correction for attempt {attempt}:
         if current is None:
             return False
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
-        if _recent_total_failure_count(rows, current.label) < self.daemon_config.max_task_total_failure_rounds:
+        if not self._task_failure_budget_exhausted(current, rows):
             return False
         task_text = _replace_checkbox_mark(task_text, current, "!")
         tasks_after = extract_plan_tasks(task_text)
@@ -2362,9 +2424,18 @@ Critical correction for attempt {attempt}:
         task: PlanTask,
         rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     ) -> bool:
-        if self.daemon_config.max_task_total_failure_rounds <= 0:
+        if (
+            self.daemon_config.max_task_total_failure_rounds > 0
+            and _recent_total_failure_count(rows, task.label) >= self.daemon_config.max_task_total_failure_rounds
+        ):
+            return True
+        if self.daemon_config.max_task_failure_rounds <= 0:
             return False
-        return _recent_total_failure_count(rows, task.label) >= self.daemon_config.max_task_total_failure_rounds
+        counts = _current_task_failure_counts(rows, task.label)
+        by_kind = counts.get("by_kind_since_success", {}) if isinstance(counts, dict) else {}
+        if any(int(count or 0) >= self.daemon_config.max_task_failure_rounds for count in by_kind.values()):
+            return True
+        return _recent_rollback_quality_failure_count(rows, task.label) >= self.daemon_config.max_task_failure_rounds
 
     def _blocked_task_dependency_reason(self, task: PlanTask, tasks: Sequence[PlanTask]) -> str:
         title = task.title.lower()
@@ -2623,6 +2694,18 @@ Critical correction for attempt {attempt}:
         ]
         if not ts_edits:
             return []
+
+        deterministic_errors: List[str] = []
+        for edit in ts_edits:
+            path = str(edit.get("path", "replacement.ts"))
+            findings = _obvious_typescript_text_damage(str(edit.get("content", "")))
+            if findings:
+                deterministic_errors.append(f"{path}:\n" + "\n".join(findings))
+        if deterministic_errors:
+            return [
+                "Rejected proposal because deterministic TypeScript replacement preflight found stripped operators or TS2314-like bare generics before touching the worktree:\n"
+                + "\n\n".join(deterministic_errors)
+            ]
 
         with tempfile.TemporaryDirectory(prefix="logic-port-ts-preflight-") as temp_dir:
             temp_root = Path(temp_dir)
@@ -2935,7 +3018,8 @@ Rules:
 - Do not use bare TypeScript generic aliases. Use Record<string, unknown>, Promise<ResultType>, Omit<Type, Keys>, Map<Key, Value>, and Array<Item> with required type arguments.
 - Avoid Omit/Pick when a named interface or explicit options type is simpler and less fragile.
 - Every for loop and comparison must include the complete operator and bound expression, such as index < items.length.
-- Before returning JSON, inspect the repaired contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Before returning JSON, inspect the repaired contents for stripped operators or generic arguments such as `index  items.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- If a diagnostic points at a complex generated block, shrink that block to a simple compileable fail-closed contract for this task instead of attempting another broad rewrite.
 - Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 - Preserve browser-native TypeScript/WASM behavior with no server, Python, filesystem, subprocess, RPC, or Node-only browser-runtime dependency.
 - Preserve focused tests for the selected task when tests were part of the original proposal.
@@ -3058,7 +3142,7 @@ Rules:
   - Map<string, Value> instead of Map
 - If diagnostics are syntax errors such as TS1005, TS1003, TS1128, TS1109, TS1144, or TS1434, repair the smallest syntactic region needed and preserve the surrounding current file structure.
 - Do not use Python-style tuple/list/dict syntax, unquoted object keys in type positions, or placeholder ellipses in returned TypeScript.
-- Before returning JSON, inspect the corrected contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Before returning JSON, inspect the corrected contents for stripped operators or generic arguments such as `index  items.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
 - Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 
 Session: {context.session_id}
@@ -3337,7 +3421,7 @@ Hard constraints:
 - Do not include shell commands that mutate files.
 - Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
 - For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
-- Before returning JSON, inspect the file contents you are about to return for stripped operators or generic arguments: reject your own answer if it contains fragments like `index  items.length`, `while (offset  text.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Before returning JSON, inspect the file contents you are about to return for stripped operators or generic arguments: reject your own answer if it contains fragments like `index  items.length`, `while (offset  text.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
 - When replacing an existing TypeScript module, preserve public exports that neighboring files import unless the selected task explicitly removes them.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
