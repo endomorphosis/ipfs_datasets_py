@@ -1085,9 +1085,14 @@ def test_ir_prover_syntax_records_validate_required_local_targets_for_proof_read
     assert all(record["requires_validation"] is False for record in records)
     assert records[0]["exported_formula"].startswith("legal_norm(")
     assert records[1]["exported_formula"].startswith("Happens(legal_norm(")
-    assert records[2]["exported_formula"] == "∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x))"
-    assert records[3]["exported_formula"] == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
-    assert records[4]["exported_formula"] == "Always(O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x))))"
+    assert "HoldsAt(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))), t)" in records[1]["exported_formula"]
+    assert records[2]["exported_formula"] == "forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))"
+    assert records[3]["exported_formula"] == "O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x)))"
+    assert records[4]["exported_formula"] == "always(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))))"
+    for record in records[1:]:
+        assert not any(
+            connective in record["exported_formula"] for connective in ("∀", "∧", "→", "¬")
+        )
 
 
 def test_ir_prover_syntax_records_do_not_clear_blocked_numbered_reference_exception():

@@ -5,6 +5,58 @@ from ipfs_datasets_py.logic.deontic.prover_syntax import validate_ir_with_prover
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
 
+def test_prover_syntax_renders_target_specific_ascii_dialects():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            {
+                "fol": "forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))",
+                "deontic_fol": "O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x)))",
+                "deontic_temporal_fol": "always(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))))",
+            },
+        ),
+        (
+            "No person may discharge pollutants into the sewer.",
+            {
+                "fol": "forall x. (Person(x) -> DischargePollutantsIntoSewer(x))",
+                "deontic_fol": "F(forall x. (Person(x) -> DischargePollutantsIntoSewer(x)))",
+                "deontic_temporal_fol": "always(F(forall x. (Person(x) -> DischargePollutantsIntoSewer(x))))",
+            },
+        ),
+        (
+            "This section applies to food carts.",
+            {
+                "fol": "AppliesTo(ThisSection, FoodCarts)",
+                "deontic_fol": "AppliesTo(ThisSection, FoodCarts)",
+                "deontic_temporal_fol": "always(AppliesTo(ThisSection, FoodCarts))",
+            },
+        ),
+    ]
+
+    for text, expected_by_target in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        report = validate_ir_with_provers(norm)
+        records = {target.target: target.to_dict() for target in report.targets}
+
+        assert report.syntax_valid is True
+        assert set(records) == {
+            "frame_logic",
+            "deontic_cec",
+            "fol",
+            "deontic_fol",
+            "deontic_temporal_fol",
+        }
+        assert records["deontic_cec"]["exported_formula"].startswith("Happens(")
+        assert "HoldsAt(" in records["deontic_cec"]["exported_formula"]
+        assert records["frame_logic"]["exported_formula"].startswith("legal_norm(")
+        for target, expected_formula in expected_by_target.items():
+            assert records[target]["exported_formula"] == expected_formula
+            assert not any(
+                connective in expected_formula for connective in ("∀", "∧", "→", "¬")
+            )
+            assert records[target]["diagnostics"] == []
+
+
 def test_prover_syntax_uses_formula_level_resolution_for_local_applicability():
     element = extract_normative_elements("This section applies to food carts.")[0]
     norm = LegalNormIR.from_parser_element(element)
@@ -29,7 +81,7 @@ def test_prover_syntax_uses_formula_level_resolution_for_local_applicability():
     assert all(record["requires_validation"] is False for record in records)
     assert records[0]["exported_formula"].startswith("legal_norm(")
     assert records[2]["exported_formula"] == "AppliesTo(ThisSection, FoodCarts)"
-    assert records[4]["exported_formula"] == "Always(AppliesTo(ThisSection, FoodCarts))"
+    assert records[4]["exported_formula"] == "always(AppliesTo(ThisSection, FoodCarts))"
 
 
 def test_prover_syntax_keeps_protected_numbered_reference_exception_blocked():
@@ -50,8 +102,10 @@ def test_prover_syntax_keeps_protected_numbered_reference_exception_blocked():
     assert all(record["diagnostics"] == [] for record in records)
     assert "cross_reference_requires_resolution" in norm.blockers
     assert "exception_requires_scope_review" in norm.blockers
-    assert records[2]["exported_formula"] == "∀x (Secretary(x) → PublishNotice(x))"
+    assert records[2]["exported_formula"] == "forall x. (Secretary(x) -> PublishNotice(x))"
     assert "Section552" not in records[2]["exported_formula"]
+    assert "∀" not in records[2]["exported_formula"]
+    assert "→" not in records[2]["exported_formula"]
 
 
 def test_prover_syntax_unknown_target_still_requires_validation():

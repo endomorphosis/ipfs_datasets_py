@@ -148,18 +148,21 @@ def _validate_target_formula(
 
 def _render_target_formula(norm: LegalNormIR, target: str, formula: str) -> str:
     source_symbol = _source_symbol(norm.source_id)
+    fol_formula = _to_ascii_logic(_strip_deontic_wrapper(formula))
+    deontic_formula = _to_ascii_deontic_formula(formula)
     if target == "frame_logic":
         actor = _predicate_symbol(norm.actor or "Actor")
         action = _predicate_symbol(norm.action or "Action")
-        return f"legal_norm({source_symbol})[actor->{actor}; action->{action}; formula->{formula}]"
+        frame_formula = _to_frame_logic_atom(formula)
+        return f"legal_norm({source_symbol})[actor->{actor}; action->{action}; formula->{frame_formula}]"
     if target == "deontic_cec":
-        return f"Happens(legal_norm({source_symbol}), t) => HoldsAt({formula}, t)"
+        return f"Happens(legal_norm({source_symbol}), t) => HoldsAt({deontic_formula}, t)"
     if target == "fol":
-        return _strip_deontic_wrapper(formula)
+        return fol_formula
     if target == "deontic_fol":
-        return formula
+        return deontic_formula
     if target == "deontic_temporal_fol":
-        return f"Always({formula})"
+        return f"always({deontic_formula})"
     return formula
 
 
@@ -173,7 +176,14 @@ def _syntax_diagnostics(target: str, exported_formula: str) -> List[Dict[str, An
         diagnostics.append({"code": "unbalanced_delimiters", "message": "formula delimiters are unbalanced"})
     if re.search(r"\bNone\b|\?\?", exported_formula):
         diagnostics.append({"code": "placeholder_token", "message": "formula contains a placeholder token"})
-    if target in {"fol", "deontic_fol", "deontic_temporal_fol"} and "∀x" not in exported_formula and not _is_frame_style_formula(exported_formula):
+    if target in {"deontic_cec", "fol", "deontic_fol", "deontic_temporal_fol"} and re.search(r"[∀∧→¬]", exported_formula):
+        diagnostics.append({"code": "display_connective", "message": "target formula contains display-only logic connectives"})
+    if (
+        target in {"fol", "deontic_fol", "deontic_temporal_fol"}
+        and "forall x." not in exported_formula
+        and not _is_frame_style_formula(exported_formula)
+        and not _contains_frame_style_formula(exported_formula)
+    ):
         diagnostics.append({"code": "missing_quantifier", "message": "FOL target lacks a quantifier or accepted frame atom"})
     return diagnostics
 
@@ -198,8 +208,44 @@ def _strip_deontic_wrapper(formula: str) -> str:
     return text
 
 
+def _to_ascii_deontic_formula(formula: str) -> str:
+    text = str(formula or "").strip()
+    if len(text) > 3 and text[1] == "(" and text[0] in {"O", "P", "F"} and text.endswith(")"):
+        return f"{text[0]}({_to_ascii_logic(text[2:-1])})"
+    return _to_ascii_logic(text)
+
+
+def _to_ascii_logic(formula: str) -> str:
+    text = str(formula or "").strip()
+    if not text:
+        return ""
+    text = re.sub(r"∀\s*([A-Za-z][A-Za-z0-9_]*)\s*", r"forall \1. ", text)
+    replacements = {
+        "∧": "and",
+        "∨": "or",
+        "→": "->",
+        "¬": "not ",
+        "≤": "<=",
+        "≥": ">=",
+    }
+    for source, replacement in replacements.items():
+        text = text.replace(source, replacement)
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"not\s+", "not ", text)
+    return text.strip()
+
+
+def _to_frame_logic_atom(formula: str) -> str:
+    text = _to_ascii_logic(formula)
+    return re.sub(r"\s+", "_", text).strip("_") or "formula"
+
+
 def _is_frame_style_formula(formula: str) -> bool:
     return bool(re.match(r"^[A-Za-z][A-Za-z0-9_]*\(.+\)$", formula.strip()))
+
+
+def _contains_frame_style_formula(formula: str) -> bool:
+    return bool(re.search(r"[A-Za-z][A-Za-z0-9_]*\([^()]+\)", formula.strip()))
 
 
 def _source_symbol(source_id: str) -> str:
