@@ -480,6 +480,48 @@ def _parse_file_edits(value: Any) -> List[Dict[str, str]]:
     return edits
 
 
+def _repair_common_typescript_text_damage(content: str) -> str:
+    """Repair recurring low-risk TypeScript damage from JSON file proposals."""
+
+    if not isinstance(content, str) or not content:
+        return content
+    repaired = content
+    generic_defaults = {
+        "Array": "Array<unknown>",
+        "Record": "Record<string, unknown>",
+        "Map": "Map<string, unknown>",
+        "Set": "Set<unknown>",
+        "Promise": "Promise<unknown>",
+    }
+    for name, replacement in generic_defaults.items():
+        repaired = re.sub(rf"\b{name}\s*>(?!>)", replacement, repaired)
+        repaired = re.sub(rf"\b{name}\b(?!\s*<)(?=\s*(?:[;=,){{}}]|$))", replacement, repaired)
+    repaired = re.sub(r"\bOmit\s*>(?!>)", "Omit<Record<string, unknown>, string>", repaired)
+    repaired = re.sub(r"\bOmit\b(?!\s*<)(?=\s*(?:[;=,){}]|$))", "Omit<Record<string, unknown>, string>", repaired)
+
+    repaired = re.sub(r"\|\|\s*position\s+left\s*-\s*right\);", "|| position < 0) {", repaired)
+    repaired = re.sub(r"\|\|\s*position\s+\{", "|| position < 0) {", repaired)
+    repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+typeof\b", r"|| Number(\1) < 0 || typeof", repaired)
+    repaired = re.sub(r"\|\|\s*Number\(([^)]+)\)\s+\{", r"|| Number(\1) < 0) {", repaired)
+    repaired = re.sub(r"\|\|\s*weight\s+\)", "|| weight < 0)", repaired)
+    repaired = re.sub(r"for \(let index = 0; index = ([A-Za-z_$][\w$.]*\.length);", r"for (let index = 0; index < \1;", repaired)
+    repaired = re.sub(r"for \(let index = 1; index \): number \{", "for (let index = 1; index < utterances.length; index += 1) {", repaired)
+    repaired = re.sub(r"for \(let index = 0; index >> 0\)\.toString", "return (hash >>> 0).toString", repaired)
+    return repaired
+
+
+def _repair_common_typescript_file_edits(edits: Sequence[Dict[str, str]]) -> List[Dict[str, str]]:
+    repaired: List[Dict[str, str]] = []
+    for edit in edits:
+        path = str(edit.get("path", ""))
+        content = edit.get("content", "")
+        if path.endswith((".ts", ".tsx")) and isinstance(content, str):
+            repaired.append({**edit, "content": _repair_common_typescript_text_damage(content)})
+        else:
+            repaired.append(dict(edit))
+    return repaired
+
+
 def _strip_daemon_task_board(text: str) -> str:
     return DAEMON_TASK_BOARD_RE.sub("\n", text).rstrip() + "\n"
 

@@ -44,6 +44,7 @@ SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}"
+export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-0}"
 
 STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
 PROGRESS_PATH="${PROGRESS_PATH:-$DAEMON_DIR/logic-port-daemon.progress.json}"
@@ -149,6 +150,7 @@ write_supervisor_status() {
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "router_default_mode": "$SUPERVISOR_ROUTER_DEFAULT_MODE",
+  "enable_ipfs_accelerate": "$IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE",
   "slice_mode": "$SLICE_MODE",
   "proposal_attempts": $PROPOSAL_ATTEMPTS,
   "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,

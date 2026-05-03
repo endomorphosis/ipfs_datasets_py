@@ -97,6 +97,8 @@ payload = {
     "latest_round": progress.get("latest_round"),
     "model_name": status.get("model_name") or supervisor.get("model_name"),
     "provider": status.get("provider") or supervisor.get("provider"),
+    "router_default_mode": supervisor.get("router_default_mode"),
+    "enable_ipfs_accelerate": supervisor.get("enable_ipfs_accelerate"),
     "status_path": status_path,
     "progress_path": progress_path,
     "supervisor_status_path": supervisor_path,
