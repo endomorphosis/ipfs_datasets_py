@@ -4,11 +4,21 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-}"
+LOGIC_PORT_PROVIDER="${LOGIC_PORT_PROVIDER:-}"
+if [[ -n "$LOGIC_PORT_PROVIDER" ]]; then
+  PROVIDER="$LOGIC_PORT_PROVIDER"
+elif [[ "${LOGIC_PORT_RESPECT_INHERITED_PROVIDER:-0}" == "1" ]]; then
+  PROVIDER="${PROVIDER:-}"
+else
+  PROVIDER=""
+fi
 SUPERVISOR_ROUTER_DEFAULT_MODE="llm_router_auto"
 # Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
-# selection and fallback. Set PROVIDER=codex_cli to force Codex only, or any
-# other registered llm_router provider when debugging a specific backend.
+# selection and fallback. Set LOGIC_PORT_PROVIDER=codex_cli to force Codex only,
+# or another registered llm_router provider when debugging a specific backend.
+# Generic inherited PROVIDER values are ignored unless
+# LOGIC_PORT_RESPECT_INHERITED_PROVIDER=1, because other daemons also use that
+# environment key.
 SLICE_MODE="${SLICE_MODE:-balanced}"
 LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
 LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
@@ -500,7 +510,7 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
 If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
@@ -544,7 +554,7 @@ The previous maintenance attempt failed before it could make the daemon more rob
 
 Reason: $reason
 
-Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit PROVIDER/--provider override is supplied.
+Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
 Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 

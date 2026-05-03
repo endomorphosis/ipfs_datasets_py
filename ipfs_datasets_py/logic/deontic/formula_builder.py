@@ -241,6 +241,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_enforcement_remedy_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_ratification_confirmation_light_verb_action(action_text)
+    action_text = _normalize_execution_signature_light_verb_action(action_text)
     action_text = _normalize_attestation_notarization_light_verb_action(action_text)
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
@@ -312,6 +313,79 @@ def _strip_failure_action(action_text: str) -> str:
         str(action_text or "").strip(),
         flags=re.IGNORECASE,
     ).strip()
+
+
+def _normalize_execution_signature_light_verb_action(action_text: str) -> str:
+    """Collapse execution and signature nominalizations into operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|effect|effects|effected|effecting|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"(?:an?\s+|the\s+)?execution\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "execute",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|effect|effects|effected|effecting|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"executions\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "execute",
+        ),
+        (
+            r"^execution\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "execute",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|affix|affixes|affixed|affixing|place|places|placed|placing|provide|provides|provided|providing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"(?:a\s+|the\s+)?signature\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "sign",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|affix|affixes|affixed|affixing|place|places|placed|placing|provide|provides|provided|providing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"signatures\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "sign",
+        ),
+        (
+            r"^signature\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "sign",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"(?:a\s+|the\s+)?notarization\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "notarize",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"notarizations\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "notarize",
+        ),
+        (
+            r"^notarization\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "notarize",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"(?:a\s+|the\s+)?countersignature\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "countersign",
+        ),
+        (
+            r"^(?:make|makes|made|making|perform|performs|performed|performing|complete|completes|completed|completing|obtain|obtains|obtained|obtaining|secure|secures|secured|securing|record|records|recorded|recording|require|requires|required|requiring)\s+"
+            r"countersignatures\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "countersign",
+        ),
+        (
+            r"^countersignature\s+(?:of|for|on|to)\s+(?:the\s+)?(.+)$",
+            "countersign",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match and match.group(1).strip():
+            return f"{verb} {match.group(1).strip()}"
+
+    return text
 
 
 def _normalize_rescission_withdrawal_light_verb_action(action_text: str) -> str:

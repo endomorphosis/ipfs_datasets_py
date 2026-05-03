@@ -971,6 +971,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact = parse_llm_patch_response(response)
             artifact.dry_run = self.daemon_config.dry_run
             artifact.target_task = target_label
+            if artifact.files:
+                artifact.files = _repair_common_typescript_file_edits(artifact.files)
             preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
             if artifact.files:
                 preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
@@ -982,6 +984,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                     selected_task=selected_task,
                 )
                 if repaired.files:
+                    repaired.files = _repair_common_typescript_file_edits(repaired.files)
                     repaired_errors = self._preflight_artifact(repaired, selected_task=selected_task)
                     repaired_errors.extend(self._typescript_replacement_preflight_errors(repaired.files))
                     if not repaired_errors:
@@ -1156,6 +1159,8 @@ Critical correction for attempt {attempt}:
             artifact.validation_results = self._run_validation()
             return artifact
 
+        if artifact.files:
+            artifact.files = _repair_common_typescript_file_edits(artifact.files)
         preflight_errors = self._preflight_artifact(artifact, selected_task=self._current_plan_task())
         if artifact.files:
             preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
@@ -1178,6 +1183,7 @@ Critical correction for attempt {attempt}:
                 else:
                     repaired = self._repair_file_edits_after_validation(artifact, context=context)
                     if repaired.files:
+                        repaired.files = _repair_common_typescript_file_edits(repaired.files)
                         preflight_errors = self._preflight_artifact(repaired, selected_task=self._current_plan_task())
                         preflight_errors.extend(self._typescript_replacement_preflight_errors(repaired.files))
                         if preflight_errors:
@@ -1237,6 +1243,7 @@ Critical correction for attempt {attempt}:
             if not check.ok:
                 file_repair = self._repair_patch_as_files(artifact, check, context=context)
                 if file_repair.files:
+                    file_repair.files = _repair_common_typescript_file_edits(file_repair.files)
                     preflight_errors = self._preflight_artifact(file_repair, selected_task=self._current_plan_task())
                     if preflight_errors:
                         artifact.errors.extend(preflight_errors)
@@ -2780,6 +2787,7 @@ Current file contents for likely targets:
             return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
         if repaired.errors or not repaired.files:
             return repaired
+        repaired.files = _repair_common_typescript_file_edits(repaired.files)
         repaired.target_task = artifact.target_task
         return repaired
 
@@ -2862,6 +2870,7 @@ Original files JSON:
                 repaired.impact = artifact.impact
             if not repaired.tasks:
                 repaired.tasks = artifact.tasks
+            repaired.files = _repair_common_typescript_file_edits(repaired.files)
             return repaired
         return repaired
 
@@ -2969,6 +2978,7 @@ Current repository file contents after rollback:
             return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
         if repaired.errors or not repaired.files:
             return repaired
+        repaired.files = _repair_common_typescript_file_edits(repaired.files)
         repaired.target_task = artifact.target_task
         return repaired
 

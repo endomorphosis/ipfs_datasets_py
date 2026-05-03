@@ -7,6 +7,7 @@ from ipfs_datasets_py.optimizers.logic_port_daemon import (
     DEFAULT_PLAN_DOCS,
     LogicPortDaemonConfig,
     LogicPortDaemonOptimizer,
+    _repair_common_typescript_text_damage,
     extract_plan_tasks,
     parse_llm_patch_response,
 )
@@ -131,6 +132,41 @@ def test_parse_llm_patch_response_marks_empty_codex_event_stream():
 
     assert artifact.failure_kind == "codex_empty_event_stream"
     assert artifact.errors == ["Codex returned JSONL startup events without an assistant proposal."]
+
+
+def test_repair_common_typescript_text_damage_fills_lost_syntax():
+    damaged = """
+export interface Example {
+  metadata: Record;
+  values: Array;
+  history: Array>;
+  lookup: Map;
+}
+export class Entity {
+  addMention(position: number): void {
+    if (!Number.isInteger(position) || position  left - right);
+  }
+}
+export class CecDiscourseAnalyzer {
+  segments: Array> = [];
+  segmentDiscourse(utterances: Array): Array> {
+    for (let index = 1; index ): number {
+      return index;
+    }
+  }
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "metadata: Record<string, unknown>;" in repaired
+    assert "values: Array<unknown>;" in repaired
+    assert "history: Array<unknown>;" in repaired
+    assert "lookup: Map<string, unknown>;" in repaired
+    assert "position < 0" in repaired
+    assert "segments: Array<unknown> = [];" in repaired
+    assert "segmentDiscourse(utterances: Array<unknown>): Array<unknown>" in repaired
+    assert "for (let index = 1; index < utterances.length; index += 1)" in repaired
 
 
 def test_extract_plan_tasks_reads_status_from_markdown():
@@ -661,7 +697,7 @@ def test_preflight_repair_recovers_malformed_typescript_files(tmp_path, monkeypa
         "impact": "Adds a malformed replacement that needs preflight repair.",
         "tasks": ["Task checkbox-1: Port CEC ZKP integration"],
         "patch": "",
-        "files": [{"path": "src/lib/logic/cecZkpIntegration.ts", "content": "export type Bad = Record;\n"}],
+        "files": [{"path": "src/lib/logic/cecZkpIntegration.ts", "content": "export const bad = ;\n"}],
     }
     fixed = {
         "summary": "Fixed generic",
@@ -691,10 +727,10 @@ def test_preflight_repair_recovers_malformed_typescript_files(tmp_path, monkeypa
 
     def fake_preflight(edits):
         content = "\n".join(edit["content"] for edit in edits)
-        if "Record;" in content:
+        if "export const bad = ;" in content:
             return [
                 "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree:\n"
-                "src/lib/logic/cecZkpIntegration.ts(1,19): error TS2314: Generic type 'Record' requires 2 type argument(s)."
+                "src/lib/logic/cecZkpIntegration.ts(1,20): error TS1109: Expression expected."
             ]
         return []
 

@@ -78,14 +78,14 @@ launch_supervisor() {
     if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
       tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
     fi
-    command_text="while true; do PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
+    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
     if tmux new-session -d -s "$TMUX_SESSION_NAME" -c "$REPO_ROOT" "$command_text"; then
       launch_mode="tmux"
       launcher_pid="0"
       return 0
     fi
   fi
-  PROVIDER="$LOGIC_PORT_PROVIDER" nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
+  LOGIC_PORT_PROVIDER="$LOGIC_PORT_PROVIDER" nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
     </dev/null > "$SUPERVISOR_OUT_PATH" 2>&1 &
   launcher_pid=$!
 }
