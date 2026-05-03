@@ -18,6 +18,8 @@ PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"
 WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-1200}"
 WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
 WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-danger-full-access}"
+REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"
+FAILED_TEST_REPAIR_ATTEMPTS="${FAILED_TEST_REPAIR_ATTEMPTS:-1}"
 DAEMON_DIR="${DAEMON_DIR:-.daemon}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
@@ -286,6 +288,8 @@ write_supervisor_status() {
   "worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS,
   "worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS,
   "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
+  "repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK"),
+  "failed_test_repair_attempts": $FAILED_TEST_REPAIR_ATTEMPTS,
   "last_exit_code": $last_exit_code,
   "last_recycle_reason": "$last_recycle_reason"
 }
@@ -2300,11 +2304,13 @@ while true; do
       --worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"
       --worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"
       --codex-bin "$CODEX_BIN"
+      --failed-test-repair-attempts "$FAILED_TEST_REPAIR_ATTEMPTS"
       --heartbeat-interval-seconds "$HEARTBEAT_INTERVAL_SECONDS"
       --test-timeout-seconds "$TEST_TIMEOUT_SECONDS"
       --apply-patches
       --commit-accepted-patches
     )
+    [[ "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK" != "1" ]] && python3_args+=(--disable-failed-test-repair)
     [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
     python3_args+=(--model-name "$MODEL_NAME")
     PYTHONUNBUFFERED=1 \

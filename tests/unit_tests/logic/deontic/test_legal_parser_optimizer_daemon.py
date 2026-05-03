@@ -208,10 +208,16 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
     assert '"worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS' in script
     assert '"worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX"' in script
+    assert 'REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"' in script
+    assert 'FAILED_TEST_REPAIR_ATTEMPTS="${FAILED_TEST_REPAIR_ATTEMPTS:-1}"' in script
+    assert '"repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK")' in script
+    assert '"failed_test_repair_attempts": $FAILED_TEST_REPAIR_ATTEMPTS' in script
     assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
     assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
     assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
     assert '--worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"' in script
+    assert '--failed-test-repair-attempts "$FAILED_TEST_REPAIR_ATTEMPTS"' in script
+    assert 'python3_args+=(--disable-failed-test-repair)' in script
     assert '--codex-bin "$CODEX_BIN"' in script
 
 
@@ -236,6 +242,8 @@ def test_check_script_reports_worktree_transport_health_fields():
     assert '"worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds")' in script
     assert '"worktree_stale_after_seconds": current.get("worktree_stale_after_seconds")' in script
     assert '"worktree_codex_sandbox": current.get("worktree_codex_sandbox")' in script
+    assert '"repair_failed_tests_before_rollback": current.get("repair_failed_tests_before_rollback")' in script
+    assert '"failed_test_repair_attempts": current.get("failed_test_repair_attempts")' in script
 
 
 def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
@@ -896,6 +904,112 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
     assert "Do not output or hand-author a patch" in codex_call["input_text"]
     assert ".legal_parser_worktree_proposal.json" in codex_call["input_text"]
     assert any(call["cmd"][:3] == ["git", "add", "-N"] for call in calls)
+
+
+def test_worktree_repair_transport_applies_base_diff_before_codex(tmp_path, monkeypatch):
+    production_path = "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    base_diff = "\n".join(
+        [
+            f"diff --git a/{production_path} b/{production_path}",
+            f"--- a/{production_path}",
+            f"+++ b/{production_path}",
+            "@@ -1 +1 @@",
+            "-VALUE = 1",
+            "+VALUE = 2",
+            "",
+        ]
+    )
+    repaired_diff = "\n".join(
+        [
+            f"diff --git a/{production_path} b/{production_path}",
+            f"--- a/{production_path}",
+            f"+++ b/{production_path}",
+            "@@ -1 +1 @@",
+            "-VALUE = 1",
+            "+VALUE = 3",
+            "",
+        ]
+    )
+    calls = []
+    diff_calls = {"count": 0}
+
+    def fake_run_command(cmd, *, cwd, input_text=None, timeout=60):
+        command = list(cmd)
+        calls.append(
+            {
+                "cmd": command,
+                "cwd": Path(cwd),
+                "input_text": input_text,
+                "timeout": timeout,
+            }
+        )
+        if command[:3] == ["git", "worktree", "add"]:
+            Path(command[-2]).mkdir(parents=True, exist_ok=True)
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+        if command[:3] == ["git", "apply", "--recount"]:
+            assert input_text == base_diff
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+        if command[0] == "codex-test":
+            metadata = {
+                "summary": "Repair failed full-suite assertion.",
+                "focus_area": "parser",
+                "requirements_addressed": ["repair before rollback"],
+                "acceptance_criteria": ["full-suite failure is repaired before rollback"],
+                "changed_files": [production_path],
+                "expected_metric_gain": {"parser_capability": "repair"},
+                "tests_to_run": ["pytest tests/unit_tests/logic/deontic"],
+            }
+            (Path(cwd) / ".legal_parser_worktree_proposal.json").write_text(
+                json.dumps(metadata),
+                encoding="utf-8",
+            )
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "repaired", "stderr": ""}
+        if command[:3] == ["git", "status", "--porcelain"]:
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": f" M {production_path}\n",
+                "stderr": "",
+            }
+        if command[:3] == ["git", "diff", "--binary"]:
+            diff_calls["count"] += 1
+            diff = base_diff if diff_calls["count"] == 1 else repaired_diff
+            return {"valid": True, "returncode": 0, "command": command, "stdout": diff, "stderr": ""}
+        if command[:3] == ["git", "worktree", "remove"]:
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+        return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+
+    monkeypatch.setattr(parser_daemon_module, "_run_command", fake_run_command)
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        proposal_transport="worktree",
+        worktree_edit_timeout_seconds=77,
+        worktree_codex_sandbox="danger-full-access",
+        codex_bin="codex-test",
+        target_files=(production_path,),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    proposal = optimizer.request_worktree_edit_patch(
+        cycle_index=9,
+        evaluation={"metrics": {}},
+        feedback=["full suite failed"],
+        base_proposal=LegalParserCycleProposal(summary="candidate", unified_diff=base_diff),
+        patch_check={"valid": True},
+        base_unified_diff=base_diff,
+        repair_context={"failed_tests": ["test_parser::test_value"]},
+    )
+
+    assert proposal.summary == "Repair failed full-suite assertion."
+    assert proposal.unified_diff == repaired_diff
+    raw_trace = json.loads(proposal.raw_response)
+    assert raw_trace["base_apply"]["valid"] is True
+    codex_call = next(call for call in calls if call["cmd"][0] == "codex-test")
+    assert '"base_unified_diff_applied": true' in codex_call["input_text"]
+    assert "test_parser::test_value" in codex_call["input_text"]
+    assert calls.index(next(call for call in calls if call["cmd"][:3] == ["git", "apply", "--recount"])) < calls.index(codex_call)
 
 
 def test_optimizer_cleans_up_stale_daemon_worktrees(tmp_path, monkeypatch):

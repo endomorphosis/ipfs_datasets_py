@@ -137,6 +137,8 @@ class LegalParserDaemonConfig:
     )
     worktree_root: Path = field(default_factory=lambda: Path(".daemon/legal-parser-worktrees"))
     codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
+    repair_failed_tests_before_rollback: bool = True
+    failed_test_repair_attempts: int = 1
     heartbeat_interval_seconds: float = 15.0
     test_timeout_seconds: int = 600
     require_production_and_tests: bool = True
@@ -441,6 +443,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         feedback: Sequence[str],
         base_proposal: Optional[LegalParserCycleProposal] = None,
         patch_check: Optional[Mapping[str, Any]] = None,
+        base_unified_diff: str = "",
+        repair_context: Optional[Mapping[str, Any]] = None,
     ) -> LegalParserCycleProposal:
         """Let Codex edit an isolated worktree and return Git's canonical diff.
 
@@ -463,6 +467,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "metadata_path": metadata_rel,
             "owner_path": owner_rel,
             "cleanup_before_create": cleanup_result,
+            "base_unified_diff_chars": len(base_unified_diff or ""),
+            "repair_context": dict(repair_context or {}),
         }
 
         try:
@@ -482,6 +488,48 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 worktree_path / owner_rel,
                 cycle_index=cycle_index,
             )
+            base_worktree_diff = ""
+            if base_unified_diff.strip():
+                base_apply_result = _run_command(
+                    ["git", "apply", "--recount", "-"],
+                    cwd=worktree_path,
+                    input_text=base_unified_diff,
+                    timeout=60,
+                )
+                raw_trace["base_apply"] = base_apply_result
+                if not base_apply_result.get("valid"):
+                    return LegalParserCycleProposal(
+                        summary="worktree repair failed before edit",
+                        raw_response=json.dumps(raw_trace, indent=2, default=str),
+                        parse_error=(
+                            "base candidate diff could not be applied in repair worktree: "
+                            + str(base_apply_result.get("stderr") or "").strip()[:1000]
+                        ),
+                    )
+                diff_paths = self._worktree_diff_paths()
+                base_status_result = _run_command(
+                    ["git", "status", "--porcelain", "--", *diff_paths],
+                    cwd=worktree_path,
+                    timeout=60,
+                )
+                raw_trace["base_status"] = base_status_result
+                base_untracked_paths = _untracked_paths_from_git_status_porcelain(
+                    str(base_status_result.get("stdout") or "")
+                )
+                raw_trace["base_untracked_paths"] = base_untracked_paths
+                if base_untracked_paths:
+                    raw_trace["base_git_add_intent_to_add"] = _run_command(
+                        ["git", "add", "-N", "--", *base_untracked_paths],
+                        cwd=worktree_path,
+                        timeout=60,
+                    )
+                base_diff_result = _run_command(
+                    ["git", "diff", "--binary", "--", *diff_paths],
+                    cwd=worktree_path,
+                    timeout=60,
+                )
+                raw_trace["base_git_diff"] = base_diff_result
+                base_worktree_diff = str(base_diff_result.get("stdout") or "")
 
             prompt = self.build_worktree_edit_prompt(
                 cycle_index=cycle_index,
@@ -490,6 +538,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 metadata_rel=metadata_rel,
                 base_proposal=base_proposal,
                 patch_check=patch_check,
+                base_unified_diff_applied=bool(base_unified_diff.strip()),
+                repair_context=repair_context,
             )
             codex_result = _run_command(
                 [
@@ -567,6 +617,19 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 else {}
             )
             raw_response = json.dumps(raw_trace, indent=2, default=str)
+            if base_unified_diff.strip() and unified_diff == base_worktree_diff:
+                return LegalParserCycleProposal(
+                    summary=str(metadata.get("summary") or "worktree repair produced no additional edits"),
+                    focus_area=str(metadata.get("focus_area") or ""),
+                    requirements_addressed=requirements_addressed,
+                    acceptance_criteria=acceptance_criteria,
+                    changed_files=changed_files,
+                    expected_metric_gain=expected_metric_gain,
+                    tests_to_run=tests_to_run,
+                    unified_diff="",
+                    raw_response=raw_response,
+                    parse_error="worktree repair made no changes beyond the failed base candidate",
+                )
             if not unified_diff.strip():
                 reason = "worktree edit produced no allowed diff"
                 if not codex_result.get("valid"):
@@ -756,6 +819,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
         metadata_rel: str,
         base_proposal: Optional[LegalParserCycleProposal] = None,
         patch_check: Optional[Mapping[str, Any]] = None,
+        base_unified_diff_applied: bool = False,
+        repair_context: Optional[Mapping[str, Any]] = None,
     ) -> str:
         """Build a direct-edit prompt for the isolated-worktree transport."""
 
@@ -776,6 +841,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "allowed_edit_paths": self._worktree_diff_paths(),
             "base_patch_proposal": base_payload,
             "failed_patch_check": dict(patch_check or {}),
+            "base_unified_diff_applied": bool(base_unified_diff_applied),
+            "repair_context": dict(repair_context or {}),
             "feedback": list(feedback),
             "required_metadata_schema": {
                 "summary": "string",
@@ -791,6 +858,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "You are Codex running inside a throwaway Git worktree for the deterministic legal-parser daemon.\n"
             "Edit files directly in this worktree. Do not commit. Do not output or hand-author a patch.\n"
             "Make one coherent implementation slice large enough to matter, with production parser/IR/formula/export/decoder/prover changes and focused deontic tests unless this is a repair-only slice.\n"
+            "If base_unified_diff_applied is true, the failed candidate is already applied in this worktree. Modify or remedy the broken behavior in place; preserve useful candidate work and fix the failure described in repair_context.\n"
             "After editing, write strict JSON metadata to "
             f"{metadata_rel}. The daemon will run git diff itself and validate the canonical patch.\n"
             "Only edit paths listed in allowed_edit_paths. Preserve the no-LLM parser contract.\n"
@@ -2313,6 +2381,10 @@ class LegalParserOptimizerDaemon:
             "reason": "patch_not_applied",
         }
         commit_result: Dict[str, Any] = {"committed": False, "reason": "commit_accepted_patches_disabled"}
+        failed_test_repair: Dict[str, Any] = {
+            "attempted": False,
+            "reason": "not_needed",
+        }
 
         if self.config.apply_patches and patch_check.get("valid"):
             self._write_current_status(
@@ -2416,16 +2488,110 @@ class LegalParserOptimizerDaemon:
                             if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
                                 commit_result = self._commit_retained_change(cycle_index, proposal, retained_change)
                     else:
-                        rollback = self._restore_patch_paths(pre_apply_files)
-                        if not rollback.get("valid"):
-                            rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
-                        apply_result["rolled_back"] = True
-                        apply_result["rollback"] = rollback
-                        retained_change = {
-                            "has_retained_changes": False,
-                            "changed_files": [],
-                            "reason": "rolled_back_after_failed_tests",
-                        }
+                        failed_test_repair = self._repair_failed_tests_before_rollback(
+                            cycle_index=cycle_index,
+                            cycle_dir=cycle_dir,
+                            started_at=started,
+                            evaluation=evaluation,
+                            feedback=feedback,
+                            proposal=proposal,
+                            patch_check=patch_check,
+                            tests_result=tests_result,
+                            pre_apply_files=pre_apply_files,
+                            pre_apply_diff=pre_apply_diff,
+                        )
+                        apply_result["failed_test_repair"] = failed_test_repair
+                        if failed_test_repair.get("repaired"):
+                            proposal = failed_test_repair["proposal"]
+                            proposal_path = cycle_dir / "repair_proposal.json"
+                            proposal_path.write_text(
+                                json.dumps(asdict(proposal), indent=2, default=str),
+                                encoding="utf-8",
+                            )
+                            patch_path = cycle_dir / "repair.patch"
+                            patch_path.write_text(proposal.unified_diff, encoding="utf-8")
+                            patch_check = dict(failed_test_repair.get("patch_check") or {})
+                            changed_files = list(failed_test_repair.get("changed_files") or [])
+                            patch_stats = _unified_diff_stats(proposal.unified_diff)
+                            proposal_quality = {
+                                **self._assess_proposal_quality(proposal, changed_files),
+                                "failed_test_repair": True,
+                            }
+                            post_apply_validation = dict(
+                                failed_test_repair.get("post_apply_validation") or {}
+                            )
+                            tests_result = dict(failed_test_repair.get("tests_result") or {})
+                            pre_apply_files = dict(failed_test_repair.get("pre_apply_files") or pre_apply_files)
+                            apply_result = dict(failed_test_repair.get("apply_result") or {})
+                            apply_result["failed_test_repair"] = failed_test_repair
+                            self._write_current_status(
+                                status="running",
+                                phase="evaluating_retained_change",
+                                cycle_index=cycle_index,
+                                cycle_dir=cycle_dir,
+                                started_at=started,
+                                changed_files=changed_files,
+                                failed_test_repair=failed_test_repair,
+                            )
+                            post_evaluation = self.optimizer.evaluate_current_parser()
+                            metric_progress = self._metric_stall_retention_result(
+                                proposal=proposal,
+                                evaluation=evaluation,
+                                post_evaluation=post_evaluation,
+                                metric_stall_mode=metric_stall_mode,
+                                irreducible_residual_mode=irreducible_residual_mode,
+                            )
+                            if not metric_progress.get("valid"):
+                                self._write_current_status(
+                                    status="running",
+                                    phase="rolling_back_metric_stall_no_progress",
+                                    cycle_index=cycle_index,
+                                    cycle_dir=cycle_dir,
+                                    started_at=started,
+                                    changed_files=changed_files,
+                                    metric_progress=metric_progress,
+                                )
+                                rollback = self._restore_patch_paths(pre_apply_files)
+                                if not rollback.get("valid"):
+                                    rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                                apply_result["rolled_back"] = True
+                                apply_result["rollback"] = rollback
+                                apply_result["reason"] = "metric_stall_no_metric_progress"
+                                apply_result["metric_progress"] = metric_progress
+                                retained_change = {
+                                    "has_retained_changes": False,
+                                    "changed_files": [],
+                                    "reason": "metric_stall_no_metric_progress",
+                                    "metric_progress": metric_progress,
+                                }
+                                commit_result = {"committed": False, "reason": "metric_stall_no_metric_progress"}
+                            else:
+                                retained_change = self._retained_change_summary(pre_apply_files)
+                                retained_patch_path = cycle_dir / "retained.patch"
+                                retained_patch_path.write_text(
+                                    self._retained_patch_for_paths(pre_apply_files),
+                                    encoding="utf-8",
+                                )
+                                retained_change["patch_path"] = str(retained_patch_path)
+                                retained_change["metric_progress"] = metric_progress
+                                retained_change["repaired_failed_tests"] = True
+                                if self.config.commit_accepted_patches and retained_change.get("has_retained_changes"):
+                                    commit_result = self._commit_retained_change(
+                                        cycle_index,
+                                        proposal,
+                                        retained_change,
+                                    )
+                        else:
+                            rollback = self._restore_patch_paths(pre_apply_files)
+                            if not rollback.get("valid"):
+                                rollback["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                            apply_result["rolled_back"] = True
+                            apply_result["rollback"] = rollback
+                            retained_change = {
+                                "has_retained_changes": False,
+                                "changed_files": [],
+                                "reason": "rolled_back_after_failed_tests",
+                            }
         elif self.config.run_tests and not self.config.apply_patches:
             self._write_current_status(
                 status="running",
@@ -2450,6 +2616,8 @@ class LegalParserOptimizerDaemon:
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
+            "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
+            "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -2466,6 +2634,7 @@ class LegalParserOptimizerDaemon:
             "commit_result": commit_result,
             "patch_check": patch_check,
             "apply_result": apply_result,
+            "failed_test_repair": failed_test_repair,
             "post_apply_validation": post_apply_validation,
             "tests": tests_result,
             "post_evaluation": post_evaluation,
@@ -2500,6 +2669,229 @@ class LegalParserOptimizerDaemon:
         )
         return cycle_payload
 
+    def _repair_failed_tests_before_rollback(
+        self,
+        *,
+        cycle_index: int,
+        cycle_dir: Path,
+        started_at: str,
+        evaluation: Mapping[str, Any],
+        feedback: Sequence[str],
+        proposal: LegalParserCycleProposal,
+        patch_check: Mapping[str, Any],
+        tests_result: Mapping[str, Any],
+        pre_apply_files: Dict[str, Optional[str]],
+        pre_apply_diff: str,
+    ) -> Dict[str, Any]:
+        """Try to repair an applied candidate before falling back to rollback."""
+
+        if not self.config.repair_failed_tests_before_rollback:
+            return {"attempted": False, "reason": "disabled"}
+        attempts_limit = max(0, int(self.config.failed_test_repair_attempts))
+        if attempts_limit <= 0:
+            return {"attempted": False, "reason": "no_attempts_configured"}
+        if not hasattr(self.optimizer, "request_worktree_edit_patch"):
+            return {"attempted": False, "reason": "optimizer_has_no_worktree_repair_transport"}
+
+        attempts: List[Dict[str, Any]] = []
+        base_proposal = proposal
+        base_patch_check: Mapping[str, Any] = patch_check
+        base_unified_diff = proposal.unified_diff
+        latest_tests_result: Mapping[str, Any] = tests_result
+        restored_to_pre_apply = False
+
+        for attempt_index in range(1, attempts_limit + 1):
+            failure_text = (
+                _command_output_text(latest_tests_result.get("stdout") or "")
+                + "\n"
+                + _command_output_text(latest_tests_result.get("stderr") or "")
+            )
+            failure_summary = _summarize_test_failure(failure_text)
+            repair_context = {
+                "mode": "repair_failed_tests_before_rollback",
+                "attempt": attempt_index,
+                "attempts_limit": attempts_limit,
+                "failure_phase": "tests",
+                "failed_tests": failure_summary.get("failed_tests", []),
+                "exception_types": failure_summary.get("exception_types", []),
+                "failure_head": failure_summary.get("failure_head", ""),
+                "tests_command": latest_tests_result.get("command", []),
+                "tests_returncode": latest_tests_result.get("returncode"),
+                "tests_timeout_seconds": latest_tests_result.get("timeout_seconds"),
+                "candidate_changed_files": _paths_from_unified_diff(base_unified_diff),
+                "instruction": (
+                    "The candidate applied and passed focused validation, but the full deontic "
+                    "suite failed. Keep the useful parser work, modify the applied diff to fix "
+                    "the named failure, and produce one combined canonical diff against HEAD."
+                ),
+            }
+            repair_feedback = list(feedback) + [
+                (
+                    "repair_failed_tests_before_rollback: repair the applied candidate instead "
+                    "of discarding it; failure summary="
+                    + json.dumps(failure_summary, ensure_ascii=False, default=str)
+                )
+            ]
+            self._write_current_status(
+                status="running",
+                phase="repairing_failed_tests_before_rollback",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started_at,
+                proposal_attempt=attempt_index,
+                repair_context=repair_context,
+            )
+            try:
+                repair_proposal = self.optimizer.request_worktree_edit_patch(
+                    cycle_index=cycle_index,
+                    evaluation=dict(evaluation),
+                    feedback=repair_feedback,
+                    base_proposal=base_proposal,
+                    patch_check=base_patch_check,
+                    base_unified_diff=base_unified_diff,
+                    repair_context=repair_context,
+                )
+            except Exception as exc:
+                repair_proposal = LegalParserCycleProposal(
+                    summary="failed-test repair proposal failed",
+                    raw_response="",
+                    parse_error=f"{type(exc).__name__}: {exc}",
+                )
+
+            attempt_record: Dict[str, Any] = {
+                "attempt": attempt_index,
+                "parse_error": repair_proposal.parse_error,
+                "summary": repair_proposal.summary,
+                "raw_response_chars": len(repair_proposal.raw_response or ""),
+                "diff_chars": len(repair_proposal.unified_diff or ""),
+                "failure_summary": failure_summary,
+            }
+            repair_retry_reason = self._proposal_retry_reason(repair_proposal)
+            if repair_retry_reason:
+                attempt_record["retry_reason"] = repair_retry_reason
+                attempts.append(attempt_record)
+                continue
+
+            if not restored_to_pre_apply:
+                restore_before_repair = self._restore_patch_paths(pre_apply_files)
+                if not restore_before_repair.get("valid"):
+                    restore_before_repair["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                attempt_record["restore_before_repair"] = restore_before_repair
+                restored_to_pre_apply = True
+                if not restore_before_repair.get("valid"):
+                    attempt_record["retry_reason"] = "restore_before_repair_failed"
+                    attempts.append(attempt_record)
+                    break
+
+            repair_patch_check = self.optimizer.check_patch(repair_proposal.unified_diff)
+            repair_changed_files = _paths_from_unified_diff(repair_proposal.unified_diff)
+            repair_patch_stats = _unified_diff_stats(repair_proposal.unified_diff)
+            attempt_record.update(
+                {
+                    "patch_valid": repair_patch_check.get("valid"),
+                    "patch_stderr_tail": str(repair_patch_check.get("stderr") or "")[-2000:],
+                    "changed_files": repair_changed_files,
+                    "patch_stats": repair_patch_stats,
+                }
+            )
+            if not repair_patch_check.get("valid"):
+                stderr_lines = str(repair_patch_check.get("stderr") or "").strip().splitlines()
+                first_line = stderr_lines[0] if stderr_lines else "patch_check_failed"
+                attempt_record["retry_reason"] = f"patch_check_failed:{first_line}"
+                attempts.append(attempt_record)
+                base_patch_check = repair_patch_check
+                continue
+
+            repair_pre_apply_files = self._snapshot_patch_paths(repair_proposal.unified_diff)
+            repair_apply_result = self.optimizer.apply_patch(repair_proposal.unified_diff)
+            attempt_record["apply_result"] = repair_apply_result
+            if not repair_apply_result.get("applied"):
+                restore_failed_apply = self._restore_patch_paths(repair_pre_apply_files)
+                if not restore_failed_apply.get("valid"):
+                    restore_failed_apply["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                attempt_record["restore_after_failed_apply"] = restore_failed_apply
+                attempt_record["retry_reason"] = "repair_apply_failed"
+                attempts.append(attempt_record)
+                base_patch_check = repair_patch_check
+                continue
+
+            self._write_current_status(
+                status="running",
+                phase="post_apply_validation",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started_at,
+                changed_files=repair_changed_files,
+                failed_test_repair_attempt=attempt_index,
+            )
+            repair_post_apply_validation = self._post_apply_validation(repair_changed_files)
+            attempt_record["post_apply_validation"] = repair_post_apply_validation
+            if not repair_post_apply_validation.get("valid"):
+                restore_failed_validation = self._restore_patch_paths(repair_pre_apply_files)
+                if not restore_failed_validation.get("valid"):
+                    restore_failed_validation["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+                attempt_record["restore_after_failed_validation"] = restore_failed_validation
+                attempt_record["retry_reason"] = "post_apply_validation_failed"
+                attempt_record["validation_failure_summary"] = _summarize_post_apply_validation_failure(
+                    repair_post_apply_validation
+                )
+                attempts.append(attempt_record)
+                base_proposal = repair_proposal
+                base_patch_check = repair_patch_check
+                base_unified_diff = repair_proposal.unified_diff
+                continue
+
+            self._write_current_status(
+                status="running",
+                phase="running_tests",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started_at,
+                changed_files=repair_changed_files,
+                failed_test_repair_attempt=attempt_index,
+            )
+            repair_tests_result = self.optimizer.run_tests()
+            attempt_record["tests_result"] = repair_tests_result
+            if repair_tests_result.get("valid"):
+                attempt_record["retry_reason"] = ""
+                attempts.append(attempt_record)
+                repair_apply_result["reason"] = "repaired_failed_tests_before_rollback"
+                return {
+                    "attempted": True,
+                    "repaired": True,
+                    "attempts": attempts,
+                    "proposal": repair_proposal,
+                    "proposal_payload": asdict(repair_proposal),
+                    "patch_check": repair_patch_check,
+                    "changed_files": repair_changed_files,
+                    "patch_stats": repair_patch_stats,
+                    "pre_apply_files": repair_pre_apply_files,
+                    "apply_result": repair_apply_result,
+                    "post_apply_validation": repair_post_apply_validation,
+                    "tests_result": repair_tests_result,
+                }
+
+            restore_failed_tests = self._restore_patch_paths(repair_pre_apply_files)
+            if not restore_failed_tests.get("valid"):
+                restore_failed_tests["diff_restore"] = self._restore_working_tree_diff(pre_apply_diff)
+            attempt_record["restore_after_failed_tests"] = restore_failed_tests
+            attempt_record["retry_reason"] = "tests_failed_after_repair"
+            attempts.append(attempt_record)
+            base_proposal = repair_proposal
+            base_patch_check = repair_patch_check
+            base_unified_diff = repair_proposal.unified_diff
+            latest_tests_result = repair_tests_result
+
+        return {
+            "attempted": True,
+            "repaired": False,
+            "reason": attempts[-1].get("retry_reason", "repair_attempts_exhausted")
+            if attempts
+            else "repair_attempts_exhausted",
+            "attempts": attempts,
+            "restored_to_pre_apply": restored_to_pre_apply,
+        }
+
     def _proposal_request_phase(
         self,
         *,
@@ -2527,6 +2919,8 @@ class LegalParserOptimizerDaemon:
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
+            "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
+            "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -2570,6 +2964,8 @@ class LegalParserOptimizerDaemon:
             "proposal_transport": self.config.proposal_transport_mode(),
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
+            "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
+            "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
             "dirty_legal_parser_targets": dirty_target_status["paths"],
             "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
@@ -2602,6 +2998,7 @@ class LegalParserOptimizerDaemon:
             "requesting_worktree_edit",
             "retrying_worktree_edit",
             "repairing_failed_worktree_edit",
+            "repairing_failed_tests_before_rollback",
         }:
             budget = worktree_timeout + slack
             reason = "worktree_edit_timeout_seconds_plus_heartbeat_slack"
@@ -3728,6 +4125,8 @@ class LegalParserOptimizerDaemon:
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "require_clean_touched_files": self.config.require_clean_touched_files,
+            "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
+            "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "test_command": list(self.config.test_command),
         }
         (self.output_dir / "current_run.json").write_text(
@@ -5116,6 +5515,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--heartbeat-interval-seconds", type=float, default=15.0)
     parser.add_argument("--test-timeout-seconds", type=int, default=600)
     parser.add_argument(
+        "--disable-failed-test-repair",
+        action="store_true",
+        default=os.environ.get("LEGAL_PARSER_DAEMON_DISABLE_FAILED_TEST_REPAIR") == "1",
+        help="Roll back immediately after full-suite failure instead of trying a bounded worktree repair.",
+    )
+    parser.add_argument(
+        "--failed-test-repair-attempts",
+        type=int,
+        default=int(os.environ.get("LEGAL_PARSER_DAEMON_FAILED_TEST_REPAIR_ATTEMPTS", "1")),
+        help="Number of worktree repair attempts to try before rolling back a candidate that failed tests.",
+    )
+    parser.add_argument(
         "--allow-patches-without-tests",
         action="store_true",
         help="Do not reject valid patches that lack a deontic test-file change.",
@@ -5160,6 +5571,8 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         worktree_codex_sandbox=str(args.worktree_codex_sandbox),
         worktree_root=Path(args.worktree_root),
         codex_bin=str(args.codex_bin),
+        repair_failed_tests_before_rollback=not bool(args.disable_failed_test_repair),
+        failed_test_repair_attempts=max(0, int(args.failed_test_repair_attempts)),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
         require_production_and_tests=not bool(args.allow_patches_without_tests),
