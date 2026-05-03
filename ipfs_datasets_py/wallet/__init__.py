@@ -1,19 +1,20 @@
-"""User-controlled data wallet primitives.
+"""Canonical wallet package for user-controlled encrypted data."""
 
-This package is the reusable core for wallet-backed personal data, UCAN-style
-delegation, encrypted storage, location claims, and privacy-preserving analysis
-workflows. UI layers should call :class:`DataWalletService` instead of
-implementing wallet security semantics locally.
-"""
+from __future__ import annotations
 
 from .exceptions import (
-    DataWalletError,
     AccessDeniedError,
+    ApprovalRequiredError,
+    DataWalletError,
     DecryptionError,
     GrantError,
     MissingRecordError,
 )
 from .models import (
+    AggregateResult,
+    AnalyticsConsent,
+    AnalyticsContribution,
+    ApprovalRequest,
     AuditEvent,
     DataRecord,
     DataVersion,
@@ -25,10 +26,19 @@ from .models import (
     StorageRef,
     Wallet,
 )
+from .multisig import operation_requires_approval
 from .service import DataWalletService
+from .storage import IPFSEncryptedBlobStore, LocalEncryptedBlobStore
+
+WalletService = DataWalletService
 
 __all__ = [
     "AccessDeniedError",
+    "AggregateResult",
+    "AnalyticsConsent",
+    "AnalyticsContribution",
+    "ApprovalRequest",
+    "ApprovalRequiredError",
     "AuditEvent",
     "DataRecord",
     "DataVersion",
@@ -38,10 +48,14 @@ __all__ = [
     "DerivedArtifact",
     "Grant",
     "GrantError",
+    "IPFSEncryptedBlobStore",
     "KeyWrap",
+    "LocalEncryptedBlobStore",
     "LocationClaim",
     "MissingRecordError",
     "ProofReceipt",
     "StorageRef",
     "Wallet",
+    "WalletService",
+    "operation_requires_approval",
 ]

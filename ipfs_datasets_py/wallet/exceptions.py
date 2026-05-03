@@ -9,6 +9,10 @@ class AccessDeniedError(DataWalletError):
     """Raised when a principal is not authorized for a wallet operation."""
 
 
+class ApprovalRequiredError(AccessDeniedError):
+    """Raised when a wallet operation requires threshold approval."""
+
+
 class DecryptionError(DataWalletError):
     """Raised when encrypted wallet data cannot be decrypted."""
 

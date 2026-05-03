@@ -3,10 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Protocol, runtime_checkable
 
 from .crypto import sha256_hex
 from .models import StorageRef
+
+
+@runtime_checkable
+class EncryptedBlobStore(Protocol):
+    """Minimal storage contract used by the wallet service."""
+
+    def put(self, data: bytes) -> StorageRef: ...
+
+    def get(self, ref: StorageRef) -> bytes: ...
 
 
 class LocalEncryptedBlobStore:
@@ -42,3 +51,37 @@ class LocalEncryptedBlobStore:
         if ref.uri.startswith("local://"):
             return Path(ref.uri[len("local://") :]).read_bytes()
         raise ValueError(f"Unsupported storage URI: {ref.uri}")
+
+
+class IPFSEncryptedBlobStore:
+    """Encrypted blob store backed by an `ipfs_backend_router` backend.
+
+    The wallet only sends encrypted bytes to IPFS. Plaintext encryption happens
+    before this adapter is called.
+    """
+
+    def __init__(self, backend: object | None = None, *, pin: bool = True) -> None:
+        if backend is None:
+            from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
+
+            backend = get_ipfs_backend()
+        self.backend = backend
+        self.pin = pin
+
+    def put(self, data: bytes) -> StorageRef:
+        cid = self.backend.add_bytes(data, pin=self.pin)  # type: ignore[attr-defined]
+        return StorageRef(
+            uri=f"ipfs://{cid}",
+            storage_type="ipfs",
+            size_bytes=len(data),
+            sha256=sha256_hex(data),
+        )
+
+    def get(self, ref: StorageRef) -> bytes:
+        if not ref.uri.startswith("ipfs://"):
+            raise ValueError(f"Unsupported IPFS storage URI: {ref.uri}")
+        cid = ref.uri[len("ipfs://") :]
+        data = self.backend.cat(cid)  # type: ignore[attr-defined]
+        if sha256_hex(data) != ref.sha256:
+            raise ValueError(f"IPFS payload hash mismatch for {cid}")
+        return data

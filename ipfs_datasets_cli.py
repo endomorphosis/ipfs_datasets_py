@@ -394,7 +394,7 @@ Commands:
       google-voice-takeout-case-report Export a markdown or HTML report for a Takeout case/download directory or manifest
       google-voice-takeout-case-bundle Collect the latest manifest, history snapshots, and case reports into one archival folder
 
-        workspace    Inspect, search, export, and package workspace dataset bundles
+    workspace    Inspect, search, export, and package workspace dataset bundles
             --action summary            Read a lightweight workspace bundle summary
             --action inspect            Read bundle sections and artifact counts
             --action load               Load the full dataset-shaped bundle payload
@@ -405,6 +405,18 @@ Commands:
             --action package            Package a workspace bundle into chain-loadable artifacts
             --action package-search-bm25 Search a packaged workspace bundle with grouped BM25 results
             --action package-search-vector Search a packaged workspace bundle with grouped vector results
+
+    wallet       Encrypted data wallet
+      generate-key Generate a local 256-bit wallet key
+      create       Create a wallet manifest
+      add          Encrypt and add a document
+      grant        Grant document access
+      request-approval Request threshold approval
+      approve-approval Approve threshold request
+      analyze      Run a permitted derived analysis
+      decrypt      Decrypt a document to a local file
+      revoke       Revoke a grant
+      audit        Show wallet audit status
 
     history-index Search persisted DuckDB history/GraphRAG index
     docket       Import a docket into a reusable dataset artifact
@@ -558,6 +570,14 @@ def execute_heavy_command(args):
             if json_output:
                 wa_args = ["--json", *wa_args]
             sys.exit(wa_main(wa_args))
+
+        if command == "wallet":
+            from ipfs_datasets_py.wallet.cli import main as wallet_main
+
+            wallet_args = list(args[1:])
+            if json_output and "--json" not in wallet_args:
+                wallet_args = ["--json", *wallet_args]
+            sys.exit(wallet_main(wallet_args))
 
         if command == "search":
             from ipfs_datasets_py.search.cli import main as search_main
@@ -4107,7 +4127,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'legal-pdf', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'legal', 'legal-pdf', 'workflow-automation', 'wallet', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'history-index', 'docket', 'workspace', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]
