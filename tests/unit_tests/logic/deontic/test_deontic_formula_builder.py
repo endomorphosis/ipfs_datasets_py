@@ -9991,6 +9991,55 @@ def test_review_request_light_verb_duties_export_operative_predicates():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_complaint_claim_request_light_verb_duties_export_operative_predicates():
+    examples = [
+        (
+            "The applicant shall submit a complaint about the assessment.",
+            "submit a complaint about the assessment",
+            "O(∀x (Applicant(x) → ComplainAssessment(x)))",
+            "SubmitComplaintAssessment",
+        ),
+        (
+            "The licensee shall file a claim for reimbursement.",
+            "file a claim for reimbursement",
+            "O(∀x (Licensee(x) → ClaimReimbursement(x)))",
+            "FileClaimReimbursement",
+        ),
+        (
+            "The permittee shall make a request for inspection.",
+            "make a request for inspection",
+            "O(∀x (Permittee(x) → RequestInspection(x)))",
+            "MakeRequestInspection",
+        ),
+    ]
+
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        action_span = element["field_spans"]["action"]
+
+        assert norm.modality == "O"
+        assert norm.norm_type == "obligation"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert record["blockers"] == []
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_training_orientation_instruction_light_verb_duties_export_operative_predicates():
     examples = [
         (
