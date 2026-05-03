@@ -98,6 +98,27 @@ def test_supervisor_revalidates_agentic_reason_after_stopping_child():
     assert function_body.index('if [[ "$refreshed_reason" != "$reason" ]]') < function_body.index(
         'mark_agentic_maintenance_ran "$reason"'
     )
+    assert "SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS" in script
+    assert '"agentic_idle_timeout_seconds"' in script
+    assert 'agentic maintenance idle timeout after' in function_body
+    assert 'prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"' in function_body
+    assert 'python3 - "$REPO_ROOT" "$REPO_ROOT/$maintenance_log" "$CODEX_BIN"' in function_body
+
+
+def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    loop_start = script.index("while true; do")
+    restart_block = script[loop_start:]
+
+    assert "SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS" in script
+    assert '"fast_restart_backoff_seconds"' in script
+    assert 'restart_delay_seconds="$RESTART_BACKOFF_SECONDS"' in restart_block
+    assert 'skipped_stale_trigger|dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change' in restart_block
+    assert 'restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"' in restart_block
+    assert 'restarting in ${restart_delay_seconds}s' in restart_block
 
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
@@ -131,6 +152,9 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "dirty_legal_parser_targets_known_bad_restore_failure" in recovery_body
     assert "and not known_bad_restore_failure" in recovery_body
     assert "status_stall_age < dirty_target_grace_seconds" in script
+    assert "progress_dirty_legal_parser_targets_diff_summary" in (
+        repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
     assert dirty_reason_pos < maintenance_reason_pos
 
 
@@ -1187,6 +1211,54 @@ def test_daemon_writes_accepted_change_ledger_and_progress_summary(tmp_path):
     assert progress_payload["latest_cycle"]["commit_result"]["committed"] is False
 
 
+def test_dirty_legal_parser_target_status_summarizes_deletion_heavy_stranded_diff(tmp_path):
+    prod_path = tmp_path / "ipfs_datasets_py/logic/deontic/exports.py"
+    test_path = tmp_path / "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    prod_path.parent.mkdir(parents=True)
+    test_path.parent.mkdir(parents=True)
+    prod_path.write_text("KEEP = True\nFAMILY = 'review'\nEXTRA = 1\n", encoding="utf-8")
+    test_path.write_text("def test_family():\n    assert True\n\ndef test_extra():\n    assert True\n", encoding="utf-8")
+    parser_daemon_module._run_command(["git", "init"], cwd=tmp_path, timeout=30)
+    parser_daemon_module._run_command(["git", "add", "."], cwd=tmp_path, timeout=30)
+    parser_daemon_module._run_command(
+        ["git", "-c", "user.name=Daemon", "-c", "user.email=daemon@example.test", "commit", "-m", "baseline"],
+        cwd=tmp_path,
+        timeout=30,
+    )
+    prod_path.write_text("KEEP = True\n", encoding="utf-8")
+    test_path.write_text("def test_family():\n    assert True\n", encoding="utf-8")
+
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    status = daemon._dirty_legal_parser_target_status()
+
+    assert status["paths"] == [
+        "ipfs_datasets_py/logic/deontic/exports.py",
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    ]
+    diff_summary = status["diff_summary"]
+    assert diff_summary["deletion_heavy"] is True
+    assert diff_summary["insertions"] == 0
+    assert diff_summary["deletions"] == 5
+    assert diff_summary["production_deletion_heavy_files"] == [
+        "ipfs_datasets_py/logic/deontic/exports.py"
+    ]
+    assert diff_summary["test_deletion_heavy_files"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    ]
+
+    report = daemon._format_progress_report(
+        {
+            "run": {},
+            "git_retained_work": {},
+            "dirty_legal_parser_targets": status["paths"],
+            "dirty_legal_parser_targets_diff_summary": diff_summary,
+        }
+    )
+    assert "deletion-heavy=`True`" in report
+    assert "deletion-heavy files" in report
+
+
 def test_progress_stall_accounting_resets_after_retained_patch(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
@@ -1603,6 +1675,111 @@ def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path)
     assert "candidate_post_apply_validation" in prompt
     assert "test_bad_formula" in prompt
     assert "repeated_validation_failure_family" in prompt
+
+
+def test_repeated_validation_progress_family_drives_repair_prompt_and_snapshots(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "A" * 25000 + "\nFORMULA_REPEATED_VALIDATION_MARKER\n" + "B" * 25000,
+        test_file: "def test_existing_formula_builder():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "current_score": 0.9763,
+                "repeated_validation_failure_family": {
+                    "count": 2,
+                    "cycle_indexes": [7, 8],
+                    "changed_files": [target_file, test_file],
+                    "latest_candidate_validation_failure": {
+                        "valid": False,
+                        "attempt": 2,
+                        "changed_files": [target_file, test_file],
+                        "reasons": ["changed deontic tests failed focused pytest"],
+                        "summary": {
+                            "failed_tests": [
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+                            ],
+                            "exception_types": ["AssertionError"],
+                            "failure_head": (
+                                "focused_tests: FAILED "
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula "
+                                "- AssertionError"
+                            ),
+                            "failure_command": [
+                                "pytest",
+                                "-q",
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                            ],
+                        },
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(cycle_index=9, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert '"test_failure_recovery_mode": true' in prompt
+    assert '"mode": "repair_with_material_followthrough"' in prompt
+    assert "repeated_validation_recovery" in prompt
+    assert "changed deontic tests failed focused pytest" in prompt
+    assert "test_bad_formula" in prompt
+    assert "FORMULA_REPEATED_VALIDATION_MARKER" in prompt
+
+
+def test_daemon_repair_phase_feedback_includes_repeated_validation_progress_family(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "repeated_validation_failure_family": {
+                    "count": 2,
+                    "changed_files": [target_file, test_file],
+                    "latest_candidate_validation_failure": {
+                        "valid": False,
+                        "reasons": ["changed deontic tests failed focused pytest"],
+                        "summary": {
+                            "failed_tests": [
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+                            ],
+                            "failure_head": "focused_tests: FAILED test_bad_formula - AssertionError",
+                        },
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    feedback = daemon._repair_phase_feedback()
+
+    assert daemon._test_failure_recovery_mode() is True
+    assert feedback[0].startswith("repeated_validation_recovery:")
+    assert "changed deontic tests failed focused pytest" in feedback[1]
+    assert "test_bad_formula" in feedback[1]
+    assert any(item.startswith("repair_phase:") for item in feedback)
 
 
 def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):

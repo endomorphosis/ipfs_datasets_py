@@ -9,6 +9,7 @@ PROVIDER="${PROVIDER:-llm_router}"
 # can override it with IPFS_DATASETS_PY_LLM_PROVIDER without changing daemon wiring.
 IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-codex_cli}"
 RESTART_BACKOFF_SECONDS="${RESTART_BACKOFF_SECONDS:-30}"
+SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS="${SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS:-2}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-900}"
 TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-600}"
 HEARTBEAT_INTERVAL_SECONDS="${HEARTBEAT_INTERVAL_SECONDS:-10}"
@@ -37,6 +38,7 @@ SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL="${SUPERVISOR_RECOVERY_FAILURE_ESCAL
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
+SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS:-180}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 
@@ -207,6 +209,7 @@ write_supervisor_status() {
   "daemon_pid": $daemon_pid_json,
   "restart_count": $restart_count,
   "restart_backoff_seconds": $RESTART_BACKOFF_SECONDS,
+  "fast_restart_backoff_seconds": $SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS,
   "supervisor_heartbeat_seconds": $SUPERVISOR_HEARTBEAT_SECONDS,
   "watchdog_stale_after_seconds": $WATCHDOG_STALE_AFTER_SECONDS,
   "watchdog_startup_grace_seconds": $WATCHDOG_STARTUP_GRACE_SECONDS,
@@ -235,6 +238,7 @@ write_supervisor_status() {
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
+  "agentic_idle_timeout_seconds": $SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS,
   "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
   "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
   "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
@@ -1646,6 +1650,7 @@ run_agentic_maintenance() {
   local after_head=""
   local before_diff=""
   local after_diff=""
+  local prompt_file=""
   maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
   maintenance_log="$DAEMON_DIR/legal_parser_daemon_agentic_maintenance_${maintenance_id}.log"
   last_agentic_maintenance_status="running"
@@ -1671,6 +1676,7 @@ run_agentic_maintenance() {
   before_head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
   before_diff="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-before.XXXXXX")"
   after_diff="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-after.XXXXXX")"
+  prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"
   git -C "$REPO_ROOT" diff --name-only -- \
     ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py \
     tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
@@ -1687,14 +1693,7 @@ run_agentic_maintenance() {
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$before_diff" 2>/dev/null || true
-  {
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting legal-parser daemon-maintenance pass: $reason"
-    timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
-      --skip-git-repo-check \
-      --sandbox "$SUPERVISOR_AGENTIC_SANDBOX" \
-      -m "$MODEL_NAME" \
-      -C "$REPO_ROOT" \
-      - <<PROMPT
+  cat > "$prompt_file" <<PROMPT
 You are maintaining the deterministic legal-parser optimizer daemon and its supervisor.
 
 The supervisor detected that the daemon may be stuck or not making meaningful progress.
@@ -1745,6 +1744,102 @@ After editing, run:
 
 Keep the daemon pointed at the deterministic legal parser plans and preserve the no-LLM parser contract for proof-ready clauses.
 PROMPT
+  {
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting legal-parser daemon-maintenance pass: $reason"
+    python3 - "$REPO_ROOT" "$REPO_ROOT/$maintenance_log" "$CODEX_BIN" "$MODEL_NAME" "$SUPERVISOR_AGENTIC_SANDBOX" "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS" "$prompt_file" <<'PY'
+import os
+import selectors
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+log_path = Path(sys.argv[2])
+codex_bin = sys.argv[3]
+model_name = sys.argv[4]
+sandbox = sys.argv[5]
+hard_timeout = int(sys.argv[6])
+idle_timeout = int(sys.argv[7])
+prompt_path = Path(sys.argv[8])
+
+cmd = [
+    codex_bin,
+    "exec",
+    "--skip-git-repo-check",
+    "--sandbox",
+    sandbox,
+    "-m",
+    model_name,
+    "-C",
+    str(repo_root),
+    "-",
+]
+with prompt_path.open("rb") as prompt_handle:
+    proc = subprocess.Popen(
+        cmd,
+        cwd=repo_root,
+        stdin=prompt_handle,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=0,
+    )
+selector = selectors.DefaultSelector()
+assert proc.stdout is not None
+selector.register(proc.stdout, selectors.EVENT_READ)
+start = time.monotonic()
+last_output = start
+rc = None
+log_path.parent.mkdir(parents=True, exist_ok=True)
+with log_path.open("ab") as log_handle:
+    while True:
+        now = time.monotonic()
+        if proc.poll() is not None:
+            rc = proc.returncode
+            remaining = proc.stdout.read() or b""
+            if remaining:
+                log_handle.write(remaining)
+                log_handle.flush()
+            break
+        if hard_timeout > 0 and now - start > hard_timeout:
+            log_handle.write(
+                f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} agentic maintenance hard timeout after {hard_timeout}s\n".encode()
+            )
+            log_handle.flush()
+            proc.terminate()
+            try:
+                proc.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=15)
+            rc = 124
+            break
+        if idle_timeout > 0 and now - last_output > idle_timeout:
+            log_handle.write(
+                f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} agentic maintenance idle timeout after {idle_timeout}s without output\n".encode()
+            )
+            log_handle.flush()
+            proc.terminate()
+            try:
+                proc.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=15)
+            rc = 124
+            break
+        events = selector.select(timeout=1.0)
+        if not events:
+            continue
+        for key, _ in events:
+            chunk = key.fileobj.read1(65536) if hasattr(key.fileobj, "read1") else key.fileobj.read(65536)
+            if not chunk:
+                continue
+            log_handle.write(chunk)
+            log_handle.flush()
+            last_output = time.monotonic()
+raise SystemExit(rc if rc is not None else 1)
+PY
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
   after_head="$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null || true)"
@@ -1778,7 +1873,7 @@ PROMPT
   else
     last_agentic_maintenance_status="failed"
   fi
-  rm -f "$before_diff" "$after_diff"
+  rm -f "$before_diff" "$after_diff" "$prompt_file"
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
 }
 
@@ -1985,6 +2080,7 @@ while true; do
   done
 
   rc=0
+  restart_delay_seconds="$RESTART_BACKOFF_SECONDS"
   if [[ -n "${child_pid:-}" ]]; then
     wait "$child_pid"
     rc=$?
@@ -1993,9 +2089,14 @@ while true; do
     rm -f "$REPO_ROOT/$CHILD_PID_PATH"
   fi
   child_pid=""
+  case "$last_agentic_maintenance_status" in
+    skipped_stale_trigger|dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change)
+      restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"
+      ;;
+  esac
   restart_count=$((restart_count + 1))
   write_supervisor_status "restarting" "$run_id" "$log_path" "$rc"
-  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) daemon exited with code $rc; restarting in ${RESTART_BACKOFF_SECONDS}s" >> "$REPO_ROOT/$log_path"
-  sleep "$RESTART_BACKOFF_SECONDS"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) daemon exited with code $rc; restarting in ${restart_delay_seconds}s" >> "$REPO_ROOT/$log_path"
+  sleep "$restart_delay_seconds"
   terminate_matching_legal_parser_daemons
 done
