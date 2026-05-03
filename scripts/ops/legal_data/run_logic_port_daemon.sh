@@ -553,11 +553,11 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
 If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
-If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify the separate legal parser daemon or subprocesses whose ancestor command contains parser_daemon or run_legal_parser_optimizer_daemon.sh.
+If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify other daemon families, including the separate legal parser daemon or PPD daemons; subprocesses whose ancestor command contains parser_daemon, run_legal_parser_optimizer_daemon.sh, ppd/daemon/ppd_supervisor.py, or ppd/daemon/ppd_daemon.py are out of scope.
 
 Improve only the daemon/supervisor implementation, its tests, or its docs. Do not work on the TypeScript logic port itself in this maintenance pass.
 
@@ -602,7 +602,7 @@ Reason: $reason
 
 Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
-Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
 Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
 
@@ -628,8 +628,8 @@ PROMPT
     && bash -n "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && grep -q "launch_mode=\\\"tmux\\\"" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/ensure_logic_port_daemon.sh" \
     && grep -q "terminate_orphaned_logic_port_llm_calls" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" \
-    && grep -q "pid_has_parser_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" \
-    && grep -q "pid_has_parser_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" \
+    && grep -q "pid_has_non_logic_port_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" \
+    && grep -q "pid_has_non_logic_port_daemon_ancestor" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh" \
     && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" pytest -q "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
     last_agentic_maintenance_status="accepted"
@@ -754,7 +754,7 @@ stuck_llm_subprocess_reason() {
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
       continue
     fi
-    if pid_has_parser_daemon_ancestor "$pid"; then
+    if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     if [[ -n "${child_pid:-}" ]] && ! pid_has_ancestor "$pid" "$child_pid"; then
@@ -791,7 +791,7 @@ duplicate_llm_subprocess_reason() {
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
       continue
     fi
-    if pid_has_parser_daemon_ancestor "$pid"; then
+    if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     if [[ -n "${child_pid:-}" ]] && ! pid_has_ancestor "$pid" "$child_pid"; then

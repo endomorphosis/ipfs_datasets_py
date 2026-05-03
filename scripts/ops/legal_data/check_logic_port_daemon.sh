@@ -72,7 +72,7 @@ supervisor_status = str(supervisor.get("status") or "")
 maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
 if not isinstance(maintenance_timeout, (int, float)) or maintenance_timeout <= 0:
     maintenance_reason = str(supervisor.get("last_agentic_maintenance_reason") or "")
-    if maintenance_reason.startswith(("stuck_phase:", "stuck_llm_subprocess:")):
+    if maintenance_reason.startswith(("stuck_phase:", "stuck_llm_subprocess:", "duplicate_llm_subprocesses:")):
         maintenance_timeout = supervisor.get("agentic_stuck_maintenance_timeout_seconds")
     else:
         maintenance_timeout = supervisor.get("agentic_timeout_seconds")

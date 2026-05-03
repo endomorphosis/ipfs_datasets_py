@@ -414,6 +414,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
             }
         stdout = str(result.get("stdout") or "")
         paths = _paths_from_git_status_porcelain(stdout)
+        diff_summary = _dirty_target_diff_summary(
+            repo_root=self.daemon_config.repo_root,
+            paths=paths,
+        )
         return {
             "valid": True,
             "paths": paths,
@@ -424,6 +428,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 status_stdout=stdout,
                 paths=paths,
             ),
+            "diff_summary": diff_summary,
             "error": {},
         }
 
@@ -442,12 +447,16 @@ class LegalParserParityOptimizer(BaseOptimizer):
         recent_test_failed_files = self._recent_test_failed_files(recent_test_failures)
         recent_metric_stall_failures = self._recent_metric_stall_failures(recent_cycle_history)
         recent_metric_stall_failed_files = self._recent_metric_stall_failed_files(recent_metric_stall_failures)
+        progress_payload = self._progress_snapshot()
+        repeated_validation_recovery_feedback = self._repeated_validation_recovery_feedback(progress_payload)
+        repeated_validation_failed_files = self._repeated_validation_failed_files(progress_payload)
         expanded_snapshot_files = (
             set(recent_failed_patch_files)
             | set(recent_test_failed_files)
             | set(recent_metric_stall_failed_files)
+            | set(repeated_validation_failed_files)
         )
-        test_failure_recovery_mode = bool(recent_test_failures)
+        test_failure_recovery_mode = bool(recent_test_failures or repeated_validation_recovery_feedback)
         metric_no_progress_recovery_mode = bool(recent_metric_stall_failures)
         file_payload = {
             path: _read_text(
@@ -457,7 +466,6 @@ class LegalParserParityOptimizer(BaseOptimizer):
             for path in self.daemon_config.target_files
             if (self.daemon_config.repo_root / path).is_file()
         }
-        progress_payload = self._progress_snapshot()
         metric_stall_mode = self._metric_stall_mode(progress_payload)
         roadmap_pivot_mode = self._roadmap_pivot_mode(progress_payload)
         irreducible_repair_blockers = self._irreducible_repair_blockers(evaluation)
@@ -513,6 +521,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "recent_failed_patch_files": recent_failed_patch_files,
             "recent_test_failed_files": recent_test_failed_files,
             "recent_test_failures": recent_test_failures,
+            "repeated_validation_failed_files": repeated_validation_failed_files,
+            "repeated_validation_recovery_feedback": repeated_validation_recovery_feedback,
             "recent_metric_stall_failed_files": recent_metric_stall_failed_files,
             "recent_metric_stall_failures": recent_metric_stall_failures,
             "docs": docs_payload,
@@ -896,6 +906,84 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 if text and text not in files:
                     files.append(text)
         return files[:8]
+
+    def _repeated_validation_failed_files(self, progress_payload: Mapping[str, Any]) -> List[str]:
+        """Return files from a repeated focused-validation family in progress state."""
+
+        family = progress_payload.get("repeated_validation_failure_family") or {}
+        if not isinstance(family, Mapping):
+            return []
+        try:
+            count = int(family.get("count") or 0)
+        except (TypeError, ValueError):
+            count = 0
+        if count < 2:
+            return []
+        files: List[str] = []
+        for path in family.get("changed_files") or []:
+            text = str(path).strip()
+            if text and text not in files:
+                files.append(text)
+        latest = family.get("latest_candidate_validation_failure") or {}
+        if isinstance(latest, Mapping):
+            for path in latest.get("changed_files") or []:
+                text = str(path).strip()
+                if text and text not in files:
+                    files.append(text)
+        return files[:8]
+
+    def _repeated_validation_recovery_feedback(self, progress_payload: Mapping[str, Any]) -> List[str]:
+        """Convert repeated candidate focused-test failures into repair feedback."""
+
+        family = progress_payload.get("repeated_validation_failure_family") or {}
+        if not isinstance(family, Mapping):
+            return []
+        try:
+            count = int(family.get("count") or 0)
+        except (TypeError, ValueError):
+            count = 0
+        if count < 2:
+            return []
+
+        files = ", ".join(self._repeated_validation_failed_files(progress_payload)) or "unknown files"
+        cycles = ", ".join(str(index) for index in family.get("cycle_indexes") or [])
+        latest = family.get("latest_candidate_validation_failure") or {}
+        summary = latest.get("summary") if isinstance(latest, Mapping) else {}
+        if not isinstance(summary, Mapping):
+            summary = {}
+        failed_tests = ", ".join(str(item) for item in summary.get("failed_tests") or [])
+        exception_types = ", ".join(str(item) for item in summary.get("exception_types") or [])
+        failure_command = " ".join(str(part) for part in summary.get("failure_command") or [])
+        head = " ".join(str(summary.get("failure_head") or "").split())
+        reasons = (
+            ", ".join(str(reason) for reason in (latest.get("reasons") or []))
+            if isinstance(latest, Mapping)
+            else ""
+        )
+        parts = [
+            f"count={count}",
+            f"files={files}",
+        ]
+        if cycles:
+            parts.append(f"cycles={cycles}")
+        if failed_tests:
+            parts.append(f"failed_tests={failed_tests}")
+        if exception_types:
+            parts.append(f"exceptions={exception_types}")
+        if failure_command:
+            parts.append(f"command={failure_command}")
+        if reasons:
+            parts.append(f"reasons={reasons}")
+        if head:
+            parts.append(f"failure_head={head[:1200]}")
+        return [
+            (
+                "repeated_validation_recovery: repeated candidate focused-validation "
+                "failures are blocking unattended progress; repair this exact family "
+                "before requesting a new parser capability slice."
+            ),
+            "repeated_validation_failure: " + "; ".join(parts),
+        ]
 
     def _recent_metric_stall_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         failures: List[Dict[str, Any]] = []
@@ -1609,6 +1697,7 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets_source": dirty_target_status["source"],
             "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
             "dirty_legal_parser_targets_fingerprint": dirty_target_status["fingerprint"],
+            "dirty_legal_parser_targets_diff_summary": dirty_target_status.get("diff_summary", {}),
             **{key: _json_safe(value) for key, value in details.items()},
         }
         with self._status_lock:
@@ -1840,17 +1929,24 @@ class LegalParserOptimizerDaemon:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):
             return False
         history = self.optimizer._recent_cycle_history(limit=5)
-        return bool(self.optimizer._recent_test_failures(history))
+        progress = self.optimizer._progress_snapshot()
+        return bool(
+            self.optimizer._recent_test_failures(history)
+            or self.optimizer._repeated_validation_recovery_feedback(progress)
+        )
 
     def _repair_phase_feedback(self) -> List[str]:
         if not isinstance(self.optimizer, LegalParserParityOptimizer):
             return []
         history = self.optimizer._recent_cycle_history(limit=5)
         failures = self.optimizer._recent_test_failures(history)
-        if not failures:
+        repeated_validation_feedback = self.optimizer._repeated_validation_recovery_feedback(
+            self.optimizer._progress_snapshot()
+        )
+        if not failures and not repeated_validation_feedback:
             return []
-        feedback: List[str] = [
-            "repair_phase: previous retained candidate failed validation/tests; repair the named failure before adding new behavior."
+        feedback: List[str] = list(repeated_validation_feedback) + [
+            "repair_phase: previous candidate failed validation/tests; repair the named failure before adding new behavior."
         ]
         for failure in failures[:3]:
             phase = str(failure.get("failure_phase") or "tests")
@@ -2581,6 +2677,7 @@ class LegalParserOptimizerDaemon:
             "dirty_legal_parser_targets_source": dirty_target_status["source"],
             "dirty_legal_parser_targets_checked_at": dirty_target_status["checked_at"],
             "dirty_legal_parser_targets_fingerprint": dirty_target_status["fingerprint"],
+            "dirty_legal_parser_targets_diff_summary": dirty_target_status.get("diff_summary", {}),
             "run": {
                 "run_id": self.run_id,
                 "started_at": self.run_started_at,
@@ -2760,6 +2857,20 @@ class LegalParserOptimizerDaemon:
         if dirty_parser_targets:
             lines.extend(["", "Dirty legal-parser recovery targets:"])
             lines.extend(f"- `{path}`" for path in dirty_parser_targets)
+            diff_summary = progress.get("dirty_legal_parser_targets_diff_summary") or {}
+            if diff_summary:
+                lines.append(
+                    "- diff: "
+                    f"`{diff_summary.get('insertions', 0)}` insertions, "
+                    f"`{diff_summary.get('deletions', 0)}` deletions, "
+                    f"deletion-heavy=`{diff_summary.get('deletion_heavy', False)}`"
+                )
+                deletion_heavy_files = diff_summary.get("deletion_heavy_files") or []
+                if deletion_heavy_files:
+                    lines.append(
+                        "- deletion-heavy files: "
+                        + ", ".join(f"`{path}`" for path in deletion_heavy_files[:8])
+                    )
         if progress.get("dirty_legal_parser_targets_valid") is False:
             error = progress.get("dirty_legal_parser_targets_error") or {}
             lines.extend(
@@ -2950,6 +3061,10 @@ class LegalParserOptimizerDaemon:
             }
         stdout = str(result.get("stdout") or "")
         paths = _paths_from_git_status_porcelain(stdout)
+        diff_summary = _dirty_target_diff_summary(
+            repo_root=self.config.repo_root,
+            paths=paths,
+        )
         return {
             "valid": True,
             "paths": paths,
@@ -2960,6 +3075,7 @@ class LegalParserOptimizerDaemon:
                 status_stdout=stdout,
                 paths=paths,
             ),
+            "diff_summary": diff_summary,
             "error": {},
         }
 
@@ -3480,6 +3596,75 @@ def _dirty_target_fingerprint(*, repo_root: Path, status_stdout: str, paths: Seq
         except OSError as exc:
             digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
     return digest.hexdigest()
+
+
+def _dirty_target_diff_summary(*, repo_root: Path, paths: Sequence[str]) -> Dict[str, Any]:
+    """Summarize stranded parser-target diffs for recovery decisions."""
+
+    if not paths:
+        return {}
+    diff_result = _run_command(
+        ["git", "diff", "--", *paths],
+        cwd=repo_root,
+        timeout=60,
+    )
+    if not diff_result.get("valid"):
+        return {
+            "valid": False,
+            "error": {
+                "returncode": diff_result.get("returncode"),
+                "stderr_tail": str(diff_result.get("stderr") or "")[-1000:],
+            },
+        }
+    numstat_result = _run_command(
+        ["git", "diff", "--numstat", "--", *paths],
+        cwd=repo_root,
+        timeout=60,
+    )
+    per_file: List[Dict[str, Any]] = []
+    insertions = 0
+    deletions = 0
+    if numstat_result.get("valid"):
+        for line in str(numstat_result.get("stdout") or "").splitlines():
+            parts = line.split("\t")
+            if len(parts) < 3:
+                continue
+            added_raw, deleted_raw, path = parts[0], parts[1], parts[2]
+            try:
+                added = int(added_raw)
+            except ValueError:
+                added = 0
+            try:
+                deleted = int(deleted_raw)
+            except ValueError:
+                deleted = 0
+            insertions += added
+            deletions += deleted
+            per_file.append(
+                {
+                    "path": path,
+                    "insertions": added,
+                    "deletions": deleted,
+                    "deletion_heavy": deleted > added and deleted > 0,
+                }
+            )
+    else:
+        stats = _unified_diff_stats(str(diff_result.get("stdout") or ""))
+        insertions = int(stats.get("insertions") or 0)
+        deletions = int(stats.get("deletions") or 0)
+    diff_paths = _paths_from_unified_diff(str(diff_result.get("stdout") or ""))
+    deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
+    return {
+        "valid": True,
+        "files_changed": len(per_file) if per_file else len(diff_paths),
+        "insertions": insertions,
+        "deletions": deletions,
+        "deletion_heavy": deletions > insertions and deletions > 0,
+        "deletion_heavy_files": deletion_heavy_files,
+        "test_deletion_heavy_files": _test_files(deletion_heavy_files),
+        "production_deletion_heavy_files": _production_files(deletion_heavy_files),
+        "per_file": per_file,
+    }
 
 
 def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:
