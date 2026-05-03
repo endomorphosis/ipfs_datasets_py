@@ -29,6 +29,7 @@ SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
 SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-1}"
 SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL="${SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL:-3}"
 SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL="${SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL:-4}"
+SUPERVISOR_REPEATED_REJECTION_RECOVERY="${SUPERVISOR_REPEATED_REJECTION_RECOVERY:-1}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
@@ -110,6 +111,7 @@ write_supervisor_status() {
   "agentic_dirty_target_files_enabled": $(json_bool "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES"),
   "agentic_dirty_rejection_tail": $SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL,
   "agentic_repeated_rejection_family_tail": $SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL,
+  "repeated_rejection_recovery_enabled": $(json_bool "$SUPERVISOR_REPEATED_REJECTION_RECOVERY"),
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
@@ -768,6 +770,268 @@ raise SystemExit(1)
 PY
 }
 
+confirmed_repeated_rejection_dirty_target_reason() {
+  if [[ "$SUPERVISOR_REPEATED_REJECTION_RECOVERY" != "1" ]]; then
+    return 1
+  fi
+  python3 - \
+    "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$REPO_ROOT/$PROGRESS_PATH" \
+    "$REPO_ROOT/$CURRENT_STATUS_PATH" \
+    "$REPO_ROOT" \
+    "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" \
+    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
+import hashlib
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+state_path = Path(sys.argv[1])
+progress_path = Path(sys.argv[2])
+status_path = Path(sys.argv[3])
+repo_root = Path(sys.argv[4])
+threshold = int(sys.argv[5])
+grace_seconds = int(sys.argv[6])
+
+LEGAL_PARSER_TARGETS = {
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+}
+
+
+def read_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def parse_epoch(value) -> int:
+    if not value:
+        return 0
+    text = str(value).strip()
+    if not text:
+        return 0
+    for candidate in (text, text.replace("Z", "+00:00")):
+        try:
+            return int(__import__("datetime").datetime.fromisoformat(candidate).timestamp())
+        except ValueError:
+            continue
+    return 0
+
+
+def family_key(item: dict) -> str:
+    reason = str(item.get("reason") or "")
+    if ":" in reason:
+        reason = reason.split(":", 1)[0]
+    changed = sorted(
+        str(path).strip()
+        for path in (item.get("changed_files") or [])
+        if str(path).strip() in LEGAL_PARSER_TARGETS
+    )
+    return json.dumps({"reason": reason, "changed_files": changed}, sort_keys=True)
+
+
+def paths_from_porcelain(stdout: str) -> list[str]:
+    paths: list[str] = []
+    for line in stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in paths:
+            paths.append(path)
+    return paths
+
+
+def fingerprint(paths: list[str], status_stdout: str) -> str:
+    if not paths:
+        return ""
+    digest = hashlib.sha256()
+    digest.update(status_stdout.encode("utf-8", errors="replace"))
+    diff = subprocess.run(
+        ["git", "diff", "--binary", "--", *paths],
+        cwd=repo_root,
+        text=False,
+        capture_output=True,
+        timeout=60,
+    )
+    digest.update(diff.stdout or b"")
+    for text in sorted(paths):
+        digest.update(text.encode("utf-8", errors="replace"))
+        path = repo_root / text
+        try:
+            digest.update(path.read_bytes())
+        except FileNotFoundError:
+            digest.update(b"__missing__")
+    return digest.hexdigest()
+
+
+progress = read_json(progress_path)
+status = read_json(status_path)
+state = read_json(state_path)
+rejections = progress.get("recent_rejections")
+if not isinstance(rejections, list) or not rejections:
+    raise SystemExit(1)
+counts: dict[str, int] = {}
+payloads: dict[str, dict] = {}
+for item in rejections:
+    if not isinstance(item, dict):
+        continue
+    key = family_key(item)
+    if not key:
+        continue
+    counts[key] = counts.get(key, 0) + 1
+    payloads[key] = item
+if not counts:
+    raise SystemExit(1)
+winner = max(counts.items(), key=lambda pair: pair[1])[0]
+count = counts[winner]
+if count < threshold:
+    raise SystemExit(1)
+family = dict(payloads[winner])
+changed_files = sorted(
+    str(path).strip()
+    for path in (family.get("changed_files") or [])
+    if str(path).strip() in LEGAL_PARSER_TARGETS
+)
+if not changed_files:
+    raise SystemExit(1)
+
+updated_at = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
+now = int(time.time())
+status_age = max(0, now - updated_at) if updated_at else 0
+if status_age < grace_seconds:
+    raise SystemExit(1)
+
+git_status = subprocess.run(
+    ["git", "status", "--porcelain", "--", *changed_files],
+    cwd=repo_root,
+    text=True,
+    capture_output=True,
+    timeout=30,
+)
+if git_status.returncode != 0:
+    raise SystemExit(1)
+dirty_paths = paths_from_porcelain(git_status.stdout)
+if not dirty_paths:
+    raise SystemExit(1)
+fp = fingerprint(dirty_paths, git_status.stdout)
+previous_paths = [str(path) for path in state.get("repeated_rejection_dirty_targets") or []]
+previous_fp = str(state.get("repeated_rejection_dirty_targets_fingerprint") or "")
+state.update(
+    {
+        "repeated_rejection_dirty_targets": dirty_paths,
+        "repeated_rejection_dirty_targets_fingerprint": fp,
+        "repeated_rejection_family_reason": str(family.get("reason") or ""),
+        "repeated_rejection_family_count": count,
+    }
+)
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+if dirty_paths == previous_paths and fp == previous_fp:
+    print(
+        "repeated_rejection_dirty_targets:"
+        + str(family.get("reason") or "unknown")
+        + ":"
+        + ",".join(dirty_paths[:8])
+    )
+    raise SystemExit(0)
+raise SystemExit(1)
+PY
+}
+
+recover_repeated_rejection_dirty_targets() {
+  local reason="$1"
+  local recovery_id=""
+  local recovery_log=""
+  local targets_file=""
+  local py_files_file=""
+  local test_files_file=""
+  local rc=0
+  recovery_id="$(date -u +%Y%m%dT%H%M%SZ)"
+  recovery_log="$DAEMON_DIR/legal_parser_daemon_repeated_rejection_recovery_${recovery_id}.log"
+  last_agentic_maintenance_status="repeated_rejection_recovery_running"
+  last_agentic_maintenance_reason="$reason"
+  last_agentic_maintenance_log_path="$recovery_log"
+  write_supervisor_status "repeated_rejection_recovery_started" "$recovery_id" "$recovery_log" null
+  stop_child
+  targets_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-repeated-targets.XXXXXX")"
+  py_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-repeated-py.XXXXXX")"
+  test_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-repeated-tests.XXXXXX")"
+  python3 - "$REPO_ROOT" "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$targets_file" "$py_files_file" "$test_files_file" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+state_path = Path(sys.argv[2])
+targets_path = Path(sys.argv[3])
+py_path = Path(sys.argv[4])
+tests_path = Path(sys.argv[5])
+try:
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+paths = [
+    str(path).strip()
+    for path in (state.get("repeated_rejection_dirty_targets") or [])
+    if str(path).strip()
+]
+targets_path.write_text("\n".join(paths) + ("\n" if paths else ""), encoding="utf-8")
+py_files = [path for path in paths if path.endswith(".py") and (repo_root / path).exists()]
+test_files = [path for path in paths if path.startswith("tests/unit_tests/logic/deontic/") and path.endswith(".py")]
+py_path.write_text("\n".join(py_files) + ("\n" if py_files else ""), encoding="utf-8")
+tests_path.write_text("\n".join(test_files) + ("\n" if test_files else ""), encoding="utf-8")
+PY
+  if [[ ! -s "$targets_file" ]]; then
+    last_agentic_maintenance_status="repeated_rejection_recovery_skipped_clean"
+    write_supervisor_status "repeated_rejection_recovery_finished" "$recovery_id" "$recovery_log" 0
+    rm -f "$targets_file" "$py_files_file" "$test_files_file"
+    return 0
+  fi
+  {
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting repeated rejection recovery: $reason"
+    echo "Repeated rejection dirty targets:"
+    sed 's/^/- /' "$targets_file"
+    if [[ -s "$py_files_file" ]]; then
+      echo "Running py_compile for repeated rejection Python targets"
+      xargs -r python3 -m py_compile < "$py_files_file"
+    fi
+    if [[ -s "$test_files_file" ]]; then
+      echo "Running focused pytest for repeated rejection deontic tests"
+      xargs -r pytest -q < "$test_files_file"
+    fi
+  } >> "$REPO_ROOT/$recovery_log" 2>&1
+  rc=$?
+  if [[ "$rc" == "0" ]]; then
+    {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) repeated rejection validation passed; committing recovered daemon slice"
+      xargs -r git -C "$REPO_ROOT" add -- < "$targets_file"
+      git -C "$REPO_ROOT" commit -m "legal-parser-daemon: recover repeated rejection target slice"
+    } >> "$REPO_ROOT/$recovery_log" 2>&1
+    rc=$?
+    last_agentic_maintenance_status="repeated_rejection_recovery_committed"
+  else
+    {
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets"
+      xargs -r git -C "$REPO_ROOT" restore --source=HEAD -- < "$targets_file"
+    } >> "$REPO_ROOT/$recovery_log" 2>&1
+    last_agentic_maintenance_status="repeated_rejection_recovery_restored"
+    rc=0
+  fi
+  mark_agentic_maintenance_ran "$reason"
+  write_supervisor_status "repeated_rejection_recovery_finished" "$recovery_id" "$recovery_log" "$rc"
+  rm -f "$targets_file" "$py_files_file" "$test_files_file"
+  return "$rc"
+}
 recover_dirty_legal_parser_targets() {
   local reason="$1"
   local recovery_id=""
@@ -1174,6 +1438,13 @@ while true; do
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$log_path"
       stop_child
+      break
+    fi
+    repeated_rejection_recovery_reason="$(confirmed_repeated_rejection_dirty_target_reason || true)"
+    if [[ -n "$repeated_rejection_recovery_reason" ]]; then
+      last_recycle_reason="repeated_rejection_recovery"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor recovering repeated rejection dirty targets: $repeated_rejection_recovery_reason" >> "$REPO_ROOT/$log_path"
+      recover_repeated_rejection_dirty_targets "$repeated_rejection_recovery_reason"
       break
     fi
     dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"
