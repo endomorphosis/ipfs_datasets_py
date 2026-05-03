@@ -25,6 +25,7 @@ from ..types.common_types import ConfidenceScore
 from .ir import LegalNormIR
 from .formula_builder import build_deontic_formula_records_from_irs
 from .exports import (
+    build_deterministic_parser_capability_profile_records,
     build_prover_syntax_target_coverage_records_from_irs,
     parser_elements_with_ir_export_readiness,
 )
@@ -202,6 +203,10 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "legal_formula_record_proof_ready_count",
                 sum(1 for record in formula_records if record.get("proof_ready") is True),
             )
+            result.metadata.setdefault(
+                "legal_parser_capability_profile_records",
+                build_deterministic_parser_capability_profile_records(legal_norm_irs),
+            )
             prover_coverage_records = build_prover_syntax_target_coverage_records_from_irs(
                 legal_norm_irs
             )
@@ -229,6 +234,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
                 "ir_count": len(legal_norm_irs),
                 "formula_record_count": len(result.metadata.get("legal_formula_records", [])),
                 "formula_record_proof_ready_count": result.metadata.get("legal_formula_record_proof_ready_count", 0),
+                "parser_capability_profile_count": len(result.metadata.get("legal_parser_capability_profile_records", [])),
                 "prover_syntax_target_coverage_record_count": len(result.metadata.get("legal_prover_syntax_target_coverage_records", [])),
                 "formal_syntax_valid_count": result.metadata.get("legal_formal_syntax_valid_count", 0),
                 "proof_ready": bool(getattr(legal_norm_ir, "proof_ready", False)),

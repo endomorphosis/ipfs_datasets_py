@@ -70,6 +70,7 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["ir_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 1
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 1
+        assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 1
         assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 1
         assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 1
         assert result.metadata["deterministic_parser"]["proof_ready"] is True
@@ -85,6 +86,17 @@ class TestDeonticConverter:
         assert result.metadata["legal_norm_irs"] == [legal_norm_ir]
         assert result.metadata["legal_formula_records"][0]["source_id"] == parser_element["source_id"]
         assert result.metadata["legal_formula_records"][0]["proof_ready"] is True
+        capability_records = result.metadata["legal_parser_capability_profile_records"]
+        assert len(capability_records) == 1
+        capability_record = capability_records[0]
+        assert capability_record["source_id"] == parser_element["source_id"]
+        assert capability_record["capability_family"] == "ordinary_duty"
+        assert capability_record["formula"] == "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))"
+        assert capability_record["formula_proof_ready"] is True
+        assert capability_record["requires_validation"] is False
+        assert capability_record["checked_slots"] == ["actor", "modality", "action"]
+        assert capability_record["grounded_slots"] == ["actor", "modality", "action"]
+        assert capability_record["source_grounded_slot_rate"] == 1.0
 
         coverage_records = result.metadata["legal_prover_syntax_target_coverage_records"]
         assert len(coverage_records) == 1
@@ -115,6 +127,8 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["ir_count"] == 0
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 0
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 0
+        assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 0
+        assert result.metadata["legal_parser_capability_profile_records"] == []
         assert result.metadata["deterministic_parser"]["prover_syntax_target_coverage_record_count"] == 0
         assert result.metadata["deterministic_parser"]["formal_syntax_valid_count"] == 0
         assert result.metadata["legal_norm_irs"] == []
@@ -141,6 +155,7 @@ class TestDeonticConverter:
         assert result.metadata["deterministic_parser"]["ir_count"] == 3
         assert result.metadata["deterministic_parser"]["formula_record_count"] == 3
         assert result.metadata["deterministic_parser"]["formula_record_proof_ready_count"] == 3
+        assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 3
         assert [element["action"][0] for element in result.metadata["parser_elements"]] == [
             "establish procedures",
             "submit a report",
@@ -169,6 +184,48 @@ class TestDeonticConverter:
             True,
             True,
         ]
+        capability_records = result.metadata["legal_parser_capability_profile_records"]
+        assert [record["capability_family"] for record in capability_records] == [
+            "enumerated_child_duty",
+            "enumerated_child_duty",
+            "enumerated_child_duty",
+        ]
+        assert [record["formula"] for record in capability_records] == [
+            "O(∀x (Secretary(x) → EstablishProcedures(x)))",
+            "O(∀x (Secretary(x) → SubmitReport(x)))",
+            "O(∀x (Secretary(x) → MaintainRecords(x)))",
+        ]
+        assert [record["enumeration_index"] for record in capability_records] == [1, 2, 3]
+        assert all(record["formula_proof_ready"] is True for record in capability_records)
+        assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+
+    def test_converter_exposes_authority_grant_capability_profile(self):
+        """Authority grants should be visible as parser capability profiles."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        result = converter.convert("The Director is delegated authority to approve permits.")
+
+        assert result.success
+        assert result.metadata["deterministic_parser"]["parser_capability_profile_count"] == 1
+        record = result.metadata["legal_parser_capability_profile_records"][0]
+        assert record["capability_family"] == "authority_grant"
+        assert record["norm_type"] == "permission"
+        assert record["modality"] == "P"
+        assert record["formula"] == "P(∀x (Director(x) → ApprovePermits(x)))"
+        assert record["formula_proof_ready"] is True
+        assert record["checked_slots"] == ["actor", "modality", "action"]
+        assert record["grounded_slots"] == ["actor", "modality", "action"]
+        assert record["repair_required"] is False
+
+        blocked = __import__(
+            "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+            fromlist=["extract_normative_elements"],
+        ).extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+        assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+        assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
     def test_converter_maps_scope_rules_to_non_obligation_operators(self):
         """Scope rules should not be exposed as ordinary obligations."""
