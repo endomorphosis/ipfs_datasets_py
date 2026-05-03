@@ -175,10 +175,15 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" in function_body
     assert "ppd/daemon/ppd_daemon.py" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
+<<<<<<< Updated upstream
     assert script.index("terminate_matching_legal_parser_daemons") < script.index(
         "terminate_competing_daemons"
     )
     assert script.index("terminate_competing_daemons") < script.index("snapshot_dirty_legal_parser_target_baseline")
+=======
+    startup_pos = script.rindex("terminate_matching_legal_parser_daemons\nterminate_competing_daemons\nsnapshot_dirty_legal_parser_target_baseline")
+    assert startup_pos >= 0
+>>>>>>> Stashed changes
     assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index("while true; do")
     loop_start = script.index("while kill -0 \"$child_pid\"")
     assert loop_start < script.index("terminate_competing_daemons", loop_start)
