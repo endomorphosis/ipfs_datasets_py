@@ -200,6 +200,54 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profiles_cover_administrative_review_requests():
+    """Appeal, petition, and application duties are a distinct request family."""
+
+    examples = [
+        (
+            "The applicant shall file an appeal of the denial.",
+            "file an appeal of the denial",
+            "O(∀x (Applicant(x) → FileAppealDenial(x)))",
+        ),
+        (
+            "The licensee shall submit a petition for review.",
+            "submit a petition for review",
+            "O(∀x (Licensee(x) → SubmitPetitionReview(x)))",
+        ),
+        (
+            "The permittee shall make an application for renewal.",
+            "make an application for renewal",
+            "O(∀x (Permittee(x) → MakeApplicationRenewal(x)))",
+        ),
+    ]
+
+    norms = [LegalNormIR.from_parser_element(extract_normative_elements(text)[0]) for text, _, _ in examples]
+    records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in records] == [
+        "administrative_review_request_duty",
+        "administrative_review_request_duty",
+        "administrative_review_request_duty",
+    ]
+    assert [norm.action for norm in norms] == [action for _, action, _ in examples]
+    assert [record["formula"] for record in records] == [formula for _, _, formula in examples]
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["parser_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+    assert build_deterministic_parser_capability_profile_record(norms[0]) == records[0]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_deterministic_parser_capability_profiles_cover_remedy_information_and_participation_families():
     examples = [
         (

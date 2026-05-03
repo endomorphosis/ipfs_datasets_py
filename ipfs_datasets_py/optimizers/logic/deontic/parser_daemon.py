@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import ast
 import hashlib
 import json
 import traceback
@@ -3176,6 +3177,7 @@ def _read_text(path: Path, *, limit: int) -> str:
 
 
 def _summarize_test_failure(stdout: str) -> Dict[str, Any]:
+    stdout = _command_output_text(stdout)
     failed_tests: List[str] = []
     for match in re.finditer(r"FAILED\s+([^\s]+)", stdout):
         name = match.group(1).strip()
@@ -3226,8 +3228,8 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
             continue
         if not failure_command:
             failure_command = [str(part) for part in check.get("command") or []]
-        stderr = str(check.get("stderr") or "")
-        stdout = str(check.get("stdout") or "")
+        stderr = _command_output_text(check.get("stderr") or "")
+        stdout = _command_output_text(check.get("stdout") or "")
         if check_name == "compile" and "py_compile" not in exception_types:
             exception_types.append("py_compile")
         for match in re.finditer(r"FAILED\s+([^\s]+)", stderr + "\n" + stdout):
@@ -3243,6 +3245,8 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
         for line in (stderr + "\n" + stdout).splitlines():
             text = line.strip()
             if not text:
+                continue
+            if _is_pytest_session_noise(text):
                 continue
             if (
                 text.startswith("File ")
@@ -3306,6 +3310,34 @@ def _failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
         summary.get("failed_tests")
         or summary.get("exception_types")
         or str(summary.get("failure_head") or "").strip()
+    )
+
+
+def _command_output_text(value: Any) -> str:
+    """Return subprocess output as text, including timeout byte reprs."""
+
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    text = str(value or "")
+    stripped = text.strip()
+    if len(stripped) >= 3 and stripped[:1].lower() == "b" and stripped[1:2] in {"'", '"'}:
+        try:
+            parsed = ast.literal_eval(stripped)
+        except (SyntaxError, ValueError):
+            return text
+        if isinstance(parsed, bytes):
+            return parsed.decode("utf-8", errors="replace")
+    return text
+
+
+def _is_pytest_session_noise(text: str) -> bool:
+    return (
+        text.startswith("=")
+        or text.startswith("platform ")
+        or text.startswith("plugins:")
+        or text.startswith("rootdir:")
+        or text.startswith("configfile:")
+        or text.startswith("collected ")
     )
 
 
@@ -3382,8 +3414,8 @@ def _run_command(
             "valid": False,
             "returncode": None,
             "command": list(cmd),
-            "stdout": str(exc.stdout or "")[-12000:],
-            "stderr": f"timeout after {timeout}s",
+            "stdout": _command_output_text(exc.stdout)[-12000:],
+            "stderr": (f"timeout after {timeout}s\n" + _command_output_text(exc.stderr))[-12000:],
             "duration_seconds": round(time.time() - started, 3),
         }
 
@@ -3630,18 +3662,7 @@ def _validation_failure_family_signature(
         for reason in (failure.get("reasons") or [])
         if str(reason).strip()
     ]
-    head_lines: List[str] = []
-    for line in str(summary.get("failure_head") or "").splitlines():
-        text = line.strip()
-        if not text:
-            continue
-        if text.startswith("=") or text.startswith("platform ") or text.startswith("plugins:"):
-            continue
-        if text.startswith("rootdir:") or text.startswith("collected "):
-            continue
-        head_lines.append(text)
-        if len(head_lines) >= 4:
-            break
+    head_lines = _normalized_failure_head_lines(summary.get("failure_head") or "", limit=4)
     return json.dumps(
         {
             "changed_files": sorted(changed_files),
@@ -3652,6 +3673,20 @@ def _validation_failure_family_signature(
         },
         sort_keys=True,
     )
+
+
+def _normalized_failure_head_lines(value: Any, *, limit: int) -> List[str]:
+    lines: List[str] = []
+    for line in _command_output_text(value).splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if _is_pytest_session_noise(text):
+            continue
+        lines.append(text)
+        if len(lines) >= limit:
+            break
+    return lines
 
 
 def _repeated_validation_failure_family(rejections: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:

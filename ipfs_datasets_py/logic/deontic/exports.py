@@ -3676,6 +3676,18 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "public_information_duty"
     if action_predicate.startswith(("Comment", "Object", "Respond")):
         return "review_participation_duty"
+    if action_predicate.startswith((
+        "FileAppeal",
+        "FileApplication",
+        "FilePetition",
+        "MakeAppeal",
+        "MakeApplication",
+        "MakePetition",
+        "SubmitAppeal",
+        "SubmitApplication",
+        "SubmitPetition",
+    )):
+        return "administrative_review_request_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:

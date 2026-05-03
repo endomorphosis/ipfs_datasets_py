@@ -291,6 +291,7 @@ agentic_maintenance_reason() {
     "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" \
     "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" \
     "$SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL" <<'PY'
+import ast
 import json
 import subprocess
 import sys
@@ -329,6 +330,42 @@ def parse_epoch(value) -> int:
         return int(datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp())
     except ValueError:
         return 0
+
+
+def command_output_text(value) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    text = str(value or "")
+    stripped = text.strip()
+    if len(stripped) >= 3 and stripped[:1].lower() == "b" and stripped[1:2] in {"'", '"'}:
+        try:
+            parsed = ast.literal_eval(stripped)
+        except (SyntaxError, ValueError):
+            return text
+        if isinstance(parsed, bytes):
+            return parsed.decode("utf-8", errors="replace")
+    return text
+
+
+def normalized_failure_head_lines(value, limit: int = 4) -> list[str]:
+    lines: list[str] = []
+    for line in command_output_text(value).splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if (
+            text.startswith("=")
+            or text.startswith("platform ")
+            or text.startswith("plugins:")
+            or text.startswith("rootdir:")
+            or text.startswith("configfile:")
+            or text.startswith("collected ")
+        ):
+            continue
+        lines.append(text)
+        if len(lines) >= limit:
+            break
+    return lines
 
 
 LEGAL_PARSER_TARGETS = [
@@ -515,19 +552,7 @@ def _validation_failure_family_key(item: dict) -> str:
         for name in (summary.get("exception_types") or [])
         if str(name).strip()
     ]
-    failure_head_lines: list[str] = []
-    for line in str(summary.get("failure_head") or "").splitlines():
-        text = line.strip()
-        if not text:
-            continue
-        if text.startswith("=") or text.startswith("platform ") or text.startswith("plugins:"):
-            continue
-        if text.startswith("rootdir:") or text.startswith("collected "):
-            continue
-        failure_head_lines.append(text)
-        if len(failure_head_lines) >= 4:
-            break
-    failure_head = "\n".join(failure_head_lines)[:400]
+    failure_head = "\n".join(normalized_failure_head_lines(summary.get("failure_head") or ""))[:400]
     return json.dumps(
         {
             "changed_files": sorted(changed_files),
@@ -711,7 +736,9 @@ elif (
         if str(text).strip()
     ]
     validation_summary = validation_failure.get("summary") or {}
-    validation_head = str(validation_summary.get("failure_head") or "").strip()[:240]
+    validation_head = " ".join(
+        normalized_failure_head_lines(validation_summary.get("failure_head") or "", limit=3)
+    )[:240]
     reason = (
         f"repeated_validation_failure_family:{repeated_validation_failure_count}:"
         f"threshold:{validation_failure_family_threshold}:"

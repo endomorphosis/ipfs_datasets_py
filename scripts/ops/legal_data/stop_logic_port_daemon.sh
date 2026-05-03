@@ -61,6 +61,26 @@ pid_has_parser_daemon_ancestor() {
   return 1
 }
 
+pid_has_non_logic_port_daemon_ancestor() {
+  local pid="$1"
+  local parent=""
+  local args=""
+  while [[ -n "$pid" ]] && [[ "$pid" != "0" ]] && [[ "$pid" != "1" ]]; do
+    args="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+    case "$args" in
+      *"parser_daemon"*|*"run_legal_parser_optimizer_daemon.sh"*|*"ppd/daemon/ppd_supervisor.py"*|*"ppd/daemon/ppd_daemon.py"*)
+        return 0
+        ;;
+    esac
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -dc '0-9' || true)"
+    if [[ -z "$parent" ]] || [[ "$parent" == "$pid" ]]; then
+      return 1
+    fi
+    pid="$parent"
+  done
+  return 1
+}
+
 terminate_repo_local_logic_codex_execs() {
   local pid=""
   local args=""
@@ -72,7 +92,7 @@ terminate_repo_local_logic_codex_execs() {
     if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
       continue
     fi
-    if pid_has_parser_daemon_ancestor "$pid"; then
+    if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"

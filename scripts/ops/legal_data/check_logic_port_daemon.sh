@@ -145,6 +145,7 @@ payload = {
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
     "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
     "agentic_stuck_maintenance_timeout_seconds": supervisor.get("agentic_stuck_maintenance_timeout_seconds"),
+    "task_board_path": supervisor.get("task_board_path"),
     "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
     "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),
     "active_agentic_maintenance_age_seconds": None if maintenance_age is None else round(maintenance_age, 3),

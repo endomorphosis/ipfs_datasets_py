@@ -67,6 +67,7 @@ SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/logic-port-daemon-superv
 SUPERVISOR_LOCK_PATH="${SUPERVISOR_LOCK_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.lock}"
 CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/logic-port-daemon.pid}"
 LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.latest.log}"
+TASK_BOARD_PATH="${TASK_BOARD_PATH:-docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md}"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 
@@ -144,6 +145,7 @@ write_supervisor_status() {
   "status_path": "$STATUS_PATH",
   "progress_path": "$PROGRESS_PATH",
   "result_log_path": "$RESULT_LOG_PATH",
+  "task_board_path": "$TASK_BOARD_PATH",
   "child_pid_path": "$CHILD_PID_PATH",
   "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
   "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
@@ -518,7 +520,7 @@ run_agentic_maintenance() {
   local maintenance_timeout="$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS"
   local rc=0
   case "$reason" in
-    stuck_phase:*|stuck_llm_subprocess:*)
+    stuck_phase:*|stuck_llm_subprocess:*|duplicate_llm_subprocesses:*)
       maintenance_timeout="$SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS"
       ;;
   esac
@@ -553,7 +555,7 @@ Reason: $reason
 
 This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify the separate legal parser daemon or subprocesses whose ancestor command contains parser_daemon or run_legal_parser_optimizer_daemon.sh.
 
@@ -769,6 +771,54 @@ stuck_llm_subprocess_reason() {
   return 1
 }
 
+duplicate_llm_subprocess_reason() {
+  local pid=""
+  local pgid=""
+  local etimes=""
+  local args=""
+  local count=0
+  local oldest_pid=""
+  local oldest_age=0
+  local limit="$SUPERVISOR_PHASE_STUCK_GRACE_SECONDS"
+  local seen_pgids=" "
+  while read -r pid pgid etimes args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
+      continue
+    fi
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
+      continue
+    fi
+    if pid_has_parser_daemon_ancestor "$pid"; then
+      continue
+    fi
+    if [[ -n "${child_pid:-}" ]] && ! pid_has_ancestor "$pid" "$child_pid"; then
+      continue
+    fi
+    if ! process_cwd_is_logic_repo_local "$pid"; then
+      continue
+    fi
+    if [[ -n "$pgid" ]] && [[ "$seen_pgids" == *" $pgid "* ]]; then
+      continue
+    fi
+    seen_pgids="${seen_pgids}${pgid} "
+    if [[ "$etimes" =~ ^[0-9]+$ ]]; then
+      count=$((count + 1))
+      if [[ "$etimes" -gt "$oldest_age" ]]; then
+        oldest_age="$etimes"
+        oldest_pid="$pid"
+      fi
+    fi
+  done < <(ps -eo pid=,pgid=,etimes=,args=)
+  if [[ "$count" -gt 1 ]] && [[ "$oldest_age" -gt "$limit" ]]; then
+    printf 'duplicate_llm_subprocesses:count:%s:oldest_pid:%s:oldest_age:%s:limit:%s\n' "$count" "$oldest_pid" "$oldest_age" "$limit"
+    return 0
+  fi
+  return 1
+}
+
 terminate_pid_tree() {
   local pid="$1"
   local child=""
@@ -841,6 +891,26 @@ pid_has_parser_daemon_ancestor() {
   return 1
 }
 
+pid_has_non_logic_port_daemon_ancestor() {
+  local pid="$1"
+  local parent=""
+  local args=""
+  while [[ -n "$pid" ]] && [[ "$pid" != "0" ]] && [[ "$pid" != "1" ]]; do
+    args="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+    case "$args" in
+      *"parser_daemon"*|*"run_legal_parser_optimizer_daemon.sh"*|*"ppd/daemon/ppd_supervisor.py"*|*"ppd/daemon/ppd_daemon.py"*)
+        return 0
+        ;;
+    esac
+    parent="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -dc '0-9' || true)"
+    if [[ -z "$parent" ]] || [[ "$parent" == "$pid" ]]; then
+      return 1
+    fi
+    pid="$parent"
+  done
+  return 1
+}
+
 process_cwd_is_logic_repo_local() {
   local pid="$1"
   local cwd=""
@@ -862,7 +932,7 @@ terminate_orphaned_logic_port_llm_calls() {
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
       continue
     fi
-    if pid_has_parser_daemon_ancestor "$pid"; then
+    if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     if [[ -n "${child_pid:-}" ]] && pid_has_ancestor "$pid" "$child_pid"; then
@@ -894,7 +964,7 @@ terminate_orphaned_agentic_maintenance_calls() {
     if [[ "$args" == *"--ephemeral --json -" ]]; then
       continue
     fi
-    if pid_has_parser_daemon_ancestor "$pid"; then
+    if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     if [[ "$include_current_supervisor" != "1" ]] && pid_has_ancestor "$pid" "$$"; then
@@ -1028,6 +1098,9 @@ while true; do
     stuck_reason="$(daemon_stuck_phase_reason || true)"
     if [[ -z "$stuck_reason" ]]; then
       stuck_reason="$(stuck_llm_subprocess_reason || true)"
+    fi
+    if [[ -z "$stuck_reason" ]]; then
+      stuck_reason="$(duplicate_llm_subprocess_reason || true)"
     fi
     if [[ -n "$stuck_reason" ]]; then
       last_recycle_reason="agentic_stuck_repair"

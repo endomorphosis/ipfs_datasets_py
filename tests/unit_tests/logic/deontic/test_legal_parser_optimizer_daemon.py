@@ -10,9 +10,11 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserCycleProposal,
     LegalParserOptimizerDaemon,
     LegalParserParityOptimizer,
+    _command_output_text,
     _paths_from_git_status_porcelain,
     _repeated_rejection_family,
     _repeated_validation_failure_family,
+    _summarize_post_apply_validation_failure,
     parse_cycle_proposal,
 )
 
@@ -3447,6 +3449,92 @@ def test_repeated_validation_failure_family_uses_stable_focused_signature():
     assert family["cycle_indexes"] == [1, 2]
     assert family["changed_files"] == base_failure["changed_files"]
     assert family["latest_candidate_validation_failure"]["attempt"] == 2
+
+
+def test_candidate_validation_summary_decodes_timeout_byte_repr():
+    validation = {
+        "valid": False,
+        "focused_tests": {
+            "valid": False,
+            "stdout": (
+                "b'============================= test session starts =============================="
+                "\\nplatform linux -- Python 3.12.3, pytest-9.0.3"
+                "\\nplugins: benchmark-5.2.3"
+                "\\nFAILED tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula "
+                "- AssertionError"
+                "\\nE   AssertionError: expected formula'"
+            ),
+            "stderr": "",
+            "command": [
+                "pytest",
+                "-q",
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            ],
+        },
+        "reasons": ["changed deontic tests failed focused pytest"],
+    }
+
+    summary = _summarize_post_apply_validation_failure(validation)
+
+    assert _command_output_text(validation["focused_tests"]["stdout"]).startswith("=")
+    assert summary["failed_tests"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+    ]
+    assert summary["exception_types"] == ["AssertionError"]
+    assert summary["failure_head"] == (
+        "focused_tests: FAILED "
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula "
+        "- AssertionError\nfocused_tests: E   AssertionError: expected formula"
+    )
+
+
+def test_repeated_validation_failure_family_normalizes_byte_repr_headers():
+    changed_files = [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    ]
+    first_failure = {
+        "valid": False,
+        "changed_files": changed_files,
+        "reasons": ["changed deontic tests failed focused pytest"],
+        "summary": {
+            "failed_tests": [
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+            ],
+            "exception_types": ["AssertionError"],
+            "failure_head": (
+                "b'============================= test session starts =============================="
+                "\\nplatform linux -- Python 3.12.3, pytest-9.0.3"
+                "\\nfocused_tests: FAILED "
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula'"
+            ),
+        },
+    }
+    second_failure = {
+        **first_failure,
+        "attempt": 2,
+        "summary": {
+            **first_failure["summary"],
+            "failure_head": (
+                "b'============================= test session starts =============================="
+                "\\nplatform linux -- Python 3.12.4, pytest-9.0.4"
+                "\\nplugins: any-plugin"
+                "\\nfocused_tests: FAILED "
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula'"
+            ),
+        },
+    }
+
+    family = _repeated_validation_failure_family(
+        [
+            {"cycle_index": 1, "changed_files": changed_files, "latest_candidate_validation_failure": first_failure},
+            {"cycle_index": 2, "changed_files": changed_files, "latest_candidate_validation_failure": second_failure},
+        ]
+    )
+
+    assert family["count"] == 2
+    assert "Python 3.12" not in family["signature"]
+    assert "test_bad_formula" in family["signature"]
 
 
 def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path):
