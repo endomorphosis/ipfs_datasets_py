@@ -1025,6 +1025,64 @@ def test_daemon_hybrid_transport_falls_back_to_worktree_after_patch_check_failur
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
 
 
+def test_daemon_worktree_transport_reports_worktree_request_phase(tmp_path, monkeypatch):
+    __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    (tmp_path / "x.txt").write_text("before\n", encoding="utf-8")
+    valid_diff = "\n".join(
+        [
+            "diff --git a/x.txt b/x.txt",
+            "--- a/x.txt",
+            "+++ b/x.txt",
+            "@@ -1 +1 @@",
+            "-before",
+            "+after",
+            "",
+        ]
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        proposal_transport="worktree",
+        apply_patches=False,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=1,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    monkeypatch.setattr(
+        optimizer,
+        "request_worktree_edit_patch",
+        lambda **_: LegalParserCycleProposal(
+            summary="Worktree generated a canonical diff.",
+            requirements_addressed=["daemon"],
+            acceptance_criteria=["worktree diff validates"],
+            changed_files=["x.txt"],
+            expected_metric_gain={},
+            tests_to_run=[],
+            unified_diff=valid_diff,
+            raw_response="worktree direct edit",
+        ),
+    )
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    phases = []
+    original_write_current_status = daemon._write_current_status
+
+    def capture_status(**kwargs):
+        phases.append(kwargs.get("phase"))
+        return original_write_current_status(**kwargs)
+
+    monkeypatch.setattr(daemon, "_write_current_status", capture_status)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert "requesting_worktree_edit" in phases
+    assert "requesting_llm_patch" not in phases
+    assert cycle["proposal_transport"] == "worktree"
+    assert cycle["patch_check"]["valid"] is True
+    assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
+
+
 def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     fake_router = _FakeRouter(
@@ -1228,6 +1286,7 @@ def test_current_status_exposes_phase_specific_stall_budget(tmp_path):
         output_dir=tmp_path / "out",
         llm_timeout_seconds=900,
         test_timeout_seconds=600,
+        worktree_edit_timeout_seconds=1200,
         heartbeat_interval_seconds=10,
         run_tests=False,
     )
@@ -1252,11 +1311,31 @@ def test_current_status_exposes_phase_specific_stall_budget(tmp_path):
         started_at="2026-05-01T00:00:00+00:00",
     )
     test_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    daemon._write_current_status(
+        status="running",
+        phase="requesting_worktree_edit",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+    )
+    worktree_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
+    daemon._write_current_status(
+        status="running",
+        phase="retrying_worktree_edit",
+        cycle_index=1,
+        cycle_dir=cycle_dir,
+        started_at="2026-05-01T00:00:00+00:00",
+    )
+    retry_worktree_status = json.loads((tmp_path / "out/current_status.json").read_text(encoding="utf-8"))
 
     assert llm_status["phase_stale_after_seconds"] == 960
     assert llm_status["phase_stale_after_reason"] == "llm_timeout_seconds_plus_heartbeat_slack"
     assert test_status["phase_stale_after_seconds"] == 660
     assert test_status["phase_stale_after_reason"] == "effective_test_timeout_seconds_plus_heartbeat_slack"
+    assert worktree_status["phase_stale_after_seconds"] == 1260
+    assert worktree_status["phase_stale_after_reason"] == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
+    assert retry_worktree_status["phase_stale_after_seconds"] == 1260
+    assert retry_worktree_status["phase_stale_after_reason"] == "worktree_edit_timeout_seconds_plus_heartbeat_slack"
 
 
 def test_evaluation_uses_active_repair_projection_for_probe_metrics(tmp_path):

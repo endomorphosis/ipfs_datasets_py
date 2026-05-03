@@ -1945,11 +1945,15 @@ class LegalParserOptimizerDaemon:
             metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
         )
         final_retry_reason = ""
+        proposal_transport_mode = self.config.proposal_transport_mode()
         for attempt_index in range(1, max_attempts + 1):
             context.metadata["proposal_attempt"] = attempt_index
             self._write_current_status(
                 status="running",
-                phase="repairing_failed_patch" if repair_phase_feedback else "requesting_llm_patch",
+                phase=self._proposal_request_phase(
+                    repair_phase_feedback=bool(repair_phase_feedback),
+                    proposal_transport_mode=proposal_transport_mode,
+                ),
                 cycle_index=cycle_index,
                 cycle_dir=cycle_dir,
                 started_at=started,
@@ -2081,10 +2085,16 @@ class LegalParserOptimizerDaemon:
             if not retry_reason:
                 break
             if attempt_index < max_attempts:
-                retry_instruction = (
-                    " Regenerate a unified diff against the exact current relevant_file_snapshots; "
-                    "do not reuse stale hunk context."
-                )
+                if proposal_transport_mode == "worktree":
+                    retry_instruction = (
+                        " Regenerate direct edits inside the ephemeral worktree; do not hand-author "
+                        "a patch, and let Git produce the canonical diff."
+                    )
+                else:
+                    retry_instruction = (
+                        " Regenerate a unified diff against the exact current relevant_file_snapshots; "
+                        "do not reuse stale hunk context."
+                    )
                 if irreducible_residual_mode:
                     retry_instruction += (
                         " The residual repair-required gap is protected; pivot away from clearing "
@@ -2110,7 +2120,7 @@ class LegalParserOptimizerDaemon:
                 ]
                 self._write_current_status(
                     status="running",
-                    phase="retrying_llm_patch",
+                    phase=self._proposal_retry_phase(proposal_transport_mode),
                     cycle_index=cycle_index,
                     cycle_dir=cycle_dir,
                     started_at=started,
@@ -2120,7 +2130,7 @@ class LegalParserOptimizerDaemon:
                     last_parse_error=proposal.parse_error,
                 )
 
-        if self.config.proposal_transport_mode() == "hybrid" and final_retry_reason:
+        if proposal_transport_mode == "hybrid" and final_retry_reason:
             fallback_patch_check = (
                 self.optimizer.check_patch(proposal.unified_diff)
                 if proposal.unified_diff.strip()
@@ -2138,7 +2148,7 @@ class LegalParserOptimizerDaemon:
                 previous_patch_check=fallback_patch_check,
                 proposal_attempt=len(proposal_attempts) + 1,
                 proposal_attempts=max_attempts + 1,
-                proposal_transport=self.config.proposal_transport_mode(),
+                proposal_transport=proposal_transport_mode,
             )
             try:
                 worktree_proposal = self.optimizer.request_worktree_edit_patch(
@@ -2468,6 +2478,21 @@ class LegalParserOptimizerDaemon:
         )
         return cycle_payload
 
+    def _proposal_request_phase(
+        self,
+        *,
+        repair_phase_feedback: bool,
+        proposal_transport_mode: str,
+    ) -> str:
+        if proposal_transport_mode == "worktree":
+            return "repairing_failed_worktree_edit" if repair_phase_feedback else "requesting_worktree_edit"
+        return "repairing_failed_patch" if repair_phase_feedback else "requesting_llm_patch"
+
+    def _proposal_retry_phase(self, proposal_transport_mode: str) -> str:
+        if proposal_transport_mode == "worktree":
+            return "retrying_worktree_edit"
+        return "retrying_llm_patch"
+
     def _write_cycle_started(self, *, cycle_dir: Path, cycle_index: int, started: str) -> None:
         marker = {
             "status": "running",
@@ -2550,7 +2575,11 @@ class LegalParserOptimizerDaemon:
         if phase in {"requesting_llm_patch", "retrying_llm_patch", "repairing_failed_patch"}:
             budget = llm_timeout + slack
             reason = "llm_timeout_seconds_plus_heartbeat_slack"
-        elif phase == "requesting_worktree_edit":
+        elif phase in {
+            "requesting_worktree_edit",
+            "retrying_worktree_edit",
+            "repairing_failed_worktree_edit",
+        }:
             budget = worktree_timeout + slack
             reason = "worktree_edit_timeout_seconds_plus_heartbeat_slack"
         elif phase in {"running_tests", "running_tests_patch_only"}:
