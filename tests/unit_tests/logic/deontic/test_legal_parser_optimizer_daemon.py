@@ -1206,6 +1206,147 @@ def test_daemon_worktree_transport_reports_worktree_request_phase(tmp_path, monk
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
 
 
+def test_daemon_repairs_failed_tests_before_rollback(tmp_path, monkeypatch):
+    subprocess = __import__("subprocess")
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=tmp_path, check=True)
+    production_path = "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+    test_path = "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py"
+    (tmp_path / production_path).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / production_path).write_text("VALUE = 1\n", encoding="utf-8")
+    (tmp_path / test_path).parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / test_path).write_text("def test_existing():\n    assert True\n", encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=tmp_path, check=True, capture_output=True)
+
+    original_diff = "\n".join(
+        [
+            f"diff --git a/{production_path} b/{production_path}",
+            f"--- a/{production_path}",
+            f"+++ b/{production_path}",
+            "@@ -1 +1 @@",
+            "-VALUE = 1",
+            "+VALUE = 2",
+            f"diff --git a/{test_path} b/{test_path}",
+            f"--- a/{test_path}",
+            f"+++ b/{test_path}",
+            "@@ -1,2 +1,5 @@",
+            " def test_existing():",
+            "     assert True",
+            "+",
+            "+def test_original_candidate():",
+            "+    assert True",
+            "",
+        ]
+    )
+    repaired_diff = "\n".join(
+        [
+            f"diff --git a/{production_path} b/{production_path}",
+            f"--- a/{production_path}",
+            f"+++ b/{production_path}",
+            "@@ -1 +1 @@",
+            "-VALUE = 1",
+            "+VALUE = 3",
+            f"diff --git a/{test_path} b/{test_path}",
+            f"--- a/{test_path}",
+            f"+++ b/{test_path}",
+            "@@ -1,2 +1,5 @@",
+            " def test_existing():",
+            "     assert True",
+            "+",
+            "+def test_repaired_candidate():",
+            "+    assert True",
+            "",
+        ]
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Candidate needs full-suite repair.",
+                "focus_area": "parser",
+                "requirements_addressed": ["repair before rollback"],
+                "acceptance_criteria": ["candidate is repaired instead of rolled back"],
+                "changed_files": [production_path, test_path],
+                "expected_metric_gain": {"parser_capability": "repair"},
+                "tests_to_run": ["pytest tests/unit_tests/logic/deontic"],
+                "unified_diff": original_diff,
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=True,
+        run_tests=True,
+        commit_accepted_patches=False,
+        require_clean_touched_files=False,
+        llm_proposal_attempts=1,
+        require_production_and_tests=True,
+        repair_failed_tests_before_rollback=True,
+        failed_test_repair_attempts=1,
+        target_files=(production_path, test_path),
+        test_command=("pytest", "tests/unit_tests/logic/deontic"),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+    repair_calls = []
+    run_test_calls = {"count": 0}
+
+    def fake_repair_request(**kwargs):
+        repair_calls.append(kwargs)
+        return LegalParserCycleProposal(
+            summary="Repair full-suite failure.",
+            focus_area="parser",
+            requirements_addressed=["repair before rollback"],
+            acceptance_criteria=["full-suite failure is repaired"],
+            changed_files=[production_path, test_path],
+            expected_metric_gain={"parser_capability": "repair"},
+            tests_to_run=["pytest tests/unit_tests/logic/deontic"],
+            unified_diff=repaired_diff,
+            raw_response="worktree repair",
+        )
+
+    def fake_run_tests():
+        run_test_calls["count"] += 1
+        if run_test_calls["count"] == 1:
+            return {
+                "valid": False,
+                "returncode": 1,
+                "command": ["pytest", "tests/unit_tests/logic/deontic"],
+                "stdout": "FAILED tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py::test_original_candidate",
+                "stderr": "",
+                "timeout_seconds": 600,
+            }
+        return {
+            "valid": True,
+            "returncode": 0,
+            "command": ["pytest", "tests/unit_tests/logic/deontic"],
+            "stdout": "passed",
+            "stderr": "",
+            "timeout_seconds": 600,
+        }
+
+    monkeypatch.setattr(optimizer, "request_worktree_edit_patch", fake_repair_request)
+    monkeypatch.setattr(optimizer, "run_tests", fake_run_tests)
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    cycle = daemon.run_cycle(cycle_index=1)
+
+    assert repair_calls
+    assert repair_calls[0]["base_unified_diff"] == original_diff
+    assert repair_calls[0]["repair_context"]["failed_tests"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py::test_original_candidate"
+    ]
+    assert cycle["failed_test_repair"]["repaired"] is True
+    assert cycle["apply_result"]["reason"] == "repaired_failed_tests_before_rollback"
+    assert cycle["apply_result"].get("rolled_back") is not True
+    assert cycle["tests"]["valid"] is True
+    assert cycle["retained_change"]["has_retained_changes"] is True
+    assert cycle["retained_change"]["repaired_failed_tests"] is True
+    assert (tmp_path / production_path).read_text(encoding="utf-8") == "VALUE = 3\n"
+    assert "test_repaired_candidate" in (tmp_path / test_path).read_text(encoding="utf-8")
+
+
 def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     fake_router = _FakeRouter(
