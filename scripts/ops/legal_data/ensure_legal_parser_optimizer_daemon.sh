@@ -61,13 +61,23 @@ pid_is_legal_parser_supervisor() {
   [[ "$args" == *"run_legal_parser_optimizer_daemon.sh"* ]]
 }
 
+pid_is_legal_parser_wrapper() {
+  local pid="$1"
+  local args=""
+  if ! pid_alive "$pid"; then
+    return 1
+  fi
+  args="$(ps -o args= -p "$pid" 2>/dev/null || true)"
+  [[ "$args" == *"run_legal_parser_optimizer_daemon.sh"* && "$args" == *"legal-parser supervisor exited with code"* ]]
+}
+
 wrapper_alive() {
   local pid=""
   if [[ "$ENSURE_LAUNCH_MODE" == "tmux" ]] && command -v tmux >/dev/null 2>&1; then
     tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null && return 0
   fi
   pid="$(wrapper_pid)"
-  pid_alive "$pid"
+  pid_is_legal_parser_wrapper "$pid"
 }
 
 run_check() {
@@ -164,6 +174,22 @@ def pid_alive(pid):
     except Exception:
         return False
 
+def pid_args(pid):
+    if not pid_alive(pid):
+        return ""
+    try:
+        with open(f"/proc/{int(pid)}/cmdline", "rb") as handle:
+            return handle.read().replace(b"\0", b" ").decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+def pid_is_legal_parser_wrapper(pid):
+    args = pid_args(pid)
+    return (
+        "run_legal_parser_optimizer_daemon.sh" in args
+        and "legal-parser supervisor exited with code" in args
+    )
+
 supervisor_pid = read_pid(supervisor_pid_path)
 wrapper_pid = read_pid(wrapper_pid_path)
 payload = {
@@ -173,7 +199,7 @@ payload = {
     "started_supervisor": started_supervisor == "1",
     "launcher_pid": int(launcher_pid) if str(launcher_pid).isdigit() else None,
     "wrapper_pid": wrapper_pid,
-    "wrapper_pid_alive": pid_alive(wrapper_pid),
+    "wrapper_pid_alive": pid_is_legal_parser_wrapper(wrapper_pid),
     "requested_launch_mode": requested_launch_mode,
     "launch_mode": launch_mode,
     "restart_delay_seconds": int(restart_delay_seconds),

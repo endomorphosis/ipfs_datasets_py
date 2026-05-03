@@ -43,6 +43,22 @@ def pid_alive(pid):
     except Exception:
         return False
 
+def pid_args(pid):
+    if not pid_alive(pid):
+        return ""
+    try:
+        with open(f"/proc/{int(pid)}/cmdline", "rb") as handle:
+            return handle.read().replace(b"\0", b" ").decode("utf-8", errors="replace")
+    except Exception:
+        return ""
+
+def pid_is_legal_parser_wrapper(pid):
+    args = pid_args(pid)
+    return (
+        "run_legal_parser_optimizer_daemon.sh" in args
+        and "legal-parser supervisor exited with code" in args
+    )
+
 
 current = read_json(status_path)
 supervisor = read_json(supervisor_path)
@@ -98,9 +114,13 @@ payload = {
     "ensure_requested_launch_mode": ensure.get("requested_launch_mode"),
     "ensure_launch_mode": ensure.get("launch_mode"),
     "ensure_launcher_pid": ensure.get("launcher_pid"),
-    "ensure_launcher_pid_alive": pid_alive(ensure.get("launcher_pid")) if ensure.get("launcher_pid") else False,
+    "ensure_launcher_pid_alive": pid_is_legal_parser_wrapper(ensure.get("launcher_pid"))
+    if ensure.get("launcher_pid")
+    else False,
     "ensure_wrapper_pid": ensure.get("wrapper_pid"),
-    "ensure_wrapper_pid_alive": pid_alive(ensure.get("wrapper_pid")) if ensure.get("wrapper_pid") else False,
+    "ensure_wrapper_pid_alive": pid_is_legal_parser_wrapper(ensure.get("wrapper_pid"))
+    if ensure.get("wrapper_pid")
+    else False,
     "ensure_supervisor_pid_alive": ensure.get("supervisor_pid_alive"),
     "cycle_index": current.get("cycle_index"),
     "phase": current.get("phase"),

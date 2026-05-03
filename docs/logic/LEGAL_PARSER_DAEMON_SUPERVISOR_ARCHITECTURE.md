@@ -53,12 +53,29 @@ behavior:
 - If legal-parser targets are dirty and stable, validate and commit them or
   restore only those targets.
 - If recovery itself repeats the same failure, escalate to maintenance.
+- If an internal escalation reason exists, keep it sticky across child stop so
+  maintenance cannot be skipped just because the stopped child no longer emits
+  the same live trigger.
 - If cycles keep advancing without accepted parser/encoder/decoder/prover work,
   escalate to maintenance instead of waiting overnight for visible files to
   change.
 - If maintenance produces no output for the idle-timeout window, terminate it.
+- If maintenance validates changed allowed files, stage and commit those changes
+  with a supervisor-maintenance commit so repaired daemon programming becomes
+  durable and visible to later runs.
 - If a no-op recovery clears a stale trigger, restart quickly.
 - If the supervisor exits, the ensure wrapper restarts it.
+- Health is green only when the supervisor is alive and either the daemon has a
+  fresh heartbeat or a bounded supervisor recovery/maintenance window is active.
+
+## Formal Logic Target Scope
+
+Autonomous parser work is allowed to move across the whole deterministic formal
+logic stack, not just the first parser/export files. The daemon prompt and
+recovery allowlists include parser, IR, formula, converter, exports, decoder,
+prover syntax, graph/support/knowledge-base helpers, and the matching deontic
+tests. That keeps overnight work aligned with the goal: deterministic legal text
+to `LegalNormIR` to formal logic/prover syntax without parser-runtime LLM calls.
 
 ## Recommended Overnight Entry Point
 

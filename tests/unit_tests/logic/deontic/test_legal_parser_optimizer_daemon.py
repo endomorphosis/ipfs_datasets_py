@@ -102,8 +102,12 @@ def test_supervisor_preserves_sticky_agentic_reason_after_stopping_child():
     assert 'agentic maintenance idle timeout after' in function_body
     assert '"active_agentic_maintenance_started_at"' in script
     assert '"active_agentic_maintenance_timeout_seconds"' in script
+    assert '"formal_logic_goal"' in script
     assert 'prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"' in function_body
     assert 'python3 - "$REPO_ROOT" "$REPO_ROOT/$maintenance_log" "$CODEX_BIN"' in function_body
+    assert "agentic maintenance validation passed; committing accepted maintenance changes" in function_body
+    assert 'git -C "$REPO_ROOT" commit -m "legal-parser-daemon: accept supervisor maintenance"' in function_body
+    assert 'last_agentic_maintenance_status="accepted_committed"' in function_body
 
 
 def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
@@ -117,7 +121,8 @@ def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
     assert "SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS" in script
     assert '"fast_restart_backoff_seconds"' in script
     assert 'restart_delay_seconds="$RESTART_BACKOFF_SECONDS"' in restart_block
-    assert 'skipped_stale_trigger|dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change' in restart_block
+    assert 'dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change' in restart_block
+    assert "skipped_stale_trigger" not in restart_block
     assert 'restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"' in restart_block
     assert 'restarting in ${restart_delay_seconds}s' in restart_block
 
@@ -136,6 +141,7 @@ def test_ensure_legal_parser_optimizer_daemon_wraps_supervisor_for_unattended_re
     assert "while true; do MODEL_NAME=" in script
     assert "legal-parser supervisor exited with code" in script
     assert "cleanup_stale_supervisor_artifacts()" in script
+    assert "pid_is_legal_parser_supervisor()" in script
     assert "wrapper_alive()" in script
     assert "wrapped_existing_supervisor" in script
     assert "wrapper_recovered_supervisor" in script
@@ -145,6 +151,37 @@ def test_ensure_legal_parser_optimizer_daemon_wraps_supervisor_for_unattended_re
     assert '"schema": "ipfs_datasets_py.legal_parser_daemon.ensure"' in script
     assert '"supervisor_pid_alive"' in script
     assert '"wrapper_pid_alive"' in script
+
+
+def test_legal_parser_daemon_scope_includes_formal_logic_stack_targets():
+    config = LegalParserDaemonConfig()
+    target_files = set(config.target_files)
+    recovery_targets = set(parser_daemon_module.LEGAL_PARSER_RECOVERY_TARGETS)
+
+    expected = {
+        "ipfs_datasets_py/logic/deontic/decoder.py",
+        "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+        "ipfs_datasets_py/logic/deontic/graph.py",
+        "ipfs_datasets_py/logic/deontic/support_map.py",
+        "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+        "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
+    }
+
+    assert expected <= target_files
+    assert expected <= recovery_targets
+
+
+def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh)" in script
+    assert "maintenance_running" in script
+    assert '"formal_logic_goal"' in script
 
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():

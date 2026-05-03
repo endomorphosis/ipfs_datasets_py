@@ -1858,6 +1858,7 @@ run_agentic_maintenance() {
     tests/unit_tests/logic/deontic/test_legal_norm_ir.py \
     tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py \
     tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py \
+    docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$before_diff" 2>/dev/null || true
@@ -1930,6 +1931,7 @@ Allowed files:
 - tests/unit_tests/logic/deontic/test_legal_norm_ir.py
 - tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py
 - tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py
+- docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md
 
@@ -2078,6 +2080,7 @@ PY
     tests/unit_tests/logic/deontic/test_legal_norm_ir.py \
     tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py \
     tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py \
+    docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$after_diff" 2>/dev/null || true
@@ -2088,7 +2091,26 @@ PY
     && python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && pytest -q "$REPO_ROOT/tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
     if [[ "$after_head" != "$before_head" ]] || ! cmp -s "$before_diff" "$after_diff"; then
-      last_agentic_maintenance_status="accepted"
+      if [[ -s "$after_diff" ]]; then
+        {
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance validation passed; committing accepted maintenance changes"
+          xargs -r git -C "$REPO_ROOT" add -- < "$after_diff"
+          if git -C "$REPO_ROOT" diff --cached --quiet; then
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) no staged maintenance diff remained after validation"
+          else
+            git -C "$REPO_ROOT" commit -m "legal-parser-daemon: accept supervisor maintenance"
+          fi
+        } >> "$REPO_ROOT/$maintenance_log" 2>&1
+        rc=$?
+        if [[ "$rc" == "0" ]]; then
+          last_agentic_maintenance_status="accepted_committed"
+          clear_recovery_failure_state
+        else
+          last_agentic_maintenance_status="commit_failed"
+        fi
+      else
+        last_agentic_maintenance_status="accepted"
+      fi
     else
       last_agentic_maintenance_status="no_change"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance completed without file changes" >> "$REPO_ROOT/$maintenance_log"
@@ -2211,20 +2233,28 @@ stop_child() {
 }
 
 cleanup() {
+  local final_status="${1:-stopped}"
   if [[ "$cleaning_up" == "1" ]]; then
     return 0
   fi
   cleaning_up=1
+  case "$last_agentic_maintenance_status" in
+    *running)
+      last_agentic_maintenance_status="${last_agentic_maintenance_status}_interrupted"
+      ;;
+  esac
+  active_agentic_maintenance_started_at=""
+  active_agentic_maintenance_timeout_seconds="null"
   stop_child
-  write_supervisor_status "stopped" "" "" null
+  write_supervisor_status "$final_status" "" "" null
   if [[ -f "$REPO_ROOT/$SUPERVISOR_PID_PATH" ]] && [[ "$(cat "$REPO_ROOT/$SUPERVISOR_PID_PATH" 2>/dev/null)" == "$$" ]]; then
     rm -f "$REPO_ROOT/$SUPERVISOR_PID_PATH"
   fi
   rm -f "$REPO_ROOT/$SUPERVISOR_LOCK_PATH"
 }
 
-trap 'cleanup; exit 143' TERM INT
-trap 'cleanup' EXIT
+trap 'cleanup "terminated"; exit 143' TERM INT
+trap 'cleanup "stopped"' EXIT
 
 terminate_matching_legal_parser_daemons
 terminate_competing_daemons
@@ -2315,7 +2345,7 @@ while true; do
   fi
   child_pid=""
   case "$last_agentic_maintenance_status" in
-    skipped_stale_trigger|dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change)
+    dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change)
       restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"
       ;;
   esac

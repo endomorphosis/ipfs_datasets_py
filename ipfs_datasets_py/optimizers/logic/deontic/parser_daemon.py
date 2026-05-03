@@ -3273,11 +3273,13 @@ class LegalParserOptimizerDaemon:
             "reason": "no_changed_deontic_test_files",
         }
         if compile_result.get("valid") and collect_result.get("valid") and changed_test_files:
+            focused_timeout = self._focused_validation_timeout_seconds(changed_test_files)
             focused_tests_result = _run_command(
                 ["pytest", "-q", *changed_test_files],
                 cwd=self.config.repo_root,
-                timeout=min(120, max(30, int(self.config.test_timeout_seconds))),
+                timeout=focused_timeout,
             )
+            focused_tests_result["timeout_seconds"] = focused_timeout
 
         valid = (
             bool(compile_result.get("valid"))
@@ -3301,6 +3303,22 @@ class LegalParserOptimizerDaemon:
             "focused_validation_command": focused_tests_result.get("command", []),
             "reasons": reasons,
         }
+
+    def _focused_validation_timeout_seconds(self, changed_test_files: Sequence[str]) -> int:
+        """Return a focused pytest timeout that can handle large deontic test files."""
+
+        configured_timeout = max(30, int(self.config.test_timeout_seconds))
+        effective_timeout = configured_timeout
+        if hasattr(self.optimizer, "effective_test_timeout_seconds"):
+            try:
+                effective_timeout = max(
+                    configured_timeout,
+                    int(self.optimizer.effective_test_timeout_seconds()),
+                )
+            except (TypeError, ValueError):
+                effective_timeout = configured_timeout
+        large_file_floor = 300 if changed_test_files else 120
+        return min(3600, max(large_file_floor, effective_timeout))
 
     def _commit_retained_change(
         self,
@@ -3488,19 +3506,22 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
             failure_command = [str(part) for part in check.get("command") or []]
         stderr = _command_output_text(check.get("stderr") or "")
         stdout = _command_output_text(check.get("stdout") or "")
+        output_text = stderr + "\n" + stdout
         if check_name == "compile" and "py_compile" not in exception_types:
             exception_types.append("py_compile")
-        for match in re.finditer(r"FAILED\s+([^\s]+)", stderr + "\n" + stdout):
+        if "timeout after" in output_text and "TimeoutExpired" not in exception_types:
+            exception_types.append("TimeoutExpired")
+        for match in re.finditer(r"FAILED\s+([^\s]+)", output_text):
             name = match.group(1).strip()
             if name == "[" or "::" not in name:
                 continue
             if name and name not in failed_tests:
                 failed_tests.append(name)
-        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", stderr + "\n" + stdout):
+        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", output_text):
             name = match.group(1)
             if name and name not in exception_types:
                 exception_types.append(name)
-        for line in (stderr + "\n" + stdout).splitlines():
+        for line in output_text.splitlines():
             text = line.strip()
             if not text:
                 continue
@@ -3511,6 +3532,7 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
                 or text.startswith("E   ")
                 or "SyntaxError" in text
                 or "IndentationError" in text
+                or "timeout after" in text
                 or "pytest" in text
                 or "FAILED " in text
             ):
