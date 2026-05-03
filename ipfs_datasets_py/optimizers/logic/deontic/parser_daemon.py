@@ -562,7 +562,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Avoid cosmetic churn, one-line metric gaming, and isolated test-only patches.",
                 "If recent_cycle_history shows patch_check_failure_tail, regenerate the patch against relevant_file_snapshots exactly; do not repeat hunks from stale file versions.",
                 "When patch_stability_mode is true, prefer one production file plus one matching test file; broad four-file patches are likely to be rejected before apply, but single-phrase micro-patches are also rejected.",
-                "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, or parity_score.",
+                "When metric_stall_mode is true, target a named unresolved repair_required_details item or coverage gap and set expected_metric_gain for a real metric such as repair_required_count, proof_ready_rate, cross_reference_resolution_rate, phase8_quality_complete_rate, phase8_decoder_grounded_phrase_rate, phase8_prover_syntax_valid_rate, or parity_score.",
                 "When progress_snapshot shows repeated metric_stall_no_metric_progress rollbacks, change the parser capability that produces the measured slot/formula/export instead of adding surrounding tests, docs, or export-only context.",
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When roadmap_pivot_mode is true, stop adding narrow procedural trigger/export variants. Prioritize Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.",
@@ -1304,24 +1304,72 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def check_patch(self, unified_diff: str) -> Dict[str, Any]:
         if not unified_diff.strip():
             return {"valid": False, "returncode": 1, "stdout": "", "stderr": "empty unified diff"}
-        return _run_command(
-            ["git", "apply", "--check", "--recount", "-"],
-            cwd=self.daemon_config.repo_root,
-            input_text=unified_diff,
-            timeout=30,
+        attempts: List[Dict[str, Any]] = []
+        for strategy, command in self._git_apply_commands(check=True):
+            result = _run_command(
+                command,
+                cwd=self.daemon_config.repo_root,
+                input_text=unified_diff,
+                timeout=30,
+            )
+            result["apply_strategy"] = strategy
+            attempts.append(result)
+            if result.get("valid"):
+                return {
+                    **result,
+                    "fallback_attempts": attempts,
+                    "strict_check": attempts[0],
+                }
+        stderr = "\n".join(
+            f"[{item.get('apply_strategy')}] {str(item.get('stderr') or '').strip()}"
+            for item in attempts
+            if str(item.get("stderr") or "").strip()
         )
+        final = dict(attempts[-1] if attempts else {})
+        final.update(
+            {
+                "valid": False,
+                "apply_strategy": "none",
+                "fallback_attempts": attempts,
+                "strict_check": attempts[0] if attempts else {},
+                "stderr": stderr or str(final.get("stderr") or ""),
+            }
+        )
+        return final
 
     def apply_patch(self, unified_diff: str) -> Dict[str, Any]:
         check = self.check_patch(unified_diff)
         if not check["valid"]:
             return {"applied": False, "check": check, "apply": None}
+        strategy = str(check.get("apply_strategy") or "strict")
+        apply_command = self._git_apply_command_for_strategy(strategy, check=False)
         apply_result = _run_command(
-            ["git", "apply", "--recount", "-"],
+            apply_command,
             cwd=self.daemon_config.repo_root,
             input_text=unified_diff,
             timeout=30,
         )
+        apply_result["apply_strategy"] = strategy
         return {"applied": bool(apply_result["valid"]), "check": check, "apply": apply_result}
+
+    def _git_apply_commands(self, *, check: bool) -> List[Tuple[str, List[str]]]:
+        """Return increasingly tolerant Git apply strategies for model-generated diffs."""
+
+        check_flag = ["--check"] if check else []
+        return [
+            ("strict", ["git", "apply", *check_flag, "--recount", "-"]),
+            (
+                "whitespace_fix",
+                ["git", "apply", *check_flag, "--recount", "--whitespace=fix", "-"],
+            ),
+            ("three_way", ["git", "apply", *check_flag, "--recount", "--3way", "-"]),
+        ]
+
+    def _git_apply_command_for_strategy(self, strategy: str, *, check: bool) -> List[str]:
+        for candidate_strategy, command in self._git_apply_commands(check=check):
+            if candidate_strategy == strategy:
+                return command
+        return self._git_apply_commands(check=check)[0][1]
 
     def run_tests(self) -> Dict[str, Any]:
         if not self.daemon_config.run_tests:
@@ -2391,6 +2439,12 @@ class LegalParserOptimizerDaemon:
             "formula_error_rate",
             "parsed_rate",
             "schema_valid_rate",
+            "phase8_quality_complete_rate",
+            "phase8_quality_requires_validation_rate",
+            "phase8_decoder_grounded_phrase_rate",
+            "phase8_decoder_ungrounded_phrase_rate",
+            "phase8_prover_syntax_valid_rate",
+            "phase8_ir_grounded_slot_rate",
         }
         if irreducible_residual_mode:
             accepted_metric_keys = accepted_metric_keys | {
@@ -2681,6 +2735,15 @@ class LegalParserOptimizerDaemon:
             "formula_error_rate",
             "parsed_rate",
             "schema_valid_rate",
+            "phase8_quality_complete_rate",
+            "phase8_quality_requires_validation_rate",
+            "phase8_decoder_grounded_phrase_rate",
+            "phase8_decoder_ungrounded_phrase_rate",
+            "phase8_prover_syntax_valid_rate",
+            "phase8_ir_grounded_slot_rate",
+            "phase8_quality_complete_count",
+            "phase8_quality_requires_validation_count",
+            "phase8_coverage_blocker_distribution",
             "coverage_gaps",
         ]
         return {key: metrics.get(key) for key in keys if key in metrics}
@@ -2692,7 +2755,13 @@ class LegalParserOptimizerDaemon:
         post_metrics: Dict[str, Any],
     ) -> Dict[str, Dict[str, Any]]:
         moved: Dict[str, Dict[str, Any]] = {}
-        lower_is_better = {"repair_required_count", "repair_required_rate", "formula_error_rate"}
+        lower_is_better = {
+            "repair_required_count",
+            "repair_required_rate",
+            "formula_error_rate",
+            "phase8_quality_requires_validation_rate",
+            "phase8_decoder_ungrounded_phrase_rate",
+        }
         for key, expected in expected_metric_gain.items():
             metric = str(key)
             before = _as_float(pre_metrics.get(metric))

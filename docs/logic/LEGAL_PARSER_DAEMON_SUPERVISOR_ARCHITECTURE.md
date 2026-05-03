@@ -81,6 +81,16 @@ behavior:
 - Health is green only when the supervisor is alive and either the daemon has a
   fresh heartbeat or a bounded supervisor recovery/maintenance window is active.
 
+## Patch Transport
+
+The daemon still stores proposals as auditable unified diffs, but patch
+validation is not a single brittle `git apply --check` anymore. It first tries a
+strict apply check, then retries with whitespace repair, then with Git three-way
+apply. The actual apply step reuses the strategy that passed validation. Longer
+term, the preferred direction is patchless proposal generation in an isolated
+worktree: let the model edit files there, then have Git generate the canonical
+diff that the daemon validates and applies.
+
 ## Formal Logic Target Scope
 
 Autonomous parser work is allowed to move across the whole deterministic formal

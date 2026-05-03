@@ -12,7 +12,7 @@ from .exports import (
     parser_elements_to_export_tables,
     validate_export_tables,
 )
-from .metrics import summarize_parser_elements
+from .metrics import summarize_parser_elements, summarize_phase8_parser_metrics
 from .legal_text_to_deontic import convert_legal_text_to_deontic
 from .analyzer import DeonticAnalyzer
 from .graph import (
@@ -92,4 +92,5 @@ __all__ = [
     "parser_element_to_ir",
     "parser_element_to_formula",
     "summarize_parser_elements",
+    "summarize_phase8_parser_metrics",
 ]

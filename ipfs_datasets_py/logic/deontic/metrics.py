@@ -3,9 +3,20 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Mapping
 
-from .exports import parser_elements_for_metrics
+from .exports import (
+    build_decoder_records_from_irs,
+    build_ir_slot_provenance_audit_records,
+    build_phase8_quality_summary_records,
+    build_prover_syntax_records_from_ir,
+    parser_elements_for_metrics,
+    summarize_decoder_reconstruction_records,
+    summarize_ir_slot_provenance_audit_records,
+    summarize_phase8_quality_records,
+    summarize_prover_syntax_target_coverage,
+)
+from .ir import LegalNormIR
 
 
 def _valid_span(text: str, span: Any) -> bool:
@@ -17,6 +28,16 @@ def _valid_span(text: str, span: Any) -> bool:
     except (TypeError, ValueError):
         return False
     return 0 <= start <= end <= len(text)
+
+
+def summarize_phase8_parser_metrics(elements: Iterable[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Return Phase 8 reconstruction/prover metrics for parser elements."""
+
+    input_rows: List[Dict[str, Any]] = [
+        dict(item) for item in elements or [] if isinstance(item, Mapping)
+    ]
+    rows: List[Dict[str, Any]] = parser_elements_for_metrics(input_rows)
+    return _summarize_phase8_rows(rows)
 
 
 def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
@@ -42,6 +63,7 @@ def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, A
             "norm_type_distribution": {},
             "modality_distribution": {},
             "cross_reference_resolution_rate": 0.0,
+            **_summarize_phase8_rows(rows),
         }
 
     schema_valid_count = sum(1 for row in rows if row.get("schema_valid") is True)
@@ -101,5 +123,86 @@ def summarize_parser_elements(elements: Iterable[Dict[str, Any]]) -> Dict[str, A
         "cross_reference_resolution_rate": (
             round(resolved_refs / total_refs, 6) if total_refs else 0.0
         ),
+        **_summarize_phase8_rows(rows),
     }
 
+
+def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    norms: List[LegalNormIR] = []
+    build_errors: Counter[str] = Counter()
+    for row in rows:
+        try:
+            norms.append(LegalNormIR.from_parser_element(row))
+        except Exception as exc:  # pragma: no cover - diagnostic only
+            build_errors[type(exc).__name__] += 1
+
+    decoder_records = build_decoder_records_from_irs(norms)
+    prover_syntax_records: List[Dict[str, Any]] = []
+    for norm in norms:
+        prover_syntax_records.extend(build_prover_syntax_records_from_ir(norm))
+    ir_slot_provenance_records = build_ir_slot_provenance_audit_records(norms)
+    phase8_quality_records = build_phase8_quality_summary_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_syntax_records,
+        ir_slot_provenance_records=ir_slot_provenance_records,
+    )
+
+    decoder_summary = summarize_decoder_reconstruction_records(decoder_records)
+    prover_summary = summarize_prover_syntax_target_coverage(prover_syntax_records)
+    provenance_summary = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
+    phase8_quality_summary = summarize_phase8_quality_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_syntax_records,
+        ir_slot_provenance_records=ir_slot_provenance_records,
+    )
+
+    quality_record_count = len(phase8_quality_records)
+    quality_complete_count = sum(
+        1 for record in phase8_quality_records if record.get("phase8_quality_complete") is True
+    )
+    quality_requires_validation_count = sum(
+        1 for record in phase8_quality_records if record.get("requires_validation") is True
+    )
+    coverage_blockers: Counter[str] = Counter()
+    for record in phase8_quality_records:
+        coverage_blockers.update(str(item) for item in record.get("coverage_blockers", []) if item)
+
+    return {
+        "phase8_source_count": len(norms),
+        "phase8_record_build_error_count": sum(build_errors.values()),
+        "phase8_record_build_error_distribution": dict(sorted(build_errors.items())),
+        "phase8_decoder_reconstruction_record_count": decoder_summary["record_count"],
+        "phase8_decoder_grounded_phrase_rate": round(
+            float(decoder_summary["mean_grounded_decoded_phrase_rate"]), 6
+        ),
+        "phase8_decoder_ungrounded_phrase_rate": round(
+            float(decoder_summary["mean_ungrounded_decoded_phrase_rate"]), 6
+        ),
+        "phase8_decoder_records_with_missing_slots": decoder_summary[
+            "records_with_missing_slots"
+        ],
+        "phase8_prover_required_target_count": len(prover_summary["required_targets"]),
+        "phase8_prover_present_required_target_count": prover_summary[
+            "present_required_target_count"
+        ],
+        "phase8_prover_syntax_valid_rate": prover_summary["syntax_valid_rate"],
+        "phase8_ir_grounded_slot_rate": provenance_summary["grounded_slot_rate"],
+        "phase8_quality_record_count": quality_record_count,
+        "phase8_quality_complete_count": quality_complete_count,
+        "phase8_quality_complete_rate": round(
+            quality_complete_count / quality_record_count, 6
+        )
+        if quality_record_count
+        else 0.0,
+        "phase8_quality_requires_validation_count": quality_requires_validation_count,
+        "phase8_quality_requires_validation_rate": round(
+            quality_requires_validation_count / quality_record_count, 6
+        )
+        if quality_record_count
+        else 0.0,
+        "phase8_coverage_blocker_distribution": dict(sorted(coverage_blockers.items())),
+        "decoder_reconstruction_metrics": decoder_summary,
+        "prover_syntax_target_coverage": prover_summary,
+        "ir_slot_provenance": provenance_summary,
+        "phase8_quality_summary": phase8_quality_summary,
+    }

@@ -707,6 +707,51 @@ def test_optimizer_restores_worktree_after_llm_side_effects(tmp_path):
     ).returncode == 0
 
 
+def test_optimizer_uses_successful_git_apply_fallback_strategy(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_run_command(cmd, *, cwd, input_text=None, timeout=60):
+        calls.append(list(cmd))
+        if "--check" in cmd:
+            valid = "--3way" in cmd
+            return {
+                "valid": valid,
+                "returncode": 0 if valid else 1,
+                "command": list(cmd),
+                "stdout": "",
+                "stderr": "" if valid else "error: patch failed: stale context",
+            }
+        return {
+            "valid": "--3way" in cmd,
+            "returncode": 0 if "--3way" in cmd else 1,
+            "command": list(cmd),
+            "stdout": "",
+            "stderr": "",
+        }
+
+    monkeypatch.setattr(parser_daemon_module, "_run_command", fake_run_command)
+    optimizer = LegalParserParityOptimizer(
+        daemon_config=LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out"),
+        llm_backend=_FakeRouter("{}"),
+    )
+
+    check = optimizer.check_patch("diff --git a/example.py b/example.py\n")
+    apply_result = optimizer.apply_patch("diff --git a/example.py b/example.py\n")
+
+    assert check["valid"] is True
+    assert check["apply_strategy"] == "three_way"
+    assert check["strict_check"]["valid"] is False
+    assert [item["apply_strategy"] for item in check["fallback_attempts"]] == [
+        "strict",
+        "whitespace_fix",
+        "three_way",
+    ]
+    assert apply_result["applied"] is True
+    assert apply_result["apply"]["apply_strategy"] == "three_way"
+    assert any("--check" in call and "--3way" in call for call in calls)
+    assert any("--check" not in call and "--3way" in call for call in calls)
+
+
 def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):
     __import__("subprocess").run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
     fake_router = _FakeRouter(
@@ -3152,6 +3197,63 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
     assert cycle["commit_result"] == {"committed": False, "reason": "metric_stall_no_metric_progress"}
     assert (repo / prod_file).read_text(encoding="utf-8") == "EXPORT_MARKER = 'before_exports'\n"
     assert (repo / test_file).read_text(encoding="utf-8") == "def test_marker():\n    assert 'before_test'\n"
+
+
+def test_daemon_metric_gate_tracks_phase8_quality_metrics():
+    daemon = object.__new__(LegalParserOptimizerDaemon)
+    proposal = LegalParserCycleProposal(
+        expected_metric_gain={"phase8_quality_complete_rate": 0.1}
+    )
+
+    quality = daemon._enforce_metric_stall_quality(
+        proposal=proposal,
+        proposal_quality={"valid": True, "reasons": []},
+    )
+    moved = daemon._moved_expected_metrics(
+        {
+            "phase8_quality_complete_rate": 0.1,
+            "phase8_quality_requires_validation_rate": -0.1,
+            "phase8_decoder_ungrounded_phrase_rate": -0.1,
+        },
+        {
+            "phase8_quality_complete_rate": 0.25,
+            "phase8_quality_requires_validation_rate": 0.75,
+            "phase8_decoder_ungrounded_phrase_rate": 0.20,
+        },
+        {
+            "phase8_quality_complete_rate": 0.50,
+            "phase8_quality_requires_validation_rate": 0.50,
+            "phase8_decoder_ungrounded_phrase_rate": 0.05,
+        },
+    )
+    snapshot = daemon._selected_metric_snapshot(
+        {
+            "phase8_quality_complete_rate": 0.50,
+            "phase8_quality_requires_validation_rate": 0.50,
+            "phase8_decoder_grounded_phrase_rate": 0.95,
+            "phase8_prover_syntax_valid_rate": 1.0,
+            "phase8_ir_grounded_slot_rate": 0.90,
+            "phase8_coverage_blocker_distribution": {"missing_reconstruction_slot:action": 1},
+            "unrelated": "ignored",
+        }
+    )
+
+    assert quality["valid"] is True
+    assert set(moved) == {
+        "phase8_quality_complete_rate",
+        "phase8_quality_requires_validation_rate",
+        "phase8_decoder_ungrounded_phrase_rate",
+    }
+    assert snapshot == {
+        "phase8_quality_complete_rate": 0.50,
+        "phase8_quality_requires_validation_rate": 0.50,
+        "phase8_decoder_grounded_phrase_rate": 0.95,
+        "phase8_prover_syntax_valid_rate": 1.0,
+        "phase8_ir_grounded_slot_rate": 0.90,
+        "phase8_coverage_blocker_distribution": {
+            "missing_reconstruction_slot:action": 1
+        },
+    }
 
 
 def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp_path):
