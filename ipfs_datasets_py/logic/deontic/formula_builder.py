@@ -151,7 +151,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_public_notice_display_light_verb_action(action_text)
     action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
-    action_text = _normalize_complaint_claim_request_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -6390,58 +6389,6 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"comment {target}" if target else text
-
-    return text
-
-
-def _normalize_complaint_claim_request_light_verb_action(action_text: str) -> str:
-    """Project procedural demand nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    complaint_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|lodge|lodges|lodged|lodging|bring|brings|brought|bringing)\s+"
-        r"(?:a\s+|the\s+)?complaint\s+(?:about|against|concerning|regarding|as\s+to|with\s+respect\s+to)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|lodge|lodges|lodged|lodging|bring|brings|brought|bringing)\s+"
-        r"complaints\s+(?:about|against|concerning|regarding|as\s+to|with\s+respect\s+to)\s+(?:the\s+)?(.+)$",
-        r"^complaint\s+(?:about|against|concerning|regarding|as\s+to|with\s+respect\s+to)\s+(?:the\s+)?(.+)$",
-        r"^complaints\s+(?:about|against|concerning|regarding|as\s+to|with\s+respect\s+to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in complaint_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"complain {target}" if target else text
-
-    claim_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|present|presents|presented|presenting|assert|asserts|asserted|asserting)\s+"
-        r"(?:a\s+|the\s+)?claim\s+(?:for|to|against|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|present|presents|presented|presenting|assert|asserts|asserted|asserting)\s+"
-        r"claims\s+(?:for|to|against|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^claim\s+(?:for|to|against|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^claims\s+(?:for|to|against|concerning|regarding)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in claim_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"claim {target}" if target else text
-
-    request_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|present|presents|presented|presenting)\s+"
-        r"(?:a\s+|the\s+)?request\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|present|presents|presented|presenting)\s+"
-        r"requests\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^request\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^requests\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in request_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"request {target}" if target else text
 
     return text
 
