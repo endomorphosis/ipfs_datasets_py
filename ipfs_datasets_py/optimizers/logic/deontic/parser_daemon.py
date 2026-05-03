@@ -24,6 +24,7 @@ import json
 import traceback
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -124,6 +125,10 @@ class LegalParserDaemonConfig:
     llm_temperature: float = 0.1
     llm_timeout_seconds: int = 900
     llm_proposal_attempts: int = 3
+    proposal_transport: str = "patch"
+    worktree_edit_timeout_seconds: int = 1200
+    worktree_root: Path = field(default_factory=lambda: Path(".daemon/legal-parser-worktrees"))
+    codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
     heartbeat_interval_seconds: float = 15.0
     test_timeout_seconds: int = 600
     require_production_and_tests: bool = True
@@ -188,6 +193,27 @@ class LegalParserDaemonConfig:
             return None
         return provider
 
+    def proposal_transport_mode(self) -> str:
+        """Return normalized proposal transport mode."""
+
+        mode = str(self.proposal_transport or "patch").strip().lower()
+        aliases = {
+            "auto": "hybrid",
+            "direct": "worktree",
+            "direct_edit": "worktree",
+            "direct-edit": "worktree",
+            "patchless": "worktree",
+            "worktree_edit": "worktree",
+            "worktree-edit": "worktree",
+        }
+        mode = aliases.get(mode, mode)
+        if mode not in {"patch", "hybrid", "worktree"}:
+            return "patch"
+        return mode
+
+    def resolved_worktree_root(self) -> Path:
+        return _resolve_path(self.repo_root, self.worktree_root)
+
 
 @dataclass
 class LegalParserCycleProposal:
@@ -235,6 +261,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
         feedback: List[str],
         context: OptimizationContext,
     ) -> LegalParserCycleProposal:
+        if self.daemon_config.proposal_transport_mode() == "worktree":
+            return self.request_worktree_edit_patch(
+                cycle_index=int(context.metadata.get("cycle_index", 1)),
+                evaluation=artifact if isinstance(artifact, dict) else {},
+                feedback=feedback,
+            )
         return self.request_llm_patch(
             cycle_index=int(context.metadata.get("cycle_index", 1)),
             evaluation=artifact if isinstance(artifact, dict) else {},
@@ -390,8 +422,245 @@ class LegalParserParityOptimizer(BaseOptimizer):
                                 "dirty_legal_parser_targets": legal_target_status,
                             }
                         )
-                    )
+                )
         return parse_cycle_proposal(raw_response)
+
+    def request_worktree_edit_patch(
+        self,
+        *,
+        cycle_index: int,
+        evaluation: Dict[str, Any],
+        feedback: Sequence[str],
+        base_proposal: Optional[LegalParserCycleProposal] = None,
+        patch_check: Optional[Mapping[str, Any]] = None,
+    ) -> LegalParserCycleProposal:
+        """Let Codex edit an isolated worktree and return Git's canonical diff.
+
+        This transport avoids asking the model to hand-author fragile unified
+        diffs.  The daemon still validates and applies a diff, but Git generates
+        that diff from direct edits in a throwaway worktree.
+        """
+
+        repo_root = self.daemon_config.repo_root
+        worktree_root = self.daemon_config.resolved_worktree_root()
+        worktree_root.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        worktree_path = worktree_root / f"cycle_{cycle_index:04d}_{stamp}_{os.getpid()}"
+        metadata_rel = ".legal_parser_worktree_proposal.json"
+        raw_trace: Dict[str, Any] = {
+            "transport": "worktree",
+            "worktree_path": str(worktree_path),
+            "metadata_path": metadata_rel,
+        }
+
+        try:
+            add_result = _run_command(
+                ["git", "worktree", "add", "--detach", str(worktree_path), "HEAD"],
+                cwd=repo_root,
+                timeout=60,
+            )
+            raw_trace["worktree_add"] = add_result
+            if not add_result.get("valid"):
+                return LegalParserCycleProposal(
+                    summary="worktree proposal failed",
+                    raw_response=json.dumps(raw_trace, indent=2, default=str),
+                    parse_error="git worktree add failed: " + str(add_result.get("stderr") or "").strip()[:1000],
+                )
+
+            prompt = self.build_worktree_edit_prompt(
+                cycle_index=cycle_index,
+                evaluation=evaluation,
+                feedback=feedback,
+                metadata_rel=metadata_rel,
+                base_proposal=base_proposal,
+                patch_check=patch_check,
+            )
+            codex_result = _run_command(
+                [
+                    self.daemon_config.codex_bin,
+                    "exec",
+                    "--skip-git-repo-check",
+                    "--sandbox",
+                    "workspace-write",
+                    "-m",
+                    self.daemon_config.model_name,
+                    "-C",
+                    str(worktree_path),
+                    "-",
+                ],
+                cwd=worktree_path,
+                input_text=prompt,
+                timeout=max(1, int(self.daemon_config.worktree_edit_timeout_seconds)),
+            )
+            raw_trace["codex_exec"] = codex_result
+
+            diff_paths = self._worktree_diff_paths()
+            status_result = _run_command(
+                ["git", "status", "--porcelain", "--", *diff_paths],
+                cwd=worktree_path,
+                timeout=60,
+            )
+            raw_trace["status"] = status_result
+            untracked_paths = _untracked_paths_from_git_status_porcelain(str(status_result.get("stdout") or ""))
+            raw_trace["untracked_paths"] = untracked_paths
+            if untracked_paths:
+                raw_trace["git_add_intent_to_add"] = _run_command(
+                    ["git", "add", "-N", "--", *untracked_paths],
+                    cwd=worktree_path,
+                    timeout=60,
+                )
+
+            diff_result = _run_command(
+                ["git", "diff", "--binary", "--", *diff_paths],
+                cwd=worktree_path,
+                timeout=60,
+            )
+            raw_trace["git_diff"] = diff_result
+            unified_diff = str(diff_result.get("stdout") or "")
+            metadata = self._read_worktree_metadata(worktree_path / metadata_rel)
+            raw_trace["metadata"] = metadata
+
+            changed_files = _paths_from_unified_diff(unified_diff)
+            metadata_changed_files = [
+                str(path)
+                for path in metadata.get("changed_files", [])
+                if str(path).strip()
+            ] if isinstance(metadata.get("changed_files"), list) else []
+            if not changed_files:
+                changed_files = metadata_changed_files
+            tests_to_run = [
+                str(item)
+                for item in metadata.get("tests_to_run", [])
+                if str(item).strip()
+            ] if isinstance(metadata.get("tests_to_run"), list) else []
+            requirements_addressed = [
+                str(item)
+                for item in metadata.get("requirements_addressed", [])
+                if str(item).strip()
+            ] if isinstance(metadata.get("requirements_addressed"), list) else []
+            acceptance_criteria = [
+                str(item)
+                for item in metadata.get("acceptance_criteria", [])
+                if str(item).strip()
+            ] if isinstance(metadata.get("acceptance_criteria"), list) else []
+            if not acceptance_criteria:
+                acceptance_criteria = ["Git generated a canonical diff from isolated worktree edits."]
+            expected_metric_gain = (
+                dict(metadata.get("expected_metric_gain") or {})
+                if isinstance(metadata.get("expected_metric_gain"), Mapping)
+                else {}
+            )
+            raw_response = json.dumps(raw_trace, indent=2, default=str)
+            if not unified_diff.strip():
+                reason = "worktree edit produced no allowed diff"
+                if not codex_result.get("valid"):
+                    reason = "worktree edit command failed without producing an allowed diff: " + str(
+                        codex_result.get("stderr") or codex_result.get("stdout") or ""
+                    ).strip()[:1000]
+                return LegalParserCycleProposal(
+                    summary=str(metadata.get("summary") or "worktree proposal produced no diff"),
+                    focus_area=str(metadata.get("focus_area") or ""),
+                    requirements_addressed=requirements_addressed,
+                    acceptance_criteria=acceptance_criteria,
+                    changed_files=changed_files,
+                    expected_metric_gain=expected_metric_gain,
+                    tests_to_run=tests_to_run,
+                    unified_diff="",
+                    raw_response=raw_response,
+                    parse_error=reason,
+                )
+
+            return LegalParserCycleProposal(
+                summary=str(metadata.get("summary") or "Worktree direct-edit proposal."),
+                focus_area=str(metadata.get("focus_area") or "parser"),
+                requirements_addressed=requirements_addressed,
+                acceptance_criteria=acceptance_criteria,
+                changed_files=changed_files,
+                expected_metric_gain=expected_metric_gain,
+                tests_to_run=tests_to_run,
+                unified_diff=unified_diff,
+                raw_response=raw_response,
+            )
+        finally:
+            remove_result = _run_command(
+                ["git", "worktree", "remove", "--force", str(worktree_path)],
+                cwd=repo_root,
+                timeout=60,
+            )
+            if not remove_result.get("valid") and worktree_path.exists():
+                shutil.rmtree(worktree_path, ignore_errors=True)
+
+    def build_worktree_edit_prompt(
+        self,
+        *,
+        cycle_index: int,
+        evaluation: Dict[str, Any],
+        feedback: Sequence[str],
+        metadata_rel: str,
+        base_proposal: Optional[LegalParserCycleProposal] = None,
+        patch_check: Optional[Mapping[str, Any]] = None,
+    ) -> str:
+        """Build a direct-edit prompt for the isolated-worktree transport."""
+
+        patch_prompt_context = self.build_patch_prompt(
+            cycle_index=cycle_index,
+            evaluation=evaluation,
+            feedback=feedback,
+        )
+        base_payload = asdict(base_proposal) if base_proposal is not None else {}
+        payload = {
+            "cycle_index": cycle_index,
+            "objective": (
+                "Edit this isolated worktree to advance deterministic legal text -> LegalNormIR "
+                "-> formal logic/prover syntax parity without adding parser-runtime LLM calls."
+            ),
+            "transport": "worktree_direct_edit",
+            "metadata_path": metadata_rel,
+            "allowed_edit_paths": self._worktree_diff_paths(),
+            "base_patch_proposal": base_payload,
+            "failed_patch_check": dict(patch_check or {}),
+            "feedback": list(feedback),
+            "required_metadata_schema": {
+                "summary": "string",
+                "focus_area": "parser|ir|formula|converter|exports|decoder|prover|tests|daemon",
+                "requirements_addressed": ["string"],
+                "acceptance_criteria": ["string"],
+                "changed_files": ["string"],
+                "expected_metric_gain": {"string": "number|string|boolean"},
+                "tests_to_run": ["string"],
+            },
+        }
+        return (
+            "You are Codex running inside a throwaway Git worktree for the deterministic legal-parser daemon.\n"
+            "Edit files directly in this worktree. Do not commit. Do not output or hand-author a patch.\n"
+            "Make one coherent implementation slice large enough to matter, with production parser/IR/formula/export/decoder/prover changes and focused deontic tests unless this is a repair-only slice.\n"
+            "After editing, write strict JSON metadata to "
+            f"{metadata_rel}. The daemon will run git diff itself and validate the canonical patch.\n"
+            "Only edit paths listed in allowed_edit_paths. Preserve the no-LLM parser contract.\n"
+            "The patch-planning context below may mention returning JSON with unified_diff; ignore that output-format instruction in worktree mode and use direct edits plus metadata JSON instead.\n\n"
+            + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
+            + "\n\nPATCH-PLANNING CONTEXT FOR ROADMAP/EVALUATION ONLY:\n"
+            + patch_prompt_context
+        )
+
+    def _worktree_diff_paths(self) -> List[str]:
+        paths: List[str] = []
+        for path in (
+            *self.daemon_config.target_files,
+            *self.daemon_config.docs,
+            "docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md",
+        ):
+            text = str(path).strip()
+            if text and text not in paths:
+                paths.append(text)
+        return paths
+
+    def _read_worktree_metadata(self, path: Path) -> Dict[str, Any]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, dict) else {}
 
     def _read_only_codex_cli_generation(self) -> "_TemporaryEnv":
         provider = str(self.daemon_config.provider or "").strip().lower()
@@ -1699,6 +1968,68 @@ class LegalParserOptimizerDaemon:
                     last_parse_error=proposal.parse_error,
                 )
 
+        if self.config.proposal_transport_mode() == "hybrid" and final_retry_reason:
+            fallback_patch_check = (
+                self.optimizer.check_patch(proposal.unified_diff)
+                if proposal.unified_diff.strip()
+                else {}
+            )
+            self._write_current_status(
+                status="running",
+                phase="requesting_worktree_edit",
+                cycle_index=cycle_index,
+                cycle_dir=cycle_dir,
+                started_at=started,
+                score=score,
+                feedback=attempt_feedback,
+                previous_retry_reason=final_retry_reason,
+                previous_patch_check=fallback_patch_check,
+                proposal_attempt=len(proposal_attempts) + 1,
+                proposal_attempts=max_attempts + 1,
+                proposal_transport=self.config.proposal_transport_mode(),
+            )
+            try:
+                worktree_proposal = self.optimizer.request_worktree_edit_patch(
+                    cycle_index=cycle_index,
+                    evaluation=evaluation,
+                    feedback=attempt_feedback,
+                    base_proposal=proposal,
+                    patch_check=fallback_patch_check,
+                )
+            except Exception as exc:
+                worktree_proposal = LegalParserCycleProposal(
+                    summary="worktree direct-edit proposal failed",
+                    raw_response="",
+                    parse_error=f"{type(exc).__name__}: {exc}",
+                )
+            worktree_retry_reason = self._proposal_retry_reason(worktree_proposal)
+            worktree_patch_check: Dict[str, Any] = {}
+            worktree_changed_files: List[str] = []
+            if not worktree_retry_reason:
+                worktree_patch_check = self.optimizer.check_patch(worktree_proposal.unified_diff)
+                worktree_changed_files = _paths_from_unified_diff(worktree_proposal.unified_diff)
+                if worktree_patch_check.get("valid") is False:
+                    stderr_lines = str(worktree_patch_check.get("stderr") or "").strip().splitlines()
+                    first_line = stderr_lines[0] if stderr_lines else "patch_check_failed"
+                    worktree_retry_reason = f"patch_check_failed:{first_line}"
+            proposal_attempts.append(
+                {
+                    "attempt": len(proposal_attempts) + 1,
+                    "transport": "worktree",
+                    "retry_reason": worktree_retry_reason,
+                    "parse_error": worktree_proposal.parse_error,
+                    "summary": worktree_proposal.summary,
+                    "raw_response_chars": len(worktree_proposal.raw_response or ""),
+                    "diff_chars": len(worktree_proposal.unified_diff or ""),
+                    "patch_valid": worktree_patch_check.get("valid"),
+                    "patch_stderr_tail": str(worktree_patch_check.get("stderr") or "")[-2000:],
+                    "changed_files": worktree_changed_files,
+                    "fallback_for_retry_reason": final_retry_reason,
+                }
+            )
+            proposal = worktree_proposal
+            final_retry_reason = worktree_retry_reason
+
         proposal_path = cycle_dir / "proposal.json"
         proposal_path.write_text(json.dumps(asdict(proposal), indent=2, default=str), encoding="utf-8")
         patch_path = cycle_dir / "proposal.patch"
@@ -1932,6 +2263,7 @@ class LegalParserOptimizerDaemon:
             "run_baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
             "provider": self.config.provider_label(),
+            "proposal_transport": self.config.proposal_transport_mode(),
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -1990,6 +2322,8 @@ class LegalParserOptimizerDaemon:
             "pid": os.getpid(),
             "model_name": self.config.model_name,
             "provider": self.config.provider_label(),
+            "proposal_transport": self.config.proposal_transport_mode(),
+            "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -2030,6 +2364,7 @@ class LegalParserOptimizerDaemon:
             "baseline_head": self.run_baseline_head,
             "model_name": self.config.model_name,
             "provider": self.config.provider_label(),
+            "proposal_transport": self.config.proposal_transport_mode(),
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
@@ -2051,6 +2386,7 @@ class LegalParserOptimizerDaemon:
 
         llm_timeout = max(1, int(self.config.llm_timeout_seconds))
         test_timeout = max(1, int(self.config.test_timeout_seconds))
+        worktree_timeout = max(1, int(self.config.worktree_edit_timeout_seconds))
         effective_test_timeout = test_timeout
         if hasattr(self.optimizer, "effective_test_timeout_seconds"):
             effective_test_timeout = max(test_timeout, int(self.optimizer.effective_test_timeout_seconds()))
@@ -2059,6 +2395,9 @@ class LegalParserOptimizerDaemon:
         if phase in {"requesting_llm_patch", "retrying_llm_patch", "repairing_failed_patch"}:
             budget = llm_timeout + slack
             reason = "llm_timeout_seconds_plus_heartbeat_slack"
+        elif phase == "requesting_worktree_edit":
+            budget = worktree_timeout + slack
+            reason = "worktree_edit_timeout_seconds_plus_heartbeat_slack"
         elif phase in {"running_tests", "running_tests_patch_only"}:
             budget = effective_test_timeout + slack
             reason = "effective_test_timeout_seconds_plus_heartbeat_slack"
@@ -3990,6 +4329,21 @@ def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
     return paths
 
 
+def _untracked_paths_from_git_status_porcelain(stdout: str) -> List[str]:
+    """Return unique untracked paths from plain ``git status --porcelain`` output."""
+
+    paths: List[str] = []
+    for line in stdout.splitlines():
+        if not line.startswith("?? "):
+            continue
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in paths:
+            paths.append(path)
+    return paths
+
+
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:
     paths: List[str] = []
     for match in re.finditer(r"^diff --git a/(.+?) b/(.+?)$", unified_diff, flags=re.MULTILINE):
@@ -4402,6 +4756,32 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)
     parser.add_argument("--llm-timeout-seconds", type=int, default=900)
     parser.add_argument("--llm-proposal-attempts", type=int, default=3)
+    parser.add_argument(
+        "--proposal-transport",
+        choices=("patch", "hybrid", "worktree", "patchless", "direct-edit"),
+        default=os.environ.get("LEGAL_PARSER_DAEMON_PROPOSAL_TRANSPORT", "patch"),
+        help=(
+            "How to obtain candidate changes: patch asks for JSON/unified_diff only; "
+            "worktree lets Codex edit an isolated worktree and Git generates the diff; "
+            "hybrid tries patch first and falls back to worktree on rejected proposals."
+        ),
+    )
+    parser.add_argument(
+        "--worktree-edit-timeout-seconds",
+        type=int,
+        default=int(os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_EDIT_TIMEOUT_SECONDS", "1200")),
+        help="Timeout for isolated-worktree direct-edit proposal generation.",
+    )
+    parser.add_argument(
+        "--worktree-root",
+        default=os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees"),
+        help="Directory for throwaway direct-edit Git worktrees.",
+    )
+    parser.add_argument(
+        "--codex-bin",
+        default=os.environ.get("CODEX_BIN", "codex"),
+        help="Codex executable used by worktree/direct-edit proposal transport.",
+    )
     parser.add_argument("--heartbeat-interval-seconds", type=float, default=15.0)
     parser.add_argument("--test-timeout-seconds", type=int, default=600)
     parser.add_argument(
@@ -4443,6 +4823,10 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         error_backoff_seconds=float(args.error_backoff_seconds),
         llm_timeout_seconds=int(args.llm_timeout_seconds),
         llm_proposal_attempts=int(args.llm_proposal_attempts),
+        proposal_transport=str(args.proposal_transport),
+        worktree_edit_timeout_seconds=int(args.worktree_edit_timeout_seconds),
+        worktree_root=Path(args.worktree_root),
+        codex_bin=str(args.codex_bin),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
         require_production_and_tests=not bool(args.allow_patches_without_tests),

@@ -83,13 +83,22 @@ behavior:
 
 ## Patch Transport
 
-The daemon still stores proposals as auditable unified diffs, but patch
-validation is not a single brittle `git apply --check` anymore. It first tries a
-strict apply check, then retries with whitespace repair, then with Git three-way
-apply. The actual apply step reuses the strategy that passed validation. Longer
-term, the preferred direction is patchless proposal generation in an isolated
-worktree: let the model edit files there, then have Git generate the canonical
-diff that the daemon validates and applies.
+The daemon stores accepted proposals as auditable unified diffs, but it no
+longer depends on a single brittle model-authored patch path.
+
+- `patch` mode asks `llm_router` for strict JSON containing a `unified_diff`.
+- `hybrid` mode, used by the overnight supervisor by default, asks for a patch
+  first and falls back to an isolated direct-edit worktree when the proposal is
+  malformed, empty, or rejected before apply.
+- `worktree` mode skips hand-authored patches entirely: Codex edits a detached
+  Git worktree, writes proposal metadata, and Git generates the canonical diff.
+
+All modes converge on the same validation and retention path. Git first checks
+the resulting diff with strict apply, then whitespace repair, then three-way
+apply. The actual apply step reuses the strategy that passed validation. The
+direct-edit worktree transport exists so invalid patch syntax does not strand
+overnight progress; the daemon still applies only validated canonical diffs to
+the main worktree.
 
 ## Formal Logic Target Scope
 
