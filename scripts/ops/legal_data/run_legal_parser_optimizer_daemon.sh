@@ -28,6 +28,7 @@ SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
 SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
 SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-1}"
 SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL="${SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL:-3}"
+SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL="${SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL:-4}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
@@ -108,6 +109,7 @@ write_supervisor_status() {
   "agentic_rolled_back_tail": $SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL,
   "agentic_dirty_target_files_enabled": $(json_bool "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES"),
   "agentic_dirty_rejection_tail": $SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL,
+  "agentic_repeated_rejection_family_tail": $SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL,
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
@@ -163,7 +165,8 @@ agentic_maintenance_reason() {
     "$SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS" \
     "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" \
     "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
-    "$SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL" <<'PY'
+    "$SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL" \
+    "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" <<'PY'
 import json
 import subprocess
 import sys
@@ -182,6 +185,7 @@ cycle_stall_seconds = int(sys.argv[8])
 cooldown_seconds = int(sys.argv[9])
 dirty_target_detection = str(sys.argv[10]).strip() == "1"
 dirty_rejection_threshold = int(sys.argv[11])
+repeated_rejection_family_threshold = int(sys.argv[12])
 now = int(time.time())
 
 
@@ -323,6 +327,41 @@ def dirty_rejection_files(rejections: list[dict]) -> list[str]:
     return files
 
 
+def _rejection_family_key(item: dict) -> str:
+    reason = str(item.get("reason") or "")
+    if ":" in reason:
+        reason = reason.split(":", 1)[0]
+    changed_files = [str(path).strip() for path in (item.get("changed_files") or []) if str(path).strip()]
+    return json.dumps(
+        {
+            "reason": reason,
+            "changed_files": sorted(changed_files),
+        },
+        sort_keys=True,
+    )
+
+
+def repeated_rejection_family(rejections: list[dict]) -> dict:
+    if not rejections:
+        return {}
+    counts: dict[str, int] = {}
+    payloads: dict[str, dict] = {}
+    for item in rejections:
+        if not isinstance(item, dict):
+            continue
+        key = _rejection_family_key(item)
+        if not key:
+            continue
+        counts[key] = counts.get(key, 0) + 1
+        payloads[key] = item
+    if not counts:
+        return {}
+    winner = max(counts.items(), key=lambda pair: pair[1])[0]
+    item = dict(payloads.get(winner) or {})
+    item["count"] = counts[winner]
+    return item
+
+
 progress = read_json(progress_path)
 status = read_json(status_path)
 if not progress and not status:
@@ -362,6 +401,8 @@ metric_stall_rollbacks_since_progress = int(
 recent_rejections = progress.get("recent_rejections")
 if not isinstance(recent_rejections, list):
     recent_rejections = []
+repeated_rejection = repeated_rejection_family(recent_rejections)
+repeated_rejection_count = int(repeated_rejection.get("count") or 0)
 dirty_preexisting_rejections = [
     item
     for item in recent_rejections
@@ -453,6 +494,18 @@ elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold and dirty_re
         f"dirty_touched_file_rejections:{len(dirty_preexisting_rejections)}:"
         f"threshold:{dirty_rejection_threshold}:active_dirty_files:{','.join(dirty_rejection_targets[:8])}"
     )
+elif not cooling_down and repeated_rejection_count >= repeated_rejection_family_threshold:
+    repeated_reason = str(repeated_rejection.get("reason") or "unknown")
+    repeated_files = [
+        str(path).strip()
+        for path in (repeated_rejection.get("changed_files") or [])
+        if str(path).strip()
+    ]
+    reason = (
+        f"repeated_rejection_family:{repeated_rejection_count}:"
+        f"threshold:{repeated_rejection_family_threshold}:"
+        f"reason:{repeated_reason}:files:{','.join(repeated_files[:8])}"
+    )
 elif (
     not cooling_down
     and stalled_metric_cycles >= stalled_metric_threshold
@@ -516,6 +569,8 @@ state.update(
         "dirty_legal_parser_targets_pending_confirmation": dirty_targets_pending_confirmation,
         "dirty_touched_file_rejections": len(dirty_preexisting_rejections),
         "dirty_rejection_active_targets": dirty_rejection_targets,
+        "repeated_rejection_family": repeated_rejection,
+        "repeated_rejection_family_count": repeated_rejection_count,
         "phase_stall_age_seconds": phase_stall_age,
         "status_stall_age_seconds": status_stall_age,
         "phase_status_budget_seconds": phase_status_budget,
@@ -882,7 +937,7 @@ Reason: $reason
 
 Improve only daemon/supervisor programming, tests, or docs in this maintenance pass. Do not implement a new legal parser feature here unless it is strictly required to repair daemon progress logic.
 
-If the reason mentions dirty_legal_parser_targets or dirty_touched_file_rejections,
+If the reason mentions dirty_legal_parser_targets, dirty_touched_file_rejections, or repeated_rejection_family,
 first inspect the stranded legal-parser diff. If it is a coherent parser slice,
 run the focused tests and commit it with a legal-parser-daemon recovery message.
 If it is incoherent, safely restore only those stranded legal-parser target files

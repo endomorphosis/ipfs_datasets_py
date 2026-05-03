@@ -123,6 +123,20 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert dirty_reason_pos < maintenance_reason_pos
 
 
+def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" in script
+    assert '"agentic_repeated_rejection_family_tail"' in script
+    assert "def repeated_rejection_family(rejections: list[dict]) -> dict:" in script
+    assert "repeated_rejection_family:" in script
+    assert "repeated_rejection_family_count" in script
+    assert "dirty_touched_file_rejections, or repeated_rejection_family" in script
+
+
 def test_supervisor_stops_competing_automation_before_and_during_run():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
