@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 def _first_text(value: Any) -> str:
@@ -758,14 +758,16 @@ def _with_penalty_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
     """Return a penalty record with a stable exporter value."""
 
     normalized = _with_value_alias(record)
-    if normalized.get("value"):
-        return normalized
-
     penalty_type = (
         normalized.get("sanction_class")
         or normalized.get("sanction_type")
         or normalized.get("type")
     )
+    if penalty_type and not normalized.get("classification"):
+        normalized["classification"] = str(penalty_type)
+    if normalized.get("value"):
+        return normalized
+
     modality = normalized.get("modality")
     minimum = (
         normalized.get("minimum_amount")
@@ -1223,6 +1225,14 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     spans: List[List[int]] = []
     for field_name in _FIELD_SPAN_ALIASES.get(slot, (slot,)):
         spans.extend(_normalized_span_records(norm.field_spans.get(field_name)))
+    if slot == "actor" and norm.norm_type == "applicability":
+        spans.extend(_nested_slot_spans(norm.cross_references))
+    if (
+        slot == "modality"
+        and not spans
+        and norm.norm_type in {"definition", "applicability", "exemption", "instrument_lifecycle"}
+    ):
+        spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))
     return _dedupe_spans(spans)
 

@@ -1209,9 +1209,15 @@ def test_ir_decoder_record_preserves_blocked_reference_exception_without_promoti
     assert record["grounded_decoded_phrase_rate"] == 1.0
     assert record["ungrounded_decoded_phrase_rate"] == 0.0
     assert [phrase["slot"] for phrase in record["phrase_provenance"]][-2:] == [
-        "exception_connector",
         "exceptions",
+        "cross_references",
     ]
+    cross_reference_phrase = record["phrase_provenance"][-1]
+    assert cross_reference_phrase["text"] == "section 552"
+    assert cross_reference_phrase["spans"] == [
+        element["cross_reference_details"][0]["span"]
+    ]
+    assert cross_reference_phrase["provenance_only"] is True
     assert proof_record["proof_ready"] is False
     assert proof_record["repair_required"] is True
     assert proof_record["deterministic_resolution"] == {}
@@ -1247,6 +1253,50 @@ def test_decoder_reconstruction_summary_reports_quality_without_promoting_blocke
         norm.source_id for norm in norms
     ]
     assert records[1]["requires_validation"] is True
+
+
+def test_decoder_records_expose_cross_reference_slot_provenance_without_text_drift():
+    examples = [
+        "The Secretary shall publish the notice except as provided in section 552.",
+        "This section applies to food carts.",
+        "Notwithstanding section 5.01.020, the Director may issue a variance.",
+    ]
+    elements = [extract_normative_elements(text)[0] for text in examples]
+    norms = [LegalNormIR.from_parser_element(element) for element in elements]
+
+    records = build_decoder_records_from_irs(norms)
+    cross_reference_rows = [
+        [
+            phrase
+            for phrase in record["phrase_provenance"]
+            if phrase["slot"] == "cross_references"
+        ]
+        for record in records
+    ]
+    slot_loss = summarize_reconstruction_slot_loss(records, required_slots=("cross_references",))
+
+    assert [record["decoded_text"] for record in records] == [
+        "Secretary shall publish the notice except as provided in section 552.",
+        "This section applies to food carts.",
+        "Notwithstanding section 5.01.020, Director may issue a variance.",
+    ]
+    assert [[row["text"] for row in rows] for rows in cross_reference_rows] == [
+        ["section 552"],
+        ["section this section"],
+        ["section 5.01.020"],
+    ]
+    assert [rows[0]["spans"] for rows in cross_reference_rows] == [
+        [elements[0]["cross_reference_details"][0]["span"]],
+        [elements[1]["cross_reference_details"][0]["span"]],
+        [elements[2]["cross_reference_details"][0]["span"]],
+    ]
+    assert all(rows[0]["provenance_only"] is True for rows in cross_reference_rows)
+    assert all(record["grounded_decoded_phrase_rate"] == 1.0 for record in records)
+    assert slot_loss["grounded_required_slots"] == ["cross_references"]
+    assert slot_loss["missing_required_slots"] == []
+    assert slot_loss["slot_reconstruction_complete"] is True
+    assert elements[0]["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in elements[0]["llm_repair"]["reasons"]
 
 
 def test_ir_procedure_event_relation_records_preserve_ordering_provenance_without_formula_strengthening():

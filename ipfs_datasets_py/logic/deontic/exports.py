@@ -896,10 +896,12 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     """
 
     decoded = decode_legal_norm_ir(norm)
-    phrase_rows = [phrase.to_dict() for phrase in decoded.phrases]
-    fixed_phrase_count = sum(1 for phrase in decoded.phrases if phrase.fixed)
+    phrase_rows = _decoder_phrase_rows_with_reference_provenance(norm, decoded.phrases)
+    fixed_phrase_count = sum(1 for phrase in phrase_rows if phrase.get("fixed") is True)
     ungrounded_phrase_count = sum(
-        1 for phrase in decoded.phrases if not phrase.fixed and not phrase.spans
+        1
+        for phrase in phrase_rows
+        if phrase.get("fixed") is not True and not phrase.get("spans")
     )
     legal_phrase_count = len(phrase_rows) - fixed_phrase_count
     grounded_phrase_count = legal_phrase_count - ungrounded_phrase_count
@@ -939,6 +941,113 @@ def build_decoder_records_from_irs(norms: Iterable[LegalNormIR]) -> List[Dict[st
     """Build ordered deterministic reconstruction rows for typed legal IR."""
 
     return [build_decoder_record_from_ir(norm) for norm in norms]
+
+
+def _decoder_phrase_rows_with_reference_provenance(
+    norm: LegalNormIR,
+    phrases: Iterable[Any],
+) -> List[Dict[str, Any]]:
+    """Return decoder phrase rows plus source-grounded cross-reference rows.
+
+    The natural-language decoder often renders a cross-reference inside an
+    exception or override phrase. Phase 8 slot-loss reports still need the
+    legally salient ``cross_references`` slot to be explicitly represented in
+    provenance. These extra rows are diagnostic-only and do not change the
+    decoded text.
+    """
+
+    rows = []
+    for phrase in phrases:
+        row = phrase.to_dict()
+        if row.get("fixed") is True:
+            row.setdefault("fixed_connective", True)
+        rows.append(row)
+    seen = {
+        (
+            str(row.get("slot") or ""),
+            str(row.get("text") or ""),
+            tuple(tuple(span) for span in row.get("spans") or []),
+        )
+        for row in rows
+        if isinstance(row, Mapping)
+    }
+
+    for reference in _decoder_reference_records(norm):
+        text = _decoder_reference_text(reference)
+        spans = _decoder_reference_spans(reference)
+        if not text or not spans:
+            continue
+        key = ("cross_references", text, tuple(tuple(span) for span in spans))
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append(
+            {
+                "text": text,
+                "slot": "cross_references",
+                "spans": spans,
+                "fixed": False,
+                "provenance_only": True,
+            }
+        )
+
+    return rows
+
+
+def _decoder_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
+    records: List[Mapping[str, Any]] = []
+    seen: set[tuple[tuple[int, int], ...]] = set()
+    for reference in list(norm.cross_references or []) + list(norm.resolved_cross_references or []):
+        if not isinstance(reference, Mapping):
+            continue
+        text = _decoder_reference_text(reference)
+        spans = _decoder_reference_spans(reference)
+        key = tuple((span[0], span[1]) for span in spans)
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        records.append(reference)
+    return records
+
+
+def _decoder_reference_text(reference: Mapping[str, Any]) -> str:
+    for key in ("normalized_text", "raw_text", "canonical_citation", "value", "target"):
+        value = str(reference.get(key) or "").strip()
+        if value:
+            return value
+    return ""
+
+
+def _decoder_reference_spans(reference: Mapping[str, Any]) -> List[List[int]]:
+    spans: List[List[int]] = []
+    for key in ("span", "source_span", "support_span", "clause_span"):
+        spans.extend(_decoder_coerce_spans(reference.get(key)))
+    return _dedupe_decoder_spans(spans)
+
+
+def _decoder_coerce_spans(value: Any) -> List[List[int]]:
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        if len(value) == 2 and all(isinstance(item, int) for item in value):
+            return [[int(value[0]), int(value[1])]]
+        spans: List[List[int]] = []
+        for item in value:
+            spans.extend(_decoder_coerce_spans(item))
+        return spans
+    return []
+
+
+def _dedupe_decoder_spans(spans: Sequence[Sequence[int]]) -> List[List[int]]:
+    seen: set[tuple[int, int]] = set()
+    deduped: List[List[int]] = []
+    for span in spans:
+        if len(span) != 2:
+            continue
+        key = (int(span[0]), int(span[1]))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append([key[0], key[1]])
+    return deduped
 
 
 def build_decoder_slot_grounding_audit_record(
