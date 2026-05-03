@@ -374,7 +374,129 @@ def test_repeated_recovery_failure_feedback_drives_repair_prompt(tmp_path):
     assert "repeated_recovery_failure_details" in "\n".join(feedback)
     assert "export ordering mismatch" in "\n".join(feedback)
     assert '"repeated_recovery_failure_feedback": [' in prompt
+    assert '"repeated_recovery_failed_tests": []' in prompt
     assert "EXPORT_MARKER" in prompt
+
+
+def test_repeated_recovery_failure_prompt_carries_failed_pytest_nodes(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "recovery_failure_escalation_reason": "repeated_recovery_failure:2:threshold:2",
+                "last_recovery_failure": {
+                    "recovery_kind": "dirty_target_recovery",
+                    "reason_family": "dirty_legal_parser_targets",
+                    "targets": [
+                        "ipfs_datasets_py/logic/deontic/exports.py",
+                        "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+                    ],
+                    "failure_signature": (
+                        "FAILED tests/unit_tests/logic/deontic/test_deontic_exports.py::"
+                        "test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations | "
+                        "FAILED tests/unit_tests/logic/deontic/test_deontic_exports.py::"
+                        "test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_sanctions"
+                    ),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(cycle_index=4, evaluation={"metrics": {}}, feedback=[])
+
+    assert "repeated_recovery_failure_contract" in prompt
+    assert '"repeated_recovery_failed_tests": [' in prompt
+    assert "test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations" in prompt
+
+
+def test_repeated_recovery_failure_quality_blocks_blind_retouch_of_restored_targets(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    failed_test = (
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py::"
+        "test_deterministic_parser_capability_profiles_cover_duty_authority_and_enumerations"
+    )
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "recovery_failure_escalation_reason": "repeated_recovery_failure:2:threshold:2",
+                "last_recovery_failure": {
+                    "recovery_kind": "dirty_target_recovery",
+                    "reason_family": "dirty_legal_parser_targets",
+                    "targets": [
+                        "ipfs_datasets_py/logic/deontic/exports.py",
+                        "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+                    ],
+                    "failure_signature": f"FAILED {failed_test}",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    proposal = LegalParserCycleProposal(
+        summary="Add export capability ordering coverage.",
+        requirements_addressed=["capability ordering"],
+        acceptance_criteria=["export profiles include new ordering"],
+        tests_to_run=["pytest -q tests/unit_tests/logic/deontic/test_deontic_exports.py"],
+    )
+
+    result = daemon._enforce_repeated_recovery_failure_quality(
+        proposal=proposal,
+        proposal_quality={"valid": True, "reasons": []},
+        changed_files=[
+            "ipfs_datasets_py/logic/deontic/exports.py",
+            "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+        ],
+    )
+
+    assert result["valid"] is False
+    assert result["repeated_recovery_failure_quality"]["failed_tests"] == [failed_test]
+    assert "must name at least one failed pytest node" in result["reasons"][0]
+
+
+def test_repeated_recovery_failure_quality_allows_named_failed_test_repair(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    failed_test = (
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py::"
+        "test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_sanctions"
+    )
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "recovery_failure_escalation_reason": "repeated_recovery_failure:2:threshold:2",
+                "last_recovery_failure": {
+                    "recovery_kind": "dirty_target_recovery",
+                    "reason_family": "dirty_legal_parser_targets",
+                    "targets": ["ipfs_datasets_py/logic/deontic/exports.py"],
+                    "failure_signature": f"FAILED {failed_test}",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir)
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+    proposal = LegalParserCycleProposal(
+        summary=f"Repair capability ordering for {failed_test}.",
+        tests_to_run=[f"pytest -q {failed_test}"],
+    )
+
+    result = daemon._enforce_repeated_recovery_failure_quality(
+        proposal=proposal,
+        proposal_quality={"valid": True, "reasons": []},
+        changed_files=["ipfs_datasets_py/logic/deontic/exports.py"],
+    )
+
+    assert result["valid"] is True
 
 
 def test_supervisor_stops_competing_automation_before_and_during_run():

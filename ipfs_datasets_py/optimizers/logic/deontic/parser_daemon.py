@@ -499,6 +499,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
         repeated_validation_failed_files = self._repeated_validation_failed_files(progress_payload)
         repeated_recovery_failure_feedback = self._repeated_recovery_failure_feedback(progress_payload)
         repeated_recovery_failed_files = self._repeated_recovery_failed_files(progress_payload)
+        repeated_recovery_failed_tests = self._repeated_recovery_failed_tests(progress_payload)
         expanded_snapshot_files = (
             set(recent_failed_patch_files)
             | set(recent_test_failed_files)
@@ -591,6 +592,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "repeated_validation_failed_files": repeated_validation_failed_files,
             "repeated_validation_recovery_feedback": repeated_validation_recovery_feedback,
             "repeated_recovery_failed_files": repeated_recovery_failed_files,
+            "repeated_recovery_failed_tests": repeated_recovery_failed_tests,
             "repeated_recovery_failure_feedback": repeated_recovery_failure_feedback,
             "recent_metric_stall_failed_files": recent_metric_stall_failed_files,
             "recent_metric_stall_failures": recent_metric_stall_failures,
@@ -1219,12 +1221,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
         reason_family = str(latest.get("reason_family") or "").strip() or "unknown"
         reason = " ".join(str(latest.get("reason") or "").split())
         targets = ", ".join(self._repeated_recovery_failed_files(progress_payload)) or "unknown targets"
+        failed_tests = self._repeated_recovery_failed_tests(progress_payload)
         signature = " ".join(str(latest.get("failure_signature") or "").split())
         parts = [
             f"kind={recovery_kind}",
             f"reason_family={reason_family}",
             f"targets={targets}",
         ]
+        if failed_tests:
+            parts.append(f"failed_tests={', '.join(failed_tests[:8])}")
         if reason:
             parts.append(f"reason={reason[:600]}")
         if signature:
@@ -1236,8 +1241,31 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "targeting, or the exact parser/test ordering failure before requesting a new "
                 "capability slice."
             ),
+            (
+                "repeated_recovery_failure_contract: if the next patch touches the restored "
+                "failed targets, proposal summary, requirements, acceptance criteria, or "
+                "tests_to_run must name at least one failed pytest node from the recovery log."
+            ),
             "repeated_recovery_failure_details: " + "; ".join(parts),
         ]
+
+    def _repeated_recovery_failed_tests(self, progress_payload: Mapping[str, Any]) -> List[str]:
+        """Return pytest node IDs captured from the latest repeated recovery failure."""
+
+        if not str(progress_payload.get("recovery_failure_escalation_reason") or "").startswith(
+            "repeated_recovery_failure:"
+        ):
+            return []
+        latest = progress_payload.get("last_recovery_failure") or {}
+        if not isinstance(latest, Mapping):
+            return []
+        signature = str(latest.get("failure_signature") or "")
+        tests: List[str] = []
+        for match in re.finditer(r"\bFAILED\s+([^\s|]+)", signature):
+            node_id = match.group(1).strip()
+            if node_id and node_id not in tests:
+                tests.append(node_id)
+        return tests[:12]
 
     def _recent_metric_stall_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         failures: List[Dict[str, Any]] = []
@@ -1522,6 +1550,12 @@ class LegalParserOptimizerDaemon:
                         proposal_quality=candidate_quality,
                         changed_files=candidate_changed_files,
                     )
+                if repair_phase_feedback:
+                    candidate_quality = self._enforce_repeated_recovery_failure_quality(
+                        proposal=proposal,
+                        proposal_quality=candidate_quality,
+                        changed_files=candidate_changed_files,
+                    )
                 candidate_dirty_touched = self._dirty_touched_files(candidate_changed_files)
                 if self.config.require_clean_touched_files and candidate_dirty_touched:
                     candidate_quality = {
@@ -1669,6 +1703,12 @@ class LegalParserOptimizerDaemon:
             )
         if roadmap_pivot_mode:
             proposal_quality = self._enforce_roadmap_pivot_quality(
+                proposal=proposal,
+                proposal_quality=proposal_quality,
+                changed_files=changed_files,
+            )
+        if repair_phase_feedback:
+            proposal_quality = self._enforce_repeated_recovery_failure_quality(
                 proposal=proposal,
                 proposal_quality=proposal_quality,
                 changed_files=changed_files,
@@ -2468,6 +2508,55 @@ class LegalParserOptimizerDaemon:
             "valid": False,
             "reasons": list(proposal_quality.get("reasons", [])) + [reason],
             "roadmap_pivot_mode": True,
+        }
+
+    def _enforce_repeated_recovery_failure_quality(
+        self,
+        *,
+        proposal: LegalParserCycleProposal,
+        proposal_quality: Dict[str, Any],
+        changed_files: Sequence[str],
+    ) -> Dict[str, Any]:
+        """Reject blind rewrites of targets restored after repeated recovery failure."""
+
+        if not isinstance(self.optimizer, LegalParserParityOptimizer):
+            return proposal_quality
+        progress = self.optimizer._progress_snapshot()
+        failed_targets = set(self.optimizer._repeated_recovery_failed_files(progress))
+        changed_failed_targets = failed_targets & set(changed_files)
+        if not changed_failed_targets:
+            return proposal_quality
+        failed_tests = self.optimizer._repeated_recovery_failed_tests(progress)
+        if not failed_tests:
+            return proposal_quality
+        proposal_text = " ".join(
+            [
+                proposal.summary or "",
+                proposal.focus_area or "",
+                " ".join(proposal.requirements_addressed or []),
+                " ".join(proposal.acceptance_criteria or []),
+                " ".join(proposal.tests_to_run or []),
+            ]
+        )
+        if any(test in proposal_text for test in failed_tests):
+            return proposal_quality
+        return {
+            **proposal_quality,
+            "valid": False,
+            "reasons": list(proposal_quality.get("reasons", []))
+            + [
+                (
+                    "repeated recovery failure repair must name at least one failed pytest node "
+                    "from the dirty-target recovery log before touching restored targets: "
+                    + ", ".join(failed_tests[:3])
+                )
+            ],
+            "repeated_recovery_failure_quality": {
+                "valid": False,
+                "failed_targets": sorted(failed_targets),
+                "changed_failed_targets": sorted(changed_failed_targets),
+                "failed_tests": failed_tests,
+            },
         }
 
     def _protected_reference_repair_invariant_reasons(
