@@ -200,6 +200,71 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profiles_cover_remedy_information_and_participation_families():
+    examples = [
+        (
+            "The Director shall order abatement of the nuisance.",
+            "enforcement_remedy_duty",
+            "O(∀x (Director(x) → AbateNuisance(x)))",
+        ),
+        (
+            "The operator shall undertake mitigation of the hazard.",
+            "enforcement_remedy_duty",
+            "O(∀x (Operator(x) → MitigateHazard(x)))",
+        ),
+        (
+            "The Bureau shall provide dissemination of the notice.",
+            "public_information_duty",
+            "O(∀x (Bureau(x) → DisseminateNotice(x)))",
+        ),
+        (
+            "The Clerk shall provide display of the permit.",
+            "public_information_duty",
+            "O(∀x (Clerk(x) → DisplayPermit(x)))",
+        ),
+        (
+            "The applicant shall file an objection to the assessment.",
+            "review_participation_duty",
+            "O(∀x (Applicant(x) → ObjectAssessment(x)))",
+        ),
+        (
+            "The licensee shall submit a response to the notice.",
+            "review_participation_duty",
+            "O(∀x (Licensee(x) → RespondNotice(x)))",
+        ),
+    ]
+
+    norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text, _, _ in examples
+    ]
+
+    records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in records] == [
+        expected_family for _, expected_family, _ in examples
+    ]
+    assert [record["formula"] for record in records] == [
+        expected_formula for _, _, expected_formula in examples
+    ]
+    assert all(record["norm_type"] == "obligation" for record in records)
+    assert all(record["modality"] == "O" for record in records)
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["parser_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lifecycle_families():
     definition = LegalNormIR.from_parser_element(extract_normative_elements(
         'In this section, the term "food cart" means a mobile food vending unit.'

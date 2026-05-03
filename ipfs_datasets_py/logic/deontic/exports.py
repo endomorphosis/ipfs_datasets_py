@@ -3659,6 +3659,23 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     legal_frame = norm.legal_frame if isinstance(norm.legal_frame, Mapping) else {}
     category = str(legal_frame.get("category") or "").strip().lower()
+    formula = build_deontic_formula_record_from_ir(norm)["formula"]
+    action_predicate = _deterministic_formula_action_predicate(formula)
+
+    if action_predicate.startswith(("Abate", "Remediate", "Mitigate", "Enforce", "Remedy")):
+        return "enforcement_remedy_duty"
+    if action_predicate.startswith((
+        "Announce",
+        "Circulate",
+        "Disseminate",
+        "Display",
+        "Distribute",
+        "Post",
+        "Transmit",
+    )):
+        return "public_information_duty"
+    if action_predicate.startswith(("Comment", "Object", "Respond")):
+        return "review_participation_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
@@ -3685,3 +3702,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.norm_type == "definition":
         return "definition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _deterministic_formula_action_predicate(formula: str) -> str:
+    """Return the consequent predicate from a generated deontic formula."""
+
+    match = re.search(
+        r"\u2192\s*([A-Za-z][A-Za-z0-9_]*)\s*\(x\)\)\)$",
+        str(formula or "").strip(),
+    )
+    return match.group(1) if match else ""

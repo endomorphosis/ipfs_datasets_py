@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserParityOptimizer,
     _paths_from_git_status_porcelain,
     _repeated_rejection_family,
+    _repeated_validation_failure_family,
     parse_cycle_proposal,
 )
 
@@ -139,9 +140,12 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
 
     assert "SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" in script
     assert '"agentic_repeated_rejection_family_tail"' in script
+    assert "SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL" in script
+    assert '"agentic_validation_failure_family_tail"' in script
     assert "SUPERVISOR_REPEATED_REJECTION_RECOVERY" in script
     assert '"repeated_rejection_recovery_enabled"' in script
     assert "def repeated_rejection_family(rejections: list[dict]) -> dict:" in script
+    assert "def repeated_validation_failure_family(rejections: list[dict]) -> dict:" in script
     assert "def infer_legal_parser_targets(item: dict) -> list[str]:" in script
     assert "confirmed_repeated_rejection_dirty_target_reason()" in script
     assert "recover_repeated_rejection_dirty_targets()" in script
@@ -149,7 +153,14 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated_rejection_family:" in script
     assert "repeated_rejection_family_count" in script
-    assert "dirty_touched_file_rejections, or repeated_rejection_family" in script
+    assert "repeated_validation_failure_family:" in script
+    assert "repeated_validation_failure_family_count" in script
+    assert "dirty_touched_file_rejections, repeated_rejection_family, or repeated_validation_failure_family" in script
+    assert "inspect the focused" in script
+    assert "prevent" in script and "same focused test failure" in script
+    assert script.index("repeated_validation_failure_count >= validation_failure_family_threshold") < script.index(
+        "repeated_rejection_count >= repeated_rejection_family_threshold"
+    )
 
 
 def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenance():
@@ -1548,6 +1559,11 @@ def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path)
                                 "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula "
                                 "- AssertionError"
                             ),
+                            "failure_command": [
+                                "pytest",
+                                "-q",
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                            ],
                         },
                         "changed_files": [target_file, test_file],
                     }
@@ -1573,12 +1589,18 @@ def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path)
     assert recent_failures[0]["failed_tests"] == [
         "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
     ]
+    assert recent_failures[0]["failure_command"] == [
+        "pytest",
+        "-q",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    ]
     assert "changed deontic tests failed focused pytest" in recent_failures[0][
         "candidate_validation_reasons"
     ]
     assert '"test_failure_recovery_mode": true' in prompt
     assert "candidate_post_apply_validation" in prompt
     assert "test_bad_formula" in prompt
+    assert "repeated_validation_failure_family" in prompt
 
 
 def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
@@ -3379,6 +3401,54 @@ def test_repeated_rejection_family_groups_exhausted_candidate_validation_failure
     assert family["latest_candidate_validation_failure"]["attempt"] == 2
 
 
+def test_repeated_validation_failure_family_uses_stable_focused_signature():
+    base_failure = {
+        "valid": False,
+        "changed_files": [
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+        ],
+        "reasons": ["changed deontic tests failed focused pytest"],
+        "summary": {
+            "failed_tests": [
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+            ],
+            "exception_types": ["AssertionError"],
+            "failure_head": (
+                "============================= test session starts ==============================\n"
+                "platform linux -- Python 3.12.3, pytest-9.0.3\n"
+                "focused_tests: FAILED "
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+            ),
+        },
+    }
+    noisy_failure = {
+        **base_failure,
+        "attempt": 2,
+        "summary": {
+            **base_failure["summary"],
+            "failure_head": (
+                "============================= test session starts ==============================\n"
+                "platform linux -- Python 3.12.4, pytest-9.0.4\n"
+                "plugins: benchmark-5.2.3\n"
+                "focused_tests: FAILED "
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+            ),
+        },
+    }
+    rejections = [
+        {"cycle_index": 1, "changed_files": base_failure["changed_files"], "latest_candidate_validation_failure": base_failure},
+        {"cycle_index": 2, "changed_files": noisy_failure["changed_files"], "latest_candidate_validation_failure": noisy_failure},
+    ]
+
+    family = _repeated_validation_failure_family(rejections)
+
+    assert family["count"] == 2
+    assert family["cycle_indexes"] == [1, 2]
+    assert family["changed_files"] == base_failure["changed_files"]
+    assert family["latest_candidate_validation_failure"]["attempt"] == 2
+
+
 def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path):
     out_dir = tmp_path / "out"
     out_dir.mkdir()
@@ -3399,6 +3469,10 @@ def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path
             "count": 4,
             "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
         },
+        "repeated_validation_failure_family": {
+            "count": 2,
+            "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
+        },
         "candidate_post_apply_validation_rejection_count": 4,
         "latest_candidate_post_apply_validation_failure": {
             "valid": False,
@@ -3415,6 +3489,7 @@ def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path
 
     assert snapshot["recent_rejections"] == progress["recent_rejections"]
     assert snapshot["repeated_rejection_family"]["count"] == 4
+    assert snapshot["repeated_validation_failure_family"]["count"] == 2
     assert snapshot["candidate_post_apply_validation_rejection_count"] == 4
     assert snapshot["latest_candidate_post_apply_validation_failure"]["summary"]["failure_head"] == (
         "focused_tests: failed"

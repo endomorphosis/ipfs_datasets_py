@@ -23,6 +23,7 @@ SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE="${SUPERVISOR_DISABLE_COMPETING_SYS
 SUPERVISOR_STOP_LOGIC_PORT_DAEMON="${SUPERVISOR_STOP_LOGIC_PORT_DAEMON:-0}"
 SUPERVISOR_DIRTY_TARGET_RECOVERY="${SUPERVISOR_DIRTY_TARGET_RECOVERY:-1}"
 SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS="${SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS:-120}"
+SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT="${SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT:-3}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
@@ -30,6 +31,7 @@ SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
 SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-1}"
 SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL="${SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL:-3}"
 SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL="${SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL:-4}"
+SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL="${SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL:-2}"
 SUPERVISOR_REPEATED_REJECTION_RECOVERY="${SUPERVISOR_REPEATED_REJECTION_RECOVERY:-1}"
 SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL="${SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL:-2}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
@@ -213,6 +215,7 @@ write_supervisor_status() {
   "disable_competing_systemd_service": $(json_bool "$SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE"),
   "stop_logic_port_daemon": $(json_bool "$SUPERVISOR_STOP_LOGIC_PORT_DAEMON"),
   "dirty_target_recovery_enabled": $(json_bool "$SUPERVISOR_DIRTY_TARGET_RECOVERY"),
+  "dirty_target_transient_cycle_limit": $SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT,
   "run_id": "$run_id",
   "log_path": "$log_path",
   "current_status_path": "$CURRENT_STATUS_PATH",
@@ -226,6 +229,7 @@ write_supervisor_status() {
   "agentic_dirty_target_files_enabled": $(json_bool "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES"),
   "agentic_dirty_rejection_tail": $SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL,
   "agentic_repeated_rejection_family_tail": $SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL,
+  "agentic_validation_failure_family_tail": $SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL,
   "repeated_rejection_recovery_enabled": $(json_bool "$SUPERVISOR_REPEATED_REJECTION_RECOVERY"),
   "recovery_failure_escalation_tail": $SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL,
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
@@ -285,7 +289,8 @@ agentic_maintenance_reason() {
     "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
     "$SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL" \
     "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" \
-    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
+    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" \
+    "$SUPERVISOR_AGENTIC_VALIDATION_FAILURE_FAMILY_TAIL" <<'PY'
 import json
 import subprocess
 import sys
@@ -306,6 +311,7 @@ dirty_target_detection = str(sys.argv[10]).strip() == "1"
 dirty_rejection_threshold = int(sys.argv[11])
 repeated_rejection_family_threshold = int(sys.argv[12])
 dirty_target_grace_seconds = int(sys.argv[13])
+validation_failure_family_threshold = int(sys.argv[14])
 now = int(time.time())
 
 
@@ -482,6 +488,79 @@ def repeated_rejection_family(rejections: list[dict]) -> dict:
     return item
 
 
+def _validation_failure_family_key(item: dict) -> str:
+    failure = item.get("latest_candidate_validation_failure")
+    if not isinstance(failure, dict) or failure.get("valid") is not False:
+        return ""
+    changed_files = [
+        str(path).strip()
+        for path in (failure.get("changed_files") or item.get("changed_files") or [])
+        if str(path).strip()
+    ]
+    reasons = [
+        str(reason).strip()
+        for reason in (failure.get("reasons") or [])
+        if str(reason).strip()
+    ]
+    summary = failure.get("summary") or {}
+    if not isinstance(summary, dict):
+        summary = {}
+    failed_tests = [
+        str(test).strip()
+        for test in (summary.get("failed_tests") or [])
+        if str(test).strip()
+    ]
+    exception_types = [
+        str(name).strip()
+        for name in (summary.get("exception_types") or [])
+        if str(name).strip()
+    ]
+    failure_head_lines: list[str] = []
+    for line in str(summary.get("failure_head") or "").splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if text.startswith("=") or text.startswith("platform ") or text.startswith("plugins:"):
+            continue
+        if text.startswith("rootdir:") or text.startswith("collected "):
+            continue
+        failure_head_lines.append(text)
+        if len(failure_head_lines) >= 4:
+            break
+    failure_head = "\n".join(failure_head_lines)[:400]
+    return json.dumps(
+        {
+            "changed_files": sorted(changed_files),
+            "failed_tests": failed_tests[:8],
+            "exception_types": exception_types[:6],
+            "reasons": reasons[:3],
+            "failure_head": failure_head,
+        },
+        sort_keys=True,
+    )
+
+
+def repeated_validation_failure_family(rejections: list[dict]) -> dict:
+    if not rejections:
+        return {}
+    counts: dict[str, int] = {}
+    payloads: dict[str, dict] = {}
+    for item in rejections:
+        if not isinstance(item, dict):
+            continue
+        key = _validation_failure_family_key(item)
+        if not key:
+            continue
+        counts[key] = counts.get(key, 0) + 1
+        payloads[key] = item
+    if not counts:
+        return {}
+    winner = max(counts.items(), key=lambda pair: pair[1])[0]
+    item = dict(payloads.get(winner) or {})
+    item["count"] = counts[winner]
+    return item
+
+
 progress = read_json(progress_path)
 status = read_json(status_path)
 if not progress and not status:
@@ -523,6 +602,8 @@ if not isinstance(recent_rejections, list):
     recent_rejections = []
 repeated_rejection = repeated_rejection_family(recent_rejections)
 repeated_rejection_count = int(repeated_rejection.get("count") or 0)
+repeated_validation_failure = repeated_validation_failure_family(recent_rejections)
+repeated_validation_failure_count = int(repeated_validation_failure.get("count") or 0)
 dirty_preexisting_rejections = [
     item
     for item in recent_rejections
@@ -614,6 +695,30 @@ elif len(dirty_preexisting_rejections) >= dirty_rejection_threshold and dirty_re
         f"dirty_touched_file_rejections:{len(dirty_preexisting_rejections)}:"
         f"threshold:{dirty_rejection_threshold}:active_dirty_files:{','.join(dirty_rejection_targets[:8])}"
     )
+elif (
+    not cooling_down
+    and repeated_validation_failure_count >= validation_failure_family_threshold
+):
+    validation_failure = dict(repeated_validation_failure.get("latest_candidate_validation_failure") or {})
+    validation_files = [
+        str(path).strip()
+        for path in (validation_failure.get("changed_files") or repeated_validation_failure.get("changed_files") or [])
+        if str(path).strip()
+    ]
+    validation_reasons = [
+        str(text).strip()
+        for text in (validation_failure.get("reasons") or [])
+        if str(text).strip()
+    ]
+    validation_summary = validation_failure.get("summary") or {}
+    validation_head = str(validation_summary.get("failure_head") or "").strip()[:240]
+    reason = (
+        f"repeated_validation_failure_family:{repeated_validation_failure_count}:"
+        f"threshold:{validation_failure_family_threshold}:"
+        f"files:{','.join(validation_files[:8])}:"
+        f"reasons:{'|'.join(validation_reasons[:3])}:"
+        f"failure_head:{validation_head}"
+    )
 elif not cooling_down and repeated_rejection_count >= repeated_rejection_family_threshold:
     repeated_reason = str(repeated_rejection.get("reason") or "unknown")
     repeated_files = [
@@ -691,6 +796,8 @@ state.update(
         "dirty_rejection_active_targets": dirty_rejection_targets,
         "repeated_rejection_family": repeated_rejection,
         "repeated_rejection_family_count": repeated_rejection_count,
+        "repeated_validation_failure_family": repeated_validation_failure,
+        "repeated_validation_failure_family_count": repeated_validation_failure_count,
         "phase_stall_age_seconds": phase_stall_age,
         "status_stall_age_seconds": status_stall_age,
         "phase_status_budget_seconds": phase_status_budget,
@@ -771,7 +878,11 @@ state.update(
         "dirty_legal_parser_targets_pending_confirmation": False,
         "dirty_legal_parser_targets_transient_phase": "",
         "dirty_legal_parser_targets_known_bad_restore_failure": False,
+        "dirty_legal_parser_targets_known_stuck_transient": False,
         "dirty_legal_parser_targets_confirmed": False,
+        "dirty_legal_parser_targets_first_cycle_index": 0,
+        "dirty_legal_parser_targets_last_cycle_index": 0,
+        "dirty_legal_parser_targets_cycle_span": 0,
     }
 )
 state_path = path
@@ -906,7 +1017,8 @@ confirmed_dirty_target_reason() {
     "$REPO_ROOT/$CURRENT_STATUS_PATH" \
     "$REPO_ROOT/$PROGRESS_PATH" \
     "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
-    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
+    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" \
+    "$SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT" <<'PY'
 import hashlib
 import json
 import subprocess
@@ -920,6 +1032,7 @@ status_path = Path(sys.argv[3])
 progress_path = Path(sys.argv[4])
 dirty_target_detection = str(sys.argv[5]).strip() == "1"
 dirty_target_grace_seconds = int(sys.argv[6])
+dirty_target_transient_cycle_limit = int(sys.argv[7])
 
 LEGAL_PARSER_TARGETS = [
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
@@ -1043,9 +1156,12 @@ status = read_status()
 progress = read_progress()
 previous = [str(path) for path in state.get("dirty_legal_parser_targets") or []]
 previous_fp = str(state.get("dirty_legal_parser_targets_fingerprint") or "")
+first_seen_cycle_index = int(state.get("dirty_legal_parser_targets_first_cycle_index") or 0)
+last_seen_cycle_index = int(state.get("dirty_legal_parser_targets_last_cycle_index") or 0)
 current_phase = str(status.get("phase") or "")
 phase_started_at = parse_epoch(status.get("phase_started_at"))
 updated_at = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
+latest_cycle_index = int(progress.get("latest_cycle_index") or status.get("cycle_index") or 0)
 now = int(time.time())
 try:
     phase_stale_after = int(status.get("phase_stale_after_seconds") or 0)
@@ -1055,6 +1171,18 @@ phase_age = max(0, now - phase_started_at) if phase_started_at else 0
 status_age = max(0, now - updated_at) if updated_at else 0
 phase_stale = bool(phase_stale_after > 0 and phase_age >= phase_stale_after)
 known_bad_restore_failure = restore_failed_dirty_targets(progress, paths)
+same_dirty_targets = bool(paths and sorted(paths) == sorted(previous) and fp == previous_fp)
+if same_dirty_targets:
+    first_dirty_cycle_index = first_seen_cycle_index or latest_cycle_index
+else:
+    first_dirty_cycle_index = latest_cycle_index if paths else 0
+dirty_cycle_span = max(0, latest_cycle_index - first_dirty_cycle_index) if paths and latest_cycle_index else 0
+known_stuck_transient_dirty = bool(
+    paths
+    and same_dirty_targets
+    and latest_cycle_index > 0
+    and dirty_cycle_span >= dirty_target_transient_cycle_limit
+)
 transient_phases = {
     "requesting_llm_patch",
     "retrying_llm_patch",
@@ -1069,20 +1197,25 @@ transient_phases = {
 transient_dirty = bool(
     paths
     and not known_bad_restore_failure
+    and not known_stuck_transient_dirty
     and not phase_stale
     and status_age < dirty_target_grace_seconds
     and (current_phase in transient_phases or bool(current_phase))
 )
-if paths and sorted(paths) == sorted(previous) and fp == previous_fp and not transient_dirty:
+if same_dirty_targets and not transient_dirty:
     print("dirty_legal_parser_targets:" + ",".join(paths[:8]))
     raise SystemExit(0)
 state.update(
     {
         "dirty_legal_parser_targets": paths,
         "dirty_legal_parser_targets_fingerprint": fp,
+        "dirty_legal_parser_targets_first_cycle_index": first_dirty_cycle_index if paths else 0,
+        "dirty_legal_parser_targets_last_cycle_index": latest_cycle_index if paths else 0,
         "dirty_legal_parser_targets_pending_confirmation": bool(paths),
         "dirty_legal_parser_targets_transient_phase": current_phase if transient_dirty else "",
         "dirty_legal_parser_targets_known_bad_restore_failure": known_bad_restore_failure,
+        "dirty_legal_parser_targets_known_stuck_transient": known_stuck_transient_dirty,
+        "dirty_legal_parser_targets_cycle_span": dirty_cycle_span if paths else 0,
     }
 )
 state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1543,12 +1676,17 @@ Reason: $reason
 
 Improve only daemon/supervisor programming, tests, or docs in this maintenance pass. Do not implement a new legal parser feature here unless it is strictly required to repair daemon progress logic.
 
-If the reason mentions dirty_legal_parser_targets, dirty_touched_file_rejections, or repeated_rejection_family,
+If the reason mentions dirty_legal_parser_targets, dirty_touched_file_rejections, repeated_rejection_family, or repeated_validation_failure_family,
 first inspect the stranded legal-parser diff. If it is a coherent parser slice,
 run the focused tests and commit it with a legal-parser-daemon recovery message.
 If it is incoherent, safely restore only those stranded legal-parser target files
 to the current HEAD so future daemon proposals are not rejected as touching
 pre-existing uncommitted changes. Do not touch unrelated dirty files.
+
+If the reason mentions repeated_validation_failure_family, inspect the focused
+pytest failure signature first. Prefer daemon/supervisor validation targeting,
+proposal feedback, progress accounting, or recovery prompt fixes that prevent
+the same focused test failure from being proposed again unattended.
 
 If the reason mentions repeated_recovery_failure, inspect the cited recovery
 log and failure signature first. Prefer fixing the daemon/supervisor recovery
