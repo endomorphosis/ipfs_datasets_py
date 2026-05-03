@@ -222,6 +222,43 @@ def test_threshold_approval_required_for_sensitive_decrypt_grant(tmp_path):
     assert manifest["approvals"][0]["approval_id"] == approval.approval_id
 
 
+def test_grant_receipt_tracks_sharing_and_survives_snapshot(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "receipt.txt"
+    source.write_text("receipt tracked sharing", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "benefits_screening"},
+    )
+    [receipt] = service.list_grant_receipts(wallet.wallet_id, audience_did=ADVOCATE)
+
+    assert receipt.grant_id == grant.grant_id
+    assert receipt.wallet_id == wallet.wallet_id
+    assert receipt.audience_did == ADVOCATE
+    assert receipt.resources == [resource]
+    assert receipt.abilities == ["record/analyze"]
+    assert receipt.purpose == "benefits_screening"
+    assert receipt.receipt_hash
+    assert service.get_wallet_manifest(wallet.wallet_id)["grant_receipts"][0]["receipt_id"] == receipt.receipt_id
+
+    restored = WalletService(storage_dir=tmp_path)
+    restored.import_wallet_snapshot(service.export_wallet_snapshot(wallet.wallet_id))
+    [restored_receipt] = restored.list_grant_receipts(wallet.wallet_id, status="active")
+    assert restored_receipt.to_dict() == receipt.to_dict()
+
+    service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
+    [revoked_receipt] = service.list_grant_receipts(wallet.wallet_id, status="revoked")
+    assert revoked_receipt.receipt_id == receipt.receipt_id
+
+
 def test_location_claims_are_coarse_and_proof_receipts_hide_precise_point(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)

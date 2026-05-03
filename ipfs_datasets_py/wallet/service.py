@@ -37,6 +37,7 @@ from .models import (
     DataVersion,
     DerivedArtifact,
     Grant,
+    GrantReceipt,
     KeyWrap,
     LocationClaim,
     ProofReceipt,
@@ -81,6 +82,7 @@ class DataWalletService:
         self.records: Dict[str, DataRecord] = {}
         self.versions: Dict[str, DataVersion] = {}
         self.grants: Dict[str, Grant] = {}
+        self.grant_receipts: Dict[str, GrantReceipt] = {}
         self.invocations: Dict[str, WalletInvocation] = {}
         self.derived_artifacts: Dict[str, DerivedArtifact] = {}
         self.proofs: Dict[str, ProofReceipt] = {}
@@ -619,6 +621,9 @@ class DataWalletService:
         self._ensure_principal_secret(audience_did)
         if any(ability in abilities for ability in ("record/decrypt", "record/analyze", "*")):
             self._wrap_granted_record_keys(wallet_id, issuer_did, audience_did, grant)
+        receipt = self._create_grant_receipt(wallet_id, grant)
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
         append_audit_event(
             self.audit_events[wallet_id],
             wallet_id=wallet_id,
@@ -626,10 +631,34 @@ class DataWalletService:
             action="grant/create",
             resource=",".join(resources),
             decision="allow",
-            details={"abilities": abilities, "audience_did": audience_did},
+            details={
+                "abilities": abilities,
+                "audience_did": audience_did,
+                "receipt_id": receipt.receipt_id,
+                "receipt_hash": receipt.receipt_hash,
+            },
             grant_id=grant.grant_id,
         )
         return grant
+
+    def list_grant_receipts(
+        self,
+        wallet_id: str,
+        *,
+        audience_did: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> List[GrantReceipt]:
+        self._wallet(wallet_id)
+        receipts = [
+            receipt
+            for receipt in self.grant_receipts.values()
+            if receipt.wallet_id == wallet_id
+        ]
+        if audience_did is not None:
+            receipts = [receipt for receipt in receipts if receipt.audience_did == audience_did]
+        if status is not None:
+            receipts = [receipt for receipt in receipts if receipt.status == status]
+        return sorted(receipts, key=lambda item: item.created_at)
 
     def issue_invocation(
         self,
@@ -709,6 +738,9 @@ class DataWalletService:
         self._assert_controller(wallet, actor_did)
         grant = self.grants[grant_id]
         grant.status = "revoked"
+        for receipt in self.grant_receipts.values():
+            if receipt.wallet_id == wallet_id and receipt.grant_id == grant_id:
+                receipt.status = "revoked"
         for request in self.access_requests.values():
             if request.wallet_id == wallet_id and request.grant_id == grant_id and request.status == "approved":
                 request.status = "revoked"
@@ -1272,6 +1304,11 @@ class DataWalletService:
                 for grant in sorted(self.grants.values(), key=lambda item: item.grant_id)
                 if any(resource.startswith(f"wallet://{wallet_id}/") for resource in grant.resources)
             ],
+            "grant_receipts": [
+                receipt.to_dict()
+                for receipt in sorted(self.grant_receipts.values(), key=lambda item: item.receipt_id)
+                if receipt.wallet_id == wallet_id
+            ],
             "invocations": [
                 invocation.to_dict()
                 for invocation in sorted(self.invocations.values(), key=lambda item: item.invocation_id)
@@ -1330,11 +1367,19 @@ class DataWalletService:
             for request in self.access_requests.values()
             if request.wallet_id == wallet_id
         )
+        grant_receipt_ids = sorted(
+            receipt.receipt_id
+            for receipt in self.grant_receipts.values()
+            if receipt.wallet_id == wallet_id
+        )
         return {
             "wallet": wallet.to_dict(),
             "records": [self.records[record_id].to_dict() for record_id in record_ids],
             "versions": [self.versions[version_id].to_dict() for version_id in version_ids],
             "grants": [self.grants[grant_id].to_dict() for grant_id in grant_ids],
+            "grant_receipts": [
+                self.grant_receipts[receipt_id].to_dict() for receipt_id in grant_receipt_ids
+            ],
             "invocations": [
                 self.invocations[invocation_id].to_dict() for invocation_id in invocation_ids
             ],
@@ -1689,6 +1734,8 @@ class DataWalletService:
             )
         for grant_data in snapshot.get("grants", []):
             self.grants[grant_data["grant_id"]] = Grant(**grant_data)
+        for receipt_data in snapshot.get("grant_receipts", []):
+            self.grant_receipts[receipt_data["receipt_id"]] = GrantReceipt(**receipt_data)
         for invocation_data in snapshot.get("invocations", []):
             self.invocations[invocation_data["invocation_id"]] = WalletInvocation(**invocation_data)
         for artifact_data in snapshot.get("derived_artifacts", []):
@@ -1826,6 +1873,42 @@ class DataWalletService:
         if request_id not in self.access_requests or self.access_requests[request_id].wallet_id != wallet_id:
             raise MissingRecordError(f"Access request not found: {request_id}")
         return self.access_requests[request_id]
+
+    def _create_grant_receipt(self, wallet_id: str, grant: Grant) -> GrantReceipt:
+        access_request_id = str(grant.caveats.get("access_request_id") or "") or None
+        approval_id = str(
+            grant.caveats.get("approval_id") or grant.caveats.get("approval_ref") or ""
+        ) or None
+        payload = {
+            "wallet_id": wallet_id,
+            "grant_id": grant.grant_id,
+            "issuer_did": grant.issuer_did,
+            "audience_did": grant.audience_did,
+            "resources": list(grant.resources),
+            "abilities": list(grant.abilities),
+            "purpose": grant.caveats.get("purpose"),
+            "caveats": dict(grant.caveats),
+            "expires_at": grant.expires_at,
+            "approval_id": approval_id,
+            "access_request_id": access_request_id,
+        }
+        receipt = GrantReceipt(
+            receipt_id=f"receipt-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            grant_id=grant.grant_id,
+            issuer_did=grant.issuer_did,
+            audience_did=grant.audience_did,
+            resources=list(grant.resources),
+            abilities=list(grant.abilities),
+            purpose=grant.caveats.get("purpose"),
+            caveats=dict(grant.caveats),
+            expires_at=grant.expires_at,
+            approval_id=approval_id,
+            access_request_id=access_request_id,
+            receipt_hash=sha256_hex(canonical_bytes(payload)),
+        )
+        self.grant_receipts[receipt.receipt_id] = receipt
+        return receipt
 
     def _matching_approval(
         self,

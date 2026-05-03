@@ -87,6 +87,24 @@ def test_wallet_cli_local_vertical_slice(tmp_path, capsys) -> None:
         str(wallet_dir),
         "--blob-dir",
         str(blob_dir),
+        "grant-receipts",
+        "--wallet-id",
+        wallet_id,
+        "--audience-did",
+        "did:key:delegate",
+    ]) == 0
+    receipts = json.loads(capsys.readouterr().out)
+    assert receipts["receipts"][0]["grant_id"] == grant_id
+    assert receipts["receipts"][0]["audience_did"] == "did:key:delegate"
+    assert receipts["receipts"][0]["status"] == "active"
+    assert receipts["receipts"][0]["receipt_hash"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
         "analyze",
         "--wallet-id",
         wallet_id,

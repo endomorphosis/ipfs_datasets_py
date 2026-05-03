@@ -304,6 +304,11 @@ def build_parser() -> argparse.ArgumentParser:
     revoke.add_argument("--actor-did", required=True)
     revoke.add_argument("--grant-id", required=True)
 
+    grant_receipts = subparsers.add_parser("grant-receipts", help="List grant sharing receipts")
+    grant_receipts.add_argument("--wallet-id", required=True)
+    grant_receipts.add_argument("--audience-did")
+    grant_receipts.add_argument("--status", choices=["active", "revoked", "all"], default="all")
+
     verify_storage = subparsers.add_parser("verify-storage", help="Verify encrypted record storage replicas")
     verify_storage.add_argument("--wallet-id", required=True)
     verify_storage.add_argument("--document-id", "--record-id", dest="record_id", required=True)
@@ -880,6 +885,19 @@ def main(argv: Optional[list[str]] = None) -> int:
             grant = service.revoke_grant(args.wallet_id, actor_did=args.actor_did, grant_id=args.grant_id)
             _save(service, args.wallet_dir, args.wallet_id)
             _emit({"status": "ok", "grant_id": grant.grant_id, "grant_status": grant.status}, json_output=args.json_output)
+            return 0
+
+        if args.command == "grant-receipts":
+            status = None if args.status == "all" else args.status
+            receipts = [
+                receipt.to_dict()
+                for receipt in service.list_grant_receipts(
+                    args.wallet_id,
+                    audience_did=args.audience_did,
+                    status=status,
+                )
+            ]
+            _emit({"status": "ok", "wallet_id": args.wallet_id, "receipts": receipts}, json_output=args.json_output)
             return 0
 
         if args.command == "verify-storage":

@@ -194,6 +194,30 @@ class WalletInvocation:
 
 
 @dataclass
+class GrantReceipt:
+    """Durable, owner-facing receipt for a wallet sharing grant."""
+
+    receipt_id: str
+    wallet_id: str
+    grant_id: str
+    issuer_did: str
+    audience_did: str
+    resources: List[str]
+    abilities: List[str]
+    purpose: Optional[str]
+    caveats: Dict[str, Any]
+    receipt_hash: str
+    created_at: str = field(default_factory=utc_now)
+    expires_at: Optional[str] = None
+    status: str = "active"
+    approval_id: Optional[str] = None
+    access_request_id: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class ApprovalRequest:
     """Threshold approval request for sensitive wallet operations."""
 
