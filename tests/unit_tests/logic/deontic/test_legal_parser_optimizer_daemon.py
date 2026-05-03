@@ -118,6 +118,10 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "snapshot_dirty_legal_parser_target_baseline()" in script
     assert "BASELINE_DIRTY_TARGET_MANIFEST_PATH" in script
     assert "BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" in script
+    assert "restore_legal_parser_targets_from_baseline_or_head" in script
+    assert "snapshot_dirty_legal_parser_target_baseline()" in script
+    assert "BASELINE_DIRTY_TARGET_MANIFEST_PATH" in script
+    assert "BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" in script
     assert "SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" in script
     assert "dirty_target_grace_seconds" in script
     assert '"requesting_llm_patch"' in recovery_body
@@ -144,6 +148,8 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert "def infer_legal_parser_targets(item: dict) -> list[str]:" in script
     assert "confirmed_repeated_rejection_dirty_target_reason()" in script
     assert "recover_repeated_rejection_dirty_targets()" in script
+    assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
+    assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
     assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated_rejection_family:" in script
