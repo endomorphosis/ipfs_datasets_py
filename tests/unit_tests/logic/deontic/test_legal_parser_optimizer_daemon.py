@@ -118,10 +118,6 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "snapshot_dirty_legal_parser_target_baseline()" in script
     assert "BASELINE_DIRTY_TARGET_MANIFEST_PATH" in script
     assert "BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" in script
-    assert "restore_legal_parser_targets_from_baseline_or_head" in script
-    assert "snapshot_dirty_legal_parser_target_baseline()" in script
-    assert "BASELINE_DIRTY_TARGET_MANIFEST_PATH" in script
-    assert "BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" in script
     assert "SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" in script
     assert "dirty_target_grace_seconds" in script
     assert '"requesting_llm_patch"' in recovery_body
@@ -150,11 +146,33 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert "recover_repeated_rejection_dirty_targets()" in script
     assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
     assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
-    assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
-    assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated_rejection_family:" in script
     assert "repeated_rejection_family_count" in script
     assert "dirty_touched_file_rejections, or repeated_rejection_family" in script
+
+
+def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenance():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    loop_start = script.index("while kill -0 \"$child_pid\"")
+    repeated_recovery_pos = script.index(
+        'recovery_failure_escalation_reason="$(confirmed_recovery_failure_escalation_reason || true)"',
+        loop_start,
+    )
+    dirty_recovery_pos = script.index('dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"', loop_start)
+    maintenance_pos = script.index('maintenance_reason="$(agentic_maintenance_reason || true)"', loop_start)
+
+    assert "SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL" in script
+    assert '"recovery_failure_escalation_tail"' in script
+    assert "record_recovery_failure()" in script
+    assert "clear_recovery_failure_state()" in script
+    assert "confirmed_recovery_failure_escalation_reason()" in script
+    assert "recent_recovery_failures" in script
+    assert "repeated_recovery_failure:" in script
+    assert "supervisor escalating repeated recovery failure" in script
+    assert repeated_recovery_pos < dirty_recovery_pos < maintenance_pos
 
 
 def test_supervisor_stops_competing_automation_before_and_during_run():
@@ -175,15 +193,8 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" in function_body
     assert "ppd/daemon/ppd_daemon.py" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
-<<<<<<< Updated upstream
-    assert script.index("terminate_matching_legal_parser_daemons") < script.index(
-        "terminate_competing_daemons"
-    )
-    assert script.index("terminate_competing_daemons") < script.index("snapshot_dirty_legal_parser_target_baseline")
-=======
     startup_pos = script.rindex("terminate_matching_legal_parser_daemons\nterminate_competing_daemons\nsnapshot_dirty_legal_parser_target_baseline")
     assert startup_pos >= 0
->>>>>>> Stashed changes
     assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index("while true; do")
     loop_start = script.index("while kill -0 \"$child_pid\"")
     assert loop_start < script.index("terminate_competing_daemons", loop_start)

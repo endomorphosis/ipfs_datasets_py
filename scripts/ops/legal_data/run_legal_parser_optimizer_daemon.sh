@@ -31,6 +31,7 @@ SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-
 SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL="${SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL:-3}"
 SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL="${SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL:-4}"
 SUPERVISOR_REPEATED_REJECTION_RECOVERY="${SUPERVISOR_REPEATED_REJECTION_RECOVERY:-1}"
+SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL="${SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL:-2}"
 SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS="${SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS:-1800}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-1200}"
@@ -226,6 +227,7 @@ write_supervisor_status() {
   "agentic_dirty_rejection_tail": $SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL,
   "agentic_repeated_rejection_family_tail": $SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL,
   "repeated_rejection_recovery_enabled": $(json_bool "$SUPERVISOR_REPEATED_REJECTION_RECOVERY"),
+  "recovery_failure_escalation_tail": $SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL,
   "agentic_cycle_stall_seconds": $SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
@@ -727,6 +729,144 @@ path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="ut
 PY
 }
 
+clear_recovery_failure_state() {
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    state = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+for key in (
+    "recent_recovery_failures",
+    "last_recovery_failure",
+    "recovery_failure_escalation_reason",
+):
+    state.pop(key, None)
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+record_recovery_failure() {
+  local recovery_kind="$1"
+  local reason="$2"
+  local recovery_log="$3"
+  local targets_file="$4"
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$recovery_kind" "$reason" "$REPO_ROOT/$recovery_log" "$targets_file" <<'PY'
+import json
+import re
+import sys
+import time
+from pathlib import Path
+
+state_path = Path(sys.argv[1])
+recovery_kind = sys.argv[2]
+reason = sys.argv[3]
+log_path = Path(sys.argv[4])
+targets_path = Path(sys.argv[5])
+try:
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+try:
+    log_text = log_path.read_text(encoding="utf-8", errors="replace")
+except Exception:
+    log_text = ""
+try:
+    targets = [line.strip() for line in targets_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+except Exception:
+    targets = []
+
+failed_lines = []
+for line in log_text.splitlines():
+    stripped = line.strip()
+    if stripped.startswith("FAILED ") or stripped.startswith("E   "):
+        failed_lines.append(stripped)
+summary = " | ".join(failed_lines[:12]).strip()
+if not summary:
+    tail_lines = [line.strip() for line in log_text.splitlines()[-40:] if line.strip()]
+    summary = " | ".join(tail_lines[-12:])[:4000]
+summary = re.sub(r"\s+", " ", summary).strip()[:4000]
+
+reason_family = reason.split(":", 1)[0] if ":" in reason else reason
+record = {
+    "recovery_kind": recovery_kind,
+    "reason": reason,
+    "reason_family": reason_family,
+    "targets": targets,
+    "failure_signature": summary,
+    "recorded_at": int(time.time()),
+}
+recent = state.get("recent_recovery_failures")
+if not isinstance(recent, list):
+    recent = []
+recent.append(record)
+state["recent_recovery_failures"] = recent[-12:]
+state["last_recovery_failure"] = record
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+confirmed_recovery_failure_escalation_reason() {
+  if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]]; then
+    return 1
+  fi
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$SUPERVISOR_RECOVERY_FAILURE_ESCALATION_TAIL" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+state_path = Path(sys.argv[1])
+threshold = int(sys.argv[2])
+try:
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+recent = state.get("recent_recovery_failures")
+if not isinstance(recent, list) or len(recent) < threshold:
+    raise SystemExit(1)
+latest = recent[-1]
+if not isinstance(latest, dict):
+    raise SystemExit(1)
+signature = str(latest.get("failure_signature") or "").strip()
+reason_family = str(latest.get("reason_family") or "").strip()
+recovery_kind = str(latest.get("recovery_kind") or "").strip()
+targets = [str(path).strip() for path in (latest.get("targets") or []) if str(path).strip()]
+if not signature or not reason_family or not recovery_kind:
+    raise SystemExit(1)
+match_count = 0
+for item in reversed(recent):
+    if not isinstance(item, dict):
+        continue
+    if str(item.get("failure_signature") or "").strip() != signature:
+        continue
+    if str(item.get("reason_family") or "").strip() != reason_family:
+        continue
+    if str(item.get("recovery_kind") or "").strip() != recovery_kind:
+        continue
+    if [str(path).strip() for path in (item.get("targets") or []) if str(path).strip()] != targets:
+        continue
+    match_count += 1
+if match_count < threshold:
+    raise SystemExit(1)
+reason = (
+    f"repeated_recovery_failure:{match_count}:threshold:{threshold}:"
+    f"kind:{recovery_kind}:reason_family:{reason_family}:"
+    f"targets:{','.join(targets[:8])}:signature:{signature[:500]}"
+)
+state["recovery_failure_escalation_reason"] = reason
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+print(reason)
+raise SystemExit(0)
+PY
+}
+
 confirmed_dirty_target_reason() {
   if [[ "$SUPERVISOR_DIRTY_TARGET_RECOVERY" != "1" ]]; then
     return 1
@@ -1188,11 +1328,13 @@ PY
     } >> "$REPO_ROOT/$recovery_log" 2>&1
     rc=$?
     last_agentic_maintenance_status="repeated_rejection_recovery_committed"
+    clear_recovery_failure_state
   else
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets"
       restore_legal_parser_targets_from_baseline_or_head "$targets_file"
     } >> "$REPO_ROOT/$recovery_log" 2>&1
+    record_recovery_failure "repeated_rejection_recovery" "$reason" "$recovery_log" "$targets_file"
     last_agentic_maintenance_status="repeated_rejection_recovery_restored"
     rc=0
   fi
@@ -1289,11 +1431,13 @@ PY
     } >> "$REPO_ROOT/$recovery_log" 2>&1
     rc=$?
     last_agentic_maintenance_status="dirty_recovery_committed"
+    clear_recovery_failure_state
   else
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target validation failed with rc=$rc; restoring only dirty legal-parser targets"
       restore_legal_parser_targets_from_baseline_or_head "$targets_file"
     } >> "$REPO_ROOT/$recovery_log" 2>&1
+    record_recovery_failure "dirty_target_recovery" "$reason" "$recovery_log" "$targets_file"
     last_agentic_maintenance_status="dirty_recovery_restored"
     rc=0
   fi
@@ -1376,6 +1520,11 @@ run the focused tests and commit it with a legal-parser-daemon recovery message.
 If it is incoherent, safely restore only those stranded legal-parser target files
 to the current HEAD so future daemon proposals are not rejected as touching
 pre-existing uncommitted changes. Do not touch unrelated dirty files.
+
+If the reason mentions repeated_recovery_failure, inspect the cited recovery
+log and failure signature first. Prefer fixing the daemon/supervisor recovery
+logic, proposal gating, or validator targeting so this exact failure loop does
+not recur on the next unattended cycle.
 
 Allowed files:
 - ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
@@ -1615,6 +1764,13 @@ while true; do
       last_recycle_reason="repeated_rejection_recovery"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor recovering repeated rejection dirty targets: $repeated_rejection_recovery_reason" >> "$REPO_ROOT/$log_path"
       recover_repeated_rejection_dirty_targets "$repeated_rejection_recovery_reason"
+      break
+    fi
+    recovery_failure_escalation_reason="$(confirmed_recovery_failure_escalation_reason || true)"
+    if [[ -n "$recovery_failure_escalation_reason" ]]; then
+      last_recycle_reason="repeated_recovery_failure"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor escalating repeated recovery failure: $recovery_failure_escalation_reason" >> "$REPO_ROOT/$log_path"
+      run_agentic_maintenance "$recovery_failure_escalation_reason"
       break
     fi
     dirty_recovery_reason="$(confirmed_dirty_target_reason || true)"
