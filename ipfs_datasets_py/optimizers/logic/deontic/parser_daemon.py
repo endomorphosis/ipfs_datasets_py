@@ -486,6 +486,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
         feedback: Sequence[str],
     ) -> str:
         docs_payload = {path: _read_text(self.daemon_config.repo_root / path, limit=24000) for path in self.daemon_config.docs}
+        roadmap_task_snapshot = self._roadmap_task_snapshot(docs_payload)
         recent_cycle_history = self._recent_cycle_history(limit=5)
         patch_stability_mode = self._patch_stability_mode(recent_cycle_history)
         recent_failed_patch_files = self._recent_failed_patch_files(recent_cycle_history)
@@ -496,13 +497,20 @@ class LegalParserParityOptimizer(BaseOptimizer):
         progress_payload = self._progress_snapshot()
         repeated_validation_recovery_feedback = self._repeated_validation_recovery_feedback(progress_payload)
         repeated_validation_failed_files = self._repeated_validation_failed_files(progress_payload)
+        repeated_recovery_failure_feedback = self._repeated_recovery_failure_feedback(progress_payload)
+        repeated_recovery_failed_files = self._repeated_recovery_failed_files(progress_payload)
         expanded_snapshot_files = (
             set(recent_failed_patch_files)
             | set(recent_test_failed_files)
             | set(recent_metric_stall_failed_files)
             | set(repeated_validation_failed_files)
+            | set(repeated_recovery_failed_files)
         )
-        test_failure_recovery_mode = bool(recent_test_failures or repeated_validation_recovery_feedback)
+        test_failure_recovery_mode = bool(
+            recent_test_failures
+            or repeated_validation_recovery_feedback
+            or repeated_recovery_failure_feedback
+        )
         metric_no_progress_recovery_mode = bool(recent_metric_stall_failures)
         file_payload = {
             path: _read_text(
@@ -560,6 +568,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
                 "When recent_test_failures has failure_phase=candidate_post_apply_validation, the prior patch failed before retention; fix the focused test, collection, or py_compile signature shown there before broadening the slice.",
                 "When progress_snapshot shows repeated_validation_failure_family, repair that exact focused validation family before requesting another parser capability slice.",
+                "When repeated_recovery_failure_feedback is present, inspect the cited recovery failure signature first. If the dirty targets were restored cleanly, fix daemon/supervisor feedback, gating, or validation targeting instead of regenerating the same dirty target patch.",
+                "Use roadmap_task_snapshot.pending_preview as the implementation backlog. If the backlog is empty, stale, or no longer matches the current code, update the implementation plan with concrete unchecked parser/IR/formula/decoder/prover tasks before taking another capability slice.",
                 "When recent_test_failures include py_compile, SyntaxError, or pytest collection failures, make the next patch compile-safe first: fix the exact file and line pattern shown in validation_failure_tail before adding new behavior.",
                 "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
@@ -580,9 +590,12 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "recent_test_failures": recent_test_failures,
             "repeated_validation_failed_files": repeated_validation_failed_files,
             "repeated_validation_recovery_feedback": repeated_validation_recovery_feedback,
+            "repeated_recovery_failed_files": repeated_recovery_failed_files,
+            "repeated_recovery_failure_feedback": repeated_recovery_failure_feedback,
             "recent_metric_stall_failed_files": recent_metric_stall_failed_files,
             "recent_metric_stall_failures": recent_metric_stall_failures,
             "docs": docs_payload,
+            "roadmap_task_snapshot": roadmap_task_snapshot,
             "evaluation": evaluation,
             "feedback": list(feedback),
             "progress_snapshot": progress_payload,
@@ -612,11 +625,54 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "If irreducible_residual_mode is true, stop chasing repair_required_count and make a tested deterministic coverage improvement from the roadmap instead. "
             "If roadmap_pivot_mode is true, implement a Phase 8 encoder/decoder/prover-syntax slice instead of another procedural trigger/export synonym. "
             "If test_failure_recovery_mode is true, use recent_test_failures as regression constraints and include a focused fix for that failure mode; py_compile and pytest collection failures are blockers that must be fixed before semantic expansion. "
+            "If repeated_recovery_failure_feedback is present, treat the restored recovery failure as a regression constraint and avoid proposing the same dirty target patch shape again. "
             "If metric_no_progress_recovery_mode is true, use recent_metric_stall_failures as hard evidence of what already failed to move metrics. "
+            "Use roadmap_task_snapshot to choose the next unchecked formal-logic task, and refresh the implementation plan when it no longer names actionable deterministic parser work. "
             "Prioritize unresolved repair-required probes only when irreducible_residual_mode is false. "
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
         )
+
+    def _roadmap_task_snapshot(self, docs_payload: Mapping[str, str]) -> Dict[str, Any]:
+        """Extract a compact checklist backlog from the deterministic parser docs."""
+
+        status_counts = {"pending": 0, "done": 0, "blocked": 0}
+        pending_preview: List[Dict[str, str]] = []
+        checkbox_pattern = re.compile(r"^\s*[-*]\s+\[([ xX~\-])\]\s+(.*\S)\s*$")
+        for path, text in docs_payload.items():
+            for line_number, line in enumerate(str(text).splitlines(), start=1):
+                match = checkbox_pattern.match(line)
+                if not match:
+                    continue
+                marker = match.group(1)
+                task_text = match.group(2).strip()
+                if marker in {"x", "X"}:
+                    status_counts["done"] += 1
+                    continue
+                if marker in {"~", "-"}:
+                    status_counts["blocked"] += 1
+                    continue
+                status_counts["pending"] += 1
+                if len(pending_preview) < 12:
+                    pending_preview.append(
+                        {
+                            "doc": path,
+                            "line": str(line_number),
+                            "task": task_text[:240],
+                        }
+                    )
+
+        return {
+            "status_counts": status_counts,
+            "pending_preview": pending_preview,
+            "has_actionable_backlog": bool(pending_preview),
+            "refresh_required": not pending_preview,
+            "refresh_instruction": (
+                "When refresh_required is true, compare current code/tests to the goal "
+                "and add concrete unchecked implementation-plan tasks for deterministic "
+                "legal text -> LegalNormIR -> formal logic/prover syntax."
+            ),
+        }
 
     def _mission_state(
         self,
@@ -828,6 +884,11 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "latest_candidate_post_apply_validation_failure": progress.get(
                 "latest_candidate_post_apply_validation_failure", {}
             ),
+            "recovery_failure_escalation_reason": progress.get(
+                "recovery_failure_escalation_reason", ""
+            ),
+            "last_recovery_failure": progress.get("last_recovery_failure", {}),
+            "recent_recovery_failures": progress.get("recent_recovery_failures", [])[-8:],
         }
 
     def _metric_stall_mode(self, progress_payload: Dict[str, Any]) -> bool:
@@ -1125,6 +1186,57 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "before requesting a new parser capability slice."
             ),
             "repeated_validation_failure: " + "; ".join(parts),
+        ]
+
+    def _repeated_recovery_failed_files(self, progress_payload: Mapping[str, Any]) -> List[str]:
+        """Return target files from a repeated supervisor recovery failure."""
+
+        if not str(progress_payload.get("recovery_failure_escalation_reason") or "").startswith(
+            "repeated_recovery_failure:"
+        ):
+            return []
+        latest = progress_payload.get("last_recovery_failure") or {}
+        if not isinstance(latest, Mapping):
+            return []
+        files: List[str] = []
+        for path in latest.get("targets") or []:
+            text = str(path).strip()
+            if text and text not in files:
+                files.append(text)
+        return files[:8]
+
+    def _repeated_recovery_failure_feedback(self, progress_payload: Mapping[str, Any]) -> List[str]:
+        """Convert repeated supervisor recovery failures into prompt feedback."""
+
+        escalation_reason = str(progress_payload.get("recovery_failure_escalation_reason") or "").strip()
+        if not escalation_reason.startswith("repeated_recovery_failure:"):
+            return []
+        latest = progress_payload.get("last_recovery_failure") or {}
+        if not isinstance(latest, Mapping):
+            return []
+
+        recovery_kind = str(latest.get("recovery_kind") or "").strip() or "unknown"
+        reason_family = str(latest.get("reason_family") or "").strip() or "unknown"
+        reason = " ".join(str(latest.get("reason") or "").split())
+        targets = ", ".join(self._repeated_recovery_failed_files(progress_payload)) or "unknown targets"
+        signature = " ".join(str(latest.get("failure_signature") or "").split())
+        parts = [
+            f"kind={recovery_kind}",
+            f"reason_family={reason_family}",
+            f"targets={targets}",
+        ]
+        if reason:
+            parts.append(f"reason={reason[:600]}")
+        if signature:
+            parts.append(f"failure_signature={signature[:1600]}")
+        return [
+            (
+                "repeated_recovery_failure: supervisor recovery failed repeatedly after focused "
+                "validation; inspect the restored target diff and repair supervision, validation "
+                "targeting, or the exact parser/test ordering failure before requesting a new "
+                "capability slice."
+            ),
+            "repeated_recovery_failure_details: " + "; ".join(parts),
         ]
 
     def _recent_metric_stall_failures(self, recent_cycle_history: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -2075,6 +2187,7 @@ class LegalParserOptimizerDaemon:
         return bool(
             self.optimizer._recent_test_failures(history)
             or self.optimizer._repeated_validation_recovery_feedback(progress)
+            or self.optimizer._repeated_recovery_failure_feedback(progress)
         )
 
     def _repair_phase_feedback(self) -> List[str]:
@@ -2082,12 +2195,12 @@ class LegalParserOptimizerDaemon:
             return []
         history = self.optimizer._recent_cycle_history(limit=5)
         failures = self.optimizer._recent_test_failures(history)
-        repeated_validation_feedback = self.optimizer._repeated_validation_recovery_feedback(
-            self.optimizer._progress_snapshot()
-        )
-        if not failures and not repeated_validation_feedback:
+        progress = self.optimizer._progress_snapshot()
+        repeated_validation_feedback = self.optimizer._repeated_validation_recovery_feedback(progress)
+        repeated_recovery_feedback = self.optimizer._repeated_recovery_failure_feedback(progress)
+        if not failures and not repeated_validation_feedback and not repeated_recovery_feedback:
             return []
-        feedback: List[str] = list(repeated_validation_feedback) + [
+        feedback: List[str] = list(repeated_validation_feedback) + list(repeated_recovery_feedback) + [
             "repair_phase: previous candidate failed validation/tests; repair the named failure before adding new behavior."
         ]
         for failure in failures[:3]:
@@ -2208,7 +2321,13 @@ class LegalParserOptimizerDaemon:
         }
 
     def _material_slice_gate_active(self, slice_scale_contract: Mapping[str, Any]) -> bool:
-        return str(slice_scale_contract.get("mode") or "") in {
+        mode = str(slice_scale_contract.get("mode") or "")
+        if mode == "standard_material_slice":
+            try:
+                return int(self.config.max_cycles) <= 0
+            except (TypeError, ValueError):
+                return False
+        return mode in {
             "expanded_slice",
             "patch_stability_family",
             "phase8_cross_stack_slice",

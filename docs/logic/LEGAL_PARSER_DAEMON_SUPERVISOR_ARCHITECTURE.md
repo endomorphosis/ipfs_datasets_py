@@ -50,6 +50,12 @@ The supervisor should never silently stall in a dead or idle state. Expected
 behavior:
 
 - If the daemon dies or heartbeat goes stale, recycle it.
+- During the child startup grace window, do not act on stale progress artifacts
+  from the previous run; give the new daemon a chance to write a fresh status
+  first.
+- Stop known competing automation, including PPD daemon/supervisor processes
+  and orphaned PP&D LLM helper children that can launch their own Codex,
+  Copilot, and pytest loops against the same worktree.
 - If legal-parser targets are dirty and stable, validate and commit them or
   restore only those targets.
 - If recovery itself repeats the same failure, escalate to maintenance.
@@ -63,6 +69,13 @@ behavior:
 - If maintenance validates changed allowed files, stage and commit those changes
   with a supervisor-maintenance commit so repaired daemon programming becomes
   durable and visible to later runs.
+- If the supervisor is terminated during maintenance, clear the active
+  maintenance window and mark the running maintenance status as interrupted so
+  health checks cannot report stale work as live progress.
+- If the roadmap checklist has no actionable pending tasks, maintenance should
+  audit the current parser/formal-logic code against the original goal and add
+  concrete unchecked tasks to the implementation plan before restarting normal
+  capability work.
 - If a no-op recovery clears a stale trigger, restart quickly.
 - If the supervisor exits, the ensure wrapper restarts it.
 - Health is green only when the supervisor is alive and either the daemon has a
@@ -76,6 +89,11 @@ recovery allowlists include parser, IR, formula, converter, exports, decoder,
 prover syntax, graph/support/knowledge-base helpers, and the matching deontic
 tests. That keeps overnight work aligned with the goal: deterministic legal text
 to `LegalNormIR` to formal logic/prover syntax without parser-runtime LLM calls.
+
+For unattended unbounded runs, even the default `standard_material_slice` is
+quality-gated. A retained slice should be a coherent parser/formal-logic family,
+not a one-phrase patch that makes the daemon look busy without moving the
+implementation plan.
 
 ## Recommended Overnight Entry Point
 

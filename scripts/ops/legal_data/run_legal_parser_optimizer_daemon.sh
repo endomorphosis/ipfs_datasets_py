@@ -1894,6 +1894,12 @@ supervisor programming so unattended cycles produce retained production parser,
 encoder, decoder, IR, formula, export, or prover-syntax work instead of
 spinning through no-op or rejected slices.
 
+If the daemon has no actionable implementation-plan tasks left, or the task
+list no longer matches the current parser/formal-logic code, audit the code
+against the original deterministic legal text -> LegalNormIR -> formal logic
+goal and update docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md
+with concrete unchecked tasks before restarting capability work.
+
 Allowed files:
 - ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
 - tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
@@ -2206,8 +2212,12 @@ terminate_competing_daemons() {
       continue
     fi
     case "$args" in
-      *"ppd/daemon/ppd_daemon.py"*)
+      *"ppd/daemon/ppd_daemon.py"*|*"ppd/daemon/ppd_supervisor.py"*)
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping competing automation $pid: $args" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+        terminate_pid_tree "$pid"
+        ;;
+      *"PPD_LLM_PROMPT_FILE"*|*"isolated PP&D implementation workspace"*)
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) stopping orphaned PP&D LLM automation $pid: $args" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
         terminate_pid_tree "$pid"
         ;;
       *"ipfs_datasets_py.optimizers.logic_port_daemon"*|*"run_logic_port_daemon.sh"*|*"ensure_logic_port_daemon.sh"*)
@@ -2292,12 +2302,21 @@ while true; do
   ) >> "$REPO_ROOT/$log_path" 2>&1 &
   child_pid=$!
   child_started_at=$SECONDS
+  startup_grace_logged=0
   printf '%s\n' "$child_pid" > "$REPO_ROOT/$CHILD_PID_PATH"
 
   while kill -0 "$child_pid" 2>/dev/null; do
     terminate_competing_daemons
     write_supervisor_status "running" "$run_id" "$log_path" null
-    if [[ $((SECONDS - child_started_at)) -ge "$WATCHDOG_STARTUP_GRACE_SECONDS" ]] && heartbeat_is_stale; then
+    if [[ $((SECONDS - child_started_at)) -lt "$WATCHDOG_STARTUP_GRACE_SECONDS" ]]; then
+      if [[ "$startup_grace_logged" == "0" ]]; then
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) startup grace active for child $child_pid; skipping stale progress recovery checks until fresh daemon status can be written" >> "$REPO_ROOT/$log_path"
+        startup_grace_logged=1
+      fi
+      sleep "$SUPERVISOR_HEARTBEAT_SECONDS"
+      continue
+    fi
+    if heartbeat_is_stale; then
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$log_path"
       stop_child

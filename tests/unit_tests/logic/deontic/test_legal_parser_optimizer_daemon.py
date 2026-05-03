@@ -110,6 +110,24 @@ def test_supervisor_preserves_sticky_agentic_reason_after_stopping_child():
     assert 'last_agentic_maintenance_status="accepted_committed"' in function_body
 
 
+def test_supervisor_cleanup_clears_interrupted_maintenance_window():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    function_start = script.index("cleanup() {")
+    function_end = script.index("\ntrap 'cleanup", function_start)
+    function_body = script[function_start:function_end]
+
+    assert 'local final_status="${1:-stopped}"' in function_body
+    assert '*running)' in function_body
+    assert 'last_agentic_maintenance_status="${last_agentic_maintenance_status}_interrupted"' in function_body
+    assert 'active_agentic_maintenance_started_at=""' in function_body
+    assert 'active_agentic_maintenance_timeout_seconds="null"' in function_body
+    assert 'write_supervisor_status "$final_status"' in function_body
+    assert 'trap \'cleanup "terminated"; exit 143\' TERM INT' in script
+
+
 def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
@@ -142,7 +160,9 @@ def test_ensure_legal_parser_optimizer_daemon_wraps_supervisor_for_unattended_re
     assert "legal-parser supervisor exited with code" in script
     assert "cleanup_stale_supervisor_artifacts()" in script
     assert "pid_is_legal_parser_supervisor()" in script
+    assert "pid_is_legal_parser_wrapper()" in script
     assert "wrapper_alive()" in script
+    assert 'pid_is_legal_parser_wrapper "$pid"' in script
     assert "wrapped_existing_supervisor" in script
     assert "wrapper_recovered_supervisor" in script
     assert "SUPERVISOR_LOCK_PATH" in script
@@ -182,6 +202,7 @@ def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
     assert "supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh)" in script
     assert "maintenance_running" in script
     assert '"formal_logic_goal"' in script
+    assert "pid_is_legal_parser_wrapper" in script
 
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
@@ -268,6 +289,8 @@ def test_supervisor_escalates_acceptance_stalls_into_agentic_maintenance():
     assert "cycle_delta >= acceptance_stall_threshold" in script
     assert "If the reason mentions accepted_patch_stall" in script
     assert "produce retained production parser" in script
+    assert "If the daemon has no actionable implementation-plan tasks left" in script
+    assert "update docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md" in script
     assert "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh" in script
     assert 'bash -n "$REPO_ROOT/scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh"' in script
     assert '"agentic_acceptance_stall_cycles"' in check_script
@@ -299,6 +322,61 @@ def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenanc
     assert repeated_recovery_pos < dirty_recovery_pos < maintenance_pos
 
 
+def test_repeated_recovery_failure_feedback_drives_repair_prompt(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    target = tmp_path / "ipfs_datasets_py/logic/deontic/exports.py"
+    test_target = tmp_path / "tests/unit_tests/logic/deontic/test_deontic_exports.py"
+    target.parent.mkdir(parents=True)
+    test_target.parent.mkdir(parents=True)
+    target.write_text("EXPORT_MARKER = True\n", encoding="utf-8")
+    test_target.write_text("def test_export_marker():\n    assert True\n", encoding="utf-8")
+    for doc in (
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md",
+    ):
+        path = tmp_path / doc
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("- [ ] Add export ordering repair task.\n", encoding="utf-8")
+    (out_dir / "progress_summary.json").write_text(
+        json.dumps(
+            {
+                "recovery_failure_escalation_reason": "repeated_recovery_failure:2:threshold:2",
+                "last_recovery_failure": {
+                    "recovery_kind": "dirty_target_recovery",
+                    "reason_family": "dirty_legal_parser_targets",
+                    "reason": "dirty_legal_parser_targets:ipfs_datasets_py/logic/deontic/exports.py",
+                    "targets": [
+                        "ipfs_datasets_py/logic/deontic/exports.py",
+                        "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+                    ],
+                    "failure_signature": "E AssertionError: export ordering mismatch",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=out_dir,
+        target_files=(
+            "ipfs_datasets_py/logic/deontic/exports.py",
+            "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+        ),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    feedback = daemon._repair_phase_feedback()
+    prompt = optimizer.build_patch_prompt(cycle_index=3, evaluation={"metrics": {}}, feedback=[])
+
+    assert daemon._test_failure_recovery_mode() is True
+    assert "repeated_recovery_failure_details" in "\n".join(feedback)
+    assert "export ordering mismatch" in "\n".join(feedback)
+    assert '"repeated_recovery_failure_feedback": [' in prompt
+    assert "EXPORT_MARKER" in prompt
+
+
 def test_supervisor_stops_competing_automation_before_and_during_run():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
@@ -316,12 +394,33 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "systemctl --user kill --signal=TERM" in function_body
     assert "SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE" in function_body
     assert "ppd/daemon/ppd_daemon.py" in function_body
+    assert "ppd/daemon/ppd_supervisor.py" in function_body
+    assert "PPD_LLM_PROMPT_FILE" in function_body
+    assert "isolated PP&D implementation workspace" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
     startup_pos = script.rindex("terminate_matching_legal_parser_daemons\nterminate_competing_daemons\nsnapshot_dirty_legal_parser_target_baseline")
     assert startup_pos >= 0
     assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index("while true; do")
     loop_start = script.index("while kill -0 \"$child_pid\"")
     assert loop_start < script.index("terminate_competing_daemons", loop_start)
+
+
+def test_supervisor_defers_stale_recovery_during_child_startup_grace():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    loop_start = script.index("while kill -0 \"$child_pid\"")
+    loop_body = script[loop_start: script.index("  done", loop_start)]
+
+    assert "startup_grace_logged=0" in script
+    assert '[[ $((SECONDS - child_started_at)) -lt "$WATCHDOG_STARTUP_GRACE_SECONDS" ]]' in loop_body
+    assert "skipping stale progress recovery checks until fresh daemon status can be written" in loop_body
+    assert "continue" in loop_body
+    assert loop_body.index("WATCHDOG_STARTUP_GRACE_SECONDS") < loop_body.index("heartbeat_is_stale")
+    assert loop_body.index("WATCHDOG_STARTUP_GRACE_SECONDS") < loop_body.index(
+        'maintenance_reason="$(agentic_maintenance_reason || true)"'
+    )
 
 
 def test_parse_cycle_proposal_accepts_strict_json():
@@ -2014,6 +2113,46 @@ def test_high_score_repair_prompt_requires_material_followthrough(tmp_path):
     assert "compile-safe first" in prompt
 
 
+def test_optimizer_prompt_includes_roadmap_task_snapshot_and_refresh_instruction(tmp_path):
+    impl_doc = tmp_path / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md"
+    improvement_doc = tmp_path / "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md"
+    impl_doc.parent.mkdir(parents=True)
+    impl_doc.write_text(
+        "\n".join(
+            [
+                "# Implementation Plan",
+                "- [x] Add LegalNormIR baseline.",
+                "- [ ] Add prover syntax validation for decoder fixtures.",
+                "- [~] Resolve external reference evidence blockers.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    improvement_doc.write_text("Improve parser.\n", encoding="utf-8")
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        target_files=(),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    prompt = optimizer.build_patch_prompt(cycle_index=1, evaluation={"metrics": {}}, feedback=[])
+    snapshot = optimizer._roadmap_task_snapshot(
+        {
+            "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": impl_doc.read_text(
+                encoding="utf-8"
+            ),
+            "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.\n",
+        }
+    )
+
+    assert snapshot["status_counts"] == {"blocked": 1, "done": 1, "pending": 1}
+    assert snapshot["pending_preview"][0]["task"] == "Add prover syntax validation for decoder fixtures."
+    assert '"roadmap_task_snapshot": {' in prompt
+    assert "Use roadmap_task_snapshot.pending_preview as the implementation backlog" in prompt
+    assert "refresh the implementation plan" in prompt
+
+
 def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
@@ -2433,16 +2572,24 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
 
 
-def test_material_slice_gate_activates_for_expanded_and_repair_followthrough_modes(tmp_path):
-    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+def test_material_slice_gate_activates_for_unbounded_standard_and_expanded_modes(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out", max_cycles=0)
     daemon = LegalParserOptimizerDaemon(
         config=config,
         optimizer=LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}")),
     )
 
+    assert daemon._material_slice_gate_active({"mode": "standard_material_slice"}) is True
     assert daemon._material_slice_gate_active({"mode": "expanded_slice"}) is True
     assert daemon._material_slice_gate_active({"mode": "repair_with_material_followthrough"}) is True
     assert daemon._material_slice_gate_active({"mode": "repair_first"}) is False
+
+    bounded_config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out2", max_cycles=1)
+    bounded_daemon = LegalParserOptimizerDaemon(
+        config=bounded_config,
+        optimizer=LegalParserParityOptimizer(daemon_config=bounded_config, llm_backend=_FakeRouter("{}")),
+    )
+    assert bounded_daemon._material_slice_gate_active({"mode": "standard_material_slice"}) is False
 
 
 def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_path):
