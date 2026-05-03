@@ -4,14 +4,11 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
 MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-codex_cli}"
-# The supervised overnight daemon still calls ipfs_datasets_py.llm_router, but
-# pins the router provider to codex_cli by default so auto-routing does not fall
-# into local/P2P providers that cannot reliably complete autonomous code edits.
-# Set PROVIDER=auto-empty only for debugging the router's provider selection.
-if [[ "$PROVIDER" == "auto-empty" ]]; then
-  PROVIDER=""
-fi
+PROVIDER="${PROVIDER:-}"
+SUPERVISOR_ROUTER_DEFAULT_MODE="llm_router_auto"
+# Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
+# selection and fallback. Set PROVIDER=codex_cli to force Codex only, or any
+# other registered llm_router provider when debugging a specific backend.
 SLICE_MODE="${SLICE_MODE:-balanced}"
 LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
 LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
@@ -151,6 +148,7 @@ write_supervisor_status() {
   "last_orphaned_llm_cleanup_count": $last_orphaned_llm_cleanup_count,
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
+  "router_default_mode": "$SUPERVISOR_ROUTER_DEFAULT_MODE",
   "slice_mode": "$SLICE_MODE",
   "proposal_attempts": $PROPOSAL_ATTEMPTS,
   "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,
