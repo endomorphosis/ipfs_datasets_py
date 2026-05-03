@@ -1632,6 +1632,49 @@ class DataWalletService:
             "derived_artifact_count": imported_artifacts,
         }
 
+    def verify_export_bundle_storage(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
+        """Verify local availability of encrypted blobs referenced by a bundle."""
+
+        if not self.verify_export_bundle(bundle):
+            raise AccessDeniedError("Export bundle hash verification failed")
+        self._validate_export_bundle_shape(bundle)
+        wallet_id = str((bundle.get("wallet") or {}).get("wallet_id") or "")
+        reports = []
+        for record_data in bundle.get("records", []):
+            record_id = record_data["record_id"]
+            if record_id in self.records and self.records[record_id].wallet_id == wallet_id:
+                report = self.verify_record_storage(wallet_id, record_id)
+                reports.append(report.to_dict())
+                continue
+            version_data = next(
+                version for version in bundle["versions"] if version["record_id"] == record_id
+            )
+            payload_status = self._check_storage_ref(
+                self._storage_ref_from_dict(version_data["encrypted_payload_ref"])
+            )
+            metadata_ref = version_data.get("encrypted_metadata_ref")
+            metadata_status = (
+                self._check_storage_ref(self._storage_ref_from_dict(metadata_ref))
+                if metadata_ref
+                else []
+            )
+            report = StorageHealthReport(
+                wallet_id=wallet_id,
+                record_id=record_id,
+                version_id=version_data["version_id"],
+                payload=payload_status,
+                metadata=metadata_status,
+            )
+            reports.append(report.to_dict())
+        return {
+            "bundle_id": bundle.get("bundle_id"),
+            "bundle_hash": bundle.get("bundle_hash"),
+            "wallet_id": wallet_id,
+            "ok": all(report["ok"] for report in reports),
+            "record_count": len(reports),
+            "reports": reports,
+        }
+
     def _validate_export_bundle_shape(self, bundle: Dict[str, Any]) -> None:
         if bundle.get("bundle_type") != "wallet_export_v1":
             raise ValueError("Unsupported export bundle type")

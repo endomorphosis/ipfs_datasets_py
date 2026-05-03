@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from ipfs_datasets_py.wallet import WalletService
 from ipfs_datasets_py.wallet.cli import main
 from ipfs_datasets_py.wallet.crypto import random_key
 from ipfs_datasets_py.wallet.ucan import resource_for_export, resource_for_record
@@ -676,6 +677,38 @@ def test_wallet_cli_export_grant_invocation_and_bundle(tmp_path, capsys) -> None
     assert imported["record_count"] == 1
     assert imported["bundle_hash"] == bundle["bundle_hash"]
     assert next(import_wallet_dir.glob("wallet-*.json")).exists()
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(import_wallet_dir),
+        "--blob-dir",
+        str(tmp_path / "missing-blobs"),
+        "export-bundle-storage",
+        "--path",
+        str(bundle_path),
+    ]) == 0
+    storage = json.loads(capsys.readouterr().out)
+    assert storage["ok"] is True
+    assert storage["record_count"] == 1
+
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    bundle["versions"][0]["encrypted_payload_ref"]["uri"] = "local:///missing/cli-export-payload.bin"
+    bundle["versions"][0]["encrypted_payload_ref"]["mirrors"] = []
+    bundle["bundle_hash"] = WalletService().export_bundle_hash(bundle)
+    bundle["bundle_id"] = f"export-{bundle['bundle_hash'][:24]}"
+    bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(import_wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-bundle-storage",
+        "--path",
+        str(bundle_path),
+    ]) == 0
+    assert json.loads(capsys.readouterr().out)["ok"] is False
 
     bundle["records"] = []
     bundle_path.write_text(json.dumps(bundle), encoding="utf-8")

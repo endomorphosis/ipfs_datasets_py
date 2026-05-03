@@ -365,6 +365,16 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     assert service.verify_export_bundle(tampered) is False
 
     imported = WalletService(storage_dir=tmp_path / "imported")
+    available_storage = imported.verify_export_bundle_storage(bundle)
+    assert available_storage["ok"] is True
+    assert available_storage["record_count"] == 2
+    broken_storage_bundle = json.loads(json.dumps(bundle))
+    broken_storage_bundle["versions"][0]["encrypted_payload_ref"]["uri"] = "local:///missing/export-payload.bin"
+    broken_storage_bundle["versions"][0]["encrypted_payload_ref"]["mirrors"] = []
+    broken_storage_bundle["bundle_hash"] = imported.export_bundle_hash(broken_storage_bundle)
+    broken_storage_bundle["bundle_id"] = f"export-{broken_storage_bundle['bundle_hash'][:24]}"
+    missing_storage = imported.verify_export_bundle_storage(broken_storage_bundle)
+    assert missing_storage["ok"] is False
     summary = imported.import_export_bundle(bundle)
     assert summary["record_count"] == 2
     assert summary["version_count"] == 2
