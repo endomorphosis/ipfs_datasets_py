@@ -646,6 +646,70 @@ def test_small_slice_mode_preserves_minimal_recovery_prompt(tmp_path):
     assert "Prefer one implementation file plus one focused test file" in prompt
 
 
+def test_preflight_repair_recovers_malformed_typescript_files(tmp_path, monkeypatch):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port CEC ZKP integration\n", encoding="utf-8")
+    status.write_text("status notes\n", encoding="utf-8")
+
+    bad = {
+        "summary": "Bad generic",
+        "impact": "Adds a malformed replacement that needs preflight repair.",
+        "tasks": ["Task checkbox-1: Port CEC ZKP integration"],
+        "patch": "",
+        "files": [{"path": "src/lib/logic/cecZkpIntegration.ts", "content": "export type Bad = Record;\n"}],
+    }
+    fixed = {
+        "summary": "Fixed generic",
+        "impact": "Adds a compileable replacement after preflight repair.",
+        "tasks": ["Task checkbox-1: Port CEC ZKP integration"],
+        "patch": "",
+        "files": [
+            {
+                "path": "src/lib/logic/cecZkpIntegration.ts",
+                "content": "export type Good = Record<string, unknown>;\n",
+            }
+        ],
+    }
+    router = SequencedRouter([json.dumps(bad), json.dumps(fixed)])
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        max_iterations=1,
+    )
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=router)
+
+    def fake_preflight(edits):
+        content = "\n".join(edit["content"] for edit in edits)
+        if "Record;" in content:
+            return [
+                "Rejected proposal because TypeScript replacement preflight found parser or generic/type-quality errors before touching the worktree:\n"
+                "src/lib/logic/cecZkpIntegration.ts(1,19): error TS2314: Generic type 'Record' requires 2 type argument(s)."
+            ]
+        return []
+
+    monkeypatch.setattr(optimizer, "_typescript_replacement_preflight_errors", fake_preflight)
+
+    result = optimizer.run_once(session_id="preflight-repair")
+
+    assert result["valid"] is True
+    assert result["artifact"]["summary"] == "Fixed generic"
+    assert result["artifact"]["files"] == ["src/lib/logic/cecZkpIntegration.ts"]
+    assert len(router.calls) == 2
+    assert "preflight rejected them before touching the worktree" in router.calls[1]["prompt"]
+    assert "export type Good = Record<string, unknown>;" in router.responses[1]
+
+
 def test_daemon_reports_router_failures_without_traceback(tmp_path):
     plan = tmp_path / "plan.md"
     status = tmp_path / "status.md"

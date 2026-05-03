@@ -101,6 +101,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --max-task-failures 4 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
+  --preflight-repair-attempts 1 \
   --validation-repair-attempts 1 \
   --validation-repair-failure-budget 2 \
   --revisit-blocked-tasks \
@@ -124,7 +125,7 @@ The daemon can also recover JSON proposals from Codex JSONL event streams. If th
 
 `--max-prompt-chars` controls the prompt budget for each LLM call and defaults to `32000`. The supervisor exposes the same setting through `MAX_PROMPT_CHARS`, also defaulting to `32000`. The task board is still the authoritative ledger, but only a compact excerpt centered on the selected task is embedded in each round.
 
-File replacement proposals now also get a cheap TypeScript replacement preflight during the proposal-attempt loop. If a replacement contains syntax errors such as Python-style object syntax or truncated declarations, or targeted generic/type-quality errors such as missing `Record`/`ReadonlyArray` type arguments and `unknown` assignability mistakes, the daemon rejects that proposal before touching the worktree and feeds the exact diagnostics into the next proposal attempt. This avoids spending a full validation/rollback cycle on files that cannot pass basic TypeScript checks.
+File replacement proposals now also get a cheap TypeScript replacement preflight during the proposal-attempt loop. If a replacement contains syntax errors such as Python-style object syntax or truncated declarations, or targeted generic/type-quality errors such as missing `Record`/`Promise`/`Omit` type arguments, missing comparison operators in loops, and `unknown` assignability mistakes, the daemon first performs one targeted preflight-repair call with the exact diagnostics and original file replacements. If the repair still fails, the daemon rejects that proposal before touching the worktree and feeds the diagnostics into the next proposal attempt. This avoids spending a full validation/rollback cycle on files that cannot pass basic TypeScript checks, while giving obvious one-pass TypeScript damage a chance to recover inside the same cycle.
 
 When complete file replacements apply but fail validation, the daemon now performs one validation-repair attempt before waiting for the next cycle. The repair prompt includes the failed validation output and the attempted file contents, asks for corrected complete file replacements, and reruns the normal validation/rollback flow.
 
@@ -221,6 +222,7 @@ python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --max-task-failures 4 \
   --proposal-attempts 3 \
   --file-repair-attempts 1 \
+  --preflight-repair-attempts 1 \
   --validation-repair-attempts 1 \
   --status-file ipfs_datasets_py/.daemon/logic-port-daemon.status.json \
   --progress-file ipfs_datasets_py/.daemon/logic-port-daemon.progress.json \

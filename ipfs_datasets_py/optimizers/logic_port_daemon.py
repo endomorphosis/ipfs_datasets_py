@@ -206,6 +206,7 @@ class LogicPortDaemonConfig:
     heartbeat_interval_seconds: float = 30.0
     patch_repair_attempts: int = 1
     file_repair_attempts: int = 1
+    preflight_repair_attempts: int = 1
     validation_repair_attempts: int = 1
     validation_repair_failure_budget: int = 2
     proposal_attempts: int = 3
@@ -932,6 +933,23 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             if artifact.files:
                 preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
             if preflight_errors:
+                repaired = self._repair_file_edits_after_preflight(
+                    artifact,
+                    preflight_errors,
+                    context=context,
+                    selected_task=selected_task,
+                )
+                if repaired.files:
+                    repaired_errors = self._preflight_artifact(repaired, selected_task=selected_task)
+                    repaired_errors.extend(self._typescript_replacement_preflight_errors(repaired.files))
+                    if not repaired_errors:
+                        repaired.dry_run = self.daemon_config.dry_run
+                        repaired.target_task = target_label
+                        return repaired
+                    artifact.errors.append(
+                        "Preflight repair still produced rejected TypeScript replacements:\n"
+                        + "\n".join(repaired_errors)
+                    )
                 artifact.errors.extend(preflight_errors)
                 artifact.failure_kind = "preflight"
                 previous_feedback = self._proposal_feedback(artifact)
@@ -2723,6 +2741,88 @@ Current file contents for likely targets:
         repaired.target_task = artifact.target_task
         return repaired
 
+    def _repair_file_edits_after_preflight(
+        self,
+        artifact: LogicPortArtifact,
+        preflight_errors: Sequence[str],
+        *,
+        context: OptimizationContext,
+        selected_task: Optional[PlanTask],
+    ) -> LogicPortArtifact:
+        attempts = max(0, int(self.daemon_config.preflight_repair_attempts))
+        if attempts <= 0 or not artifact.files:
+            return LogicPortArtifact(raw_response=artifact.raw_response)
+
+        task_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
+        diagnostic_context = self._typescript_preflight_diagnostic_context(preflight_errors, artifact.files)
+        repair_prompt = f"""The previous daemon proposal returned complete TypeScript file replacements, but preflight rejected them before touching the worktree.
+
+Repair the same intended change into compileable complete file replacements for the selected task.
+
+Return ONLY JSON with this shape:
+{{
+  "summary": "short repair description",
+  "impact": "how the changed files are directly used by the TypeScript port or validation suite",
+  "tasks": {json.dumps(artifact.tasks or ["preflight repair"])},
+  "patch": "",
+  "files": [
+    {{"path": "src/lib/logic/example.ts", "content": "complete replacement file content"}}
+  ],
+  "validation_commands": [["npx", "tsc", "--noEmit"], ["npm", "run", "validate:logic-port"]]
+}}
+
+Rules:
+- Do not return a patch. Return complete file contents, not snippets.
+- Keep the change focused on the daemon-selected task: {task_label}
+- Fix every TypeScript parser/generic diagnostic shown below.
+- Do not use bare TypeScript generic aliases. Use Record<string, unknown>, Promise<ResultType>, Omit<Type, Keys>, Map<Key, Value>, and Array<Item> with required type arguments.
+- Avoid Omit/Pick when a named interface or explicit options type is simpler and less fragile.
+- Every for loop and comparison must include the complete operator and bound expression, such as index < items.length.
+- Preserve browser-native TypeScript/WASM behavior with no server, Python, filesystem, subprocess, RPC, or Node-only browser-runtime dependency.
+- Preserve focused tests for the selected task when tests were part of the original proposal.
+
+Session: {context.session_id}
+Preflight diagnostics:
+{chr(10).join(str(error) for error in preflight_errors if error)}
+
+typescript_diagnostic_context={diagnostic_context or '<none>'}
+
+Original summary:
+{artifact.summary}
+
+Original impact:
+{artifact.impact}
+
+Original files JSON:
+{json.dumps(artifact.files, indent=2)}
+"""
+        repaired = LogicPortArtifact(raw_response=artifact.raw_response)
+        for attempt in range(1, attempts + 1):
+            self._write_status(
+                "preflight_repair_started",
+                attempt=attempt,
+                attempts=attempts,
+                selected_task=task_label,
+                session_id=context.session_id,
+            )
+            try:
+                repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+            except Exception as exc:
+                LOGGER.warning("preflight repair call failed: %s", exc)
+                return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)], failure_kind="preflight_repair_exception")
+            if repaired.errors or not repaired.files:
+                continue
+            repaired.target_task = artifact.target_task
+            repaired.dry_run = artifact.dry_run
+            if not repaired.summary:
+                repaired.summary = artifact.summary
+            if not repaired.impact:
+                repaired.impact = artifact.impact
+            if not repaired.tasks:
+                repaired.tasks = artifact.tasks
+            return repaired
+        return repaired
+
     def _repair_file_edits_after_validation(self, artifact: LogicPortArtifact, *, context: OptimizationContext) -> LogicPortArtifact:
         attempts = max(0, int(self.daemon_config.validation_repair_attempts))
         if attempts <= 0:
@@ -3128,6 +3228,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--progress-file", default=None, help="Optional progress summary JSON file. Defaults to .daemon progress path.")
     parser.add_argument("--heartbeat-interval", type=float, default=30.0, help="Seconds between status heartbeat writes while a cycle is active.")
     parser.add_argument("--file-repair-attempts", type=int, default=1, help="Attempts to convert malformed patches into complete file replacements.")
+    parser.add_argument("--preflight-repair-attempts", type=int, default=1, help="Attempts to repair complete file replacements rejected by TypeScript preflight before failing the round.")
     parser.add_argument("--validation-repair-attempts", type=int, default=1, help="Attempts to repair complete file replacements after validation errors.")
     parser.add_argument(
         "--validation-repair-failure-budget",
@@ -3184,6 +3285,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         progress_path=Path(args.progress_file) if args.progress_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.progress.json"),
         heartbeat_interval_seconds=max(0.0, args.heartbeat_interval),
         file_repair_attempts=max(0, args.file_repair_attempts),
+        preflight_repair_attempts=max(0, args.preflight_repair_attempts),
         validation_repair_attempts=max(0, args.validation_repair_attempts),
         validation_repair_failure_budget=max(0, args.validation_repair_failure_budget),
         proposal_attempts=max(1, args.proposal_attempts),

@@ -13,7 +13,8 @@ if [[ "$PROVIDER" == "auto-empty" ]]; then
   PROVIDER=""
 fi
 SLICE_MODE="${SLICE_MODE:-balanced}"
-LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-0}"
+LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
+LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
 RESTART_DELAY_SECONDS="${RESTART_DELAY_SECONDS:-0}"
 LLM_TIMEOUT_SECONDS="${LLM_TIMEOUT_SECONDS:-300}"
@@ -27,6 +28,7 @@ STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
 MAX_TASK_FAILURES="${MAX_TASK_FAILURES:-20}"
 PROPOSAL_ATTEMPTS="${PROPOSAL_ATTEMPTS:-3}"
 FILE_REPAIR_ATTEMPTS="${FILE_REPAIR_ATTEMPTS:-1}"
+PREFLIGHT_REPAIR_ATTEMPTS="${PREFLIGHT_REPAIR_ATTEMPTS:-1}"
 VALIDATION_REPAIR_ATTEMPTS="${VALIDATION_REPAIR_ATTEMPTS:-1}"
 VALIDATION_REPAIR_FAILURE_BUDGET="${VALIDATION_REPAIR_FAILURE_BUDGET:-2}"
 BLOCKED_BACKLOG_LIMIT="${BLOCKED_BACKLOG_LIMIT:-10}"
@@ -59,7 +61,7 @@ LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/logic-port-daemon-supervisor.lat
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 
 LEGAL_PARSER_SUPERVISOR_PID_PATH="${LEGAL_PARSER_SUPERVISOR_PID_PATH:-$REPO_ROOT/ipfs_datasets_py/.daemon/legal_parser_daemon_supervisor.pid}"
-if [[ "$LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER" != "1" ]] && [[ -f "$LEGAL_PARSER_SUPERVISOR_PID_PATH" ]]; then
+if [[ "$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER" != "1" ]] && [[ -f "$LEGAL_PARSER_SUPERVISOR_PID_PATH" ]]; then
   legal_parser_pid="$(tr -dc '0-9' < "$LEGAL_PARSER_SUPERVISOR_PID_PATH" 2>/dev/null || true)"
   if [[ -n "$legal_parser_pid" ]] && kill -0 "$legal_parser_pid" 2>/dev/null; then
     echo "logic-port daemon suppressed because legal-parser daemon supervisor is running with PID $legal_parser_pid"
@@ -150,6 +152,12 @@ write_supervisor_status() {
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "slice_mode": "$SLICE_MODE",
+  "proposal_attempts": $PROPOSAL_ATTEMPTS,
+  "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,
+  "preflight_repair_attempts": $PREFLIGHT_REPAIR_ATTEMPTS,
+  "validation_repair_attempts": $VALIDATION_REPAIR_ATTEMPTS,
+  "validation_repair_failure_budget": $VALIDATION_REPAIR_FAILURE_BUDGET,
+  "allow_during_legal_parser": "$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER",
   "force_allow_during_legal_parser": "$LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
   "command_timeout_seconds": $COMMAND_TIMEOUT_SECONDS,
@@ -797,6 +805,7 @@ while true; do
       --max-task-failures "$MAX_TASK_FAILURES"
       --proposal-attempts "$PROPOSAL_ATTEMPTS"
       --file-repair-attempts "$FILE_REPAIR_ATTEMPTS"
+      --preflight-repair-attempts "$PREFLIGHT_REPAIR_ATTEMPTS"
       --validation-repair-attempts "$VALIDATION_REPAIR_ATTEMPTS"
       --validation-repair-failure-budget "$VALIDATION_REPAIR_FAILURE_BUDGET"
       --revisit-blocked-tasks
