@@ -22,6 +22,7 @@ SUPERVISOR_STOP_COMPETING_DAEMONS="${SUPERVISOR_STOP_COMPETING_DAEMONS:-1}"
 SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE="${SUPERVISOR_DISABLE_COMPETING_SYSTEMD_SERVICE:-1}"
 SUPERVISOR_STOP_LOGIC_PORT_DAEMON="${SUPERVISOR_STOP_LOGIC_PORT_DAEMON:-0}"
 SUPERVISOR_DIRTY_TARGET_RECOVERY="${SUPERVISOR_DIRTY_TARGET_RECOVERY:-1}"
+SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS="${SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS:-120}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
@@ -40,6 +41,8 @@ SUPERVISOR_STATUS_PATH="${SUPERVISOR_STATUS_PATH:-$DAEMON_DIR/legal_parser_daemo
 SUPERVISOR_AGENTIC_STATE_PATH="${SUPERVISOR_AGENTIC_STATE_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor_agentic_state.json}"
 SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.pid}"
 SUPERVISOR_LOCK_PATH="${SUPERVISOR_LOCK_PATH:-$DAEMON_DIR/legal_parser_daemon_supervisor.lock}"
+BASELINE_DIRTY_TARGET_MANIFEST_PATH="${BASELINE_DIRTY_TARGET_MANIFEST_PATH:-$DAEMON_DIR/legal_parser_dirty_target_baseline.json}"
+BASELINE_DIRTY_TARGET_SNAPSHOT_DIR="${BASELINE_DIRTY_TARGET_SNAPSHOT_DIR:-$DAEMON_DIR/legal_parser_dirty_target_baseline_files}"
 CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/legal_parser_daemon.pid}"
 LATEST_LOG_PATH="${LATEST_LOG_PATH:-$DAEMON_DIR/legal_parser_daemon_overnight.log}"
 CURRENT_STATUS_PATH="$OUTPUT_DIR/current_status.json"
@@ -69,6 +72,117 @@ last_agentic_maintenance_log_path=""
 
 json_bool() {
   [[ "$1" == "1" ]] && printf true || printf false
+}
+
+snapshot_dirty_legal_parser_target_baseline() {
+  python3 - "$REPO_ROOT" "$REPO_ROOT/$BASELINE_DIRTY_TARGET_MANIFEST_PATH" "$REPO_ROOT/$BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" <<'PY'
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+snapshot_dir = Path(sys.argv[3])
+targets = [
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+    "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+]
+result = subprocess.run(
+    ["git", "status", "--porcelain", "--", *targets],
+    cwd=repo_root,
+    text=True,
+    capture_output=True,
+    timeout=30,
+)
+if result.returncode != 0:
+    raise SystemExit(result.returncode)
+paths = []
+entries = {}
+for line in result.stdout.splitlines():
+    path = line[3:].strip()
+    if " -> " in path:
+        path = path.rsplit(" -> ", 1)[1].strip()
+    if not path or path in paths:
+        continue
+    paths.append(path)
+    src = repo_root / path
+    snapshot_path = snapshot_dir / path
+    entry = {
+        "path": path,
+        "snapshot_path": str(snapshot_path.relative_to(repo_root)),
+        "exists": src.exists(),
+    }
+    snapshot_path.parent.mkdir(parents=True, exist_ok=True)
+    if src.exists():
+        shutil.copy2(src, snapshot_path)
+    else:
+        snapshot_path.unlink(missing_ok=True)
+    entries[path] = entry
+manifest = {
+    "paths": paths,
+    "entries": entries,
+}
+manifest_path.parent.mkdir(parents=True, exist_ok=True)
+manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+restore_legal_parser_targets_from_baseline_or_head() {
+  local targets_file="$1"
+  python3 - "$REPO_ROOT" "$REPO_ROOT/$BASELINE_DIRTY_TARGET_MANIFEST_PATH" "$targets_file" <<'PY'
+import json
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+repo_root = Path(sys.argv[1])
+manifest_path = Path(sys.argv[2])
+targets_path = Path(sys.argv[3])
+try:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+except Exception:
+    manifest = {}
+entries = manifest.get("entries")
+if not isinstance(entries, dict):
+    entries = {}
+targets = [line.strip() for line in targets_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+head_targets = []
+for path_text in targets:
+    entry = entries.get(path_text)
+    if not isinstance(entry, dict):
+        head_targets.append(path_text)
+        continue
+    snapshot_rel = str(entry.get("snapshot_path") or "").strip()
+    dst = repo_root / path_text
+    if bool(entry.get("exists")):
+        if not snapshot_rel:
+            head_targets.append(path_text)
+            continue
+        snapshot_path = repo_root / snapshot_rel
+        if not snapshot_path.exists():
+            head_targets.append(path_text)
+            continue
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(snapshot_path, dst)
+    else:
+        dst.unlink(missing_ok=True)
+if head_targets:
+    subprocess.run(
+        ["git", "restore", "--source=HEAD", "--", *head_targets],
+        cwd=repo_root,
+        check=True,
+        timeout=60,
+    )
+PY
 }
 
 write_supervisor_status() {
@@ -168,7 +282,8 @@ agentic_maintenance_reason() {
     "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" \
     "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
     "$SUPERVISOR_AGENTIC_DIRTY_REJECTION_TAIL" \
-    "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" <<'PY'
+    "$SUPERVISOR_AGENTIC_REPEATED_REJECTION_FAMILY_TAIL" \
+    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
 import json
 import subprocess
 import sys
@@ -188,6 +303,7 @@ cooldown_seconds = int(sys.argv[9])
 dirty_target_detection = str(sys.argv[10]).strip() == "1"
 dirty_rejection_threshold = int(sys.argv[11])
 repeated_rejection_family_threshold = int(sys.argv[12])
+dirty_target_grace_seconds = int(sys.argv[13])
 now = int(time.time())
 
 
@@ -1075,7 +1191,7 @@ PY
   else
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets"
-      xargs -r git -C "$REPO_ROOT" restore --source=HEAD -- < "$targets_file"
+      restore_legal_parser_targets_from_baseline_or_head "$targets_file"
     } >> "$REPO_ROOT/$recovery_log" 2>&1
     last_agentic_maintenance_status="repeated_rejection_recovery_restored"
     rc=0
@@ -1176,7 +1292,7 @@ PY
   else
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target validation failed with rc=$rc; restoring only dirty legal-parser targets"
-      xargs -r git -C "$REPO_ROOT" restore --source=HEAD -- < "$targets_file"
+      restore_legal_parser_targets_from_baseline_or_head "$targets_file"
     } >> "$REPO_ROOT/$recovery_log" 2>&1
     last_agentic_maintenance_status="dirty_recovery_restored"
     rc=0
@@ -1449,6 +1565,7 @@ trap 'cleanup' EXIT
 
 terminate_matching_legal_parser_daemons
 terminate_competing_daemons
+snapshot_dirty_legal_parser_target_baseline
 
 while true; do
   run_id="$(date -u +%Y%m%dT%H%M%SZ)"

@@ -114,7 +114,10 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "dirty_recovery_committed" in recovery_body
     assert "dirty_recovery_restored" in recovery_body
     assert "pytest -q" in recovery_body
-    assert "git -C \"$REPO_ROOT\" restore --source=HEAD --" in recovery_body
+    assert "restore_legal_parser_targets_from_baseline_or_head" in script
+    assert "snapshot_dirty_legal_parser_target_baseline()" in script
+    assert "BASELINE_DIRTY_TARGET_MANIFEST_PATH" in script
+    assert "BASELINE_DIRTY_TARGET_SNAPSHOT_DIR" in script
     assert "SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" in script
     assert "dirty_target_grace_seconds" in script
     assert '"requesting_llm_patch"' in recovery_body
@@ -141,6 +144,8 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert "def infer_legal_parser_targets(item: dict) -> list[str]:" in script
     assert "confirmed_repeated_rejection_dirty_target_reason()" in script
     assert "recover_repeated_rejection_dirty_targets()" in script
+    assert "repeated rejection validation failed with rc=$rc; restoring only repeated rejection targets" in script
+    assert 'restore_legal_parser_targets_from_baseline_or_head "$targets_file"' in script
     assert "repeated_rejection_family:" in script
     assert "repeated_rejection_family_count" in script
     assert "dirty_touched_file_rejections, or repeated_rejection_family" in script
@@ -165,8 +170,10 @@ def test_supervisor_stops_competing_automation_before_and_during_run():
     assert "ppd/daemon/ppd_daemon.py" in function_body
     assert "ipfs_datasets_py.optimizers.logic_port_daemon" in function_body
     assert script.index("terminate_matching_legal_parser_daemons") < script.index(
-        "terminate_competing_daemons\n\nwhile true; do"
+        "terminate_competing_daemons"
     )
+    assert script.index("terminate_competing_daemons") < script.index("snapshot_dirty_legal_parser_target_baseline")
+    assert script.index("snapshot_dirty_legal_parser_target_baseline") < script.index("while true; do")
     loop_start = script.index("while kill -0 \"$child_pid\"")
     assert loop_start < script.index("terminate_competing_daemons", loop_start)
 

@@ -77,6 +77,15 @@ DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS = (
     "action",
 )
 
+DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY = {
+    "definition": ("actor", "modality", "action"),
+    "applicability_rule": ("actor", "modality", "action", "cross_references"),
+    "exemption_rule": ("actor", "modality", "action"),
+    "instrument_lifecycle_validity": ("actor", "modality", "action"),
+    "instrument_lifecycle_expiration": ("actor", "modality", "action"),
+    "instrument_lifecycle": ("actor", "modality", "action"),
+}
+
 
 def build_deterministic_parser_capability_profile_record(
     norm: LegalNormIR,
@@ -91,15 +100,16 @@ def build_deterministic_parser_capability_profile_record(
     theorem promotion, or cross-reference resolution.
     """
 
+    capability_family = _deterministic_norm_family(norm)
+    effective_slots = _deterministic_capability_profile_slots(norm, slots)
     formula_record = build_deontic_formula_record_from_ir(norm)
-    audit = legal_norm_ir_slot_provenance(norm, slots)
+    audit = legal_norm_ir_slot_provenance(norm, effective_slots)
     checked_slots = list(audit["checked_slots"])
     grounded_slots = list(audit["grounded_slots"])
     missing_slots = list(audit["missing_slots"])
     ungrounded_slots = list(audit["ungrounded_slots"])
     checked_count = len(checked_slots)
     grounded_count = len(grounded_slots)
-    capability_family = _deterministic_norm_family(norm)
 
     return {
         "parser_capability_profile_id": _stable_id(
@@ -3631,6 +3641,18 @@ def _slot_grounding_records(record: Mapping[str, Any]) -> List[Mapping[str, Any]
     return []
 
 
+def _deterministic_capability_profile_slots(
+    norm: LegalNormIR,
+    requested_slots: Sequence[str],
+) -> Sequence[str]:
+    requested = tuple(dict.fromkeys(str(slot) for slot in requested_slots if slot))
+    if requested != DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS:
+        return requested
+
+    family = _deterministic_norm_family(norm)
+    return DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY.get(family, requested)
+
+
 def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.is_enumerated_child:
         return "enumerated_child_duty"
@@ -3649,9 +3671,16 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "ordinary_duty"
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
-    if norm.norm_type in {"applicability", "exemption"}:
-        return "scope_rule"
+    if norm.norm_type == "applicability":
+        return "applicability_rule"
+    if norm.norm_type == "exemption":
+        return "exemption_rule"
     if norm.norm_type == "instrument_lifecycle":
+        action = str(norm.action or "").strip().lower()
+        if action.startswith("valid for "):
+            return "instrument_lifecycle_validity"
+        if action.startswith("expires "):
+            return "instrument_lifecycle_expiration"
         return "instrument_lifecycle"
     if norm.norm_type == "definition":
         return "definition"

@@ -31,6 +31,7 @@ HEARTBEAT_INTERVAL_SECONDS="${HEARTBEAT_INTERVAL_SECONDS:-30}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
 WATCHDOG_STARTUP_GRACE_SECONDS="${WATCHDOG_STARTUP_GRACE_SECONDS:-120}"
+SUPERVISOR_PHASE_STUCK_GRACE_SECONDS="${SUPERVISOR_PHASE_STUCK_GRACE_SECONDS:-90}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
 MAX_TASK_FAILURES="${MAX_TASK_FAILURES:-20}"
 PROPOSAL_ATTEMPTS="${PROPOSAL_ATTEMPTS:-3}"
@@ -50,6 +51,7 @@ SUPERVISOR_AGENTIC_ROLLBACK_FAILURES="${SUPERVISOR_AGENTIC_ROLLBACK_FAILURES:-5}
 SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES="${SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES:-3}"
 SUPERVISOR_AGENTIC_COOLDOWN_SECONDS="${SUPERVISOR_AGENTIC_COOLDOWN_SECONDS:-3600}"
 SUPERVISOR_AGENTIC_TIMEOUT_SECONDS="${SUPERVISOR_AGENTIC_TIMEOUT_SECONDS:-900}"
+SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS="${SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS:-360}"
 SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
@@ -133,6 +135,7 @@ write_supervisor_status() {
   "supervisor_heartbeat_seconds": $SUPERVISOR_HEARTBEAT_SECONDS,
   "watchdog_stale_after_seconds": $WATCHDOG_STALE_AFTER_SECONDS,
   "watchdog_startup_grace_seconds": $WATCHDOG_STARTUP_GRACE_SECONDS,
+  "phase_stuck_grace_seconds": $SUPERVISOR_PHASE_STUCK_GRACE_SECONDS,
   "stop_grace_seconds": $STOP_GRACE_SECONDS,
   "run_id": "$run_id",
   "log_path": "$log_path",
@@ -150,6 +153,7 @@ write_supervisor_status() {
   "agentic_typescript_quality_failures": $SUPERVISOR_AGENTIC_TYPESCRIPT_QUALITY_FAILURES,
   "agentic_cooldown_seconds": $SUPERVISOR_AGENTIC_COOLDOWN_SECONDS,
   "agentic_timeout_seconds": $SUPERVISOR_AGENTIC_TIMEOUT_SECONDS,
+  "agentic_stuck_maintenance_timeout_seconds": $SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS,
   "agentic_sandbox": "$SUPERVISOR_AGENTIC_SANDBOX",
   "agentic_fallback_sandbox": "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX",
   "agentic_state_path": "$SUPERVISOR_AGENTIC_STATE_PATH",
@@ -466,11 +470,12 @@ PY
 
 run_agentic_codex_exec() {
   local sandbox="$1"
+  local timeout_seconds="${2:-$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS}"
   local sandbox_args=()
   if [[ -n "$sandbox" ]] && [[ "$sandbox" != "auto" ]]; then
     sandbox_args=(--sandbox "$sandbox")
   fi
-  timeout "$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS" "$CODEX_BIN" exec \
+  timeout "$timeout_seconds" "$CODEX_BIN" exec \
     --skip-git-repo-check \
     "${sandbox_args[@]}" \
     -m "$MODEL_NAME" \
@@ -483,7 +488,13 @@ run_agentic_maintenance() {
   local maintenance_id=""
   local maintenance_log=""
   local maintenance_backup_dir=""
+  local maintenance_timeout="$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS"
   local rc=0
+  case "$reason" in
+    stuck_phase:*|stuck_llm_subprocess:*)
+      maintenance_timeout="$SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS"
+      ;;
+  esac
   maintenance_id="$(date -u +%Y%m%dT%H%M%SZ)"
   maintenance_log="$DAEMON_DIR/logic-port-daemon-agentic-maintenance_${maintenance_id}.log"
   maintenance_backup_dir="$(mktemp -d "$REPO_ROOT/$DAEMON_DIR/logic-port-maintenance-backup.XXXXXX")"
@@ -503,7 +514,8 @@ run_agentic_maintenance() {
   mark_agentic_maintenance_ran "$reason"
   {
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) starting agentic daemon-maintenance pass: $reason"
-    run_agentic_codex_exec "$SUPERVISOR_AGENTIC_SANDBOX" <<PROMPT
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance timeout: ${maintenance_timeout}s"
+    run_agentic_codex_exec "$SUPERVISOR_AGENTIC_SANDBOX" "$maintenance_timeout" <<PROMPT
 You are maintaining the logic-port daemon infrastructure for the browser-native TypeScript/WASM port.
 
 The supervisor detected that the daemon may be stuck or not making meaningful progress.
@@ -512,7 +524,7 @@ Reason: $reason
 
 This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify the separate legal parser daemon or subprocesses whose ancestor command contains parser_daemon or run_legal_parser_optimizer_daemon.sh.
 
@@ -540,14 +552,17 @@ Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not
 PROMPT
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
+  if [[ "$rc" == "124" ]]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance timed out after ${maintenance_timeout}s" >> "$REPO_ROOT/$maintenance_log"
+  fi
   if [[ "$rc" == "0" ]] && grep -Eq "bwrap: loopback|Failed RTM_NEWADDR|couldn.t perform this maintenance pass|could not inspect files|could not .*run the requested validation" "$REPO_ROOT/$maintenance_log"; then
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance reported sandbox failure despite exit code 0" >> "$REPO_ROOT/$maintenance_log"
     rc=70
   fi
-  if [[ "$rc" != "0" ]] && [[ "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" != "$SUPERVISOR_AGENTIC_SANDBOX" ]]; then
+  if [[ "$rc" != "0" ]] && [[ "$rc" != "124" ]] && [[ "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" != "$SUPERVISOR_AGENTIC_SANDBOX" ]]; then
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance exited with code $rc; retrying with sandbox=$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX"
-      run_agentic_codex_exec "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" <<PROMPT
+      run_agentic_codex_exec "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" "$maintenance_timeout" <<PROMPT
 You are maintaining the logic-port daemon infrastructure for the browser-native TypeScript/WASM port.
 
 The previous maintenance attempt failed before it could make the daemon more robust. Retry the same maintenance task, but avoid exploratory shell work if the environment blocks sandboxed commands.
@@ -556,7 +571,7 @@ Reason: $reason
 
 Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
-Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, parser-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
 Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
 
@@ -567,6 +582,9 @@ Run validation if possible:
 PROMPT
     } >> "$REPO_ROOT/$maintenance_log" 2>&1
     rc=$?
+    if [[ "$rc" == "124" ]]; then
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) fallback agentic maintenance timed out after ${maintenance_timeout}s" >> "$REPO_ROOT/$maintenance_log"
+    fi
     if [[ "$rc" == "0" ]] && grep -Eq "bwrap: loopback|Failed RTM_NEWADDR|couldn.t perform this maintenance pass|could not inspect files|could not .*run the requested validation" "$REPO_ROOT/$maintenance_log"; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) fallback agentic maintenance reported sandbox failure despite exit code 0" >> "$REPO_ROOT/$maintenance_log"
       rc=70
@@ -585,7 +603,11 @@ PROMPT
     && PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}" pytest -q "$REPO_ROOT/ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
     last_agentic_maintenance_status="accepted"
   else
-    last_agentic_maintenance_status="failed"
+    if [[ "$rc" == "124" ]]; then
+      last_agentic_maintenance_status="timeout"
+    else
+      last_agentic_maintenance_status="failed"
+    fi
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) maintenance validation failed; restoring daemon/supervisor files from $maintenance_backup_dir" >> "$REPO_ROOT/$maintenance_log"
     cp "$maintenance_backup_dir/scripts/ops/legal_data/run_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh" 2>/dev/null || true
     cp "$maintenance_backup_dir/scripts/ops/legal_data/check_logic_port_daemon.sh" "$REPO_ROOT/ipfs_datasets_py/scripts/ops/legal_data/check_logic_port_daemon.sh" 2>/dev/null || true
@@ -612,6 +634,108 @@ age = float(sys.argv[1])
 threshold = float(sys.argv[2])
 raise SystemExit(0 if age > threshold else 1)
 PY
+}
+
+daemon_stuck_phase_reason() {
+  python3 - \
+    "$REPO_ROOT/$STATUS_PATH" \
+    "${child_pid:-0}" \
+    "$LLM_TIMEOUT_SECONDS" \
+    "$COMMAND_TIMEOUT_SECONDS" \
+    "$SUPERVISOR_PHASE_STUCK_GRACE_SECONDS" <<'PY'
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+status_path = Path(sys.argv[1])
+child_pid = int(sys.argv[2])
+llm_timeout = float(sys.argv[3])
+command_timeout = float(sys.argv[4])
+grace = float(sys.argv[5])
+
+
+def parse_ts(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+try:
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+except Exception:
+    raise SystemExit(1)
+
+try:
+    status_pid = int(status.get("pid") or 0)
+except Exception:
+    status_pid = 0
+if child_pid <= 0 or status_pid != child_pid:
+    raise SystemExit(1)
+
+state = str(status.get("active_state") or status.get("state") or "")
+started_at = parse_ts(status.get("active_state_started_at") or status.get("state_started_at"))
+if not state or started_at is None:
+    raise SystemExit(1)
+
+limit = None
+if state == "llm_call_started" or state in {
+    "preflight_repair_started",
+    "validation_repair_started",
+    "proposal_attempt_started",
+}:
+    limit = llm_timeout + grace
+elif state in {
+    "iteration_started",
+    "cycle_started",
+    "session_started",
+}:
+    limit = max(llm_timeout, command_timeout) + grace
+
+if limit is None:
+    raise SystemExit(1)
+
+age = max(0.0, (datetime.now(timezone.utc) - started_at).total_seconds())
+if age <= limit:
+    raise SystemExit(1)
+print(f"stuck_phase:{state}:age:{int(age)}:limit:{int(limit)}")
+raise SystemExit(0)
+PY
+}
+
+stuck_llm_subprocess_reason() {
+  local pid=""
+  local etimes=""
+  local args=""
+  local limit=$((LLM_TIMEOUT_SECONDS + SUPERVISOR_PHASE_STUCK_GRACE_SECONDS))
+  while read -r pid etimes args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
+      continue
+    fi
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
+      continue
+    fi
+    if pid_has_parser_daemon_ancestor "$pid"; then
+      continue
+    fi
+    if [[ -n "${child_pid:-}" ]] && ! pid_has_ancestor "$pid" "$child_pid"; then
+      continue
+    fi
+    if ! process_cwd_is_logic_repo_local "$pid"; then
+      continue
+    fi
+    if [[ "$etimes" =~ ^[0-9]+$ ]] && [[ "$etimes" -gt "$limit" ]]; then
+      printf 'stuck_llm_subprocess:%s:age:%s:limit:%s\n' "$pid" "$etimes" "$limit"
+      return 0
+    fi
+  done < <(ps -eo pid=,etimes=,args=)
+  return 1
 }
 
 terminate_pid_tree() {
@@ -724,6 +848,34 @@ terminate_orphaned_logic_port_llm_calls() {
   [[ "$cleaned" -gt 0 ]]
 }
 
+terminate_orphaned_agentic_maintenance_calls() {
+  local include_current_supervisor="${1:-0}"
+  local pid=""
+  local args=""
+  local cleaned=0
+  while read -r pid args; do
+    if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
+      continue
+    fi
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"-C $REPO_ROOT"* ]]; then
+      continue
+    fi
+    if [[ "$args" == *"--ephemeral --json -" ]]; then
+      continue
+    fi
+    if pid_has_parser_daemon_ancestor "$pid"; then
+      continue
+    fi
+    if [[ "$include_current_supervisor" != "1" ]] && pid_has_ancestor "$pid" "$$"; then
+      continue
+    fi
+    cleaned=$((cleaned + 1))
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaning up orphaned logic-port agentic maintenance call $pid" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+    terminate_pid_tree "$pid"
+  done < <(ps -eo pid=,args=)
+  [[ "$cleaned" -gt 0 ]]
+}
+
 run_infrastructure_maintenance_if_needed() {
   local reason="$1"
   if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]] || [[ -z "$reason" ]]; then
@@ -759,12 +911,14 @@ cleanup() {
     rm -f "$REPO_ROOT/$SUPERVISOR_PID_PATH"
   fi
   rm -f "$REPO_ROOT/$SUPERVISOR_LOCK_PATH"
+  terminate_orphaned_agentic_maintenance_calls 1 || true
 }
 
 trap 'cleanup; exit 143' TERM INT
 trap 'cleanup' EXIT
 
 terminate_matching_logic_port_daemons
+terminate_orphaned_agentic_maintenance_calls || true
 if terminate_orphaned_logic_port_llm_calls; then
   if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
     run_infrastructure_maintenance_if_needed "orphaned_llm_calls:$last_orphaned_llm_cleanup_count:startup_cleanup" || true
@@ -838,6 +992,16 @@ while true; do
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$run_log"
       stop_child
+      break
+    fi
+    stuck_reason="$(daemon_stuck_phase_reason || true)"
+    if [[ -z "$stuck_reason" ]]; then
+      stuck_reason="$(stuck_llm_subprocess_reason || true)"
+    fi
+    if [[ -n "$stuck_reason" ]]; then
+      last_recycle_reason="agentic_stuck_repair"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking stuck-phase maintenance: $stuck_reason" >> "$REPO_ROOT/$run_log"
+      run_agentic_maintenance "$stuck_reason"
       break
     fi
     maintenance_reason="$(agentic_maintenance_reason || true)"

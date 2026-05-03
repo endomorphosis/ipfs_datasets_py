@@ -1,5 +1,6 @@
 import json
 import subprocess
+import time
 from pathlib import Path
 
 import ipfs_datasets_py.optimizers.logic_port_daemon as logic_port_daemon
@@ -38,6 +39,16 @@ class SequencedRouter:
 class FailingRouter:
     def generate_text(self, prompt, **kwargs):
         raise RuntimeError("no route")
+
+
+class HangingRouter:
+    def __init__(self):
+        self.calls = []
+
+    def generate_text(self, prompt, **kwargs):
+        self.calls.append({"prompt": prompt, "kwargs": kwargs})
+        time.sleep(30)
+        return "{}"
 
 
 def test_default_plan_docs_use_typescript_port_plan():
@@ -1262,6 +1273,55 @@ def test_status_file_records_liveness_and_latest_artifact(tmp_path):
     assert heartbeat["valid"] is True
     assert heartbeat["artifact"]["summary"] == "Runtime feature"
     assert heartbeat["artifact"]["valid_changed_files"] == ["src/lib/logic/feature.ts"]
+
+
+def test_status_file_preserves_phase_start_for_stuck_detection(tmp_path):
+    status_path = tmp_path / "daemon" / "status.json"
+    config = LogicPortDaemonConfig(repo_root=tmp_path, status_path=status_path)
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=FakeRouter("{}"))
+
+    optimizer._write_status("llm_call_started", timeout_seconds=300, prompt_chars=100)
+    first = json.loads(status_path.read_text(encoding="utf-8"))
+    optimizer._write_status("llm_call_started", timeout_seconds=300, prompt_chars=200)
+    second = json.loads(status_path.read_text(encoding="utf-8"))
+    optimizer._write_status("llm_call_completed", response_chars=10)
+    completed = json.loads(status_path.read_text(encoding="utf-8"))
+
+    assert first["state"] == "llm_call_started"
+    assert first["state_started_at"] == first["timestamp"]
+    assert first["heartbeat_at"] == first["timestamp"]
+    assert first["updated_at"] == first["timestamp"]
+    assert second["state"] == "llm_call_started"
+    assert second["state_started_at"] == first["state_started_at"]
+    assert completed["state"] == "llm_call_completed"
+    assert completed["state_started_at"] == completed["timestamp"]
+
+
+def test_llm_call_has_daemon_side_deadline_for_stuck_router(tmp_path):
+    status_path = tmp_path / "daemon" / "status.json"
+    router = HangingRouter()
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        status_path=status_path,
+        llm_timeout_seconds=0.01,
+    )
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=router)
+
+    try:
+        optimizer._call_llm("return json")
+    except TimeoutError as exc:
+        assert "exceeded daemon deadline" in str(exc)
+    else:
+        raise AssertionError("Expected stuck router call to time out")
+
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    assert router.calls
+    assert router.calls[0]["kwargs"]["timeout"] == 0.01
+    assert router.calls[0]["kwargs"]["provider"] is None
+    assert status["state"] == "llm_call_timeout"
+    assert status["provider"] == "auto"
+    assert status["timeout_seconds"] == 0.01
+    assert status["state_started_at"] == status["timestamp"]
 
 
 def test_daemon_retries_empty_or_non_json_proposals_as_file_replacements(tmp_path):

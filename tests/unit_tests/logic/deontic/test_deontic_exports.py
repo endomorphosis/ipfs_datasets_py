@@ -200,6 +200,73 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lifecycle_families():
+    definition = LegalNormIR.from_parser_element(extract_normative_elements(
+        'In this section, the term "food cart" means a mobile food vending unit.'
+    )[0])
+    applicability = LegalNormIR.from_parser_element(extract_normative_elements(
+        "This section applies to food carts and mobile vendors."
+    )[0])
+    exemption = LegalNormIR.from_parser_element(extract_normative_elements(
+        "A permit is not required for emergency work."
+    )[0])
+    valid_lifecycle = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The license is valid for 30 days."
+    )[0])
+    expiry_lifecycle = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The permit expires one year after issuance."
+    )[0])
+
+    records = build_deterministic_parser_capability_profile_records([
+        definition,
+        applicability,
+        exemption,
+        valid_lifecycle,
+        expiry_lifecycle,
+    ])
+
+    assert [record["capability_family"] for record in records] == [
+        "definition",
+        "applicability_rule",
+        "exemption_rule",
+        "instrument_lifecycle_validity",
+        "instrument_lifecycle_expiration",
+    ]
+    assert [record["formula"] for record in records] == [
+        "Definition(FoodCart)",
+        "AppliesTo(ThisSection, FoodCartsAndMobileVendors)",
+        "ExemptFrom(EmergencyWork, Permit)",
+        "ValidFor(License, 30Days)",
+        "ExpiresAfter(Permit, OneYearAfterIssuance)",
+    ]
+    assert records[0]["checked_slots"] == ["actor", "modality", "action"]
+    assert records[1]["checked_slots"] == [
+        "actor",
+        "modality",
+        "action",
+        "cross_references",
+    ]
+    assert records[2]["checked_slots"] == ["actor", "modality", "action"]
+    assert records[3]["checked_slots"] == ["actor", "modality", "action"]
+    assert records[4]["checked_slots"] == ["actor", "modality", "action"]
+    assert records[0]["norm_type"] == "definition"
+    assert records[1]["norm_type"] == "applicability"
+    assert records[2]["norm_type"] == "exemption"
+    assert records[3]["norm_type"] == "instrument_lifecycle"
+    assert records[4]["norm_type"] == "instrument_lifecycle"
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["parser_capability_profile_id"].startswith("parser-capability-profile:") for record in records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_scoped_definition_ir_and_canonical_export_preserve_definition_scope():
     element = dict(extract_normative_elements(
         'In this section, the term "food cart" means a mobile food vending unit.'

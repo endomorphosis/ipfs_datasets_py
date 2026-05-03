@@ -19,6 +19,7 @@ import argparse
 import json
 import logging
 import os
+import queue
 import re
 import subprocess
 import tempfile
@@ -1976,11 +1977,13 @@ Critical correction for attempt {attempt}:
         for task in tasks:
             status_counts[task.status] = status_counts.get(task.status, 0) + 1
 
+        now = datetime.now(timezone.utc).isoformat()
         payload = {
             "schema": "ipfs_datasets_py.logic_port_daemon.progress",
             "schema_version": 1,
             "pid": os.getpid(),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": now,
+            "updated_at": now,
             "active_state": active_state,
             "completed_cycles_this_process": completed_cycles,
             "consecutive_failure_cycles": consecutive_failure_cycles,
@@ -2040,9 +2043,12 @@ Critical correction for attempt {attempt}:
                     base = dict(self._last_status_payload)
                 if not base:
                     continue
+                now = datetime.now(timezone.utc).isoformat()
                 payload = {
                     **base,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": now,
+                    "updated_at": now,
+                    "heartbeat_at": now,
                     "state": "heartbeat",
                     "active_state": base.get("state", ""),
                     "active_state_started_at": base.get("state_started_at", ""),
@@ -2078,11 +2084,14 @@ Critical correction for attempt {attempt}:
                 "failure_kind": _classify_failure_kind(artifact),
                 "validation_passed": artifact.get("validation_passed", False),
             }
+        now = datetime.now(timezone.utc).isoformat()
         payload = {
             "schema": "ipfs_datasets_py.logic_port_daemon.status",
             "schema_version": 1,
             "pid": os.getpid(),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": now,
+            "updated_at": now,
+            "heartbeat_at": now,
             "state": state,
             "slice_mode": self.daemon_config.slice_mode,
             **details,
@@ -3084,6 +3093,50 @@ Current repository file contents after rollback:
         repaired.target_task = artifact.target_task
         return repaired
 
+    def _call_generator_with_deadline(
+        self,
+        generator: Any,
+        *args: Any,
+        status_provider: Optional[str],
+        **kwargs: Any,
+    ) -> str:
+        timeout_seconds = float(self.daemon_config.llm_timeout_seconds)
+        if timeout_seconds <= 0:
+            return str(generator(*args, **kwargs))
+
+        result_queue: "queue.Queue[Tuple[str, Any]]" = queue.Queue(maxsize=1)
+
+        def invoke() -> None:
+            try:
+                result_queue.put(("ok", str(generator(*args, **kwargs))))
+            except BaseException as exc:  # pragma: no cover - defensive thread boundary.
+                result_queue.put(("error", exc))
+
+        thread = threading.Thread(target=invoke, name="logic-port-llm-call", daemon=True)
+        started = time.time()
+        thread.start()
+        thread.join(timeout=timeout_seconds)
+        if thread.is_alive():
+            elapsed = time.time() - started
+            self._write_status(
+                "llm_call_timeout",
+                provider=status_provider or "auto",
+                timeout_seconds=timeout_seconds,
+                elapsed_seconds=round(elapsed, 3),
+                pending_thread=thread.name,
+            )
+            raise TimeoutError(
+                f"llm_router generation exceeded daemon deadline after {elapsed:.1f}s "
+                f"(timeout={timeout_seconds:.1f}s, provider={status_provider or 'auto'})"
+            )
+        try:
+            kind, payload = result_queue.get_nowait()
+        except queue.Empty as exc:  # pragma: no cover - thread finished without publishing a result.
+            raise RuntimeError("llm_router generation thread ended without returning a result") from exc
+        if kind == "error":
+            raise payload
+        return str(payload)
+
     def _call_llm(self, prompt: str) -> str:
         provider = self._resolved_provider()
         self._write_status(
@@ -3096,45 +3149,12 @@ Current repository file contents after rollback:
         if self.llm_router is not None:
             generator = getattr(self.llm_router, "generate_text", None)
             if callable(generator):
-                text = str(
-                    generator(
-                        prompt,
-                        model_name=self.daemon_config.model_name,
-                        provider=provider,
-                        allow_local_fallback=self.daemon_config.allow_local_fallback,
-                        max_new_tokens=self.daemon_config.max_new_tokens,
-                        temperature=self.daemon_config.temperature,
-                        timeout=self.daemon_config.llm_timeout_seconds,
-                        trace=bool(self.daemon_config.codex_trace_dir),
-                        trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
-                    )
-                )
-                self._write_status("llm_call_completed", response_chars=len(text))
-                return text
-            generator = getattr(self.llm_router, "generate", None)
-            if callable(generator):
-                text = str(
-                    generator(
-                        prompt,
-                        model_name=self.daemon_config.model_name,
-                        max_new_tokens=self.daemon_config.max_new_tokens,
-                        temperature=self.daemon_config.temperature,
-                        timeout=self.daemon_config.llm_timeout_seconds,
-                        trace=bool(self.daemon_config.codex_trace_dir),
-                        trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
-                    )
-                )
-                self._write_status("llm_call_completed", response_chars=len(text))
-                return text
-
-        from ipfs_datasets_py import llm_router
-
-        try:
-            text = str(
-                llm_router.generate_text(
+                text = self._call_generator_with_deadline(
+                    generator,
                     prompt,
-                    model_name=self.daemon_config.model_name,
+                    status_provider=provider,
                     provider=provider,
+                    model_name=self.daemon_config.model_name,
                     allow_local_fallback=self.daemon_config.allow_local_fallback,
                     max_new_tokens=self.daemon_config.max_new_tokens,
                     temperature=self.daemon_config.temperature,
@@ -3142,6 +3162,39 @@ Current repository file contents after rollback:
                     trace=bool(self.daemon_config.codex_trace_dir),
                     trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
                 )
+                self._write_status("llm_call_completed", response_chars=len(text))
+                return text
+            generator = getattr(self.llm_router, "generate", None)
+            if callable(generator):
+                text = self._call_generator_with_deadline(
+                    generator,
+                    prompt,
+                    status_provider=provider,
+                    model_name=self.daemon_config.model_name,
+                    max_new_tokens=self.daemon_config.max_new_tokens,
+                    temperature=self.daemon_config.temperature,
+                    timeout=self.daemon_config.llm_timeout_seconds,
+                    trace=bool(self.daemon_config.codex_trace_dir),
+                    trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
+                )
+                self._write_status("llm_call_completed", response_chars=len(text))
+                return text
+
+        from ipfs_datasets_py import llm_router
+
+        try:
+            text = self._call_generator_with_deadline(
+                llm_router.generate_text,
+                prompt,
+                status_provider=provider,
+                provider=provider,
+                model_name=self.daemon_config.model_name,
+                allow_local_fallback=self.daemon_config.allow_local_fallback,
+                max_new_tokens=self.daemon_config.max_new_tokens,
+                temperature=self.daemon_config.temperature,
+                timeout=self.daemon_config.llm_timeout_seconds,
+                trace=bool(self.daemon_config.codex_trace_dir),
+                trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
             )
         except Exception as exc:
             self._write_status("llm_call_failed", error=str(exc), provider=provider or "auto")

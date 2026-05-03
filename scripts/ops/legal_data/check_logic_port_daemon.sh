@@ -113,6 +113,7 @@ payload = {
     "agentic_typescript_quality_failures": supervisor.get("agentic_typescript_quality_failures"),
     "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
     "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
+    "agentic_stuck_maintenance_timeout_seconds": supervisor.get("agentic_stuck_maintenance_timeout_seconds"),
     "agentic_state_path": supervisor.get("agentic_state_path"),
     "last_agentic_maintenance_status": supervisor.get("last_agentic_maintenance_status"),
     "last_agentic_maintenance_reason": supervisor.get("last_agentic_maintenance_reason"),

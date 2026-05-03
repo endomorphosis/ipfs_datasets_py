@@ -151,7 +151,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_public_notice_display_light_verb_action(action_text)
     action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
-    action_text = _normalize_acknowledgment_attestation_authentication_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -6390,55 +6389,6 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"comment {target}" if target else text
-
-    return text
-
-
-def _normalize_acknowledgment_attestation_authentication_light_verb_action(action_text: str) -> str:
-    """Project proof/record-verification nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    acknowledgment_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"(?:an?\s+|the\s+)?acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"acknowledg(?:e)?ments\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^acknowledg(?:e)?ment\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in acknowledgment_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"acknowledge {target}" if target else text
-
-    attestation_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"(?:an?\s+|the\s+)?attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"attestations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^attestation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in attestation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"attest {target}" if target else text
-
-    authentication_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"(?:an?\s+|the\s+)?authentication\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|file|files|filed|filing|submit|submits|submitted|submitting|issue|issues|issued|issuing)\s+"
-        r"authentications\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^authentication\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in authentication_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"authenticate {target}" if target else text
 
     return text
 
