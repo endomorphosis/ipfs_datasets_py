@@ -840,6 +840,27 @@ def family_key(item: dict) -> str:
     return json.dumps({"reason": reason, "changed_files": changed}, sort_keys=True)
 
 
+def infer_legal_parser_targets(item: dict) -> list[str]:
+    text_parts = [
+        str(item.get("reason") or ""),
+        str(item.get("patch_stderr_tail") or ""),
+        json.dumps(item.get("proposal_quality_reasons") or [], sort_keys=True),
+    ]
+    text = "\n".join(text_parts)
+    inferred: list[str] = []
+    for candidate in sorted(LEGAL_PARSER_TARGETS):
+        if candidate in text and candidate not in inferred:
+            inferred.append(candidate)
+    if inferred:
+        return inferred
+    changed = sorted(
+        str(path).strip()
+        for path in (item.get("changed_files") or [])
+        if str(path).strip() in LEGAL_PARSER_TARGETS
+    )
+    return changed
+
+
 def paths_from_porcelain(stdout: str) -> list[str]:
     paths: list[str] = []
     for line in stdout.splitlines():
@@ -897,11 +918,7 @@ count = counts[winner]
 if count < threshold:
     raise SystemExit(1)
 family = dict(payloads[winner])
-changed_files = sorted(
-    str(path).strip()
-    for path in (family.get("changed_files") or [])
-    if str(path).strip() in LEGAL_PARSER_TARGETS
-)
+changed_files = infer_legal_parser_targets(family)
 if not changed_files:
     raise SystemExit(1)
 

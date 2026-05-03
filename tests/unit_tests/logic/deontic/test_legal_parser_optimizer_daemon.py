@@ -134,6 +134,7 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert "SUPERVISOR_REPEATED_REJECTION_RECOVERY" in script
     assert '"repeated_rejection_recovery_enabled"' in script
     assert "def repeated_rejection_family(rejections: list[dict]) -> dict:" in script
+    assert "def infer_legal_parser_targets(item: dict) -> list[str]:" in script
     assert "confirmed_repeated_rejection_dirty_target_reason()" in script
     assert "recover_repeated_rejection_dirty_targets()" in script
     assert "repeated_rejection_family:" in script
