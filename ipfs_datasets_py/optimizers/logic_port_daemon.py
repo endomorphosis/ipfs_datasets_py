@@ -527,12 +527,32 @@ def _repair_common_typescript_text_damage(content: str) -> str:
         repaired,
     )
     repaired = re.sub(
+        r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length)\s+&&",
+        r"while (\g<var> < \g<bound> &&",
+        repaired,
+    )
+    repaired = re.sub(
         r"if \((?P<var>[A-Za-z_$][\w$]*) = (?P<bound>[A-Za-z_$][\w$.]*\.length) \|\|",
         r"if (\g<var> >= \g<bound> ||",
         repaired,
     )
     repaired = re.sub(r"for \(let index = 1; index \): number \{", "for (let index = 1; index < utterances.length; index += 1) {", repaired)
     repaired = re.sub(r"for \(let index = 0; index >> 0\)\.toString", "return (hash >>> 0).toString", repaired)
+    repaired = re.sub(
+        r"(?P<prefix>\b(?:const|let)\s+(?:parts|tokens|lines|symbols|orderedSymbols|sortedSymbols|errors|warnings|commands|logics)\s*:\s*)Array<unknown>(?P<suffix>\s*=\s*\[\s*\])",
+        r"\g<prefix>Array<string>\g<suffix>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<prefix>\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*:\s*)Array<unknown>(?P<suffix>\s*=\s*\[(?:\s*['\"][^'\"]*['\"]\s*,?)*\s*\])",
+        r"\g<prefix>Array<string>\g<suffix>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<prefix>\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*:\s*)Array<unknown>(?P<suffix>\s*=\s*Object\.keys\()",
+        r"\g<prefix>Array<string>\g<suffix>",
+        repaired,
+    )
     return repaired
 
 
@@ -620,10 +640,20 @@ def _read_daemon_results(path: Path) -> List[Tuple[Dict[str, Any], Dict[str, Any
     return rows
 
 
+def _normalize_task_label(value: str) -> str:
+    normalized = str(value or "").replace("`", "").strip()
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized
+
+
+def _same_task_label(left: str, right: str) -> bool:
+    return _normalize_task_label(left) == _normalize_task_label(right)
+
+
 def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str, failure_kind: str) -> int:
     count = 0
     for result, artifact in reversed(rows):
-        if artifact.get("target_task") != task_label:
+        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
             continue
         if result.get("valid"):
             break
@@ -638,7 +668,7 @@ def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
 def _recent_total_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
     count = 0
     for result, artifact in reversed(rows):
-        if artifact.get("target_task") != task_label:
+        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
             continue
         if result.get("valid"):
             break
@@ -653,7 +683,7 @@ def _current_task_failure_counts(
     total = 0
     by_kind: Dict[str, int] = {}
     for result, artifact in reversed(rows):
-        if artifact.get("target_task") != task_label:
+        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
             continue
         if result.get("valid"):
             break
@@ -675,7 +705,7 @@ def _rounds_since_last_valid(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]
 def _last_task_attempt_index(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
     for index in range(len(rows) - 1, -1, -1):
         _result, artifact = rows[index]
-        if artifact.get("target_task") == task_label:
+        if _same_task_label(str(artifact.get("target_task") or ""), task_label):
             return index
     return -1
 
@@ -688,7 +718,7 @@ def _task_failure_summary(
     counts = _current_task_failure_counts(rows, task_label)
     latest_failure: Dict[str, Any] = {}
     for result, artifact in reversed(rows):
-        if artifact.get("target_task") != task_label:
+        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
             continue
         if result.get("valid"):
             break
@@ -1191,6 +1221,8 @@ Critical correction for attempt {attempt}:
 - Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
 - Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
 - For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
+- Before returning JSON, inspect the replacement contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 - Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.
 - If the previous response was prose, convert that intent into complete file replacements now.
 """
@@ -2013,6 +2045,7 @@ Critical correction for attempt {attempt}:
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "state": "heartbeat",
                     "active_state": base.get("state", ""),
+                    "active_state_started_at": base.get("state_started_at", ""),
                     "heartbeat_interval_seconds": interval,
                 }
                 self._write_status_payload(payload)
@@ -2056,6 +2089,12 @@ Critical correction for attempt {attempt}:
         }
         if state != "heartbeat":
             with self._status_lock:
+                previous = self._last_status_payload
+                previous_state = str(previous.get("state") or "")
+                if previous_state == state and previous.get("state_started_at"):
+                    payload["state_started_at"] = previous["state_started_at"]
+                else:
+                    payload["state_started_at"] = payload["timestamp"]
                 self._last_status_payload = dict(payload)
         self._write_status_payload(payload)
 
@@ -2637,7 +2676,7 @@ Critical correction for attempt {attempt}:
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         snippets: List[str] = []
         for result, artifact in reversed(rows):
-            if artifact.get("target_task") != selected_task.label:
+            if not _same_task_label(str(artifact.get("target_task") or ""), selected_task.label):
                 continue
             if result.get("valid"):
                 break
@@ -2887,6 +2926,8 @@ Rules:
 - Do not use bare TypeScript generic aliases. Use Record<string, unknown>, Promise<ResultType>, Omit<Type, Keys>, Map<Key, Value>, and Array<Item> with required type arguments.
 - Avoid Omit/Pick when a named interface or explicit options type is simpler and less fragile.
 - Every for loop and comparison must include the complete operator and bound expression, such as index < items.length.
+- Before returning JSON, inspect the repaired contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 - Preserve browser-native TypeScript/WASM behavior with no server, Python, filesystem, subprocess, RPC, or Node-only browser-runtime dependency.
 - Preserve focused tests for the selected task when tests were part of the original proposal.
 
@@ -3008,6 +3049,8 @@ Rules:
   - Map<string, Value> instead of Map
 - If diagnostics are syntax errors such as TS1005, TS1003, TS1128, TS1109, TS1144, or TS1434, repair the smallest syntactic region needed and preserve the surrounding current file structure.
 - Do not use Python-style tuple/list/dict syntax, unquoted object keys in type positions, or placeholder ellipses in returned TypeScript.
+- Before returning JSON, inspect the corrected contents for stripped operators or generic arguments such as `index  items.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 
 Session: {context.session_id}
 Original summary:
@@ -3163,6 +3206,11 @@ Current repository file contents after rollback:
         recent_failure_context = self._recent_failure_context(selected_task)
         task_failure_counts = self._selected_task_failure_counts(selected_task)
         repeated_typescript_failures = int(task_failure_counts.get("by_kind_since_success", {}).get("typescript_quality", 0))
+        prompt_rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
+        if self.daemon_config.result_log_path is not None:
+            prompt_rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
+        rollback_quality_failures = _rollback_quality_failure_counts(prompt_rows)
+        repeated_rollback_failures = int(rollback_quality_failures.get("consecutive", 0))
         slice_mode = self.daemon_config.slice_mode if self.daemon_config.slice_mode in {"small", "balanced", "broad"} else "balanced"
         if slice_mode == "small":
             slice_guidance = (
@@ -3202,13 +3250,18 @@ Current repository file contents after rollback:
                     "Implement one coherent browser-native contract for the selected task, typically with 1-3 related implementation/test files, "
                     "avoid advanced generic types and fragile recursive JSON unions, and include focused tests that exercise the runtime behavior."
                 )
+        if repeated_rollback_failures >= 3:
+            recovery_mode_context += (
+                "\nUnattended rollback recovery mode is active because recent daemon rounds have rolled back without accepted files: "
+                f"{repeated_rollback_failures} consecutive rollback-quality failures. For this cycle, prioritize a smaller compileable scaffold "
+                "over a feature-complete replacement: one runtime source file plus one focused test at most, simple named interfaces, explicit "
+                "generic arguments, and no broad module rewrites. Preserve existing exports used by neighboring files, especially when replacing "
+                "an existing module."
+            )
         relevant_file_context = self._relevant_file_context(selected_task, file_inventory.stdout)
         blocked_backlog_context = "[No blocked backlog context available.]"
         if self.daemon_config.task_board_doc is not None:
-            rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
-            if self.daemon_config.result_log_path is not None:
-                rows.extend(_read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path)))
-            blocked_backlog_context = self._blocked_task_backlog_markdown(plan_tasks, rows)
+            blocked_backlog_context = self._blocked_task_backlog_markdown(plan_tasks, prompt_rows)
 
         prompt = f"""You are implementing the browser-native TypeScript/WASM port of ipfs_datasets_py logic.
 
@@ -3231,6 +3284,8 @@ Hard constraints:
 - Do not include shell commands that mutate files.
 - Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
 - For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
+- Before returning JSON, inspect the file contents you are about to return for stripped operators or generic arguments: reject your own answer if it contains fragments like `index  items.length`, `while (offset  text.length`, `Record =`, `Array =`, `Promise;`, or `Omit;`.
+- When replacing an existing TypeScript module, preserve public exports that neighboring files import unless the selected task explicitly removes them.
 - Use conservative, PR-sized changes.
 - Choose one narrow requirement per cycle.
 - The daemon-selected task for this cycle is: {selected_task_text}

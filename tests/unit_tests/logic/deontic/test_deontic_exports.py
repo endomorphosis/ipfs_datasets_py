@@ -25,6 +25,7 @@ from ipfs_datasets_py.logic.deontic.exports import (
     normalize_repair_required_details_from_parser_elements,
     summarize_decoder_reconstruction_records,
     summarize_reconstruction_slot_loss,
+    summarize_deterministic_parser_capability_profile_records,
     parser_element_has_active_repair,
     parser_elements_to_export_tables,
     parser_elements_for_metrics,
@@ -191,6 +192,89 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert procedure.procedure["event_relations"]
     assert sanction.penalty["classification"] == "civil"
     assert build_deterministic_parser_capability_profile_record(temporal) == records[0]
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_deterministic_parser_capability_profile_summary_aggregates_coverage_families():
+    norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "The tenant must pay rent monthly."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "The Director is delegated authority to approve permits."
+        )[0]),
+        *[
+            LegalNormIR.from_parser_element(element)
+            for element in extract_normative_elements(
+                "The Secretary shall (1) establish procedures; (2) submit a report; and (3) maintain records.",
+                expand_enumerations=True,
+            )
+        ],
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "The Director shall issue a permit within 10 days after application."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "Upon receipt of an application, the Bureau shall inspect the premises before approval."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "This section applies to food carts."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            'In this section, the term "food cart" means a mobile food vending unit.'
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "The permit expires one year after issuance."
+        )[0]),
+        LegalNormIR.from_parser_element(extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]),
+    ]
+    records = build_deterministic_parser_capability_profile_records(norms)
+
+    summary = summarize_deterministic_parser_capability_profile_records(records)
+
+    assert summary["record_count"] == len(records)
+    assert summary["source_ids"] == sorted(norm.source_id for norm in norms)
+    assert summary["capability_families"] == [
+        "authority_grant",
+        "definition",
+        "enumerated_child_duty",
+        "instrument_lifecycle",
+        "ordinary_duty",
+        "procedural_event_duty",
+        "sanction_clause",
+        "scope_rule",
+        "temporal_deadline_duty",
+    ]
+    assert summary["family_counts"] == {
+        "authority_grant": 1,
+        "definition": 1,
+        "enumerated_child_duty": 3,
+        "instrument_lifecycle": 1,
+        "ordinary_duty": 2,
+        "procedural_event_duty": 1,
+        "sanction_clause": 1,
+        "scope_rule": 1,
+        "temporal_deadline_duty": 1,
+    }
+    assert summary["proof_ready_count"] == len(records) - 1
+    assert summary["parser_proof_ready_count"] == 10
+    assert summary["requires_validation_count"] == 1
+    assert summary["repair_required_count"] == 1
+    assert summary["repair_required_families"] == ["ordinary_duty"]
+    assert summary["validation_required_families"] == ["ordinary_duty"]
+    assert summary["average_source_grounded_slot_rate"] == 1.0
+    assert "cross_reference_requires_resolution" in summary["coverage_blockers"]
+    assert "exception_requires_scope_review" in summary["coverage_blockers"]
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

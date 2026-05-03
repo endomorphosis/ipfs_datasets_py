@@ -147,6 +147,79 @@ def build_deterministic_parser_capability_profile_records(
     return [build_deterministic_parser_capability_profile_record(norm, slots) for norm in norms]
 
 
+def summarize_deterministic_parser_capability_profile_records(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize deterministic parser capability-profile rows.
+
+    Capability rows are emitted per norm. Phase 8 corpus reports also need a
+    stable aggregate view that shows which construction families the
+    deterministic parser covered, which families still require validation, and
+    whether source-grounded slots were preserved. This summary is diagnostic
+    only; it does not change parser repair status or theorem promotion.
+    """
+
+    valid_records = [record for record in records or [] if isinstance(record, Mapping)]
+    source_ids: set[str] = set()
+    family_counts: Dict[str, int] = {}
+    family_proof_ready_counts: Dict[str, int] = {}
+    validation_required_families: set[str] = set()
+    repair_required_families: set[str] = set()
+    blockers: set[str] = set()
+    grounded_rate_total = 0.0
+    proof_ready_count = 0
+    parser_proof_ready_count = 0
+    requires_validation_count = 0
+    repair_required_count = 0
+
+    for record in valid_records:
+        source_id = str(record.get("source_id") or "").strip()
+        if source_id:
+            source_ids.add(source_id)
+
+        family = str(record.get("capability_family") or "unknown").strip() or "unknown"
+        family_counts[family] = family_counts.get(family, 0) + 1
+
+        if record.get("formula_proof_ready") is True:
+            proof_ready_count += 1
+            family_proof_ready_counts[family] = family_proof_ready_counts.get(family, 0) + 1
+        if record.get("parser_proof_ready") is True:
+            parser_proof_ready_count += 1
+
+        if record.get("requires_validation") is True:
+            requires_validation_count += 1
+            validation_required_families.add(family)
+        if record.get("repair_required") is True:
+            repair_required_count += 1
+            repair_required_families.add(family)
+
+        for blocker in record.get("blockers") or []:
+            blocker_text = str(blocker or "").strip()
+            if blocker_text:
+                blockers.add(blocker_text)
+
+        grounded_rate_total += float(record.get("source_grounded_slot_rate") or 0.0)
+
+    record_count = len(valid_records)
+    return {
+        "record_count": record_count,
+        "source_ids": sorted(source_ids),
+        "capability_families": sorted(family_counts),
+        "family_counts": dict(sorted(family_counts.items())),
+        "family_proof_ready_counts": dict(sorted(family_proof_ready_counts.items())),
+        "proof_ready_count": proof_ready_count,
+        "parser_proof_ready_count": parser_proof_ready_count,
+        "requires_validation_count": requires_validation_count,
+        "repair_required_count": repair_required_count,
+        "validation_required_families": sorted(validation_required_families),
+        "repair_required_families": sorted(repair_required_families),
+        "coverage_blockers": sorted(blockers),
+        "average_source_grounded_slot_rate": round(grounded_rate_total / record_count, 6)
+        if record_count
+        else 0.0,
+    }
+
+
 def summarize_ir_slot_provenance_audit_records(
     records: Sequence[Mapping[str, Any]],
 ) -> Dict[str, Any]:

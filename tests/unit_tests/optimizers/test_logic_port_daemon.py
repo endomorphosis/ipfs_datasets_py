@@ -193,6 +193,27 @@ export function count(input: string): number {
     assert "if (total >= input.length || input.length === 0)" in repaired
 
 
+def test_repair_common_typescript_text_damage_recovers_string_arrays_and_while_guards():
+    damaged = """
+const ORDERED_SYMBOLS: Array = Object.keys(SYMBOL_REPLACEMENTS);
+const parts: Array = [];
+
+export function scan(input: string): string {
+  let firstParen = 0;
+  while (firstParen  input.length && input[firstParen] !== "(") {
+    firstParen += 1;
+  }
+  return parts.map((part: string) => part.trim()).join(",") + ORDERED_SYMBOLS[0];
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "const ORDERED_SYMBOLS: Array<string> = Object.keys(SYMBOL_REPLACEMENTS);" in repaired
+    assert "const parts: Array<string> = [];" in repaired
+    assert "while (firstParen < input.length && input[firstParen] !== \"(\")" in repaired
+
+
 def test_extract_plan_tasks_reads_status_from_markdown():
     tasks = extract_plan_tasks(
         """
@@ -659,6 +680,51 @@ def test_balanced_slice_mode_keeps_recovery_from_tiny_scaffolds(tmp_path):
     assert "balanced slice mode should still land a useful vertical slice rather than a tiny scaffold" in prompt
     assert "smallest compileable TypeScript contract" not in prompt
     assert "usually 1-3 related implementation/test files" in prompt
+
+
+def test_consecutive_rollback_failures_enable_unattended_recovery_prompt(tmp_path):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    log_path = tmp_path / "daemon" / "results.jsonl"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port DCEC cleaning\n", encoding="utf-8")
+    status.write_text("status notes\n", encoding="utf-8")
+    log_path.parent.mkdir(parents=True)
+    rows = [
+        {
+            "valid": False,
+            "artifact": {
+                "target_task": "Task checkbox-1: Port DCEC cleaning",
+                "summary": f"rollback {index}",
+                "failure_kind": "preflight",
+                "changed_files": [],
+                "errors": ["src/lib/logic/cec/dcecCleaning.ts(1,1): error TS1005: ';' expected."],
+            },
+        }
+        for index in range(3)
+    ]
+    log_path.write_text(json.dumps({"results": rows}) + "\n", encoding="utf-8")
+    router = FakeRouter(json.dumps({"summary": "Noop", "patch": "", "files": []}))
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        result_log_path=log_path,
+    )
+
+    LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="rollback-recovery")
+
+    prompt = router.calls[0]["prompt"]
+    assert "Unattended rollback recovery mode is active" in prompt
+    assert "Preserve existing exports used by neighboring files" in prompt
 
 
 def test_small_slice_mode_preserves_minimal_recovery_prompt(tmp_path):
@@ -2476,6 +2542,26 @@ def test_revisit_blocked_skips_tasks_after_failure_budget(tmp_path):
 
     assert selected is not None
     assert selected.title == "Fresh blocked task"
+
+
+def test_task_failure_counts_normalize_markdown_backticks():
+    rows = [
+        (
+            {"valid": False},
+            {
+                "target_task": "Task checkbox-203: Port remaining Python logic module logic/CEC/native/dcec_cleaning.py to browser-native TypeScript/WASM",
+                "failure_kind": "preflight",
+            },
+        )
+    ]
+    task_label = (
+        "Task checkbox-203: Port remaining Python logic module `logic/CEC/native/dcec_cleaning.py` "
+        "to browser-native TypeScript/WASM"
+    )
+
+    assert logic_port_daemon._recent_total_failure_count(rows, task_label) == 1
+    assert logic_port_daemon._recent_failure_count(rows, task_label, "preflight") == 1
+    assert logic_port_daemon._current_task_failure_counts(rows, task_label)["by_kind_since_success"]["preflight"] == 1
 
 
 def test_revisit_blocked_stops_when_all_blocked_tasks_exhaust_failure_budget(tmp_path):
