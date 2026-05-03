@@ -269,6 +269,52 @@ class DataWalletService:
             requests = [request for request in requests if request.audience_did == audience_did]
         return sorted(requests, key=lambda item: item.created_at)
 
+    def access_request_review_items(
+        self,
+        wallet_id: str,
+        *,
+        status: Optional[str] = None,
+        requester_did: Optional[str] = None,
+        audience_did: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Return access requests with operator-facing approval and grant state."""
+
+        wallet = self._wallet(wallet_id)
+        items: List[Dict[str, Any]] = []
+        for request in self.list_access_requests(
+            wallet_id,
+            status=status,
+            requester_did=requester_did,
+            audience_did=audience_did,
+        ):
+            approval_required = operation_requires_approval(
+                wallet,
+                operation="grant/create",
+                resources=request.resources,
+                abilities=request.abilities,
+                caveats={"purpose": request.purpose, **dict(request.details)},
+            )
+            approval = self._matching_approval(
+                wallet_id,
+                resources=request.resources,
+                abilities=request.abilities,
+                operation="grant/create",
+            )
+            grant = self.grants.get(request.grant_id or "")
+            item = request.to_dict()
+            item.update(
+                {
+                    "approval_required": approval_required,
+                    "approval_id": approval.approval_id if approval else None,
+                    "approval_status": approval.status if approval else None,
+                    "approval_threshold": approval.threshold if approval else None,
+                    "approval_count": approval.approved_count if approval else 0,
+                    "grant_status": grant.status if grant else None,
+                }
+            )
+            items.append(item)
+        return items
+
     def approve_access_request(
         self,
         wallet_id: str,
@@ -1780,6 +1826,24 @@ class DataWalletService:
         if request_id not in self.access_requests or self.access_requests[request_id].wallet_id != wallet_id:
             raise MissingRecordError(f"Access request not found: {request_id}")
         return self.access_requests[request_id]
+
+    def _matching_approval(
+        self,
+        wallet_id: str,
+        *,
+        resources: List[str],
+        abilities: List[str],
+        operation: str,
+    ) -> Optional[ApprovalRequest]:
+        matches = [
+            approval
+            for approval in self.approval_requests.values()
+            if approval.wallet_id == wallet_id
+            and approval.operation == operation
+            and set(approval.resources) == set(resources)
+            and set(approval.abilities) == set(abilities)
+        ]
+        return sorted(matches, key=lambda item: item.created_at)[-1] if matches else None
 
     def _analytics_consent(self, wallet_id: str, consent_id: str) -> AnalyticsConsent:
         if consent_id not in self.analytics_consents or self.analytics_consents[consent_id].wallet_id != wallet_id:

@@ -1125,6 +1125,9 @@ def test_wallet_cli_access_request_approval_issues_invocation(tmp_path, capsys) 
     ]) == 0
     inbox = json.loads(capsys.readouterr().out)
     assert [request["request_id"] for request in inbox["requests"]] == [access_request["request_id"]]
+    assert inbox["requests"][0]["approval_required"] is False
+    assert inbox["requests"][0]["approval_count"] == 0
+    assert inbox["requests"][0]["grant_status"] is None
 
     assert main([
         "--json",
@@ -1149,6 +1152,21 @@ def test_wallet_cli_access_request_approval_issues_invocation(tmp_path, capsys) 
     assert approved["status"] == "approved"
     assert approved["grant_id"].startswith("grant-")
     assert approved["invocation_token"].startswith("wallet-ucan-v1.")
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "access-requests",
+        "--wallet-id",
+        wallet_id,
+        "--status",
+        "approved",
+    ]) == 0
+    approved_list = json.loads(capsys.readouterr().out)
+    assert approved_list["requests"][0]["grant_status"] == "active"
 
     assert main([
         "--json",
@@ -1285,6 +1303,7 @@ def test_wallet_cli_revoke_access_blocks_existing_invocation(tmp_path, capsys) -
     ]) == 0
     revoked_list = json.loads(capsys.readouterr().out)
     assert revoked_list["requests"][0]["request_id"] == access_request["request_id"]
+    assert revoked_list["requests"][0]["grant_status"] == "revoked"
 
     assert main([
         "--json",

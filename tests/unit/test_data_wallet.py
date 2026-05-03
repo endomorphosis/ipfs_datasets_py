@@ -687,6 +687,65 @@ def test_access_request_listing_filters_for_review_inbox(tmp_path):
     ] == [second.request_id]
 
 
+def test_access_request_review_items_include_approval_and_grant_state(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(
+        owner_did=OWNER,
+        controller_dids=[OWNER, SECOND_CONTROLLER],
+        governance_policy={"threshold": 2, "approver_dids": [OWNER, SECOND_CONTROLLER]},
+    )
+    source = tmp_path / "threshold-access.txt"
+    source.write_text("threshold access text", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    access_request = service.request_access(
+        wallet.wallet_id,
+        requester_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/decrypt"],
+        purpose="identity_verification",
+    )
+
+    [pending_item] = service.access_request_review_items(wallet.wallet_id, status="pending")
+    assert pending_item["request_id"] == access_request.request_id
+    assert pending_item["approval_required"] is True
+    assert pending_item["approval_id"] is None
+    assert pending_item["approval_count"] == 0
+    assert pending_item["grant_status"] is None
+
+    approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="grant/create",
+        resources=[resource],
+        abilities=["record/decrypt"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
+
+    [partial_item] = service.access_request_review_items(wallet.wallet_id, status="pending")
+    assert partial_item["approval_id"] == approval.approval_id
+    assert partial_item["approval_status"] == "pending"
+    assert partial_item["approval_threshold"] == 2
+    assert partial_item["approval_count"] == 1
+
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER)
+    service.approve_access_request(
+        wallet.wallet_id,
+        request_id=access_request.request_id,
+        actor_did=OWNER,
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+        approval_id=approval.approval_id,
+    )
+
+    [approved_item] = service.access_request_review_items(wallet.wallet_id, status="approved")
+    assert approved_item["approval_status"] == "approved"
+    assert approved_item["approval_count"] == 2
+    assert approved_item["grant_status"] == "active"
+
+
 def test_invocation_rejects_tampering_wrong_ability_and_revoked_grant(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     owner_secret = b"o" * 32

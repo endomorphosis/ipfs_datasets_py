@@ -770,15 +770,12 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.command == "access-requests":
             status = None if args.status == "all" else args.status
-            requests = [
-                request.to_dict()
-                for request in service.list_access_requests(
-                    args.wallet_id,
-                    status=status,
-                    requester_did=args.requester_did,
-                    audience_did=args.audience_did,
-                )
-            ]
+            requests = service.access_request_review_items(
+                args.wallet_id,
+                status=status,
+                requester_did=args.requester_did,
+                audience_did=args.audience_did,
+            )
             _emit({"status": "ok", "wallet_id": args.wallet_id, "requests": requests}, json_output=args.json_output)
             return 0
 
