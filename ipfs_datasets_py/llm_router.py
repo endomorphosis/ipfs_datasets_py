@@ -3172,6 +3172,65 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
                         raise RuntimeError(message.strip())
                 raise RuntimeError("AccelerateManager provider did not return generated text")
 
+            def generate_multimodal(
+                self,
+                prompt: str,
+                *,
+                model_name: Optional[str] = None,
+                image_paths: Sequence[str] | None = None,
+                image_urls: Sequence[str] | None = None,
+                system_prompt: Optional[str] = None,
+                additional_text_blocks: Sequence[str] | None = None,
+                messages: Sequence[dict] | None = None,
+                **kwargs: object,
+            ) -> str:
+                effective_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL", "")
+                call_options = dict(kwargs)
+                payload: dict[str, object] = {
+                    "prompt": str(prompt or ""),
+                    "image_urls": [str(url) for url in image_urls or () if str(url or "").strip()],
+                    "image_data_urls": [_image_path_to_data_url(path) for path in image_paths or ()],
+                    "system_prompt": system_prompt,
+                    "additional_text_blocks": _coerce_text_sequence(additional_text_blocks),
+                }
+                if messages is not None:
+                    payload["messages"] = list(messages)
+
+                remote_provider = (
+                    call_options.pop("remote_provider", None)
+                    or call_options.pop("multimodal_provider", None)
+                    or call_options.pop("target_provider", None)
+                )
+                if remote_provider is not None:
+                    payload["provider"] = str(remote_provider)
+
+                for key in (
+                    "max_tokens",
+                    "max_new_tokens",
+                    "temperature",
+                    "top_p",
+                    "top_k",
+                    "timeout",
+                    "image_detail",
+                ):
+                    if key in call_options:
+                        payload[key] = call_options.pop(key)
+
+                result = manager.run_inference(  # type: ignore[union-attr]
+                    effective_model,
+                    payload,
+                    task_type="multimodal-generation",
+                    **call_options,
+                )
+                text = _extract_generated_text(result)
+                if isinstance(text, str) and text:
+                    return text
+                if isinstance(result, dict):
+                    message = result.get("message")
+                    if isinstance(message, str) and message.strip():
+                        raise RuntimeError(message.strip())
+                raise RuntimeError("AccelerateManager multimodal provider did not return generated text")
+
         return _AccelerateLLMProvider()
     except Exception:
         pass

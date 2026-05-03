@@ -60,6 +60,7 @@ from .ucan import (
     assert_grant_allows,
     assert_invocation_allows,
     create_invocation,
+    resource_for_export,
     resource_for_location,
     resource_for_record,
     resource_for_wallet,
@@ -367,6 +368,39 @@ class DataWalletService:
             resource=",".join(request.resources),
             decision="deny",
             details={"request_id": request.request_id, "reason": reason},
+        )
+        return request
+
+    def revoke_access_request(
+        self,
+        wallet_id: str,
+        *,
+        request_id: str,
+        actor_did: str,
+        reason: Optional[str] = None,
+    ) -> AccessRequest:
+        wallet = self._wallet(wallet_id)
+        self._assert_controller(wallet, actor_did)
+        request = self._access_request(wallet_id, request_id)
+        if request.status != "approved" or not request.grant_id:
+            raise GrantError(f"Access request is not revocable: {request_id}")
+        self.revoke_grant(wallet_id, request.grant_id, actor_did=actor_did)
+        request.status = "revoked"
+        request.decided_at = utc_now()
+        request.decided_by = actor_did
+        if reason:
+            request.details = {**request.details, "revocation_reason": reason}
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="access/revoke",
+            resource=",".join(request.resources),
+            decision="allow",
+            details={"request_id": request.request_id, "reason": reason},
+            grant_id=request.grant_id,
         )
         return request
 
@@ -1288,6 +1322,146 @@ class DataWalletService:
             ),
         }
 
+    def create_export_bundle(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        record_ids: Optional[List[str]] = None,
+        include_proofs: bool = True,
+        include_derived_artifacts: bool = True,
+    ) -> Dict[str, Any]:
+        """Create a bounded encrypted export bundle for a wallet actor.
+
+        This is a sharing/export view, not a plaintext backup. It includes
+        encrypted storage references and only key wraps addressed to the actor.
+        """
+
+        wallet = self._wallet(wallet_id)
+        requested_ids = (
+            list(record_ids)
+            if record_ids is not None
+            else sorted(
+                record.record_id
+                for record in self.records.values()
+                if record.wallet_id == wallet_id and record.status == "active"
+            )
+        )
+        records = [self._record(wallet_id, record_id) for record_id in requested_ids]
+
+        if actor_did != wallet.owner_did:
+            if grant_id is None:
+                raise AccessDeniedError("Non-owner export requires an export/create grant")
+            grant = self.grants[grant_id]
+            self._assert_export_grant_allows(
+                grant,
+                wallet_id=wallet_id,
+                actor_did=actor_did,
+                record_ids=requested_ids,
+            )
+        versions: List[Dict[str, Any]] = []
+        for record in records:
+            version = self.versions[record.current_version_id]
+            version_data = version.to_dict()
+            if actor_did != wallet.owner_did:
+                version_data["key_wraps"] = [
+                    wrap.to_dict()
+                    for wrap in version.key_wraps
+                    if wrap.recipient_did == actor_did and wrap.status == "active"
+                ]
+            versions.append(version_data)
+
+        record_id_set = set(requested_ids)
+        artifact_ids = sorted(
+            artifact.artifact_id
+            for artifact in self.derived_artifacts.values()
+            if artifact.wallet_id == wallet_id and any(record_id in record_id_set for record_id in artifact.source_record_ids)
+        )
+        proof_ids = sorted(
+            proof.proof_id
+            for proof in self.proofs.values()
+            if proof.wallet_id == wallet_id and any(record_id in record_id_set for record_id in proof.witness_record_ids)
+        )
+        bundle = {
+            "bundle_type": "wallet_export_v1",
+            "wallet": self._export_wallet_descriptor(wallet, actor_did=actor_did),
+            "created_at": utc_now(),
+            "actor_did": actor_did,
+            "grant_id": grant_id,
+            "records": [record.to_dict() for record in records],
+            "versions": versions,
+            "derived_artifacts": (
+                [self.derived_artifacts[artifact_id].to_dict() for artifact_id in artifact_ids]
+                if include_derived_artifacts
+                else []
+            ),
+            "proofs": (
+                [self.proofs[proof_id].to_dict() for proof_id in proof_ids]
+                if include_proofs
+                else []
+            ),
+        }
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="export/create",
+            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in requested_ids),
+            decision="allow",
+            details={
+                "record_ids": requested_ids,
+                "include_proofs": include_proofs,
+                "include_derived_artifacts": include_derived_artifacts,
+            },
+            grant_id=grant_id,
+        )
+        return bundle
+
+    def _export_wallet_descriptor(self, wallet: Wallet, *, actor_did: str) -> Dict[str, Any]:
+        if actor_did == wallet.owner_did:
+            return wallet.to_dict()
+        return {
+            "wallet_id": wallet.wallet_id,
+            "owner_did": wallet.owner_did,
+            "manifest_head": wallet.manifest_head,
+            "created_at": wallet.created_at,
+            "updated_at": wallet.updated_at,
+        }
+
+    def create_export_bundle_with_invocation(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        invocation: WalletInvocation,
+        actor_secret: Optional[bytes] = None,
+        record_ids: Optional[List[str]] = None,
+        include_proofs: bool = True,
+        include_derived_artifacts: bool = True,
+    ) -> Dict[str, Any]:
+        self.verify_invocation(
+            wallet_id,
+            invocation,
+            actor_did=actor_did,
+            resource=resource_for_export(wallet_id),
+            ability="export/create",
+            actor_secret=actor_secret,
+        )
+        if record_ids is not None and invocation.caveats.get("record_ids") is not None:
+            allowed = set(str(record_id) for record_id in invocation.caveats["record_ids"])
+            requested = set(record_ids)
+            if not requested.issubset(allowed):
+                raise AccessDeniedError("Export invocation does not cover all requested records")
+        return self.create_export_bundle(
+            wallet_id,
+            actor_did=actor_did,
+            grant_id=invocation.grant_id,
+            record_ids=record_ids,
+            include_proofs=include_proofs,
+            include_derived_artifacts=include_derived_artifacts,
+        )
+
     def import_wallet_snapshot(self, snapshot: Dict[str, Any]) -> Wallet:
         """Import a snapshot produced by :meth:`export_wallet_snapshot`."""
 
@@ -1463,6 +1637,39 @@ class DataWalletService:
         if consent_id not in self.analytics_consents or self.analytics_consents[consent_id].wallet_id != wallet_id:
             raise MissingRecordError(f"Analytics consent not found: {consent_id}")
         return self.analytics_consents[consent_id]
+
+    def _assert_export_grant_allows(
+        self,
+        grant: Grant,
+        *,
+        wallet_id: str,
+        actor_did: str,
+        record_ids: List[str],
+    ) -> None:
+        export_resource = resource_for_export(wallet_id)
+        try:
+            assert_grant_allows(
+                grant,
+                audience_did=actor_did,
+                resource=export_resource,
+                ability="export/create",
+            )
+        except AccessDeniedError:
+            for record_id in record_ids:
+                assert_grant_allows(
+                    grant,
+                    audience_did=actor_did,
+                    resource=resource_for_record(wallet_id, record_id),
+                    ability="export/create",
+                )
+            return
+        allowed_record_ids = grant.caveats.get("record_ids")
+        if allowed_record_ids is None:
+            return
+        allowed = set(str(record_id) for record_id in allowed_record_ids)
+        requested = set(record_ids)
+        if not requested.issubset(allowed):
+            raise AccessDeniedError("Export grant does not cover all requested records")
 
     def _analytics_template(self, template_id: str) -> AnalyticsTemplate:
         if template_id not in self.analytics_templates:

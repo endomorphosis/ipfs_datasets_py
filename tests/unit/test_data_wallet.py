@@ -18,7 +18,13 @@ from ipfs_datasets_py.wallet.storage import (
     ReplicatedEncryptedBlobStore,
     S3EncryptedBlobStore,
 )
-from ipfs_datasets_py.wallet.ucan import invocation_from_token, invocation_to_token, resource_for_location, resource_for_record
+from ipfs_datasets_py.wallet.ucan import (
+    invocation_from_token,
+    invocation_to_token,
+    resource_for_export,
+    resource_for_location,
+    resource_for_record,
+)
 
 
 OWNER = "did:key:owner"
@@ -275,6 +281,187 @@ def test_revoked_grant_fails_future_invocations(tmp_path):
         )
 
 
+def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "notice.txt"
+    source.write_text("Eviction notice with confidential case facts", encoding="utf-8")
+    document = service.add_document(wallet.wallet_id, source)
+    location = service.add_location(wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385)
+
+    with pytest.raises(AccessDeniedError):
+        service.create_export_bundle(
+            wallet.wallet_id,
+            actor_did=ADVOCATE,
+            record_ids=[document.record_id, location.record_id],
+        )
+
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[
+            resource_for_record(wallet.wallet_id, document.record_id),
+            resource_for_record(wallet.wallet_id, location.record_id),
+        ],
+        abilities=["export/create"],
+    )
+    bundle = service.create_export_bundle(
+        wallet.wallet_id,
+        actor_did=ADVOCATE,
+        grant_id=grant.grant_id,
+        record_ids=[document.record_id, location.record_id],
+    )
+
+    assert bundle["bundle_type"] == "wallet_export_v1"
+    assert "controller_dids" not in bundle["wallet"]
+    assert "device_dids" not in bundle["wallet"]
+    assert [record["record_id"] for record in bundle["records"]] == [document.record_id, location.record_id]
+    assert all(version["key_wraps"] == [] for version in bundle["versions"])
+    public_export = json.dumps(bundle)
+    assert "Eviction notice" not in public_export
+    assert "45.515232" not in public_export
+    assert "-122.678385" not in public_export
+
+    service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
+    with pytest.raises(AccessDeniedError):
+        service.create_export_bundle(
+            wallet.wallet_id,
+            actor_did=ADVOCATE,
+            grant_id=grant.grant_id,
+            record_ids=[document.record_id],
+        )
+
+
+def test_export_bundle_accepts_signed_invocation_and_invocation_caveats(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "export-note.txt"
+    source.write_text("Export through invocation", encoding="utf-8")
+    document = service.add_document(wallet.wallet_id, source)
+    location = service.add_location(wallet.wallet_id, actor_did=OWNER, lat=45.515232, lon=-122.678385)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_export(wallet.wallet_id)],
+        abilities=["export/create"],
+        caveats={"record_ids": [document.record_id, location.record_id]},
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource_for_export(wallet.wallet_id),
+        ability="export/create",
+        actor_secret=delegate_secret,
+        caveats={"record_ids": [document.record_id]},
+    )
+
+    bundle = service.create_export_bundle_with_invocation(
+        wallet.wallet_id,
+        actor_did=ADVOCATE,
+        invocation=invocation,
+        actor_secret=delegate_secret,
+        record_ids=[document.record_id],
+    )
+
+    assert [record["record_id"] for record in bundle["records"]] == [document.record_id]
+    with pytest.raises(AccessDeniedError):
+        service.create_export_bundle_with_invocation(
+            wallet.wallet_id,
+            actor_did=ADVOCATE,
+            invocation=invocation,
+            actor_secret=delegate_secret,
+            record_ids=[location.record_id],
+        )
+
+
+def test_revoked_export_grant_blocks_existing_invocation(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "export-revoke.txt"
+    source.write_text("Export should stop after revoke", encoding="utf-8")
+    document = service.add_document(wallet.wallet_id, source)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_export(wallet.wallet_id)],
+        abilities=["export/create"],
+        caveats={"record_ids": [document.record_id]},
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource_for_export(wallet.wallet_id),
+        ability="export/create",
+        actor_secret=delegate_secret,
+        caveats={"record_ids": [document.record_id]},
+    )
+
+    service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
+
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.create_export_bundle_with_invocation(
+            wallet.wallet_id,
+            actor_did=ADVOCATE,
+            invocation=invocation,
+            actor_secret=delegate_secret,
+            record_ids=[document.record_id],
+        )
+
+
+def test_export_grant_requires_threshold_approval(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(
+        owner_did=OWNER,
+        controller_dids=[OWNER, SECOND_CONTROLLER],
+        governance_policy={"threshold": 2, "approver_dids": [OWNER, SECOND_CONTROLLER]},
+    )
+    source = tmp_path / "export-approval.txt"
+    source.write_text("Export requires approval", encoding="utf-8")
+    document = service.add_document(wallet.wallet_id, source)
+    export_resource = resource_for_export(wallet.wallet_id)
+
+    with pytest.raises(ApprovalRequiredError):
+        service.create_grant(
+            wallet_id=wallet.wallet_id,
+            issuer_did=OWNER,
+            audience_did=ADVOCATE,
+            resources=[export_resource],
+            abilities=["export/create"],
+            caveats={"record_ids": [document.record_id]},
+        )
+
+    approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="grant/create",
+        resources=[export_resource],
+        abilities=["export/create"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=SECOND_CONTROLLER)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[export_resource],
+        abilities=["export/create"],
+        caveats={"record_ids": [document.record_id]},
+        approval_id=approval.approval_id,
+    )
+
+    assert grant.grant_id.startswith("grant-")
+    assert grant.abilities == ["export/create"]
+
+
 def test_signed_invocation_allows_delegate_analysis_and_round_trips_token(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     owner_secret = b"o" * 32
@@ -383,6 +570,51 @@ def test_access_request_rejection_records_decision(tmp_path):
     assert rejected.decided_by == OWNER
     assert rejected.details["rejection_reason"] == "insufficient purpose"
     assert service.get_wallet_manifest(wallet.wallet_id)["access_requests"][0]["status"] == "rejected"
+
+
+def test_access_request_revocation_updates_request_and_blocks_invocation(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "revocable.txt"
+    source.write_text("revocable access", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    request = service.request_access(
+        wallet.wallet_id,
+        requester_did=ADVOCATE,
+        resources=[resource_for_record(wallet.wallet_id, record.record_id)],
+        abilities=["record/decrypt"],
+        purpose="identity_verification",
+    )
+    approved = service.approve_access_request(
+        wallet.wallet_id,
+        request_id=request.request_id,
+        actor_did=OWNER,
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+        issue_invocation=True,
+    )
+
+    revoked = service.revoke_access_request(
+        wallet.wallet_id,
+        request_id=approved.request_id,
+        actor_did=OWNER,
+        reason="user withdrew consent",
+    )
+
+    assert revoked.status == "revoked"
+    assert revoked.details["revocation_reason"] == "user withdrew consent"
+    assert service.grants[approved.grant_id].status == "revoked"
+    assert service.list_access_requests(wallet.wallet_id, status="revoked")[0].request_id == request.request_id
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.decrypt_record_with_invocation(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            invocation=service.invocations[approved.invocation_id],
+            actor_secret=delegate_secret,
+        )
 
 
 def test_access_request_listing_filters_for_review_inbox(tmp_path):

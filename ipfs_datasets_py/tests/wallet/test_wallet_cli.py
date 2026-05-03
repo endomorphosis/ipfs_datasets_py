@@ -5,7 +5,7 @@ from pathlib import Path
 
 from ipfs_datasets_py.wallet.cli import main
 from ipfs_datasets_py.wallet.crypto import random_key
-from ipfs_datasets_py.wallet.ucan import resource_for_record
+from ipfs_datasets_py.wallet.ucan import resource_for_export, resource_for_record
 
 
 def test_wallet_cli_local_vertical_slice(tmp_path, capsys) -> None:
@@ -537,6 +537,325 @@ def test_wallet_cli_share_issues_analysis_invocation(tmp_path, capsys) -> None:
     assert analysis["artifact_type"] == "summary"
 
 
+def test_wallet_cli_export_grant_invocation_and_bundle(tmp_path, capsys) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    source = tmp_path / "source.txt"
+    bundle_path = tmp_path / "bundle.json"
+    source.write_text("cli export confidential text", encoding="utf-8")
+    owner_key = random_key().hex()
+    delegate_key = random_key().hex()
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "create",
+        "--owner-did",
+        "did:key:owner",
+    ]) == 0
+    wallet_id = json.loads(capsys.readouterr().out)["wallet_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "add",
+        "--wallet-id",
+        wallet_id,
+        "--actor-did",
+        "did:key:owner",
+        "--key-hex",
+        owner_key,
+        "--path",
+        str(source),
+    ]) == 0
+    record_id = json.loads(capsys.readouterr().out)["record_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-grant",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--issuer-did",
+        "did:key:owner",
+        "--audience-did",
+        "did:key:delegate",
+        "--issuer-key-hex",
+        owner_key,
+        "--recipient-key-hex",
+        delegate_key,
+        "--issue-invocation",
+    ]) == 0
+    grant = json.loads(capsys.readouterr().out)
+    assert grant["ability"] == "export/create"
+    assert grant["invocation_token"].startswith("wallet-ucan-v1.")
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-bundle",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--actor-did",
+        "did:key:delegate",
+        "--key-hex",
+        delegate_key,
+        "--invocation-token",
+        grant["invocation_token"],
+        "--out",
+        str(bundle_path),
+    ]) == 0
+    exported = json.loads(capsys.readouterr().out)
+    assert exported["record_count"] == 1
+    bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    assert bundle["records"][0]["record_id"] == record_id
+    assert "cli export confidential text" not in json.dumps(bundle)
+
+
+def test_wallet_cli_revoked_export_grant_blocks_invocation(tmp_path, capsys) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    source = tmp_path / "source.txt"
+    bundle_path = tmp_path / "revoked-bundle.json"
+    source.write_text("revoked cli export text", encoding="utf-8")
+    owner_key = random_key().hex()
+    delegate_key = random_key().hex()
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "create",
+        "--owner-did",
+        "did:key:owner",
+    ]) == 0
+    wallet_id = json.loads(capsys.readouterr().out)["wallet_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "add",
+        "--wallet-id",
+        wallet_id,
+        "--actor-did",
+        "did:key:owner",
+        "--key-hex",
+        owner_key,
+        "--path",
+        str(source),
+    ]) == 0
+    record_id = json.loads(capsys.readouterr().out)["record_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-grant",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--issuer-did",
+        "did:key:owner",
+        "--audience-did",
+        "did:key:delegate",
+        "--issuer-key-hex",
+        owner_key,
+        "--recipient-key-hex",
+        delegate_key,
+        "--issue-invocation",
+    ]) == 0
+    grant = json.loads(capsys.readouterr().out)
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "revoke",
+        "--wallet-id",
+        wallet_id,
+        "--actor-did",
+        "did:key:owner",
+        "--grant-id",
+        grant["grant_id"],
+    ]) == 0
+    assert json.loads(capsys.readouterr().out)["grant_status"] == "revoked"
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-bundle",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--actor-did",
+        "did:key:delegate",
+        "--key-hex",
+        delegate_key,
+        "--invocation-token",
+        grant["invocation_token"],
+        "--out",
+        str(bundle_path),
+    ]) == 1
+    assert "not active" in json.loads(capsys.readouterr().out)["error"]
+
+
+def test_wallet_cli_export_grant_respects_threshold_approval(tmp_path, capsys) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    source = tmp_path / "source.txt"
+    source.write_text("approval gated export", encoding="utf-8")
+    owner_key = random_key().hex()
+    delegate_key = random_key().hex()
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "create",
+        "--owner-did",
+        "did:key:owner",
+        "--controller-did",
+        "did:key:second-controller",
+        "--approval-threshold",
+        "2",
+    ]) == 0
+    wallet_id = json.loads(capsys.readouterr().out)["wallet_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "add",
+        "--wallet-id",
+        wallet_id,
+        "--actor-did",
+        "did:key:owner",
+        "--key-hex",
+        owner_key,
+        "--path",
+        str(source),
+    ]) == 0
+    record_id = json.loads(capsys.readouterr().out)["record_id"]
+    export_resource = resource_for_export(wallet_id)
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-grant",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--issuer-did",
+        "did:key:owner",
+        "--audience-did",
+        "did:key:delegate",
+        "--issuer-key-hex",
+        owner_key,
+        "--recipient-key-hex",
+        delegate_key,
+    ]) == 1
+    assert "approval_id is required" in json.loads(capsys.readouterr().out)["error"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "request-approval",
+        "--wallet-id",
+        wallet_id,
+        "--requested-by",
+        "did:key:owner",
+        "--resource",
+        export_resource,
+        "--ability",
+        "export/create",
+    ]) == 0
+    approval_id = json.loads(capsys.readouterr().out)["approval_id"]
+
+    for approver in ["did:key:owner", "did:key:second-controller"]:
+        assert main([
+            "--json",
+            "--wallet-dir",
+            str(wallet_dir),
+            "--blob-dir",
+            str(blob_dir),
+            "approve-approval",
+            "--wallet-id",
+            wallet_id,
+            "--approval-id",
+            approval_id,
+            "--approver-did",
+            approver,
+        ]) == 0
+        approval_status = json.loads(capsys.readouterr().out)["approval_status"]
+    assert approval_status == "approved"
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "export-grant",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--issuer-did",
+        "did:key:owner",
+        "--audience-did",
+        "did:key:delegate",
+        "--issuer-key-hex",
+        owner_key,
+        "--recipient-key-hex",
+        delegate_key,
+        "--approval-ref",
+        approval_id,
+    ]) == 0
+    grant = json.loads(capsys.readouterr().out)
+    assert grant["ability"] == "export/create"
+
+
 def test_wallet_cli_share_decrypt_respects_threshold_approval(tmp_path, capsys) -> None:
     wallet_dir = tmp_path / "wallets"
     blob_dir = tmp_path / "blobs"
@@ -805,6 +1124,143 @@ def test_wallet_cli_access_request_approval_issues_invocation(tmp_path, capsys) 
     ]) == 0
     analysis = json.loads(capsys.readouterr().out)
     assert analysis["artifact_type"] == "summary"
+
+
+def test_wallet_cli_revoke_access_blocks_existing_invocation(tmp_path, capsys) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    source = tmp_path / "source.txt"
+    decrypted = tmp_path / "decrypted.txt"
+    source.write_text("revoked access command text", encoding="utf-8")
+    owner_key = random_key().hex()
+    delegate_key = random_key().hex()
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "create",
+        "--owner-did",
+        "did:key:owner",
+    ]) == 0
+    wallet_id = json.loads(capsys.readouterr().out)["wallet_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "add",
+        "--wallet-id",
+        wallet_id,
+        "--actor-did",
+        "did:key:owner",
+        "--key-hex",
+        owner_key,
+        "--path",
+        str(source),
+    ]) == 0
+    record_id = json.loads(capsys.readouterr().out)["record_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "request-access",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--requester-did",
+        "did:key:delegate",
+        "--ability",
+        "record/decrypt",
+        "--purpose",
+        "identity_verification",
+    ]) == 0
+    access_request = json.loads(capsys.readouterr().out)
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "approve-access",
+        "--wallet-id",
+        wallet_id,
+        "--request-id",
+        access_request["request_id"],
+        "--actor-did",
+        "did:key:owner",
+        "--issuer-key-hex",
+        owner_key,
+        "--recipient-key-hex",
+        delegate_key,
+        "--issue-invocation",
+    ]) == 0
+    approved = json.loads(capsys.readouterr().out)
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "revoke-access",
+        "--wallet-id",
+        wallet_id,
+        "--request-id",
+        access_request["request_id"],
+        "--actor-did",
+        "did:key:owner",
+        "--reason",
+        "user withdrew consent",
+    ]) == 0
+    revoked = json.loads(capsys.readouterr().out)
+    assert revoked["status"] == "revoked"
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "access-requests",
+        "--wallet-id",
+        wallet_id,
+        "--status",
+        "revoked",
+    ]) == 0
+    revoked_list = json.loads(capsys.readouterr().out)
+    assert revoked_list["requests"][0]["request_id"] == access_request["request_id"]
+
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "decrypt-invocation",
+        "--wallet-id",
+        wallet_id,
+        "--record-id",
+        record_id,
+        "--actor-did",
+        "did:key:delegate",
+        "--key-hex",
+        delegate_key,
+        "--invocation-token",
+        approved["invocation_token"],
+        "--out",
+        str(decrypted),
+    ]) == 1
+    assert "not active" in json.loads(capsys.readouterr().out)["error"]
 
 
 def test_wallet_cli_private_analytics_template_flow(tmp_path, capsys) -> None:

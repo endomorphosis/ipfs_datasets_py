@@ -787,6 +787,8 @@ except Exception as e:
         _GENERATION_TASKS = {
             "text-generation", "text_generation", "generation", "generate", "completion",
             "llm.generate", "llm_generate", "chat", "chat-completion",
+            "multimodal-generation", "multimodal_generation", "multimodal.generate",
+            "multimodal_generate", "vision", "vision-language",
         }
         # For known LLM provider names, default to text-generation task type.
         if not normalized_task and model_name.lower() in _LLM_PROVIDER_NAMES:
@@ -797,17 +799,32 @@ except Exception as e:
                 "delegating to llm_router"
             )
 
-        if isinstance(input_data, dict) and "prompt" in input_data:
-            prompt = str(input_data.get("prompt") or "")
+        payload_data: Dict[str, Any] = dict(input_data) if isinstance(input_data, dict) else {}
+        is_multimodal_task = normalized_task in {
+            "multimodal-generation", "multimodal_generation", "multimodal.generate",
+            "multimodal_generate", "vision", "vision-language",
+        }
+
+        if payload_data and "prompt" in payload_data:
+            prompt = str(payload_data.get("prompt") or "")
         else:
             prompt = str(input_data)
+
+        if is_multimodal_task:
+            kwargs = dict(kwargs)
+            kwargs["_multimodal_payload"] = payload_data or {"prompt": prompt}
 
         errors: List[str] = []
 
         # 1. ipfs_accelerate_py HF inference — only for real HF model IDs, not provider names.
         # LLM provider names (codex_cli, copilot_cli, etc.) must go via p2p_task_queue so the
         # worker uses its own credentials; sending them to the HF backend causes gpt2 fallback.
-        if self._accelerate_available and _accel_llm_router is not None and model_name.lower() not in _LLM_PROVIDER_NAMES:
+        if (
+            not is_multimodal_task
+            and self._accelerate_available
+            and _accel_llm_router is not None
+            and model_name.lower() not in _LLM_PROVIDER_NAMES
+        ):
             try:
                 result = self._try_ipfs_accelerate(model_name, prompt, **kwargs)
                 if result:
@@ -948,7 +965,15 @@ except Exception as e:
 
         extra = extra_kwargs or {}
         is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
-        if is_llm_provider:
+        multimodal_payload = extra.get("_multimodal_payload") if isinstance(extra.get("_multimodal_payload"), dict) else None
+        if multimodal_payload is not None:
+            p2p_task_type = "multimodal-generation"
+            p2p_model_name = str((extra.get("llm_model") or "") if is_llm_provider else model_name)
+            payload = dict(multimodal_payload)
+            payload.setdefault("prompt", prompt)
+            if is_llm_provider:
+                payload.setdefault("provider", model_name)
+        elif is_llm_provider:
             # model_name is actually a provider name; use llm.generate task type
             # with the provider in the payload and no explicit model override.
             p2p_task_type = "llm.generate"
@@ -960,7 +985,7 @@ except Exception as e:
             p2p_task_type = "text-generation"
             p2p_model_name = model_name
             payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
-        for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
+        for k in ("temperature", "top_p", "top_k", "repetition_penalty", "image_detail"):
             if k in extra:
                 payload[k] = extra[k]
 
@@ -1081,7 +1106,15 @@ print(json.dumps({{"result": result}}))
         if p2p_in_process:
             remote = RemoteQueue(peer_id=peer_id, multiaddr=multiaddr)
             is_llm_provider = model_name.lower() in _LLM_PROVIDER_NAMES
-            if is_llm_provider:
+            multimodal_payload = kwargs.get("_multimodal_payload") if isinstance(kwargs.get("_multimodal_payload"), dict) else None
+            if multimodal_payload is not None:
+                p2p_task_type = "multimodal-generation"
+                p2p_model_name = str((kwargs.get("llm_model") or "") if is_llm_provider else model_name)
+                payload = dict(multimodal_payload)
+                payload.setdefault("prompt", prompt)
+                if is_llm_provider:
+                    payload.setdefault("provider", model_name)
+            elif is_llm_provider:
                 p2p_task_type = "llm.generate"
                 p2p_model_name = kwargs.get("llm_model") or ""
                 payload = {"prompt": prompt, "provider": model_name}
@@ -1091,7 +1124,7 @@ print(json.dumps({{"result": result}}))
                 p2p_task_type = "text-generation"
                 p2p_model_name = model_name
                 payload = {"prompt": prompt, "max_new_tokens": max_new_tokens}
-            for k in ("temperature", "top_p", "top_k", "repetition_penalty"):
+            for k in ("temperature", "top_p", "top_k", "repetition_penalty", "image_detail"):
                 if k in kwargs:
                     payload[k] = kwargs[k]
 
@@ -1189,6 +1222,7 @@ print(json.dumps({{"result": result}}))
 
         timeout = _p2p_timeout()
         max_new_tokens = int(kwargs.get("max_new_tokens") or kwargs.get("max_tokens") or 512)
+        multimodal_payload = kwargs.get("_multimodal_payload") if isinstance(kwargs.get("_multimodal_payload"), dict) else None
         body: Dict[str, Any] = {
             "model": model_name,
             "prompt": prompt,
@@ -1196,6 +1230,22 @@ print(json.dumps({{"result": result}}))
             "max_new_tokens": max_new_tokens,
             "parameters": {"max_new_tokens": max_new_tokens},
         }
+        if multimodal_payload is not None:
+            body.update({
+                key: value
+                for key, value in multimodal_payload.items()
+                if key
+                in {
+                    "image_urls",
+                    "image_data_urls",
+                    "system_prompt",
+                    "additional_text_blocks",
+                    "messages",
+                    "provider",
+                    "image_detail",
+                }
+            })
+            body["task_type"] = "multimodal-generation"
         for k in ("temperature", "top_p", "top_k"):
             if k in kwargs:
                 body[k] = kwargs[k]

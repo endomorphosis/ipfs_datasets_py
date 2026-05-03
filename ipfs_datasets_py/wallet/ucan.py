@@ -27,6 +27,10 @@ def resource_for_wallet(wallet_id: str) -> str:
     return f"wallet://{wallet_id}"
 
 
+def resource_for_export(wallet_id: str) -> str:
+    return f"wallet://{wallet_id}/exports"
+
+
 def is_expired(expires_at: str | None, now: datetime | None = None) -> bool:
     if not expires_at:
         return False

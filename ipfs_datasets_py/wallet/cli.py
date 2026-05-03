@@ -11,7 +11,12 @@ from typing import Any, Dict, Iterable, Optional
 from ipfs_datasets_py.wallet import WalletService
 from ipfs_datasets_py.wallet.crypto import random_key
 from ipfs_datasets_py.wallet.storage import LocalEncryptedBlobStore
-from ipfs_datasets_py.wallet.ucan import invocation_from_token, invocation_to_token, resource_for_record
+from ipfs_datasets_py.wallet.ucan import (
+    invocation_from_token,
+    invocation_to_token,
+    resource_for_export,
+    resource_for_record,
+)
 
 
 def _default_wallet_dir() -> Path:
@@ -193,9 +198,41 @@ def build_parser() -> argparse.ArgumentParser:
     share.add_argument("--issue-invocation", action="store_true")
     share.add_argument("--invocation-expires-at")
 
+    export_grant = subparsers.add_parser("export-grant", help="Grant a delegate bounded encrypted export access")
+    export_grant.add_argument("--wallet-id", required=True)
+    export_grant.add_argument("--record-id", action="append", required=True)
+    export_grant.add_argument("--issuer-did", required=True)
+    export_grant.add_argument("--audience-did", required=True)
+    export_grant.add_argument("--issuer-key-hex", required=True)
+    export_grant.add_argument("--recipient-key-hex", required=True)
+    export_grant.add_argument("--purpose", default="user_export")
+    export_grant.add_argument("--expires-at")
+    export_grant.add_argument("--approval-ref")
+    export_grant.add_argument("--issue-invocation", action="store_true")
+    export_grant.add_argument("--invocation-expires-at")
+
+    export_invocation = subparsers.add_parser("export-invocation", help="Issue a signed export invocation token")
+    export_invocation.add_argument("--wallet-id", required=True)
+    export_invocation.add_argument("--grant-id", required=True)
+    export_invocation.add_argument("--actor-did", required=True)
+    export_invocation.add_argument("--key-hex", required=True)
+    export_invocation.add_argument("--record-id", action="append", default=[])
+    export_invocation.add_argument("--expires-at")
+
+    export_bundle = subparsers.add_parser("export-bundle", help="Create a bounded encrypted wallet export bundle")
+    export_bundle.add_argument("--wallet-id", required=True)
+    export_bundle.add_argument("--actor-did", required=True)
+    export_bundle.add_argument("--key-hex")
+    export_bundle.add_argument("--grant-id")
+    export_bundle.add_argument("--invocation-token")
+    export_bundle.add_argument("--record-id", action="append", default=[])
+    export_bundle.add_argument("--out", type=Path, required=True)
+    export_bundle.add_argument("--exclude-proofs", action="store_true")
+    export_bundle.add_argument("--exclude-derived-artifacts", action="store_true")
+
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
-    access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "all"], default="pending")
+    access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending")
     access_requests.add_argument("--requester-did")
     access_requests.add_argument("--audience-did")
 
@@ -223,6 +260,12 @@ def build_parser() -> argparse.ArgumentParser:
     reject_access.add_argument("--request-id", required=True)
     reject_access.add_argument("--actor-did", required=True)
     reject_access.add_argument("--reason")
+
+    revoke_access = subparsers.add_parser("revoke-access", help="Revoke an approved access request")
+    revoke_access.add_argument("--wallet-id", required=True)
+    revoke_access.add_argument("--request-id", required=True)
+    revoke_access.add_argument("--actor-did", required=True)
+    revoke_access.add_argument("--reason")
 
     grant = subparsers.add_parser("grant", help="Grant record access")
     grant.add_argument("--wallet-id", required=True)
@@ -586,6 +629,113 @@ def main(argv: Optional[list[str]] = None) -> int:
             _emit(result, json_output=args.json_output)
             return 0
 
+        if args.command == "export-grant":
+            grant = service.create_grant(
+                wallet_id=args.wallet_id,
+                issuer_did=args.issuer_did,
+                audience_did=args.audience_did,
+                resources=[resource_for_export(args.wallet_id)],
+                abilities=["export/create"],
+                caveats={"purpose": args.purpose, "record_ids": list(args.record_id)},
+                expires_at=args.expires_at,
+                approval_id=args.approval_ref,
+                issuer_secret=_key_from_arg(args.issuer_key_hex),
+                audience_secret=_key_from_arg(args.recipient_key_hex),
+            )
+            result: Dict[str, Any] = {
+                "status": "ok",
+                "grant_id": grant.grant_id,
+                "audience_did": grant.audience_did,
+                "ability": "export/create",
+                "resource": resource_for_export(args.wallet_id),
+                "record_ids": list(args.record_id),
+            }
+            if args.issue_invocation:
+                invocation = service.issue_invocation(
+                    args.wallet_id,
+                    grant_id=grant.grant_id,
+                    actor_did=args.audience_did,
+                    resource=resource_for_export(args.wallet_id),
+                    ability="export/create",
+                    actor_secret=_key_from_arg(args.recipient_key_hex),
+                    caveats={"purpose": args.purpose, "record_ids": list(args.record_id)},
+                    expires_at=args.invocation_expires_at,
+                )
+                result.update(
+                    {
+                        "invocation_id": invocation.invocation_id,
+                        "invocation_token": invocation_to_token(invocation),
+                    }
+                )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(result, json_output=args.json_output)
+            return 0
+
+        if args.command == "export-invocation":
+            caveats: Dict[str, Any] = {"purpose": "user_export"}
+            if args.record_id:
+                caveats["record_ids"] = list(args.record_id)
+            invocation = service.issue_invocation(
+                args.wallet_id,
+                grant_id=args.grant_id,
+                actor_did=args.actor_did,
+                resource=resource_for_export(args.wallet_id),
+                ability="export/create",
+                actor_secret=_key_from_arg(args.key_hex),
+                caveats=caveats,
+                expires_at=args.expires_at,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(
+                {
+                    "status": "ok",
+                    "invocation_id": invocation.invocation_id,
+                    "grant_id": invocation.grant_id,
+                    "ability": invocation.ability,
+                    "resource": invocation.resource,
+                    "invocation_token": invocation_to_token(invocation),
+                },
+                json_output=args.json_output,
+            )
+            return 0
+
+        if args.command == "export-bundle":
+            record_ids = list(args.record_id) if args.record_id else None
+            if args.invocation_token:
+                bundle = service.create_export_bundle_with_invocation(
+                    args.wallet_id,
+                    actor_did=args.actor_did,
+                    invocation=invocation_from_token(args.invocation_token),
+                    actor_secret=_key_from_arg(args.key_hex) if args.key_hex else None,
+                    record_ids=record_ids,
+                    include_proofs=not args.exclude_proofs,
+                    include_derived_artifacts=not args.exclude_derived_artifacts,
+                )
+            else:
+                bundle = service.create_export_bundle(
+                    args.wallet_id,
+                    actor_did=args.actor_did,
+                    grant_id=args.grant_id,
+                    record_ids=record_ids,
+                    include_proofs=not args.exclude_proofs,
+                    include_derived_artifacts=not args.exclude_derived_artifacts,
+                )
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(json.dumps(bundle, sort_keys=True, indent=2), encoding="utf-8")
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(
+                {
+                    "status": "ok",
+                    "out": str(args.out),
+                    "wallet_id": args.wallet_id,
+                    "record_count": len(bundle["records"]),
+                    "proof_count": len(bundle["proofs"]),
+                    "derived_artifact_count": len(bundle["derived_artifacts"]),
+                },
+                json_output=args.json_output,
+            )
+            return 0
+
         if args.command == "access-requests":
             status = None if args.status == "all" else args.status
             requests = [
@@ -634,6 +784,17 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.command == "reject-access":
             request = service.reject_access_request(
+                args.wallet_id,
+                request_id=args.request_id,
+                actor_did=args.actor_did,
+                reason=args.reason,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **request.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "revoke-access":
+            request = service.revoke_access_request(
                 args.wallet_id,
                 request_id=args.request_id,
                 actor_did=args.actor_did,
