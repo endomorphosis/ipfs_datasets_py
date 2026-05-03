@@ -431,7 +431,10 @@ dirty_defer_phases = {
 current_phase = str(status.get("phase") or "")
 dirty_targets_deferred = bool(
     dirty_targets
-    and current_phase in dirty_defer_phases
+    and (
+        current_phase in dirty_defer_phases
+        or (not phase_stale and status_stall_age < dirty_target_grace_seconds)
+    )
     and not phase_stale
 )
 dirty_targets_pending_confirmation = bool(
@@ -558,16 +561,21 @@ confirmed_dirty_target_reason() {
   python3 - \
     "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
     "$REPO_ROOT" \
-    "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" <<'PY'
+    "$REPO_ROOT/$CURRENT_STATUS_PATH" \
+    "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
+    "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
 import hashlib
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 state_path = Path(sys.argv[1])
 repo_root = Path(sys.argv[2])
-dirty_target_detection = str(sys.argv[3]).strip() == "1"
+status_path = Path(sys.argv[3])
+dirty_target_detection = str(sys.argv[4]).strip() == "1"
+dirty_target_grace_seconds = int(sys.argv[5])
 
 LEGAL_PARSER_TARGETS = [
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
@@ -586,6 +594,27 @@ def read_state() -> dict:
         return json.loads(state_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def read_status() -> dict:
+    try:
+        return json.loads(status_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def parse_epoch(value) -> int:
+    if not value:
+        return 0
+    text = str(value).strip()
+    if not text:
+        return 0
+    for candidate in (text, text.replace("Z", "+00:00")):
+        try:
+            return int(__import__("datetime").datetime.fromisoformat(candidate).timestamp())
+        except ValueError:
+            continue
+    return 0
 
 
 def paths_from_status(stdout: str) -> list[str]:
@@ -636,9 +665,38 @@ if result.returncode != 0:
 paths = paths_from_status(result.stdout)
 fp = fingerprint(result.stdout, paths)
 state = read_state()
+status = read_status()
 previous = [str(path) for path in state.get("dirty_legal_parser_targets") or []]
 previous_fp = str(state.get("dirty_legal_parser_targets_fingerprint") or "")
-if paths and sorted(paths) == sorted(previous) and fp == previous_fp:
+current_phase = str(status.get("phase") or "")
+phase_started_at = parse_epoch(status.get("phase_started_at"))
+updated_at = parse_epoch(status.get("updated_at") or status.get("heartbeat_at"))
+now = int(time.time())
+try:
+    phase_stale_after = int(status.get("phase_stale_after_seconds") or 0)
+except (TypeError, ValueError):
+    phase_stale_after = 0
+phase_age = max(0, now - phase_started_at) if phase_started_at else 0
+status_age = max(0, now - updated_at) if updated_at else 0
+phase_stale = bool(phase_stale_after > 0 and phase_age >= phase_stale_after)
+transient_phases = {
+    "requesting_llm_patch",
+    "retrying_llm_patch",
+    "repairing_failed_patch",
+    "checking_patch",
+    "applying_patch",
+    "post_apply_validation",
+    "running_tests",
+    "evaluating_retained_change",
+    "rolling_back_metric_stall_no_progress",
+}
+transient_dirty = bool(
+    paths
+    and not phase_stale
+    and status_age < dirty_target_grace_seconds
+    and (current_phase in transient_phases or bool(current_phase))
+)
+if paths and sorted(paths) == sorted(previous) and fp == previous_fp and not transient_dirty:
     print("dirty_legal_parser_targets:" + ",".join(paths[:8]))
     raise SystemExit(0)
 state.update(
@@ -646,6 +704,7 @@ state.update(
         "dirty_legal_parser_targets": paths,
         "dirty_legal_parser_targets_fingerprint": fp,
         "dirty_legal_parser_targets_pending_confirmation": bool(paths),
+        "dirty_legal_parser_targets_transient_phase": current_phase if transient_dirty else "",
     }
 )
 state_path.parent.mkdir(parents=True, exist_ok=True)

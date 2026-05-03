@@ -115,6 +115,11 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "dirty_recovery_restored" in recovery_body
     assert "pytest -q" in recovery_body
     assert "git -C \"$REPO_ROOT\" restore --source=HEAD --" in recovery_body
+    assert "SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" in script
+    assert "dirty_target_grace_seconds" in script
+    assert '"requesting_llm_patch"' in recovery_body
+    assert "dirty_legal_parser_targets_transient_phase" in recovery_body
+    assert "status_stall_age < dirty_target_grace_seconds" in script
     assert dirty_reason_pos < maintenance_reason_pos
 
 
