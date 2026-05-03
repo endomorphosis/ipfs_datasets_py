@@ -19,10 +19,60 @@ class StorageRef:
     storage_type: str
     size_bytes: int
     sha256: str
+    mirrors: List["StorageRef"] = field(default_factory=list)
     created_at: str = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:
+        data = asdict(self)
+        data["mirrors"] = [mirror.to_dict() for mirror in self.mirrors]
+        return data
+
+
+@dataclass
+class StorageReplicaStatus:
+    """Integrity status for one encrypted storage replica."""
+
+    uri: str
+    storage_type: str
+    role: str
+    ok: bool
+    size_bytes: Optional[int] = None
+    sha256: Optional[str] = None
+    error: Optional[str] = None
+    repaired: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class StorageHealthReport:
+    """Integrity report for encrypted payload and metadata replicas."""
+
+    wallet_id: str
+    record_id: str
+    version_id: str
+    payload: List[StorageReplicaStatus] = field(default_factory=list)
+    metadata: List[StorageReplicaStatus] = field(default_factory=list)
+    repaired: bool = False
+    created_at: str = field(default_factory=utc_now)
+
+    @property
+    def ok(self) -> bool:
+        statuses = [*self.payload, *self.metadata]
+        return bool(statuses) and all(status.ok for status in statuses)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "wallet_id": self.wallet_id,
+            "record_id": self.record_id,
+            "version_id": self.version_id,
+            "payload": [status.to_dict() for status in self.payload],
+            "metadata": [status.to_dict() for status in self.metadata],
+            "ok": self.ok,
+            "repaired": self.repaired,
+            "created_at": self.created_at,
+        }
 
 
 @dataclass
@@ -125,6 +175,25 @@ class Grant:
 
 
 @dataclass
+class WalletInvocation:
+    """Signed UCAN-style invocation of one grant capability."""
+
+    invocation_id: str
+    grant_id: str
+    audience_did: str
+    resource: str
+    ability: str
+    caveats: Dict[str, Any] = field(default_factory=dict)
+    issued_at: str = field(default_factory=utc_now)
+    expires_at: Optional[str] = None
+    nonce: str = ""
+    signature: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class ApprovalRequest:
     """Threshold approval request for sensitive wallet operations."""
 
@@ -146,6 +215,30 @@ class ApprovalRequest:
     def approved_count(self) -> int:
         approvers = set(self.approver_dids)
         return len([did for did in self.approvals if did in approvers])
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class AccessRequest:
+    """Delegate-originated request for wallet data access."""
+
+    request_id: str
+    wallet_id: str
+    requester_did: str
+    audience_did: str
+    resources: List[str]
+    abilities: List[str]
+    purpose: str
+    status: str = "pending"
+    created_at: str = field(default_factory=utc_now)
+    expires_at: Optional[str] = None
+    decided_at: Optional[str] = None
+    decided_by: Optional[str] = None
+    grant_id: Optional[str] = None
+    invocation_id: Optional[str] = None
+    details: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -183,6 +276,26 @@ class ProofReceipt:
     witness_record_ids: List[str]
     is_simulated: bool
     created_at: str = field(default_factory=utc_now)
+    expires_at: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class AnalyticsTemplate:
+    """Approved aggregate analytics study template."""
+
+    template_id: str
+    title: str
+    purpose: str
+    allowed_record_types: List[str]
+    allowed_derived_fields: List[str]
+    aggregation_policy: Dict[str, Any]
+    created_by: str
+    status: str = "active"
+    created_at: str = field(default_factory=utc_now)
+    updated_at: str = field(default_factory=utc_now)
     expires_at: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
@@ -237,6 +350,14 @@ class AggregateResult:
     cohort_size: int
     min_cohort_size: int
     privacy_notes: List[str]
+    noisy_count: Optional[float] = None
+    epsilon: Optional[float] = None
+    noise: Optional[float] = None
+    noise_sensitivity: Optional[float] = None
+    privacy_budget_key: Optional[str] = None
+    privacy_budget_spent: Optional[float] = None
+    exact_count_released: bool = True
+    cohort_size_released: bool = True
     created_at: str = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:

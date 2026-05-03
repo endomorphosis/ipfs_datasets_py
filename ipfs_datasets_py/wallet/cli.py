@@ -6,12 +6,12 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Iterable, Optional
 
 from ipfs_datasets_py.wallet import WalletService
 from ipfs_datasets_py.wallet.crypto import random_key
 from ipfs_datasets_py.wallet.storage import LocalEncryptedBlobStore
-from ipfs_datasets_py.wallet.ucan import resource_for_record
+from ipfs_datasets_py.wallet.ucan import invocation_from_token, invocation_to_token, resource_for_record
 
 
 def _default_wallet_dir() -> Path:
@@ -54,6 +54,50 @@ def _load(wallet_dir: Path, blob_dir: Path, wallet_id: str) -> WalletService:
     snapshot = json.loads(_wallet_path(wallet_dir, wallet_id).read_text(encoding="utf-8"))
     service.import_wallet_snapshot(snapshot)
     return service
+
+
+def _load_all(wallet_dir: Path, blob_dir: Path) -> WalletService:
+    service = _service(blob_dir)
+    if not wallet_dir.exists():
+        return service
+    for path in sorted(wallet_dir.glob("wallet-*.json")):
+        service.import_wallet_snapshot(json.loads(path.read_text(encoding="utf-8")))
+    return service
+
+
+def _save_all(service: WalletService, wallet_dir: Path, wallet_ids: Iterable[str]) -> None:
+    for wallet_id in sorted(set(wallet_ids)):
+        _save(service, wallet_dir, wallet_id)
+
+
+def _parse_key_value_items(items: list[str] | None) -> Dict[str, Any]:
+    parsed: Dict[str, Any] = {}
+    for item in items or []:
+        if "=" not in item:
+            raise ValueError(f"expected KEY=VALUE field, got: {item}")
+        key, value = item.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise ValueError("field key cannot be empty")
+        parsed[key] = value
+    return parsed
+
+
+def _aggregate_result_summary(result) -> Dict[str, Any]:
+    return {
+        "result_id": result.result_id,
+        "template_id": result.template_id,
+        "metric": result.metric,
+        "released": result.released,
+        "suppressed": result.suppressed,
+        "count": result.count if result.exact_count_released else None,
+        "noisy_count": result.noisy_count if result.released else None,
+        "min_cohort_size": result.min_cohort_size,
+        "epsilon": result.epsilon,
+        "privacy_budget_key": result.privacy_budget_key,
+        "privacy_budget_spent": result.privacy_budget_spent,
+        "privacy_notes": list(result.privacy_notes),
+    }
 
 
 def _emit(result: Dict[str, Any], *, json_output: bool) -> None:
@@ -109,6 +153,77 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--grant-id")
     analyze.add_argument("--output-type", default="summary")
 
+    issue_invocation = subparsers.add_parser("issue-invocation", help="Issue a signed invocation token for a grant")
+    issue_invocation.add_argument("--wallet-id", required=True)
+    issue_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    issue_invocation.add_argument("--grant-id", required=True)
+    issue_invocation.add_argument("--actor-did", required=True)
+    issue_invocation.add_argument("--key-hex", required=True)
+    issue_invocation.add_argument("--ability", required=True)
+    issue_invocation.add_argument("--caveat", action="append", default=[], help="Invocation caveat as KEY=VALUE")
+    issue_invocation.add_argument("--expires-at")
+
+    analyze_invocation = subparsers.add_parser("analyze-invocation", help="Run derived analysis using an invocation token")
+    analyze_invocation.add_argument("--wallet-id", required=True)
+    analyze_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    analyze_invocation.add_argument("--actor-did", required=True)
+    analyze_invocation.add_argument("--key-hex", required=True)
+    analyze_invocation.add_argument("--invocation-token", required=True)
+
+    decrypt_invocation = subparsers.add_parser("decrypt-invocation", help="Decrypt a record using an invocation token")
+    decrypt_invocation.add_argument("--wallet-id", required=True)
+    decrypt_invocation.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    decrypt_invocation.add_argument("--actor-did", required=True)
+    decrypt_invocation.add_argument("--key-hex", required=True)
+    decrypt_invocation.add_argument("--invocation-token", required=True)
+    decrypt_invocation.add_argument("--out", type=Path, required=True)
+
+    share = subparsers.add_parser("share", help="Share a record with a delegate")
+    share.add_argument("--wallet-id", required=True)
+    share.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    share.add_argument("--issuer-did", required=True)
+    share.add_argument("--audience-did", required=True)
+    share.add_argument("--issuer-key-hex", required=True)
+    share.add_argument("--recipient-key-hex", required=True)
+    share.add_argument("--can", dest="ability", choices=["record/analyze", "record/decrypt"], required=True)
+    share.add_argument("--output-type", action="append", default=[])
+    share.add_argument("--purpose", default="service_matching")
+    share.add_argument("--expires-at")
+    share.add_argument("--approval-ref")
+    share.add_argument("--issue-invocation", action="store_true")
+    share.add_argument("--invocation-expires-at")
+
+    access_requests = subparsers.add_parser("access-requests", help="List access requests")
+    access_requests.add_argument("--wallet-id", required=True)
+    access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "all"], default="pending")
+    access_requests.add_argument("--requester-did")
+    access_requests.add_argument("--audience-did")
+
+    request_access = subparsers.add_parser("request-access", help="Request access to a wallet record")
+    request_access.add_argument("--wallet-id", required=True)
+    request_access.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    request_access.add_argument("--requester-did", required=True)
+    request_access.add_argument("--audience-did")
+    request_access.add_argument("--ability", action="append", required=True)
+    request_access.add_argument("--purpose", required=True)
+    request_access.add_argument("--expires-at")
+
+    approve_access = subparsers.add_parser("approve-access", help="Approve an access request")
+    approve_access.add_argument("--wallet-id", required=True)
+    approve_access.add_argument("--request-id", required=True)
+    approve_access.add_argument("--actor-did", required=True)
+    approve_access.add_argument("--issuer-key-hex", required=True)
+    approve_access.add_argument("--recipient-key-hex", required=True)
+    approve_access.add_argument("--approval-ref")
+    approve_access.add_argument("--issue-invocation", action="store_true")
+    approve_access.add_argument("--invocation-expires-at")
+
+    reject_access = subparsers.add_parser("reject-access", help="Reject an access request")
+    reject_access.add_argument("--wallet-id", required=True)
+    reject_access.add_argument("--request-id", required=True)
+    reject_access.add_argument("--actor-did", required=True)
+    reject_access.add_argument("--reason")
+
     grant = subparsers.add_parser("grant", help="Grant record access")
     grant.add_argument("--wallet-id", required=True)
     grant.add_argument("--document-id", "--record-id", dest="record_id", required=True)
@@ -139,6 +254,55 @@ def build_parser() -> argparse.ArgumentParser:
     revoke.add_argument("--wallet-id", required=True)
     revoke.add_argument("--actor-did", required=True)
     revoke.add_argument("--grant-id", required=True)
+
+    verify_storage = subparsers.add_parser("verify-storage", help="Verify encrypted record storage replicas")
+    verify_storage.add_argument("--wallet-id", required=True)
+    verify_storage.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    verify_storage.add_argument("--skip-metadata", action="store_true")
+
+    repair_storage = subparsers.add_parser("repair-storage", help="Repair encrypted record storage replicas")
+    repair_storage.add_argument("--wallet-id", required=True)
+    repair_storage.add_argument("--document-id", "--record-id", dest="record_id", required=True)
+    repair_storage.add_argument("--actor-did", required=True)
+    repair_storage.add_argument("--skip-metadata", action="store_true")
+
+    analytics_template = subparsers.add_parser("analytics-template", help="Register an aggregate analytics template")
+    analytics_template.add_argument("--wallet-id", required=True)
+    analytics_template.add_argument("--template-id", required=True)
+    analytics_template.add_argument("--title", required=True)
+    analytics_template.add_argument("--purpose", required=True)
+    analytics_template.add_argument("--record-type", action="append", required=True)
+    analytics_template.add_argument("--derived-field", action="append", required=True)
+    analytics_template.add_argument("--min-cohort-size", type=int, default=10)
+    analytics_template.add_argument("--epsilon-budget", type=float, default=1.0)
+    analytics_template.add_argument("--created-by", required=True)
+    analytics_template.add_argument("--expires-at")
+
+    analytics_templates = subparsers.add_parser("analytics-templates", help="List active analytics templates")
+    analytics_templates.add_argument("--wallet-id", required=True)
+    analytics_templates.add_argument("--include-inactive", action="store_true")
+
+    analytics_consent = subparsers.add_parser("analytics-consent", help="Create consent from an analytics template")
+    analytics_consent.add_argument("--wallet-id", required=True)
+    analytics_consent.add_argument("--actor-did", required=True)
+    analytics_consent.add_argument("--template-id", required=True)
+    analytics_consent.add_argument("--expires-at")
+
+    analytics_contribute = subparsers.add_parser("analytics-contribute", help="Submit derived analytics fields")
+    analytics_contribute.add_argument("--wallet-id", required=True)
+    analytics_contribute.add_argument("--actor-did", required=True)
+    analytics_contribute.add_argument("--consent-id", required=True)
+    analytics_contribute.add_argument("--template-id", required=True)
+    analytics_contribute.add_argument("--field", action="append", required=True, help="Derived field as KEY=VALUE")
+
+    analytics_count = subparsers.add_parser("analytics-count", help="Run a private aggregate count")
+    analytics_count.add_argument("--wallet-id", required=True)
+    analytics_count.add_argument("--template-id", required=True)
+    analytics_count.add_argument("--epsilon", type=float)
+    analytics_count.add_argument("--min-cohort-size", type=int)
+    analytics_count.add_argument("--budget-key")
+    analytics_count.add_argument("--budget-limit", type=float)
+    analytics_count.add_argument("--actor-did", default="did:service:ipfs-datasets-cli")
 
     audit = subparsers.add_parser("audit", help="Show wallet audit event count and head")
     audit.add_argument("--wallet-id", required=True)
@@ -171,7 +335,92 @@ def main(argv: Optional[list[str]] = None) -> int:
             _emit({"status": "ok", "wallet_id": wallet.wallet_id, "manifest_head": wallet.manifest_head, "path": str(path)}, json_output=args.json_output)
             return 0
 
-        service = _load(args.wallet_dir, args.blob_dir, args.wallet_id)
+        analytics_commands = {
+            "analytics-template",
+            "analytics-templates",
+            "analytics-consent",
+            "analytics-contribute",
+            "analytics-count",
+        }
+        service = (
+            _load_all(args.wallet_dir, args.blob_dir)
+            if args.command in analytics_commands
+            else _load(args.wallet_dir, args.blob_dir, args.wallet_id)
+        )
+
+        if args.command == "analytics-template":
+            service._wallet(args.wallet_id)
+            template = service.create_analytics_template(
+                template_id=args.template_id,
+                title=args.title,
+                purpose=args.purpose,
+                allowed_record_types=args.record_type,
+                allowed_derived_fields=args.derived_field,
+                aggregation_policy={
+                    "min_cohort_size": args.min_cohort_size,
+                    "epsilon_budget": args.epsilon_budget,
+                    "duplicate_policy": "reject_by_nullifier",
+                },
+                created_by=args.created_by,
+                expires_at=args.expires_at,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **template.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "analytics-templates":
+            service._wallet(args.wallet_id)
+            templates = [
+                template.to_dict()
+                for template in service.list_analytics_templates(include_inactive=args.include_inactive)
+            ]
+            _emit({"status": "ok", "templates": templates}, json_output=args.json_output)
+            return 0
+
+        if args.command == "analytics-consent":
+            wallet = service._wallet(args.wallet_id)
+            template = service.analytics_templates[args.template_id]
+            consent = service.create_analytics_consent(
+                args.wallet_id,
+                actor_did=args.actor_did,
+                template_id=args.template_id,
+                allowed_record_types=list(template.allowed_record_types),
+                allowed_derived_fields=list(template.allowed_derived_fields),
+                expires_at=args.expires_at,
+            )
+            _save(service, args.wallet_dir, wallet.wallet_id)
+            _emit({"status": "ok", **consent.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "analytics-contribute":
+            contribution = service.create_analytics_contribution(
+                args.wallet_id,
+                actor_did=args.actor_did,
+                consent_id=args.consent_id,
+                template_id=args.template_id,
+                fields=_parse_key_value_items(args.field),
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **contribution.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "analytics-count":
+            result = service.run_aggregate_count(
+                args.template_id,
+                min_cohort_size=args.min_cohort_size,
+                epsilon=args.epsilon,
+                budget_key=args.budget_key,
+                budget_limit=args.budget_limit,
+                actor_did=args.actor_did,
+            )
+            participating_wallet_ids = [
+                consent.wallet_id
+                for consent in service.analytics_consents.values()
+                if consent.template_id == args.template_id
+            ]
+            _save_all(service, args.wallet_dir, participating_wallet_ids or [args.wallet_id])
+            _emit({"status": "ok", **_aggregate_result_summary(result)}, json_output=args.json_output)
+            return 0
 
         if args.command == "add":
             metadata: Dict[str, Any] = {"filename": args.path.name}
@@ -238,6 +487,162 @@ def main(argv: Optional[list[str]] = None) -> int:
             _emit({"status": "ok", **artifact.to_dict()}, json_output=args.json_output)
             return 0
 
+        if args.command == "issue-invocation":
+            invocation = service.issue_invocation(
+                args.wallet_id,
+                grant_id=args.grant_id,
+                actor_did=args.actor_did,
+                resource=resource_for_record(args.wallet_id, args.record_id),
+                ability=args.ability,
+                actor_secret=_key_from_arg(args.key_hex),
+                caveats=_parse_key_value_items(args.caveat),
+                expires_at=args.expires_at,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(
+                {
+                    "status": "ok",
+                    "invocation_id": invocation.invocation_id,
+                    "grant_id": invocation.grant_id,
+                    "ability": invocation.ability,
+                    "resource": invocation.resource,
+                    "invocation_token": invocation_to_token(invocation),
+                },
+                json_output=args.json_output,
+            )
+            return 0
+
+        if args.command == "analyze-invocation":
+            artifact = service.analyze_record_summary_with_invocation(
+                args.wallet_id,
+                args.record_id,
+                actor_did=args.actor_did,
+                invocation=invocation_from_token(args.invocation_token),
+                actor_secret=_key_from_arg(args.key_hex),
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **artifact.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "decrypt-invocation":
+            plaintext = service.decrypt_record_with_invocation(
+                args.wallet_id,
+                args.record_id,
+                actor_did=args.actor_did,
+                invocation=invocation_from_token(args.invocation_token),
+                actor_secret=_key_from_arg(args.key_hex),
+            )
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_bytes(plaintext)
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", "out": str(args.out), "size_bytes": len(plaintext)}, json_output=args.json_output)
+            return 0
+
+        if args.command == "share":
+            caveats: Dict[str, Any] = {"purpose": args.purpose}
+            if args.output_type:
+                caveats["output_types"] = args.output_type
+            if args.expires_at is not None:
+                caveats["expires_at"] = args.expires_at
+            if args.approval_ref:
+                caveats["approval_ref"] = args.approval_ref
+            grant = service.create_grant(
+                wallet_id=args.wallet_id,
+                issuer_did=args.issuer_did,
+                audience_did=args.audience_did,
+                resources=[resource_for_record(args.wallet_id, args.record_id)],
+                abilities=[args.ability],
+                caveats=caveats,
+                expires_at=args.expires_at,
+                approval_id=args.approval_ref,
+                issuer_secret=_key_from_arg(args.issuer_key_hex),
+                audience_secret=_key_from_arg(args.recipient_key_hex),
+            )
+            result: Dict[str, Any] = {
+                "status": "ok",
+                "grant_id": grant.grant_id,
+                "audience_did": grant.audience_did,
+                "ability": args.ability,
+                "resource": resource_for_record(args.wallet_id, args.record_id),
+            }
+            if args.issue_invocation:
+                invocation = service.issue_invocation(
+                    args.wallet_id,
+                    grant_id=grant.grant_id,
+                    actor_did=args.audience_did,
+                    resource=resource_for_record(args.wallet_id, args.record_id),
+                    ability=args.ability,
+                    actor_secret=_key_from_arg(args.recipient_key_hex),
+                    caveats={"purpose": args.purpose},
+                    expires_at=args.invocation_expires_at,
+                )
+                result.update(
+                    {
+                        "invocation_id": invocation.invocation_id,
+                        "invocation_token": invocation_to_token(invocation),
+                    }
+                )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(result, json_output=args.json_output)
+            return 0
+
+        if args.command == "access-requests":
+            status = None if args.status == "all" else args.status
+            requests = [
+                request.to_dict()
+                for request in service.list_access_requests(
+                    args.wallet_id,
+                    status=status,
+                    requester_did=args.requester_did,
+                    audience_did=args.audience_did,
+                )
+            ]
+            _emit({"status": "ok", "wallet_id": args.wallet_id, "requests": requests}, json_output=args.json_output)
+            return 0
+
+        if args.command == "request-access":
+            request = service.request_access(
+                args.wallet_id,
+                requester_did=args.requester_did,
+                audience_did=args.audience_did,
+                resources=[resource_for_record(args.wallet_id, args.record_id)],
+                abilities=args.ability,
+                purpose=args.purpose,
+                expires_at=args.expires_at,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **request.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "approve-access":
+            request = service.approve_access_request(
+                args.wallet_id,
+                request_id=args.request_id,
+                actor_did=args.actor_did,
+                issuer_secret=_key_from_arg(args.issuer_key_hex),
+                audience_secret=_key_from_arg(args.recipient_key_hex),
+                approval_id=args.approval_ref,
+                issue_invocation=args.issue_invocation,
+                invocation_expires_at=args.invocation_expires_at,
+            )
+            result: Dict[str, Any] = {"status": "ok", **request.to_dict()}
+            if request.invocation_id:
+                result["invocation_token"] = invocation_to_token(service.invocations[request.invocation_id])
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit(result, json_output=args.json_output)
+            return 0
+
+        if args.command == "reject-access":
+            request = service.reject_access_request(
+                args.wallet_id,
+                request_id=args.request_id,
+                actor_did=args.actor_did,
+                reason=args.reason,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **request.to_dict()}, json_output=args.json_output)
+            return 0
+
         if args.command == "grant":
             caveats: Dict[str, Any] = {}
             if args.output_type:
@@ -285,6 +690,27 @@ def main(argv: Optional[list[str]] = None) -> int:
             grant = service.revoke_grant(args.wallet_id, actor_did=args.actor_did, grant_id=args.grant_id)
             _save(service, args.wallet_dir, args.wallet_id)
             _emit({"status": "ok", "grant_id": grant.grant_id, "grant_status": grant.status}, json_output=args.json_output)
+            return 0
+
+        if args.command == "verify-storage":
+            report = service.verify_record_storage(
+                args.wallet_id,
+                args.record_id,
+                include_metadata=not args.skip_metadata,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **report.to_dict()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "repair-storage":
+            report = service.repair_record_storage(
+                args.wallet_id,
+                args.record_id,
+                actor_did=args.actor_did,
+                include_metadata=not args.skip_metadata,
+            )
+            _save(service, args.wallet_dir, args.wallet_id)
+            _emit({"status": "ok", **report.to_dict()}, json_output=args.json_output)
             return 0
 
         if args.command == "audit":

@@ -27,8 +27,10 @@ from .location import make_coarse_location_claim, region_membership_statement, s
 from .manifest import canonical_bytes, canonical_dumps
 from .models import (
     AggregateResult,
+    AccessRequest,
     AnalyticsConsent,
     AnalyticsContribution,
+    AnalyticsTemplate,
     ApprovalRequest,
     AuditEvent,
     DataRecord,
@@ -38,7 +40,11 @@ from .models import (
     KeyWrap,
     LocationClaim,
     ProofReceipt,
+    StorageHealthReport,
+    StorageRef,
+    StorageReplicaStatus,
     Wallet,
+    WalletInvocation,
     utc_now,
 )
 from .multisig import (
@@ -50,7 +56,14 @@ from .multisig import (
 )
 from .proofs import create_simulated_proof_receipt
 from .storage import EncryptedBlobStore, LocalEncryptedBlobStore
-from .ucan import assert_grant_allows, resource_for_location, resource_for_record, resource_for_wallet
+from .ucan import (
+    assert_grant_allows,
+    assert_invocation_allows,
+    create_invocation,
+    resource_for_location,
+    resource_for_record,
+    resource_for_wallet,
+)
 
 
 class DataWalletService:
@@ -67,11 +80,15 @@ class DataWalletService:
         self.records: Dict[str, DataRecord] = {}
         self.versions: Dict[str, DataVersion] = {}
         self.grants: Dict[str, Grant] = {}
+        self.invocations: Dict[str, WalletInvocation] = {}
         self.derived_artifacts: Dict[str, DerivedArtifact] = {}
         self.proofs: Dict[str, ProofReceipt] = {}
         self.analytics_consents: Dict[str, AnalyticsConsent] = {}
         self.analytics_contributions: Dict[str, AnalyticsContribution] = {}
+        self.analytics_templates: Dict[str, AnalyticsTemplate] = {}
         self.aggregate_results: Dict[str, AggregateResult] = {}
+        self.analytics_query_budget_spent: Dict[str, float] = {}
+        self.access_requests: Dict[str, AccessRequest] = {}
         self.approval_requests: Dict[str, ApprovalRequest] = {}
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
@@ -96,6 +113,7 @@ class DataWalletService:
             default_privacy_policy={
                 "location_default": "coarse",
                 "analytics_min_cohort_size": 10,
+                "analytics_epsilon_budget": 1.0,
             },
             governance_policy=normalize_governance_policy(
                 controller_dids=controllers,
@@ -180,6 +198,175 @@ class DataWalletService:
                 "threshold": request.threshold,
                 "status": request.status,
             },
+        )
+        return request
+
+    def request_access(
+        self,
+        wallet_id: str,
+        *,
+        requester_did: str,
+        resources: List[str],
+        abilities: List[str],
+        purpose: str,
+        audience_did: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        expires_at: Optional[str] = None,
+    ) -> AccessRequest:
+        wallet = self._wallet(wallet_id)
+        if not resources or not abilities:
+            raise GrantError("Access request requires at least one resource and ability")
+        request = AccessRequest(
+            request_id=f"access-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            requester_did=requester_did,
+            audience_did=audience_did or requester_did,
+            resources=list(resources),
+            abilities=list(abilities),
+            purpose=purpose,
+            details=details or {},
+            expires_at=expires_at,
+        )
+        self.access_requests[request.request_id] = request
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=requester_did,
+            action="access/request",
+            resource=",".join(resources),
+            decision="allow",
+            details={
+                "request_id": request.request_id,
+                "abilities": abilities,
+                "purpose": purpose,
+                "audience_did": request.audience_did,
+            },
+        )
+        return request
+
+    def list_access_requests(
+        self,
+        wallet_id: str,
+        *,
+        status: Optional[str] = None,
+        requester_did: Optional[str] = None,
+        audience_did: Optional[str] = None,
+    ) -> List[AccessRequest]:
+        self._wallet(wallet_id)
+        requests = [
+            request
+            for request in self.access_requests.values()
+            if request.wallet_id == wallet_id
+        ]
+        if status is not None:
+            requests = [request for request in requests if request.status == status]
+        if requester_did is not None:
+            requests = [request for request in requests if request.requester_did == requester_did]
+        if audience_did is not None:
+            requests = [request for request in requests if request.audience_did == audience_did]
+        return sorted(requests, key=lambda item: (item.created_at, item.request_id))
+
+    def approve_access_request(
+        self,
+        wallet_id: str,
+        *,
+        request_id: str,
+        actor_did: str,
+        issuer_secret: Optional[bytes] = None,
+        audience_secret: Optional[bytes] = None,
+        approval_id: Optional[str] = None,
+        issue_invocation: bool = False,
+        invocation_expires_at: Optional[str] = None,
+    ) -> AccessRequest:
+        wallet = self._wallet(wallet_id)
+        self._assert_controller(wallet, actor_did)
+        request = self._access_request(wallet_id, request_id)
+        if request.status != "pending":
+            raise GrantError(f"Access request is not pending: {request_id}")
+        caveats = {
+            "purpose": request.purpose,
+            "access_request_id": request.request_id,
+            **dict(request.details),
+        }
+        grant = self.create_grant(
+            wallet_id=wallet_id,
+            issuer_did=actor_did,
+            audience_did=request.audience_did,
+            resources=request.resources,
+            abilities=request.abilities,
+            caveats=caveats,
+            expires_at=request.expires_at,
+            approval_id=approval_id,
+            issuer_secret=issuer_secret,
+            audience_secret=audience_secret,
+        )
+        invocation = None
+        if issue_invocation:
+            if len(request.resources) != 1 or len(request.abilities) != 1:
+                raise GrantError("Invocation issuance requires one resource and one ability")
+            invocation = self.issue_invocation(
+                wallet_id,
+                grant_id=grant.grant_id,
+                actor_did=request.audience_did,
+                resource=request.resources[0],
+                ability=request.abilities[0],
+                actor_secret=audience_secret,
+                caveats={"purpose": request.purpose, "access_request_id": request.request_id},
+                expires_at=invocation_expires_at,
+            )
+        request.status = "approved"
+        request.decided_at = utc_now()
+        request.decided_by = actor_did
+        request.grant_id = grant.grant_id
+        request.invocation_id = invocation.invocation_id if invocation else None
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="access/approve",
+            resource=",".join(request.resources),
+            decision="allow",
+            details={
+                "request_id": request.request_id,
+                "grant_id": request.grant_id,
+                "invocation_id": request.invocation_id,
+            },
+            grant_id=grant.grant_id,
+        )
+        return request
+
+    def reject_access_request(
+        self,
+        wallet_id: str,
+        *,
+        request_id: str,
+        actor_did: str,
+        reason: Optional[str] = None,
+    ) -> AccessRequest:
+        wallet = self._wallet(wallet_id)
+        self._assert_controller(wallet, actor_did)
+        request = self._access_request(wallet_id, request_id)
+        if request.status != "pending":
+            raise GrantError(f"Access request is not pending: {request_id}")
+        request.status = "rejected"
+        request.decided_at = utc_now()
+        request.decided_by = actor_did
+        if reason:
+            request.details = {**request.details, "rejection_reason": reason}
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="access/reject",
+            resource=",".join(request.resources),
+            decision="deny",
+            details={"request_id": request.request_id, "reason": reason},
         )
         return request
 
@@ -364,6 +551,79 @@ class DataWalletService:
         )
         return grant
 
+    def issue_invocation(
+        self,
+        wallet_id: str,
+        *,
+        grant_id: str,
+        actor_did: str,
+        resource: str,
+        ability: str,
+        actor_secret: Optional[bytes] = None,
+        caveats: Optional[Dict[str, Any]] = None,
+        expires_at: Optional[str] = None,
+    ) -> WalletInvocation:
+        self._wallet(wallet_id)
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        grant = self.grants[grant_id]
+        invocation = create_invocation(
+            grant=grant,
+            audience_did=actor_did,
+            resource=resource,
+            ability=ability,
+            signing_secret=self._ensure_principal_secret(actor_did),
+            caveats=caveats,
+            expires_at=expires_at,
+        )
+        self.invocations[invocation.invocation_id] = invocation
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="invocation/issue",
+            resource=resource,
+            decision="allow",
+            details={"ability": ability, "invocation_id": invocation.invocation_id},
+            grant_id=grant_id,
+        )
+        return invocation
+
+    def verify_invocation(
+        self,
+        wallet_id: str,
+        invocation: WalletInvocation,
+        *,
+        actor_did: str,
+        resource: str,
+        ability: str,
+        actor_secret: Optional[bytes] = None,
+    ) -> WalletInvocation:
+        self._wallet(wallet_id)
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        grant = self.grants[invocation.grant_id]
+        assert_invocation_allows(
+            invocation,
+            grant,
+            audience_did=actor_did,
+            resource=resource,
+            ability=ability,
+            signing_secret=self._ensure_principal_secret(actor_did),
+        )
+        self.invocations[invocation.invocation_id] = invocation
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="invocation/verify",
+            resource=resource,
+            decision="allow",
+            details={"ability": ability, "invocation_id": invocation.invocation_id},
+            grant_id=invocation.grant_id,
+        )
+        return invocation
+
     def revoke_grant(self, wallet_id: str, grant_id: str, *, actor_did: str) -> Grant:
         wallet = self._wallet(wallet_id)
         self._assert_controller(wallet, actor_did)
@@ -421,6 +681,32 @@ class DataWalletService:
         )
         return plaintext
 
+    def decrypt_record_with_invocation(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        invocation: WalletInvocation,
+        actor_secret: Optional[bytes] = None,
+    ) -> bytes:
+        resource = resource_for_record(wallet_id, record_id)
+        self.verify_invocation(
+            wallet_id,
+            invocation,
+            actor_did=actor_did,
+            resource=resource,
+            ability="record/decrypt",
+            actor_secret=actor_secret,
+        )
+        return self.decrypt_record(
+            wallet_id,
+            record_id,
+            actor_did=actor_did,
+            grant_id=invocation.grant_id,
+            actor_secret=actor_secret,
+        )
+
     def create_coarse_location_claim(
         self,
         wallet_id: str,
@@ -455,6 +741,32 @@ class DataWalletService:
             grant_id=grant_id,
         )
         return claim
+
+    def create_coarse_location_claim_with_invocation(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        invocation: WalletInvocation,
+        actor_secret: Optional[bytes] = None,
+        precision: int = 2,
+    ) -> LocationClaim:
+        self.verify_invocation(
+            wallet_id,
+            invocation,
+            actor_did=actor_did,
+            resource=resource_for_location(wallet_id, record_id),
+            ability="location/read_coarse",
+            actor_secret=actor_secret,
+        )
+        return self.create_coarse_location_claim(
+            wallet_id,
+            record_id,
+            actor_did=actor_did,
+            grant_id=invocation.grant_id,
+            precision=precision,
+        )
 
     def create_location_region_proof(
         self,
@@ -561,6 +873,33 @@ class DataWalletService:
         )
         return artifact
 
+    def analyze_record_summary_with_invocation(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        invocation: WalletInvocation,
+        actor_secret: Optional[bytes] = None,
+        max_chars: int = 200,
+    ) -> DerivedArtifact:
+        self.verify_invocation(
+            wallet_id,
+            invocation,
+            actor_did=actor_did,
+            resource=resource_for_record(wallet_id, record_id),
+            ability="record/analyze",
+            actor_secret=actor_secret,
+        )
+        return self.analyze_record_summary(
+            wallet_id,
+            record_id,
+            actor_did=actor_did,
+            grant_id=invocation.grant_id,
+            actor_secret=actor_secret,
+            max_chars=max_chars,
+        )
+
     def create_analytics_consent(
         self,
         wallet_id: str,
@@ -574,17 +913,39 @@ class DataWalletService:
     ) -> AnalyticsConsent:
         wallet = self._wallet(wallet_id)
         self._assert_controller(wallet, actor_did)
+        template = self.analytics_templates.get(template_id)
+        if template is not None:
+            self._assert_active_analytics_template(template)
+            template_record_types = set(template.allowed_record_types)
+            template_fields = set(template.allowed_derived_fields)
+            if not set(allowed_record_types).issubset(template_record_types):
+                raise AccessDeniedError("Analytics consent record types exceed template policy")
+            if not set(allowed_derived_fields).issubset(template_fields):
+                raise AccessDeniedError("Analytics consent fields exceed template policy")
+            policy = dict(template.aggregation_policy)
+            if aggregation_policy:
+                requested_min = int(aggregation_policy.get("min_cohort_size", policy.get("min_cohort_size", 10)))
+                template_min = int(policy.get("min_cohort_size", 10))
+                if requested_min < template_min:
+                    raise AccessDeniedError("Analytics consent cannot lower template min_cohort_size")
+                requested_budget = float(aggregation_policy.get("epsilon_budget", policy.get("epsilon_budget", 1.0)))
+                template_budget = float(policy.get("epsilon_budget", 1.0))
+                if requested_budget > template_budget:
+                    raise AccessDeniedError("Analytics consent cannot exceed template epsilon_budget")
+                policy.update(aggregation_policy)
+        else:
+            policy = aggregation_policy or {
+                "min_cohort_size": wallet.default_privacy_policy.get("analytics_min_cohort_size", 10),
+                "epsilon_budget": wallet.default_privacy_policy.get("analytics_epsilon_budget", 1.0),
+                "duplicate_policy": "reject_by_nullifier",
+            }
         consent = AnalyticsConsent(
             consent_id=f"consent-{uuid.uuid4().hex}",
             wallet_id=wallet_id,
             template_id=template_id,
             allowed_record_types=list(allowed_record_types),
             allowed_derived_fields=list(allowed_derived_fields),
-            aggregation_policy=aggregation_policy
-            or {
-                "min_cohort_size": wallet.default_privacy_policy.get("analytics_min_cohort_size", 10),
-                "duplicate_policy": "reject_by_nullifier",
-            },
+            aggregation_policy=policy,
             expires_at=expires_at,
         )
         self.analytics_consents[consent.consent_id] = consent
@@ -602,6 +963,48 @@ class DataWalletService:
             },
         )
         return consent
+
+    def create_analytics_template(
+        self,
+        *,
+        template_id: str,
+        title: str,
+        purpose: str,
+        allowed_record_types: List[str],
+        allowed_derived_fields: List[str],
+        aggregation_policy: Dict[str, Any],
+        created_by: str,
+        expires_at: Optional[str] = None,
+    ) -> AnalyticsTemplate:
+        if template_id in self.analytics_templates:
+            raise ValueError(f"Analytics template already exists: {template_id}")
+        self._validate_analytics_template_policy(aggregation_policy)
+        template = AnalyticsTemplate(
+            template_id=template_id,
+            title=title,
+            purpose=purpose,
+            allowed_record_types=list(allowed_record_types),
+            allowed_derived_fields=list(allowed_derived_fields),
+            aggregation_policy=dict(aggregation_policy),
+            created_by=created_by,
+            expires_at=expires_at,
+        )
+        self.analytics_templates[template_id] = template
+        return template
+
+    def list_analytics_templates(self, *, include_inactive: bool = False) -> List[AnalyticsTemplate]:
+        templates = sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
+        if include_inactive:
+            return templates
+        return [template for template in templates if template.status == "active"]
+
+    def retire_analytics_template(self, template_id: str, *, actor_did: str) -> AnalyticsTemplate:
+        template = self._analytics_template(template_id)
+        if actor_did != template.created_by:
+            raise AccessDeniedError("Only the template creator can retire this analytics template")
+        template.status = "retired"
+        template.updated_at = utc_now()
+        return template
 
     def revoke_analytics_consent(self, wallet_id: str, consent_id: str, *, actor_did: str) -> AnalyticsConsent:
         wallet = self._wallet(wallet_id)
@@ -632,6 +1035,9 @@ class DataWalletService:
         wallet = self._wallet(wallet_id)
         self._assert_controller(wallet, actor_did)
         consent = self._analytics_consent(wallet_id, consent_id)
+        template = self.analytics_templates.get(template_id)
+        if template is not None:
+            self._assert_active_analytics_template(template)
         if consent.status != "active":
             raise AccessDeniedError(f"Analytics consent {consent_id} is not active")
         if consent.expires_at is not None:
@@ -641,6 +1047,10 @@ class DataWalletService:
                 raise AccessDeniedError(f"Analytics consent {consent_id} has expired")
         if consent.template_id != template_id:
             raise AccessDeniedError("Analytics template does not match consent")
+        if template is not None:
+            template_fields = set(template.allowed_derived_fields)
+            if not set(fields).issubset(template_fields):
+                raise AccessDeniedError("Analytics fields exceed template policy")
 
         requested_fields = set(fields)
         allowed_fields = set(consent.allowed_derived_fields)
@@ -702,7 +1112,18 @@ class DataWalletService:
             and sorted(contribution.fields) == proof.public_inputs.get("field_names")
         )
 
-    def run_aggregate_count(self, template_id: str, *, min_cohort_size: Optional[int] = None) -> AggregateResult:
+    def run_aggregate_count(
+        self,
+        template_id: str,
+        *,
+        min_cohort_size: Optional[int] = None,
+        epsilon: Optional[float] = None,
+        sensitivity: float = 1.0,
+        budget_key: Optional[str] = None,
+        budget_limit: Optional[float] = None,
+        release_exact_count: Optional[bool] = None,
+        actor_did: str = "did:service:analytics",
+    ) -> AggregateResult:
         if min_cohort_size is None:
             matching_consents = [
                 consent for consent in self.analytics_consents.values() if consent.template_id == template_id
@@ -712,12 +1133,39 @@ class DataWalletService:
                 for consent in matching_consents
             ]
             min_cohort_size = max(policy_sizes) if policy_sizes else 10
+            template = self.analytics_templates.get(template_id)
+            if template is not None:
+                self._assert_active_analytics_template(template)
+                min_cohort_size = max(
+                    min_cohort_size,
+                    int(template.aggregation_policy.get("min_cohort_size", 10)),
+                )
+        spent = None
+        if epsilon is not None:
+            if epsilon <= 0:
+                raise ValueError("epsilon must be greater than zero")
+            budget_key = budget_key or f"template:{template_id}"
+            if budget_limit is None:
+                budget_limit = self._analytics_budget_limit(template_id)
+            spent = self._spend_analytics_privacy_budget(
+                budget_key=budget_key,
+                epsilon=epsilon,
+                budget_limit=budget_limit,
+            )
+        if release_exact_count is None:
+            release_exact_count = epsilon is None
         result = aggregate_count(
             template_id=template_id,
             contributions=self.analytics_contributions.values(),
             min_cohort_size=min_cohort_size,
+            epsilon=epsilon,
+            sensitivity=sensitivity,
+            privacy_budget_key=budget_key if epsilon is not None else None,
+            privacy_budget_spent=spent,
+            release_exact_count=release_exact_count,
         )
         self.aggregate_results[result.result_id] = result
+        self._audit_aggregate_query(template_id, result, actor_did=actor_did)
         return result
 
     def get_wallet_manifest(self, wallet_id: str) -> Dict[str, Any]:
@@ -736,10 +1184,20 @@ class DataWalletService:
                 for grant in sorted(self.grants.values(), key=lambda item: item.grant_id)
                 if any(resource.startswith(f"wallet://{wallet_id}/") for resource in grant.resources)
             ],
+            "invocations": [
+                invocation.to_dict()
+                for invocation in sorted(self.invocations.values(), key=lambda item: item.invocation_id)
+                if invocation.resource.startswith(f"wallet://{wallet_id}/")
+            ],
             "approvals": [
                 approval.to_dict()
                 for approval in sorted(self.approval_requests.values(), key=lambda item: item.approval_id)
                 if approval.wallet_id == wallet_id
+            ],
+            "access_requests": [
+                request.to_dict()
+                for request in sorted(self.access_requests.values(), key=lambda item: item.request_id)
+                if request.wallet_id == wallet_id
             ],
         }
 
@@ -755,6 +1213,11 @@ class DataWalletService:
             grant.grant_id
             for grant in self.grants.values()
             if any(resource.startswith(f"wallet://{wallet_id}/") for resource in grant.resources)
+        )
+        invocation_ids = sorted(
+            invocation.invocation_id
+            for invocation in self.invocations.values()
+            if invocation.resource.startswith(f"wallet://{wallet_id}/")
         )
         artifact_ids = sorted(
             artifact.artifact_id
@@ -774,17 +1237,29 @@ class DataWalletService:
             for approval in self.approval_requests.values()
             if approval.wallet_id == wallet_id
         )
+        access_request_ids = sorted(
+            request.request_id
+            for request in self.access_requests.values()
+            if request.wallet_id == wallet_id
+        )
         return {
             "wallet": wallet.to_dict(),
             "records": [self.records[record_id].to_dict() for record_id in record_ids],
             "versions": [self.versions[version_id].to_dict() for version_id in version_ids],
             "grants": [self.grants[grant_id].to_dict() for grant_id in grant_ids],
+            "invocations": [
+                self.invocations[invocation_id].to_dict() for invocation_id in invocation_ids
+            ],
             "derived_artifacts": [
                 self.derived_artifacts[artifact_id].to_dict() for artifact_id in artifact_ids
             ],
             "proofs": [self.proofs[proof_id].to_dict() for proof_id in proof_ids],
             "analytics_consents": [
                 self.analytics_consents[consent_id].to_dict() for consent_id in consent_ids
+            ],
+            "analytics_templates": [
+                template.to_dict()
+                for template in sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
             ],
             "analytics_contributions": [
                 contribution.to_dict()
@@ -797,7 +1272,11 @@ class DataWalletService:
                 result.to_dict()
                 for result in sorted(self.aggregate_results.values(), key=lambda item: item.result_id)
             ],
+            "analytics_query_budget_spent": dict(sorted(self.analytics_query_budget_spent.items())),
             "approvals": [self.approval_requests[approval_id].to_dict() for approval_id in approval_ids],
+            "access_requests": [
+                self.access_requests[request_id].to_dict() for request_id in access_request_ids
+            ],
             "audit_events": [
                 event.to_dict() for event in self.audit_events.get(wallet_id, [])
             ],
@@ -842,6 +1321,8 @@ class DataWalletService:
             )
         for grant_data in snapshot.get("grants", []):
             self.grants[grant_data["grant_id"]] = Grant(**grant_data)
+        for invocation_data in snapshot.get("invocations", []):
+            self.invocations[invocation_data["invocation_id"]] = WalletInvocation(**invocation_data)
         for artifact_data in snapshot.get("derived_artifacts", []):
             ref = self._storage_ref_from_dict(artifact_data["encrypted_payload_ref"])
             self.derived_artifacts[artifact_data["artifact_id"]] = DerivedArtifact(
@@ -857,14 +1338,21 @@ class DataWalletService:
             self.proofs[proof_data["proof_id"]] = ProofReceipt(**proof_data)
         for consent_data in snapshot.get("analytics_consents", []):
             self.analytics_consents[consent_data["consent_id"]] = AnalyticsConsent(**consent_data)
+        for template_data in snapshot.get("analytics_templates", []):
+            self.analytics_templates[template_data["template_id"]] = AnalyticsTemplate(**template_data)
         for contribution_data in snapshot.get("analytics_contributions", []):
             self.analytics_contributions[contribution_data["contribution_id"]] = AnalyticsContribution(
                 **contribution_data
             )
         for result_data in snapshot.get("aggregate_results", []):
             self.aggregate_results[result_data["result_id"]] = AggregateResult(**result_data)
+        self.analytics_query_budget_spent.update(
+            {str(key): float(value) for key, value in snapshot.get("analytics_query_budget_spent", {}).items()}
+        )
         for approval_data in snapshot.get("approvals", []):
             self.approval_requests[approval_data["approval_id"]] = ApprovalRequest(**approval_data)
+        for request_data in snapshot.get("access_requests", []):
+            self.access_requests[request_data["request_id"]] = AccessRequest(**request_data)
         return wallet
 
     def get_wallet_manifest_canonical(self, wallet_id: str) -> str:
@@ -873,6 +1361,88 @@ class DataWalletService:
     def get_audit_log(self, wallet_id: str) -> List[AuditEvent]:
         self._wallet(wallet_id)
         return list(self.audit_events[wallet_id])
+
+    def verify_record_storage(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        include_metadata: bool = True,
+    ) -> StorageHealthReport:
+        """Verify encrypted payload and metadata replicas without decrypting."""
+
+        record = self._record(wallet_id, record_id)
+        version = self.versions[record.current_version_id]
+        report = StorageHealthReport(
+            wallet_id=wallet_id,
+            record_id=record_id,
+            version_id=version.version_id,
+            payload=self._check_storage_ref(version.encrypted_payload_ref),
+            metadata=(
+                self._check_storage_ref(version.encrypted_metadata_ref)
+                if include_metadata and version.encrypted_metadata_ref is not None
+                else []
+            ),
+        )
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=self._wallet(wallet_id).owner_did,
+            action="storage/verify",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "version_id": version.version_id,
+                "ok": report.ok,
+                "payload_replicas": len(report.payload),
+                "metadata_replicas": len(report.metadata),
+            },
+        )
+        return report
+
+    def repair_record_storage(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        include_metadata: bool = True,
+    ) -> StorageHealthReport:
+        """Repair encrypted payload and metadata mirrors from a valid replica."""
+
+        wallet = self._wallet(wallet_id)
+        self._assert_controller(wallet, actor_did)
+        record = self._record(wallet_id, record_id)
+        version = self.versions[record.current_version_id]
+        report = StorageHealthReport(
+            wallet_id=wallet_id,
+            record_id=record_id,
+            version_id=version.version_id,
+            payload=self._repair_storage_ref(version.encrypted_payload_ref),
+            metadata=(
+                self._repair_storage_ref(version.encrypted_metadata_ref)
+                if include_metadata and version.encrypted_metadata_ref is not None
+                else []
+            ),
+        )
+        report.repaired = any(status.repaired for status in [*report.payload, *report.metadata])
+        wallet.updated_at = utc_now()
+        wallet.manifest_head = sha256_hex(canonical_bytes(self.get_wallet_manifest(wallet_id)))
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="storage/repair",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "version_id": version.version_id,
+                "ok": report.ok,
+                "payload_repaired": any(status.repaired for status in report.payload),
+                "metadata_repaired": any(status.repaired for status in report.metadata),
+            },
+        )
+        return report
 
     def _wallet(self, wallet_id: str) -> Wallet:
         if wallet_id not in self.wallets:
@@ -884,10 +1454,109 @@ class DataWalletService:
             raise MissingRecordError(f"Record not found: {record_id}")
         return self.records[record_id]
 
+    def _access_request(self, wallet_id: str, request_id: str) -> AccessRequest:
+        if request_id not in self.access_requests or self.access_requests[request_id].wallet_id != wallet_id:
+            raise MissingRecordError(f"Access request not found: {request_id}")
+        return self.access_requests[request_id]
+
     def _analytics_consent(self, wallet_id: str, consent_id: str) -> AnalyticsConsent:
         if consent_id not in self.analytics_consents or self.analytics_consents[consent_id].wallet_id != wallet_id:
             raise MissingRecordError(f"Analytics consent not found: {consent_id}")
         return self.analytics_consents[consent_id]
+
+    def _analytics_template(self, template_id: str) -> AnalyticsTemplate:
+        if template_id not in self.analytics_templates:
+            raise MissingRecordError(f"Analytics template not found: {template_id}")
+        return self.analytics_templates[template_id]
+
+    def _assert_active_analytics_template(self, template: AnalyticsTemplate) -> None:
+        if template.status != "active":
+            raise AccessDeniedError(f"Analytics template {template.template_id} is not active")
+        if template.expires_at is not None:
+            from .ucan import is_expired
+
+            if is_expired(template.expires_at):
+                raise AccessDeniedError(f"Analytics template {template.template_id} has expired")
+
+    def _validate_analytics_template_policy(self, policy: Dict[str, Any]) -> None:
+        if int(policy.get("min_cohort_size", 0)) <= 0:
+            raise ValueError("analytics template min_cohort_size must be greater than zero")
+        if float(policy.get("epsilon_budget", 0)) <= 0:
+            raise ValueError("analytics template epsilon_budget must be greater than zero")
+
+    def _analytics_budget_limit(self, template_id: str) -> float:
+        template = self.analytics_templates.get(template_id)
+        if template is not None and "epsilon_budget" in template.aggregation_policy:
+            template_limit = float(template.aggregation_policy["epsilon_budget"])
+        else:
+            template_limit = 1.0
+        matching_consents = [
+            consent for consent in self.analytics_consents.values() if consent.template_id == template_id
+        ]
+        limits = [
+            float(consent.aggregation_policy["epsilon_budget"])
+            for consent in matching_consents
+            if "epsilon_budget" in consent.aggregation_policy
+        ]
+        limits.append(template_limit)
+        return min(limits)
+
+    def _spend_analytics_privacy_budget(
+        self,
+        *,
+        budget_key: str,
+        epsilon: float,
+        budget_limit: float,
+    ) -> float:
+        if budget_limit <= 0:
+            raise ValueError("budget_limit must be greater than zero")
+        spent = self.analytics_query_budget_spent.get(budget_key, 0.0)
+        next_spent = spent + epsilon
+        if next_spent > budget_limit + 1e-12:
+            raise AccessDeniedError(
+                f"Analytics privacy budget exceeded for {budget_key}: "
+                f"{next_spent:.6g} > {budget_limit:.6g}"
+            )
+        self.analytics_query_budget_spent[budget_key] = next_spent
+        return next_spent
+
+    def _audit_aggregate_query(
+        self,
+        template_id: str,
+        result: AggregateResult,
+        *,
+        actor_did: str,
+    ) -> None:
+        wallet_ids = sorted(
+            {
+                consent.wallet_id
+                for consent in self.analytics_consents.values()
+                if consent.template_id == template_id
+            }
+        )
+        for wallet_id in wallet_ids:
+            append_audit_event(
+                self.audit_events[wallet_id],
+                wallet_id=wallet_id,
+                actor_did=actor_did,
+                action="analytics/query",
+                resource=f"wallet://{wallet_id}/analytics/{template_id}/results/{result.result_id}",
+                decision="allow" if result.released else "suppress",
+                details={
+                    "template_id": template_id,
+                    "result_id": result.result_id,
+                    "metric": result.metric,
+                    "released": result.released,
+                    "suppressed": result.suppressed,
+                    "min_cohort_size": result.min_cohort_size,
+                    "epsilon": result.epsilon,
+                    "privacy_budget_key": result.privacy_budget_key,
+                    "privacy_budget_spent": result.privacy_budget_spent,
+                    "exact_count_released": result.exact_count_released,
+                    "cohort_size_released": result.cohort_size_released,
+                    "privacy_notes": list(result.privacy_notes),
+                },
+            )
 
     def _assert_controller(self, wallet: Wallet, actor_did: str) -> None:
         if actor_did not in wallet.controller_dids and actor_did != wallet.owner_did:
@@ -970,7 +1639,43 @@ class DataWalletService:
         return suffix
 
     @staticmethod
-    def _storage_ref_from_dict(data: Dict[str, Any]):
-        from .models import StorageRef
+    def _storage_ref_from_dict(data: Dict[str, Any]) -> StorageRef:
+        payload = dict(data)
+        payload["mirrors"] = [
+            DataWalletService._storage_ref_from_dict(mirror)
+            for mirror in payload.get("mirrors", [])
+        ]
+        return StorageRef(**payload)
 
-        return StorageRef(**data)
+    def _check_storage_ref(self, ref: StorageRef) -> List[StorageReplicaStatus]:
+        if hasattr(self.storage, "check_ref"):
+            return list(self.storage.check_ref(ref))  # type: ignore[attr-defined]
+        try:
+            data = self.storage.get(ref)
+        except Exception as exc:
+            return [
+                StorageReplicaStatus(
+                    uri=ref.uri,
+                    storage_type=ref.storage_type,
+                    role="primary",
+                    ok=False,
+                    size_bytes=ref.size_bytes,
+                    sha256=ref.sha256,
+                    error=str(exc),
+                )
+            ]
+        return [
+            StorageReplicaStatus(
+                uri=ref.uri,
+                storage_type=ref.storage_type,
+                role="primary",
+                ok=True,
+                size_bytes=len(data),
+                sha256=sha256_hex(data),
+            )
+        ]
+
+    def _repair_storage_ref(self, ref: StorageRef) -> List[StorageReplicaStatus]:
+        if hasattr(self.storage, "repair_ref"):
+            return list(self.storage.repair_ref(ref))  # type: ignore[attr-defined]
+        return self._check_storage_ref(ref)

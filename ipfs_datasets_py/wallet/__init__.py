@@ -12,8 +12,10 @@ from .exceptions import (
 )
 from .models import (
     AggregateResult,
+    AccessRequest,
     AnalyticsConsent,
     AnalyticsContribution,
+    AnalyticsTemplate,
     ApprovalRequest,
     AuditEvent,
     DataRecord,
@@ -23,20 +25,33 @@ from .models import (
     KeyWrap,
     LocationClaim,
     ProofReceipt,
+    StorageHealthReport,
     StorageRef,
+    StorageReplicaStatus,
     Wallet,
+    WalletInvocation,
 )
 from .multisig import operation_requires_approval
+from .privacy import AnalyticsPrivacyPolicy
 from .service import DataWalletService
-from .storage import IPFSEncryptedBlobStore, LocalEncryptedBlobStore
+from .storage import (
+    FilecoinEncryptedBlobStore,
+    IPFSEncryptedBlobStore,
+    LocalEncryptedBlobStore,
+    ReplicatedEncryptedBlobStore,
+    S3EncryptedBlobStore,
+)
 
 WalletService = DataWalletService
 
 __all__ = [
     "AccessDeniedError",
+    "AccessRequest",
     "AggregateResult",
     "AnalyticsConsent",
+    "AnalyticsPrivacyPolicy",
     "AnalyticsContribution",
+    "AnalyticsTemplate",
     "ApprovalRequest",
     "ApprovalRequiredError",
     "AuditEvent",
@@ -48,14 +63,20 @@ __all__ = [
     "DerivedArtifact",
     "Grant",
     "GrantError",
+    "FilecoinEncryptedBlobStore",
     "IPFSEncryptedBlobStore",
     "KeyWrap",
     "LocalEncryptedBlobStore",
     "LocationClaim",
     "MissingRecordError",
     "ProofReceipt",
+    "ReplicatedEncryptedBlobStore",
+    "S3EncryptedBlobStore",
+    "StorageHealthReport",
     "StorageRef",
+    "StorageReplicaStatus",
     "Wallet",
+    "WalletInvocation",
     "WalletService",
     "operation_requires_approval",
 ]
