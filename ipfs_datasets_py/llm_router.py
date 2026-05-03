@@ -778,6 +778,27 @@ def _extract_last_agent_message_from_codex_jsonl(text: str) -> Optional[str]:
     return last.strip() if isinstance(last, str) and last.strip() else None
 
 
+def _looks_like_empty_codex_jsonl(text: str) -> bool:
+    """Return True when Codex --json emitted lifecycle events but no assistant text."""
+
+    if not isinstance(text, str) or not text.strip():
+        return False
+    if _extract_last_agent_message_from_codex_jsonl(text):
+        return False
+
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or not (line.startswith("{") and line.endswith("}")):
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(obj, dict) and isinstance(obj.get("type"), str):
+            return True
+    return False
+
+
 def get_accelerate_manager(
     *,
     deps: Optional[RouterDeps] = None,
@@ -2614,6 +2635,11 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
                     raise LLMRouterError(f"Codex usage limit reached{suffix}")
                 raise LLMRouterError((stderr or "").strip() or "codex exec failed")
+
+            if json_mode and not text_out and _looks_like_empty_codex_jsonl(stdout or ""):
+                raise LLMRouterError(
+                    "codex exec returned JSONL lifecycle events without an assistant proposal"
+                )
 
             if proc.returncode == 0 or text_out or (stdout and stdout.strip()):
                 if text_out:
