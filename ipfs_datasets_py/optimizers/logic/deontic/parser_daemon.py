@@ -7,11 +7,12 @@ legal parser.  Each cycle:
 2. reads the two deterministic-parser roadmap documents;
 3. asks ``llm_router`` for a strict JSON improvement proposal using a pinned
    model, defaulting to ``gpt-5.5``;
-4. stores the proposal and unified diff as cycle artifacts;
-5. optionally applies the diff and runs validation tests.
+4. stores proposal metadata and Git's canonical diff as cycle artifacts;
+5. optionally applies the Git-generated diff and runs validation tests.
 
-The default mode is patch-only.  This keeps unattended runs auditable and avoids
-mutating the working tree unless the operator passes ``--apply-patches``.
+The supervised default is worktree-direct edit: Codex edits a throwaway detached
+Git worktree, then the daemon validates and applies the canonical diff generated
+by Git.  Patch and hybrid transports remain available for debugging and fallback.
 """
 
 from __future__ import annotations
@@ -127,6 +128,7 @@ class LegalParserDaemonConfig:
     llm_proposal_attempts: int = 3
     proposal_transport: str = "patch"
     worktree_edit_timeout_seconds: int = 1200
+    worktree_stale_after_seconds: int = 7200
     worktree_root: Path = field(default_factory=lambda: Path(".daemon/legal-parser-worktrees"))
     codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
     heartbeat_interval_seconds: float = 15.0
@@ -443,14 +445,18 @@ class LegalParserParityOptimizer(BaseOptimizer):
 
         repo_root = self.daemon_config.repo_root
         worktree_root = self.daemon_config.resolved_worktree_root()
+        cleanup_result = self.cleanup_stale_worktrees()
         worktree_root.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
         worktree_path = worktree_root / f"cycle_{cycle_index:04d}_{stamp}_{os.getpid()}"
         metadata_rel = ".legal_parser_worktree_proposal.json"
+        owner_rel = ".legal_parser_worktree_owner.json"
         raw_trace: Dict[str, Any] = {
             "transport": "worktree",
             "worktree_path": str(worktree_path),
             "metadata_path": metadata_rel,
+            "owner_path": owner_rel,
+            "cleanup_before_create": cleanup_result,
         }
 
         try:
@@ -466,6 +472,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     raw_response=json.dumps(raw_trace, indent=2, default=str),
                     parse_error="git worktree add failed: " + str(add_result.get("stderr") or "").strip()[:1000],
                 )
+            self._write_worktree_owner_file(
+                worktree_path / owner_rel,
+                cycle_index=cycle_index,
+            )
 
             prompt = self.build_worktree_edit_prompt(
                 cycle_index=cycle_index,
@@ -589,6 +599,146 @@ class LegalParserParityOptimizer(BaseOptimizer):
             )
             if not remove_result.get("valid") and worktree_path.exists():
                 shutil.rmtree(worktree_path, ignore_errors=True)
+
+    def cleanup_stale_worktrees(self) -> Dict[str, Any]:
+        """Remove daemon-created direct-edit worktrees left behind by crashes."""
+
+        repo_root = self.daemon_config.repo_root
+        worktree_root = self.daemon_config.resolved_worktree_root()
+        stale_after = max(1, int(self.daemon_config.worktree_stale_after_seconds))
+        result: Dict[str, Any] = {
+            "valid": True,
+            "worktree_root": str(worktree_root),
+            "stale_after_seconds": stale_after,
+            "removed": [],
+            "skipped": [],
+            "errors": [],
+        }
+        prune_before = _run_command(
+            ["git", "worktree", "prune", "--expire", "now"],
+            cwd=repo_root,
+            timeout=60,
+        )
+        result["prune_before"] = prune_before
+        if not worktree_root.exists():
+            return result
+        root_resolved = worktree_root.resolve()
+        list_result = _run_command(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=repo_root,
+            timeout=60,
+        )
+        result["worktree_list"] = list_result
+        registered_paths = {
+            str(path)
+            for path in _git_worktree_paths_from_porcelain(str(list_result.get("stdout") or ""))
+        }
+        now = time.time()
+        for candidate in sorted(worktree_root.glob("cycle_*")):
+            if not candidate.exists():
+                continue
+            try:
+                resolved = candidate.resolve()
+                if not resolved.is_relative_to(root_resolved):
+                    result["skipped"].append({"path": str(candidate), "reason": "outside_worktree_root"})
+                    continue
+                if not candidate.is_dir():
+                    result["skipped"].append({"path": str(candidate), "reason": "not_directory"})
+                    continue
+                owner = self._read_worktree_owner_file(candidate / ".legal_parser_worktree_owner.json")
+                owner_pid = _owner_pid_from_worktree(candidate, owner)
+                owner_alive = bool(owner_pid and _pid_is_alive(owner_pid))
+                try:
+                    created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
+                except (OSError, TypeError, ValueError):
+                    created_at = candidate.stat().st_mtime
+                age_seconds = max(0.0, now - created_at)
+                if owner_alive:
+                    result["skipped"].append(
+                        {
+                            "path": str(candidate),
+                            "reason": "owner_pid_alive",
+                            "owner_pid": owner_pid,
+                            "age_seconds": round(age_seconds, 3),
+                        }
+                    )
+                    continue
+                if age_seconds < stale_after:
+                    result["skipped"].append(
+                        {
+                            "path": str(candidate),
+                            "reason": "not_stale_yet",
+                            "owner_pid": owner_pid,
+                            "age_seconds": round(age_seconds, 3),
+                        }
+                    )
+                    continue
+                registered = str(resolved) in registered_paths
+                remove_result: Dict[str, Any]
+                if registered:
+                    remove_result = _run_command(
+                        ["git", "worktree", "remove", "--force", str(resolved)],
+                        cwd=repo_root,
+                        timeout=60,
+                    )
+                    if not remove_result.get("valid") and candidate.exists():
+                        shutil.rmtree(candidate, ignore_errors=True)
+                else:
+                    shutil.rmtree(candidate, ignore_errors=True)
+                    remove_result = {
+                        "valid": not candidate.exists(),
+                        "returncode": 0 if not candidate.exists() else 1,
+                        "command": ["shutil.rmtree", str(resolved)],
+                        "stdout": "",
+                        "stderr": "" if not candidate.exists() else "directory still exists after rmtree",
+                    }
+                record = {
+                    "path": str(candidate),
+                    "registered": registered,
+                    "owner_pid": owner_pid,
+                    "age_seconds": round(age_seconds, 3),
+                    "remove": remove_result,
+                }
+                if remove_result.get("valid"):
+                    result["removed"].append(record)
+                else:
+                    result["valid"] = False
+                    result["errors"].append(record)
+            except Exception as exc:
+                result["valid"] = False
+                result["errors"].append(
+                    {
+                        "path": str(candidate),
+                        "exception": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+        result["prune_after"] = _run_command(
+            ["git", "worktree", "prune", "--expire", "now"],
+            cwd=repo_root,
+            timeout=60,
+        )
+        if not result["prune_after"].get("valid"):
+            result["valid"] = False
+        return result
+
+    def _write_worktree_owner_file(self, path: Path, *, cycle_index: int) -> None:
+        payload = {
+            "schema": "ipfs_datasets_py.legal_parser_worktree_owner",
+            "pid": os.getpid(),
+            "cycle_index": cycle_index,
+            "repo_root": str(self.daemon_config.repo_root),
+            "created_at": _utc_now(),
+            "created_at_epoch": time.time(),
+            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+        }
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def _read_worktree_owner_file(self, path: Path) -> Dict[str, Any]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, dict) else {}
 
     def build_worktree_edit_prompt(
         self,
@@ -1700,6 +1850,8 @@ class LegalParserOptimizerDaemon:
         self.state_file = self.output_dir / "daemon_state.json"
         self.status_file = self.output_dir / "current_status.json"
         self.optimizer = optimizer or LegalParserParityOptimizer(daemon_config=self.config)
+        if isinstance(self.optimizer, LegalParserParityOptimizer):
+            self.optimizer.cleanup_stale_worktrees()
         self._state = self._load_state()
         self.run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_started_at = _utc_now()
@@ -2264,6 +2416,8 @@ class LegalParserOptimizerDaemon:
             "model_name": self.config.model_name,
             "provider": self.config.provider_label(),
             "proposal_transport": self.config.proposal_transport_mode(),
+            "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
+            "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -2324,6 +2478,7 @@ class LegalParserOptimizerDaemon:
             "provider": self.config.provider_label(),
             "proposal_transport": self.config.proposal_transport_mode(),
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
+            "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -4344,6 +4499,47 @@ def _untracked_paths_from_git_status_porcelain(stdout: str) -> List[str]:
     return paths
 
 
+def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
+    """Return worktree paths from ``git worktree list --porcelain`` output."""
+
+    paths: List[Path] = []
+    for line in stdout.splitlines():
+        if not line.startswith("worktree "):
+            continue
+        path_text = line[len("worktree ") :].strip()
+        if path_text:
+            paths.append(Path(path_text).resolve())
+    return paths
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _owner_pid_from_worktree(path: Path, owner: Mapping[str, Any]) -> Optional[int]:
+    try:
+        pid = int(owner.get("pid") or 0)
+    except (TypeError, ValueError):
+        pid = 0
+    if pid > 0:
+        return pid
+    match = re.search(r"_(\d+)$", path.name)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:
     paths: List[str] = []
     for match in re.finditer(r"^diff --git a/(.+?) b/(.+?)$", unified_diff, flags=re.MULTILINE):
@@ -4759,7 +4955,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--proposal-transport",
         choices=("patch", "hybrid", "worktree", "patchless", "direct-edit"),
-        default=os.environ.get("LEGAL_PARSER_DAEMON_PROPOSAL_TRANSPORT", "patch"),
+        default=os.environ.get("LEGAL_PARSER_DAEMON_PROPOSAL_TRANSPORT", "worktree"),
         help=(
             "How to obtain candidate changes: patch asks for JSON/unified_diff only; "
             "worktree lets Codex edit an isolated worktree and Git generates the diff; "
@@ -4771,6 +4967,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_EDIT_TIMEOUT_SECONDS", "1200")),
         help="Timeout for isolated-worktree direct-edit proposal generation.",
+    )
+    parser.add_argument(
+        "--worktree-stale-after-seconds",
+        type=int,
+        default=int(os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_STALE_AFTER_SECONDS", "7200")),
+        help="Age after which dead daemon-created proposal worktrees are pruned.",
     )
     parser.add_argument(
         "--worktree-root",
@@ -4825,6 +5027,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         llm_proposal_attempts=int(args.llm_proposal_attempts),
         proposal_transport=str(args.proposal_transport),
         worktree_edit_timeout_seconds=int(args.worktree_edit_timeout_seconds),
+        worktree_stale_after_seconds=int(args.worktree_stale_after_seconds),
         worktree_root=Path(args.worktree_root),
         codex_bin=str(args.codex_bin),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),

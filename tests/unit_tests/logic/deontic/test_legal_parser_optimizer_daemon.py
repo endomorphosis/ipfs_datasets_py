@@ -15,6 +15,7 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     _repeated_rejection_family,
     _repeated_validation_failure_family,
     _summarize_post_apply_validation_failure,
+    build_arg_parser,
     parse_cycle_proposal,
 )
 
@@ -193,19 +194,41 @@ def test_legal_parser_daemon_scope_includes_formal_logic_stack_targets():
     assert expected <= recovery_targets
 
 
-def test_supervisor_uses_hybrid_worktree_transport_by_default():
+def test_supervisor_uses_worktree_transport_by_default():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
         repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
     ).read_text(encoding="utf-8")
 
-    assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-hybrid}"' in script
+    assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"' in script
     assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-1200}"' in script
+    assert 'WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"' in script
     assert '"proposal_transport": "$PROPOSAL_TRANSPORT"' in script
     assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
+    assert '"worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS' in script
     assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
     assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
+    assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
     assert '--codex-bin "$CODEX_BIN"' in script
+
+
+def test_cli_defaults_to_worktree_transport(monkeypatch):
+    monkeypatch.delenv("LEGAL_PARSER_DAEMON_PROPOSAL_TRANSPORT", raising=False)
+
+    args = build_arg_parser().parse_args([])
+
+    assert args.proposal_transport == "worktree"
+
+
+def test_check_script_reports_worktree_transport_health_fields():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+
+    assert '"proposal_transport": current.get("proposal_transport")' in script
+    assert '"worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds")' in script
+    assert '"worktree_stale_after_seconds": current.get("worktree_stale_after_seconds")' in script
 
 
 def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
@@ -864,6 +887,73 @@ def test_optimizer_worktree_edit_transport_generates_canonical_diff(tmp_path, mo
     assert "Do not output or hand-author a patch" in codex_call["input_text"]
     assert ".legal_parser_worktree_proposal.json" in codex_call["input_text"]
     assert any(call["cmd"][:3] == ["git", "add", "-N"] for call in calls)
+
+
+def test_optimizer_cleans_up_stale_daemon_worktrees(tmp_path, monkeypatch):
+    worktree_root = tmp_path / ".daemon/legal-parser-worktrees"
+    stale_registered = worktree_root / "cycle_0001_20260503T000000000000Z_999999"
+    stale_orphan = worktree_root / "cycle_0002_20260503T000000000000Z_999998"
+    active = worktree_root / f"cycle_0003_20260503T000000000000Z_{__import__('os').getpid()}"
+    for path in (stale_registered, stale_orphan, active):
+        path.mkdir(parents=True)
+    old_time = time.time() - 100
+    for path in (stale_registered, stale_orphan, active):
+        __import__("os").utime(path, (old_time, old_time))
+    (stale_registered / ".legal_parser_worktree_owner.json").write_text(
+        json.dumps({"pid": 999999, "created_at_epoch": old_time}),
+        encoding="utf-8",
+    )
+    (stale_orphan / ".legal_parser_worktree_owner.json").write_text(
+        json.dumps({"pid": 999998, "created_at_epoch": old_time}),
+        encoding="utf-8",
+    )
+    (active / ".legal_parser_worktree_owner.json").write_text(
+        json.dumps({"pid": __import__("os").getpid(), "created_at_epoch": old_time}),
+        encoding="utf-8",
+    )
+    calls = []
+
+    def fake_run_command(cmd, *, cwd, input_text=None, timeout=60):
+        command = list(cmd)
+        calls.append(command)
+        if command[:3] == ["git", "worktree", "list"]:
+            return {
+                "valid": True,
+                "returncode": 0,
+                "command": command,
+                "stdout": f"worktree {stale_registered.resolve()}\nHEAD abc123\n",
+                "stderr": "",
+            }
+        if command[:3] == ["git", "worktree", "remove"]:
+            assert Path(command[-1]) == stale_registered.resolve()
+            __import__("shutil").rmtree(stale_registered)
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+        if command[:3] == ["git", "worktree", "prune"]:
+            return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+        return {"valid": True, "returncode": 0, "command": command, "stdout": "", "stderr": ""}
+
+    monkeypatch.setattr(parser_daemon_module, "_run_command", fake_run_command)
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        worktree_root=worktree_root,
+        worktree_stale_after_seconds=1,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    result = optimizer.cleanup_stale_worktrees()
+
+    assert result["valid"] is True
+    assert not stale_registered.exists()
+    assert not stale_orphan.exists()
+    assert active.exists()
+    assert {Path(item["path"]).name for item in result["removed"]} == {
+        stale_registered.name,
+        stale_orphan.name,
+    }
+    assert any(item["reason"] == "owner_pid_alive" for item in result["skipped"])
+    assert any(call[:3] == ["git", "worktree", "remove"] for call in calls)
+    assert sum(1 for call in calls if call[:3] == ["git", "worktree", "prune"]) == 2
 
 
 def test_daemon_hybrid_transport_falls_back_to_worktree_after_patch_check_failure(tmp_path, monkeypatch):
