@@ -3659,6 +3659,21 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     legal_frame = norm.legal_frame if isinstance(norm.legal_frame, Mapping) else {}
     category = str(legal_frame.get("category") or "").strip().lower()
+
+    if norm.norm_type == "definition":
+        return "definition"
+    if norm.norm_type == "applicability":
+        return "applicability_rule"
+    if norm.norm_type == "exemption":
+        return "exemption_rule"
+    if norm.norm_type == "instrument_lifecycle":
+        action = str(norm.action or "").strip().lower()
+        if action.startswith("valid for "):
+            return "instrument_lifecycle_validity"
+        if action.startswith("expires "):
+            return "instrument_lifecycle_expiration"
+        return "instrument_lifecycle"
+
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
 
@@ -3692,28 +3707,29 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
         return "sanction_clause"
+    if _has_deadline_temporal_constraint(norm):
+        return "temporal_deadline_duty"
     if norm.procedure:
         return "procedural_event_duty"
-    if norm.temporal_constraints:
-        return "temporal_deadline_duty"
     if norm.modality == "O" and norm.norm_type == "obligation":
         return "ordinary_duty"
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
-    if norm.norm_type == "applicability":
-        return "applicability_rule"
-    if norm.norm_type == "exemption":
-        return "exemption_rule"
-    if norm.norm_type == "instrument_lifecycle":
-        action = str(norm.action or "").strip().lower()
-        if action.startswith("valid for "):
-            return "instrument_lifecycle_validity"
-        if action.startswith("expires "):
-            return "instrument_lifecycle_expiration"
-        return "instrument_lifecycle"
-    if norm.norm_type == "definition":
-        return "definition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _has_deadline_temporal_constraint(norm: LegalNormIR) -> bool:
+    for record in norm.temporal_constraints or []:
+        if not isinstance(record, Mapping):
+            continue
+        constraint_type = str(record.get("type") or "").strip().lower()
+        relation = str(record.get("relation") or "").strip().lower()
+        value = str(record.get("value") or record.get("normalized_text") or "").strip().lower()
+        if constraint_type == "deadline" or relation in {"deadline", "due_by"}:
+            return True
+        if value.startswith(("within ", "not later than ", "no later than ", "by ", "before ")):
+            return True
+    return False
 
 
 def _deterministic_formula_action_predicate(formula: str) -> str:

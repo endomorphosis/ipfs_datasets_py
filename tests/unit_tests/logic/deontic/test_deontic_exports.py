@@ -200,6 +200,79 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_family_precedence_distinguishes_periods_deadlines_scope_and_lifecycle():
+    """Capability families should reflect legal construction, not incidental slots."""
+
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            "ordinary_duty",
+            "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))",
+        ),
+        (
+            "The Director shall issue a permit within 10 days after application.",
+            "temporal_deadline_duty",
+            "O(∀x (Director(x) ∧ Deadline10DaysAfterApplication(x) → IssuePermit(x)))",
+        ),
+        (
+            "Upon receipt of an application, the Bureau shall inspect the premises before approval.",
+            "procedural_event_duty",
+            "O(∀x (Bureau(x) ∧ ProcedureUponReceiptApplication(x) → InspectPremises(x)))",
+        ),
+        (
+            "This section applies to food carts.",
+            "applicability_rule",
+            "AppliesTo(ThisSection, FoodCarts)",
+        ),
+        (
+            "A permit is not required for emergency work.",
+            "exemption_rule",
+            "ExemptFrom(EmergencyWork, Permit)",
+        ),
+        (
+            'In this section, the term "food cart" means a mobile food vending unit.',
+            "definition",
+            "Definition(FoodCart)",
+        ),
+        (
+            "The permit expires one year after issuance.",
+            "instrument_lifecycle_expiration",
+            "ExpiresAfter(Permit, OneYearAfterIssuance)",
+        ),
+    ]
+
+    norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text, _, _ in examples
+    ]
+
+    records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in records] == [
+        expected_family for _, expected_family, _ in examples
+    ]
+    assert [record["formula"] for record in records] == [
+        expected_formula for _, _, expected_formula in examples
+    ]
+    assert records[0]["norm_type"] == "obligation"
+    assert records[0]["checked_slots"] == ["actor", "modality", "action"]
+    assert records[1]["capability_family"] == "temporal_deadline_duty"
+    assert records[2]["capability_family"] == "procedural_event_duty"
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    blocked_record = build_deterministic_parser_capability_profile_record(
+        LegalNormIR.from_parser_element(blocked)
+    )
+
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+    assert blocked_record["repair_required"] is True
+
+
 def test_deterministic_parser_capability_profiles_cover_administrative_review_requests():
     """Appeal, petition, and application duties are a distinct request family."""
 
