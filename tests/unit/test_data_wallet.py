@@ -327,6 +327,26 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     tampered = {**bundle, "records": []}
     assert service.verify_export_bundle(tampered) is False
 
+    imported = WalletService(storage_dir=tmp_path / "imported")
+    summary = imported.import_export_bundle(bundle)
+    assert summary["record_count"] == 2
+    assert summary["version_count"] == 2
+    assert imported.records[document.record_id].data_type == "document"
+    assert imported.records[location.record_id].data_type == "location"
+    assert imported.get_audit_log(wallet.wallet_id)[-1].action == "export/import"
+    with pytest.raises(AccessDeniedError):
+        imported.import_export_bundle(tampered)
+    wrong_type = {**bundle, "bundle_type": "not_wallet_export"}
+    wrong_type["bundle_hash"] = imported.export_bundle_hash(wrong_type)
+    wrong_type["bundle_id"] = f"export-{wrong_type['bundle_hash'][:24]}"
+    with pytest.raises(ValueError, match="Unsupported"):
+        imported.import_export_bundle(wrong_type)
+    missing_versions = {**bundle, "versions": []}
+    missing_versions["bundle_hash"] = imported.export_bundle_hash(missing_versions)
+    missing_versions["bundle_id"] = f"export-{missing_versions['bundle_hash'][:24]}"
+    with pytest.raises(ValueError, match="version"):
+        imported.import_export_bundle(missing_versions)
+
     service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
     with pytest.raises(AccessDeniedError):
         service.create_export_bundle(

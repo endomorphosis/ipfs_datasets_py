@@ -233,6 +233,9 @@ def build_parser() -> argparse.ArgumentParser:
     verify_export_bundle = subparsers.add_parser("verify-export-bundle", help="Verify an encrypted export bundle receipt")
     verify_export_bundle.add_argument("--path", type=Path, required=True)
 
+    import_export_bundle = subparsers.add_parser("import-export-bundle", help="Import encrypted descriptors from a verified export bundle")
+    import_export_bundle.add_argument("--path", type=Path, required=True)
+
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
     access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending")
@@ -377,6 +380,14 @@ def main(argv: Optional[list[str]] = None) -> int:
                 },
                 json_output=args.json_output,
             )
+            return 0
+
+        if args.command == "import-export-bundle":
+            service = _service(args.blob_dir)
+            bundle = json.loads(args.path.read_text(encoding="utf-8"))
+            result = service.import_export_bundle(bundle)
+            _save(service, args.wallet_dir, result["wallet_id"])
+            _emit({"status": "ok", **result}, json_output=args.json_output)
             return 0
 
         if args.command == "create":

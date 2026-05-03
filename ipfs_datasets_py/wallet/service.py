@@ -1445,6 +1445,127 @@ class DataWalletService:
         expected = bundle.get("bundle_hash")
         return isinstance(expected, str) and self.export_bundle_hash(bundle) == expected
 
+    def import_export_bundle(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and register an encrypted export bundle.
+
+        This imports encrypted descriptors only. It does not grant plaintext
+        access and does not assume the referenced encrypted blobs are locally
+        available.
+        """
+
+        if not self.verify_export_bundle(bundle):
+            raise AccessDeniedError("Export bundle hash verification failed")
+        self._validate_export_bundle_shape(bundle)
+        wallet_data = dict(bundle.get("wallet") or {})
+        wallet_id = str(wallet_data.get("wallet_id") or "")
+        if not wallet_id:
+            raise ValueError("Export bundle wallet_id is required")
+        if wallet_id not in self.wallets:
+            self.wallets[wallet_id] = Wallet(
+                wallet_id=wallet_id,
+                owner_did=str(wallet_data.get("owner_did") or "did:unknown:owner"),
+                controller_dids=list(wallet_data.get("controller_dids") or [wallet_data.get("owner_did") or "did:unknown:owner"]),
+                device_dids=list(wallet_data.get("device_dids") or []),
+                default_privacy_policy=dict(wallet_data.get("default_privacy_policy") or {}),
+                governance_policy=dict(wallet_data.get("governance_policy") or {}),
+                manifest_head=wallet_data.get("manifest_head"),
+                created_at=wallet_data.get("created_at", utc_now()),
+                updated_at=wallet_data.get("updated_at", utc_now()),
+            )
+            self.audit_events[wallet_id] = []
+
+        imported_records = 0
+        for record_data in bundle.get("records", []):
+            self.records[record_data["record_id"]] = DataRecord(**record_data)
+            imported_records += 1
+
+        imported_versions = 0
+        for version_data in bundle.get("versions", []):
+            payload_ref = version_data["encrypted_payload_ref"]
+            metadata_ref = version_data.get("encrypted_metadata_ref")
+            self.versions[version_data["version_id"]] = DataVersion(
+                version_id=version_data["version_id"],
+                record_id=version_data["record_id"],
+                encrypted_payload_ref=self._storage_ref_from_dict(payload_ref),
+                encrypted_metadata_ref=self._storage_ref_from_dict(metadata_ref) if metadata_ref else None,
+                ciphertext_hash=version_data["ciphertext_hash"],
+                encryption_suite=version_data["encryption_suite"],
+                key_wraps=[KeyWrap(**wrap) for wrap in version_data.get("key_wraps", [])],
+                derived_artifact_ids=list(version_data.get("derived_artifact_ids", [])),
+                proof_receipt_ids=list(version_data.get("proof_receipt_ids", [])),
+                created_at=version_data.get("created_at", utc_now()),
+            )
+            imported_versions += 1
+
+        imported_artifacts = 0
+        for artifact_data in bundle.get("derived_artifacts", []):
+            self.derived_artifacts[artifact_data["artifact_id"]] = DerivedArtifact(
+                artifact_id=artifact_data["artifact_id"],
+                wallet_id=artifact_data["wallet_id"],
+                source_record_ids=list(artifact_data.get("source_record_ids", [])),
+                artifact_type=artifact_data["artifact_type"],
+                output_policy=artifact_data["output_policy"],
+                encrypted_payload_ref=self._storage_ref_from_dict(artifact_data["encrypted_payload_ref"]),
+                created_at=artifact_data.get("created_at", utc_now()),
+            )
+            imported_artifacts += 1
+
+        imported_proofs = 0
+        for proof_data in bundle.get("proofs", []):
+            self.proofs[proof_data["proof_id"]] = ProofReceipt(**proof_data)
+            imported_proofs += 1
+
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=str(bundle.get("actor_did") or "did:unknown:export-recipient"),
+            action="export/import",
+            resource=f"wallet://{wallet_id}/exports/{bundle.get('bundle_id')}",
+            decision="allow",
+            details={
+                "bundle_id": bundle.get("bundle_id"),
+                "bundle_hash": bundle.get("bundle_hash"),
+                "record_count": imported_records,
+                "version_count": imported_versions,
+                "proof_count": imported_proofs,
+                "derived_artifact_count": imported_artifacts,
+            },
+        )
+        return {
+            "wallet_id": wallet_id,
+            "bundle_id": bundle.get("bundle_id"),
+            "bundle_hash": bundle.get("bundle_hash"),
+            "record_count": imported_records,
+            "version_count": imported_versions,
+            "proof_count": imported_proofs,
+            "derived_artifact_count": imported_artifacts,
+        }
+
+    def _validate_export_bundle_shape(self, bundle: Dict[str, Any]) -> None:
+        if bundle.get("bundle_type") != "wallet_export_v1":
+            raise ValueError("Unsupported export bundle type")
+        if not isinstance(bundle.get("wallet"), dict):
+            raise ValueError("Export bundle wallet descriptor is required")
+        for key in ("records", "versions", "proofs", "derived_artifacts"):
+            if not isinstance(bundle.get(key), list):
+                raise ValueError(f"Export bundle {key} must be a list")
+        record_ids = {
+            str(record.get("record_id"))
+            for record in bundle["records"]
+            if isinstance(record, dict) and record.get("record_id")
+        }
+        version_record_ids = {
+            str(version.get("record_id"))
+            for version in bundle["versions"]
+            if isinstance(version, dict) and version.get("record_id")
+        }
+        if not record_ids:
+            raise ValueError("Export bundle must contain at least one record")
+        if not version_record_ids:
+            raise ValueError("Export bundle must contain at least one version")
+        if not version_record_ids.issubset(record_ids):
+            raise ValueError("Export bundle versions reference records outside the bundle")
+
     def _export_wallet_descriptor(self, wallet: Wallet, *, actor_did: str) -> Dict[str, Any]:
         if actor_did == wallet.owner_did:
             return wallet.to_dict()

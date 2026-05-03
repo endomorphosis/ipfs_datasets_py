@@ -643,6 +643,22 @@ def test_wallet_cli_export_grant_invocation_and_bundle(tmp_path, capsys) -> None
     assert verified["valid"] is True
     assert verified["computed_hash"] == bundle["bundle_hash"]
 
+    import_wallet_dir = tmp_path / "imported-wallets"
+    assert main([
+        "--json",
+        "--wallet-dir",
+        str(import_wallet_dir),
+        "--blob-dir",
+        str(blob_dir),
+        "import-export-bundle",
+        "--path",
+        str(bundle_path),
+    ]) == 0
+    imported = json.loads(capsys.readouterr().out)
+    assert imported["record_count"] == 1
+    assert imported["bundle_hash"] == bundle["bundle_hash"]
+    assert next(import_wallet_dir.glob("wallet-*.json")).exists()
+
     bundle["records"] = []
     bundle_path.write_text(json.dumps(bundle), encoding="utf-8")
     assert main([
