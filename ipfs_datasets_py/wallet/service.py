@@ -266,7 +266,7 @@ class DataWalletService:
             requests = [request for request in requests if request.requester_did == requester_did]
         if audience_did is not None:
             requests = [request for request in requests if request.audience_did == audience_did]
-        return sorted(requests, key=lambda item: (item.created_at, item.request_id))
+        return sorted(requests, key=lambda item: item.created_at)
 
     def approve_access_request(
         self,
