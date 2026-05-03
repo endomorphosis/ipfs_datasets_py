@@ -199,6 +199,56 @@ class TestDeonticConverter:
         assert all(record["formula_proof_ready"] is True for record in capability_records)
         assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
 
+    def test_periodic_and_deadline_capability_profiles_are_distinct(self):
+        """Converter metadata should not treat recurrence as a deadline."""
+        converter = DeonticConverter(use_ml=False, enable_monitoring=False)
+
+        periodic_examples = [
+            (
+                "The tenant must pay rent monthly.",
+                "ordinary_duty",
+                "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))",
+            ),
+            (
+                "The licensee shall submit reports weekly.",
+                "ordinary_duty",
+                "O(∀x (Licensee(x) ∧ PeriodWeekly(x) → SubmitReportsWeekly(x)))",
+            ),
+        ]
+        deadline_examples = [
+            (
+                "The Director shall issue a permit within 10 days after application.",
+                "temporal_deadline_duty",
+                "O(∀x (Director(x) ∧ Deadline10DaysAfterApplication(x) → IssuePermit(x)))",
+            ),
+            (
+                "The Clerk shall mail the notice no later than 5 days after filing.",
+                "temporal_deadline_duty",
+                "O(∀x (Clerk(x) ∧ Deadline5DaysAfterFiling(x) → MailNotice(x)))",
+            ),
+        ]
+
+        for text, capability_family, formula in [*periodic_examples, *deadline_examples]:
+            result = converter.convert(text)
+
+            assert result.success
+            record = result.metadata["legal_parser_capability_profile_records"][0]
+            assert record["capability_family"] == capability_family
+            assert record["formula"] == formula
+            assert record["formula_proof_ready"] is True
+            assert record["requires_validation"] is False
+            assert record["repair_required"] is False
+            assert record["checked_slots"] == ["actor", "modality", "action"]
+            assert record["grounded_slots"] == ["actor", "modality", "action"]
+
+        blocked = __import__(
+            "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+            fromlist=["extract_normative_elements"],
+        ).extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+        assert blocked["llm_repair"]["required"] is True
+
     def test_converter_exposes_authority_grant_capability_profile(self):
         """Authority grants should be visible as parser capability profiles."""
         converter = DeonticConverter(use_ml=False, enable_monitoring=False)

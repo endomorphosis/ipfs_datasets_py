@@ -751,6 +751,35 @@ path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="ut
 PY
 }
 
+clear_dirty_target_state() {
+  python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    state = json.loads(path.read_text(encoding="utf-8"))
+except Exception:
+    state = {}
+state.update(
+    {
+        "dirty_legal_parser_targets": [],
+        "dirty_legal_parser_targets_fingerprint": "",
+        "previous_dirty_legal_parser_targets": [],
+        "previous_dirty_legal_parser_targets_fingerprint": "",
+        "dirty_legal_parser_targets_pending_confirmation": False,
+        "dirty_legal_parser_targets_transient_phase": "",
+        "dirty_legal_parser_targets_known_bad_restore_failure": False,
+        "dirty_legal_parser_targets_confirmed": False,
+    }
+)
+state_path = path
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
 record_recovery_failure() {
   local recovery_kind="$1"
   local reason="$2"

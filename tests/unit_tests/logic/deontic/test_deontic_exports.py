@@ -200,6 +200,64 @@ def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profiles_distinguish_periods_from_deadlines():
+    """Recurring periods are ordinary duties; true deadlines are deadline duties."""
+
+    periodic_texts = [
+        "The tenant must pay rent monthly.",
+        "The licensee shall submit reports weekly.",
+        "The treasurer shall publish the statement annually.",
+    ]
+    deadline_texts = [
+        "The Director shall issue a permit within 10 days after application.",
+        "The Secretary shall issue regulations not later than 180 days after enactment.",
+        "The Clerk shall mail the notice no later than 5 days after filing.",
+    ]
+
+    periodic_norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text in periodic_texts
+    ]
+    deadline_norms = [
+        LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        for text in deadline_texts
+    ]
+    records = build_deterministic_parser_capability_profile_records(
+        [*periodic_norms, *deadline_norms]
+    )
+
+    assert [record["capability_family"] for record in records[:3]] == [
+        "ordinary_duty",
+        "ordinary_duty",
+        "ordinary_duty",
+    ]
+    assert [record["capability_family"] for record in records[3:]] == [
+        "temporal_deadline_duty",
+        "temporal_deadline_duty",
+        "temporal_deadline_duty",
+    ]
+    assert [record["formula"] for record in records] == [
+        "O(∀x (Tenant(x) ∧ PeriodMonthly(x) → PayRentMonthly(x)))",
+        "O(∀x (Licensee(x) ∧ PeriodWeekly(x) → SubmitReportsWeekly(x)))",
+        "O(∀x (Treasurer(x) ∧ PeriodAnnually(x) → PublishStatementAnnually(x)))",
+        "O(∀x (Director(x) ∧ Deadline10DaysAfterApplication(x) → IssuePermit(x)))",
+        "O(∀x (Secretary(x) ∧ Deadline180DaysAfterEnactment(x) → IssueRegulations(x)))",
+        "O(∀x (Clerk(x) ∧ Deadline5DaysAfterFiling(x) → MailNotice(x)))",
+    ]
+    assert all(record["formula_proof_ready"] is True for record in records)
+    assert all(record["requires_validation"] is False for record in records)
+    assert all(record["repair_required"] is False for record in records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in records)
+    assert all(norm.temporal_constraints for norm in [*periodic_norms, *deadline_norms])
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_deterministic_parser_capability_profiles_cover_scope_definition_and_lifecycle_families():
     definition = LegalNormIR.from_parser_element(extract_normative_elements(
         'In this section, the term "food cart" means a mobile food vending unit.'

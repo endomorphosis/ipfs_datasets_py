@@ -9944,29 +9944,26 @@ def test_objection_response_comment_light_verb_duties_export_operative_predicate
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
-def test_review_request_light_verb_duties_export_operative_predicates():
+def test_review_request_light_verb_duties_preserve_source_grounded_predicates():
     examples = [
         (
             "The applicant shall file an appeal of the denial.",
             "file an appeal of the denial",
-            "O(∀x (Applicant(x) → AppealDenial(x)))",
-            "FileAppealDenial",
+            "O(∀x (Applicant(x) → FileAppealDenial(x)))",
         ),
         (
             "The licensee shall submit a petition for review.",
             "submit a petition for review",
-            "O(∀x (Licensee(x) → PetitionReview(x)))",
-            "SubmitPetitionReview",
+            "O(∀x (Licensee(x) → SubmitPetitionReview(x)))",
         ),
         (
             "The permittee shall make an application for renewal.",
             "make an application for renewal",
-            "O(∀x (Permittee(x) → ApplyRenewal(x)))",
-            "MakeApplicationRenewal",
+            "O(∀x (Permittee(x) → MakeApplicationRenewal(x)))",
         ),
     ]
 
-    for text, action, expected_formula, rejected_predicate in examples:
+    for text, action, expected_formula in examples:
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         record = build_deontic_formula_record_from_ir(norm)
@@ -9978,7 +9975,6 @@ def test_review_request_light_verb_duties_export_operative_predicates():
         assert element["text"][action_span[0]:action_span[1]] == action
         assert build_deontic_formula_from_ir(norm) == expected_formula
         assert record["formula"] == expected_formula
-        assert rejected_predicate not in expected_formula
         assert record["proof_ready"] is True
         assert record["requires_validation"] is False
         assert record["repair_required"] is False

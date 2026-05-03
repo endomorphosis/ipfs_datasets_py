@@ -3665,7 +3665,7 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "sanction_clause"
     if norm.procedure:
         return "procedural_event_duty"
-    if norm.temporal_constraints:
+    if _norm_has_deadline_temporal_constraint(norm):
         return "temporal_deadline_duty"
     if norm.modality == "O" and norm.norm_type == "obligation":
         return "ordinary_duty"
@@ -3685,3 +3685,22 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.norm_type == "definition":
         return "definition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _norm_has_deadline_temporal_constraint(norm: LegalNormIR) -> bool:
+    """Return whether temporal slots impose a deadline, not just recurrence."""
+
+    for constraint in norm.temporal_constraints or []:
+        if not isinstance(constraint, Mapping):
+            continue
+        temporal_type = str(
+            constraint.get("type") or constraint.get("temporal_type") or ""
+        ).strip().lower()
+        temporal_kind = str(
+            constraint.get("temporal_kind") or constraint.get("kind") or ""
+        ).strip().lower()
+        if temporal_type == "deadline" or temporal_kind.startswith(("within_", "by_")):
+            return True
+        if temporal_kind in {"not_later_than", "no_later_than", "not_more_than", "no_more_than"}:
+            return True
+    return False

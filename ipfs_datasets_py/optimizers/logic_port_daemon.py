@@ -207,6 +207,7 @@ class LogicPortDaemonConfig:
     max_failure_cycles: int = 0
     max_task_failure_rounds: int = 3
     max_task_total_failure_rounds: int = 6
+    max_task_typescript_quality_rounds: int = 3
     result_log_path: Optional[Path] = None
     accepted_work_log_path: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md")
     accepted_work_artifact_dir: Optional[Path] = Path("ipfs_datasets_py/.daemon/accepted-work")
@@ -2425,6 +2426,16 @@ Critical correction for attempt {attempt}:
         rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     ) -> bool:
         if (
+            self.daemon_config.max_task_typescript_quality_rounds > 0
+            and int(
+                _current_task_failure_counts(rows, task.label)
+                .get("by_kind_since_success", {})
+                .get("typescript_quality", 0)
+            )
+            >= self.daemon_config.max_task_typescript_quality_rounds
+        ):
+            return True
+        if (
             self.daemon_config.max_task_total_failure_rounds > 0
             and _recent_total_failure_count(rows, task.label) >= self.daemon_config.max_task_total_failure_rounds
         ):
@@ -2995,6 +3006,20 @@ Current file contents for likely targets:
 
         task_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
         diagnostic_context = self._typescript_preflight_diagnostic_context(preflight_errors, artifact.files)
+        failure_counts = self._selected_task_failure_counts(selected_task)
+        repeated_typescript_failures = int(
+            failure_counts.get("by_kind_since_success", {}).get("typescript_quality", 0)
+            if isinstance(failure_counts, dict)
+            else 0
+        )
+        typescript_quality_budget = max(0, int(self.daemon_config.max_task_typescript_quality_rounds))
+        shrink_guidance = ""
+        if typescript_quality_budget > 0 and repeated_typescript_failures >= typescript_quality_budget:
+            shrink_guidance = (
+                "\n- This task has reached the TypeScript-quality failure budget. Do not repair by broadening the same malformed replacement. "
+                "Shrink to the smallest compileable browser-native contract for the selected task: one runtime file plus one focused test at most, "
+                "simple named interfaces, explicit generic arguments, and no recursive parser rewrites unless the current file already contains that structure."
+            )
         repair_prompt = f"""The previous daemon proposal returned complete TypeScript file replacements, but preflight rejected them before touching the worktree.
 
 Repair the same intended change into compileable complete file replacements for the selected task.
@@ -3023,6 +3048,7 @@ Rules:
 - Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
 - Preserve browser-native TypeScript/WASM behavior with no server, Python, filesystem, subprocess, RPC, or Node-only browser-runtime dependency.
 - Preserve focused tests for the selected task when tests were part of the original proposal.
+{shrink_guidance}
 
 Session: {context.session_id}
 Preflight diagnostics:
@@ -3349,11 +3375,19 @@ Current repository file contents after rollback:
         rollback_quality_failures = _rollback_quality_failure_counts(prompt_rows)
         repeated_rollback_failures = int(rollback_quality_failures.get("consecutive", 0))
         slice_mode = self.daemon_config.slice_mode if self.daemon_config.slice_mode in {"small", "balanced", "broad"} else "balanced"
-        if slice_mode == "small":
+        typescript_quality_budget = max(0, int(self.daemon_config.max_task_typescript_quality_rounds))
+        effective_slice_mode = slice_mode
+        if (
+            slice_mode == "balanced"
+            and typescript_quality_budget > 0
+            and repeated_typescript_failures >= typescript_quality_budget
+        ):
+            effective_slice_mode = "small"
+        if effective_slice_mode == "small":
             slice_guidance = (
                 "Slice mode: small. Prefer one implementation file plus one focused test file, and keep the diff as compact as possible."
             )
-        elif slice_mode == "broad":
+        elif effective_slice_mode == "broad":
             slice_guidance = (
                 "Slice mode: broad. Prefer a complete coherent parity chunk for the selected task; it may span 2-5 related runtime/test files "
                 "when that is necessary for browser-native behavior, but it must still stay compileable and under the diff-line budget."
@@ -3362,10 +3396,10 @@ Current repository file contents after rollback:
             slice_guidance = (
                 "Slice mode: balanced. Prefer a useful vertical slice for the selected task, usually 1-3 related implementation/test files, "
                 "so the result is directly exercised by validation without becoming a broad rewrite."
-            )
+        )
         recovery_mode_context = "[No repeated TypeScript-quality failure recovery mode active.]"
         if repeated_typescript_failures >= 2:
-            if slice_mode == "small":
+            if effective_slice_mode == "small":
                 recovery_mode_context = (
                     f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
                     "Recovery mode is active: land the smallest compileable TypeScript contract first, avoid large feature-complete files, "
@@ -3373,7 +3407,12 @@ Current repository file contents after rollback:
                     "and include only one focused test that proves the contract. Prefer simple interfaces, string/number/boolean/null arrays/records, "
                     "and fail-closed stubs that can be expanded in later tasks."
                 )
-            elif slice_mode == "broad":
+                if slice_mode != effective_slice_mode:
+                    recovery_mode_context += (
+                        f" Balanced slice mode was overridden to small because this task reached the "
+                        f"TypeScript-quality failure budget of {typescript_quality_budget}; do not attempt another full-module replacement."
+                    )
+            elif effective_slice_mode == "broad":
                 recovery_mode_context = (
                     f"Repeated TypeScript-quality failures for this task: {repeated_typescript_failures}. "
                     "Recovery mode is active, but broad slice mode should not collapse the work into a tiny placeholder. "
@@ -3461,6 +3500,7 @@ Session: {context.session_id}
 Model requested by daemon: {self.daemon_config.model_name}
 Provider requested by daemon: {self._resolved_provider() or "auto"}
 Slice mode requested by daemon: {slice_mode}
+Effective slice mode for this task: {effective_slice_mode}
 Dry run: {self.daemon_config.dry_run}
 
 Current git status:
@@ -3523,6 +3563,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--retry-interval", type=float, default=0.0, help="Seconds between supervised daemon cycles. Default 0 starts the next cycle immediately.")
     parser.add_argument("--max-failure-cycles", type=int, default=0, help="Stop --watch after N failed cycles; 0 means unlimited.")
     parser.add_argument("--max-task-failures", type=int, default=6, help="Block the current task after N failures since its last accepted round, regardless of failure kind.")
+    parser.add_argument(
+        "--max-task-typescript-quality-failures",
+        type=int,
+        default=3,
+        help="Block or shrink a task after N TypeScript-quality failures since its last accepted round; 0 disables this dedicated budget.",
+    )
     parser.add_argument("--llm-timeout", type=int, default=300, help="Seconds before a single LLM/Codex call times out.")
     parser.add_argument("--command-timeout", type=int, default=300, help="Seconds before validation/git commands time out.")
     parser.add_argument("--max-prompt-chars", type=int, default=32000, help="Maximum prompt characters sent to a single LLM/Codex call.")
@@ -3583,6 +3629,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
         max_task_total_failure_rounds=max(0, args.max_task_failures),
+        max_task_typescript_quality_rounds=max(0, args.max_task_typescript_quality_failures),
         result_log_path=Path(args.log_file) if args.log_file else None,
         status_path=Path(args.status_file) if args.status_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.status.json"),
         progress_path=Path(args.progress_file) if args.progress_file else Path("ipfs_datasets_py/.daemon/logic-port-daemon.progress.json"),

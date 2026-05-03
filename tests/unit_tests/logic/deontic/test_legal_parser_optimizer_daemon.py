@@ -11,6 +11,7 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserOptimizerDaemon,
     LegalParserParityOptimizer,
     _paths_from_git_status_porcelain,
+    _repeated_rejection_family,
     parse_cycle_proposal,
 )
 
@@ -1488,6 +1489,96 @@ def test_recent_cycle_history_summarizes_post_apply_validation_failures(tmp_path
     assert '"test_failure_recovery_mode": true' in prompt
     assert "compile-safe first" in prompt
     assert "SyntaxError" in prompt
+
+
+def test_recent_cycle_history_summarizes_candidate_validation_failures(tmp_path):
+    target_file = "ipfs_datasets_py/logic/deontic/formula_builder.py"
+    test_file = "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py"
+    for path, body in {
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md": "Improve parser.",
+        "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md": "Implement parser.",
+        target_file: "def existing():\n    return 'production'\n",
+        test_file: "def test_existing():\n    assert True\n",
+    }.items():
+        full_path = tmp_path / path
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(body, encoding="utf-8")
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        target_files=(target_file, test_file),
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9763,
+                "feedback": ["repair_required_count: 1"],
+                "patch_check": {
+                    "valid": False,
+                    "stderr": (
+                        "all proposal attempts exhausted; last rejection: "
+                        "candidate_post_apply_validation_failed:focused test failed"
+                    ),
+                },
+                "proposal_quality": {
+                    "valid": False,
+                    "reasons": ["all proposal attempts exhausted"],
+                },
+                "apply_result": {"applied": False, "reason": "proposal_quality_failed"},
+                "changed_files": [target_file, test_file],
+                "proposal_attempts": [
+                    {
+                        "attempt": 1,
+                        "retry_reason": "candidate_post_apply_validation_failed:focused test failed",
+                        "candidate_validation_valid": False,
+                        "candidate_validation_reasons": [
+                            "changed deontic tests failed focused pytest"
+                        ],
+                        "candidate_validation_summary": {
+                            "failed_tests": [
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+                            ],
+                            "exception_types": ["AssertionError"],
+                            "failure_head": (
+                                "focused_tests: FAILED "
+                                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula "
+                                "- AssertionError"
+                            ),
+                        },
+                        "changed_files": [target_file, test_file],
+                    }
+                ],
+                "tests": {"valid": True, "skipped": True, "reason": "patch_not_applied"},
+                "post_apply_validation": {
+                    "valid": True,
+                    "skipped": True,
+                    "reason": "patch_not_applied",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    history = optimizer._recent_cycle_history(limit=1)
+    recent_failures = optimizer._recent_test_failures(history)
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert history[0]["candidate_validation_valid"] is False
+    assert recent_failures[0]["failure_phase"] == "candidate_post_apply_validation"
+    assert recent_failures[0]["candidate_attempt"] == 1
+    assert recent_failures[0]["failed_tests"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+    ]
+    assert "changed deontic tests failed focused pytest" in recent_failures[0][
+        "candidate_validation_reasons"
+    ]
+    assert '"test_failure_recovery_mode": true' in prompt
+    assert "candidate_post_apply_validation" in prompt
+    assert "test_bad_formula" in prompt
 
 
 def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
@@ -3179,6 +3270,155 @@ def test_progress_summary_does_not_report_stale_dirty_rejection_files_as_active(
 
     assert progress["dirty_touched_file_rejection_count"] == 1
     assert progress["active_dirty_touched_files"] == []
+
+
+def test_progress_summary_exposes_candidate_validation_rejection_signature(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=_FailingOptimizer())
+    cycle = {
+        "cycle_index": 1,
+        "score": 0.9,
+        "metrics": {"parity_score": 0.9},
+        "patch_check": {
+            "valid": False,
+            "stderr": (
+                "all proposal attempts exhausted; last rejection: "
+                "candidate_post_apply_validation_failed:focused tests failed"
+            ),
+        },
+        "proposal_quality": {
+            "valid": False,
+            "reasons": ["all proposal attempts exhausted"],
+        },
+        "apply_result": {"applied": False, "reason": "proposal_quality_failed"},
+        "changed_files": [
+            "ipfs_datasets_py/logic/deontic/formula_builder.py",
+            "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+        ],
+        "tests": {"valid": True},
+        "proposal_attempts": [
+            {
+                "attempt": 1,
+                "retry_reason": "candidate_post_apply_validation_failed:focused tests failed",
+                "candidate_validation_valid": False,
+                "candidate_validation_reasons": ["changed deontic tests failed focused pytest"],
+                "candidate_validation_summary": {
+                    "failed_tests": [
+                        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+                    ],
+                    "exception_types": ["AssertionError"],
+                    "failure_head": "focused_tests: FAILED test_bad_formula - AssertionError",
+                },
+                "changed_files": [
+                    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+                    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                ],
+            }
+        ],
+    }
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(json.dumps(cycle), encoding="utf-8")
+
+    progress = daemon._build_progress_summary(latest_cycle=cycle)
+    latest_failure = progress["latest_candidate_post_apply_validation_failure"]
+    report = daemon._format_progress_report(progress)
+
+    assert progress["candidate_post_apply_validation_rejection_count"] == 1
+    assert latest_failure["attempt"] == 1
+    assert latest_failure["summary"]["failed_tests"] == [
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py::test_bad_formula"
+    ]
+    assert progress["repeated_rejection_family"]["reason"] == "candidate_post_apply_validation_failed"
+    assert progress["repeated_rejection_family"]["count"] == 1
+    assert progress["repeated_rejection_family"]["changed_files"] == [
+        "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+    ]
+    assert "Latest candidate post-apply validation failure:" in report
+    assert "test_bad_formula" in report
+    assert "changed deontic tests failed focused pytest" in report
+
+
+def test_repeated_rejection_family_groups_exhausted_candidate_validation_failures():
+    rejections = [
+        {
+            "cycle_index": 1,
+            "reason": (
+                "proposal_quality_failed:all proposal attempts exhausted; last rejection: "
+                "candidate_post_apply_validation_failed:focused_tests: AssertionError"
+            ),
+            "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
+            "latest_candidate_validation_failure": {"valid": False, "attempt": 3},
+        },
+        {
+            "cycle_index": 2,
+            "reason": (
+                "proposal_quality_failed:all proposal attempts exhausted; last rejection: "
+                "candidate_post_apply_validation_failed:focused_tests: ValueError"
+            ),
+            "changed_files": ["tests/unit_tests/logic/deontic/test_deontic_exports.py"],
+            "latest_candidate_validation_failure": {"valid": False, "attempt": 2},
+        },
+        {
+            "cycle_index": 3,
+            "reason": "patch_check_failed:error: patch failed",
+            "changed_files": ["ipfs_datasets_py/logic/deontic/converter.py"],
+        },
+    ]
+
+    family = _repeated_rejection_family(rejections)
+
+    assert family["reason"] == "candidate_post_apply_validation_failed"
+    assert family["count"] == 2
+    assert family["cycle_indexes"] == [1, 2]
+    assert family["changed_files"] == [
+        "ipfs_datasets_py/logic/deontic/exports.py",
+        "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    ]
+    assert family["latest_candidate_validation_failure"]["attempt"] == 2
+
+
+def test_optimizer_progress_snapshot_includes_repeated_rejection_family(tmp_path):
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    progress = {
+        "total_cycles": 4,
+        "recent_rejections": [
+            {
+                "cycle_index": 4,
+                "reason": (
+                    "proposal_quality_failed:all proposal attempts exhausted; last rejection: "
+                    "candidate_post_apply_validation_failed:focused_tests failed"
+                ),
+                "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
+            }
+        ],
+        "repeated_rejection_family": {
+            "reason": "candidate_post_apply_validation_failed",
+            "count": 4,
+            "changed_files": ["ipfs_datasets_py/logic/deontic/exports.py"],
+        },
+        "candidate_post_apply_validation_rejection_count": 4,
+        "latest_candidate_post_apply_validation_failure": {
+            "valid": False,
+            "summary": {"failure_head": "focused_tests: failed"},
+        },
+    }
+    (out_dir / "progress_summary.json").write_text(json.dumps(progress), encoding="utf-8")
+    optimizer = LegalParserParityOptimizer(
+        daemon_config=LegalParserDaemonConfig(repo_root=tmp_path, output_dir=out_dir),
+        llm_backend=_FakeRouter("{}"),
+    )
+
+    snapshot = optimizer._progress_snapshot()
+
+    assert snapshot["recent_rejections"] == progress["recent_rejections"]
+    assert snapshot["repeated_rejection_family"]["count"] == 4
+    assert snapshot["candidate_post_apply_validation_rejection_count"] == 4
+    assert snapshot["latest_candidate_post_apply_validation_failure"]["summary"]["failure_head"] == (
+        "focused_tests: failed"
+    )
 
 
 def test_progress_report_names_visible_commits_and_uncommitted_files(tmp_path):

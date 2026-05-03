@@ -494,6 +494,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "When irreducible_residual_mode is true, the remaining repair_required_count is a protected legal-reference blocker; do not try to clear it. Instead implement a roadmap parser capability with focused tests and set expected_metric_gain to deterministic_coverage, parser_capability, or coverage_expansion.",
                 "When roadmap_pivot_mode is true, stop adding narrow procedural trigger/export variants. Prioritize Phase 8 encoder/decoder reconstruction or local theorem-prover syntax validation for frame logic, deontic CEC, FOL, deontic FOL, and deontic temporal FOL.",
                 "When test_failure_recovery_mode is true, first address the named recent_test_failures and avoid repeating a patch shape that rolled back on the same exception.",
+                "When recent_test_failures has failure_phase=candidate_post_apply_validation, the prior patch failed before retention; fix the focused test, collection, or py_compile signature shown there before broadening the slice.",
                 "When recent_test_failures include py_compile, SyntaxError, or pytest collection failures, make the next patch compile-safe first: fix the exact file and line pattern shown in validation_failure_tail before adding new behavior.",
                 "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
@@ -664,6 +665,14 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "stalled_metric_cycles": progress.get("stalled_metric_cycles", 0),
             "cycles_since_meaningful_progress": progress.get("cycles_since_meaningful_progress", 0),
             "meaningful_progress_definition": progress.get("meaningful_progress_definition", ""),
+            "recent_rejections": progress.get("recent_rejections", [])[-8:],
+            "repeated_rejection_family": progress.get("repeated_rejection_family", {}),
+            "candidate_post_apply_validation_rejection_count": progress.get(
+                "candidate_post_apply_validation_rejection_count", 0
+            ),
+            "latest_candidate_post_apply_validation_failure": progress.get(
+                "latest_candidate_post_apply_validation_failure", {}
+            ),
         }
 
     def _metric_stall_mode(self, progress_payload: Dict[str, Any]) -> bool:
@@ -766,6 +775,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
             test_failure_summary = _summarize_test_failure(tests_stdout)
             post_apply_validation = dict(summary.get("post_apply_validation") or {})
             validation_failure_summary = _summarize_post_apply_validation_failure(post_apply_validation)
+            candidate_validation_failure = _latest_candidate_validation_failure(
+                summary.get("proposal_attempts") or []
+            )
             patch_check = dict(summary.get("patch_check") or {})
             apply_result = dict(summary.get("apply_result") or {})
             metric_progress = dict(
@@ -796,6 +808,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "post_apply_validation_valid": post_apply_validation.get("valid"),
                     "validation_failure_summary": validation_failure_summary,
                     "validation_failure_tail": validation_failure_summary.get("failure_head", ""),
+                    "candidate_validation_valid": candidate_validation_failure.get("valid"),
+                    "candidate_validation_failure_summary": candidate_validation_failure.get("summary", {}),
+                    "candidate_validation_failure_reasons": candidate_validation_failure.get("reasons", []),
+                    "candidate_validation_failure_attempt": candidate_validation_failure.get("attempt"),
                     "test_failure_summary": test_failure_summary if not tests.get("valid") else {},
                     "test_failure_tail": tests_stdout[-4000:] if not tests.get("valid") else "",
                 }
@@ -836,23 +852,34 @@ class LegalParserParityOptimizer(BaseOptimizer):
         failures: List[Dict[str, Any]] = []
         for item in recent_cycle_history:
             validation_failed = item.get("post_apply_validation_valid") is False
+            candidate_validation_failed = item.get("candidate_validation_valid") is False
             tests_failed = item.get("tests_valid") is False
-            if not tests_failed and not validation_failed:
+            if not tests_failed and not validation_failed and not candidate_validation_failed:
                 continue
             summary = dict(item.get("test_failure_summary") or {})
             if not _failure_summary_has_content(summary):
                 summary = _summarize_test_failure(str(item.get("test_failure_tail") or ""))
             if not _failure_summary_has_content(summary) and validation_failed:
                 summary = dict(item.get("validation_failure_summary") or {})
+            if not _failure_summary_has_content(summary) and candidate_validation_failed:
+                summary = dict(item.get("candidate_validation_failure_summary") or {})
             failures.append(
                 {
                     "cycle_index": item.get("cycle_index"),
                     "changed_files": item.get("changed_files", []),
                     "rolled_back": item.get("rolled_back", False),
-                    "failure_phase": "post_apply_validation" if validation_failed else "tests",
+                    "failure_phase": (
+                        "post_apply_validation"
+                        if validation_failed
+                        else "candidate_post_apply_validation"
+                        if candidate_validation_failed
+                        else "tests"
+                    ),
+                    "candidate_attempt": item.get("candidate_validation_failure_attempt"),
                     "failed_tests": summary.get("failed_tests", [])[:12],
                     "exception_types": summary.get("exception_types", [])[:8],
                     "failure_head": summary.get("failure_head", ""),
+                    "candidate_validation_reasons": item.get("candidate_validation_failure_reasons", []),
                 }
             )
         return failures[:5]
@@ -1170,6 +1197,7 @@ class LegalParserOptimizerDaemon:
                     "skipped": True,
                     "reason": "candidate_not_ready_for_validation",
                 }
+                candidate_validation_summary: Dict[str, Any] = {}
                 if (
                     not retry_reason
                     and self.config.apply_patches
@@ -1182,6 +1210,9 @@ class LegalParserOptimizerDaemon:
                     )
                     if not candidate_validation.get("valid"):
                         retry_reason = self._candidate_validation_retry_reason(candidate_validation)
+                        candidate_validation_summary = _summarize_post_apply_validation_failure(
+                            candidate_validation
+                        )
                 attempt_record.update(
                     {
                         "retry_reason": retry_reason,
@@ -1192,6 +1223,7 @@ class LegalParserOptimizerDaemon:
                         "slice_scale_contract": slice_scale_contract,
                         "candidate_validation_valid": candidate_validation.get("valid"),
                         "candidate_validation_reasons": candidate_validation.get("reasons", []),
+                        "candidate_validation_summary": candidate_validation_summary,
                         "changed_files": candidate_changed_files,
                     }
                 )
@@ -2447,10 +2479,21 @@ class LegalParserOptimizerDaemon:
                 "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
                 "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
                 "dirty_touched_files": (cycle.get("proposal_quality") or {}).get("dirty_touched_files", []),
+                "latest_candidate_validation_failure": _latest_candidate_validation_failure(
+                    cycle.get("proposal_attempts") or []
+                ),
             }
             for cycle in epoch_cycles[-10:]
             if not _cycle_was_kept(cycle)
         ]
+        candidate_validation_failures = [
+            failure
+            for failure in (
+                item.get("latest_candidate_validation_failure") for item in recent_rejections
+            )
+            if isinstance(failure, Mapping) and failure.get("valid") is False
+        ]
+        repeated_rejection_family = _repeated_rejection_family(recent_rejections)
         dirty_rejection_files = _dirty_files_from_rejections(recent_rejections)
         active_dirty_touched_files = self._dirty_touched_files(dirty_rejection_files)
 
@@ -2540,10 +2583,15 @@ class LegalParserOptimizerDaemon:
             },
             "accepted_change_summaries": accepted_summaries,
             "recent_rejections": recent_rejections,
+            "repeated_rejection_family": repeated_rejection_family,
             "dirty_touched_file_rejection_count": sum(
                 1 for item in recent_rejections if item.get("dirty_touched_files")
             ),
             "active_dirty_touched_files": active_dirty_touched_files,
+            "candidate_post_apply_validation_rejection_count": len(candidate_validation_failures),
+            "latest_candidate_post_apply_validation_failure": (
+                candidate_validation_failures[-1] if candidate_validation_failures else {}
+            ),
             "latest_cycle": {
                 "cycle_index": latest_cycle.get("cycle_index"),
                 "status": latest_cycle.get("status", "ok"),
@@ -2649,6 +2697,41 @@ class LegalParserOptimizerDaemon:
         if active_dirty:
             lines.extend(["", "Active dirty touched files blocking proposals:"])
             lines.extend(f"- `{path}`" for path in active_dirty)
+        candidate_failure = progress.get("latest_candidate_post_apply_validation_failure") or {}
+        if candidate_failure:
+            summary = candidate_failure.get("summary") or {}
+            lines.extend(["", "Latest candidate post-apply validation failure:"])
+            attempt = candidate_failure.get("attempt")
+            if attempt is not None:
+                lines.append(f"- attempt: `{attempt}`")
+            failed_tests = summary.get("failed_tests") or []
+            if failed_tests:
+                lines.append("- failed tests: " + ", ".join(f"`{name}`" for name in failed_tests[:6]))
+            exception_types = summary.get("exception_types") or []
+            if exception_types:
+                lines.append("- exception types: " + ", ".join(f"`{name}`" for name in exception_types[:6]))
+            reasons = candidate_failure.get("reasons") or []
+            if reasons:
+                lines.append("- reasons: " + "; ".join(str(reason) for reason in reasons[:3]))
+            failure_head = str(summary.get("failure_head") or "").strip()
+            if failure_head:
+                lines.extend(["", "```text", failure_head[:1200], "```"])
+        repeated_rejection = progress.get("repeated_rejection_family") or {}
+        if repeated_rejection and int(repeated_rejection.get("count") or 0) >= 2:
+            lines.extend(["", "Repeated rejection family:"])
+            lines.append(f"- reason: `{repeated_rejection.get('reason') or 'unknown'}`")
+            lines.append(f"- count: `{repeated_rejection.get('count')}`")
+            cycle_indexes = repeated_rejection.get("cycle_indexes") or []
+            if cycle_indexes:
+                lines.append("- cycles: " + ", ".join(f"`{index}`" for index in cycle_indexes[:10]))
+            changed_files = repeated_rejection.get("changed_files") or []
+            if changed_files:
+                lines.append("- files: " + ", ".join(f"`{path}`" for path in changed_files[:8]))
+            latest_candidate = repeated_rejection.get("latest_candidate_validation_failure") or {}
+            latest_summary = latest_candidate.get("summary") or {}
+            latest_head = str(latest_summary.get("failure_head") or "").strip()
+            if latest_head:
+                lines.extend(["", "```text", latest_head[:1200], "```"])
         dirty_parser_targets = progress.get("dirty_legal_parser_targets") or []
         if dirty_parser_targets:
             lines.extend(["", "Dirty legal-parser recovery targets:"])
@@ -3109,6 +3192,7 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
     if not validation or validation.get("valid") is not False:
         return {}
 
+    failed_tests: List[str] = []
     exception_types: List[str] = []
     interesting_lines: List[str] = []
     for check_name in ("compile", "collect", "focused_tests"):
@@ -3119,6 +3203,12 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
         stdout = str(check.get("stdout") or "")
         if check_name == "compile" and "py_compile" not in exception_types:
             exception_types.append("py_compile")
+        for match in re.finditer(r"FAILED\s+([^\s]+)", stderr + "\n" + stdout):
+            name = match.group(1).strip()
+            if name == "[" or "::" not in name:
+                continue
+            if name and name not in failed_tests:
+                failed_tests.append(name)
         for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", stderr + "\n" + stdout):
             name = match.group(1)
             if name and name not in exception_types:
@@ -3143,10 +3233,43 @@ def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> D
         interesting_lines = [str(reason) for reason in validation.get("reasons") or []]
 
     return {
-        "failed_tests": [],
+        "failed_tests": failed_tests[:12],
         "exception_types": exception_types[:8],
         "failure_head": "\n".join(interesting_lines)[:2000],
     }
+
+
+def _latest_candidate_validation_failure(attempts: Sequence[Any]) -> Dict[str, Any]:
+    """Return the newest failed candidate preflight from proposal attempts."""
+
+    for item in reversed(list(attempts)):
+        if not isinstance(item, Mapping):
+            continue
+        if item.get("candidate_validation_valid") is not False:
+            continue
+        summary = dict(item.get("candidate_validation_summary") or {})
+        if not _failure_summary_has_content(summary):
+            retry_reason = str(item.get("retry_reason") or "")
+            reasons = [str(reason) for reason in item.get("candidate_validation_reasons") or []]
+            summary = {
+                "failed_tests": [],
+                "exception_types": [
+                    match.group(1)
+                    for match in re.finditer(
+                        r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b",
+                        retry_reason + "\n" + "\n".join(reasons),
+                    )
+                ][:8],
+                "failure_head": retry_reason or "; ".join(reasons),
+            }
+        return {
+            "valid": False,
+            "attempt": item.get("attempt"),
+            "changed_files": item.get("changed_files", []),
+            "reasons": item.get("candidate_validation_reasons", []),
+            "summary": summary,
+        }
+    return {"valid": True, "skipped": True, "reason": "no_failed_candidate_validation"}
 
 
 def _failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
@@ -3383,6 +3506,72 @@ def _cycle_rejection_reason(cycle_payload: Dict[str, Any]) -> str:
     if retained.get("has_retained_changes") is False:
         return str(retained.get("reason") or "no_retained_changes")
     return "unknown"
+
+
+def _rejection_family_reason(reason: str) -> str:
+    """Return a stable family key for repeated autonomous rejection loops."""
+
+    text = str(reason or "").strip()
+    if not text:
+        return "unknown"
+    if "candidate_post_apply_validation_failed" in text:
+        return "candidate_post_apply_validation_failed"
+    if "patch touches files with pre-existing uncommitted changes" in text:
+        return "dirty_touched_files"
+    if text.startswith("proposal_quality_failed:"):
+        first_detail = text.split(":", 1)[1].split(";", 1)[0].strip()
+        return f"proposal_quality_failed:{first_detail}" if first_detail else "proposal_quality_failed"
+    if text.startswith("patch_check_failed:"):
+        return "patch_check_failed"
+    return text.split(":", 1)[0]
+
+
+def _repeated_rejection_family(rejections: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+    """Summarize the largest repeated rejection family in recent progress."""
+
+    families: Dict[str, Dict[str, Any]] = {}
+    for item in rejections:
+        if not isinstance(item, Mapping):
+            continue
+        candidate_failure = item.get("latest_candidate_validation_failure")
+        reason = (
+            "candidate_post_apply_validation_failed"
+            if isinstance(candidate_failure, Mapping) and candidate_failure.get("valid") is False
+            else _rejection_family_reason(str(item.get("reason") or ""))
+        )
+        family = families.setdefault(
+            reason,
+            {
+                "reason": reason,
+                "count": 0,
+                "cycle_indexes": [],
+                "changed_files": [],
+                "dirty_touched_files": [],
+                "latest_candidate_validation_failure": {},
+            },
+        )
+        family["count"] += 1
+        cycle_index = item.get("cycle_index")
+        if cycle_index is not None:
+            family["cycle_indexes"].append(cycle_index)
+        for key in ("changed_files", "dirty_touched_files"):
+            for path in item.get(key) or []:
+                text = str(path).strip()
+                if text and text not in family[key]:
+                    family[key].append(text)
+        if isinstance(candidate_failure, Mapping) and candidate_failure.get("valid") is False:
+            family["latest_candidate_validation_failure"] = dict(candidate_failure)
+
+    if not families:
+        return {}
+    return max(
+        families.values(),
+        key=lambda item: (
+            int(item.get("count") or 0),
+            len(item.get("cycle_indexes") or []),
+            str(item.get("reason") or ""),
+        ),
+    )
 
 
 def _dirty_files_from_rejections(rejections: Sequence[Mapping[str, Any]]) -> List[str]:
