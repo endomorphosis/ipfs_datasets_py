@@ -27,6 +27,7 @@ SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS="${SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS:-
 SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT="${SUPERVISOR_DIRTY_TARGET_TRANSIENT_CYCLE_LIMIT:-3}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES="${SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES:-40}"
+SUPERVISOR_AGENTIC_ACCEPTANCE_STALL_CYCLES="${SUPERVISOR_AGENTIC_ACCEPTANCE_STALL_CYCLES:-12}"
 SUPERVISOR_AGENTIC_REJECTED_TAIL="${SUPERVISOR_AGENTIC_REJECTED_TAIL:-25}"
 SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL="${SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL:-10}"
 SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES="${SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES:-1}"
@@ -74,6 +75,8 @@ last_recycle_reason=""
 last_agentic_maintenance_status=""
 last_agentic_maintenance_reason=""
 last_agentic_maintenance_log_path=""
+active_agentic_maintenance_started_at=""
+active_agentic_maintenance_timeout_seconds="null"
 
 json_bool() {
   [[ "$1" == "1" ]] && printf true || printf false
@@ -91,14 +94,37 @@ repo_root = Path(sys.argv[1])
 manifest_path = Path(sys.argv[2])
 snapshot_dir = Path(sys.argv[3])
 targets = [
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 ]
 result = subprocess.run(
     ["git", "status", "--porcelain", "--", *targets],
@@ -227,6 +253,7 @@ write_supervisor_status() {
   "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
   "agentic_maintenance_enabled": $(json_bool "$SUPERVISOR_AGENTIC_MAINTENANCE"),
   "agentic_stalled_metric_cycles": $SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES,
+  "agentic_acceptance_stall_cycles": $SUPERVISOR_AGENTIC_ACCEPTANCE_STALL_CYCLES,
   "agentic_rejected_tail": $SUPERVISOR_AGENTIC_REJECTED_TAIL,
   "agentic_rolled_back_tail": $SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL,
   "agentic_dirty_target_files_enabled": $(json_bool "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES"),
@@ -243,6 +270,9 @@ write_supervisor_status() {
   "last_agentic_maintenance_status": "$last_agentic_maintenance_status",
   "last_agentic_maintenance_reason": "$last_agentic_maintenance_reason",
   "last_agentic_maintenance_log_path": "$last_agentic_maintenance_log_path",
+  "active_agentic_maintenance_started_at": "$active_agentic_maintenance_started_at",
+  "active_agentic_maintenance_timeout_seconds": $active_agentic_maintenance_timeout_seconds,
+  "formal_logic_goal": "deterministic legal text -> LegalNormIR -> formal logic/prover syntax, with no parser-runtime LLM dependency",
   "model_name": "$MODEL_NAME",
   "provider": "$PROVIDER",
   "llm_timeout_seconds": $LLM_TIMEOUT_SECONDS,
@@ -286,6 +316,7 @@ agentic_maintenance_reason() {
     "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
     "$REPO_ROOT" \
     "$SUPERVISOR_AGENTIC_STALLED_METRIC_CYCLES" \
+    "$SUPERVISOR_AGENTIC_ACCEPTANCE_STALL_CYCLES" \
     "$SUPERVISOR_AGENTIC_REJECTED_TAIL" \
     "$SUPERVISOR_AGENTIC_ROLLED_BACK_TAIL" \
     "$SUPERVISOR_AGENTIC_CYCLE_STALL_SECONDS" \
@@ -308,15 +339,16 @@ status_path = Path(sys.argv[2])
 state_path = Path(sys.argv[3])
 repo_root = Path(sys.argv[4])
 stalled_metric_threshold = int(sys.argv[5])
-rejected_tail_threshold = int(sys.argv[6])
-rolled_back_tail_threshold = int(sys.argv[7])
-cycle_stall_seconds = int(sys.argv[8])
-cooldown_seconds = int(sys.argv[9])
-dirty_target_detection = str(sys.argv[10]).strip() == "1"
-dirty_rejection_threshold = int(sys.argv[11])
-repeated_rejection_family_threshold = int(sys.argv[12])
-dirty_target_grace_seconds = int(sys.argv[13])
-validation_failure_family_threshold = int(sys.argv[14])
+acceptance_stall_threshold = int(sys.argv[6])
+rejected_tail_threshold = int(sys.argv[7])
+rolled_back_tail_threshold = int(sys.argv[8])
+cycle_stall_seconds = int(sys.argv[9])
+cooldown_seconds = int(sys.argv[10])
+dirty_target_detection = str(sys.argv[11]).strip() == "1"
+dirty_rejection_threshold = int(sys.argv[12])
+repeated_rejection_family_threshold = int(sys.argv[13])
+dirty_target_grace_seconds = int(sys.argv[14])
+validation_failure_family_threshold = int(sys.argv[15])
 now = int(time.time())
 
 
@@ -373,14 +405,37 @@ def normalized_failure_head_lines(value, limit: int = 4) -> list[str]:
 
 
 LEGAL_PARSER_TARGETS = [
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 ]
 
 dirty_status_errors: list[dict] = []
@@ -764,6 +819,16 @@ elif not cooling_down and repeated_rejection_count >= repeated_rejection_family_
     )
 elif (
     not cooling_down
+    and acceptance_stall_threshold > 0
+    and cycle_delta >= acceptance_stall_threshold
+):
+    reason = (
+        f"accepted_patch_stall:{cycle_delta}:threshold:{acceptance_stall_threshold}:"
+        f"latest_cycle:{latest_cycle_index}:accepted:{accepted_count}:"
+        f"rolled_back_delta:{rolled_back_delta}:rejected_delta:{rejected_delta}"
+    )
+elif (
+    not cooling_down
     and stalled_metric_cycles >= stalled_metric_threshold
     and cycles_since_meaningful_progress >= stalled_metric_threshold
 ):
@@ -795,6 +860,7 @@ state.update(
         "updated_at_epoch": now,
         "baseline_cycle_index": baseline_cycle,
         "baseline_accepted_count": baseline_accepted,
+        "acceptance_stall_threshold": acceptance_stall_threshold,
         "baseline_rolled_back_count": baseline_rolled_back,
         "baseline_rejected_count": baseline_rejected,
         "baseline_metric_stall_rollbacks_since_progress": baseline_metric_stall_rollbacks,
@@ -1066,14 +1132,37 @@ dirty_target_grace_seconds = int(sys.argv[6])
 dirty_target_transient_cycle_limit = int(sys.argv[7])
 
 LEGAL_PARSER_TARGETS = [
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 ]
 
 
@@ -1281,14 +1370,37 @@ threshold = int(sys.argv[5])
 grace_seconds = int(sys.argv[6])
 
 LEGAL_PARSER_TARGETS = {
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 }
 
 
@@ -1463,6 +1575,8 @@ recover_repeated_rejection_dirty_targets() {
   last_agentic_maintenance_status="repeated_rejection_recovery_running"
   last_agentic_maintenance_reason="$reason"
   last_agentic_maintenance_log_path="$recovery_log"
+  active_agentic_maintenance_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  active_agentic_maintenance_timeout_seconds="$TEST_TIMEOUT_SECONDS"
   write_supervisor_status "repeated_rejection_recovery_started" "$recovery_id" "$recovery_log" null
   stop_child
   targets_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-repeated-targets.XXXXXX")"
@@ -1495,6 +1609,8 @@ tests_path.write_text("\n".join(test_files) + ("\n" if test_files else ""), enco
 PY
   if [[ ! -s "$targets_file" ]]; then
     last_agentic_maintenance_status="repeated_rejection_recovery_skipped_clean"
+    active_agentic_maintenance_started_at=""
+    active_agentic_maintenance_timeout_seconds="null"
     write_supervisor_status "repeated_rejection_recovery_finished" "$recovery_id" "$recovery_log" 0
     rm -f "$targets_file" "$py_files_file" "$test_files_file"
     return 0
@@ -1532,6 +1648,8 @@ PY
     rc=0
   fi
   mark_agentic_maintenance_ran "$reason"
+  active_agentic_maintenance_started_at=""
+  active_agentic_maintenance_timeout_seconds="null"
   write_supervisor_status "repeated_rejection_recovery_finished" "$recovery_id" "$recovery_log" "$rc"
   rm -f "$targets_file" "$py_files_file" "$test_files_file"
   return "$rc"
@@ -1549,6 +1667,8 @@ recover_dirty_legal_parser_targets() {
   last_agentic_maintenance_status="dirty_recovery_running"
   last_agentic_maintenance_reason="$reason"
   last_agentic_maintenance_log_path="$recovery_log"
+  active_agentic_maintenance_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  active_agentic_maintenance_timeout_seconds="$TEST_TIMEOUT_SECONDS"
   write_supervisor_status "dirty_target_recovery_started" "$recovery_id" "$recovery_log" null
   stop_child
   targets_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-targets.XXXXXX")"
@@ -1564,14 +1684,37 @@ targets_path = Path(sys.argv[2])
 py_path = Path(sys.argv[3])
 tests_path = Path(sys.argv[4])
 targets = [
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 ]
 result = subprocess.run(
     ["git", "status", "--porcelain", "--", *targets],
@@ -1597,6 +1740,8 @@ tests_path.write_text("\n".join(test_files) + ("\n" if test_files else ""), enco
 PY
   if [[ ! -s "$targets_file" ]]; then
     last_agentic_maintenance_status="dirty_recovery_skipped_clean"
+    active_agentic_maintenance_started_at=""
+    active_agentic_maintenance_timeout_seconds="null"
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target recovery skipped because targets are clean: $reason" >> "$REPO_ROOT/$recovery_log"
     write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" 0
     rm -f "$targets_file" "$py_files_file" "$test_files_file"
@@ -1635,6 +1780,8 @@ PY
     rc=0
   fi
   mark_agentic_maintenance_ran "$reason"
+  active_agentic_maintenance_started_at=""
+  active_agentic_maintenance_timeout_seconds="null"
   write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" "$rc"
   rm -f "$targets_file" "$py_files_file" "$test_files_file"
   return "$rc"
@@ -1656,17 +1803,14 @@ run_agentic_maintenance() {
   last_agentic_maintenance_status="running"
   last_agentic_maintenance_reason="$reason"
   last_agentic_maintenance_log_path="$maintenance_log"
+  active_agentic_maintenance_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  active_agentic_maintenance_timeout_seconds="$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS"
   write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" null
   stop_child
   refreshed_reason="$(agentic_maintenance_reason || true)"
   if [[ -z "$refreshed_reason" ]]; then
-    last_agentic_maintenance_status="skipped_stale_trigger"
-    last_agentic_maintenance_reason="$reason"
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) skipping agentic maintenance because trigger cleared after child stop: $reason" >> "$REPO_ROOT/$maintenance_log"
-    write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" 0
-    return 0
-  fi
-  if [[ "$refreshed_reason" != "$reason" ]]; then
+    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) preserving sticky agentic maintenance reason after child stop: $reason" >> "$REPO_ROOT/$maintenance_log"
+  elif [[ "$refreshed_reason" != "$reason" ]]; then
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) agentic maintenance reason refreshed after child stop: $reason -> $refreshed_reason" >> "$REPO_ROOT/$maintenance_log"
     reason="$refreshed_reason"
     last_agentic_maintenance_reason="$reason"
@@ -1682,14 +1826,38 @@ run_agentic_maintenance() {
     tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
     scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
     scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh \
+    ipfs_datasets_py/logic/deontic/analyzer.py \
     ipfs_datasets_py/logic/deontic/utils/deontic_parser.py \
     ipfs_datasets_py/logic/deontic/ir.py \
     ipfs_datasets_py/logic/deontic/formula_builder.py \
     ipfs_datasets_py/logic/deontic/converter.py \
+    ipfs_datasets_py/logic/deontic/decoder.py \
     ipfs_datasets_py/logic/deontic/exports.py \
+    ipfs_datasets_py/logic/deontic/graph.py \
+    ipfs_datasets_py/logic/deontic/knowledge_base.py \
+    ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py \
+    ipfs_datasets_py/logic/deontic/metrics.py \
+    ipfs_datasets_py/logic/deontic/prover_syntax.py \
+    ipfs_datasets_py/logic/deontic/support_map.py \
+    tests/unit_tests/logic/deontic/test_conflict_detection.py \
+    tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py \
     tests/unit_tests/logic/deontic/test_deontic_formula_builder.py \
     tests/unit_tests/logic/deontic/test_deontic_converter.py \
+    tests/unit_tests/logic/deontic/test_deontic_decoder.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py \
     tests/unit_tests/logic/deontic/test_deontic_exports.py \
+    tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py \
+    tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py \
+    tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py \
+    tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py \
+    tests/unit_tests/logic/deontic/test_legal_norm_ir.py \
+    tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py \
+    tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$before_diff" 2>/dev/null || true
@@ -1700,7 +1868,7 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-Improve only daemon/supervisor programming, tests, or docs in this maintenance pass. Do not implement a new legal parser feature here unless it is strictly required to repair daemon progress logic.
+Improve daemon/supervisor programming, tests, docs, or the minimal parser-scope contract needed to restore autonomous progress. The normal daemon cycles should implement parser features; maintenance should unblock that path by fixing supervision, target scope, validation, prompts, or stuck recovery.
 
 If the reason mentions dirty_legal_parser_targets, dirty_touched_file_rejections, repeated_rejection_family, or repeated_validation_failure_family,
 first inspect the stranded legal-parser diff. If it is a coherent parser slice,
@@ -1719,26 +1887,56 @@ log and failure signature first. Prefer fixing the daemon/supervisor recovery
 logic, proposal gating, or validator targeting so this exact failure loop does
 not recur on the next unattended cycle.
 
+If the reason mentions accepted_patch_stall, inspect progress_summary.json,
+recent rejections, recent rollbacks, and the prompt contract. Update daemon or
+supervisor programming so unattended cycles produce retained production parser,
+encoder, decoder, IR, formula, export, or prover-syntax work instead of
+spinning through no-op or rejected slices.
+
 Allowed files:
 - ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
 - tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
 - scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh
 - scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh
+- scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh
+- ipfs_datasets_py/logic/deontic/analyzer.py
 - ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
 - ipfs_datasets_py/logic/deontic/ir.py
 - ipfs_datasets_py/logic/deontic/formula_builder.py
 - ipfs_datasets_py/logic/deontic/converter.py
+- ipfs_datasets_py/logic/deontic/decoder.py
 - ipfs_datasets_py/logic/deontic/exports.py
+- ipfs_datasets_py/logic/deontic/graph.py
+- ipfs_datasets_py/logic/deontic/knowledge_base.py
+- ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py
+- ipfs_datasets_py/logic/deontic/metrics.py
+- ipfs_datasets_py/logic/deontic/prover_syntax.py
+- ipfs_datasets_py/logic/deontic/support_map.py
+- tests/unit_tests/logic/deontic/test_conflict_detection.py
+- tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py
 - tests/unit_tests/logic/deontic/test_deontic_formula_builder.py
 - tests/unit_tests/logic/deontic/test_deontic_converter.py
+- tests/unit_tests/logic/deontic/test_deontic_decoder.py
+- tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py
+- tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py
+- tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py
+- tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py
+- tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py
 - tests/unit_tests/logic/deontic/test_deontic_exports.py
+- tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py
+- tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py
+- tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py
+- tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py
+- tests/unit_tests/logic/deontic/test_legal_norm_ir.py
+- tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py
+- tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md
 - docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md
 
 Focus on unattended operation making real progress: better stuck/no-progress detection, better recovery prompts, safer restart behavior, clearer status/progress accounting, stronger validation before retaining patches, or documentation of those behaviors.
 
 After editing, run:
-- bash -n scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh
+- bash -n scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh
 - python3 -m py_compile ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py
 - pytest -q tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py
 
@@ -1848,20 +2046,45 @@ PY
     tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py \
     scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh \
     scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh \
+    scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh \
+    ipfs_datasets_py/logic/deontic/analyzer.py \
     ipfs_datasets_py/logic/deontic/utils/deontic_parser.py \
     ipfs_datasets_py/logic/deontic/ir.py \
     ipfs_datasets_py/logic/deontic/formula_builder.py \
     ipfs_datasets_py/logic/deontic/converter.py \
+    ipfs_datasets_py/logic/deontic/decoder.py \
     ipfs_datasets_py/logic/deontic/exports.py \
+    ipfs_datasets_py/logic/deontic/graph.py \
+    ipfs_datasets_py/logic/deontic/knowledge_base.py \
+    ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py \
+    ipfs_datasets_py/logic/deontic/metrics.py \
+    ipfs_datasets_py/logic/deontic/prover_syntax.py \
+    ipfs_datasets_py/logic/deontic/support_map.py \
+    tests/unit_tests/logic/deontic/test_conflict_detection.py \
+    tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py \
     tests/unit_tests/logic/deontic/test_deontic_formula_builder.py \
     tests/unit_tests/logic/deontic/test_deontic_converter.py \
+    tests/unit_tests/logic/deontic/test_deontic_decoder.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py \
+    tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py \
     tests/unit_tests/logic/deontic/test_deontic_exports.py \
+    tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py \
+    tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py \
+    tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py \
+    tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py \
+    tests/unit_tests/logic/deontic/test_legal_norm_ir.py \
+    tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py \
+    tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md \
     docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md \
     > "$after_diff" 2>/dev/null || true
   if [[ "$rc" == "0" ]] \
     && bash -n "$REPO_ROOT/scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && bash -n "$REPO_ROOT/scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
+    && bash -n "$REPO_ROOT/scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && python3 -m py_compile "$REPO_ROOT/ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1 \
     && pytest -q "$REPO_ROOT/tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py" >> "$REPO_ROOT/$maintenance_log" 2>&1; then
     if [[ "$after_head" != "$before_head" ]] || ! cmp -s "$before_diff" "$after_diff"; then
@@ -1874,6 +2097,8 @@ PY
     last_agentic_maintenance_status="failed"
   fi
   rm -f "$before_diff" "$after_diff" "$prompt_file"
+  active_agentic_maintenance_started_at=""
+  active_agentic_maintenance_timeout_seconds="null"
   write_supervisor_status "agentic_maintenance_finished" "$maintenance_id" "$maintenance_log" "$rc"
 }
 

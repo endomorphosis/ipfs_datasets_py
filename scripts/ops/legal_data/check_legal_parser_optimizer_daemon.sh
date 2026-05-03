@@ -14,6 +14,7 @@ import sys
 from datetime import datetime, timezone
 
 status_path, supervisor_path, progress_path, stale_after_raw = sys.argv[1:5]
+ensure_path = ".daemon/legal_parser_daemon_ensure.status.json"
 stale_after = float(stale_after_raw)
 
 
@@ -45,6 +46,7 @@ def pid_alive(pid):
 
 current = read_json(status_path)
 supervisor = read_json(supervisor_path)
+ensure = read_json(ensure_path)
 progress = read_json(progress_path)
 supervisor_state = read_json(supervisor.get("agentic_state_path", "")) if supervisor else {}
 now = datetime.now(timezone.utc)
@@ -55,23 +57,61 @@ if heartbeat_at is not None:
 
 daemon_pid = current.get("heartbeat_pid") or current.get("pid")
 supervisor_pid = supervisor.get("supervisor_pid")
-alive = bool(pid_alive(daemon_pid) and heartbeat_age is not None and heartbeat_age <= stale_after)
+supervisor_alive = pid_alive(supervisor_pid) if supervisor_pid else False
+daemon_alive = pid_alive(daemon_pid) if daemon_pid else False
+supervisor_status = str(supervisor.get("status") or "")
+maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
+try:
+    maintenance_timeout = float(maintenance_timeout)
+except Exception:
+    maintenance_timeout = float(supervisor.get("agentic_timeout_seconds") or 0.0)
+maintenance_started_at = parse_ts(
+    supervisor.get("active_agentic_maintenance_started_at") or supervisor.get("updated_at")
+)
+maintenance_age = None
+maintenance_fresh = False
+if (
+    supervisor_alive
+    and supervisor_status.endswith("_started")
+    and str(supervisor.get("last_agentic_maintenance_status") or "").endswith("running")
+    and maintenance_started_at is not None
+    and maintenance_timeout > 0
+):
+    maintenance_age = max(0.0, (now - maintenance_started_at).total_seconds())
+    maintenance_fresh = maintenance_age <= maintenance_timeout + 60.0
+daemon_fresh = heartbeat_age is not None and heartbeat_age <= stale_after
+alive = bool(supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh))
+status_label = "maintenance_running" if maintenance_fresh else "running" if alive else "stale_or_stopped"
 
 payload = {
     "alive": alive,
-    "status": "running" if alive else "stale_or_stopped",
+    "status": status_label,
     "checked_at": now.isoformat(),
     "stale_after_seconds": stale_after,
     "heartbeat_age_seconds": None if heartbeat_age is None else round(heartbeat_age, 3),
     "daemon_pid": daemon_pid,
-    "daemon_pid_alive": pid_alive(daemon_pid) if daemon_pid else False,
+    "daemon_pid_alive": daemon_alive,
     "supervisor_pid": supervisor_pid,
-    "supervisor_pid_alive": pid_alive(supervisor_pid) if supervisor_pid else False,
+    "supervisor_pid_alive": supervisor_alive,
+    "ensure_status": ensure.get("status"),
+    "ensure_checked_at": ensure.get("checked_at"),
+    "ensure_requested_launch_mode": ensure.get("requested_launch_mode"),
+    "ensure_launch_mode": ensure.get("launch_mode"),
+    "ensure_launcher_pid": ensure.get("launcher_pid"),
+    "ensure_launcher_pid_alive": pid_alive(ensure.get("launcher_pid")) if ensure.get("launcher_pid") else False,
+    "ensure_wrapper_pid": ensure.get("wrapper_pid"),
+    "ensure_wrapper_pid_alive": pid_alive(ensure.get("wrapper_pid")) if ensure.get("wrapper_pid") else False,
+    "ensure_supervisor_pid_alive": ensure.get("supervisor_pid_alive"),
     "cycle_index": current.get("cycle_index"),
     "phase": current.get("phase"),
     "model_name": current.get("model_name") or supervisor.get("model_name"),
     "provider": current.get("provider") or supervisor.get("provider"),
     "supervisor_status": supervisor.get("status"),
+    "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
+    "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),
+    "active_agentic_maintenance_age_seconds": None if maintenance_age is None else round(maintenance_age, 3),
+    "active_agentic_maintenance_fresh": maintenance_fresh,
+    "formal_logic_goal": supervisor.get("formal_logic_goal"),
     "restart_count": supervisor.get("restart_count"),
     "watchdog_stale_after_seconds": supervisor.get("watchdog_stale_after_seconds"),
     "watchdog_startup_grace_seconds": supervisor.get("watchdog_startup_grace_seconds"),
@@ -81,6 +121,7 @@ payload = {
     "phase_stale_after_reason": current.get("phase_stale_after_reason"),
     "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
     "agentic_stalled_metric_cycles": supervisor.get("agentic_stalled_metric_cycles"),
+    "agentic_acceptance_stall_cycles": supervisor.get("agentic_acceptance_stall_cycles"),
     "stalled_metric_cycles": progress.get("stalled_metric_cycles"),
     "cycles_since_meaningful_progress": progress.get("cycles_since_meaningful_progress"),
     "meaningful_progress_definition": progress.get("meaningful_progress_definition"),

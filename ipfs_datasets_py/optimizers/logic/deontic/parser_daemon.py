@@ -68,14 +68,37 @@ DEFAULT_PROBE_CORPUS: List[Dict[str, str]] = [
 ]
 
 LEGAL_PARSER_RECOVERY_TARGETS: Tuple[str, ...] = (
+    "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
     "ipfs_datasets_py/logic/deontic/ir.py",
     "ipfs_datasets_py/logic/deontic/formula_builder.py",
     "ipfs_datasets_py/logic/deontic/converter.py",
+    "ipfs_datasets_py/logic/deontic/decoder.py",
     "ipfs_datasets_py/logic/deontic/exports.py",
+    "ipfs_datasets_py/logic/deontic/graph.py",
+    "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+    "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+    "ipfs_datasets_py/logic/deontic/metrics.py",
+    "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+    "ipfs_datasets_py/logic/deontic/support_map.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+    "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
     "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
     "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+    "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+    "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
     "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+    "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+    "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+    "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+    "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+    "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 )
 
 
@@ -109,15 +132,38 @@ class LegalParserDaemonConfig:
         "docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md",
     )
     target_files: Tuple[str, ...] = (
+        "ipfs_datasets_py/logic/deontic/analyzer.py",
         "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
         "ipfs_datasets_py/logic/deontic/ir.py",
         "ipfs_datasets_py/logic/deontic/formula_builder.py",
         "ipfs_datasets_py/logic/deontic/converter.py",
+        "ipfs_datasets_py/logic/deontic/decoder.py",
         "ipfs_datasets_py/logic/deontic/exports.py",
+        "ipfs_datasets_py/logic/deontic/graph.py",
+        "ipfs_datasets_py/logic/deontic/knowledge_base.py",
+        "ipfs_datasets_py/logic/deontic/legal_text_to_deontic.py",
+        "ipfs_datasets_py/logic/deontic/metrics.py",
+        "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+        "ipfs_datasets_py/logic/deontic/support_map.py",
         "ipfs_datasets_py/logic/deontic",
+        "tests/unit_tests/logic/deontic/test_conflict_detection.py",
+        "tests/unit_tests/logic/deontic/test_conflict_detection_advanced.py",
         "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
         "tests/unit_tests/logic/deontic/test_deontic_converter.py",
+        "tests/unit_tests/logic/deontic/test_deontic_decoder.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_audit.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_decoder_slot_grounding_summary.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_batch.py",
+        "tests/unit_tests/logic/deontic/test_deontic_export_prover_target_coverage_record.py",
         "tests/unit_tests/logic/deontic/test_deontic_exports.py",
+        "tests/unit_tests/logic/deontic/test_deontic_formula_procurement.py",
+        "tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py",
+        "tests/unit_tests/logic/deontic/test_deontic_parser_metrics.py",
+        "tests/unit_tests/logic/deontic/test_deontic_prover_syntax.py",
+        "tests/unit_tests/logic/deontic/test_legal_norm_ir.py",
+        "tests/unit_tests/logic/deontic/test_legal_norm_ir_provenance.py",
+        "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
         "tests/unit_tests/logic/deontic",
     )
 
@@ -478,6 +524,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
             test_failure_recovery_mode=test_failure_recovery_mode,
             metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
         )
+        mission_state = self._mission_state(
+            progress_payload=progress_payload,
+            patch_stability_mode=patch_stability_mode,
+            metric_stall_mode=metric_stall_mode,
+            roadmap_pivot_mode=roadmap_pivot_mode,
+            test_failure_recovery_mode=test_failure_recovery_mode,
+            metric_no_progress_recovery_mode=metric_no_progress_recovery_mode,
+            repeated_validation_recovery_feedback=repeated_validation_recovery_feedback,
+        )
         payload = {
             "cycle_index": cycle_index,
             "objective": (
@@ -509,7 +564,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 "Preserve source-grounded parser slots that already extract facts such as mental_state, action, actor, modality, temporal constraints, and references; do not add tests that assert an extracted legal fact should become empty.",
                 "When metric_no_progress_recovery_mode is true, do not repeat patches that only add context recovery around exports; change the actual parser/formula/IR behavior needed to move the shown pre/post metrics.",
                 "Do not move metrics by clearing repair for unresolved, absent, mismatched, partial, or external numbered legal references; those must stay blocked unless exact same-document evidence is present.",
+                "Use mission_state.active_lane as the primary work lane. Do not drift into unrelated parser synonyms when the active lane calls for encoder/decoder/prover work or focused recovery.",
             ],
+            "mission_state": mission_state,
             "patch_stability_mode": patch_stability_mode,
             "metric_stall_mode": metric_stall_mode,
             "roadmap_pivot_mode": roadmap_pivot_mode,
@@ -560,6 +617,91 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "Return JSON matching required_json_schema and nothing else.\n"
             + json.dumps(payload, indent=2, ensure_ascii=False, default=str)
         )
+
+    def _mission_state(
+        self,
+        *,
+        progress_payload: Mapping[str, Any],
+        patch_stability_mode: bool,
+        metric_stall_mode: bool,
+        roadmap_pivot_mode: bool,
+        test_failure_recovery_mode: bool,
+        metric_no_progress_recovery_mode: bool,
+        repeated_validation_recovery_feedback: Sequence[str],
+    ) -> Dict[str, Any]:
+        """Return the durable autonomous work contract for the next daemon cycle."""
+
+        try:
+            current_score = float(progress_payload.get("current_score") or 0.0)
+        except (TypeError, ValueError):
+            current_score = 0.0
+        try:
+            stalled_cycles = int(progress_payload.get("cycles_since_meaningful_progress") or 0)
+        except (TypeError, ValueError):
+            stalled_cycles = 0
+        active_lane = "parser_capability_expansion"
+        if test_failure_recovery_mode or repeated_validation_recovery_feedback:
+            active_lane = "repair_stability"
+        elif roadmap_pivot_mode or current_score >= 0.97 or stalled_cycles >= 6:
+            active_lane = "encoder_decoder_prover_integration"
+        elif metric_stall_mode or metric_no_progress_recovery_mode:
+            active_lane = "metric_moving_parser_slice"
+        elif patch_stability_mode:
+            active_lane = "patch_stable_parser_family"
+
+        return {
+            "primary_objective": (
+                "Autonomously improve deterministic legal text -> IR -> formal logic conversion "
+                "without relying on LLM calls at parse time."
+            ),
+            "active_lane": active_lane,
+            "lanes": [
+                {
+                    "name": "repair_stability",
+                    "purpose": "Fix repeated focused validation failures, dirty target loops, and patch application instability before adding new behavior.",
+                    "done_when": "the named focused tests compile and pass and the same rejection family stops recurring.",
+                },
+                {
+                    "name": "parser_capability_expansion",
+                    "purpose": "Add deterministic legal construction families across parser, IR/export, formula builder, and tests.",
+                    "done_when": "a family-sized slice moves parser coverage or proof-ready metrics with retained changes.",
+                },
+                {
+                    "name": "encoder_decoder_prover_integration",
+                    "purpose": (
+                        "Build text -> encoder -> IR -> decoder -> text round-trip quality and feed IR/formulas "
+                        "through theorem-prover syntax checks for frame logic, deontic CEC, FOL, deontic FOL, "
+                        "and deontic temporal FOL."
+                    ),
+                    "done_when": "round-trip and prover syntax tests expose measurable reconstruction/proof-readiness signals.",
+                },
+                {
+                    "name": "metric_moving_parser_slice",
+                    "purpose": "Target a concrete metric-stall sample with parser behavior that changes measured outputs, not only surrounding exports or docs.",
+                    "done_when": "post-evaluation shows a changed metric or a retained deterministic capability expansion.",
+                },
+                {
+                    "name": "patch_stable_parser_family",
+                    "purpose": "Keep changes in a narrow file pair while still covering a legal-construction family.",
+                    "done_when": "the patch applies cleanly and retains a non-micro parser/test improvement.",
+                },
+            ],
+            "quality_gates": [
+                "production parser/IR/export/formula change plus focused tests unless the lane is repair-only",
+                "no parser-runtime LLM dependency",
+                "focused pytest and py_compile pass before retention",
+                "dirty legal-parser targets are either committed after validation or restored by supervisor recovery",
+            ],
+            "signals": {
+                "current_score": current_score,
+                "cycles_since_meaningful_progress": stalled_cycles,
+                "roadmap_pivot_mode": roadmap_pivot_mode,
+                "test_failure_recovery_mode": test_failure_recovery_mode,
+                "metric_stall_mode": metric_stall_mode,
+                "metric_no_progress_recovery_mode": metric_no_progress_recovery_mode,
+                "patch_stability_mode": patch_stability_mode,
+            },
+        }
 
     def _slice_scale_contract(
         self,

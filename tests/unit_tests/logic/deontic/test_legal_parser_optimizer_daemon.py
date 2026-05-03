@@ -78,7 +78,7 @@ class _MetricGateOptimizer(LegalParserParityOptimizer):
         return {"valid": True, "returncode": 0, "stdout": "passed", "stderr": ""}
 
 
-def test_supervisor_revalidates_agentic_reason_after_stopping_child():
+def test_supervisor_preserves_sticky_agentic_reason_after_stopping_child():
     repo_root = Path(__file__).resolve().parents[4]
     script = (
         repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
@@ -90,17 +90,18 @@ def test_supervisor_revalidates_agentic_reason_after_stopping_child():
     assert function_body.index("stop_child") < function_body.index(
         'refreshed_reason="$(agentic_maintenance_reason || true)"'
     )
-    assert "skipped_stale_trigger" in function_body
-    assert "trigger cleared after child stop" in function_body
+    assert "preserving sticky agentic maintenance reason after child stop" in function_body
     assert function_body.index('if [[ -z "$refreshed_reason" ]]') < function_body.index(
         'mark_agentic_maintenance_ran "$reason"'
     )
-    assert function_body.index('if [[ "$refreshed_reason" != "$reason" ]]') < function_body.index(
+    assert function_body.index('elif [[ "$refreshed_reason" != "$reason" ]]') < function_body.index(
         'mark_agentic_maintenance_ran "$reason"'
     )
     assert "SUPERVISOR_AGENTIC_IDLE_TIMEOUT_SECONDS" in script
     assert '"agentic_idle_timeout_seconds"' in script
     assert 'agentic maintenance idle timeout after' in function_body
+    assert '"active_agentic_maintenance_started_at"' in script
+    assert '"active_agentic_maintenance_timeout_seconds"' in script
     assert 'prompt_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-agentic-prompt.XXXXXX")"' in function_body
     assert 'python3 - "$REPO_ROOT" "$REPO_ROOT/$maintenance_log" "$CODEX_BIN"' in function_body
 
@@ -119,6 +120,31 @@ def test_supervisor_uses_fast_restart_after_noop_recovery_outcomes():
     assert 'skipped_stale_trigger|dirty_recovery_skipped_clean|repeated_rejection_recovery_skipped_clean|no_change' in restart_block
     assert 'restart_delay_seconds="$SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS"' in restart_block
     assert 'restarting in ${restart_delay_seconds}s' in restart_block
+
+
+def test_ensure_legal_parser_optimizer_daemon_wraps_supervisor_for_unattended_restarts():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "legal_parser_daemon_ensure.status.json" in script
+    assert "legal_parser_daemon_supervisor_wrapper.pid" in script
+    assert "check_legal_parser_optimizer_daemon.sh" in script
+    assert "run_legal_parser_optimizer_daemon.sh" in script
+    assert 'ENSURE_LAUNCH_MODE="${ENSURE_LAUNCH_MODE:-nohup_loop}"' in script
+    assert "while true; do MODEL_NAME=" in script
+    assert "legal-parser supervisor exited with code" in script
+    assert "cleanup_stale_supervisor_artifacts()" in script
+    assert "wrapper_alive()" in script
+    assert "wrapped_existing_supervisor" in script
+    assert "wrapper_recovered_supervisor" in script
+    assert "SUPERVISOR_LOCK_PATH" in script
+    assert "tmux new-session" in script
+    assert "wait_for_supervisor" in script
+    assert '"schema": "ipfs_datasets_py.legal_parser_daemon.ensure"' in script
+    assert '"supervisor_pid_alive"' in script
+    assert '"wrapper_pid_alive"' in script
 
 
 def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
@@ -187,6 +213,29 @@ def test_supervisor_escalates_repeated_rejection_families_as_stuck_work():
     assert script.index("repeated_validation_failure_count >= validation_failure_family_threshold") < script.index(
         "repeated_rejection_count >= repeated_rejection_family_threshold"
     )
+
+
+def test_supervisor_escalates_acceptance_stalls_into_agentic_maintenance():
+    repo_root = Path(__file__).resolve().parents[4]
+    script = (
+        repo_root / "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+    check_script = (
+        repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "SUPERVISOR_AGENTIC_ACCEPTANCE_STALL_CYCLES" in script
+    assert '"agentic_acceptance_stall_cycles"' in script
+    assert "acceptance_stall_threshold = int(sys.argv[6])" in script
+    assert "accepted_patch_stall:" in script
+    assert "cycle_delta >= acceptance_stall_threshold" in script
+    assert "If the reason mentions accepted_patch_stall" in script
+    assert "produce retained production parser" in script
+    assert "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh" in script
+    assert 'bash -n "$REPO_ROOT/scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh"' in script
+    assert '"agentic_acceptance_stall_cycles"' in check_script
+    assert '"ensure_status"' in check_script
+    assert '"ensure_wrapper_pid_alive"' in check_script
 
 
 def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenance():
@@ -2520,6 +2569,9 @@ def test_optimizer_prompt_marks_roadmap_pivot_after_procedural_micro_patches(tmp
     )
 
     assert '"roadmap_pivot_mode": true' in prompt
+    assert '"mission_state": {' in prompt
+    assert '"active_lane": "encoder_decoder_prover_integration"' in prompt
+    assert "Build text -> encoder -> IR -> decoder -> text" in prompt
     assert "Phase 8 encoder/decoder/prover-syntax slice" in prompt
     assert "stop adding narrow procedural trigger/export variants" in prompt
 
