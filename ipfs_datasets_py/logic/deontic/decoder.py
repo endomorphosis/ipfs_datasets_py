@@ -56,6 +56,8 @@ def decode_legal_norm_ir(norm: LegalNormIR) -> DecodedLegalText:
         phrases, missing = _decode_exemption(norm)
     elif norm.modality == "LIFE" or norm.norm_type == "instrument_lifecycle":
         phrases, missing = _decode_lifecycle(norm)
+    elif norm.norm_type == "penalty":
+        phrases, missing = _decode_penalty(norm)
     else:
         phrases, missing = _decode_deontic_clause(norm)
 
@@ -210,6 +212,66 @@ def _decode_lifecycle(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str]
     else:
         missing.append("lifecycle_action")
     return phrases, missing
+
+
+def _decode_penalty(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str]]:
+    """Render sanction clauses from penalty IR without duplicating subslots."""
+
+    phrases: List[DecodedPhrase] = []
+    missing: List[str] = []
+    actor = _clean_text(norm.actor)
+    sanction_text = _penalty_sanction_text(norm)
+
+    if actor:
+        phrases.append(_phrase(actor, "actor", norm))
+    else:
+        missing.append("actor")
+
+    phrases.append(_fixed_phrase("is subject to", "penalty_connector"))
+    if sanction_text:
+        phrases.append(_phrase(sanction_text, "action", norm))
+    else:
+        missing.append("penalty")
+
+    return phrases, missing
+
+
+def _penalty_sanction_text(norm: LegalNormIR) -> str:
+    action = _clean_text(_strip_prefix(norm.action, ("incur", "be subject to", "subject to")))
+    if action:
+        return action
+
+    penalty = norm.penalty if isinstance(norm.penalty, Mapping) else {}
+    imprisonment = penalty.get("imprisonment_duration")
+    if isinstance(imprisonment, Mapping):
+        imprisonment_text = _slot_text(imprisonment)
+        if imprisonment_text:
+            return imprisonment_text
+
+    minimum = penalty.get("minimum_amount")
+    maximum = penalty.get("maximum_amount")
+    classification = _clean_text(str(penalty.get("classification") or penalty.get("sanction_class") or ""))
+    recurrence = penalty.get("recurrence")
+    recurrence_text = _slot_text(recurrence) if isinstance(recurrence, Mapping) else ""
+
+    amount_text = ""
+    if isinstance(minimum, Mapping) and isinstance(maximum, Mapping):
+        min_text = _slot_text(minimum)
+        max_text = _slot_text(maximum)
+        if min_text and max_text:
+            amount_text = f"of not less than {min_text} and not more than {max_text}"
+    elif isinstance(maximum, Mapping):
+        max_text = _slot_text(maximum)
+        if max_text:
+            amount_text = f"of not more than {max_text}"
+    elif isinstance(minimum, Mapping):
+        min_text = _slot_text(minimum)
+        if min_text:
+            amount_text = f"of not less than {min_text}"
+
+    noun = "fine" if penalty.get("has_fine") else "penalty"
+    parts = [part for part in (classification, noun, amount_text, recurrence_text) if part]
+    return _clean_text(" ".join(parts))
 
 
 def _phrase(text: str, slot: str, norm: LegalNormIR) -> DecodedPhrase:

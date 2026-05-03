@@ -763,8 +763,6 @@ def _with_penalty_value_alias(record: Dict[str, Any]) -> Dict[str, Any]:
         or normalized.get("sanction_type")
         or normalized.get("type")
     )
-    if penalty_type and not normalized.get("classification"):
-        normalized["classification"] = str(penalty_type)
     if normalized.get("value"):
         return normalized
 

@@ -2840,10 +2840,13 @@ def extract_penalty_details(text: str, action: str = "") -> Dict[str, Any]:
     amounts = extract_monetary_amount_details(combined)
     minimum_amount = _penalty_bound(combined, "minimum")
     maximum_amount = _penalty_bound(combined, "maximum")
+    sanction_class = classify_sanction_class(combined)
+    sanction_modality = classify_sanction_modality(combined)
     return {
         "raw_text": combined,
-        "sanction_class": classify_sanction_class(combined),
-        "sanction_modality": classify_sanction_modality(combined),
+        "sanction_class": sanction_class,
+        "classification": sanction_class,
+        "sanction_modality": sanction_modality,
         "monetary_amounts": extract_monetary_amounts(combined),
         "monetary_amount_details": amounts,
         "minimum_amount": minimum_amount,

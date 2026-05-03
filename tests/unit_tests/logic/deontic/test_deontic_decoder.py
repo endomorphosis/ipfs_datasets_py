@@ -202,3 +202,41 @@ def test_decoder_renders_scope_and_lifecycle_norm_types_from_ir_slots():
 
     assert lifecycle_decoded.text == "License is valid for 30 days."
     assert lifecycle.modality == "LIFE"
+
+
+def test_decoder_renders_penalty_clauses_without_duplicate_condition_or_deadline():
+    examples = [
+        (
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation.",
+            "civil",
+            "Violation is subject to a civil fine of not less than $100 and not more than $500 per violation.",
+        ),
+        (
+            "A violation is punishable by imprisonment for not more than 30 days.",
+            "criminal",
+            "Violation is subject to imprisonment for not more than 30 days.",
+        ),
+        (
+            "A violation is subject to an administrative penalty of $250 per day.",
+            "administrative",
+            "Violation is subject to an administrative penalty of $250 per day.",
+        ),
+    ]
+
+    for text, classification, expected_decoded in examples:
+        element, norm, decoded = _decode(text)
+
+        assert element["norm_type"] == "penalty"
+        assert element["penalty"]["classification"] == classification
+        assert norm.penalty["classification"] == classification
+        assert decoded.text == expected_decoded
+        assert decoded.missing_slots == []
+        assert [phrase.slot for phrase in decoded.phrases] == [
+            "actor",
+            "penalty_connector",
+            "action",
+        ]
+        assert decoded.phrases[1].fixed is True
+        assert decoded.phrases[2].spans == [element["field_spans"]["action"]]
+        assert " within " not in decoded.text.lower()
+        assert decoded.text.lower().count(" if ") == 0
