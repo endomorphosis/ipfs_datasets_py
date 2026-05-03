@@ -151,7 +151,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_public_notice_display_light_verb_action(action_text)
     action_text = _normalize_dissemination_distribution_light_verb_action(action_text)
     action_text = _normalize_objection_response_comment_light_verb_action(action_text)
-    action_text = _normalize_petition_application_request_light_verb_action(action_text)
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
@@ -6390,56 +6389,6 @@ def _normalize_objection_response_comment_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"comment {target}" if target else text
-
-    return text
-
-
-def _normalize_petition_application_request_light_verb_action(action_text: str) -> str:
-    """Project procedural intake nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    application_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|deliver|delivers|delivered|delivering)\s+"
-        r"(?:an?\s+|the\s+)?application\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|deliver|delivers|delivered|delivering)\s+"
-        r"applications\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^application\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in application_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"apply {target}" if target else text
-
-    request_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
-        r"(?:a\s+|the\s+)?request\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
-        r"requests\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^request\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^requests\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in request_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"request {target}" if target else text
-
-    petition_patterns = [
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
-        r"(?:a\s+|the\s+)?petition\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|make|makes|made|making|serve|serves|served|serving|deliver|delivers|delivered|delivering)\s+"
-        r"petitions\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-        r"^petition\s+(?:for|to|concerning|regarding)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in petition_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"petition {target}" if target else text
 
     return text
 
