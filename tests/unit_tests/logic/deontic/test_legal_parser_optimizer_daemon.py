@@ -1506,6 +1506,79 @@ def test_daemon_feeds_recent_failures_into_repair_phase_prompt(tmp_path):
     assert "AssertionError" in prompt
 
 
+def test_high_score_repair_prompt_requires_material_followthrough(tmp_path):
+    cycle_dir = tmp_path / "out/cycles/cycle_0001"
+    cycle_dir.mkdir(parents=True)
+    (cycle_dir / "cycle_summary.json").write_text(
+        json.dumps(
+            {
+                "cycle_index": 1,
+                "score": 0.9763,
+                "feedback": ["repair_required_count: 1"],
+                "patch_check": {"valid": True, "stderr": ""},
+                "proposal_quality": {"valid": True, "reasons": []},
+                "apply_result": {"applied": True, "rolled_back": True},
+                "changed_files": [
+                    "ipfs_datasets_py/logic/deontic/formula_builder.py",
+                    "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                ],
+                "post_apply_validation": {
+                    "valid": False,
+                    "compile": {"valid": True, "stderr": "", "stdout": ""},
+                    "collect": {
+                        "valid": False,
+                        "stderr": "E   SyntaxError: invalid syntax",
+                        "stdout": "FAILED tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+                    },
+                    "focused_tests": {"valid": True, "stderr": "", "stdout": ""},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "out/progress_summary.json").write_text(
+        json.dumps(
+            {
+                "current_score": 0.9763,
+                "cycles_since_meaningful_progress": 1,
+                "stalled_metric_cycles": 1,
+                "accepted_change_summaries": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    fake_router = _FakeRouter(
+        json.dumps(
+            {
+                "summary": "Repair formula-builder collection failure with same-family followthrough.",
+                "requirements_addressed": ["repair phase"],
+                "acceptance_criteria": ["collection passes"],
+                "expected_metric_gain": {},
+                "tests_to_run": [],
+                "unified_diff": "",
+            }
+        )
+    )
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        apply_patches=False,
+        run_tests=False,
+        require_production_and_tests=False,
+        require_clean_touched_files=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=fake_router)
+
+    prompt = optimizer.build_patch_prompt(cycle_index=2, evaluation={"metrics": {}}, feedback=["gap"])
+
+    assert '"test_failure_recovery_mode": true' in prompt
+    assert '"slice_scale_contract": {' in prompt
+    assert '"mode": "repair_with_material_followthrough"' in prompt
+    assert '"minimum_related_constructions": 2' in prompt
+    assert '"target_focused_examples_or_assertions": "4-6"' in prompt
+    assert "compile-safe first" in prompt
+
+
 def test_daemon_rejects_source_grounded_mental_state_erasure_test(tmp_path):
     config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
     daemon = LegalParserOptimizerDaemon(config, optimizer=LegalParserParityOptimizer(daemon_config=config))
@@ -1760,12 +1833,39 @@ def test_daemon_rejects_material_slice_that_is_too_small(tmp_path):
             ],
         },
         patch_stability_mode=False,
+        slice_scale_mode="expanded_slice",
         test_failure_recovery_mode=False,
         material_slice_gate_active=True,
     )
 
     assert assessed["valid"] is False
     assert assessed["material_slice_quality"]["minimum_insertions"] == 30
+    assert any("material_slice_too_small" in reason for reason in assessed["reasons"])
+
+
+def test_daemon_rejects_too_small_high_score_repair_followthrough_slice(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+    daemon = LegalParserOptimizerDaemon(config=config, optimizer=optimizer)
+
+    assessed = daemon._enforce_material_slice_quality(
+        proposal_quality={"valid": True, "reasons": []},
+        patch_stats={
+            "insertions": 10,
+            "deletions": 2,
+            "changed_files": [
+                "ipfs_datasets_py/logic/deontic/formula_builder.py",
+                "tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
+            ],
+        },
+        patch_stability_mode=False,
+        slice_scale_mode="repair_with_material_followthrough",
+        test_failure_recovery_mode=True,
+        material_slice_gate_active=True,
+    )
+
+    assert assessed["valid"] is False
+    assert assessed["material_slice_quality"]["minimum_insertions"] == 24
     assert any("material_slice_too_small" in reason for reason in assessed["reasons"])
 
 
@@ -1896,6 +1996,18 @@ def test_daemon_retries_broad_patch_when_patch_stability_mode_is_active(tmp_path
     assert cycle["proposal_attempts"][1]["proposal_quality_valid"] is True
     assert cycle["proposal_quality"]["valid"] is True
     assert cycle["apply_result"]["reason"] == "apply_patches_disabled"
+
+
+def test_material_slice_gate_activates_for_expanded_and_repair_followthrough_modes(tmp_path):
+    config = LegalParserDaemonConfig(repo_root=tmp_path, output_dir=tmp_path / "out")
+    daemon = LegalParserOptimizerDaemon(
+        config=config,
+        optimizer=LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}")),
+    )
+
+    assert daemon._material_slice_gate_active({"mode": "expanded_slice"}) is True
+    assert daemon._material_slice_gate_active({"mode": "repair_with_material_followthrough"}) is True
+    assert daemon._material_slice_gate_active({"mode": "repair_first"}) is False
 
 
 def test_optimizer_prompt_marks_metric_stall_and_includes_repair_details(tmp_path):
@@ -2119,15 +2231,51 @@ def test_daemon_retries_metric_stall_proposal_without_expected_metric_gain(tmp_p
             "diff --git a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
             "--- a/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
             "+++ b/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,17 @@",
             "-before_parser",
-            "+after_parser",
+            "+def parse_notice_trigger_family():",
+            "+    cases = [",
+            "+        'before_parser',",
+            "+        'directive trigger notice',",
+            "+        'directive trigger permit',",
+            "+        'directive trigger hearing',",
+            "+        'directive trigger filing',",
+            "+        'directive trigger renewal',",
+            "+        'directive trigger publication',",
+            "+    ]",
+            "+    return [case.upper() for case in cases]",
+            "+",
+            "+",
+            "+def parse_notice_trigger_summary():",
+            "+    return {'family': 'directive_trigger', 'count': 7}",
+            "+",
+            "+",
+            "+def parse_notice_trigger_labels():",
+            "+    return ['notice', 'permit', 'hearing', 'filing', 'renewal', 'publication']",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_converter.py b/tests/unit_tests/logic/deontic/test_deontic_converter.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_converter.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_converter.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,20 @@",
             "-before_test",
-            "+after_test",
+            "+def test_notice_trigger_family_examples():",
+            "+    family = parse_notice_trigger_family()",
+            "+    assert family[0] == 'BEFORE_PARSER'",
+            "+    assert 'DIRECTIVE TRIGGER NOTICE' in family",
+            "+    assert 'DIRECTIVE TRIGGER PERMIT' in family",
+            "+    assert 'DIRECTIVE TRIGGER HEARING' in family",
+            "+    assert 'DIRECTIVE TRIGGER FILING' in family",
+            "+    assert 'DIRECTIVE TRIGGER RENEWAL' in family",
+            "+    assert 'DIRECTIVE TRIGGER PUBLICATION' in family",
+            "+",
+            "+",
+            "+def test_notice_trigger_summary():",
+            "+    summary = parse_notice_trigger_summary()",
+            "+    assert summary == {'family': 'directive_trigger', 'count': 7}",
+            "+",
+            "+",
+            "+def test_notice_trigger_labels():",
+            "+    labels = parse_notice_trigger_labels()",
+            "+    assert labels == ['notice', 'permit', 'hearing', 'filing', 'renewal', 'publication']",
             "",
         ]
     )
@@ -2199,16 +2347,48 @@ def test_daemon_rolls_back_metric_stall_patch_without_metric_progress(tmp_path):
             "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
             "--- a/ipfs_datasets_py/logic/deontic/exports.py",
             "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,15 @@",
             "-EXPORT_MARKER = 'before_exports'",
             "+EXPORT_MARKER = 'after_exports'",
+            "+EXPORT_CASES = [",
+            "+    'repair_required_count',",
+            "+    'proof_ready_rate',",
+            "+    'cross_reference_resolution_rate',",
+            "+    'phase8_quality_summary',",
+            "+    'decoder_slot_loss',",
+            "+    'ir_slot_provenance',",
+            "+]",
+            "+",
+            "+",
+            "+def export_metric_family_summary():",
+            "+    return {'family': 'metric_summary', 'metrics': EXPORT_CASES, 'count': len(EXPORT_CASES)}",
+            "+",
+            "+",
+            "+def export_metric_names():",
+            "+    return ','.join(EXPORT_CASES)",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
-            "@@ -1,2 +1,2 @@",
+            "@@ -1,2 +1,18 @@",
             " def test_marker():",
             "-    assert 'before_test'",
             "+    assert 'after_test'",
+            "+",
+            "+",
+            "+def test_export_metric_family_summary():",
+            "+    summary = {'family': 'metric_summary', 'metrics': ['repair_required_count', 'proof_ready_rate', 'cross_reference_resolution_rate', 'phase8_quality_summary', 'decoder_slot_loss', 'ir_slot_provenance'], 'count': 6}",
+            "+    assert summary['family'] == 'metric_summary'",
+            "+    assert summary['count'] == 6",
+            "+    assert 'repair_required_count' in summary['metrics']",
+            "+    assert 'proof_ready_rate' in summary['metrics']",
+            "+    assert 'cross_reference_resolution_rate' in summary['metrics']",
+            "+    assert 'phase8_quality_summary' in summary['metrics']",
+            "+",
+            "+",
+            "+def test_export_metric_names():",
+            "+    names = 'repair_required_count,proof_ready_rate,cross_reference_resolution_rate,phase8_quality_summary,decoder_slot_loss,ir_slot_provenance'",
+            "+    assert 'repair_required_count' in names",
+            "+    assert 'ir_slot_provenance' in names",
             "",
         ]
     )
@@ -2314,15 +2494,48 @@ def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp
             "diff --git a/ipfs_datasets_py/logic/deontic/exports.py b/ipfs_datasets_py/logic/deontic/exports.py",
             "--- a/ipfs_datasets_py/logic/deontic/exports.py",
             "+++ b/ipfs_datasets_py/logic/deontic/exports.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,15 @@",
             "-before_exports",
-            "+after_exports",
+            "+def export_only_summary_rows():",
+            "+    return [",
+            "+        'after_exports',",
+            "+        'repair_required_count',",
+            "+        'proof_ready_rate',",
+            "+        'cross_reference_resolution_rate',",
+            "+        'phase8_quality_summary',",
+            "+        'decoder_slot_loss',",
+            "+        'ir_slot_provenance',",
+            "+    ]",
+            "+",
+            "+",
+            "+def export_only_summary_count():",
+            "+    return len(export_only_summary_rows())",
+            "+",
+            "+",
+            "+def export_only_summary_labels():",
+            "+    return ['exports', 'metrics', 'phase8']",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_exports.py b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_exports.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_exports.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,18 @@",
             "-before_exports_test",
-            "+after_exports_test",
+            "+def test_export_only_summary_rows():",
+            "+    rows = export_only_summary_rows()",
+            "+    assert rows[0] == 'after_exports'",
+            "+    assert 'repair_required_count' in rows",
+            "+    assert 'proof_ready_rate' in rows",
+            "+    assert 'cross_reference_resolution_rate' in rows",
+            "+    assert 'phase8_quality_summary' in rows",
+            "+    assert 'decoder_slot_loss' in rows",
+            "+    assert 'ir_slot_provenance' in rows",
+            "+",
+            "+",
+            "+def test_export_only_summary_count():",
+            "+    assert export_only_summary_count() == 7",
+            "+",
+            "+",
+            "+def test_export_only_summary_labels():",
+            "+    assert export_only_summary_labels() == ['exports', 'metrics', 'phase8']",
             "",
         ]
     )
@@ -2331,15 +2544,48 @@ def test_daemon_retries_exports_only_patch_after_metric_no_progress_recovery(tmp
             "diff --git a/ipfs_datasets_py/logic/deontic/formula_builder.py b/ipfs_datasets_py/logic/deontic/formula_builder.py",
             "--- a/ipfs_datasets_py/logic/deontic/formula_builder.py",
             "+++ b/ipfs_datasets_py/logic/deontic/formula_builder.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,15 @@",
             "-before_formula",
-            "+after_formula",
+            "+def formula_family_summary():",
+            "+    return [",
+            "+        'after_formula',",
+            "+        'abatement duty',",
+            "+        'mitigation duty',",
+            "+        'remediation duty',",
+            "+        'publication duty',",
+            "+        'notice duty',",
+            "+        'hearing duty',",
+            "+    ]",
+            "+",
+            "+",
+            "+def formula_family_count():",
+            "+    return len(formula_family_summary())",
+            "+",
+            "+",
+            "+def formula_family_labels():",
+            "+    return ['abatement', 'mitigation', 'remediation', 'publication', 'notice', 'hearing']",
             "diff --git a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
             "--- a/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
             "+++ b/tests/unit_tests/logic/deontic/test_deontic_formula_builder.py",
-            "@@ -1 +1 @@",
+            "@@ -1 +1,18 @@",
             "-before_formula_test",
-            "+after_formula_test",
+            "+def test_formula_family_summary():",
+            "+    examples = formula_family_summary()",
+            "+    assert examples[0] == 'after_formula'",
+            "+    assert 'abatement duty' in examples",
+            "+    assert 'mitigation duty' in examples",
+            "+    assert 'remediation duty' in examples",
+            "+    assert 'publication duty' in examples",
+            "+    assert 'notice duty' in examples",
+            "+    assert 'hearing duty' in examples",
+            "+",
+            "+",
+            "+def test_formula_family_count():",
+            "+    assert formula_family_count() == 7",
+            "+",
+            "+",
+            "+def test_formula_family_labels():",
+            "+    assert formula_family_labels() == ['abatement', 'mitigation', 'remediation', 'publication', 'notice', 'hearing']",
             "",
         ]
     )

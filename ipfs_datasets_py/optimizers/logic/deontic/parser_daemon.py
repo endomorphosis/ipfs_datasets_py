@@ -560,7 +560,30 @@ class LegalParserParityOptimizer(BaseOptimizer):
     ) -> Dict[str, Any]:
         """Describe how large the next autonomous implementation slice should be."""
 
+        try:
+            score = float(progress_payload.get("current_score") or 0.0)
+        except (TypeError, ValueError):
+            score = 0.0
+        try:
+            stalled_cycles = int(progress_payload.get("cycles_since_meaningful_progress", 0) or 0)
+        except (TypeError, ValueError):
+            stalled_cycles = 0
+        expanded = metric_stall_mode or metric_no_progress_recovery_mode or score >= 0.95 or stalled_cycles >= 3
+
         if test_failure_recovery_mode:
+            if expanded or roadmap_pivot_mode:
+                return {
+                    "mode": "repair_with_material_followthrough",
+                    "minimum_related_constructions": 2,
+                    "minimum_focused_examples_or_assertions": 4,
+                    "target_focused_examples_or_assertions": "4-6",
+                    "file_scope": "the failing production/test files plus the same capability family",
+                    "instruction": (
+                        "Fix the concrete validation failure first, then keep the patch in the same "
+                        "file pair and add enough same-family assertions or examples to prevent the "
+                        "failure from collapsing into a one-off micro-fix."
+                    ),
+                }
             return {
                 "mode": "repair_first",
                 "minimum_related_constructions": 1,
@@ -594,15 +617,6 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "predicate spelling; cover a legal-construction family in the chosen file pair."
                 ),
             }
-        try:
-            score = float(progress_payload.get("current_score") or 0.0)
-        except (TypeError, ValueError):
-            score = 0.0
-        try:
-            stalled_cycles = int(progress_payload.get("cycles_since_meaningful_progress", 0) or 0)
-        except (TypeError, ValueError):
-            stalled_cycles = 0
-        expanded = metric_stall_mode or metric_no_progress_recovery_mode or score >= 0.95 or stalled_cycles >= 3
         if expanded:
             return {
                 "mode": "expanded_slice",
@@ -1113,6 +1127,7 @@ class LegalParserOptimizerDaemon:
                     proposal_quality=candidate_quality,
                     patch_stats=candidate_patch_stats,
                     patch_stability_mode=patch_stability_mode,
+                    slice_scale_mode=str(slice_scale_contract.get("mode") or ""),
                     test_failure_recovery_mode=test_failure_recovery_mode,
                     material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
                 )
@@ -1258,6 +1273,7 @@ class LegalParserOptimizerDaemon:
             proposal_quality=proposal_quality,
             patch_stats=patch_stats,
             patch_stability_mode=patch_stability_mode,
+            slice_scale_mode=str(slice_scale_contract.get("mode") or ""),
             test_failure_recovery_mode=test_failure_recovery_mode,
             material_slice_gate_active=self._material_slice_gate_active(slice_scale_contract),
         )
@@ -1870,12 +1886,13 @@ class LegalParserOptimizerDaemon:
         proposal_quality: Dict[str, Any],
         patch_stats: Mapping[str, Any],
         patch_stability_mode: bool,
+        slice_scale_mode: str,
         test_failure_recovery_mode: bool,
         material_slice_gate_active: bool,
     ) -> Dict[str, Any]:
         if not material_slice_gate_active:
             return proposal_quality
-        if test_failure_recovery_mode:
+        if test_failure_recovery_mode and slice_scale_mode == "repair_first":
             return proposal_quality
         try:
             insertions = int(patch_stats.get("insertions", 0) or 0)
@@ -1886,7 +1903,12 @@ class LegalParserOptimizerDaemon:
         changed_files = list(patch_stats.get("changed_files") or [])
         if not changed_files:
             return proposal_quality
-        minimum_insertions = 18 if patch_stability_mode else 30
+        if slice_scale_mode == "repair_with_material_followthrough":
+            minimum_insertions = 24
+        elif patch_stability_mode:
+            minimum_insertions = 18
+        else:
+            minimum_insertions = 30
         if insertions >= minimum_insertions and insertions + deletions >= minimum_insertions:
             return proposal_quality
         return {
@@ -1913,8 +1935,10 @@ class LegalParserOptimizerDaemon:
 
     def _material_slice_gate_active(self, slice_scale_contract: Mapping[str, Any]) -> bool:
         return str(slice_scale_contract.get("mode") or "") in {
+            "expanded_slice",
             "patch_stability_family",
             "phase8_cross_stack_slice",
+            "repair_with_material_followthrough",
         }
 
     def _enforce_metric_stall_quality(
