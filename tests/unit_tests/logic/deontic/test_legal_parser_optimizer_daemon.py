@@ -119,6 +119,10 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert "dirty_target_grace_seconds" in script
     assert '"requesting_llm_patch"' in recovery_body
     assert "dirty_legal_parser_targets_transient_phase" in recovery_body
+    assert 'def restore_failed_dirty_targets(progress: dict, paths: list[str]) -> bool:' in recovery_body
+    assert '"automatic restore failed"' in recovery_body
+    assert "dirty_legal_parser_targets_known_bad_restore_failure" in recovery_body
+    assert "and not known_bad_restore_failure" in recovery_body
     assert "status_stall_age < dirty_target_grace_seconds" in script
     assert dirty_reason_pos < maintenance_reason_pos
 

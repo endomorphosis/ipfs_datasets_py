@@ -619,6 +619,7 @@ confirmed_dirty_target_reason() {
     "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
     "$REPO_ROOT" \
     "$REPO_ROOT/$CURRENT_STATUS_PATH" \
+    "$REPO_ROOT/$PROGRESS_PATH" \
     "$SUPERVISOR_AGENTIC_DIRTY_TARGET_FILES" \
     "$SUPERVISOR_DIRTY_TARGET_GRACE_SECONDS" <<'PY'
 import hashlib
@@ -631,8 +632,9 @@ from pathlib import Path
 state_path = Path(sys.argv[1])
 repo_root = Path(sys.argv[2])
 status_path = Path(sys.argv[3])
-dirty_target_detection = str(sys.argv[4]).strip() == "1"
-dirty_target_grace_seconds = int(sys.argv[5])
+progress_path = Path(sys.argv[4])
+dirty_target_detection = str(sys.argv[5]).strip() == "1"
+dirty_target_grace_seconds = int(sys.argv[6])
 
 LEGAL_PARSER_TARGETS = [
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
@@ -656,6 +658,13 @@ def read_state() -> dict:
 def read_status() -> dict:
     try:
         return json.loads(status_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def read_progress() -> dict:
+    try:
+        return json.loads(progress_path.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
@@ -708,6 +717,29 @@ def fingerprint(status_stdout: str, paths: list[str]) -> str:
     return digest.hexdigest()
 
 
+def restore_failed_dirty_targets(progress: dict, paths: list[str]) -> bool:
+    if not paths:
+        return False
+    recent_rejections = progress.get("recent_rejections")
+    if not isinstance(recent_rejections, list):
+        return False
+    path_set = set(paths)
+    for item in reversed(recent_rejections):
+        if not isinstance(item, dict):
+            continue
+        text_parts = [
+            str(item.get("reason") or ""),
+            str(item.get("patch_stderr_tail") or ""),
+            json.dumps(item.get("proposal_quality_reasons") or [], sort_keys=True),
+        ]
+        text = "\n".join(text_parts)
+        if "automatic restore failed" not in text:
+            continue
+        if any(candidate in text for candidate in path_set):
+            return True
+    return False
+
+
 if not dirty_target_detection:
     raise SystemExit(1)
 result = subprocess.run(
@@ -723,6 +755,7 @@ paths = paths_from_status(result.stdout)
 fp = fingerprint(result.stdout, paths)
 state = read_state()
 status = read_status()
+progress = read_progress()
 previous = [str(path) for path in state.get("dirty_legal_parser_targets") or []]
 previous_fp = str(state.get("dirty_legal_parser_targets_fingerprint") or "")
 current_phase = str(status.get("phase") or "")
@@ -736,6 +769,7 @@ except (TypeError, ValueError):
 phase_age = max(0, now - phase_started_at) if phase_started_at else 0
 status_age = max(0, now - updated_at) if updated_at else 0
 phase_stale = bool(phase_stale_after > 0 and phase_age >= phase_stale_after)
+known_bad_restore_failure = restore_failed_dirty_targets(progress, paths)
 transient_phases = {
     "requesting_llm_patch",
     "retrying_llm_patch",
@@ -749,6 +783,7 @@ transient_phases = {
 }
 transient_dirty = bool(
     paths
+    and not known_bad_restore_failure
     and not phase_stale
     and status_age < dirty_target_grace_seconds
     and (current_phase in transient_phases or bool(current_phase))
@@ -762,6 +797,7 @@ state.update(
         "dirty_legal_parser_targets_fingerprint": fp,
         "dirty_legal_parser_targets_pending_confirmation": bool(paths),
         "dirty_legal_parser_targets_transient_phase": current_phase if transient_dirty else "",
+        "dirty_legal_parser_targets_known_bad_restore_failure": known_bad_restore_failure,
     }
 )
 state_path.parent.mkdir(parents=True, exist_ok=True)
