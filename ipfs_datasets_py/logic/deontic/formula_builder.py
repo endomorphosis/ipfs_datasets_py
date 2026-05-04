@@ -179,6 +179,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_training_orientation_light_verb_action(action_text)
     action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
     action_text = _normalize_remediation_abatement_light_verb_action(action_text)
+    action_text = _normalize_regulatory_control_light_verb_action(action_text)
     action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
     action_text = _normalize_codification_compilation_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
@@ -6173,6 +6174,48 @@ def _normalize_remediation_abatement_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"mitigate {target}" if target else text
+
+    return text
+
+
+def _normalize_regulatory_control_light_verb_action(action_text: str) -> str:
+    """Project regulatory-control nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    control_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|order|orders|ordered|ordering|impose|imposes|imposed|imposing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?quarantine\s+(?:of|on|for)\s+(?:the\s+)?(.+)$",
+            "quarantine",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|order|orders|ordered|ordering|impose|imposes|imposed|imposing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:an?\s+|the\s+)?embargo\s+(?:of|on|against|for)\s+(?:the\s+)?(.+)$",
+            "embargo",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|order|orders|ordered|ordering|impose|imposes|imposed|imposing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?recall\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "recall",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|order|orders|ordered|ordering|issue|issues|issued|issuing|enter|enters|entered|entering)\s+"
+            r"(?:a\s+|the\s+)?condemnation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "condemn",
+        ),
+        (r"^quarantine\s+(?:of|on|for)\s+(?:the\s+)?(.+)$", "quarantine"),
+        (r"^embargo\s+(?:of|on|against|for)\s+(?:the\s+)?(.+)$", "embargo"),
+        (r"^recall\s+(?:of|for)\s+(?:the\s+)?(.+)$", "recall"),
+        (r"^condemnation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "condemn"),
+    ]
+    for pattern, verb in control_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 
