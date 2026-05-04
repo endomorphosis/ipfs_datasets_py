@@ -18,7 +18,7 @@ from .formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
 )
-from .ir import LegalNormIR
+from .ir import LegalNormIR, legal_norm_ir_slot_provenance
 from .decoder import decode_legal_norm_ir
 
 
@@ -28,6 +28,18 @@ LOCAL_PROVER_TARGETS = (
     "fol",
     "deontic_fol",
     "deontic_temporal_fol",
+)
+
+PROVER_IR_AUDIT_SLOTS = (
+    "actor",
+    "modality",
+    "action",
+    "mental_state",
+    "recipient",
+    "conditions",
+    "exceptions",
+    "temporal_constraints",
+    "cross_references",
 )
 
 
@@ -49,6 +61,11 @@ class ProverTargetSyntaxRecord:
     grounded_decoded_slots: List[str]
     ungrounded_decoded_slots: List[str]
     missing_decoded_slots: List[str]
+    grounded_ir_slots: List[str]
+    ungrounded_ir_slots: List[str]
+    missing_ir_slots: List[str]
+    ir_slot_grounding: List[Dict[str, Any]]
+    ir_slot_grounding_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -142,7 +159,8 @@ def _validate_target_formula(
     exported_formula = _render_target_formula(norm, target, formula)
     decoded = decode_legal_norm_ir(norm)
     decoded_slot_summary = _decoded_slot_summary(decoded)
-    target_components = _target_components(target, exported_formula)
+    ir_slot_summary = _ir_slot_grounding_summary(norm)
+    target_components = _target_components(target, exported_formula, ir_slot_summary)
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
 
@@ -158,6 +176,7 @@ def _validate_target_formula(
             norm,
             formula,
             decoded_slot_summary["decoded_slots"],
+            ir_slot_summary["grounded_ir_slots"],
         ),
         decoded_text=decoded.text,
         decoded_slots=decoded_slot_summary["decoded_slots"],
@@ -169,6 +188,11 @@ def _validate_target_formula(
         grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
         ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
         missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
+        grounded_ir_slots=ir_slot_summary["grounded_ir_slots"],
+        ungrounded_ir_slots=ir_slot_summary["ungrounded_ir_slots"],
+        missing_ir_slots=ir_slot_summary["missing_ir_slots"],
+        ir_slot_grounding=ir_slot_summary["ir_slot_grounding"],
+        ir_slot_grounding_fingerprint=ir_slot_summary["ir_slot_grounding_fingerprint"],
         target_components=target_components,
         syntax_valid=syntax_valid,
         skipped=False,
@@ -262,8 +286,35 @@ def _target_formula_role(target: str) -> str:
     }.get(target, "unknown")
 
 
-def _target_components(target: str, exported_formula: str) -> Dict[str, Any]:
+def _ir_slot_grounding_summary(norm: LegalNormIR) -> Dict[str, Any]:
+    audit = legal_norm_ir_slot_provenance(norm, PROVER_IR_AUDIT_SLOTS)
+    grounded_slots = list(audit["grounded_slots"])
+    ungrounded_slots = list(audit["ungrounded_slots"])
+    missing_slots = list(audit["missing_slots"])
+    return {
+        "grounded_ir_slots": grounded_slots,
+        "ungrounded_ir_slots": ungrounded_slots,
+        "missing_ir_slots": missing_slots,
+        "ir_slot_grounding": list(audit["slot_grounding"]),
+        "ir_slot_grounding_fingerprint": _stable_fingerprint(
+            norm.source_id,
+            "|".join(grounded_slots),
+            "|".join(ungrounded_slots),
+            "|".join(missing_slots),
+        ),
+    }
+
+
+def _target_components(
+    target: str,
+    exported_formula: str,
+    ir_slot_summary: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
+    ir_slot_summary = ir_slot_summary or {}
+    grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
+    ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
+    missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
@@ -273,6 +324,12 @@ def _target_components(target: str, exported_formula: str) -> Dict[str, Any]:
         "uses_temporal_wrapper": text.startswith("always("),
         "uses_first_order_quantifier": "forall x." in text,
         "contains_display_connectives": bool(re.search(r"[∀∧→¬]", text)),
+        "grounded_ir_slots": grounded_ir_slots,
+        "ungrounded_ir_slots": ungrounded_ir_slots,
+        "missing_ir_slots": missing_ir_slots,
+        "grounded_ir_slot_count": len(grounded_ir_slots),
+        "ungrounded_ir_slot_count": len(ungrounded_ir_slots),
+        "missing_ir_slot_count": len(missing_ir_slots),
     }
 
 
@@ -280,6 +337,7 @@ def _ir_semantic_fingerprint(
     norm: LegalNormIR,
     formula: str,
     decoded_slots: Sequence[str],
+    grounded_ir_slots: Sequence[str] = (),
 ) -> str:
     return _stable_fingerprint(
         norm.schema_version,
@@ -290,6 +348,7 @@ def _ir_semantic_fingerprint(
         norm.action,
         formula,
         "|".join(decoded_slots),
+        "|".join(grounded_ir_slots),
     )
 
 

@@ -124,6 +124,45 @@ def test_prover_syntax_records_share_ir_semantics_across_target_dialects():
     )
 
 
+def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
+    examples = [
+        (
+            "The Director shall issue a permit within 10 days after application unless approval is denied.",
+            ["actor", "modality", "action", "exceptions", "temporal_constraints"],
+            ["mental_state", "recipient", "conditions", "cross_references"],
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            ["actor", "modality", "action", "exceptions", "cross_references"],
+            ["mental_state", "recipient", "conditions", "temporal_constraints"],
+        ),
+    ]
+
+    for text, grounded_slots, missing_slots in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert len({record["ir_slot_grounding_fingerprint"] for record in records}) == 1
+        assert all(record["grounded_ir_slots"] == grounded_slots for record in records)
+        assert all(record["ungrounded_ir_slots"] == [] for record in records)
+        assert all(record["missing_ir_slots"] == missing_slots for record in records)
+        assert all(
+            record["target_components"]["grounded_ir_slots"] == grounded_slots
+            for record in records
+        )
+        assert all(
+            record["target_components"]["grounded_ir_slot_count"] == len(grounded_slots)
+            for record in records
+        )
+        assert all(
+            record["target_components"]["missing_ir_slot_count"] == len(missing_slots)
+            for record in records
+        )
+        assert records[0]["ir_slot_grounding"][0]["slot"] == "actor"
+        assert records[0]["ir_slot_grounding"][0]["status"] == "grounded"
+
+
 def test_prover_syntax_semantic_fingerprints_change_when_ir_slots_change():
     tenant = LegalNormIR.from_parser_element(
         extract_normative_elements("The tenant must pay rent monthly.")[0]
