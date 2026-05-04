@@ -124,6 +124,48 @@ def test_prover_syntax_records_share_ir_semantics_across_target_dialects():
     )
 
 
+def test_prover_syntax_records_carry_target_dialect_profiles():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+
+    records = {target.target: target.to_dict() for target in validate_ir_with_provers(norm).targets}
+
+    assert [records[target]["target_dialect_profile"]["dialect_family"] for target in records] == [
+        "frame_logic",
+        "event_calculus",
+        "first_order",
+        "deontic_first_order",
+        "deontic_temporal_first_order",
+    ]
+    assert records["frame_logic"]["target_dialect_profile"]["required_wrappers"] == [
+        "legal_norm"
+    ]
+    assert records["deontic_cec"]["target_dialect_profile"]["required_wrappers"] == [
+        "Happens",
+        "HoldsAt",
+    ]
+    assert records["fol"]["target_dialect_profile"]["forbidden_wrappers_absent"] is True
+    assert records["deontic_fol"]["target_dialect_profile"]["present_wrappers"] == ["O"]
+    assert records["deontic_temporal_fol"]["target_dialect_profile"]["present_wrappers"] == [
+        "always",
+        "O",
+    ]
+    assert all(
+        record["target_dialect_profile"]["connective_style"] == "ascii"
+        for record in records.values()
+    )
+    assert all(
+        record["target_dialect_profile"]["target_dialect_profile_complete"] is True
+        for record in records.values()
+    )
+    assert all(
+        record["target_components"]["target_dialect_profile_complete"] is True
+        for record in records.values()
+    )
+    assert len({record["target_dialect_profile_fingerprint"] for record in records.values()}) == 5
+
+
 def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
     examples = [
         (

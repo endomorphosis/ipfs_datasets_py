@@ -74,6 +74,8 @@ class ProverTargetSyntaxRecord:
     exported_formula_symbols: List[str]
     target_symbol_alignment: Dict[str, Any]
     target_symbol_alignment_fingerprint: str
+    target_dialect_profile: Dict[str, Any]
+    target_dialect_profile_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -178,12 +180,19 @@ def _validate_target_formula(
         formula,
         exported_formula,
     )
+    target_dialect_profile = _target_dialect_profile(
+        target,
+        formula,
+        exported_formula,
+        norm,
+    )
     target_components = _target_components(
         target,
         exported_formula,
         ir_slot_summary,
         alignment_summary,
         symbol_alignment,
+        target_dialect_profile,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -226,6 +235,10 @@ def _validate_target_formula(
         target_symbol_alignment=symbol_alignment,
         target_symbol_alignment_fingerprint=symbol_alignment[
             "target_symbol_alignment_fingerprint"
+        ],
+        target_dialect_profile=target_dialect_profile,
+        target_dialect_profile_fingerprint=target_dialect_profile[
+            "target_dialect_profile_fingerprint"
         ],
         target_components=target_components,
         syntax_valid=syntax_valid,
@@ -424,11 +437,13 @@ def _target_components(
     ir_slot_summary: Dict[str, Any] | None = None,
     alignment_summary: Dict[str, Any] | None = None,
     symbol_alignment: Dict[str, Any] | None = None,
+    target_dialect_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
     alignment_summary = alignment_summary or {}
     symbol_alignment = symbol_alignment or {}
+    target_dialect_profile = target_dialect_profile or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
@@ -473,7 +488,154 @@ def _target_components(
         "target_symbol_alignment_complete": bool(
             symbol_alignment.get("target_symbol_alignment_complete") is True
         ),
+        "dialect_family": target_dialect_profile.get("dialect_family", "unknown"),
+        "connective_style": target_dialect_profile.get("connective_style", "unknown"),
+        "quantifier_policy": target_dialect_profile.get("quantifier_policy", "unknown"),
+        "required_wrappers_present": bool(
+            target_dialect_profile.get("required_wrappers_present") is True
+        ),
+        "forbidden_wrappers_absent": bool(
+            target_dialect_profile.get("forbidden_wrappers_absent") is True
+        ),
+        "target_dialect_profile_complete": bool(
+            target_dialect_profile.get("target_dialect_profile_complete") is True
+        ),
     }
+
+
+def _target_dialect_profile(
+    target: str,
+    formula: str,
+    exported_formula: str,
+    norm: LegalNormIR,
+) -> Dict[str, Any]:
+    """Describe target-specific syntax obligations for audit records.
+
+    The syntax validator should expose not only whether a target string parsed,
+    but why that string belongs to the requested local dialect. This profile is
+    deterministic metadata derived from the target name and rendered formula.
+    """
+
+    text = str(exported_formula or "").strip()
+    source_operator = _source_deontic_operator(formula, norm)
+    policy = _target_dialect_policy(target)
+    required_wrappers = list(policy["required_wrappers"])
+    forbidden_wrappers = list(policy["forbidden_wrappers"])
+    present_wrappers = _present_target_wrappers(text)
+    required_present = all(wrapper in present_wrappers for wrapper in required_wrappers)
+    forbidden_absent = all(wrapper not in present_wrappers for wrapper in forbidden_wrappers)
+    display_connectives_absent = not bool(re.search(r"[∀∧∨→¬]", text))
+    quantifier_present = "forall x." in text
+    quantifier_policy = str(policy["quantifier_policy"])
+    quantifier_ok = (
+        quantifier_present
+        if quantifier_policy == "required"
+        else not quantifier_present
+        if quantifier_policy == "forbidden"
+        else True
+    )
+    deontic_operator_preserved = (
+        source_operator == ""
+        or source_operator not in {"O", "P", "F"}
+        or source_operator in present_wrappers
+        or target == "fol"
+    )
+    complete = (
+        required_present
+        and forbidden_absent
+        and display_connectives_absent
+        and quantifier_ok
+        and deontic_operator_preserved
+    )
+    fingerprint = _stable_fingerprint(
+        target,
+        policy["dialect_family"],
+        "|".join(required_wrappers),
+        "|".join(forbidden_wrappers),
+        "|".join(present_wrappers),
+        quantifier_policy,
+        str(complete),
+    )
+    return {
+        "target": target,
+        "dialect_family": policy["dialect_family"],
+        "formula_role": _target_formula_role(target),
+        "connective_style": "ascii",
+        "source_deontic_operator": source_operator,
+        "required_wrappers": required_wrappers,
+        "forbidden_wrappers": forbidden_wrappers,
+        "present_wrappers": present_wrappers,
+        "required_wrappers_present": required_present,
+        "forbidden_wrappers_absent": forbidden_absent,
+        "display_connectives_absent": display_connectives_absent,
+        "quantifier_policy": quantifier_policy,
+        "quantifier_present": quantifier_present,
+        "quantifier_policy_satisfied": quantifier_ok,
+        "deontic_operator_preserved": deontic_operator_preserved,
+        "target_dialect_profile_complete": complete,
+        "target_dialect_profile_fingerprint": fingerprint,
+    }
+
+
+def _target_dialect_policy(target: str) -> Dict[str, Any]:
+    policies: Dict[str, Dict[str, Any]] = {
+        "frame_logic": {
+            "dialect_family": "frame_logic",
+            "required_wrappers": ("legal_norm",),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_cec": {
+            "dialect_family": "event_calculus",
+            "required_wrappers": ("Happens", "HoldsAt"),
+            "forbidden_wrappers": ("always",),
+            "quantifier_policy": "optional",
+        },
+        "fol": {
+            "dialect_family": "first_order",
+            "required_wrappers": (),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always", "O", "P", "F"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_fol": {
+            "dialect_family": "deontic_first_order",
+            "required_wrappers": (),
+            "forbidden_wrappers": ("Happens", "HoldsAt", "always"),
+            "quantifier_policy": "optional",
+        },
+        "deontic_temporal_fol": {
+            "dialect_family": "deontic_temporal_first_order",
+            "required_wrappers": ("always",),
+            "forbidden_wrappers": ("Happens", "HoldsAt"),
+            "quantifier_policy": "optional",
+        },
+    }
+    return policies.get(
+        target,
+        {
+            "dialect_family": "unknown",
+            "required_wrappers": (),
+            "forbidden_wrappers": (),
+            "quantifier_policy": "optional",
+        },
+    )
+
+
+def _present_target_wrappers(exported_formula: str) -> List[str]:
+    text = str(exported_formula or "")
+    wrappers: List[str] = []
+    for wrapper in ("legal_norm", "Happens", "HoldsAt", "always", "O", "P", "F"):
+        if re.search(r"\b" + re.escape(wrapper) + r"\s*\(", text):
+            wrappers.append(wrapper)
+    return wrappers
+
+
+def _source_deontic_operator(formula: str, norm: LegalNormIR) -> str:
+    text = str(formula or "").strip()
+    if len(text) > 2 and text[0] in {"O", "P", "F"} and text[1] == "(":
+        return text[0]
+    modality = str(norm.modality or "").strip().upper()
+    return modality if modality in {"O", "P", "F"} else ""
 
 
 def _target_symbol_alignment(
