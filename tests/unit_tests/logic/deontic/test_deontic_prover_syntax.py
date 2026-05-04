@@ -1,7 +1,10 @@
 """Tests for Phase 8 local prover syntax validation."""
 
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
-from ipfs_datasets_py.logic.deontic.prover_syntax import validate_ir_with_provers
+from ipfs_datasets_py.logic.deontic.prover_syntax import (
+    _syntax_diagnostics,
+    validate_ir_with_provers,
+)
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
 
@@ -55,6 +58,76 @@ def test_prover_syntax_renders_target_specific_ascii_dialects():
                 connective in expected_formula for connective in ("∀", "∧", "→", "¬")
             )
             assert records[target]["diagnostics"] == []
+
+
+def test_prover_syntax_records_carry_decoder_context_for_local_targets():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            "Tenant shall pay rent monthly.",
+            ["actor", "modality", "action"],
+            [],
+        ),
+        (
+            "This section applies to food carts.",
+            "This section applies to food carts.",
+            ["actor", "action"],
+            [],
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            "Secretary shall publish the notice except as provided in section 552.",
+            ["actor", "modality", "action", "exceptions"],
+            [],
+        ),
+    ]
+
+    for text, decoded_text, decoded_slots, missing_slots in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        report = validate_ir_with_provers(norm)
+        records = [target.to_dict() for target in report.targets]
+
+        assert len(records) == 5
+        assert all(record["decoded_text"] == decoded_text for record in records)
+        assert all(record["decoded_slots"] == decoded_slots for record in records)
+        assert all(record["missing_decoded_slots"] == missing_slots for record in records)
+        assert all(record["ungrounded_decoded_slots"] == [] for record in records)
+        assert all(record["grounded_decoded_slots"] == decoded_slots for record in records)
+
+
+def test_prover_syntax_reports_target_shape_diagnostics():
+    cases = [
+        (
+            "frame_logic",
+            "legal_norm(source)[actor->Tenant; formula->PayRent]",
+            "frame_logic_shape",
+        ),
+        (
+            "deontic_cec",
+            "HoldsAt(O(forall x. Tenant(x)), t)",
+            "deontic_cec_shape",
+        ),
+        (
+            "fol",
+            "O(forall x. Tenant(x))",
+            "fol_shape",
+        ),
+        (
+            "deontic_fol",
+            "always(O(forall x. Tenant(x)))",
+            "deontic_fol_shape",
+        ),
+        (
+            "deontic_temporal_fol",
+            "O(forall x. Tenant(x))",
+            "temporal_wrapper",
+        ),
+    ]
+
+    for target, exported_formula, expected_code in cases:
+        diagnostics = _syntax_diagnostics(target, exported_formula)
+
+        assert expected_code in [diagnostic["code"] for diagnostic in diagnostics]
 
 
 def test_prover_syntax_uses_formula_level_resolution_for_local_applicability():

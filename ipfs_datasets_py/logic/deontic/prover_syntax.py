@@ -18,6 +18,7 @@ from .formula_builder import (
     build_deontic_formula_record_from_ir,
 )
 from .ir import LegalNormIR
+from .decoder import decode_legal_norm_ir
 
 
 LOCAL_PROVER_TARGETS = (
@@ -38,6 +39,11 @@ class ProverTargetSyntaxRecord:
     target_version: str
     formula: str
     exported_formula: str
+    decoded_text: str
+    decoded_slots: List[str]
+    grounded_decoded_slots: List[str]
+    ungrounded_decoded_slots: List[str]
+    missing_decoded_slots: List[str]
     syntax_valid: bool
     skipped: bool
     diagnostics: List[Dict[str, Any]]
@@ -128,6 +134,8 @@ def _validate_target_formula(
     formula_record: Dict[str, Any],
 ) -> ProverTargetSyntaxRecord:
     exported_formula = _render_target_formula(norm, target, formula)
+    decoded = decode_legal_norm_ir(norm)
+    decoded_slot_summary = _decoded_slot_summary(decoded)
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
 
@@ -137,6 +145,11 @@ def _validate_target_formula(
         target_version="syntax_v1",
         formula=formula,
         exported_formula=exported_formula,
+        decoded_text=decoded.text,
+        decoded_slots=decoded_slot_summary["decoded_slots"],
+        grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
+        ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
+        missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
@@ -185,6 +198,79 @@ def _syntax_diagnostics(target: str, exported_formula: str) -> List[Dict[str, An
         and not _contains_frame_style_formula(exported_formula)
     ):
         diagnostics.append({"code": "missing_quantifier", "message": "FOL target lacks a quantifier or accepted frame atom"})
+    diagnostics.extend(_target_shape_diagnostics(target, exported_formula))
+    return diagnostics
+
+
+def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
+    decoded_slots: List[str] = []
+    grounded_slots: List[str] = []
+    ungrounded_slots: List[str] = []
+
+    for phrase in getattr(decoded, "phrases", []) or []:
+        if getattr(phrase, "fixed", False):
+            continue
+        slot = str(getattr(phrase, "slot", "") or "").strip()
+        if not slot or slot in decoded_slots:
+            continue
+        decoded_slots.append(slot)
+        if getattr(phrase, "spans", []) or []:
+            grounded_slots.append(slot)
+        else:
+            ungrounded_slots.append(slot)
+
+    missing_slots = [
+        str(slot)
+        for slot in getattr(decoded, "missing_slots", []) or []
+        if str(slot).strip()
+    ]
+    return {
+        "decoded_slots": decoded_slots,
+        "grounded_decoded_slots": grounded_slots,
+        "ungrounded_decoded_slots": ungrounded_slots,
+        "missing_decoded_slots": missing_slots,
+    }
+
+
+def _target_shape_diagnostics(target: str, exported_formula: str) -> List[Dict[str, Any]]:
+    text = str(exported_formula or "").strip()
+    diagnostics: List[Dict[str, Any]] = []
+    if not text or target not in LOCAL_PROVER_TARGETS:
+        return diagnostics
+
+    if target == "frame_logic" and not re.match(
+        r"^legal_norm\([A-Za-z0-9_]+\)\[actor->[A-Za-z][A-Za-z0-9_]*; action->[A-Za-z][A-Za-z0-9_]*; formula->[A-Za-z0-9_().,\->=]+\]$",
+        text,
+    ):
+        diagnostics.append({
+            "code": "frame_logic_shape",
+            "message": "frame logic target must render a legal_norm frame with actor, action, and formula slots",
+        })
+    elif target == "deontic_cec" and not re.match(
+        r"^Happens\(legal_norm\([A-Za-z0-9_]+\), t\) => HoldsAt\(.+, t\)$",
+        text,
+    ):
+        diagnostics.append({
+            "code": "deontic_cec_shape",
+            "message": "deontic CEC target must render Happens(..., t) => HoldsAt(..., t)",
+        })
+    elif target == "deontic_temporal_fol" and not (
+        text.startswith("always(") and text.endswith(")")
+    ):
+        diagnostics.append({
+            "code": "temporal_wrapper",
+            "message": "deontic temporal FOL target must wrap the target formula in always(...)",
+        })
+    elif target == "deontic_fol" and re.match(r"^(?:always|Happens|HoldsAt)\(", text):
+        diagnostics.append({
+            "code": "deontic_fol_shape",
+            "message": "deontic FOL target must not include event-calculus or temporal wrappers",
+        })
+    elif target == "fol" and re.match(r"^(?:O|P|F|always|Happens|HoldsAt)\(", text):
+        diagnostics.append({
+            "code": "fol_shape",
+            "message": "FOL target must not include deontic, temporal, or event-calculus wrappers",
+        })
     return diagnostics
 
 
