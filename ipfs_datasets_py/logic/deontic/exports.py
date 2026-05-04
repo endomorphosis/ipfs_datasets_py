@@ -3948,6 +3948,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "financial_administration_duty"
     if action_predicate.startswith(("Refer", "Remand")):
         return "case_routing_duty"
+    if action_predicate.startswith((
+        "Adjudicate",
+        "Decide",
+        "Dismiss",
+        "Dispose",
+        "Find",
+    )):
+        return "judicial_disposition_duty"
     if action_predicate.startswith(("Waive", "Extend")):
         return "administrative_relief_duty"
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
