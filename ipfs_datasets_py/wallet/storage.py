@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Protocol, runtime_checkable
+from typing import Any, Dict, Iterable, Mapping, Optional, Protocol, runtime_checkable
 from urllib.parse import quote, unquote, urlparse
 
 from .crypto import sha256_hex
@@ -17,6 +18,96 @@ class EncryptedBlobStore(Protocol):
     def put(self, data: bytes) -> StorageRef: ...
 
     def get(self, ref: StorageRef) -> bytes: ...
+
+
+@dataclass(frozen=True)
+class WalletStorageBackendConfig:
+    """Config for one encrypted wallet storage backend."""
+
+    storage_type: str = "memory"
+    root: str | Path | None = None
+    bucket: str | None = None
+    prefix: str = "wallet/blobs"
+    pin: bool = True
+
+    @classmethod
+    def from_config(cls, config: str | Mapping[str, Any] | "WalletStorageBackendConfig" | None) -> "WalletStorageBackendConfig":
+        if config is None:
+            return cls()
+        if isinstance(config, cls):
+            return config
+        if isinstance(config, str):
+            return cls(storage_type=config)
+        storage_type = str(config.get("type") or config.get("storage_type") or config.get("provider") or "memory")
+        return cls(
+            storage_type=storage_type,
+            root=config.get("root") or config.get("path"),
+            bucket=config.get("bucket"),
+            prefix=str(config.get("prefix") or "wallet/blobs"),
+            pin=bool(config.get("pin", True)),
+        )
+
+
+@dataclass(frozen=True)
+class WalletStorageConfig:
+    """Config for primary encrypted storage plus optional mirror replicas."""
+
+    primary: WalletStorageBackendConfig = field(default_factory=WalletStorageBackendConfig)
+    mirrors: list[WalletStorageBackendConfig] = field(default_factory=list)
+
+    @classmethod
+    def from_config(cls, config: str | Mapping[str, Any] | "WalletStorageConfig" | None) -> "WalletStorageConfig":
+        if config is None:
+            return cls()
+        if isinstance(config, cls):
+            return config
+        if isinstance(config, str):
+            return cls(primary=WalletStorageBackendConfig.from_config(config))
+        if "primary" in config or "mirrors" in config:
+            return cls(
+                primary=WalletStorageBackendConfig.from_config(config.get("primary")),
+                mirrors=[
+                    WalletStorageBackendConfig.from_config(mirror)
+                    for mirror in config.get("mirrors", [])
+                ],
+            )
+        return cls(primary=WalletStorageBackendConfig.from_config(config))
+
+
+def create_encrypted_blob_store(
+    config: str | Mapping[str, Any] | WalletStorageConfig | None = None,
+    *,
+    ipfs_backend: object | None = None,
+    s3_client: object | None = None,
+    filecoin_backend: object | None = None,
+    backends: Mapping[str, object] | None = None,
+) -> EncryptedBlobStore:
+    """Build an encrypted blob store from app configuration.
+
+    Examples:
+        ``create_encrypted_blob_store()``
+        ``create_encrypted_blob_store({"type": "local", "root": "/data/wallet"})``
+        ``create_encrypted_blob_store({"primary": "memory", "mirrors": [{"type": "s3", "bucket": "b"}]}, s3_client=client)``
+    """
+
+    storage_config = WalletStorageConfig.from_config(config)
+    backend_map = dict(backends or {})
+    primary = _create_backend_store(
+        storage_config.primary,
+        ipfs_backend=ipfs_backend or backend_map.get("ipfs"),
+        s3_client=s3_client or backend_map.get("s3"),
+        filecoin_backend=filecoin_backend or backend_map.get("filecoin"),
+    )
+    mirrors = [
+        _create_backend_store(
+            mirror,
+            ipfs_backend=ipfs_backend or backend_map.get("ipfs"),
+            s3_client=s3_client or backend_map.get("s3"),
+            filecoin_backend=filecoin_backend or backend_map.get("filecoin"),
+        )
+        for mirror in storage_config.mirrors
+    ]
+    return ReplicatedEncryptedBlobStore(primary, mirrors) if mirrors else primary
 
 
 class LocalEncryptedBlobStore:
@@ -310,6 +401,45 @@ def _store_matches_ref(store: EncryptedBlobStore, ref: StorageRef) -> bool:
     if isinstance(store, FilecoinEncryptedBlobStore):
         return ref.storage_type == "filecoin"
     return True
+
+
+def _create_backend_store(
+    config: WalletStorageBackendConfig,
+    *,
+    ipfs_backend: object | None,
+    s3_client: object | None,
+    filecoin_backend: object | None,
+) -> EncryptedBlobStore:
+    storage_type = config.storage_type.lower()
+    if storage_type == "memory":
+        return LocalEncryptedBlobStore()
+    if storage_type == "local":
+        if config.root is None:
+            raise ValueError("Local wallet storage requires a root path")
+        return LocalEncryptedBlobStore(config.root)
+    if storage_type == "ipfs":
+        return IPFSEncryptedBlobStore(ipfs_backend, pin=config.pin)
+    if storage_type == "s3":
+        if not config.bucket:
+            raise ValueError("S3 wallet storage requires a bucket")
+        return S3EncryptedBlobStore(
+            s3_client or _default_s3_client(),
+            bucket=config.bucket,
+            prefix=config.prefix,
+        )
+    if storage_type == "filecoin":
+        if filecoin_backend is None:
+            raise ValueError("Filecoin wallet storage requires a backend")
+        return FilecoinEncryptedBlobStore(filecoin_backend)
+    raise ValueError(f"Unsupported wallet storage type: {config.storage_type}")
+
+
+def _default_s3_client() -> object:
+    try:
+        import boto3  # type: ignore[import-not-found]
+    except ImportError as exc:  # pragma: no cover - depends on optional dependency
+        raise ValueError("S3 wallet storage requires an explicit client or boto3") from exc
+    return boto3.client("s3")
 
 
 def _status_from_ref(role: str, ref: StorageRef, *, repaired: bool = False) -> StorageReplicaStatus:

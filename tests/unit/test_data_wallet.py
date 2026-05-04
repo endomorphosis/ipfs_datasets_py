@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import uuid
 from io import BytesIO
 
 os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL", "false")
@@ -10,7 +12,15 @@ os.environ.setdefault("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
 
 import pytest
 
-from ipfs_datasets_py.wallet import AccessDeniedError, ApprovalRequiredError, WalletInvocation, WalletService
+from ipfs_datasets_py.wallet import (
+    AccessDeniedError,
+    ApprovalRequiredError,
+    DataWalletError,
+    DeterministicLocationRegionProofBackend,
+    ProofReceipt,
+    WalletInvocation,
+    WalletService,
+)
 from ipfs_datasets_py.wallet.storage import (
     FilecoinEncryptedBlobStore,
     IPFSEncryptedBlobStore,
@@ -287,10 +297,146 @@ def test_location_claims_are_coarse_and_proof_receipts_hide_precise_point(tmp_pa
 
     assert claim.public_value == {"lat": 45.52, "lon": -122.68}
     assert receipt.is_simulated is True
-    assert receipt.public_inputs == {"region_id": "multnomah_county", "claim": "location_in_region"}
+    assert receipt.proof_system == "simulated"
+    assert receipt.verification_status == "verified"
+    assert receipt.public_inputs["region_id"] == "multnomah_county"
+    assert receipt.public_inputs["claim"] == "location_in_region"
+    assert receipt.public_inputs["region_policy_hash"]
     public_receipt = json.dumps(receipt.to_dict())
     assert "45.515232" not in public_receipt
     assert "-122.678385" not in public_receipt
+
+
+class FakeLocationRegionProofBackend:
+    verifier_id = "fake-location-region-v1"
+    proof_system = "fake-zkp"
+    mode = "production"
+    is_simulated = False
+
+    def __init__(self, *, verifies: bool = True) -> None:
+        self.verifies = verifies
+        self.last_witness: dict[str, object] | None = None
+
+    def prove_location_region(
+        self,
+        *,
+        wallet_id: str,
+        statement: dict[str, object],
+        public_inputs: dict[str, object],
+        witness: dict[str, object],
+        witness_record_ids: list[str],
+    ) -> ProofReceipt:
+        self.last_witness = dict(witness)
+        digest = hashlib.sha256(f"{self.proof_system}:{self.verifier_id}".encode("utf-8")).hexdigest()
+        proof_hash = hashlib.sha256(json.dumps(public_inputs, sort_keys=True).encode("utf-8")).hexdigest()
+        return ProofReceipt(
+            proof_id=f"proof-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            proof_type="location_region",
+            statement=dict(statement),
+            verifier_id=self.verifier_id,
+            public_inputs=dict(public_inputs),
+            proof_hash=proof_hash,
+            witness_record_ids=list(witness_record_ids),
+            is_simulated=False,
+            proof_system=self.proof_system,
+            circuit_id="fake-location-region-circuit",
+            verifier_digest=digest,
+            proof_artifact_ref="memory://fake-location-region-proof",
+            verification_status="verified" if self.verifies else "failed",
+        )
+
+    def verify(self, receipt: ProofReceipt) -> bool:
+        return self.verifies and receipt.verifier_id == self.verifier_id and not receipt.is_simulated
+
+
+def test_location_region_proof_fails_closed_when_simulated_disabled(tmp_path):
+    service = WalletService(storage_dir=tmp_path, allow_simulated_proofs=False)
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    with pytest.raises(DataWalletError, match="Simulated proofs are disabled"):
+        service.create_location_region_proof(
+            wallet.wallet_id,
+            location.record_id,
+            actor_did=OWNER,
+            region_id="multnomah_county",
+        )
+
+    assert service.proofs == {}
+
+
+def test_location_region_proof_accepts_verified_non_simulated_backend(tmp_path):
+    backend = FakeLocationRegionProofBackend()
+    service = WalletService(
+        storage_dir=tmp_path,
+        proof_backend=backend,
+        allow_simulated_proofs=False,
+    )
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    receipt = service.create_location_region_proof(
+        wallet.wallet_id,
+        location.record_id,
+        actor_did=OWNER,
+        region_id="multnomah_county",
+    )
+
+    assert receipt.is_simulated is False
+    assert receipt.proof_system == "fake-zkp"
+    assert receipt.verification_status == "verified"
+    assert receipt.proof_artifact_ref == "memory://fake-location-region-proof"
+    assert backend.last_witness and backend.last_witness["lat"] == 45.515232
+    public_receipt = json.dumps(receipt.to_dict())
+    assert "45.515232" not in public_receipt
+    assert "-122.678385" not in public_receipt
+
+
+def test_location_region_proof_accepts_deterministic_integration_backend(tmp_path):
+    service = WalletService(
+        storage_dir=tmp_path,
+        proof_backend=DeterministicLocationRegionProofBackend(),
+        allow_simulated_proofs=False,
+    )
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    receipt = service.create_location_region_proof(
+        wallet.wallet_id,
+        location.record_id,
+        actor_did=OWNER,
+        region_id="multnomah_county",
+    )
+
+    assert receipt.is_simulated is False
+    assert receipt.proof_system == "deterministic-test-proof"
+    assert receipt.circuit_id == "deterministic-location-region-v0.1"
+    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith("deterministic-proof://")
+    assert service.proof_backend.verify(receipt) is True
+    public_receipt = json.dumps(receipt.to_dict())
+    assert "45.515232" not in public_receipt
+    assert "-122.678385" not in public_receipt
+
+
+def test_location_region_proof_rejects_failed_backend_verification(tmp_path):
+    service = WalletService(
+        storage_dir=tmp_path,
+        proof_backend=FakeLocationRegionProofBackend(verifies=False),
+        allow_simulated_proofs=False,
+    )
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    with pytest.raises(DataWalletError, match="Proof verification failed"):
+        service.create_location_region_proof(
+            wallet.wallet_id,
+            location.record_id,
+            actor_did=OWNER,
+            region_id="multnomah_county",
+        )
+
+    assert service.proofs == {}
 
 
 def test_revoked_grant_fails_future_invocations(tmp_path):

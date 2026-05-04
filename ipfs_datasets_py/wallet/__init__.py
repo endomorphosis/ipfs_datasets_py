@@ -34,6 +34,13 @@ from .models import (
 )
 from .multisig import operation_requires_approval
 from .privacy import AnalyticsPrivacyPolicy
+from .proofs import (
+    DeterministicLocationRegionProofBackend,
+    ProofBackend,
+    ProofBackendRegistry,
+    SimulatedProofBackend,
+)
+from .repository import LocalWalletRepository
 from .service import DataWalletService
 from .storage import (
     FilecoinEncryptedBlobStore,
@@ -41,6 +48,9 @@ from .storage import (
     LocalEncryptedBlobStore,
     ReplicatedEncryptedBlobStore,
     S3EncryptedBlobStore,
+    WalletStorageBackendConfig,
+    WalletStorageConfig,
+    create_encrypted_blob_store,
 )
 
 WalletService = DataWalletService
@@ -61,6 +71,7 @@ __all__ = [
     "DataWalletError",
     "DataWalletService",
     "DecryptionError",
+    "DeterministicLocationRegionProofBackend",
     "DerivedArtifact",
     "Grant",
     "GrantReceipt",
@@ -69,16 +80,23 @@ __all__ = [
     "IPFSEncryptedBlobStore",
     "KeyWrap",
     "LocalEncryptedBlobStore",
+    "LocalWalletRepository",
     "LocationClaim",
     "MissingRecordError",
     "ProofReceipt",
+    "ProofBackend",
+    "ProofBackendRegistry",
     "ReplicatedEncryptedBlobStore",
     "S3EncryptedBlobStore",
+    "SimulatedProofBackend",
     "StorageHealthReport",
     "StorageRef",
     "StorageReplicaStatus",
     "Wallet",
     "WalletInvocation",
     "WalletService",
+    "WalletStorageBackendConfig",
+    "WalletStorageConfig",
+    "create_encrypted_blob_store",
     "operation_requires_approval",
 ]

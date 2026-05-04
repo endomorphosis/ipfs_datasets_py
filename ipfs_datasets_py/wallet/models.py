@@ -299,6 +299,11 @@ class ProofReceipt:
     proof_hash: str
     witness_record_ids: List[str]
     is_simulated: bool
+    proof_system: str = "simulated"
+    circuit_id: Optional[str] = None
+    verifier_digest: Optional[str] = None
+    proof_artifact_ref: Optional[str] = None
+    verification_status: str = "verified"
     created_at: str = field(default_factory=utc_now)
     expires_at: Optional[str] = None
 

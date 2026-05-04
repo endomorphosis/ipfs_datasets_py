@@ -22,7 +22,7 @@ from .crypto import (
     unwrap_key,
     wrap_key,
 )
-from .exceptions import AccessDeniedError, GrantError, MissingRecordError
+from .exceptions import AccessDeniedError, DataWalletError, GrantError, MissingRecordError
 from .location import make_coarse_location_claim, region_membership_statement, serialize_location
 from .manifest import canonical_bytes, canonical_dumps
 from .models import (
@@ -55,7 +55,7 @@ from .multisig import (
     operation_requires_approval,
     verify_approval,
 )
-from .proofs import create_simulated_proof_receipt
+from .proofs import ProofBackend, SimulatedProofBackend, create_simulated_proof_receipt
 from .storage import EncryptedBlobStore, LocalEncryptedBlobStore
 from .ucan import (
     assert_grant_allows,
@@ -76,8 +76,12 @@ class DataWalletService:
         storage_dir: Optional[str | Path] = None,
         *,
         storage_backend: Optional[EncryptedBlobStore] = None,
+        proof_backend: Optional[ProofBackend] = None,
+        allow_simulated_proofs: bool = True,
     ) -> None:
         self.storage = storage_backend or LocalEncryptedBlobStore(storage_dir)
+        self.proof_backend = proof_backend or SimulatedProofBackend()
+        self.allow_simulated_proofs = allow_simulated_proofs
         self.wallets: Dict[str, Wallet] = {}
         self.records: Dict[str, DataRecord] = {}
         self.versions: Dict[str, DataVersion] = {}
@@ -912,13 +916,28 @@ class DataWalletService:
         raw = self.decrypt_record(wallet_id, record_id, actor_did=self._wallet(wallet_id).owner_did)
         payload = json.loads(raw.decode("utf-8"))
         statement = region_membership_statement(payload["lat"], payload["lon"], region_id)
-        receipt = create_simulated_proof_receipt(
+        public_inputs = {
+            "region_id": region_id,
+            "claim": "location_in_region",
+            "region_policy_hash": sha256_hex(region_id.encode("utf-8")),
+        }
+        witness = {
+            "lat": payload["lat"],
+            "lon": payload["lon"],
+            "wallet_id": wallet_id,
+            "record_id": record_id,
+        }
+        receipt = self.proof_backend.prove_location_region(
             wallet_id=wallet_id,
-            proof_type="location_region",
             statement=statement,
-            public_inputs={"region_id": region_id, "claim": "location_in_region"},
+            public_inputs=public_inputs,
+            witness=witness,
             witness_record_ids=[record_id],
         )
+        if receipt.is_simulated and not self.allow_simulated_proofs:
+            raise DataWalletError("Simulated proofs are disabled for this wallet service")
+        if not self.proof_backend.verify(receipt):
+            raise DataWalletError("Proof verification failed")
         self.proofs[receipt.proof_id] = receipt
         self.versions[record.current_version_id].proof_receipt_ids.append(receipt.proof_id)
         append_audit_event(
