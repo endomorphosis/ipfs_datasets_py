@@ -2539,7 +2539,7 @@ class DataWalletService:
             resource=resource_for_record(wallet_id, record_id),
             decision="allow",
             details={
-                "version_id": version.version_id,
+                "version_id": report.version_id,
                 "ok": report.ok,
                 "payload_repaired": any(status.repaired for status in report.payload),
                 "metadata_repaired": any(status.repaired for status in report.metadata),

@@ -1651,6 +1651,44 @@ def test_record_storage_health_detects_and_repairs_bad_mirrors(tmp_path):
     assert any(event.action == "storage/repair" for event in service.get_audit_log(wallet.wallet_id))
 
 
+def test_wallet_storage_repair_repairs_all_record_replicas(tmp_path):
+    s3_client = FakeS3Client()
+    storage = ReplicatedEncryptedBlobStore(
+        LocalEncryptedBlobStore(tmp_path / "primary"),
+        mirrors=[S3EncryptedBlobStore(s3_client, bucket="wallet-test")],
+    )
+    service = WalletService(storage_backend=storage)
+    wallet = service.create_wallet(owner_did=OWNER)
+    first = tmp_path / "first.txt"
+    second = tmp_path / "second.txt"
+    first.write_text("first wallet repair plaintext", encoding="utf-8")
+    second.write_text("second wallet repair plaintext", encoding="utf-8")
+    record1 = service.add_document(wallet.wallet_id, first, metadata={"title": "First"})
+    record2 = service.add_document(wallet.wallet_id, second, metadata={"title": "Second"})
+
+    # Remove one mirror payload and one mirror metadata blob across different records.
+    version1 = service.versions[record1.current_version_id]
+    version2 = service.versions[record2.current_version_id]
+    s3_payload_ref = version1.encrypted_payload_ref.mirrors[0]
+    s3_metadata_ref = version2.encrypted_metadata_ref.mirrors[0]
+    del s3_client.objects[("wallet-test", s3_payload_ref.uri.split("/", 3)[-1])]
+    del s3_client.objects[("wallet-test", s3_metadata_ref.uri.split("/", 3)[-1])]
+
+    broken = service.verify_wallet_storage(wallet.wallet_id)
+    assert broken.ok is False
+    assert broken.failed_replica_count == 2
+
+    repaired = service.repair_wallet_storage(wallet.wallet_id, actor_did=OWNER)
+    assert repaired.ok is True
+    assert repaired.record_count == 2
+    assert repaired.repaired is True
+    assert repaired.repaired_replica_count == 2
+    assert repaired.storage_types == {"local": 4, "s3": 4}
+    assert service.verify_wallet_storage(wallet.wallet_id).ok is True
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "storage/repair_wallet" in actions
+
+
 def test_record_storage_repair_restores_missing_primary_from_mirror(tmp_path):
     s3_client = FakeS3Client()
     storage = ReplicatedEncryptedBlobStore(
