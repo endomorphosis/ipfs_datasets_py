@@ -10,6 +10,7 @@ target without changing the report shape.
 from __future__ import annotations
 
 import re
+import hashlib
 from dataclasses import asdict, dataclass
 from typing import Any, Dict, Iterable, List, Sequence
 
@@ -39,11 +40,16 @@ class ProverTargetSyntaxRecord:
     target_version: str
     formula: str
     exported_formula: str
+    target_formula_role: str
+    target_formula_fingerprint: str
+    ir_semantic_fingerprint: str
     decoded_text: str
     decoded_slots: List[str]
+    decoded_slot_fingerprint: str
     grounded_decoded_slots: List[str]
     ungrounded_decoded_slots: List[str]
     missing_decoded_slots: List[str]
+    target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
     diagnostics: List[Dict[str, Any]]
@@ -136,6 +142,7 @@ def _validate_target_formula(
     exported_formula = _render_target_formula(norm, target, formula)
     decoded = decode_legal_norm_ir(norm)
     decoded_slot_summary = _decoded_slot_summary(decoded)
+    target_components = _target_components(target, exported_formula)
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
 
@@ -145,11 +152,24 @@ def _validate_target_formula(
         target_version="syntax_v1",
         formula=formula,
         exported_formula=exported_formula,
+        target_formula_role=_target_formula_role(target),
+        target_formula_fingerprint=_stable_fingerprint(target, exported_formula),
+        ir_semantic_fingerprint=_ir_semantic_fingerprint(
+            norm,
+            formula,
+            decoded_slot_summary["decoded_slots"],
+        ),
         decoded_text=decoded.text,
         decoded_slots=decoded_slot_summary["decoded_slots"],
+        decoded_slot_fingerprint=_stable_fingerprint(
+            norm.source_id,
+            "|".join(decoded_slot_summary["decoded_slots"]),
+            decoded.text,
+        ),
         grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
         ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
         missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
+        target_components=target_components,
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
@@ -230,6 +250,52 @@ def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
         "ungrounded_decoded_slots": ungrounded_slots,
         "missing_decoded_slots": missing_slots,
     }
+
+
+def _target_formula_role(target: str) -> str:
+    return {
+        "frame_logic": "frame_record",
+        "deontic_cec": "event_calculus_state",
+        "fol": "first_order_formula",
+        "deontic_fol": "deontic_first_order_formula",
+        "deontic_temporal_fol": "temporal_deontic_first_order_formula",
+    }.get(target, "unknown")
+
+
+def _target_components(target: str, exported_formula: str) -> Dict[str, Any]:
+    text = str(exported_formula or "").strip()
+    return {
+        "target": target,
+        "formula_role": _target_formula_role(target),
+        "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
+        "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
+        "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
+        "uses_temporal_wrapper": text.startswith("always("),
+        "uses_first_order_quantifier": "forall x." in text,
+        "contains_display_connectives": bool(re.search(r"[∀∧→¬]", text)),
+    }
+
+
+def _ir_semantic_fingerprint(
+    norm: LegalNormIR,
+    formula: str,
+    decoded_slots: Sequence[str],
+) -> str:
+    return _stable_fingerprint(
+        norm.schema_version,
+        norm.source_id,
+        norm.norm_type,
+        norm.modality,
+        norm.actor,
+        norm.action,
+        formula,
+        "|".join(decoded_slots),
+    )
+
+
+def _stable_fingerprint(*parts: Any) -> str:
+    payload = "\x1f".join(str(part or "") for part in parts)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:24]
 
 
 def _target_shape_diagnostics(target: str, exported_formula: str) -> List[Dict[str, Any]]:

@@ -95,6 +95,95 @@ def test_prover_syntax_records_carry_decoder_context_for_local_targets():
         assert all(record["grounded_decoded_slots"] == decoded_slots for record in records)
 
 
+def test_prover_syntax_records_share_ir_semantics_across_target_dialects():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+
+    report = validate_ir_with_provers(norm)
+    records = {target.target: target.to_dict() for target in report.targets}
+
+    assert len({record["ir_semantic_fingerprint"] for record in records.values()}) == 1
+    assert len({record["target_formula_fingerprint"] for record in records.values()}) == 5
+    assert len({record["decoded_slot_fingerprint"] for record in records.values()}) == 1
+    assert records["frame_logic"]["target_formula_role"] == "frame_record"
+    assert records["deontic_cec"]["target_formula_role"] == "event_calculus_state"
+    assert records["fol"]["target_formula_role"] == "first_order_formula"
+    assert records["deontic_fol"]["target_formula_role"] == "deontic_first_order_formula"
+    assert records["deontic_temporal_fol"]["target_formula_role"] == (
+        "temporal_deontic_first_order_formula"
+    )
+    assert records["frame_logic"]["target_components"]["uses_frame_record"] is True
+    assert records["deontic_cec"]["target_components"]["uses_event_calculus_wrapper"] is True
+    assert records["fol"]["target_components"]["uses_deontic_wrapper"] is False
+    assert records["deontic_fol"]["target_components"]["uses_deontic_wrapper"] is True
+    assert records["deontic_temporal_fol"]["target_components"]["uses_temporal_wrapper"] is True
+    assert all(
+        record["target_components"]["contains_display_connectives"] is False
+        for record in records.values()
+    )
+
+
+def test_prover_syntax_semantic_fingerprints_change_when_ir_slots_change():
+    tenant = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    permittee = LegalNormIR.from_parser_element(
+        extract_normative_elements("The permittee may appeal the decision.")[0]
+    )
+
+    tenant_records = [target.to_dict() for target in validate_ir_with_provers(tenant).targets]
+    permittee_records = [
+        target.to_dict() for target in validate_ir_with_provers(permittee).targets
+    ]
+
+    assert len({record["ir_semantic_fingerprint"] for record in tenant_records}) == 1
+    assert len({record["ir_semantic_fingerprint"] for record in permittee_records}) == 1
+    assert tenant_records[0]["ir_semantic_fingerprint"] != permittee_records[0][
+        "ir_semantic_fingerprint"
+    ]
+    assert tenant_records[0]["decoded_slot_fingerprint"] != permittee_records[0][
+        "decoded_slot_fingerprint"
+    ]
+    assert tenant_records[0]["decoded_slots"] == ["actor", "modality", "action"]
+    assert permittee_records[0]["decoded_slots"] == ["actor", "modality", "action"]
+
+
+def test_prover_syntax_target_components_cover_frame_applicability_and_blocked_reference():
+    applicability = LegalNormIR.from_parser_element(
+        extract_normative_elements("This section applies to food carts.")[0]
+    )
+    blocked = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+    )
+
+    applicability_records = {
+        target.target: target.to_dict()
+        for target in validate_ir_with_provers(applicability).targets
+    }
+    blocked_records = {
+        target.target: target.to_dict()
+        for target in validate_ir_with_provers(blocked).targets
+    }
+
+    assert applicability_records["fol"]["target_components"]["uses_first_order_quantifier"] is False
+    assert applicability_records["fol"]["target_components"]["uses_deontic_wrapper"] is False
+    assert applicability_records["deontic_temporal_fol"]["target_components"][
+        "uses_temporal_wrapper"
+    ] is True
+    assert blocked_records["fol"]["target_components"]["uses_first_order_quantifier"] is True
+    assert blocked_records["deontic_fol"]["target_components"]["uses_deontic_wrapper"] is True
+    assert blocked_records["deontic_temporal_fol"]["target_components"][
+        "uses_temporal_wrapper"
+    ] is True
+    assert blocked_records["fol"]["proof_ready"] is False
+    assert blocked_records["fol"]["requires_validation"] is True
+    assert "cross_reference_requires_resolution" in blocked.blockers
+    assert "exception_requires_scope_review" in blocked.blockers
+
+
 def test_prover_syntax_reports_target_shape_diagnostics():
     cases = [
         (
