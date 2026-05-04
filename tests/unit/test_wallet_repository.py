@@ -57,6 +57,58 @@ def test_local_wallet_repository_saves_atomically_and_loads_all(tmp_path):
     assert plaintext == b"persisted wallet repository payload"
 
 
+def test_local_wallet_repository_persists_analytics_ledger(tmp_path):
+    repository = LocalWalletRepository(tmp_path / "repository")
+    service = WalletService(storage_dir=tmp_path / "blobs")
+    wallet1 = service.create_wallet(owner_did="did:key:owner1")
+    wallet2 = service.create_wallet(owner_did="did:key:owner2")
+    template = service.create_analytics_template(
+        template_id="repository_analytics_v1",
+        title="Repository analytics",
+        purpose="Persistence coverage",
+        allowed_record_types=["location", "need"],
+        allowed_derived_fields=["county", "need_category"],
+        aggregation_policy={"min_cohort_size": 2, "epsilon_budget": 0.5},
+        created_by="did:key:analyst",
+    )
+    for wallet, owner in [(wallet1, "did:key:owner1"), (wallet2, "did:key:owner2")]:
+        consent = service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=owner,
+            template_id=template.template_id,
+            allowed_record_types=["location", "need"],
+            allowed_derived_fields=["county", "need_category"],
+        )
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=owner,
+            consent_id=consent.consent_id,
+            template_id=template.template_id,
+            fields={"county": "Multnomah", "need_category": "housing"},
+        )
+    result = service.run_aggregate_count_by_fields(
+        template.template_id,
+        group_by=["county", "need_category"],
+        epsilon=0.25,
+    )
+
+    repository.save_all(service)
+    ledger_report = repository.verify_analytics_ledger()
+    ledger_payload = json.loads(repository.analytics_ledger_path().read_text(encoding="utf-8"))
+    restored = WalletService(storage_dir=tmp_path / "blobs")
+    loaded_wallet_ids = repository.load_all(restored)
+
+    assert ledger_report["valid"] is True
+    assert ledger_payload["snapshot_type"] == "wallet_repository_analytics_ledger_v1"
+    assert ledger_payload["snapshot_hash"] == repository.snapshot_hash(ledger_payload["ledger"])
+    assert loaded_wallet_ids == sorted([wallet1.wallet_id, wallet2.wallet_id])
+    assert restored.analytics_templates[template.template_id].status == "approved"
+    assert len(restored.analytics_consents) == 2
+    assert len(restored.analytics_contributions) == 2
+    assert restored.aggregate_results[result.result_id].group_by == ["county", "need_category"]
+    assert restored.analytics_query_budget_spent[f"template:{template.template_id}:group:county,need_category"] == 0.25
+
+
 def test_local_wallet_repository_rejects_tampered_snapshot(tmp_path):
     repository = LocalWalletRepository(tmp_path / "repository")
     service = WalletService(storage_dir=tmp_path / "blobs")

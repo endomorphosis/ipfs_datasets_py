@@ -30,6 +30,7 @@ from .models import (
     StorageRef,
     StorageReplicaStatus,
     Wallet,
+    WalletStorageHealthReport,
     WalletInvocation,
 )
 from .multisig import operation_requires_approval
@@ -95,6 +96,7 @@ __all__ = [
     "Wallet",
     "WalletInvocation",
     "WalletService",
+    "WalletStorageHealthReport",
     "WalletStorageBackendConfig",
     "WalletStorageConfig",
     "create_encrypted_blob_store",

@@ -12,6 +12,7 @@ os.environ.setdefault("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
 
 import pytest
 
+import ipfs_datasets_py.wallet.analytics as wallet_analytics
 from ipfs_datasets_py.wallet import (
     AccessDeniedError,
     ApprovalRequiredError,
@@ -21,6 +22,7 @@ from ipfs_datasets_py.wallet import (
     WalletInvocation,
     WalletService,
 )
+from ipfs_datasets_py.wallet.privacy import noisy_count
 from ipfs_datasets_py.wallet.storage import (
     FilecoinEncryptedBlobStore,
     IPFSEncryptedBlobStore,
@@ -34,11 +36,13 @@ from ipfs_datasets_py.wallet.ucan import (
     resource_for_export,
     resource_for_location,
     resource_for_record,
+    resource_for_wallet,
 )
 
 
 OWNER = "did:key:owner"
 ADVOCATE = "did:key:advocate"
+CASE_MANAGER = "did:key:case-manager"
 SECOND_CONTROLLER = "did:key:second-controller"
 
 
@@ -167,6 +171,224 @@ def test_decrypt_grant_wraps_key_for_delegate(tmp_path):
     )
 
 
+def test_delegated_grant_attenuates_and_revokes_with_parent(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "case-plan.txt"
+    source.write_text("housing case plan and benefit notes", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    parent = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze", "record/share"],
+        caveats={"purpose": "case_review", "max_delegation_depth": 1},
+    )
+
+    child = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=ADVOCATE,
+        audience_did=CASE_MANAGER,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review"},
+        parent_grant_id=parent.grant_id,
+    )
+    artifact = service.analyze_record_summary(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=CASE_MANAGER,
+        grant_id=child.grant_id,
+    )
+
+    assert child.proof_chain == [parent.grant_id]
+    assert artifact.artifact_type == "summary"
+    with pytest.raises(AccessDeniedError, match="Delegated ability exceeds"):
+        service.create_grant(
+            wallet_id=wallet.wallet_id,
+            issuer_did=ADVOCATE,
+            audience_did=CASE_MANAGER,
+            resources=[resource],
+            abilities=["record/decrypt"],
+            caveats={"purpose": "case_review"},
+            parent_grant_id=parent.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="purpose"):
+        service.create_grant(
+            wallet_id=wallet.wallet_id,
+            issuer_did=ADVOCATE,
+            audience_did=CASE_MANAGER,
+            resources=[resource],
+            abilities=["record/analyze"],
+            caveats={"purpose": "different"},
+            parent_grant_id=parent.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="depth"):
+        service.create_grant(
+            wallet_id=wallet.wallet_id,
+            issuer_did=CASE_MANAGER,
+            audience_did="did:key:second-hop",
+            resources=[resource],
+            abilities=["record/analyze"],
+            caveats={"purpose": "case_review"},
+            parent_grant_id=child.grant_id,
+        )
+
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    restored = WalletService(storage_dir=tmp_path / "restored")
+    restored.import_wallet_snapshot(snapshot)
+    assert restored.grants[child.grant_id].proof_chain == [parent.grant_id]
+    tampered_snapshot = json.loads(json.dumps(snapshot))
+    for grant_data in tampered_snapshot["grants"]:
+        if grant_data["grant_id"] == child.grant_id:
+            grant_data["abilities"] = ["record/decrypt"]
+    tampered = WalletService(storage_dir=tmp_path / "tampered")
+    tampered.import_wallet_snapshot(tampered_snapshot)
+    with pytest.raises(AccessDeniedError, match="exceeds parent"):
+        tampered.decrypt_record(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=CASE_MANAGER,
+            grant_id=child.grant_id,
+        )
+
+    service.revoke_grant(wallet.wallet_id, parent.grant_id, actor_did=OWNER)
+
+    assert service.grants[parent.grant_id].status == "revoked"
+    assert service.grants[child.grant_id].status == "revoked"
+    with pytest.raises(AccessDeniedError):
+        service.analyze_record_summary(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=CASE_MANAGER,
+            grant_id=child.grant_id,
+        )
+    assert all(
+        wrap.status == "revoked"
+        for wrap in service.versions[record.current_version_id].key_wraps
+        if wrap.grant_id == child.grant_id
+    )
+
+
+def test_emergency_revoke_requires_threshold_and_rotates_active_records(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(
+        owner_did=OWNER,
+        controller_dids=[OWNER, SECOND_CONTROLLER],
+        governance_policy={"threshold": 2},
+    )
+    source = tmp_path / "emergency.txt"
+    source.write_text("emergency revoke plaintext", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source)
+    old_version_id = record.current_version_id
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    parent = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze", "record/share"],
+        caveats={"purpose": "case_review", "max_delegation_depth": 1},
+    )
+    child = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=ADVOCATE,
+        audience_did=CASE_MANAGER,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review"},
+        parent_grant_id=parent.grant_id,
+    )
+
+    with pytest.raises(ApprovalRequiredError):
+        service.emergency_revoke(wallet.wallet_id, actor_did=OWNER)
+
+    approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="wallet/emergency_revoke",
+        resources=[resource_for_wallet(wallet.wallet_id)],
+        abilities=["wallet/admin"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=approval.approval_id,
+        approver_did=SECOND_CONTROLLER,
+    )
+
+    report = service.emergency_revoke(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        approval_id=approval.approval_id,
+        reason="suspected_compromise",
+    )
+
+    assert report["revoked_grant_ids"] == [parent.grant_id, child.grant_id]
+    assert report["rotated_record_ids"] == [record.record_id]
+    assert report["rotation_errors"] == {}
+    assert service.grants[parent.grant_id].status == "revoked"
+    assert service.grants[child.grant_id].status == "revoked"
+    assert service.records[record.record_id].current_version_id != old_version_id
+    with pytest.raises(AccessDeniedError):
+        service.analyze_record_summary(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=CASE_MANAGER,
+            grant_id=child.grant_id,
+        )
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "wallet/emergency_revoke" in actions
+    assert "record/key_rotate" in actions
+
+
+def test_record_key_rotation_reencrypts_current_version_and_preserves_active_grants(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    source = tmp_path / "rotation.txt"
+    source.write_text("rotation plaintext stays encrypted", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    old_version = service.versions[record.current_version_id]
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_record(wallet.wallet_id, record.record_id)],
+        abilities=["record/decrypt"],
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+
+    new_version = service.rotate_record_key(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=OWNER,
+        actor_secret=owner_secret,
+    )
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    public_snapshot = json.dumps(snapshot)
+
+    assert new_version.version_id != old_version.version_id
+    assert new_version.encrypted_payload_ref.sha256 != old_version.encrypted_payload_ref.sha256
+    assert service.records[record.record_id].current_version_id == new_version.version_id
+    assert any(wrap.recipient_did == ADVOCATE and wrap.grant_id == grant.grant_id for wrap in new_version.key_wraps)
+    assert service.decrypt_record(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=ADVOCATE,
+        grant_id=grant.grant_id,
+        actor_secret=delegate_secret,
+    ) == b"rotation plaintext stays encrypted"
+    assert [version["version_id"] for version in snapshot["versions"]] == [new_version.version_id]
+    assert "rotation plaintext" not in public_snapshot
+    assert service.get_audit_log(wallet.wallet_id)[-1].action == "record/decrypt"
+    assert any(event.action == "record/key_rotate" for event in service.get_audit_log(wallet.wallet_id))
+
+
 def test_threshold_approval_required_for_sensitive_decrypt_grant(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(
@@ -232,6 +454,192 @@ def test_threshold_approval_required_for_sensitive_decrypt_grant(tmp_path):
     assert manifest["approvals"][0]["approval_id"] == approval.approval_id
 
 
+def test_controller_changes_require_wallet_admin_threshold_approval(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(
+        owner_did=OWNER,
+        controller_dids=[OWNER, SECOND_CONTROLLER],
+        governance_policy={"threshold": 2},
+    )
+    new_controller = "did:key:new-controller"
+    wallet_resource = resource_for_wallet(wallet.wallet_id)
+
+    with pytest.raises(ApprovalRequiredError):
+        service.add_controller(
+            wallet.wallet_id,
+            actor_did=OWNER,
+            controller_did=new_controller,
+        )
+
+    approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="wallet/controller_add",
+        resources=[wallet_resource],
+        abilities=["wallet/admin"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=approval.approval_id,
+        approver_did=SECOND_CONTROLLER,
+    )
+    updated = service.add_controller(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        controller_did=new_controller,
+        approval_id=approval.approval_id,
+    )
+
+    assert new_controller in updated.controller_dids
+    assert new_controller in updated.governance_policy["approver_dids"]
+
+    remove_approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="wallet/controller_remove",
+        resources=[wallet_resource],
+        abilities=["wallet/admin"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=remove_approval.approval_id, approver_did=OWNER)
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=remove_approval.approval_id,
+        approver_did=SECOND_CONTROLLER,
+    )
+    service.remove_controller(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        controller_did=new_controller,
+        approval_id=remove_approval.approval_id,
+    )
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+
+    assert new_controller not in service.wallets[wallet.wallet_id].controller_dids
+    assert "wallet/controller_add" in actions
+    assert "wallet/controller_remove" in actions
+
+
+def test_device_add_and_revoke_updates_wallet_manifest(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    device_did = "did:key:phone-device"
+
+    assert service.get_wallet(wallet.wallet_id).wallet_id == wallet.wallet_id
+    service.add_device(wallet.wallet_id, actor_did=OWNER, device_did=device_did)
+    assert device_did in service.wallets[wallet.wallet_id].device_dids
+
+    service.revoke_device(wallet.wallet_id, actor_did=OWNER, device_did=device_did)
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    restored = WalletService(storage_dir=tmp_path / "restored")
+    restored.import_wallet_snapshot(snapshot)
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+
+    assert device_did not in snapshot["wallet"]["device_dids"]
+    assert restored.wallets[wallet.wallet_id].device_dids == [OWNER]
+    assert "wallet/device_add" in actions
+    assert "wallet/device_revoke" in actions
+
+
+def test_recovery_policy_requires_threshold_and_recovers_controller(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(
+        owner_did=OWNER,
+        controller_dids=[OWNER, SECOND_CONTROLLER],
+        governance_policy={"threshold": 2},
+    )
+    wallet_resource = resource_for_wallet(wallet.wallet_id)
+    recovery_contacts = ["did:key:recovery-a", "did:key:recovery-b"]
+    recovered_controller = "did:key:recovered-controller"
+
+    with pytest.raises(ApprovalRequiredError):
+        service.set_recovery_policy(
+            wallet.wallet_id,
+            actor_did=OWNER,
+            contact_dids=recovery_contacts,
+            threshold=2,
+        )
+
+    approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=OWNER,
+        operation="wallet/recovery_policy_set",
+        resources=[wallet_resource],
+        abilities=["wallet/admin"],
+    )
+    service.approve_approval(wallet.wallet_id, approval_id=approval.approval_id, approver_did=OWNER)
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=approval.approval_id,
+        approver_did=SECOND_CONTROLLER,
+    )
+    updated = service.set_recovery_policy(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        contact_dids=recovery_contacts,
+        threshold=2,
+        approval_id=approval.approval_id,
+    )
+    recovery_policy = updated.governance_policy["recovery_policy"]
+    assert recovery_policy["contact_dids"] == recovery_contacts
+    assert recovery_policy["threshold"] == 2
+    assert recovery_policy["status"] == "active"
+
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    restored = WalletService(storage_dir=tmp_path / "restored-recovery")
+    restored.import_wallet_snapshot(snapshot)
+    assert restored.wallets[wallet.wallet_id].governance_policy["recovery_policy"]["contact_dids"] == recovery_contacts
+
+    with pytest.raises(ApprovalRequiredError):
+        service.recover_controller(
+            wallet.wallet_id,
+            actor_did=recovery_contacts[0],
+            controller_did=recovered_controller,
+        )
+
+    recovery_approval = service.request_approval(
+        wallet.wallet_id,
+        requested_by=recovery_contacts[0],
+        operation="wallet/controller_recover",
+        resources=[wallet_resource],
+        abilities=["wallet/admin"],
+    )
+    assert recovery_approval.approver_dids == recovery_contacts
+    assert recovery_approval.threshold == 2
+    assert recovery_approval.details["approval_scope"] == "wallet_recovery"
+
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=recovery_approval.approval_id,
+        approver_did=recovery_contacts[0],
+    )
+    with pytest.raises(ApprovalRequiredError):
+        service.recover_controller(
+            wallet.wallet_id,
+            actor_did=recovery_contacts[0],
+            controller_did=recovered_controller,
+            approval_id=recovery_approval.approval_id,
+        )
+
+    service.approve_approval(
+        wallet.wallet_id,
+        approval_id=recovery_approval.approval_id,
+        approver_did=recovery_contacts[1],
+    )
+    recovered = service.recover_controller(
+        wallet.wallet_id,
+        actor_did=recovery_contacts[0],
+        controller_did=recovered_controller,
+        approval_id=recovery_approval.approval_id,
+    )
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+
+    assert recovered_controller in recovered.controller_dids
+    assert recovered_controller in recovered.governance_policy["approver_dids"]
+    assert "wallet/recovery_policy_set" in actions
+    assert "wallet/controller_recover" in actions
+
+
 def test_grant_receipt_tracks_sharing_and_survives_snapshot(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -267,6 +675,10 @@ def test_grant_receipt_tracks_sharing_and_survives_snapshot(tmp_path):
     service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
     [revoked_receipt] = service.list_grant_receipts(wallet.wallet_id, status="revoked")
     assert revoked_receipt.receipt_id == receipt.receipt_id
+    version = service.versions[record.current_version_id]
+    revoked_wraps = [wrap for wrap in version.key_wraps if wrap.grant_id == grant.grant_id]
+    assert revoked_wraps
+    assert all(wrap.status == "revoked" for wrap in revoked_wraps)
 
 
 def test_location_claims_are_coarse_and_proof_receipts_hide_precise_point(tmp_path):
@@ -415,6 +827,44 @@ def test_location_region_proof_accepts_deterministic_integration_backend(tmp_pat
     assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith("deterministic-proof://")
     assert service.proof_backend.verify(receipt) is True
     public_receipt = json.dumps(receipt.to_dict())
+    assert "45.515232" not in public_receipt
+    assert "-122.678385" not in public_receipt
+
+
+def test_proof_receipt_snapshot_import_accepts_legacy_receipt_schema(tmp_path):
+    service = WalletService(
+        storage_dir=tmp_path,
+        proof_backend=DeterministicLocationRegionProofBackend(),
+        allow_simulated_proofs=False,
+    )
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+    receipt = service.create_location_region_proof(
+        wallet.wallet_id,
+        location.record_id,
+        actor_did=OWNER,
+        region_id="multnomah_county",
+    )
+    snapshot = service.export_wallet_snapshot(wallet.wallet_id)
+    legacy_proof = dict(snapshot["proofs"][0])
+    for key in (
+        "proof_system",
+        "circuit_id",
+        "verifier_digest",
+        "proof_artifact_ref",
+        "verification_status",
+    ):
+        legacy_proof.pop(key, None)
+    snapshot["proofs"] = [legacy_proof]
+
+    restored = WalletService(storage_dir=tmp_path)
+    restored.import_wallet_snapshot(snapshot)
+    restored_receipt = restored.proofs[receipt.proof_id]
+
+    assert restored_receipt.proof_system == "simulated"
+    assert restored_receipt.verification_status == "verified"
+    assert restored_receipt.proof_hash == receipt.proof_hash
+    public_receipt = json.dumps(restored_receipt.to_dict())
     assert "45.515232" not in public_receipt
     assert "-122.678385" not in public_receipt
 
@@ -1180,6 +1630,14 @@ def test_record_storage_health_detects_and_repairs_bad_mirrors(tmp_path):
     assert broken.ok is False
     assert any(not status.ok and status.storage_type == "ipfs" for status in broken.payload)
     assert any(not status.ok and status.storage_type == "s3" for status in broken.payload)
+    wallet_report = service.verify_wallet_storage(wallet.wallet_id)
+    assert wallet_report.ok is False
+    assert wallet_report.record_count == 1
+    assert wallet_report.replica_count == 6
+    assert wallet_report.failed_replica_count >= 2
+    assert wallet_report.storage_types == {"ipfs": 2, "local": 2, "s3": 2}
+    assert wallet_report.to_dict()["reports"][0]["record_id"] == record.record_id
+    assert service.get_audit_log(wallet.wallet_id)[-1].action == "storage/verify_wallet"
 
     repaired = service.repair_record_storage(wallet.wallet_id, record.record_id, actor_did=OWNER)
     assert repaired.ok is True
@@ -1306,6 +1764,69 @@ def test_analytics_template_constrains_consent_and_snapshot(tmp_path):
     assert restored.list_analytics_templates()[0].template_id == template.template_id
 
 
+def test_analytics_template_review_states_gate_consent_contribution_and_queries(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    template = service.create_analytics_template(
+        template_id="reviewed_template_v1",
+        title="Reviewed housing study",
+        purpose="Template lifecycle review",
+        allowed_record_types=["location"],
+        allowed_derived_fields=["county"],
+        aggregation_policy={"min_cohort_size": 1, "epsilon_budget": 0.5},
+        created_by="did:key:analyst",
+        status="draft",
+    )
+
+    assert template.status == "draft"
+    assert service.list_analytics_templates() == []
+    assert service.list_analytics_templates(include_inactive=True)[0].status == "draft"
+
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=OWNER,
+            template_id=template.template_id,
+            allowed_record_types=["location"],
+            allowed_derived_fields=["county"],
+        )
+
+    with pytest.raises(AccessDeniedError, match="Only the template creator"):
+        service.set_analytics_template_status(template.template_id, actor_did=OWNER, status="approved")
+
+    service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="approved")
+    assert service.list_analytics_templates()[0].template_id == template.template_id
+    consent = service.create_analytics_consent(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        template_id=template.template_id,
+        allowed_record_types=["location"],
+        allowed_derived_fields=["county"],
+    )
+    service.create_analytics_contribution(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        consent_id=consent.consent_id,
+        template_id=template.template_id,
+        fields={"county": "Multnomah"},
+    )
+
+    service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="paused")
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.run_aggregate_count(template.template_id, min_cohort_size=1)
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=OWNER,
+            consent_id=consent.consent_id,
+            template_id=template.template_id,
+            fields={"county": "Multnomah"},
+        )
+
+    with pytest.raises(ValueError, match="status"):
+        service.set_analytics_template_status(template.template_id, actor_did="did:key:analyst", status="live")
+
+
 def test_retired_analytics_template_blocks_new_contributions(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -1335,6 +1856,56 @@ def test_retired_analytics_template_blocks_new_contributions(tmp_path):
             template_id=template.template_id,
             fields={"county": "Multnomah"},
         )
+
+
+def test_revoked_analytics_consent_blocks_future_contribution_preserves_aggregate_history(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet1 = service.create_wallet(owner_did="did:key:owner1")
+    wallet2 = service.create_wallet(owner_did="did:key:owner2")
+    template_id = "revoked_consent_history_v1"
+    consents = []
+
+    for wallet, owner in [(wallet1, "did:key:owner1"), (wallet2, "did:key:owner2")]:
+        consent = service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=owner,
+            template_id=template_id,
+            allowed_record_types=["location", "need"],
+            allowed_derived_fields=["county"],
+            aggregation_policy={"min_cohort_size": 2, "epsilon_budget": 0.5},
+        )
+        consents.append((wallet, owner, consent))
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=owner,
+            consent_id=consent.consent_id,
+            template_id=template_id,
+            fields={"county": "Multnomah"},
+        )
+
+    result = service.run_aggregate_count(template_id, epsilon=0.25)
+    assert result.released is True
+    assert result.result_id in service.aggregate_results
+    service.revoke_analytics_consent(wallet1.wallet_id, consents[0][2].consent_id, actor_did="did:key:owner1")
+
+    with pytest.raises(AccessDeniedError, match="not active"):
+        service.create_analytics_contribution(
+            wallet1.wallet_id,
+            actor_did="did:key:owner1",
+            consent_id=consents[0][2].consent_id,
+            template_id=template_id,
+            fields={"county": "Multnomah"},
+        )
+
+    assert service.aggregate_results[result.result_id].to_dict() == result.to_dict()
+    query_events = [
+        event for event in service.get_audit_log(wallet1.wallet_id) if event.action == "analytics/query"
+    ]
+    revoke_events = [
+        event for event in service.get_audit_log(wallet1.wallet_id) if event.action == "analytics/consent_revoke"
+    ]
+    assert query_events[-1].details["result_id"] == result.result_id
+    assert revoke_events[-1].details["template_id"] == template_id
 
 
 def test_analytics_duplicate_nullifier_rejected_even_with_new_consent(tmp_path):
@@ -1423,6 +1994,71 @@ def test_aggregate_count_suppresses_small_cohorts_and_releases_threshold(tmp_pat
     assert released.cohort_size == 2
 
 
+def test_multi_dimensional_aggregate_suppresses_sparse_cells_without_labels(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    template = service.create_analytics_template(
+        template_id="multi_dimensional_sparse_v1",
+        title="County and need cohorts",
+        purpose="Sparse-cell suppression",
+        allowed_record_types=["location", "need"],
+        allowed_derived_fields=["county", "need_category"],
+        aggregation_policy={"min_cohort_size": 2, "epsilon_budget": 0.5},
+        created_by="did:key:analyst",
+    )
+    rows = [
+        ("did:key:cohort-owner1", {"county": "Multnomah", "need_category": "housing"}),
+        ("did:key:cohort-owner2", {"county": "Multnomah", "need_category": "housing"}),
+        ("did:key:cohort-owner3", {"county": "Lane", "need_category": "food"}),
+        ("did:key:cohort-owner4", {"county": "Lane", "need_category": "food"}),
+        ("did:key:cohort-owner5", {"county": "Clackamas", "need_category": "rare-need"}),
+    ]
+
+    for owner, fields in rows:
+        wallet = service.create_wallet(owner_did=owner)
+        consent = service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=owner,
+            template_id=template.template_id,
+            allowed_record_types=["location", "need"],
+            allowed_derived_fields=["county", "need_category"],
+        )
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=owner,
+            consent_id=consent.consent_id,
+            template_id=template.template_id,
+            fields=fields,
+        )
+
+    result = service.run_aggregate_count_by_fields(
+        template.template_id,
+        group_by=["county", "need_category"],
+        min_cohort_size=2,
+    )
+    serialized = json.dumps(result.to_dict())
+
+    assert result.released is True
+    assert result.suppressed is True
+    assert result.metric == "count_by_fields"
+    assert result.group_by == ["county", "need_category"]
+    assert result.count == 4
+    assert result.cohort_size == 4
+    assert result.suppressed_cohort_count == 1
+    assert len(result.cohorts) == 2
+    assert {cohort["count"] for cohort in result.cohorts} == {2}
+    assert "sparse-cell-suppression" in result.privacy_notes
+    assert "suppressed-cohorts:1" in result.privacy_notes
+    assert "rare-need" not in serialized
+    assert "Clackamas" not in serialized
+
+    with pytest.raises(AccessDeniedError, match="group_by fields exceed template policy"):
+        service.run_aggregate_count_by_fields(
+            template.template_id,
+            group_by=["county", "precise_age"],
+            min_cohort_size=2,
+        )
+
+
 def test_differentially_private_aggregate_count_suppresses_exact_counts(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet1 = service.create_wallet(owner_did="did:key:owner1")
@@ -1464,6 +2100,57 @@ def test_differentially_private_aggregate_count_suppresses_exact_counts(tmp_path
     assert query_events[-1].decision == "allow"
     assert query_events[-1].details["result_id"] == result.result_id
     assert query_events[-1].details["privacy_budget_spent"] == 0.25
+
+
+def test_noisy_count_uses_random_noise_unless_explicitly_seeded():
+    deterministic = noisy_count(count=10, epsilon=1.0, seed_material="fixed-study")
+    assert deterministic == noisy_count(count=10, epsilon=1.0, seed_material="fixed-study")
+
+    left = noisy_count(count=10, epsilon=1.0, random_value=0.25)
+    right = noisy_count(count=10, epsilon=1.0, random_value=0.75)
+
+    assert left[1] != right[1]
+
+
+def test_differentially_private_aggregate_count_uses_unseeded_noise(tmp_path, monkeypatch):
+    captured: dict[str, object] = {}
+
+    def fake_noisy_count(**kwargs):
+        captured.update(kwargs)
+        return float(kwargs["count"]), 0.0
+
+    monkeypatch.setattr(wallet_analytics, "noisy_count", fake_noisy_count)
+    service = WalletService(storage_dir=tmp_path)
+    wallets = [
+        service.create_wallet(owner_did="did:key:noise-owner1"),
+        service.create_wallet(owner_did="did:key:noise-owner2"),
+    ]
+    template_id = "dp_unseeded_noise_v1"
+
+    for index, wallet in enumerate(wallets, start=1):
+        owner = f"did:key:noise-owner{index}"
+        consent = service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=owner,
+            template_id=template_id,
+            allowed_record_types=["location", "need"],
+            allowed_derived_fields=["county"],
+            aggregation_policy={"min_cohort_size": 2, "epsilon_budget": 0.5},
+        )
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=owner,
+            consent_id=consent.consent_id,
+            template_id=template_id,
+            fields={"county": "Multnomah"},
+        )
+
+    result = service.run_aggregate_count(template_id, epsilon=0.25)
+
+    assert captured == {"count": 2, "epsilon": 0.25, "sensitivity": 1.0}
+    assert result.noisy_count == 2.0
+    assert result.noise == 0.0
+    assert "noise-source:system-random" in result.privacy_notes
 
 
 def test_differentially_private_aggregate_count_enforces_query_budget(tmp_path):

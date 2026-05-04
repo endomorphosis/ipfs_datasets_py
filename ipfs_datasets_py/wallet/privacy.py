@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import math
+import secrets
 from dataclasses import dataclass
 from typing import Optional, Tuple
+
+
+_SECURE_RANDOM = secrets.SystemRandom()
 
 
 @dataclass(frozen=True)
@@ -46,6 +50,49 @@ def deterministic_laplace_noise(
     if centered == 0:
         centered = 1.0 / (1 << 65)
 
+    return _laplace_noise_from_centered_probability(
+        centered,
+        epsilon=epsilon,
+        sensitivity=sensitivity,
+    )
+
+
+def laplace_noise(
+    *,
+    epsilon: float,
+    sensitivity: float = 1.0,
+    random_value: Optional[float] = None,
+) -> float:
+    """Return Laplace noise using a cryptographically strong random source."""
+
+    if epsilon <= 0:
+        raise ValueError("epsilon must be greater than zero")
+    if sensitivity <= 0:
+        raise ValueError("sensitivity must be greater than zero")
+    if random_value is None:
+        random_value = _SECURE_RANDOM.random()
+    if not 0 <= random_value < 1:
+        raise ValueError("random_value must be in [0, 1)")
+
+    # Keep inverse-CDF math away from singularities and exact zero noise.
+    edge = 1.0 / (1 << 65)
+    probability = min(max(random_value, edge), 1.0 - edge)
+    centered = probability - 0.5
+    if centered == 0:
+        centered = edge
+    return _laplace_noise_from_centered_probability(
+        centered,
+        epsilon=epsilon,
+        sensitivity=sensitivity,
+    )
+
+
+def _laplace_noise_from_centered_probability(
+    centered: float,
+    *,
+    epsilon: float,
+    sensitivity: float,
+) -> float:
     scale = sensitivity / epsilon
     return -scale * math.copysign(math.log(1 - 2 * abs(centered)), centered)
 
@@ -55,13 +102,21 @@ def noisy_count(
     count: int,
     epsilon: float,
     sensitivity: float = 1.0,
-    seed_material: str,
+    seed_material: Optional[str] = None,
+    random_value: Optional[float] = None,
 ) -> Tuple[float, float]:
     """Return a non-negative noisy count and the applied noise."""
 
-    noise = deterministic_laplace_noise(
-        epsilon=epsilon,
-        sensitivity=sensitivity,
-        seed_material=seed_material,
-    )
+    if seed_material is None:
+        noise = laplace_noise(
+            epsilon=epsilon,
+            sensitivity=sensitivity,
+            random_value=random_value,
+        )
+    else:
+        noise = deterministic_laplace_noise(
+            epsilon=epsilon,
+            sensitivity=sensitivity,
+            seed_material=seed_material,
+        )
     return max(0.0, float(count) + noise), noise

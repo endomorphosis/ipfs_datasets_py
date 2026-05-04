@@ -76,6 +76,68 @@ class StorageHealthReport:
 
 
 @dataclass
+class WalletStorageHealthReport:
+    """Integrity summary for every encrypted record in a wallet."""
+
+    wallet_id: str
+    record_count: int
+    reports: List[StorageHealthReport] = field(default_factory=list)
+    created_at: str = field(default_factory=utc_now)
+
+    @property
+    def ok(self) -> bool:
+        return all(report.ok for report in self.reports)
+
+    @property
+    def replica_count(self) -> int:
+        return sum(len(report.payload) + len(report.metadata) for report in self.reports)
+
+    @property
+    def failed_replica_count(self) -> int:
+        return sum(
+            1
+            for report in self.reports
+            for status in [*report.payload, *report.metadata]
+            if not status.ok
+        )
+
+    @property
+    def repaired(self) -> bool:
+        return any(report.repaired for report in self.reports)
+
+    @property
+    def repaired_replica_count(self) -> int:
+        return sum(
+            1
+            for report in self.reports
+            for status in [*report.payload, *report.metadata]
+            if status.repaired
+        )
+
+    @property
+    def storage_types(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for report in self.reports:
+            for status in [*report.payload, *report.metadata]:
+                counts[status.storage_type] = counts.get(status.storage_type, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "wallet_id": self.wallet_id,
+            "record_count": self.record_count,
+            "reports": [report.to_dict() for report in self.reports],
+            "ok": self.ok,
+            "replica_count": self.replica_count,
+            "failed_replica_count": self.failed_replica_count,
+            "repaired": self.repaired,
+            "repaired_replica_count": self.repaired_replica_count,
+            "storage_types": self.storage_types,
+            "created_at": self.created_at,
+        }
+
+
+@dataclass
 class KeyWrap:
     """A document/data encryption key wrapped to a recipient principal."""
 
@@ -322,7 +384,7 @@ class AnalyticsTemplate:
     allowed_derived_fields: List[str]
     aggregation_policy: Dict[str, Any]
     created_by: str
-    status: str = "active"
+    status: str = "approved"
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
     expires_at: Optional[str] = None
@@ -387,6 +449,9 @@ class AggregateResult:
     privacy_budget_spent: Optional[float] = None
     exact_count_released: bool = True
     cohort_size_released: bool = True
+    group_by: List[str] = field(default_factory=list)
+    cohorts: List[Dict[str, Any]] = field(default_factory=list)
+    suppressed_cohort_count: int = 0
     created_at: str = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:
