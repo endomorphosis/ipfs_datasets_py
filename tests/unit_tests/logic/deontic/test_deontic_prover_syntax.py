@@ -220,6 +220,106 @@ def test_prover_syntax_records_carry_target_parse_profiles():
     ) == 5
 
 
+def test_prover_syntax_records_carry_reconstruction_token_profiles():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            ["tenant", "pay", "rent", "monthly"],
+        ),
+        (
+            "The inspector shall knowingly approve the discharge.",
+            ["inspector", "knowingly", "approve", "discharge"],
+        ),
+        (
+            "The Director shall issue a permit within 10 days after application.",
+            [
+                "director",
+                "issue",
+                "permit",
+                "within",
+                "10",
+                "days",
+                "after",
+                "application",
+            ],
+        ),
+    ]
+
+    for text, expected_tokens in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = {
+            target.target: target.to_dict()
+            for target in validate_ir_with_provers(norm).targets
+        }
+
+        assert len(records) == 5
+        assert all(
+            record["reconstruction_token_profile"]["source_salient_tokens"]
+            == expected_tokens
+            for record in records.values()
+        )
+        assert all(
+            record["reconstruction_token_profile"]["decoded_salient_tokens"]
+            == expected_tokens
+            for record in records.values()
+        )
+        assert all(
+            record["reconstruction_token_profile"][
+                "reconstruction_token_profile_complete"
+            ]
+            is True
+            for record in records.values()
+        )
+        assert all(
+            record["target_components"]["reconstruction_token_profile_complete"]
+            is True
+            for record in records.values()
+        )
+        assert all(
+            record["target_components"]["salient_token_coverage_rate"] == 1.0
+            for record in records.values()
+        )
+        assert len(
+            {
+                record["reconstruction_token_profile_fingerprint"]
+                for record in records.values()
+            }
+        ) == 5
+
+
+def test_prover_reconstruction_profile_preserves_blocked_reference_tokens_without_repair_clearance():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert all(record["proof_ready"] is False for record in records)
+    assert all(record["requires_validation"] is True for record in records)
+    assert all(
+        record["reconstruction_token_profile"]["source_salient_tokens"]
+        == ["secretary", "publish", "notice", "except", "section", "552"]
+        for record in records
+    )
+    assert all(
+        record["reconstruction_token_profile"]["unreconstructed_source_tokens"] == []
+        for record in records
+    )
+    assert all(
+        record["reconstruction_token_profile"]["added_decoded_tokens"] == []
+        for record in records
+    )
+    assert all(
+        record["target_components"]["reconstruction_token_profile_complete"] is True
+        for record in records
+    )
+
+
 def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
     examples = [
         (

@@ -78,6 +78,8 @@ class ProverTargetSyntaxRecord:
     target_dialect_profile_fingerprint: str
     target_parse_profile: Dict[str, Any]
     target_parse_profile_fingerprint: str
+    reconstruction_token_profile: Dict[str, Any]
+    reconstruction_token_profile_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -189,6 +191,11 @@ def _validate_target_formula(
         norm,
     )
     target_parse_profile = _target_parse_profile(target, exported_formula)
+    reconstruction_token_profile = _reconstruction_token_profile(
+        target,
+        norm,
+        decoded.text,
+    )
     target_components = _target_components(
         target,
         exported_formula,
@@ -197,6 +204,7 @@ def _validate_target_formula(
         symbol_alignment,
         target_dialect_profile,
         target_parse_profile,
+        reconstruction_token_profile,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -247,6 +255,10 @@ def _validate_target_formula(
         target_parse_profile=target_parse_profile,
         target_parse_profile_fingerprint=target_parse_profile[
             "target_parse_profile_fingerprint"
+        ],
+        reconstruction_token_profile=reconstruction_token_profile,
+        reconstruction_token_profile_fingerprint=reconstruction_token_profile[
+            "reconstruction_token_profile_fingerprint"
         ],
         target_components=target_components,
         syntax_valid=syntax_valid,
@@ -447,6 +459,7 @@ def _target_components(
     symbol_alignment: Dict[str, Any] | None = None,
     target_dialect_profile: Dict[str, Any] | None = None,
     target_parse_profile: Dict[str, Any] | None = None,
+    reconstruction_token_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
@@ -454,6 +467,7 @@ def _target_components(
     symbol_alignment = symbol_alignment or {}
     target_dialect_profile = target_dialect_profile or {}
     target_parse_profile = target_parse_profile or {}
+    reconstruction_token_profile = reconstruction_token_profile or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
@@ -513,6 +527,31 @@ def _target_components(
         "target_parse_profile_complete": bool(
             target_parse_profile.get("target_parse_profile_complete") is True
         ),
+        "reconstruction_token_profile_complete": bool(
+            reconstruction_token_profile.get("reconstruction_token_profile_complete")
+            is True
+        ),
+        "source_salient_token_count": int(
+            reconstruction_token_profile.get("source_salient_token_count") or 0
+        ),
+        "decoded_salient_token_count": int(
+            reconstruction_token_profile.get("decoded_salient_token_count") or 0
+        ),
+        "matched_salient_token_count": int(
+            reconstruction_token_profile.get("matched_salient_token_count") or 0
+        ),
+        "unreconstructed_source_tokens": list(
+            reconstruction_token_profile.get("unreconstructed_source_tokens") or []
+        ),
+        "added_decoded_tokens": list(
+            reconstruction_token_profile.get("added_decoded_tokens") or []
+        ),
+        "salient_token_coverage_rate": float(
+            reconstruction_token_profile.get("salient_token_coverage_rate") or 0.0
+        ),
+        "decoded_token_precision_rate": float(
+            reconstruction_token_profile.get("decoded_token_precision_rate") or 0.0
+        ),
         "top_level_symbol": target_parse_profile.get("top_level_symbol", ""),
         "parse_wrappers": list(target_parse_profile.get("wrapper_sequence") or []),
         "parse_atom_symbols": list(target_parse_profile.get("atom_symbols") or []),
@@ -525,6 +564,88 @@ def _target_components(
             target_parse_profile.get("event_predicates") or []
         ),
     }
+
+
+_RECONSTRUCTION_TOKEN_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "be",
+    "by",
+    "for",
+    "from",
+    "in",
+    "is",
+    "it",
+    "must",
+    "not",
+    "of",
+    "provided",
+    "shall",
+    "that",
+    "the",
+    "to",
+}
+
+
+def _reconstruction_token_profile(
+    target: str,
+    norm: LegalNormIR,
+    decoded_text: str,
+) -> Dict[str, Any]:
+    """Compare source and decoded salient legal tokens for Phase 8 audits."""
+
+    source_text = str(norm.source_text or norm.support_text or "").strip()
+    source_tokens = _salient_reconstruction_tokens(source_text)
+    decoded_tokens = _salient_reconstruction_tokens(decoded_text)
+    source_set = set(source_tokens)
+    decoded_set = set(decoded_tokens)
+    matched_tokens = [token for token in source_tokens if token in decoded_set]
+    unreconstructed_tokens = [token for token in source_tokens if token not in decoded_set]
+    added_tokens = [token for token in decoded_tokens if token not in source_set]
+    coverage_rate = round(len(matched_tokens) / len(source_tokens), 6) if source_tokens else 1.0
+    precision_rate = round(
+        sum(1 for token in decoded_tokens if token in source_set) / len(decoded_tokens),
+        6,
+    ) if decoded_tokens else 1.0
+    complete = not unreconstructed_tokens and not added_tokens
+    fingerprint = _stable_fingerprint(
+        target,
+        norm.source_id,
+        "|".join(source_tokens),
+        "|".join(decoded_tokens),
+        "|".join(unreconstructed_tokens),
+        "|".join(added_tokens),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_text_basis": "source_text" if norm.source_text else "support_text",
+        "source_salient_tokens": source_tokens,
+        "decoded_salient_tokens": decoded_tokens,
+        "matched_salient_tokens": matched_tokens,
+        "unreconstructed_source_tokens": unreconstructed_tokens,
+        "added_decoded_tokens": added_tokens,
+        "source_salient_token_count": len(source_tokens),
+        "decoded_salient_token_count": len(decoded_tokens),
+        "matched_salient_token_count": len(matched_tokens),
+        "salient_token_coverage_rate": coverage_rate,
+        "decoded_token_precision_rate": precision_rate,
+        "reconstruction_token_profile_complete": complete,
+        "reconstruction_token_profile_fingerprint": fingerprint,
+    }
+
+
+def _salient_reconstruction_tokens(text: str) -> List[str]:
+    tokens: List[str] = []
+    for token in re.findall(r"[A-Za-z0-9]+", str(text or "").lower()):
+        if token in _RECONSTRUCTION_TOKEN_STOPWORDS:
+            continue
+        if token not in tokens:
+            tokens.append(token)
+    return tokens
 
 
 def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
