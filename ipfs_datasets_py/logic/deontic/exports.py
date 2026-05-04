@@ -3852,6 +3852,50 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "SubmitPetition",
     )):
         return "administrative_review_request_duty"
+    if action_predicate.startswith((
+        "Accredit",
+        "Credential",
+        "Endorse",
+        "License",
+        "Permit",
+    )) or action_predicate in {
+        "RegisterOperators",
+        "RegisterInspectors",
+        "RegisterInstructors",
+        "RegisterLicensees",
+        "RegisterPermittee",
+        "RegisterPermittees",
+    }:
+        return "licensing_credentialing_duty"
+    if action_predicate.startswith(("Cancel", "Revoke", "Suspend")):
+        return "instrument_status_duty"
+    if action_predicate.startswith("Renew") and _predicate_mentions_regulated_instrument(
+        action_predicate
+    ):
+        return "instrument_status_duty"
+    if action_predicate.startswith((
+        "Assess",
+        "Impose",
+        "Allocate",
+        "Apportion",
+        "Remit",
+    )):
+        return "financial_administration_duty"
+    if action_predicate.startswith(("Refer", "Remand")):
+        return "case_routing_duty"
+    if action_predicate.startswith(("Waive", "Extend")):
+        return "administrative_relief_duty"
+    if action_predicate.startswith(("Register", "Enroll", "Renew")):
+        return "registration_lifecycle_duty"
+    if action_predicate.startswith((
+        "Catalog",
+        "Index",
+        "Interpret",
+        "Summarize",
+        "Transcribe",
+        "Translate",
+    )):
+        return "records_information_processing_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
@@ -3865,6 +3909,22 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _predicate_mentions_regulated_instrument(action_predicate: str) -> bool:
+    return any(
+        instrument in action_predicate
+        for instrument in (
+            "Approval",
+            "Certificate",
+            "Credential",
+            "Endorsement",
+            "License",
+            "Permit",
+            "Registration",
+            "Variance",
+        )
+    )
 
 
 def _has_deadline_temporal_constraint(norm: LegalNormIR) -> bool:
