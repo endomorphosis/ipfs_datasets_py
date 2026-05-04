@@ -103,6 +103,8 @@ def build_deterministic_parser_capability_profile_record(
     capability_family = _deterministic_norm_family(norm)
     effective_slots = _deterministic_capability_profile_slots(norm, slots)
     formula_record = build_deontic_formula_record_from_ir(norm)
+    decoder_record = build_decoder_record_from_ir(norm)
+    decoder_profile = _deterministic_capability_decoder_profile(decoder_record)
     audit = legal_norm_ir_slot_provenance(norm, effective_slots)
     checked_slots = list(audit["checked_slots"])
     grounded_slots = list(audit["grounded_slots"])
@@ -142,6 +144,18 @@ def build_deterministic_parser_capability_profile_record(
         if checked_count
         else 0.0,
         "slot_grounding": audit["slot_grounding"],
+        "decoded_text": decoder_record["decoded_text"],
+        "decoder_reconstruction_id": decoder_record["reconstruction_id"],
+        "decoded_slots": decoder_profile["decoded_slots"],
+        "grounded_decoded_slots": decoder_profile["grounded_decoded_slots"],
+        "missing_decoded_slots": decoder_profile["missing_decoded_slots"],
+        "ungrounded_decoded_slots": decoder_profile["ungrounded_decoded_slots"],
+        "decoder_slot_grounding_complete": decoder_profile["decoder_slot_grounding_complete"],
+        "decoder_grounded_slot_rate": decoder_profile["decoder_grounded_slot_rate"],
+        "decoder_phrase_count": decoder_record["phrase_count"],
+        "decoder_legal_phrase_count": decoder_record["legal_phrase_count"],
+        "decoder_grounded_phrase_rate": decoder_record["grounded_decoded_phrase_rate"],
+        "decoder_requires_validation": decoder_record["requires_validation"],
         "support_span": norm.support_span.to_list(),
         "field_spans": dict(norm.field_spans),
         "schema_version": norm.schema_version,
@@ -3748,6 +3762,50 @@ def _slot_grounding_records(record: Mapping[str, Any]) -> List[Mapping[str, Any]
         if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
             return [value for value in values if isinstance(value, Mapping)]
     return []
+
+
+def _deterministic_capability_decoder_profile(
+    decoder_record: Mapping[str, Any],
+) -> Dict[str, Any]:
+    """Return compact decoder slot coverage for capability profile rows."""
+
+    decoded_slots: List[str] = []
+    grounded_slots: List[str] = []
+    ungrounded_slots: List[str] = []
+
+    for phrase in decoder_record.get("phrase_provenance") or []:
+        if not isinstance(phrase, Mapping) or phrase.get("fixed") is True:
+            continue
+        slot = str(phrase.get("slot") or "").strip()
+        if not slot:
+            continue
+        if slot not in decoded_slots:
+            decoded_slots.append(slot)
+        if phrase.get("spans"):
+            if slot not in grounded_slots:
+                grounded_slots.append(slot)
+        elif slot not in ungrounded_slots:
+            ungrounded_slots.append(slot)
+
+    missing_slots = [
+        str(slot)
+        for slot in decoder_record.get("missing_slots") or []
+        if str(slot).strip()
+    ]
+    grounded_count = len(grounded_slots)
+    decoded_count = len(decoded_slots)
+    return {
+        "decoded_slots": decoded_slots,
+        "grounded_decoded_slots": grounded_slots,
+        "missing_decoded_slots": missing_slots,
+        "ungrounded_decoded_slots": ungrounded_slots,
+        "decoder_slot_grounding_complete": bool(
+            decoded_count and not missing_slots and not ungrounded_slots
+        ),
+        "decoder_grounded_slot_rate": round(grounded_count / decoded_count, 6)
+        if decoded_count
+        else 0.0,
+    }
 
 
 def _deterministic_capability_profile_slots(
