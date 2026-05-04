@@ -185,7 +185,7 @@ _MODAL_RE = re.compile(
         is\s+permitted\s+to|are\s+permitted\s+to|
         is\s+entitled\s+to|are\s+entitled\s+to
     )
-    \s+
+    \s*,?\s+
     (?P<action>.+?)
     (?=(?:\s+(?:and|or)\s+(?:shall|must|may|cannot|can\s+not|is\s+required|are\s+required|is\s+authorized|are\s+authorized|is\s+permitted|are\s+permitted)\b)|(?:\s+(?:if|when|where|provided\s+that|unless|except|except\s+that|without|absent|before|after|within|not\s+later\s+than|no\s+later\s+than|not\s+more\s+than|no\s+more\s+than)\b)|[.;:]|$)
     """,
@@ -350,6 +350,14 @@ _MENTAL_STATE_TERMS = {
     "deliberately",
     "corruptly",
 }
+_LEADING_COMPLEX_MENTAL_STATE_RE = re.compile(
+    r"^\s*(?P<state>with\s+(?:the\s+)?(?:"
+    r"intent\s+to\s+[^,;:]+|"
+    r"knowledge\s+that\s+[^,;:]+|"
+    r"reckless\s+disregard\s+for\s+[^,;:]+"
+    r"))\s*,\s*(?P<action>.+)$",
+    re.IGNORECASE,
+)
 _RECIPIENT_RE = re.compile(
     r"\b(?:to|for|with|of)\s+((?:the\s+)?[A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*){0,6})$",
     re.IGNORECASE,
@@ -1691,9 +1699,27 @@ def _build_element(
     enumerated_items = extract_enumerated_items(sentence)
     if enumerated_items and re.match(r"^\([A-Za-z0-9]+\)\s+", action_text or ""):
         action_text = enumerated_items[0]["text"]
+    field_spans = dict(field_spans or {})
+    complex_mental_state = ""
+    original_action_text = action_text
+    complex_split = _split_leading_complex_mental_state(action_text)
+    if complex_split[0]:
+        complex_mental_state, action_text = complex_split
+        action_start = 0
+        raw_action_span = list(field_spans.get("action") or _find_span(sentence, original_action_text))
+        if len(raw_action_span) == 2:
+            action_start = raw_action_span[0]
+        mental_state_span = _find_span(sentence, complex_mental_state, start=action_start)
+        operative_action_span = _find_span(
+            sentence,
+            action_text,
+            start=mental_state_span[1] if len(mental_state_span) == 2 else action_start,
+        )
+        field_spans["mental_state"] = mental_state_span
+        field_spans["action"] = operative_action_span
     subject = [subject_text] if subject_text else extract_legal_subject(sentence)
     action = [action_text]
-    spans = _complete_field_spans(sentence, subject_text, action_text, field_spans or {})
+    spans = _complete_field_spans(sentence, subject_text, action_text, field_spans)
     return {
         "schema_version": PARSER_SCHEMA_VERSION,
         "source_id": "",
@@ -1709,7 +1735,7 @@ def _build_element(
         "actor_type": classify_legal_entity(subject[0] if subject else ""),
         "entity_type": classify_legal_entity(subject[0] if subject else ""),
         "action": action,
-        "mental_state": _mental_state(action_text),
+        "mental_state": complex_mental_state or _mental_state(action_text),
         "action_verb": _first_verb(action_text),
         "action_object": _action_object(action_text),
         "action_recipient": extract_action_recipient(action_text),
@@ -1765,6 +1791,7 @@ def _complete_field_spans(
         "subject": subject_span,
         "modal": list(field_spans.get("modal") or []),
         "action": list(field_spans.get("action") or _find_span(sentence, action_text)),
+        "mental_state": list(field_spans.get("mental_state") or []),
         "action_verb": [],
         "action_object": [],
         "action_recipient": [],
@@ -3253,20 +3280,19 @@ def _clean_action(value: str) -> str:
 
 
 def _first_verb(action: str) -> str:
-    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
-    while words and words[0].lower() in _MENTAL_STATE_TERMS:
-        words = words[1:]
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
     return words[0].lower() if words else ""
 
 
 def _action_object(action: str) -> str:
-    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
-    while words and words[0].lower() in _MENTAL_STATE_TERMS:
-        words = words[1:]
+    words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", _action_without_mental_state(action) or "")
     return " ".join(words[1:]).strip() if len(words) > 1 else ""
 
 
 def _mental_state(action: str) -> str:
+    complex_split = _split_leading_complex_mental_state(action)
+    if complex_split[0]:
+        return complex_split[0].lower()
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
     if words and words[0].lower() in _MENTAL_STATE_TERMS:
         return words[0].lower()
@@ -3274,10 +3300,24 @@ def _mental_state(action: str) -> str:
 
 
 def _action_without_mental_state(action: str) -> str:
+    complex_split = _split_leading_complex_mental_state(action)
+    if complex_split[0]:
+        return complex_split[1]
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
     if words and words[0].lower() in _MENTAL_STATE_TERMS:
         return " ".join(words[1:]).strip()
     return action
+
+
+def _split_leading_complex_mental_state(action: str) -> tuple[str, str]:
+    match = _LEADING_COMPLEX_MENTAL_STATE_RE.match(str(action or "").strip())
+    if not match:
+        return ("", "")
+    state = _clean_phrase(match.group("state")).lower()
+    operative_action = _clean_phrase(match.group("action"))
+    if not state or not operative_action:
+        return ("", "")
+    return (state, operative_action)
 
 
 def _normalize_passive_clause(subject_text: str, action_text: str) -> tuple[str, str]:

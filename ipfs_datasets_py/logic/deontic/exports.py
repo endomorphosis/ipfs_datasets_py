@@ -3867,6 +3867,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
     if action_predicate.startswith((
+        "Accession",
+        "DocumentChainCustody",
+        "InventoryEvidence",
+        "PreserveEvidence",
+    )):
+        return "evidence_custody_duty"
+    if action_predicate.startswith((
         "Anonymize",
         "Decrypt",
         "Deidentify",

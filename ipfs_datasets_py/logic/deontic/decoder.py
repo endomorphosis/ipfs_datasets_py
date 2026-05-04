@@ -23,6 +23,7 @@ class DecodedPhrase:
     slot: str
     spans: List[List[int]] = field(default_factory=list)
     fixed: bool = False
+    provenance_only: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -137,6 +138,7 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
                 phrases.append(_fixed_phrase(connector, "exception_connector"))
                 phrases.append(_detail_phrase(exception_text, "exceptions", exception, norm))
 
+    _append_cross_reference_provenance(phrases, norm)
     return phrases, missing
 
 
@@ -175,6 +177,7 @@ def _decode_applicability(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[
         phrases.append(_phrase(target, "action", norm))
     else:
         missing.append("applicability_target")
+    _append_cross_reference_provenance(phrases, norm)
     return phrases, missing
 
 
@@ -193,6 +196,7 @@ def _decode_exemption(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str]
         phrases.append(_phrase(requirement, "action", norm))
     else:
         missing.append("requirement")
+    _append_cross_reference_provenance(phrases, norm)
     return phrases, missing
 
 
@@ -292,6 +296,74 @@ def _detail_phrase(
 
 def _fixed_phrase(text: str, slot: str) -> DecodedPhrase:
     return DecodedPhrase(text=text, slot=slot, fixed=True)
+
+
+def _provenance_phrase(text: str, slot: str, spans: List[List[int]]) -> DecodedPhrase:
+    return DecodedPhrase(
+        text=_clean_text(text),
+        slot=slot,
+        spans=spans,
+        provenance_only=True,
+    )
+
+
+def _append_cross_reference_provenance(
+    phrases: List[DecodedPhrase],
+    norm: LegalNormIR,
+) -> None:
+    """Add source-grounded cross-reference slot phrases without text drift."""
+
+    seen = {
+        (
+            phrase.slot,
+            phrase.text,
+            tuple(tuple(span) for span in phrase.spans),
+        )
+        for phrase in phrases
+    }
+    for reference in _cross_reference_records(norm):
+        text = _reference_text(reference)
+        spans = _reference_spans(reference)
+        if not text or not spans:
+            continue
+        key = ("cross_references", text, tuple(tuple(span) for span in spans))
+        if key in seen:
+            continue
+        seen.add(key)
+        phrases.append(_provenance_phrase(text, "cross_references", spans))
+
+
+def _cross_reference_records(norm: LegalNormIR) -> List[Mapping[str, Any]]:
+    records: List[Mapping[str, Any]] = []
+    seen: set[tuple[tuple[int, int], ...]] = set()
+    for reference in list(norm.cross_references or []) + list(
+        norm.resolved_cross_references or []
+    ):
+        if not isinstance(reference, Mapping):
+            continue
+        text = _reference_text(reference)
+        spans = _reference_spans(reference)
+        key = tuple(tuple(span) for span in spans)
+        if not text or key in seen:
+            continue
+        seen.add(key)
+        records.append(reference)
+    return records
+
+
+def _reference_text(reference: Mapping[str, Any]) -> str:
+    for key in ("normalized_text", "raw_text", "canonical_citation", "value", "target"):
+        value = reference.get(key)
+        if value:
+            return _clean_text(str(value))
+    return ""
+
+
+def _reference_spans(reference: Mapping[str, Any]) -> List[List[int]]:
+    spans: List[List[int]] = []
+    for key in ("span", "source_span", "support_span", "clause_span"):
+        spans.extend(_coerce_spans(reference.get(key)))
+    return _dedupe_spans(spans)
 
 
 def _modal_phrase(modality: str) -> str:
@@ -410,7 +482,11 @@ def _coerce_span(value: Any) -> List[int]:
 
 
 def _sentence_from_phrases(phrases: Iterable[DecodedPhrase]) -> str:
-    text = " ".join(phrase.text for phrase in phrases if phrase.text).strip()
+    text = " ".join(
+        phrase.text
+        for phrase in phrases
+        if phrase.text and not phrase.provenance_only
+    ).strip()
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"\s+([,.;:])", r"\1", text)
     if text:
@@ -463,3 +539,17 @@ def _starts_with_phrase(container: str, phrase: str) -> bool:
     left = _clean_text(container)
     right = _clean_text(phrase)
     return bool(right and re.match(r"^" + re.escape(right) + r"\b", left, re.IGNORECASE))
+
+
+def _dedupe_spans(spans: Sequence[Sequence[int]]) -> List[List[int]]:
+    seen: set[tuple[int, int]] = set()
+    deduped: List[List[int]] = []
+    for span in spans:
+        if len(span) != 2:
+            continue
+        key = (int(span[0]), int(span[1]))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append([key[0], key[1]])
+    return deduped

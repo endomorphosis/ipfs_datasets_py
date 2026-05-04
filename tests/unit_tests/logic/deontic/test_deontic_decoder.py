@@ -159,6 +159,12 @@ def test_decoder_preserves_unresolved_reference_exception_without_clearing_repai
     exception_phrase = next(phrase for phrase in decoded.phrases if phrase.slot == "exceptions")
     assert exception_phrase.text == "as provided in section 552"
     assert exception_phrase.spans == [element["exception_details"][0]["span"]]
+    reference_phrase = next(
+        phrase for phrase in decoded.phrases if phrase.slot == "cross_references"
+    )
+    assert reference_phrase.text == "section 552"
+    assert reference_phrase.spans == [element["cross_reference_details"][0]["span"]]
+    assert reference_phrase.provenance_only is True
 
 
 def test_decoder_preserves_precedence_override_with_provenance():
@@ -183,6 +189,11 @@ def test_decoder_preserves_precedence_override_with_provenance():
         "overrides",
         "override_punctuation",
     ]
+    reference_phrase = next(
+        phrase for phrase in decoded.phrases if phrase.slot == "cross_references"
+    )
+    assert reference_phrase.text == "section 5.01.020"
+    assert reference_phrase.provenance_only is True
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -217,8 +228,10 @@ def test_decoder_renders_scope_and_lifecycle_norm_types_from_ir_slots():
         "actor",
         "applicability_connector",
         "action",
+        "cross_references",
     ]
     assert applicability_decoded.phrases[1].fixed is True
+    assert applicability_decoded.phrases[-1].provenance_only is True
 
     assert exemption_decoded.text == "Emergency work is exempt from permit."
     assert exemption.modality == "EXEMPT"
@@ -263,3 +276,45 @@ def test_decoder_renders_penalty_clauses_without_duplicate_condition_or_deadline
         assert decoded.phrases[2].spans == [element["field_spans"]["action"]]
         assert " within " not in decoded.text.lower()
         assert decoded.text.lower().count(" if ") == 0
+
+
+def test_decoder_exposes_cross_reference_provenance_without_reconstruction_text_drift():
+    examples = [
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            "Secretary shall publish the notice except as provided in section 552.",
+            "section 552",
+        ),
+        (
+            "This section applies to food carts.",
+            "This section applies to food carts.",
+            "section this section",
+        ),
+        (
+            "Notwithstanding section 5.01.020, the Director may issue a variance.",
+            "Notwithstanding section 5.01.020, Director may issue a variance.",
+            "section 5.01.020",
+        ),
+    ]
+
+    for text, expected_decoded, expected_reference in examples:
+        element, norm, decoded = _decode(text)
+        reference_phrase = next(
+            phrase for phrase in decoded.phrases if phrase.slot == "cross_references"
+        )
+
+        assert decoded.text == expected_decoded
+        assert reference_phrase.text == expected_reference
+        assert reference_phrase.spans == [element["cross_reference_details"][0]["span"]]
+        assert reference_phrase.fixed is False
+        assert reference_phrase.provenance_only is True
+        assert decoded.text.count(expected_reference) == expected_decoded.count(
+            expected_reference
+        )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]

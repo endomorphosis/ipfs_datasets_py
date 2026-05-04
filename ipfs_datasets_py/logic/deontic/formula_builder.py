@@ -180,6 +180,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_settlement_conciliation_light_verb_action(action_text)
     action_text = _normalize_remediation_abatement_light_verb_action(action_text)
     action_text = _normalize_regulatory_control_light_verb_action(action_text)
+    action_text = _normalize_evidence_custody_light_verb_action(action_text)
     action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
     action_text = _normalize_codification_compilation_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
@@ -6261,6 +6262,51 @@ def _normalize_regulatory_control_light_verb_action(action_text: str) -> str:
         (r"^condemnation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "condemn"),
     ]
     for pattern, verb in control_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
+
+    return text
+
+
+def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
+    """Project evidence and custody nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    evidence_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|ensure|ensures|ensured|ensuring)\s+"
+            r"(?:an?\s+|the\s+)?evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "preserve evidence",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining)\s+"
+            r"(?:an?\s+|the\s+)?evidence\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "inventory evidence",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|record|records|recorded|recording)\s+"
+            r"(?:a\s+|the\s+)?sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "accession",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording)\s+"
+            r"(?:a\s+|the\s+)?chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "document chain of custody for",
+        ),
+        (r"^evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "preserve evidence"),
+        (r"^evidence\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "inventory evidence"),
+        (r"^sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "accession"),
+        (
+            r"^chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "document chain of custody for",
+        ),
+    ]
+    for pattern, verb in evidence_patterns:
         match = re.match(pattern, text, re.IGNORECASE)
         if match:
             target = _normalized_light_verb_target(match.group(1))

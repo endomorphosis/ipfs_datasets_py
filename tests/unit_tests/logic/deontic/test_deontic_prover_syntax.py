@@ -71,13 +71,13 @@ def test_prover_syntax_records_carry_decoder_context_for_local_targets():
         (
             "This section applies to food carts.",
             "This section applies to food carts.",
-            ["actor", "action"],
+            ["actor", "action", "cross_references"],
             [],
         ),
         (
             "The Secretary shall publish the notice except as provided in section 552.",
             "Secretary shall publish the notice except as provided in section 552.",
-            ["actor", "modality", "action", "exceptions"],
+            ["actor", "modality", "action", "exceptions", "cross_references"],
             [],
         ),
     ]
@@ -183,8 +183,8 @@ def test_prover_syntax_records_align_decoder_ir_and_formula_slots():
         ),
         (
             "The Secretary shall publish the notice except as provided in section 552.",
-            False,
-            ["cross_references"],
+            True,
+            [],
             [],
             [],
             ["exceptions"],
