@@ -166,6 +166,60 @@ def test_prover_syntax_records_carry_target_dialect_profiles():
     assert len({record["target_dialect_profile_fingerprint"] for record in records.values()}) == 5
 
 
+def test_prover_syntax_records_carry_target_parse_profiles():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+
+    records = {
+        target.target: target.to_dict()
+        for target in validate_ir_with_provers(norm).targets
+    }
+
+    assert records["frame_logic"]["target_parse_profile"]["top_level_symbol"] == (
+        "legal_norm"
+    )
+    assert records["frame_logic"]["target_parse_profile"]["frame_slots"] == [
+        "actor",
+        "action",
+        "formula",
+    ]
+    assert records["deontic_cec"]["target_parse_profile"]["event_predicates"] == [
+        "Happens",
+        "HoldsAt",
+    ]
+    assert records["fol"]["target_parse_profile"]["top_level_symbol"] == "forall"
+    assert records["fol"]["target_parse_profile"]["quantifier_variables"] == ["x"]
+    assert records["deontic_fol"]["target_parse_profile"]["wrapper_sequence"] == ["O"]
+    assert records["deontic_temporal_fol"]["target_parse_profile"][
+        "wrapper_sequence"
+    ] == ["always", "O"]
+    assert all(
+        record["target_parse_profile"]["target_parse_profile_complete"] is True
+        for record in records.values()
+    )
+    assert all(
+        record["target_components"]["target_parse_profile_complete"] is True
+        for record in records.values()
+    )
+    assert records["frame_logic"]["target_components"]["parse_frame_slots"] == [
+        "actor",
+        "action",
+        "formula",
+    ]
+    assert records["deontic_cec"]["target_components"]["parse_event_predicates"] == [
+        "Happens",
+        "HoldsAt",
+    ]
+    assert records["fol"]["target_components"]["parse_quantifier_variables"] == ["x"]
+    assert len(
+        {
+            record["target_parse_profile_fingerprint"]
+            for record in records.values()
+        }
+    ) == 5
+
+
 def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
     examples = [
         (

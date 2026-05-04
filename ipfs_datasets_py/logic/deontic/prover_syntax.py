@@ -76,6 +76,8 @@ class ProverTargetSyntaxRecord:
     target_symbol_alignment_fingerprint: str
     target_dialect_profile: Dict[str, Any]
     target_dialect_profile_fingerprint: str
+    target_parse_profile: Dict[str, Any]
+    target_parse_profile_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -186,6 +188,7 @@ def _validate_target_formula(
         exported_formula,
         norm,
     )
+    target_parse_profile = _target_parse_profile(target, exported_formula)
     target_components = _target_components(
         target,
         exported_formula,
@@ -193,6 +196,7 @@ def _validate_target_formula(
         alignment_summary,
         symbol_alignment,
         target_dialect_profile,
+        target_parse_profile,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -239,6 +243,10 @@ def _validate_target_formula(
         target_dialect_profile=target_dialect_profile,
         target_dialect_profile_fingerprint=target_dialect_profile[
             "target_dialect_profile_fingerprint"
+        ],
+        target_parse_profile=target_parse_profile,
+        target_parse_profile_fingerprint=target_parse_profile[
+            "target_parse_profile_fingerprint"
         ],
         target_components=target_components,
         syntax_valid=syntax_valid,
@@ -438,12 +446,14 @@ def _target_components(
     alignment_summary: Dict[str, Any] | None = None,
     symbol_alignment: Dict[str, Any] | None = None,
     target_dialect_profile: Dict[str, Any] | None = None,
+    target_parse_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
     alignment_summary = alignment_summary or {}
     symbol_alignment = symbol_alignment or {}
     target_dialect_profile = target_dialect_profile or {}
+    target_parse_profile = target_parse_profile or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
@@ -500,7 +510,173 @@ def _target_components(
         "target_dialect_profile_complete": bool(
             target_dialect_profile.get("target_dialect_profile_complete") is True
         ),
+        "target_parse_profile_complete": bool(
+            target_parse_profile.get("target_parse_profile_complete") is True
+        ),
+        "top_level_symbol": target_parse_profile.get("top_level_symbol", ""),
+        "parse_wrappers": list(target_parse_profile.get("wrapper_sequence") or []),
+        "parse_atom_symbols": list(target_parse_profile.get("atom_symbols") or []),
+        "parse_connectives": list(target_parse_profile.get("connectives") or []),
+        "parse_quantifier_variables": list(
+            target_parse_profile.get("quantifier_variables") or []
+        ),
+        "parse_frame_slots": list(target_parse_profile.get("frame_slots") or []),
+        "parse_event_predicates": list(
+            target_parse_profile.get("event_predicates") or []
+        ),
     }
+
+
+def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
+    """Return a compact deterministic parse profile for the rendered dialect.
+
+    This is intentionally syntax-only. It exposes the target-visible structure
+    that the local validators inspected so Phase 8 reports can distinguish a
+    valid string from the kind of formula accepted by a target adapter.
+    """
+
+    text = str(exported_formula or "").strip()
+    top_level_symbol = _top_level_symbol(text)
+    wrapper_sequence = _wrapper_sequence(text)
+    atom_symbols = _formula_symbols(text)
+    connectives = _target_connectives(text)
+    quantifier_variables = _quantifier_variables(text)
+    frame_slots = _frame_slots(text) if target == "frame_logic" else []
+    event_predicates = _event_predicates(text) if target == "deontic_cec" else []
+    complete = bool(
+        text
+        and top_level_symbol
+        and _target_parse_profile_shape_complete(
+            target,
+            top_level_symbol,
+            wrapper_sequence,
+            frame_slots,
+            event_predicates,
+        )
+    )
+    fingerprint = _stable_fingerprint(
+        target,
+        top_level_symbol,
+        "|".join(wrapper_sequence),
+        "|".join(atom_symbols),
+        "|".join(connectives),
+        "|".join(quantifier_variables),
+        "|".join(frame_slots),
+        "|".join(event_predicates),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "top_level_symbol": top_level_symbol,
+        "wrapper_sequence": wrapper_sequence,
+        "atom_symbols": atom_symbols,
+        "connectives": connectives,
+        "quantifier_variables": quantifier_variables,
+        "frame_slots": frame_slots,
+        "event_predicates": event_predicates,
+        "contains_quantifier": bool(quantifier_variables),
+        "target_parse_profile_complete": complete,
+        "target_parse_profile_fingerprint": fingerprint,
+    }
+
+
+def _top_level_symbol(text: str) -> str:
+    match = re.match(r"^\s*([A-Za-z][A-Za-z0-9_]*)\s*[\(\[]", text)
+    if match:
+        return match.group(1)
+    if re.match(r"^\s*forall\s+[A-Za-z][A-Za-z0-9_]*\.", text):
+        return "forall"
+    return ""
+
+
+def _wrapper_sequence(text: str) -> List[str]:
+    wrappers: List[str] = []
+    for match in re.finditer(r"\b([A-Za-z][A-Za-z0-9_]*)\s*\(", text):
+        wrapper = match.group(1)
+        if wrapper in {"legal_norm", "Happens", "HoldsAt", "always", "O", "P", "F"}:
+            wrappers.append(wrapper)
+    return wrappers
+
+
+def _target_connectives(text: str) -> List[str]:
+    connectives: List[str] = []
+    for symbol, pattern in (
+        ("forall", r"\bforall\s+[A-Za-z][A-Za-z0-9_]*\."),
+        ("and", r"\band\b"),
+        ("or", r"\bor\b"),
+        ("not", r"\bnot\b"),
+        ("implies", r"(?:->|=>)"),
+    ):
+        if re.search(pattern, text):
+            connectives.append(symbol)
+    return connectives
+
+
+def _quantifier_variables(text: str) -> List[str]:
+    variables: List[str] = []
+    for variable in re.findall(r"\bforall\s+([A-Za-z][A-Za-z0-9_]*)\.", text):
+        if variable not in variables:
+            variables.append(variable)
+    return variables
+
+
+def _frame_slots(text: str) -> List[str]:
+    match = re.match(r"^legal_norm\([^)]+\)\[(.+)\]$", text)
+    if not match:
+        return []
+    slots: List[str] = []
+    for slot in re.findall(r"([A-Za-z][A-Za-z0-9_]*)->", match.group(1)):
+        if slot not in slots:
+            slots.append(slot)
+    return slots
+
+
+def _event_predicates(text: str) -> List[str]:
+    predicates: List[str] = []
+    for predicate in re.findall(r"\b(Happens|HoldsAt)\s*\(", text):
+        if predicate not in predicates:
+            predicates.append(predicate)
+    return predicates
+
+
+def _target_parse_profile_shape_complete(
+    target: str,
+    top_level_symbol: str,
+    wrapper_sequence: Sequence[str],
+    frame_slots: Sequence[str],
+    event_predicates: Sequence[str],
+) -> bool:
+    wrappers = list(wrapper_sequence)
+    if target == "frame_logic":
+        return top_level_symbol == "legal_norm" and list(frame_slots) == [
+            "actor",
+            "action",
+            "formula",
+        ]
+    if target == "deontic_cec":
+        return top_level_symbol == "Happens" and list(event_predicates) == [
+            "Happens",
+            "HoldsAt",
+        ]
+    if target == "fol":
+        return top_level_symbol in {
+            "forall",
+            "AppliesTo",
+            "Definition",
+            "ExemptFrom",
+            "ValidFor",
+            "ExpiresAfter",
+            "Lifecycle",
+        }
+    if target == "deontic_fol":
+        return (
+            bool(top_level_symbol)
+            and "always" not in wrappers
+            and "Happens" not in wrappers
+        )
+    if target == "deontic_temporal_fol":
+        return top_level_symbol == "always" and "always" in wrappers
+    return False
 
 
 def _target_dialect_profile(
