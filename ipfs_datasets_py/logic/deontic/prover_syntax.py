@@ -70,6 +70,10 @@ class ProverTargetSyntaxRecord:
     omitted_formula_slots: Dict[str, Any]
     decoded_ir_slot_alignment: Dict[str, Any]
     slot_alignment_fingerprint: str
+    source_formula_symbols: List[str]
+    exported_formula_symbols: List[str]
+    target_symbol_alignment: Dict[str, Any]
+    target_symbol_alignment_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -169,11 +173,17 @@ def _validate_target_formula(
         ir_slot_summary,
         formula_record,
     )
+    symbol_alignment = _target_symbol_alignment(
+        target,
+        formula,
+        exported_formula,
+    )
     target_components = _target_components(
         target,
         exported_formula,
         ir_slot_summary,
         alignment_summary,
+        symbol_alignment,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -211,6 +221,12 @@ def _validate_target_formula(
         omitted_formula_slots=alignment_summary["omitted_formula_slots"],
         decoded_ir_slot_alignment=alignment_summary,
         slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
+        source_formula_symbols=symbol_alignment["source_formula_symbols"],
+        exported_formula_symbols=symbol_alignment["exported_formula_symbols"],
+        target_symbol_alignment=symbol_alignment,
+        target_symbol_alignment_fingerprint=symbol_alignment[
+            "target_symbol_alignment_fingerprint"
+        ],
         target_components=target_components,
         syntax_valid=syntax_valid,
         skipped=False,
@@ -407,14 +423,19 @@ def _target_components(
     exported_formula: str,
     ir_slot_summary: Dict[str, Any] | None = None,
     alignment_summary: Dict[str, Any] | None = None,
+    symbol_alignment: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
     alignment_summary = alignment_summary or {}
+    symbol_alignment = symbol_alignment or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
+    missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
+    source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
+    exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
@@ -444,7 +465,128 @@ def _target_components(
         "formula_ungrounded_slots": list(
             alignment_summary.get("formula_ungrounded_slots") or []
         ),
+        "source_formula_symbols": source_symbols,
+        "exported_formula_symbols": exported_symbols,
+        "source_formula_symbol_count": len(source_symbols),
+        "exported_formula_symbol_count": len(exported_symbols),
+        "missing_exported_formula_symbols": missing_symbols,
+        "target_symbol_alignment_complete": bool(
+            symbol_alignment.get("target_symbol_alignment_complete") is True
+        ),
     }
+
+
+def _target_symbol_alignment(
+    target: str,
+    formula: str,
+    exported_formula: str,
+) -> Dict[str, Any]:
+    """Audit whether target rendering preserved formal formula symbols.
+
+    Syntax checks catch malformed target strings, while slot alignment checks
+    that decoded legal slots and formula slots agree. This audit focuses on the
+    rendered target formula itself: every predicate or frame symbol in the
+    source formula must still be visible in the target dialect.
+    """
+
+    source_symbols = _formula_symbols(formula)
+    exported_symbols = _formula_symbols(exported_formula)
+    exported_symbol_set = set(exported_symbols)
+    missing_symbols = [
+        symbol for symbol in source_symbols if symbol not in exported_symbol_set
+    ]
+    extra_symbols = [
+        symbol for symbol in exported_symbols if symbol not in set(source_symbols)
+    ]
+    complete = not missing_symbols
+    fingerprint = _stable_fingerprint(
+        target,
+        "|".join(source_symbols),
+        "|".join(exported_symbols),
+        "|".join(missing_symbols),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_formula_symbols": source_symbols,
+        "exported_formula_symbols": exported_symbols,
+        "missing_exported_formula_symbols": missing_symbols,
+        "extra_exported_formula_symbols": extra_symbols,
+        "source_formula_symbol_count": len(source_symbols),
+        "exported_formula_symbol_count": len(exported_symbols),
+        "target_symbol_alignment_complete": complete,
+        "target_symbol_alignment_fingerprint": fingerprint,
+    }
+
+
+_FORMULA_SYMBOL_STOPWORDS = {
+    "O",
+    "P",
+    "F",
+    "DEF",
+    "APP",
+    "EXEMPT",
+    "LIFE",
+    "forall",
+    "exists",
+    "and",
+    "or",
+    "not",
+    "always",
+    "Happens",
+    "HoldsAt",
+    "legal_norm",
+    "actor",
+    "action",
+    "formula",
+    "source",
+    "unknown",
+    "ForallX",
+    "t",
+    "x",
+}
+
+
+def _formula_symbols(formula: str) -> List[str]:
+    text = _to_ascii_logic(str(formula or ""))
+    symbols: List[str] = []
+    for token in re.findall(r"[A-Za-z][A-Za-z0-9_]*", text):
+        if token in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if token.lower() in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if token.startswith("deontic_"):
+            continue
+        normalized = _canonical_formula_symbol(token)
+        if normalized in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if normalized.lower() in _FORMULA_SYMBOL_STOPWORDS:
+            continue
+        if normalized and normalized not in symbols:
+            symbols.append(normalized)
+    return symbols
+
+
+def _canonical_formula_symbol(symbol: str) -> str:
+    value = str(symbol or "").strip("_")
+    if not value:
+        return ""
+    for prefix in ("And", "Or", "Not"):
+        if value.startswith(prefix) and len(value) > len(prefix):
+            remainder = value[len(prefix) :]
+            if remainder[:1].isupper():
+                value = remainder
+                break
+    if "_" not in value:
+        return value
+    parts = [
+        part
+        for part in value.split("_")
+        if part and part.lower() not in _FORMULA_SYMBOL_STOPWORDS
+    ]
+    if not parts:
+        return ""
+    return "".join(part[:1].upper() + part[1:] for part in parts)
 
 
 def _ir_semantic_fingerprint(

@@ -5,10 +5,11 @@ The daemon is intentionally conservative:
 - it uses :mod:`ipfs_datasets_py.optimizers.common` session tooling;
 - it calls ``ipfs_datasets_py.llm_router.generate_text`` with ``gpt-5.5`` by
   default for legacy JSON/file proposals;
-- in supervised mode it can ask Codex to edit an isolated Git worktree directly
-  and then harvest Git's canonical diff plus complete file replacements;
-- it accepts patches only as unified diffs and applies them with ``git apply``;
-- it runs a configured validation command list after each applied patch;
+- by default it asks Codex to edit an isolated Git worktree directly and then
+  harvests Git's canonical audit diff plus complete file replacements;
+- it keeps legacy llm_router JSON/diff proposal mode available as an explicit
+  fallback for debugging old proposal paths;
+- it runs a configured validation command list after each candidate change;
 - it never executes arbitrary shell commands returned by the model.
 
 This is development tooling for the repository. It does not add a runtime
@@ -306,7 +307,9 @@ class LogicPortArtifact:
             "target_task": self.target_task,
             "impact": self.impact,
             "tasks": self.tasks,
-            "has_patch": bool(self.patch.strip()),
+            "has_patch": bool(self.patch.strip() and self.proposal_transport != "worktree"),
+            "has_audit_diff": bool(self.patch.strip()),
+            "uses_worktree_transport": self.proposal_transport == "worktree",
             "files": [item.get("path", "") for item in self.files],
             "applied": self.applied,
             "dry_run": self.dry_run,
@@ -1952,11 +1955,13 @@ Critical correction for attempt {attempt}:
             results.append(
                 {
                     "artifact": {
-                        "summary": "Daemon failed before producing a valid patch.",
+                        "summary": "Daemon failed before producing valid candidate changes.",
                         "target_task": self._current_plan_task().label if self._current_plan_task() else "",
                         "impact": "",
                         "tasks": [],
                         "has_patch": False,
+                        "has_audit_diff": False,
+                        "uses_worktree_transport": self.daemon_config.proposal_transport_mode() == "worktree",
                         "files": [],
                         "applied": False,
                         "dry_run": self.daemon_config.dry_run,
@@ -2116,6 +2121,8 @@ Critical correction for attempt {attempt}:
                 "impact": "The daemon stopped before calling the LLM because every parsed port-plan task is complete or blocked.",
                 "tasks": [],
                 "has_patch": False,
+                "has_audit_diff": False,
+                "uses_worktree_transport": self.daemon_config.proposal_transport_mode() == "worktree",
                 "files": [],
                 "applied": False,
                 "dry_run": self.daemon_config.dry_run,
@@ -2650,15 +2657,15 @@ Critical correction for attempt {attempt}:
         }
 
         manifest_path = root / f"{stem}.json"
-        patch_path = root / f"{stem}.patch"
+        diff_path = root / f"{stem}.diff"
         stat_path = root / f"{stem}.stat.txt"
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-        patch_path.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
+        diff_path.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
         stat_path.write_text(diff_stat.stdout if diff_stat.ok else "", encoding="utf-8")
 
         return [
             str(manifest_path.relative_to(self.daemon_config.repo_root)),
-            str(patch_path.relative_to(self.daemon_config.repo_root)),
+            str(diff_path.relative_to(self.daemon_config.repo_root)),
             str(stat_path.relative_to(self.daemon_config.repo_root)),
         ]
 

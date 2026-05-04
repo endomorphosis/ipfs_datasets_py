@@ -279,7 +279,9 @@ def test_worktree_transport_generates_file_edits_from_isolated_worktree(tmp_path
     assert result["valid"] is True
     assert result["artifact"]["proposal_transport"] == "worktree"
     assert result["artifact"]["files"] == [target_path]
-    assert result["artifact"]["has_patch"] is True
+    assert result["artifact"]["has_patch"] is False
+    assert result["artifact"]["has_audit_diff"] is True
+    assert result["artifact"]["uses_worktree_transport"] is True
     codex_call = next(call for call in calls if call["command"][0] == "codex-test")
     assert codex_call["timeout"] == 77
     assert "Edit files directly in this isolated worktree" in codex_call["stdin"]
@@ -1474,7 +1476,8 @@ def test_accepted_work_log_records_valid_changed_files(tmp_path):
     assert "Evidence:" in accepted
     artifact_files = list((tmp_path / "artifacts").glob("*"))
     assert any(path.suffix == ".json" for path in artifact_files)
-    assert any(path.suffix == ".patch" for path in artifact_files)
+    assert any(path.suffix == ".diff" for path in artifact_files)
+    assert not any(path.suffix == ".patch" for path in artifact_files)
     assert any(path.name.endswith(".stat.txt") for path in artifact_files)
 
 

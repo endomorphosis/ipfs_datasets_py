@@ -44,7 +44,7 @@ With `--apply`, each patch must pass `git apply --check` before it is applied. A
 
 Use `--validation-command` to override those checks, or `--skip-validation` for a fast local experiment.
 
-For the current supervised default, `--proposal-transport worktree` asks Codex to edit an ephemeral worktree instead of returning a patch. The daemon still records a patch artifact for audit, but applies complete file replacements harvested from that worktree whenever possible. `--worktree-repair-attempts 1` keeps a failed-validation candidate in the worktree workflow: after tests fail, the daemon creates a repair worktree with the failed files already applied and asks Codex to repair that concrete state before the next main-worktree validation. Use `--proposal-transport llm_router` only for legacy JSON proposal debugging, or `--proposal-transport hybrid` to try worktree first and fall back to the router JSON path if the direct-edit proposal produces no usable changes.
+For the current CLI and supervised default, `--proposal-transport worktree` asks Codex to edit an ephemeral worktree instead of returning a patch. The daemon records Git's harvested diff as an audit artifact, but applies complete file replacements harvested from that worktree whenever possible. `--worktree-repair-attempts 1` keeps a failed-validation candidate in the worktree workflow: after tests fail, the daemon creates a repair worktree with the failed files already applied and asks Codex to repair that concrete state before the next main-worktree validation. Use `--proposal-transport llm_router` only for legacy JSON proposal debugging, or `--proposal-transport hybrid` to try worktree first and fall back to the router JSON path if the direct-edit proposal produces no usable changes.
 
 ## Supervised Continuous Mode
 
@@ -214,7 +214,7 @@ Validated accepted work is also appended to `docs/IPFS_DATASETS_LOGIC_PORT_DAEMO
 For every accepted round, the daemon also writes review artifacts under `ipfs_datasets_py/.daemon/accepted-work/`:
 
 - a JSON manifest with task, impact, changed files, validation status, and diff-stat summary;
-- a `.patch` snapshot from `git diff -- <changed files>`;
+- a `.diff` audit snapshot from `git diff -- <changed files>`;
 - a `.stat.txt` summary from `git diff --stat -- <changed files>`.
 
 These files make accepted daemon output auditable without hunting through process logs.

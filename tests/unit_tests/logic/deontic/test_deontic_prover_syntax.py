@@ -243,6 +243,84 @@ def test_prover_syntax_records_align_decoder_ir_and_formula_slots():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_prover_syntax_records_audit_target_formula_symbols():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            ["Tenant", "PeriodMonthly", "PayRentMonthly"],
+        ),
+        (
+            "No person may discharge pollutants into the sewer.",
+            ["Person", "DischargePollutantsIntoSewer"],
+        ),
+        (
+            "This section applies to food carts.",
+            ["AppliesTo", "ThisSection", "FoodCarts"],
+        ),
+        (
+            "The Director shall issue a permit within 10 days after application.",
+            ["Director", "Deadline10DaysAfterApplication", "IssuePermit"],
+        ),
+    ]
+
+    for text, expected_symbols in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert all(record["source_formula_symbols"] == expected_symbols for record in records)
+        assert all(
+            record["target_symbol_alignment"]["source_formula_symbols"]
+            == expected_symbols
+            for record in records
+        )
+        assert all(
+            record["target_symbol_alignment"]["target_symbol_alignment_complete"] is True
+            for record in records
+        )
+        assert all(
+            record["target_symbol_alignment"]["missing_exported_formula_symbols"] == []
+            for record in records
+        )
+        assert all(
+            record["target_components"]["target_symbol_alignment_complete"] is True
+            for record in records
+        )
+        assert all(
+            record["target_components"]["missing_exported_formula_symbols"] == []
+            for record in records
+        )
+        assert len({record["target_symbol_alignment_fingerprint"] for record in records}) == 5
+
+
+def test_prover_syntax_symbol_audit_keeps_blocked_reference_formula_grounded():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert all(
+        record["source_formula_symbols"] == ["Secretary", "PublishNotice"]
+        for record in records
+    )
+    assert all(
+        record["target_symbol_alignment"]["missing_exported_formula_symbols"] == []
+        for record in records
+    )
+    assert all(
+        "Section552" not in record["exported_formula_symbols"]
+        for record in records
+    )
+    assert all(record["proof_ready"] is False for record in records)
+    assert all(record["requires_validation"] is True for record in records)
+
+
 def test_prover_syntax_records_expose_mental_state_components():
     norm = LegalNormIR.from_parser_element(
         extract_normative_elements(
