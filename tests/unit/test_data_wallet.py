@@ -146,6 +146,344 @@ def test_analyze_grant_does_not_allow_plaintext_decrypt(tmp_path):
         )
 
 
+def test_redacted_document_analysis_masks_sensitive_fields(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "intake.txt"
+    source.write_text(
+        "Jane can be reached at jane@example.org or 503-555-1212. "
+        "SSN 123-45-6789. Lives at 123 Main St. Needs rent and SNAP help.",
+        encoding="utf-8",
+    )
+    record = service.add_document(wallet.wallet_id, source)
+
+    result = service.analyze_document_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=OWNER,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_document_analysis"
+    assert output["output_policy"] == "redacted_derived_only"
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert "123-45-6789" not in serialized
+    assert "123 Main St" not in serialized
+    assert output["redaction_counts"]["email"] == 1
+    assert output["redaction_counts"]["phone"] == 1
+    assert output["redaction_counts"]["ssn"] == 1
+    assert output["redaction_counts"]["address"] == 1
+    assert set(output["derived_facts"]["need_categories"]) >= {"housing", "food"}
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/analyze_redacted" in actions
+
+
+def test_document_vector_profile_is_redacted_and_hashed(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "case-plan.txt"
+    source.write_text(
+        "Jane can be reached at jane@example.org or 503-555-1212. "
+        "She needs rent assistance, SNAP support, and a clinic appointment.",
+        encoding="utf-8",
+    )
+    record = service.add_document(wallet.wallet_id, source)
+
+    result = service.create_document_vector_profile(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=OWNER,
+        chunk_size_words=10,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_document_vector_profile"
+    assert output["output_policy"] == "encrypted_vector_profile"
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert "Jane" not in serialized
+    assert output["profile"]["profile_type"] == "redacted_lexical_hash_vector"
+    assert output["profile"]["chunk_count"] >= 1
+    assert all(len(chunk_hash) == 64 for chunk_hash in output["profile"]["chunk_hashes"])
+    assert output["profile"]["feature_vector"]["housing"] >= 1
+    assert output["profile"]["feature_vector"]["food"] >= 1
+    assert output["profile"]["feature_vector"]["health"] >= 1
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/vector_profile" in actions
+
+
+def test_cross_record_redacted_analysis_respects_grant_scope(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    housing = tmp_path / "housing.txt"
+    housing.write_text(
+        "Jane at jane@example.org needs rent support after a utility shutoff notice.",
+        encoding="utf-8",
+    )
+    food_health = tmp_path / "food-health.txt"
+    food_health.write_text(
+        "Call 503-555-1212 about SNAP enrollment and medical clinic transportation.",
+        encoding="utf-8",
+    )
+    excluded = tmp_path / "excluded.txt"
+    excluded.write_text("SSN 123-45-6789 and a private income appeal.", encoding="utf-8")
+    housing_record = service.add_document(wallet.wallet_id, housing)
+    food_health_record = service.add_document(wallet.wallet_id, food_health)
+    excluded_record = service.add_document(wallet.wallet_id, excluded)
+    allowed_ids = [housing_record.record_id, food_health_record.record_id]
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_record(wallet.wallet_id, record_id) for record_id in allowed_ids],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["redacted_derived_only"], "record_ids": allowed_ids},
+    )
+
+    result = service.analyze_documents_with_redaction(
+        wallet.wallet_id,
+        allowed_ids,
+        actor_did=ADVOCATE,
+        grant_id=grant.grant_id,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_cross_document_analysis"
+    assert result["artifact"].source_record_ids == allowed_ids
+    assert output["output_policy"] == "redacted_derived_only"
+    assert output["source_record_count"] == 2
+    assert "Jane" not in serialized
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert "123-45-6789" not in serialized
+    assert set(output["derived_facts"]["need_categories"]) >= {"housing", "food", "health"}
+    assert output["derived_facts"]["category_record_counts"]["housing"] == 1
+    assert output["derived_facts"]["category_record_counts"]["food"] == 1
+    assert output["derived_facts"]["category_record_counts"]["health"] == 1
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/analyze_redacted_batch" in actions
+
+    with pytest.raises(AccessDeniedError):
+        service.analyze_documents_with_redaction(
+            wallet.wallet_id,
+            [*allowed_ids, excluded_record.record_id],
+            actor_did=ADVOCATE,
+            grant_id=grant.grant_id,
+        )
+
+
+def test_document_text_extraction_uses_wallet_boundary_and_redacts(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "extract.txt"
+    source.write_text(
+        "Jane can be reached at jane@example.org or 503-555-1212. "
+        "She needs rent assistance and SNAP enrollment.",
+        encoding="utf-8",
+    )
+    record = service.add_document(wallet.wallet_id, source)
+
+    result = service.extract_document_text_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=OWNER,
+        max_chars=500,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_document_text_extraction"
+    assert output["output_policy"] == "redacted_extracted_text"
+    assert output["extraction"]["method"] == "text"
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert "[REDACTED_EMAIL]" in output["text"]
+    assert "[REDACTED_PHONE]" in output["text"]
+    assert set(output["derived_facts"]["need_categories"]) >= {"housing", "food"}
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/extract_text_redacted" in actions
+
+
+def test_document_form_analysis_returns_redacted_field_metadata(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "intake-form.txt"
+    source.write_text(
+        "Full name: Jane Example\n"
+        "Email: jane@example.org\n"
+        "Phone: 503-555-1212\n"
+        "Rent assistance required: yes\n"
+        "SNAP enrollment: yes\n",
+        encoding="utf-8",
+    )
+    record = service.add_document(wallet.wallet_id, source)
+
+    result = service.analyze_document_form_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=OWNER,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_document_form_analysis"
+    assert output["output_policy"] == "redacted_form_analysis"
+    assert output["form"]["method"] == "text"
+    assert output["form"]["field_count"] >= 5
+    assert output["form"]["data_type_counts"]["email"] == 1
+    assert output["form"]["data_type_counts"]["phone"] == 1
+    assert "Jane Example" not in serialized
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert set(output["derived_facts"]["need_categories"]) >= {"housing", "food"}
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/analyze_form_redacted" in actions
+
+
+def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "output-caveat.txt"
+    source.write_text("Housing plan with protected plaintext.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    summary_only = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze", "record/decrypt"],
+        caveats={"output_types": ["summary"]},
+    )
+    plaintext_only = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=CASE_MANAGER,
+        resources=[resource],
+        abilities=["record/analyze", "record/decrypt"],
+        caveats={"output_types": ["plaintext"]},
+    )
+    redacted_only = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did="did:key:redacted-reviewer",
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["redacted_derived_only"]},
+    )
+
+    assert service.analyze_record_summary(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=ADVOCATE,
+        grant_id=summary_only.grant_id,
+    ).artifact_type == "summary"
+    assert service.decrypt_record(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=CASE_MANAGER,
+        grant_id=plaintext_only.grant_id,
+    ) == source.read_bytes()
+    assert service.analyze_document_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did="did:key:redacted-reviewer",
+        grant_id=redacted_only.grant_id,
+    )["output"]["output_policy"] == "redacted_derived_only"
+
+    vector_profile_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did="did:key:vector-reviewer",
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["vector_profile"]},
+    )
+    assert service.create_document_vector_profile(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did="did:key:vector-reviewer",
+        grant_id=vector_profile_grant.grant_id,
+    )["output"]["output_policy"] == "encrypted_vector_profile"
+
+    extracted_text_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did="did:key:extractor",
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["redacted_extracted_text"]},
+    )
+    assert service.extract_document_text_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did="did:key:extractor",
+        grant_id=extracted_text_grant.grant_id,
+    )["output"]["output_policy"] == "redacted_extracted_text"
+
+    form_analysis_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did="did:key:form-reviewer",
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["redacted_form_analysis"]},
+    )
+    assert service.analyze_document_form_with_redaction(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did="did:key:form-reviewer",
+        grant_id=form_analysis_grant.grant_id,
+    )["output"]["output_policy"] == "redacted_form_analysis"
+
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.decrypt_record(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.analyze_record_summary(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=CASE_MANAGER,
+            grant_id=plaintext_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.analyze_document_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.create_document_vector_profile(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.extract_document_text_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.analyze_document_form_with_redaction(
+            wallet.wallet_id,
+            record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+
+
 def test_decrypt_grant_wraps_key_for_delegate(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -996,6 +1334,47 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
             wallet.wallet_id,
             actor_did=ADVOCATE,
             grant_id=grant.grant_id,
+            record_ids=[document.record_id],
+        )
+
+
+def test_export_bundle_output_type_caveat_must_allow_encrypted_bundle(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "export-output.txt"
+    source.write_text("Export output caveat content", encoding="utf-8")
+    document = service.add_document(wallet.wallet_id, source)
+    export_resource = resource_for_export(wallet.wallet_id)
+    good_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[export_resource],
+        abilities=["export/create"],
+        caveats={"record_ids": [document.record_id], "output_types": ["encrypted_export_bundle"]},
+    )
+    wrong_output_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=CASE_MANAGER,
+        resources=[export_resource],
+        abilities=["export/create"],
+        caveats={"record_ids": [document.record_id], "output_types": ["summary"]},
+    )
+
+    bundle = service.create_export_bundle(
+        wallet.wallet_id,
+        actor_did=ADVOCATE,
+        grant_id=good_grant.grant_id,
+        record_ids=[document.record_id],
+    )
+
+    assert bundle["bundle_type"] == "wallet_export_v1"
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.create_export_bundle(
+            wallet.wallet_id,
+            actor_did=CASE_MANAGER,
+            grant_id=wrong_output_grant.grant_id,
             record_ids=[document.record_id],
         )
 

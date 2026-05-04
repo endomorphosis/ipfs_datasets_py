@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -70,6 +72,7 @@ from .ucan import (
     assert_invocation_allows,
     create_invocation,
     is_expired,
+    record_id_from_resource,
     resource_for_export,
     resource_for_location,
     resource_for_record,
@@ -81,6 +84,22 @@ class DataWalletService:
     """In-process service for encrypted wallet records and delegated access."""
 
     RECOVERY_APPROVAL_OPERATIONS = {"wallet/controller_recover"}
+    REDACTION_PATTERNS = {
+        "email": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
+        "phone": re.compile(r"\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b"),
+        "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
+        "address": re.compile(
+            r"\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,5}\s+"
+            r"(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Ln|Lane|Way|Ct|Court)\b",
+            re.IGNORECASE,
+        ),
+    }
+    DERIVED_FACT_KEYWORDS = {
+        "housing": ("rent", "eviction", "shelter", "housing", "homeless", "utility", "shutoff"),
+        "food": ("snap", "food", "pantry", "meal", "groceries"),
+        "health": ("medical", "doctor", "clinic", "medicaid", "medicare", "prescription"),
+        "income": ("benefit", "unemployment", "income", "job", "wage", "ssi", "disability"),
+    }
 
     def __init__(
         self,
@@ -982,6 +1001,10 @@ class DataWalletService:
             self.set_principal_secret(actor_did, actor_secret)
         grant = self.grants[grant_id]
         self._assert_grant_chain_active(wallet_id, grant)
+        record_id = record_id_from_resource(resource)
+        data_type = None
+        if record_id in self.records and self.records[record_id].wallet_id == wallet_id:
+            data_type = self.records[record_id].data_type
         invocation = create_invocation(
             grant=grant,
             audience_did=actor_did,
@@ -990,6 +1013,8 @@ class DataWalletService:
             signing_secret=self._ensure_principal_secret(actor_did),
             caveats=caveats,
             expires_at=expires_at,
+            record_id=record_id,
+            data_type=data_type,
         )
         self.invocations[invocation.invocation_id] = invocation
         append_audit_event(
@@ -1019,6 +1044,10 @@ class DataWalletService:
             self.set_principal_secret(actor_did, actor_secret)
         grant = self.grants[invocation.grant_id]
         self._assert_grant_chain_active(wallet_id, grant)
+        record_id = record_id_from_resource(resource)
+        data_type = None
+        if record_id in self.records and self.records[record_id].wallet_id == wallet_id:
+            data_type = self.records[record_id].data_type
         assert_invocation_allows(
             invocation,
             grant,
@@ -1026,6 +1055,8 @@ class DataWalletService:
             resource=resource,
             ability=ability,
             signing_secret=self._ensure_principal_secret(actor_did),
+            record_id=record_id,
+            data_type=data_type,
         )
         self.invocations[invocation.invocation_id] = invocation
         append_audit_event(
@@ -1167,11 +1198,13 @@ class DataWalletService:
         actor_did: str,
         grant_id: Optional[str] = None,
         actor_secret: Optional[bytes] = None,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> bytes:
         record = self._record(wallet_id, record_id)
         if actor_secret is not None:
             self.set_principal_secret(actor_did, actor_secret)
         if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(invocation_caveats, output_types=["plaintext"])
             if grant_id is None:
                 raise AccessDeniedError("Non-owner decrypt requires a grant")
             grant = self.grants[grant_id]
@@ -1181,6 +1214,7 @@ class DataWalletService:
                 audience_did=actor_did,
                 resource=resource_for_record(wallet_id, record_id),
                 ability="record/decrypt",
+                invocation_caveats=operation_caveats,
             )
         version = self.versions[record.current_version_id]
         dek = self._unwrap_dek(version, wallet_id, actor_did)
@@ -1225,6 +1259,7 @@ class DataWalletService:
             actor_did=actor_did,
             grant_id=invocation.grant_id,
             actor_secret=actor_secret,
+            invocation_caveats=invocation.caveats,
         )
 
     def rotate_record_key(
@@ -1344,6 +1379,7 @@ class DataWalletService:
         actor_did: str,
         grant_id: Optional[str] = None,
         precision: int = 2,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> LocationClaim:
         record = self._record(wallet_id, record_id)
         if record.data_type != "location":
@@ -1357,6 +1393,7 @@ class DataWalletService:
                 audience_did=actor_did,
                 resource=resource_for_location(wallet_id, record_id),
                 ability="location/read_coarse",
+                invocation_caveats=invocation_caveats,
             )
         raw = self.decrypt_record(wallet_id, record_id, actor_did=self._wallet(wallet_id).owner_did)
         payload = json.loads(raw.decode("utf-8"))
@@ -1396,6 +1433,7 @@ class DataWalletService:
             actor_did=actor_did,
             grant_id=invocation.grant_id,
             precision=precision,
+            invocation_caveats=invocation.caveats,
         )
 
     def create_location_region_proof(
@@ -1468,10 +1506,12 @@ class DataWalletService:
         grant_id: Optional[str] = None,
         actor_secret: Optional[bytes] = None,
         max_chars: int = 200,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> DerivedArtifact:
         if actor_secret is not None:
             self.set_principal_secret(actor_did, actor_secret)
         if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(invocation_caveats, output_types=["summary"])
             if grant_id is None:
                 raise AccessDeniedError("Analysis requires a grant")
             self._assert_grant_allows(
@@ -1480,6 +1520,7 @@ class DataWalletService:
                 audience_did=actor_did,
                 resource=resource_for_record(wallet_id, record_id),
                 ability="record/analyze",
+                invocation_caveats=operation_caveats,
             )
         record = self._record(wallet_id, record_id)
         if actor_did == self._wallet(wallet_id).owner_did:
@@ -1520,6 +1561,901 @@ class DataWalletService:
         )
         return artifact
 
+    def analyze_document_with_redaction(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        max_chars: int = 500,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create an encrypted redacted-analysis artifact and return safe output."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["redacted_derived_only"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("Analysis requires a grant")
+            self._assert_grant_allows(
+                self.grants[grant_id],
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="record/analyze",
+                invocation_caveats=operation_caveats,
+            )
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "document":
+            raise ValueError("Redacted document analysis requires a document record")
+        if actor_did == self._wallet(wallet_id).owner_did:
+            plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+        else:
+            version = self.versions[record.current_version_id]
+            dek = self._unwrap_dek(version, wallet_id, actor_did)
+            payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+            plaintext = decrypt_bytes(
+                EncryptedBlob.from_dict(payload_data),
+                dek,
+                self._payload_aad(wallet_id, record_id, version.version_id, record.data_type),
+            )
+        text = plaintext.decode("utf-8", errors="replace")
+        redacted_text, redaction_counts = self._redact_text(text)
+        safe_text = redacted_text[:max_chars]
+        derived_facts = self._derive_document_facts(redacted_text)
+        output = {
+            "summary": safe_text,
+            "truncated": len(redacted_text) > max_chars,
+            "redaction_counts": redaction_counts,
+            "derived_facts": derived_facts,
+            "source_record_count": 1,
+            "raw_text_chars": len(text),
+            "output_policy": "redacted_derived_only",
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_id": record_id, "kind": "redacted_derived"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=[record_id],
+            artifact_type="redacted_document_analysis",
+            output_policy="redacted_derived_only",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/analyze_redacted",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "redaction_counts": redaction_counts,
+                "derived_fact_keys": sorted(derived_facts),
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
+    def _redact_text(self, text: str) -> tuple[str, Dict[str, int]]:
+        redacted = text
+        counts: Dict[str, int] = {}
+        for label, pattern in self.REDACTION_PATTERNS.items():
+            redacted, count = pattern.subn(f"[REDACTED_{label.upper()}]", redacted)
+            counts[label] = count
+        return redacted, counts
+
+    def _derive_document_facts(self, redacted_text: str) -> Dict[str, Any]:
+        lower = redacted_text.lower()
+        categories = [
+            category
+            for category, keywords in self.DERIVED_FACT_KEYWORDS.items()
+            if any(keyword in lower for keyword in keywords)
+        ]
+        return {
+            "need_categories": categories,
+            "contains_contact_redactions": any(
+                token in redacted_text
+                for token in ("[REDACTED_EMAIL]", "[REDACTED_PHONE]", "[REDACTED_ADDRESS]")
+            ),
+        }
+
+    def create_document_vector_profile(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        chunk_size_words: int = 80,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create an encrypted vector-profile artifact without returning raw text."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["vector_profile"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("Vector profile creation requires a grant")
+            self._assert_grant_allows(
+                self.grants[grant_id],
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="record/analyze",
+                invocation_caveats=operation_caveats,
+            )
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "document":
+            raise ValueError("Document vector profile requires a document record")
+        if chunk_size_words < 1:
+            raise ValueError("chunk_size_words must be at least 1")
+        if actor_did == self._wallet(wallet_id).owner_did:
+            plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+        else:
+            version = self.versions[record.current_version_id]
+            dek = self._unwrap_dek(version, wallet_id, actor_did)
+            payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+            plaintext = decrypt_bytes(
+                EncryptedBlob.from_dict(payload_data),
+                dek,
+                self._payload_aad(wallet_id, record_id, version.version_id, record.data_type),
+            )
+
+        text = plaintext.decode("utf-8", errors="replace")
+        redacted_text, redaction_counts = self._redact_text(text)
+        profile = self._derive_vector_profile(redacted_text, chunk_size_words=chunk_size_words)
+        output = {
+            "output_policy": "encrypted_vector_profile",
+            "redaction_counts": redaction_counts,
+            "derived_facts": self._derive_document_facts(redacted_text),
+            "profile": profile,
+            "source_record_count": 1,
+            "raw_text_chars": len(text),
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_id": record_id, "kind": "vector_profile"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=[record_id],
+            artifact_type="redacted_document_vector_profile",
+            output_policy="encrypted_vector_profile",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/vector_profile",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "chunk_count": profile["chunk_count"],
+                "feature_keys": sorted(profile["feature_vector"]),
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
+    def analyze_documents_with_redaction(
+        self,
+        wallet_id: str,
+        record_ids: List[str],
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create an encrypted cross-record derived analysis without returning document text."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        ordered_record_ids = list(dict.fromkeys(record_ids))
+        if not ordered_record_ids:
+            raise ValueError("At least one record_id is required")
+
+        wallet = self._wallet(wallet_id)
+        if actor_did != wallet.owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["redacted_derived_only"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("Cross-record analysis requires a grant")
+            grant = self.grants[grant_id]
+            for record_id in ordered_record_ids:
+                self._assert_grant_allows(
+                    grant,
+                    wallet_id=wallet_id,
+                    audience_did=actor_did,
+                    resource=resource_for_record(wallet_id, record_id),
+                    ability="record/analyze",
+                    invocation_caveats=operation_caveats,
+                )
+
+        per_record: List[Dict[str, Any]] = []
+        combined_counts = {label: 0 for label in self.REDACTION_PATTERNS}
+        category_record_counts = {category: 0 for category in self.DERIVED_FACT_KEYWORDS}
+        all_categories: set[str] = set()
+        total_chars = 0
+
+        for record_id in ordered_record_ids:
+            record = self._record(wallet_id, record_id)
+            if record.data_type != "document":
+                raise ValueError("Cross-record redacted analysis requires document records")
+            if actor_did == wallet.owner_did:
+                plaintext = self.decrypt_record(wallet_id, record_id, actor_did=actor_did, actor_secret=actor_secret)
+            else:
+                version = self.versions[record.current_version_id]
+                dek = self._unwrap_dek(version, wallet_id, actor_did)
+                payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+                plaintext = decrypt_bytes(
+                    EncryptedBlob.from_dict(payload_data),
+                    dek,
+                    self._payload_aad(wallet_id, record_id, version.version_id, record.data_type),
+                )
+            text = plaintext.decode("utf-8", errors="replace")
+            redacted_text, redaction_counts = self._redact_text(text)
+            facts = self._derive_document_facts(redacted_text)
+            categories = set(facts["need_categories"])
+            all_categories.update(categories)
+            total_chars += len(text)
+            for label, count in redaction_counts.items():
+                combined_counts[label] = combined_counts.get(label, 0) + count
+            for category in categories:
+                category_record_counts[category] = category_record_counts.get(category, 0) + 1
+            per_record.append(
+                {
+                    "record_id": record_id,
+                    "derived_facts": facts,
+                    "redaction_counts": redaction_counts,
+                    "raw_text_chars": len(text),
+                }
+            )
+
+        derived_facts = {
+            "need_categories": sorted(all_categories),
+            "category_record_counts": {
+                category: count
+                for category, count in sorted(category_record_counts.items())
+                if count > 0
+            },
+            "contains_contact_redactions": any(count > 0 for count in combined_counts.values()),
+        }
+        category_text = ", ".join(derived_facts["need_categories"]) if derived_facts["need_categories"] else "none"
+        output = {
+            "summary": f"Detected need categories across authorized records: {category_text}.",
+            "redaction_counts": combined_counts,
+            "derived_facts": derived_facts,
+            "per_record": per_record,
+            "source_record_count": len(ordered_record_ids),
+            "source_record_ids": ordered_record_ids,
+            "raw_text_chars": total_chars,
+            "output_policy": "redacted_derived_only",
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_ids": ordered_record_ids, "kind": "redacted_cross_record"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=ordered_record_ids,
+            artifact_type="redacted_cross_document_analysis",
+            output_policy="redacted_derived_only",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        for record_id in ordered_record_ids:
+            self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
+                artifact.artifact_id
+            )
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/analyze_redacted_batch",
+            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "source_record_count": len(ordered_record_ids),
+                "redaction_counts": combined_counts,
+                "derived_fact_keys": sorted(derived_facts),
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
+    def extract_document_text_with_redaction(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        max_chars: int = 20_000,
+        max_bytes: int = 200_000,
+        use_ocr: bool = True,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Extract document text inside the wallet boundary and return only redacted output."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        if max_chars < 1:
+            raise ValueError("max_chars must be at least 1")
+        if max_bytes < 1:
+            raise ValueError("max_bytes must be at least 1")
+        if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["redacted_extracted_text"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("Text extraction requires a grant")
+            self._assert_grant_allows(
+                self.grants[grant_id],
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="record/analyze",
+                invocation_caveats=operation_caveats,
+            )
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "document":
+            raise ValueError("Text extraction requires a document record")
+        plaintext, metadata = self._decrypt_record_bytes_and_metadata(
+            wallet_id,
+            record,
+            actor_did=actor_did,
+            actor_secret=actor_secret,
+        )
+        extraction = self._extract_document_text_from_bytes(
+            plaintext,
+            metadata=metadata,
+            record_id=record_id,
+            max_chars=max_chars,
+            max_bytes=max_bytes,
+            use_ocr=use_ocr,
+        )
+        extracted_text = str(extraction.get("text") or "")
+        redacted_text, redaction_counts = self._redact_text(extracted_text)
+        output = {
+            "text": redacted_text,
+            "truncated": len(extracted_text) > max_chars,
+            "redaction_counts": redaction_counts,
+            "derived_facts": self._derive_document_facts(redacted_text),
+            "source_record_count": 1,
+            "source_record_id": record_id,
+            "raw_text_chars": len(extracted_text),
+            "original_size_bytes": len(plaintext),
+            "extraction": {
+                "method": extraction.get("method"),
+                "suffix": extraction.get("suffix"),
+                "ocr_used": bool(extraction.get("ocr_used")),
+                "ocr_engine": extraction.get("ocr_engine"),
+                "confidence": extraction.get("confidence"),
+                "error": extraction.get("error"),
+            },
+            "output_policy": "redacted_extracted_text",
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_id": record_id, "kind": "redacted_text_extraction"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=[record_id],
+            artifact_type="redacted_document_text_extraction",
+            output_policy="redacted_extracted_text",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/extract_text_redacted",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "method": extraction.get("method"),
+                "ocr_used": bool(extraction.get("ocr_used")),
+                "redaction_counts": redaction_counts,
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
+    def analyze_document_form_with_redaction(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        max_fields: int = 100,
+        use_ocr: bool = False,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Analyze form structure inside the wallet boundary and return redacted field metadata."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        if max_fields < 1:
+            raise ValueError("max_fields must be at least 1")
+        if actor_did != self._wallet(wallet_id).owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["redacted_form_analysis"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("Form analysis requires a grant")
+            self._assert_grant_allows(
+                self.grants[grant_id],
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="record/analyze",
+                invocation_caveats=operation_caveats,
+            )
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "document":
+            raise ValueError("Form analysis requires a document record")
+        plaintext, metadata = self._decrypt_record_bytes_and_metadata(
+            wallet_id,
+            record,
+            actor_did=actor_did,
+            actor_secret=actor_secret,
+        )
+        analysis = self._analyze_form_from_document_bytes(
+            plaintext,
+            metadata=metadata,
+            record_id=record_id,
+            max_fields=max_fields,
+            use_ocr=use_ocr,
+        )
+        output = {
+            "output_policy": "redacted_form_analysis",
+            "source_record_count": 1,
+            "source_record_id": record_id,
+            "original_size_bytes": len(plaintext),
+            **analysis,
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_id": record_id, "kind": "redacted_form_analysis"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=[record_id],
+            artifact_type="redacted_document_form_analysis",
+            output_policy="redacted_form_analysis",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        self.versions[record.current_version_id].derived_artifact_ids.append(artifact.artifact_id)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/analyze_form_redacted",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "method": analysis["form"]["method"],
+                "field_count": analysis["form"]["field_count"],
+                "redaction_counts": analysis["redaction_counts"],
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
+    def _derive_vector_profile(self, redacted_text: str, *, chunk_size_words: int) -> Dict[str, Any]:
+        words = re.findall(r"[A-Za-z][A-Za-z'-]*|\[REDACTED_[A-Z_]+\]", redacted_text)
+        chunks = [
+            " ".join(words[index : index + chunk_size_words])
+            for index in range(0, len(words), chunk_size_words)
+        ]
+        lower = redacted_text.lower()
+        feature_vector = {
+            category: sum(lower.count(keyword) for keyword in keywords)
+            for category, keywords in self.DERIVED_FACT_KEYWORDS.items()
+        }
+        redaction_features = {
+            token.lower().strip("[]"): redacted_text.count(token)
+            for token in ("[REDACTED_EMAIL]", "[REDACTED_PHONE]", "[REDACTED_SSN]", "[REDACTED_ADDRESS]")
+        }
+        feature_vector.update(redaction_features)
+        return {
+            "profile_type": "redacted_lexical_hash_vector",
+            "chunk_size_words": chunk_size_words,
+            "chunk_count": len(chunks),
+            "chunk_hashes": [
+                sha256_hex(canonical_bytes(self._chunk_feature_signature(chunk)))
+                for chunk in chunks
+            ],
+            "feature_vector": feature_vector,
+            "word_count": len(words),
+        }
+
+    def _chunk_feature_signature(self, chunk_text: str) -> Dict[str, Any]:
+        lower = chunk_text.lower()
+        signature = {
+            category: sum(lower.count(keyword) for keyword in keywords)
+            for category, keywords in self.DERIVED_FACT_KEYWORDS.items()
+        }
+        signature.update(
+            {
+                token.lower().strip("[]"): chunk_text.count(token)
+                for token in ("[REDACTED_EMAIL]", "[REDACTED_PHONE]", "[REDACTED_SSN]", "[REDACTED_ADDRESS]")
+            }
+        )
+        return signature
+
+    def _decrypt_record_bytes_and_metadata(
+        self,
+        wallet_id: str,
+        record: DataRecord,
+        *,
+        actor_did: str,
+        actor_secret: Optional[bytes] = None,
+    ) -> tuple[bytes, Dict[str, Any]]:
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        version = self.versions[record.current_version_id]
+        dek = self._unwrap_dek(version, wallet_id, actor_did)
+        payload_aad = self._payload_aad(wallet_id, record.record_id, version.version_id, record.data_type)
+        payload_data = json.loads(self.storage.get(version.encrypted_payload_ref).decode("utf-8"))
+        plaintext = decrypt_bytes(EncryptedBlob.from_dict(payload_data), dek, payload_aad)
+        metadata: Dict[str, Any] = {}
+        if version.encrypted_metadata_ref is not None:
+            metadata_data = json.loads(self.storage.get(version.encrypted_metadata_ref).decode("utf-8"))
+            metadata_plaintext = decrypt_bytes(
+                EncryptedBlob.from_dict(metadata_data),
+                dek,
+                payload_aad | {"kind": "metadata"},
+            )
+            metadata = json.loads(metadata_plaintext.decode("utf-8"))
+        return plaintext, metadata
+
+    def _extract_document_text_from_bytes(
+        self,
+        plaintext: bytes,
+        *,
+        metadata: Dict[str, Any],
+        record_id: str,
+        max_chars: int,
+        max_bytes: int,
+        use_ocr: bool,
+    ) -> Dict[str, Any]:
+        suffix = self._document_suffix_from_metadata(metadata)
+        result: Dict[str, Any] = {}
+        with tempfile.TemporaryDirectory(prefix="wallet-document-") as temp_dir:
+            temp_path = Path(temp_dir) / f"{record_id}{suffix}"
+            temp_path.write_bytes(plaintext)
+            try:
+                from ipfs_datasets_py.processors.multimedia.attachment_text_extractor import (
+                    extract_attachment_text,
+                )
+
+                result = extract_attachment_text(
+                    temp_path,
+                    max_chars=max_chars,
+                    max_bytes=max_bytes,
+                    use_ocr=use_ocr,
+                )
+            except Exception as exc:  # pragma: no cover - defensive optional dependency path
+                result = {
+                    "text": "",
+                    "method": "extractor-error",
+                    "suffix": suffix,
+                    "ocr_used": False,
+                    "ocr_engine": None,
+                    "confidence": 0.0,
+                    "error": str(exc),
+                }
+        if result.get("text") or result.get("method") not in {"unsupported", "missing", "extractor-error"}:
+            return result
+
+        fallback_text = plaintext[:max_bytes].decode("utf-8", errors="replace")
+        return {
+            "text": fallback_text[:max_chars],
+            "method": "utf8-fallback",
+            "suffix": suffix,
+            "ocr_used": False,
+            "ocr_engine": None,
+            "confidence": 0.0,
+            "error": result.get("error"),
+        }
+
+    def _analyze_form_from_document_bytes(
+        self,
+        plaintext: bytes,
+        *,
+        metadata: Dict[str, Any],
+        record_id: str,
+        max_fields: int,
+        use_ocr: bool,
+    ) -> Dict[str, Any]:
+        suffix = self._document_suffix_from_metadata(metadata)
+        if suffix == ".pdf":
+            with tempfile.TemporaryDirectory(prefix="wallet-form-") as temp_dir:
+                temp_path = Path(temp_dir) / f"{record_id}.pdf"
+                temp_path.write_bytes(plaintext)
+                try:
+                    return self._analyze_pdf_form_path(temp_path, max_fields=max_fields, use_ocr=use_ocr)
+                except Exception as exc:
+                    text_result = self._extract_document_text_from_bytes(
+                        plaintext,
+                        metadata=metadata,
+                        record_id=record_id,
+                        max_chars=20_000,
+                        max_bytes=200_000,
+                        use_ocr=use_ocr,
+                    )
+                    return self._analyze_text_form_fallback(
+                        str(text_result.get("text") or ""),
+                        method="text-fallback-after-pdf-error",
+                        suffix=suffix,
+                        max_fields=max_fields,
+                        error=str(exc),
+                    )
+
+        text_result = self._extract_document_text_from_bytes(
+            plaintext,
+            metadata=metadata,
+            record_id=record_id,
+            max_chars=20_000,
+            max_bytes=200_000,
+            use_ocr=use_ocr,
+        )
+        return self._analyze_text_form_fallback(
+            str(text_result.get("text") or ""),
+            method=str(text_result.get("method") or "text-fallback"),
+            suffix=suffix,
+            max_fields=max_fields,
+            error=text_result.get("error"),
+        )
+
+    def _analyze_pdf_form_path(self, pdf_path: Path, *, max_fields: int, use_ocr: bool) -> Dict[str, Any]:
+        from ipfs_datasets_py.processors.pdf_form_filler import analyze_pdf_form, classify_pdf
+
+        ocr_provider = None
+        if use_ocr:
+            try:
+                from ipfs_datasets_py.processors.pdf_form_filler import build_tesseract_ocr_provider
+
+                ocr_provider = build_tesseract_ocr_provider()
+            except Exception:
+                ocr_provider = None
+        document_type = classify_pdf(pdf_path, ocr_provider=ocr_provider)
+        result = analyze_pdf_form(pdf_path, ocr_provider=ocr_provider)
+        fields = [self._safe_form_field(field.to_dict()) for field in result.fields[:max_fields]]
+        edges = [
+            self._safe_form_edge(edge.to_dict())
+            for edge in result.dependency_graph.edges[: max_fields * 3]
+        ]
+        redacted_page_text, redaction_counts = self._redact_text("\n".join(result.page_text))
+        data_type_counts = self._field_data_type_counts(fields)
+        required_count = sum(1 for field in fields if field["required"])
+        return {
+            "form": {
+                "method": "pdf_form_analyzer",
+                "document_type": document_type,
+                "page_count": result.metadata.get("page_count", len(result.page_text)),
+                "field_count": len(result.fields),
+                "returned_field_count": len(fields),
+                "required_field_count": required_count,
+                "data_type_counts": data_type_counts,
+                "dependency_edge_count": len(result.dependency_graph.edges),
+                "ocr_requested": use_ocr,
+                "ocr_used": ocr_provider is not None,
+            },
+            "fields": fields,
+            "dependency_edges": edges,
+            "derived_facts": self._derive_document_facts(redacted_page_text),
+            "redaction_counts": redaction_counts,
+            "raw_text_chars": len("\n".join(result.page_text)),
+        }
+
+    def _analyze_text_form_fallback(
+        self,
+        text: str,
+        *,
+        method: str,
+        suffix: str,
+        max_fields: int,
+        error: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        redacted_text, redaction_counts = self._redact_text(text)
+        fields = self._infer_form_fields_from_text(redacted_text, max_fields=max_fields)
+        data_type_counts = self._field_data_type_counts(fields)
+        return {
+            "form": {
+                "method": method,
+                "document_type": "text_form_or_document",
+                "suffix": suffix,
+                "page_count": None,
+                "field_count": len(fields),
+                "returned_field_count": len(fields),
+                "required_field_count": sum(1 for field in fields if field["required"]),
+                "data_type_counts": data_type_counts,
+                "dependency_edge_count": 0,
+                "ocr_requested": False,
+                "ocr_used": False,
+                "error": error,
+            },
+            "fields": fields,
+            "dependency_edges": [],
+            "derived_facts": self._derive_document_facts(redacted_text),
+            "redaction_counts": redaction_counts,
+            "raw_text_chars": len(text),
+        }
+
+    def _infer_form_fields_from_text(self, redacted_text: str, *, max_fields: int) -> List[Dict[str, Any]]:
+        fields: List[Dict[str, Any]] = []
+        seen: set[str] = set()
+        for raw_line in redacted_text.splitlines():
+            line = " ".join(raw_line.strip().split())
+            if not line or len(line) > 160:
+                continue
+            match = re.match(r"^(.{2,80}?)(?:\s*[:：]\s*|\s+_{2,}\s*|\s+\[[ xX]?\]\s*)", line)
+            if not match:
+                continue
+            label = match.group(1).strip(" -*\t")
+            if not label:
+                continue
+            normalized = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_") or f"field_{len(fields) + 1}"
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            fields.append(
+                {
+                    "name": normalized[:80],
+                    "label": label,
+                    "page_index": None,
+                    "data_type": self._infer_form_data_type(label),
+                    "required": bool(re.search(r"\b(required|must|mandatory)\b|\*", line, re.IGNORECASE)),
+                    "max_chars": None,
+                    "multiline": False,
+                    "options": [],
+                    "source": "text-fallback",
+                    "confidence": 0.45,
+                    "dependencies": [],
+                }
+            )
+            if len(fields) >= max_fields:
+                break
+        return fields
+
+    @staticmethod
+    def _field_data_type_counts(fields: List[Dict[str, Any]]) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for field in fields:
+            data_type = str(field.get("data_type") or "string")
+            counts[data_type] = counts.get(data_type, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def _safe_form_field(self, field: Dict[str, Any]) -> Dict[str, Any]:
+        redacted_name, _ = self._redact_text(str(field.get("name") or ""))
+        redacted_label, _ = self._redact_text(str(field.get("label") or ""))
+        redacted_options = [self._redact_text(str(option))[0] for option in field.get("options") or []]
+        redacted_dependencies = [
+            self._redact_text(str(dependency))[0] for dependency in field.get("dependencies") or []
+        ]
+        return {
+            "name": redacted_name,
+            "label": redacted_label,
+            "page_index": field.get("page_index"),
+            "data_type": field.get("data_type") or "string",
+            "required": bool(field.get("required")),
+            "max_chars": field.get("max_chars"),
+            "multiline": bool(field.get("multiline")),
+            "options": redacted_options,
+            "source": field.get("source") or "unknown",
+            "confidence": field.get("confidence"),
+            "dependencies": redacted_dependencies,
+        }
+
+    def _safe_form_edge(self, edge: Dict[str, Any]) -> Dict[str, Any]:
+        source, _ = self._redact_text(str(edge.get("source") or ""))
+        target, _ = self._redact_text(str(edge.get("target") or ""))
+        return {
+            "source": source,
+            "target": target,
+            "relation": edge.get("relation") or "related",
+            "required": bool(edge.get("required", True)),
+            "confidence": edge.get("confidence"),
+        }
+
+    @staticmethod
+    def _infer_form_data_type(label: str) -> str:
+        lower = label.lower()
+        if any(token in lower for token in ("email", "e-mail")):
+            return "email"
+        if any(token in lower for token in ("phone", "telephone", "mobile")):
+            return "phone"
+        if any(token in lower for token in ("date", "dob", "birth")):
+            return "date"
+        if any(token in lower for token in ("ssn", "social security")):
+            return "identifier"
+        if any(token in lower for token in ("address", "street", "city", "zip")):
+            return "address"
+        if any(token in lower for token in ("amount", "income", "rent", "cost", "payment")):
+            return "currency"
+        if any(token in lower for token in ("yes", "no", "check", "agree")):
+            return "boolean"
+        if "name" in lower:
+            return "person_name"
+        return "string"
+
+    @staticmethod
+    def _document_suffix_from_metadata(metadata: Dict[str, Any]) -> str:
+        filename = str(metadata.get("filename") or metadata.get("name") or "")
+        suffix = Path(filename).suffix.lower()
+        if suffix and re.fullmatch(r"\.[a-z0-9][a-z0-9+_-]{0,15}", suffix):
+            return suffix
+        content_type = str(metadata.get("content_type") or metadata.get("mime_type") or "").lower()
+        content_type_suffixes = {
+            "application/pdf": ".pdf",
+            "text/plain": ".txt",
+            "text/markdown": ".md",
+            "text/csv": ".csv",
+            "text/html": ".html",
+            "application/json": ".json",
+            "image/png": ".png",
+            "image/jpeg": ".jpg",
+            "image/tiff": ".tif",
+        }
+        return content_type_suffixes.get(content_type, ".txt")
+
     def analyze_record_summary_with_invocation(
         self,
         wallet_id: str,
@@ -1545,6 +2481,7 @@ class DataWalletService:
             grant_id=invocation.grant_id,
             actor_secret=actor_secret,
             max_chars=max_chars,
+            invocation_caveats=invocation.caveats,
         )
 
     def create_analytics_consent(
@@ -2077,6 +3014,7 @@ class DataWalletService:
         record_ids: Optional[List[str]] = None,
         include_proofs: bool = True,
         include_derived_artifacts: bool = True,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Create a bounded encrypted export bundle for a wallet actor.
 
@@ -2097,6 +3035,10 @@ class DataWalletService:
         records = [self._record(wallet_id, record_id) for record_id in requested_ids]
 
         if actor_did != wallet.owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["encrypted_export_bundle"],
+            )
             if grant_id is None:
                 raise AccessDeniedError("Non-owner export requires an export/create grant")
             grant = self.grants[grant_id]
@@ -2105,6 +3047,7 @@ class DataWalletService:
                 wallet_id=wallet_id,
                 actor_did=actor_did,
                 record_ids=requested_ids,
+                invocation_caveats=operation_caveats,
             )
         versions: List[Dict[str, Any]] = []
         for record in records:
@@ -2389,6 +3332,7 @@ class DataWalletService:
             record_ids=record_ids,
             include_proofs=include_proofs,
             include_derived_artifacts=include_derived_artifacts,
+            invocation_caveats=invocation.caveats,
         )
 
     def import_wallet_snapshot(self, snapshot: Dict[str, Any]) -> Wallet:
@@ -2753,14 +3697,32 @@ class DataWalletService:
         audience_did: str,
         resource: str,
         ability: str,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> None:
+        record_id = record_id_from_resource(resource)
+        data_type = None
+        if record_id in self.records and self.records[record_id].wallet_id == wallet_id:
+            data_type = self.records[record_id].data_type
         assert_grant_allows(
             grant,
             audience_did=audience_did,
             resource=resource,
             ability=ability,
+            invocation_caveats=invocation_caveats,
+            record_id=record_id,
+            data_type=data_type,
         )
         self._assert_grant_chain_active(wallet_id, grant)
+
+    @staticmethod
+    def _operation_caveats(
+        invocation_caveats: Optional[Dict[str, Any]],
+        **defaults: Any,
+    ) -> Dict[str, Any]:
+        caveats = dict(invocation_caveats or {})
+        for key, value in defaults.items():
+            caveats.setdefault(key, value)
+        return caveats
 
     def _assert_grant_chain_active(self, wallet_id: str, grant: Grant) -> None:
         chain: List[Grant] = []
@@ -2824,16 +3786,37 @@ class DataWalletService:
             raise AccessDeniedError("Delegated grant purpose must match parent grant")
         parent_record_ids = parent.caveats.get("record_ids")
         child_record_ids = caveats.get("record_ids")
+        if parent_record_ids is not None and child_record_ids is None:
+            raise AccessDeniedError("Delegated grant must preserve parent record_ids caveat")
         if parent_record_ids is not None and child_record_ids is not None:
             allowed = set(str(record_id) for record_id in parent_record_ids)
             requested = set(str(record_id) for record_id in child_record_ids)
             if not requested.issubset(allowed):
                 raise AccessDeniedError("Delegated record_ids exceed parent grant")
+        self._assert_delegated_subset_caveat(parent, caveats, "data_types")
+        self._assert_delegated_subset_caveat(parent, caveats, "output_types")
+        if parent.caveats.get("user_presence_required") is True and caveats.get("user_presence_required") is not True:
+            raise AccessDeniedError("Delegated grant must preserve parent user_presence_required caveat")
+        if parent.caveats.get("require_user_presence") is True and caveats.get("require_user_presence") is not True:
+            raise AccessDeniedError("Delegated grant must preserve parent require_user_presence caveat")
         if "max_delegation_depth" in caveats:
             parent_depth = int(parent.caveats.get("max_delegation_depth", 1))
             child_depth = int(caveats["max_delegation_depth"])
             if child_depth > parent_depth:
                 raise AccessDeniedError("Delegated max_delegation_depth exceeds parent grant")
+
+    @staticmethod
+    def _assert_delegated_subset_caveat(parent: Grant, caveats: Dict[str, Any], key: str) -> None:
+        parent_values = parent.caveats.get(key)
+        if parent_values is None:
+            return
+        child_values = caveats.get(key)
+        if child_values is None:
+            raise AccessDeniedError(f"Delegated grant must preserve parent {key} caveat")
+        parent_set = {str(value) for value in parent_values} if not isinstance(parent_values, str) else {parent_values}
+        child_set = {str(value) for value in child_values} if not isinstance(child_values, str) else {child_values}
+        if not child_set.issubset(parent_set):
+            raise AccessDeniedError(f"Delegated {key} exceed parent grant")
 
     def _assert_delegation_expiry(self, parent: Grant, expires_at: Optional[str]) -> None:
         if parent.expires_at is None:
@@ -2873,33 +3856,35 @@ class DataWalletService:
         wallet_id: str,
         actor_did: str,
         record_ids: List[str],
+        invocation_caveats: Optional[Dict[str, Any]] = None,
     ) -> None:
         export_resource = resource_for_export(wallet_id)
-        try:
+        if self._grant_has_ability(grant, "export/create") and self._grant_covers_resource(grant, export_resource):
             self._assert_grant_allows(
                 grant,
                 wallet_id=wallet_id,
                 audience_did=actor_did,
                 resource=export_resource,
                 ability="export/create",
+                invocation_caveats=invocation_caveats,
             )
-        except AccessDeniedError:
-            for record_id in record_ids:
-                self._assert_grant_allows(
-                    grant,
-                    wallet_id=wallet_id,
-                    audience_did=actor_did,
-                    resource=resource_for_record(wallet_id, record_id),
-                    ability="export/create",
-                )
+            allowed_record_ids = grant.caveats.get("record_ids")
+            if allowed_record_ids is None:
+                return
+            allowed = set(str(record_id) for record_id in allowed_record_ids)
+            requested = set(record_ids)
+            if not requested.issubset(allowed):
+                raise AccessDeniedError("Export grant does not cover all requested records")
             return
-        allowed_record_ids = grant.caveats.get("record_ids")
-        if allowed_record_ids is None:
-            return
-        allowed = set(str(record_id) for record_id in allowed_record_ids)
-        requested = set(record_ids)
-        if not requested.issubset(allowed):
-            raise AccessDeniedError("Export grant does not cover all requested records")
+        for record_id in record_ids:
+            self._assert_grant_allows(
+                grant,
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="export/create",
+                invocation_caveats=invocation_caveats,
+            )
 
     def _analytics_template(self, template_id: str) -> AnalyticsTemplate:
         if template_id not in self.analytics_templates:
@@ -3172,11 +4157,25 @@ class DataWalletService:
         audience_did: str,
         grant: Grant,
     ) -> None:
+        record_ids: set[str] = set()
+        caveat_record_ids = grant.caveats.get("record_ids") or grant.caveats.get("allowed_record_ids")
         for resource in grant.resources:
             record_id = self._record_id_from_resource(wallet_id, resource)
-            if record_id is None:
+            if record_id is not None:
+                record_ids.add(record_id)
                 continue
+            if resource == f"wallet://{wallet_id}/records/*":
+                if caveat_record_ids is not None:
+                    record_ids.update(str(record_id) for record_id in caveat_record_ids)
+                else:
+                    record_ids.update(
+                        record.record_id for record in self.records.values() if record.wallet_id == wallet_id
+                    )
+        for record_id in sorted(record_ids):
             record = self._record(wallet_id, record_id)
+            record_resource = resource_for_record(wallet_id, record_id)
+            if not self._grant_has_wrappable_record_ability(grant, audience_did, record_resource, record):
+                continue
             version = self.versions[record.current_version_id]
             dek = self._unwrap_dek(version, wallet_id, issuer_did)
             key_wrap = KeyWrap(
@@ -3194,6 +4193,27 @@ class DataWalletService:
                 expires_at=grant.expires_at,
             )
             version.key_wraps.append(key_wrap)
+
+    def _grant_has_wrappable_record_ability(
+        self,
+        grant: Grant,
+        audience_did: str,
+        resource: str,
+        record: DataRecord,
+    ) -> bool:
+        for ability in ("record/decrypt", "record/analyze"):
+            if not self._grant_has_ability(grant, ability):
+                continue
+            if grant.audience_did != audience_did or not self._grant_covers_resource(grant, resource):
+                continue
+            allowed_record_ids = grant.caveats.get("record_ids") or grant.caveats.get("allowed_record_ids")
+            if allowed_record_ids is not None and record.record_id not in {str(item) for item in allowed_record_ids}:
+                continue
+            allowed_data_types = grant.caveats.get("data_types") or grant.caveats.get("allowed_data_types")
+            if allowed_data_types is not None and record.data_type not in {str(item) for item in allowed_data_types}:
+                continue
+            return True
+        return False
 
     def _active_key_wrap_grant_id(self, version: DataVersion, recipient_did: str) -> Optional[str]:
         for key_wrap in version.key_wraps:
@@ -3223,7 +4243,7 @@ class DataWalletService:
         if not resource.startswith(prefix):
             return None
         suffix = resource[len(prefix) :]
-        if "/" in suffix or not suffix:
+        if "/" in suffix or not suffix or suffix == "*":
             return None
         return suffix
 
