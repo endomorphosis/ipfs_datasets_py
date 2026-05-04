@@ -3808,6 +3808,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "enforcement_remedy_duty"
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
+    if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
+        return "rulemaking_legislative_duty"
     if action_predicate.startswith((
         "Announce",
         "Circulate",

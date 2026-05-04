@@ -5947,7 +5947,7 @@ def _normalize_codification_recodification_light_verb_action(action_text: str) -
 
 
 def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
-    """Project licensing and permitting nominalizations to operative predicates."""
+    """Project licensing, permitting, and credentialing nominalizations."""
 
     text = str(action_text or "").strip()
     if not text:
@@ -5991,6 +5991,32 @@ def _normalize_licensing_permitting_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"accredit {target}" if target else text
+
+    credentialing_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"(?:an?\s+|the\s+)?credentialing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"credentials\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^credentialing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in credentialing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"credential {target}" if target else text
+
+    endorsement_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|issue|issues|issued|issuing|grant|grants|granted|granting)\s+"
+        r"(?:an?\s+|the\s+)?endorsement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|issue|issues|issued|issuing|grant|grants|granted|granting)\s+"
+        r"endorsements\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^endorsement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in endorsement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"endorse {target}" if target else text
 
     return text
 
