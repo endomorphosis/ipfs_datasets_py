@@ -103,6 +103,9 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --worktree-edit-timeout-seconds 300 \
   --worktree-stale-after-seconds 7200 \
   --worktree-repair-attempts 1 \
+  --auto-commit \
+  --auto-commit-startup-dirty \
+  --auto-commit-branch main \
   --apply \
   --watch \
   --retry-interval 0 \
@@ -124,7 +127,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 
-Continuous mode runs without user input. In worktree transport, each proposal gets a bounded Codex direct-edit window controlled by `--worktree-edit-timeout-seconds 300`; failed or empty worktree edits are recorded as structured failures and the next cycle starts immediately by default. Time is bounded by operation timeouts, not by a fixed retry sleep: use `--llm-timeout 300`, `--command-timeout 300`, and `--worktree-edit-timeout-seconds 300` to cap individual router, validation/git, and direct-edit calls. When a proposal becomes usable, the daemon applies only allowlisted TypeScript/docs changes, validates them, repairs failed validation once in a fresh temporary worktree by default, and updates the port-plan task board only after accepted work.
+Continuous mode runs without user input. In worktree transport, each proposal gets a bounded Codex direct-edit window controlled by `--worktree-edit-timeout-seconds 300`; failed or empty worktree edits are recorded as structured failures and the next cycle starts immediately by default. Time is bounded by operation timeouts, not by a fixed retry sleep: use `--llm-timeout 300`, `--command-timeout 300`, and `--worktree-edit-timeout-seconds 300` to cap individual router, validation/git, and direct-edit calls. When a proposal becomes usable, the daemon applies only allowlisted TypeScript/docs changes, validates them, repairs failed validation once in a fresh temporary worktree by default, and updates the port-plan task board only after accepted work. The supervised default also enables `--auto-commit` and `--auto-commit-startup-dirty`, so validated daemon-owned changes under `src/lib/logic/` plus the port-plan/accepted-work docs are committed on `main` before the next cycle. If a later proposal touches a dirty allowlisted file, the daemon first tries the same scoped auto-commit and then rechecks dirtiness before rejecting the round.
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
@@ -210,6 +213,8 @@ For accepted rounds, the daemon records the concrete changed files in the JSONL 
 The daemon now distinguishes fixture/capture tasks from implementation tasks. If the selected port-plan checkbox does not explicitly ask for fixtures, captures, docs, evaluation, or planning, a proposal must change runtime TypeScript under `src/lib/logic/`; docs-only and parity-fixture-only changes are rejected before they touch the worktree. Fixture and capture tasks must still add tests that load and assert the fixture content so the generated work is exercised by `npm run validate:logic-port`.
 
 Validated accepted work is also appended to `docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md`. That ledger records the target task, impact statement, changed files, validation commands, and evidence artifact paths so daemon output is visible even when the changed files are small.
+
+With auto-commit enabled, each accepted round commits the validated TypeScript changes, the generated task-board update, and the accepted-work ledger to the current `main` branch using a `chore(logic-port): ...` subject. The commit scope is intentionally narrow: startup cleanup commits only `src/lib/logic/`, `docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md`, and `docs/IPFS_DATASETS_LOGIC_PORT_DAEMON_ACCEPTED.md`; per-round cleanup additionally includes the accepted artifact's changed files. It does not stage unrelated daemon families such as PP&D or the legal-parser daemon.
 
 For every accepted round, the daemon also writes review artifacts under `ipfs_datasets_py/.daemon/accepted-work/`:
 

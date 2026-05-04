@@ -237,6 +237,9 @@ class LogicPortDaemonConfig:
     preflight_repair_attempts: int = 1
     validation_repair_attempts: int = 1
     validation_repair_failure_budget: int = 2
+    auto_commit: bool = False
+    auto_commit_branch: str = "main"
+    auto_commit_startup_dirty: bool = False
     proposal_attempts: int = 3
     prefer_file_edits: bool = True
     task_board_doc: Optional[Path] = Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
@@ -1693,6 +1696,14 @@ Critical correction for attempt {attempt}:
 
         dirty_errors = self._dirty_touched_file_errors(_artifact_paths(artifact))
         if dirty_errors:
+            self._auto_commit_paths(
+                _artifact_paths(artifact),
+                reason="dirty touched files before applying candidate",
+                target_task=artifact.target_task,
+                summary=artifact.summary,
+            )
+            dirty_errors = self._dirty_touched_file_errors(_artifact_paths(artifact))
+        if dirty_errors:
             artifact.errors.extend(dirty_errors)
             artifact.failure_kind = "dirty_touched_files"
             return artifact
@@ -1995,6 +2006,7 @@ Critical correction for attempt {attempt}:
             )
             self._update_task_board(results)
             self._append_accepted_work_log(results)
+            self._auto_commit_accepted_results(results)
             self._write_status(
                 "session_completed",
                 session_id=session_id,
@@ -2026,6 +2038,8 @@ Critical correction for attempt {attempt}:
 
         while cycles <= 0 or completed_cycles < cycles:
             completed_cycles += 1
+            if self.daemon_config.auto_commit_startup_dirty:
+                self._auto_commit_startup_dirty_scope()
             self._block_current_task_if_stale_failed()
             terminal_result = self._no_eligible_task_result()
             if terminal_result is not None:
@@ -2458,6 +2472,9 @@ Critical correction for attempt {attempt}:
             "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
             "worktree_root": str(self.daemon_config.resolved_worktree_root()),
             "worktree_repair_attempts": self.daemon_config.worktree_repair_attempts,
+            "auto_commit": self.daemon_config.auto_commit,
+            "auto_commit_branch": self.daemon_config.auto_commit_branch,
+            "auto_commit_startup_dirty": self.daemon_config.auto_commit_startup_dirty,
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "typescript_quality_failures": typescript_quality_failures,
@@ -2562,6 +2579,9 @@ Critical correction for attempt {attempt}:
             "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
             "worktree_root": str(self.daemon_config.resolved_worktree_root()),
             "worktree_repair_attempts": self.daemon_config.worktree_repair_attempts,
+            "auto_commit": self.daemon_config.auto_commit,
+            "auto_commit_branch": self.daemon_config.auto_commit_branch,
+            "auto_commit_startup_dirty": self.daemon_config.auto_commit_startup_dirty,
             **details,
         }
         if state != "heartbeat":
@@ -2622,6 +2642,224 @@ Critical correction for attempt {attempt}:
         with path.open("a", encoding="utf-8") as handle:
             handle.write("\n".join(entry))
             handle.write("\n")
+
+    def _auto_commit_accepted_results(self, results: List[Dict[str, Any]]) -> None:
+        if not results:
+            return
+        latest = results[-1]
+        if not latest.get("valid"):
+            return
+        artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
+        changed_files = [str(path) for path in artifact.get("changed_files", []) if str(path)]
+        commit_paths = [*changed_files]
+        if self.daemon_config.task_board_doc is not None:
+            commit_paths.append(self._repo_relative_pathspec(self.daemon_config.task_board_doc))
+        if self.daemon_config.accepted_work_log_path is not None:
+            commit_paths.append(self._repo_relative_pathspec(self.daemon_config.accepted_work_log_path))
+        result = self._auto_commit_paths(
+            commit_paths,
+            reason="validated logic-port daemon round",
+            target_task=str(artifact.get("target_task") or ""),
+            summary=str(artifact.get("summary") or ""),
+        )
+        if result.get("attempted"):
+            artifact["auto_commit"] = result
+
+    def _auto_commit_startup_dirty_scope(self) -> None:
+        paths = [
+            self._repo_relative_pathspec(self.daemon_config.typescript_logic_dir),
+        ]
+        if self.daemon_config.task_board_doc is not None:
+            paths.append(self._repo_relative_pathspec(self.daemon_config.task_board_doc))
+        if self.daemon_config.accepted_work_log_path is not None:
+            paths.append(self._repo_relative_pathspec(self.daemon_config.accepted_work_log_path))
+        target_task = self._current_plan_task().label if self._current_plan_task() else ""
+        summary = ""
+        if self.daemon_config.progress_path is not None:
+            try:
+                progress = json.loads(self.daemon_config.resolve(self.daemon_config.progress_path).read_text(encoding="utf-8"))
+            except Exception:
+                progress = {}
+            latest_round = progress.get("latest_round", {}) if isinstance(progress, dict) else {}
+            if isinstance(latest_round, dict) and latest_round.get("valid"):
+                target_task = str(latest_round.get("target_task") or target_task)
+                summary = str(latest_round.get("summary") or "")
+        self._auto_commit_paths(
+            paths,
+            reason="startup dirty daemon scope",
+            target_task=target_task,
+            summary=summary,
+        )
+
+    def _repo_relative_pathspec(self, path: Path) -> str:
+        path = Path(path)
+        if path.is_absolute():
+            try:
+                return path.relative_to(self.daemon_config.repo_root).as_posix()
+            except ValueError:
+                return path.as_posix()
+        return path.as_posix()
+
+    def _auto_commit_paths(
+        self,
+        paths: Sequence[str],
+        *,
+        reason: str,
+        target_task: str = "",
+        summary: str = "",
+    ) -> Dict[str, Any]:
+        if self.daemon_config.dry_run or not self.daemon_config.auto_commit:
+            return {"attempted": False, "committed": False, "skipped_reason": "auto_commit_disabled"}
+
+        pathspecs = self._safe_auto_commit_pathspecs(paths)
+        if not pathspecs:
+            return {"attempted": False, "committed": False, "skipped_reason": "no_safe_pathspecs"}
+
+        branch = run_command(
+            ("git", "branch", "--show-current"),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        branch_name = branch.stdout.strip() if branch.ok else ""
+        required_branch = str(self.daemon_config.auto_commit_branch or "").strip()
+        if required_branch and branch_name != required_branch:
+            return {
+                "attempted": True,
+                "committed": False,
+                "skipped_reason": "wrong_branch",
+                "branch": branch_name,
+                "required_branch": required_branch,
+            }
+
+        status = run_command(
+            ("git", "status", "--porcelain", "--", *pathspecs),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        if not status.ok:
+            return {
+                "attempted": True,
+                "committed": False,
+                "skipped_reason": "status_failed",
+                "branch": branch_name,
+                "stderr": status.stderr[-1000:],
+            }
+
+        dirty_paths = self._safe_auto_commit_pathspecs(_git_status_paths(status.stdout))
+        if not dirty_paths:
+            return {"attempted": True, "committed": False, "skipped_reason": "clean", "branch": branch_name}
+
+        self._write_status(
+            "auto_commit_started",
+            auto_commit_reason=reason,
+            auto_commit_paths=dirty_paths,
+            selected_task=target_task,
+        )
+
+        add = run_command(
+            ("git", "add", "--", *dirty_paths),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(120, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        if not add.ok:
+            return {
+                "attempted": True,
+                "committed": False,
+                "skipped_reason": "add_failed",
+                "branch": branch_name,
+                "changed_files": dirty_paths,
+                "stderr": add.stderr[-1000:],
+            }
+
+        staged = run_command(
+            ("git", "diff", "--cached", "--name-only", "--", *dirty_paths),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        staged_paths = self._safe_auto_commit_pathspecs(staged.stdout.splitlines()) if staged.ok else []
+        if not staged_paths:
+            return {
+                "attempted": True,
+                "committed": False,
+                "skipped_reason": "nothing_staged",
+                "branch": branch_name,
+                "changed_files": dirty_paths,
+            }
+
+        subject = self._auto_commit_subject(target_task=target_task, summary=summary, reason=reason)
+        body_lines = [
+            f"Reason: {reason}",
+            f"Target task: {target_task or 'unknown'}",
+            "",
+            "Committed by the logic-port daemon after validation so unattended work can continue.",
+            "",
+            "Files:",
+            *[f"- {path}" for path in staged_paths],
+        ]
+        commit = run_command(
+            (
+                "git",
+                "-c",
+                "user.name=Logic Port Daemon",
+                "-c",
+                "user.email=logic-port-daemon@local",
+                "commit",
+                "-m",
+                subject,
+                "-m",
+                "\n".join(body_lines),
+                "--",
+                *staged_paths,
+            ),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(180, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        record = {
+            "attempted": True,
+            "committed": commit.ok,
+            "branch": branch_name,
+            "changed_files": staged_paths,
+            "subject": subject,
+            "stdout": commit.stdout[-1000:],
+            "stderr": commit.stderr[-1000:],
+        }
+        if not commit.ok:
+            record["skipped_reason"] = "commit_failed"
+        self._write_status("auto_commit_completed", auto_commit=record, selected_task=target_task)
+        return record
+
+    def _safe_auto_commit_pathspecs(self, paths: Sequence[str]) -> List[str]:
+        safe: List[str] = []
+        seen = set()
+        logic_dir = self._repo_relative_pathspec(self.daemon_config.typescript_logic_dir).rstrip("/")
+        task_board = self._repo_relative_pathspec(self.daemon_config.task_board_doc) if self.daemon_config.task_board_doc else ""
+        accepted_log = (
+            self._repo_relative_pathspec(self.daemon_config.accepted_work_log_path)
+            if self.daemon_config.accepted_work_log_path
+            else ""
+        )
+        for raw in paths:
+            normalized = str(raw or "").replace("\\", "/").strip()
+            if not normalized:
+                continue
+            normalized = normalized[2:] if normalized.startswith("./") else normalized
+            if normalized.startswith("/") or ".." in Path(normalized).parts:
+                continue
+            allowed = (
+                normalized == logic_dir
+                or normalized.startswith(logic_dir + "/")
+                or normalized in {task_board, accepted_log}
+                or any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES)
+            )
+            if allowed and normalized not in seen:
+                seen.add(normalized)
+                safe.append(normalized)
+        return safe
+
+    def _auto_commit_subject(self, *, target_task: str, summary: str, reason: str) -> str:
+        source = summary or target_task or reason or "logic port daemon work"
+        slug = _slugify(source, limit=54).replace("-", " ")
+        return f"chore(logic-port): {slug}".strip()
 
     def _write_accepted_work_artifacts(self, artifact: Dict[str, Any], changed_files: List[str]) -> List[str]:
         if self.daemon_config.accepted_work_artifact_dir is None:
@@ -3649,6 +3887,12 @@ PLANNING CONTEXT:
         applied = False
         dirty_errors = self._dirty_touched_file_errors([str(edit.get("path", "")) for edit in edits])
         if dirty_errors:
+            self._auto_commit_paths(
+                [str(edit.get("path", "")) for edit in edits],
+                reason="dirty touched files before applying file replacements",
+            )
+            dirty_errors = self._dirty_touched_file_errors([str(edit.get("path", "")) for edit in edits])
+        if dirty_errors:
             raise ValueError(dirty_errors[0])
         for edit in edits:
             path = self._safe_edit_path(edit["path"])
@@ -4574,6 +4818,11 @@ Documents:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Iteratively improve the TypeScript ipfs_datasets_py logic port.")
+    auto_commit_default = os.environ.get("LOGIC_PORT_DAEMON_AUTO_COMMIT", "1").strip().lower() not in {"0", "false", "no", "off"}
+    auto_commit_startup_dirty_default = (
+        os.environ.get("LOGIC_PORT_DAEMON_AUTO_COMMIT_STARTUP_DIRTY", "1").strip().lower()
+        not in {"0", "false", "no", "off"}
+    )
     parser.add_argument("--repo-root", default=".", help="Repository root containing package.json and ipfs_datasets_py/")
     parser.add_argument("--model", default="gpt-5.5", help="llm_router model name")
     parser.add_argument("--provider", default=None, help="Optional llm_router provider")
@@ -4625,6 +4874,36 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=int(os.environ.get("LOGIC_PORT_DAEMON_WORKTREE_REPAIR_ATTEMPTS", "1")),
         help="Worktree direct-edit repair attempts after a worktree candidate fails validation before falling back to legacy JSON repair.",
+    )
+    parser.set_defaults(auto_commit=auto_commit_default, auto_commit_startup_dirty=auto_commit_startup_dirty_default)
+    parser.add_argument(
+        "--auto-commit",
+        dest="auto_commit",
+        action="store_true",
+        help="Commit validated daemon-owned TypeScript/docs changes to the current main branch after accepted rounds.",
+    )
+    parser.add_argument(
+        "--no-auto-commit",
+        dest="auto_commit",
+        action="store_false",
+        help="Leave validated daemon changes uncommitted after accepted rounds.",
+    )
+    parser.add_argument(
+        "--auto-commit-startup-dirty",
+        dest="auto_commit_startup_dirty",
+        action="store_true",
+        help="Before each supervised cycle, commit dirty daemon-owned TypeScript/port-plan files on main.",
+    )
+    parser.add_argument(
+        "--no-auto-commit-startup-dirty",
+        dest="auto_commit_startup_dirty",
+        action="store_false",
+        help="Do not commit pre-existing dirty daemon-owned files at supervised-cycle start.",
+    )
+    parser.add_argument(
+        "--auto-commit-branch",
+        default=os.environ.get("LOGIC_PORT_DAEMON_AUTO_COMMIT_BRANCH", "main"),
+        help="Branch name required for daemon auto-commits; set empty to allow the current branch.",
     )
     parser.add_argument(
         "--slice-mode",
@@ -4710,6 +4989,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         worktree_root=Path(args.worktree_root),
         codex_bin=str(args.codex_bin),
         worktree_repair_attempts=max(0, args.worktree_repair_attempts),
+        auto_commit=bool(args.auto_commit),
+        auto_commit_branch=str(args.auto_commit_branch),
+        auto_commit_startup_dirty=bool(args.auto_commit_startup_dirty),
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
         max_task_total_failure_rounds=max(0, args.max_task_failures),

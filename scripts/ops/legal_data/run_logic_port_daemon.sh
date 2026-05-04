@@ -26,6 +26,17 @@ WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
 WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}}"
 WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
 WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"
+AUTO_COMMIT="${AUTO_COMMIT:-1}"
+AUTO_COMMIT_STARTUP_DIRTY="${AUTO_COMMIT_STARTUP_DIRTY:-1}"
+AUTO_COMMIT_BRANCH="${AUTO_COMMIT_BRANCH:-main}"
+case "${AUTO_COMMIT,,}" in
+  1|true|yes|on) AUTO_COMMIT=1 ;;
+  *) AUTO_COMMIT=0 ;;
+esac
+case "${AUTO_COMMIT_STARTUP_DIRTY,,}" in
+  1|true|yes|on) AUTO_COMMIT_STARTUP_DIRTY=1 ;;
+  *) AUTO_COMMIT_STARTUP_DIRTY=0 ;;
+esac
 LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
 LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
@@ -185,6 +196,9 @@ write_supervisor_status() {
   "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
   "worktree_root": "$WORKTREE_ROOT",
   "worktree_repair_attempts": $WORKTREE_REPAIR_ATTEMPTS,
+  "auto_commit": $AUTO_COMMIT,
+  "auto_commit_startup_dirty": $AUTO_COMMIT_STARTUP_DIRTY,
+  "auto_commit_branch": "$AUTO_COMMIT_BRANCH",
   "codex_bin": "$CODEX_BIN",
   "proposal_attempts": $PROPOSAL_ATTEMPTS,
   "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,
@@ -567,7 +581,7 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep WORKTREE_REPAIR_ATTEMPTS enabled so failed validation runs get a direct-edit repair pass in a temporary worktree before legacy JSON repair is considered. Keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep WORKTREE_REPAIR_ATTEMPTS enabled so failed validation runs get a direct-edit repair pass in a temporary worktree before legacy JSON repair is considered. Keep AUTO_COMMIT and AUTO_COMMIT_STARTUP_DIRTY enabled so accepted daemon-owned TypeScript/docs work is committed on main before later cycles collide with dirty files. Keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
 
 If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, worktree_validation_repair, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better worktree failed-test repair, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
@@ -614,7 +628,7 @@ The previous maintenance attempt failed before it could make the daemon more rob
 
 Reason: $reason
 
-Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, keep WORKTREE_REPAIR_ATTEMPTS enabled for failed validation repair in temporary worktrees, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
+Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, keep WORKTREE_REPAIR_ATTEMPTS enabled for failed validation repair in temporary worktrees, keep AUTO_COMMIT/AUTO_COMMIT_STARTUP_DIRTY enabled for accepted daemon-owned work, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
 Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
@@ -1100,6 +1114,17 @@ while true; do
       --worktree-repair-attempts "$WORKTREE_REPAIR_ATTEMPTS"
       --codex-bin "$CODEX_BIN"
     )
+    if [[ "$AUTO_COMMIT" == "1" ]]; then
+      python3_args+=(--auto-commit)
+    else
+      python3_args+=(--no-auto-commit)
+    fi
+    if [[ "$AUTO_COMMIT_STARTUP_DIRTY" == "1" ]]; then
+      python3_args+=(--auto-commit-startup-dirty)
+    else
+      python3_args+=(--no-auto-commit-startup-dirty)
+    fi
+    python3_args+=(--auto-commit-branch "$AUTO_COMMIT_BRANCH")
     [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
     python3_args+=(
       --apply

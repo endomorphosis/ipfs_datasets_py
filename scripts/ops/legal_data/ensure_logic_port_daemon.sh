@@ -20,6 +20,9 @@ WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
 WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}}"
 WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
 WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"
+AUTO_COMMIT="${AUTO_COMMIT:-1}"
+AUTO_COMMIT_STARTUP_DIRTY="${AUTO_COMMIT_STARTUP_DIRTY:-1}"
+AUTO_COMMIT_BRANCH="${AUTO_COMMIT_BRANCH:-main}"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 cd "$REPO_ROOT" || exit 2
@@ -84,7 +87,7 @@ launch_supervisor() {
     if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
       tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
     fi
-    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") PROPOSAL_TRANSPORT=$(printf '%q' "$PROPOSAL_TRANSPORT") WORKTREE_EDIT_TIMEOUT_SECONDS=$(printf '%q' "$WORKTREE_EDIT_TIMEOUT_SECONDS") WORKTREE_STALE_AFTER_SECONDS=$(printf '%q' "$WORKTREE_STALE_AFTER_SECONDS") WORKTREE_CODEX_SANDBOX=$(printf '%q' "$WORKTREE_CODEX_SANDBOX") WORKTREE_ROOT=$(printf '%q' "$WORKTREE_ROOT") WORKTREE_REPAIR_ATTEMPTS=$(printf '%q' "$WORKTREE_REPAIR_ATTEMPTS") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
+    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") PROPOSAL_TRANSPORT=$(printf '%q' "$PROPOSAL_TRANSPORT") WORKTREE_EDIT_TIMEOUT_SECONDS=$(printf '%q' "$WORKTREE_EDIT_TIMEOUT_SECONDS") WORKTREE_STALE_AFTER_SECONDS=$(printf '%q' "$WORKTREE_STALE_AFTER_SECONDS") WORKTREE_CODEX_SANDBOX=$(printf '%q' "$WORKTREE_CODEX_SANDBOX") WORKTREE_ROOT=$(printf '%q' "$WORKTREE_ROOT") WORKTREE_REPAIR_ATTEMPTS=$(printf '%q' "$WORKTREE_REPAIR_ATTEMPTS") AUTO_COMMIT=$(printf '%q' "$AUTO_COMMIT") AUTO_COMMIT_STARTUP_DIRTY=$(printf '%q' "$AUTO_COMMIT_STARTUP_DIRTY") AUTO_COMMIT_BRANCH=$(printf '%q' "$AUTO_COMMIT_BRANCH") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
     if tmux new-session -d -s "$TMUX_SESSION_NAME" -c "$REPO_ROOT" "$command_text"; then
       launch_mode="tmux"
       launcher_pid="0"
@@ -98,6 +101,9 @@ launch_supervisor() {
     WORKTREE_CODEX_SANDBOX="$WORKTREE_CODEX_SANDBOX" \
     WORKTREE_ROOT="$WORKTREE_ROOT" \
     WORKTREE_REPAIR_ATTEMPTS="$WORKTREE_REPAIR_ATTEMPTS" \
+    AUTO_COMMIT="$AUTO_COMMIT" \
+    AUTO_COMMIT_STARTUP_DIRTY="$AUTO_COMMIT_STARTUP_DIRTY" \
+    AUTO_COMMIT_BRANCH="$AUTO_COMMIT_BRANCH" \
     nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
     </dev/null > "$SUPERVISOR_OUT_PATH" 2>&1 &
   launcher_pid=$!
@@ -154,6 +160,9 @@ payload = {
     "proposal_transport": check.get("proposal_transport"),
     "worktree_root": check.get("worktree_root"),
     "worktree_repair_attempts": check.get("worktree_repair_attempts"),
+    "auto_commit": check.get("auto_commit"),
+    "auto_commit_startup_dirty": check.get("auto_commit_startup_dirty"),
+    "auto_commit_branch": check.get("auto_commit_branch"),
     "supervisor_pid": supervisor_pid,
     "supervisor_pid_alive": supervisor_pid_alive,
     "supervisor_status": supervisor_status.get("status"),

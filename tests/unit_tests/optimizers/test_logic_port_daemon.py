@@ -62,6 +62,9 @@ def test_cli_defaults_to_worktree_transport(monkeypatch):
     monkeypatch.delenv("LOGIC_PORT_DAEMON_PROPOSAL_TRANSPORT", raising=False)
     monkeypatch.delenv("LOGIC_PORT_DAEMON_WORKTREE_CODEX_SANDBOX", raising=False)
     monkeypatch.delenv("IPFS_DATASETS_PY_CODEX_SANDBOX", raising=False)
+    monkeypatch.delenv("LOGIC_PORT_DAEMON_AUTO_COMMIT", raising=False)
+    monkeypatch.delenv("LOGIC_PORT_DAEMON_AUTO_COMMIT_STARTUP_DIRTY", raising=False)
+    monkeypatch.delenv("LOGIC_PORT_DAEMON_AUTO_COMMIT_BRANCH", raising=False)
 
     args = build_arg_parser().parse_args([])
 
@@ -70,6 +73,9 @@ def test_cli_defaults_to_worktree_transport(monkeypatch):
     assert args.worktree_stale_after == 7200
     assert args.worktree_codex_sandbox == "danger-full-access"
     assert args.worktree_repair_attempts == 1
+    assert args.auto_commit is True
+    assert args.auto_commit_startup_dirty is True
+    assert args.auto_commit_branch == "main"
 
 
 def test_supervisor_uses_worktree_transport_by_default():
@@ -80,9 +86,14 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"' in script
     assert 'WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"' in script
     assert 'WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"' in script
+    assert 'AUTO_COMMIT="${AUTO_COMMIT:-1}"' in script
+    assert 'AUTO_COMMIT_STARTUP_DIRTY="${AUTO_COMMIT_STARTUP_DIRTY:-1}"' in script
+    assert 'AUTO_COMMIT_BRANCH="${AUTO_COMMIT_BRANCH:-main}"' in script
     assert '"proposal_transport": "$PROPOSAL_TRANSPORT"' in script
     assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
     assert '"worktree_repair_attempts": $WORKTREE_REPAIR_ATTEMPTS' in script
+    assert '"auto_commit": $AUTO_COMMIT' in script
+    assert '--auto-commit-branch "$AUTO_COMMIT_BRANCH"' in script
     assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
     assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
     assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
@@ -102,6 +113,9 @@ def test_check_script_reports_worktree_transport_health_fields():
     assert '"worktree_codex_sandbox": status.get("worktree_codex_sandbox")' in script
     assert '"worktree_root": status.get("worktree_root")' in script
     assert '"worktree_repair_attempts": status.get("worktree_repair_attempts")' in script
+    assert '"auto_commit": status.get("auto_commit")' in script
+    assert '"auto_commit_startup_dirty": status.get("auto_commit_startup_dirty")' in script
+    assert '"auto_commit_branch": status.get("auto_commit_branch")' in script
 
 
 def test_parse_llm_patch_response_from_json():
@@ -1479,6 +1493,139 @@ def test_accepted_work_log_records_valid_changed_files(tmp_path):
     assert any(path.suffix == ".diff" for path in artifact_files)
     assert not any(path.suffix == ".patch" for path in artifact_files)
     assert any(path.name.endswith(".stat.txt") for path in artifact_files)
+
+
+def test_auto_commit_after_valid_round_commits_daemon_scope(tmp_path):
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan = docs_dir / "port-plan.md"
+    status = docs_dir / "status.md"
+    accepted = docs_dir / "accepted.md"
+    feature = logic_dir / "feature.ts"
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    feature.write_text("export const feature = 'old';\n", encoding="utf-8")
+
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    response = json.dumps(
+        {
+            "summary": "Runtime feature",
+            "impact": "Feature is imported by the logic runtime.",
+            "files": [{"path": "src/lib/logic/feature.ts", "content": "export const feature = 'new';\n"}],
+        }
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        max_iterations=1,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        accepted_work_log_path=accepted,
+        accepted_work_artifact_dir=None,
+        auto_commit=True,
+        auto_commit_branch="main",
+    )
+
+    results = LogicPortDaemonOptimizer(config, llm_router=FakeRouter(response)).run_daemon()
+
+    assert results[-1]["valid"] is True
+    assert results[-1]["artifact"]["auto_commit"]["committed"] is True
+    status_result = subprocess.run(
+        ["git", "status", "--porcelain", "--", "src/lib/logic", "docs/port-plan.md", "docs/accepted.md"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert status_result.stdout == ""
+    subject = subprocess.run(
+        ["git", "log", "-1", "--pretty=%s"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert subject.startswith("chore(logic-port):")
+
+
+def test_startup_dirty_auto_commit_commits_existing_daemon_scope(tmp_path):
+    docs_dir = tmp_path / "docs"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    docs_dir.mkdir(parents=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan = docs_dir / "port-plan.md"
+    accepted = docs_dir / "accepted.md"
+    feature = logic_dir / "feature.ts"
+    plan.write_text("- [ ] Port runtime feature\n", encoding="utf-8")
+    accepted.write_text("# Accepted\n", encoding="utf-8")
+    feature.write_text("export const feature = 'old';\n", encoding="utf-8")
+
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "checkout", "-b", "main"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "add", "."], cwd=tmp_path, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    plan.write_text("- [x] Port runtime feature\n", encoding="utf-8")
+    feature.write_text("export const feature = 'dirty';\n", encoding="utf-8")
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(accepted,),
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=False,
+        validation_commands=tuple(),
+        task_board_doc=plan,
+        accepted_work_log_path=accepted,
+        auto_commit=True,
+        auto_commit_branch="main",
+        auto_commit_startup_dirty=True,
+    )
+
+    LogicPortDaemonOptimizer(config)._auto_commit_startup_dirty_scope()
+
+    status_result = subprocess.run(
+        ["git", "status", "--porcelain", "--", "src/lib/logic", "docs/port-plan.md", "docs/accepted.md"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert status_result.stdout == ""
+    subject = subprocess.run(
+        ["git", "log", "-1", "--pretty=%s"],
+        cwd=tmp_path,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert subject.startswith("chore(logic-port):")
 
 
 def test_file_edit_mode_rejects_noop_file_replacements(tmp_path):
