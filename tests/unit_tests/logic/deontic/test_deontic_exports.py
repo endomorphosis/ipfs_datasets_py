@@ -148,6 +148,28 @@ def test_deterministic_parser_capability_profiles_cover_duty_authority_and_enume
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_deterministic_parser_capability_profile_includes_grounded_mental_state_slot():
+    element = extract_normative_elements(
+        "The inspector shall knowingly approve the discharge."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_deterministic_parser_capability_profile_record(norm)
+
+    assert norm.mental_state == "knowingly"
+    assert record["checked_slots"] == ["actor", "modality", "mental_state", "action"]
+    assert record["grounded_slots"] == ["actor", "modality", "mental_state", "action"]
+    assert record["missing_slots"] == []
+    assert record["ungrounded_slots"] == []
+    assert record["source_grounded_slot_rate"] == 1.0
+    grounding = {item["slot"]: item for item in record["slot_grounding"]}
+    assert grounding["mental_state"]["spans"] == [[20, 29]]
+    assert grounding["action"]["spans"] == [[30, 51]]
+    assert record["formula"] == (
+        "O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))"
+    )
+
+
 def test_deterministic_parser_capability_profiles_cover_deadlines_procedure_and_sanctions():
     temporal = LegalNormIR.from_parser_element(extract_normative_elements(
         "The Director shall issue a permit within 10 days after application."

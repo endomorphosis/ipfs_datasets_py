@@ -81,6 +81,7 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     recipient = _recipient_phrase_text(norm.recipient)
     mental_state = _clean_text(norm.mental_state)
     modal = _modal_phrase(norm.modality)
+    action_phrase = _action_without_leading_mental_state(action, mental_state)
 
     for override in norm.overrides:
         override_text = _slot_text(override)
@@ -103,15 +104,15 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
     else:
         missing.append("modality")
 
-    if mental_state and not _text_already_contains(action, mental_state):
+    if mental_state:
         phrases.append(_phrase(mental_state, "mental_state", norm))
 
-    if action:
-        phrases.append(_phrase(action, "action", norm))
+    if action_phrase:
+        phrases.append(_phrase(action_phrase, "action", norm))
     else:
         missing.append("action")
 
-    if recipient and not _text_already_contains(action, recipient):
+    if recipient and not _text_already_contains(action_phrase, recipient):
         phrases.append(_fixed_phrase("to", "recipient_connector"))
         phrases.append(_phrase(recipient, "recipient", norm))
 
@@ -123,7 +124,7 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
 
     for temporal in norm.temporal_constraints:
         temporal_text = _temporal_phrase_text(temporal)
-        if temporal_text and not _text_already_contains(action, temporal_text):
+        if temporal_text and not _text_already_contains(action_phrase, temporal_text):
             phrases.append(_detail_phrase(temporal_text, "temporal_constraints", temporal, norm))
 
     for exception in norm.exceptions:
@@ -332,6 +333,14 @@ def _slot_text(record: Mapping[str, Any]) -> str:
 
 def _slot_spans(norm: LegalNormIR, slot: str) -> List[List[int]]:
     field_spans = norm.field_spans if isinstance(norm.field_spans, Mapping) else {}
+    if slot == "mental_state":
+        spans = _mental_state_spans_from_action(norm, field_spans)
+        if spans:
+            return spans
+    if slot == "action":
+        spans = _action_spans_without_leading_mental_state(norm, field_spans)
+        if spans:
+            return spans
     candidates = [slot]
     candidates.extend({"actor": ["subject"], "recipient": ["action_recipient"]}.get(slot, []))
     for key in candidates:
@@ -340,6 +349,45 @@ def _slot_spans(norm: LegalNormIR, slot: str) -> List[List[int]]:
             return spans
     fallback = norm.support_span.to_list()
     return [fallback] if fallback != [0, 0] else []
+
+
+def _mental_state_spans_from_action(
+    norm: LegalNormIR,
+    field_spans: Mapping[str, Any],
+) -> List[List[int]]:
+    explicit = _coerce_spans(field_spans.get("mental_state"))
+    if explicit:
+        return explicit
+    mental_state = _clean_text(norm.mental_state)
+    action = _clean_text(_action_without_leading_modal(norm.action))
+    if not mental_state or not _starts_with_phrase(action, mental_state):
+        return []
+    action_spans = _coerce_spans(field_spans.get("action"))
+    if not action_spans:
+        return []
+    action_span = action_spans[0]
+    return [[action_span[0], action_span[0] + len(mental_state)]]
+
+
+def _action_spans_without_leading_mental_state(
+    norm: LegalNormIR,
+    field_spans: Mapping[str, Any],
+) -> List[List[int]]:
+    action_spans = _coerce_spans(field_spans.get("action"))
+    if not action_spans:
+        return []
+    mental_state = _clean_text(norm.mental_state)
+    action = _clean_text(_action_without_leading_modal(norm.action))
+    if not mental_state or not _starts_with_phrase(action, mental_state):
+        return []
+    mental_spans = _mental_state_spans_from_action(norm, field_spans)
+    if not mental_spans:
+        return []
+    action_span = action_spans[0]
+    mental_span = mental_spans[0]
+    if action_span[0] > mental_span[0] or action_span[1] <= mental_span[1]:
+        return []
+    return [[mental_span[1] + 1, action_span[1]]]
 
 
 def _coerce_spans(value: Any) -> List[List[int]]:
@@ -376,6 +424,14 @@ def _action_without_leading_modal(action: str) -> str:
     return re.sub(r"^(?:shall not|must not|may not|shall|must|may)\s+", "", action.strip(), flags=re.IGNORECASE)
 
 
+def _action_without_leading_mental_state(action: str, mental_state: str) -> str:
+    action = _clean_text(action)
+    mental_state = _clean_text(mental_state)
+    if not mental_state or not _starts_with_phrase(action, mental_state):
+        return action
+    return _clean_text(action[len(mental_state) :])
+
+
 def _recipient_phrase_text(recipient: str) -> str:
     """Return a normalized recipient phrase without duplicating a connector."""
     return re.sub(r"^(?:to|for)\s+", "", _clean_text(recipient), flags=re.IGNORECASE)
@@ -401,3 +457,9 @@ def _text_already_contains(container: str, phrase: str) -> bool:
     left = re.sub(r"[^a-z0-9]+", " ", container.lower()).strip()
     right = re.sub(r"[^a-z0-9]+", " ", phrase.lower()).strip()
     return bool(left and right and right in left)
+
+
+def _starts_with_phrase(container: str, phrase: str) -> bool:
+    left = _clean_text(container)
+    right = _clean_text(phrase)
+    return bool(right and re.match(r"^" + re.escape(right) + r"\b", left, re.IGNORECASE))

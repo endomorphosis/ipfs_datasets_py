@@ -59,6 +59,89 @@ def pid_is_legal_parser_wrapper(pid):
         and "legal-parser supervisor exited with code" in args
     )
 
+def process_table():
+    parents = {}
+    commands = {}
+    try:
+        entries = os.listdir("/proc")
+    except Exception:
+        return parents, commands
+    for entry in entries:
+        if not entry.isdigit():
+            continue
+        pid = int(entry)
+        try:
+            with open(f"/proc/{pid}/status", "r", encoding="utf-8", errors="replace") as handle:
+                ppid = 0
+                for line in handle:
+                    if line.startswith("PPid:"):
+                        ppid = int((line.split(":", 1)[1] or "0").strip() or "0")
+                        break
+            with open(f"/proc/{pid}/cmdline", "rb") as handle:
+                cmdline = handle.read().replace(b"\0", b" ").decode("utf-8", errors="replace").strip()
+            if not cmdline:
+                with open(f"/proc/{pid}/comm", "r", encoding="utf-8", errors="replace") as handle:
+                    cmdline = "[" + handle.read().strip() + "]"
+        except Exception:
+            continue
+        parents[pid] = ppid
+        commands[pid] = cmdline
+    return parents, commands
+
+def descendant_processes(root_pid):
+    try:
+        root_pid = int(root_pid)
+    except Exception:
+        return []
+    parents, commands = process_table()
+    children = {}
+    for pid, ppid in parents.items():
+        children.setdefault(ppid, []).append(pid)
+    stack = list(children.get(root_pid, []))
+    seen = set()
+    found = []
+    while stack:
+        pid = stack.pop(0)
+        if pid in seen:
+            continue
+        seen.add(pid)
+        found.append({"pid": pid, "ppid": parents.get(pid), "cmdline": commands.get(pid, "")})
+        stack.extend(children.get(pid, []))
+    return found
+
+def worktree_phase_worker_status(current, daemon_pid, threshold):
+    phase = str(current.get("phase") or "")
+    phases = {
+        "requesting_worktree_edit",
+        "retrying_worktree_edit",
+        "repairing_failed_worktree_edit",
+        "repairing_failed_tests_before_rollback",
+    }
+    if phase not in phases:
+        return {"required": False, "phase": phase}
+    started = parse_ts(current.get("phase_started_at") or current.get("phase_updated_at"))
+    age = None
+    if started is not None:
+        age = max(0.0, (now - started).total_seconds())
+    descendants = descendant_processes(daemon_pid)
+    workers = [
+        item
+        for item in descendants
+        if "codex" in str(item.get("cmdline") or "").lower()
+        and " exec" in (" " + " ".join(str(item.get("cmdline") or "").lower().split()))
+    ]
+    stalled = bool(age is not None and threshold > 0 and age >= threshold and not workers)
+    return {
+        "required": True,
+        "phase": phase,
+        "phase_age_seconds": None if age is None else round(age, 3),
+        "threshold_seconds": threshold,
+        "active_worker_pids": [item.get("pid") for item in workers],
+        "active_worker_count": len(workers),
+        "descendant_count": len(descendants),
+        "stalled_without_active_worker": stalled,
+    }
+
 
 current = read_json(status_path)
 supervisor = read_json(supervisor_path)
@@ -98,6 +181,16 @@ if (
 daemon_fresh = heartbeat_age is not None and heartbeat_age <= stale_after
 alive = bool(supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh))
 status_label = "maintenance_running" if maintenance_fresh else "running" if alive else "stale_or_stopped"
+worktree_no_child_threshold = (
+    current.get("worktree_no_child_stall_seconds")
+    or supervisor.get("worktree_no_child_stall_seconds")
+    or 0
+)
+try:
+    worktree_no_child_threshold = float(worktree_no_child_threshold)
+except Exception:
+    worktree_no_child_threshold = 0.0
+worktree_worker_status = worktree_phase_worker_status(current, daemon_pid, worktree_no_child_threshold)
 
 payload = {
     "alive": alive,
@@ -134,6 +227,8 @@ payload = {
     if current.get("repair_failed_tests_before_rollback") is not None
     else supervisor.get("repair_failed_tests_before_rollback"),
     "failed_test_repair_attempts": current.get("failed_test_repair_attempts") or supervisor.get("failed_test_repair_attempts"),
+    "worktree_no_child_stall_seconds": worktree_no_child_threshold,
+    "worktree_phase_worker_status": worktree_worker_status,
     "supervisor_status": supervisor.get("status"),
     "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
     "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),

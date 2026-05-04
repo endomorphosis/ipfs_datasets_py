@@ -163,6 +163,34 @@ def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
         assert records[0]["ir_slot_grounding"][0]["status"] == "grounded"
 
 
+def test_prover_syntax_records_expose_mental_state_components():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The inspector shall knowingly approve the discharge."
+        )[0]
+    )
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert len(records) == 5
+    assert all(
+        record["decoded_slots"] == ["actor", "modality", "mental_state", "action"]
+        for record in records
+    )
+    assert all(
+        record["grounded_decoded_slots"]
+        == ["actor", "modality", "mental_state", "action"]
+        for record in records
+    )
+    assert all("mental_state" in record["grounded_ir_slots"] for record in records)
+    assert all(record["target_components"]["grounded_ir_slot_count"] >= 4 for record in records)
+    assert all(
+        record["exported_formula"].find("Knowingly") >= 0
+        for record in records
+        if record["target"] != "frame_logic"
+    )
+
+
 def test_prover_syntax_semantic_fingerprints_change_when_ir_slots_change():
     tenant = LegalNormIR.from_parser_element(
         extract_normative_elements("The tenant must pay rent monthly.")[0]

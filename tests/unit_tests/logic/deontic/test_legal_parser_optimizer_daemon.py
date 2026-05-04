@@ -208,6 +208,8 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
     assert '"worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS' in script
     assert '"worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX"' in script
+    assert 'WORKTREE_NO_CHILD_STALL_SECONDS="${WORKTREE_NO_CHILD_STALL_SECONDS:-240}"' in script
+    assert '"worktree_no_child_stall_seconds": $WORKTREE_NO_CHILD_STALL_SECONDS' in script
     assert 'REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"' in script
     assert 'FAILED_TEST_REPAIR_ATTEMPTS="${FAILED_TEST_REPAIR_ATTEMPTS:-1}"' in script
     assert '"repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK")' in script
@@ -217,8 +219,11 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
     assert '--worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"' in script
     assert '--failed-test-repair-attempts "$FAILED_TEST_REPAIR_ATTEMPTS"' in script
+    assert '--worktree-no-child-stall-seconds "$WORKTREE_NO_CHILD_STALL_SECONDS"' in script
     assert 'python3_args+=(--disable-failed-test-repair)' in script
     assert '--codex-bin "$CODEX_BIN"' in script
+    assert "worktree_phase_without_active_child_reason()" in script
+    assert 'last_recycle_reason="worktree_phase_without_active_child"' in script
 
 
 def test_cli_defaults_to_worktree_transport(monkeypatch):
@@ -230,6 +235,7 @@ def test_cli_defaults_to_worktree_transport(monkeypatch):
 
     assert args.proposal_transport == "worktree"
     assert args.worktree_codex_sandbox == "danger-full-access"
+    assert args.worktree_no_child_stall_seconds == 240
 
 
 def test_check_script_reports_worktree_transport_health_fields():
@@ -244,6 +250,8 @@ def test_check_script_reports_worktree_transport_health_fields():
     assert '"worktree_codex_sandbox": current.get("worktree_codex_sandbox")' in script
     assert '"repair_failed_tests_before_rollback": current.get("repair_failed_tests_before_rollback")' in script
     assert '"failed_test_repair_attempts": current.get("failed_test_repair_attempts")' in script
+    assert '"worktree_no_child_stall_seconds": worktree_no_child_threshold' in script
+    assert '"worktree_phase_worker_status": worktree_worker_status' in script
 
 
 def test_check_legal_parser_daemon_requires_live_supervisor_for_health():
@@ -1345,6 +1353,51 @@ def test_daemon_repairs_failed_tests_before_rollback(tmp_path, monkeypatch):
     assert cycle["retained_change"]["repaired_failed_tests"] is True
     assert (tmp_path / production_path).read_text(encoding="utf-8") == "VALUE = 3\n"
     assert "test_repaired_candidate" in (tmp_path / test_path).read_text(encoding="utf-8")
+
+
+def test_daemon_marks_worktree_phase_unhealthy_without_active_worker(monkeypatch):
+    daemon = object.__new__(LegalParserOptimizerDaemon)
+    daemon.config = LegalParserDaemonConfig(worktree_no_child_stall_seconds=1)
+    monkeypatch.setattr(parser_daemon_module, "_process_descendant_snapshots", lambda _pid: [])
+
+    health = daemon._worktree_phase_child_health(
+        {
+            "phase": "repairing_failed_worktree_edit",
+            "phase_started_at": "2000-01-01T00:00:00+00:00",
+        }
+    )
+
+    assert health["required"] is True
+    assert health["valid"] is False
+    assert health["reason"] == "worktree_phase_without_active_child"
+
+
+def test_daemon_keeps_worktree_phase_healthy_with_active_codex_worker(monkeypatch):
+    daemon = object.__new__(LegalParserOptimizerDaemon)
+    daemon.config = LegalParserDaemonConfig(worktree_no_child_stall_seconds=1)
+    monkeypatch.setattr(
+        parser_daemon_module,
+        "_process_descendant_snapshots",
+        lambda _pid: [
+            {
+                "pid": 123,
+                "ppid": 1,
+                "cmdline": "node /usr/local/bin/codex exec --sandbox danger-full-access -",
+            }
+        ],
+    )
+
+    health = daemon._worktree_phase_child_health(
+        {
+            "phase": "requesting_worktree_edit",
+            "phase_started_at": "2000-01-01T00:00:00+00:00",
+        }
+    )
+
+    assert health["required"] is True
+    assert health["valid"] is True
+    assert health["reason"] == "active_worktree_worker"
+    assert health["active_worker_pids"] == [123]
 
 
 def test_optimizer_tolerates_unrelated_restore_failure_when_legal_targets_clean(tmp_path, monkeypatch):

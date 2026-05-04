@@ -139,6 +139,7 @@ class LegalParserDaemonConfig:
     codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
     repair_failed_tests_before_rollback: bool = True
     failed_test_repair_attempts: int = 1
+    worktree_no_child_stall_seconds: int = 240
     heartbeat_interval_seconds: float = 15.0
     test_timeout_seconds: int = 600
     require_production_and_tests: bool = True
@@ -2618,6 +2619,7 @@ class LegalParserOptimizerDaemon:
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
+            "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
             "apply_patches": self.config.apply_patches,
             "metrics": evaluation.get("metrics", {}),
             "score": score,
@@ -2921,6 +2923,7 @@ class LegalParserOptimizerDaemon:
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
+            "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
             "apply_patches": self.config.apply_patches,
         }
         (cycle_dir / "cycle_started.json").write_text(
@@ -2966,6 +2969,7 @@ class LegalParserOptimizerDaemon:
             "commit_accepted_patches": self.config.commit_accepted_patches,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
+            "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
             "dirty_legal_parser_targets": dirty_target_status["paths"],
             "dirty_legal_parser_targets_valid": dirty_target_status["valid"],
@@ -3063,16 +3067,80 @@ class LegalParserOptimizerDaemon:
     def _heartbeat_loop(self) -> None:
         interval = max(0.1, float(self.config.heartbeat_interval_seconds))
         while not self._heartbeat_stop.wait(interval):
+            exit_for_unhealthy_phase = False
             with self._status_lock:
                 if not self._status_payload:
                     continue
                 payload = dict(self._status_payload)
+                phase_child_health = self._worktree_phase_child_health(payload)
+                if phase_child_health.get("required"):
+                    payload["phase_child_health"] = phase_child_health
+                    if phase_child_health.get("valid") is False:
+                        payload["status"] = "unhealthy"
+                        payload["phase_health_error"] = phase_child_health
+                        exit_for_unhealthy_phase = True
                 payload["updated_at"] = _utc_now()
                 payload["heartbeat_at"] = payload["updated_at"]
                 payload["heartbeat_pid"] = os.getpid()
                 payload["heartbeat_thread"] = "legal-parser-daemon-heartbeat"
                 self._status_payload = payload
                 self._write_status_file_atomic(payload)
+            if exit_for_unhealthy_phase:
+                os._exit(75)
+
+    def _worktree_phase_child_health(self, payload: Mapping[str, Any]) -> Dict[str, Any]:
+        """Return health for phases that should have an active Codex worker."""
+
+        phase = str(payload.get("phase") or "")
+        if phase not in _WORKTREE_CHILD_PHASES:
+            return {"required": False, "phase": phase}
+        threshold = max(0, int(self.config.worktree_no_child_stall_seconds))
+        if threshold <= 0:
+            return {
+                "required": True,
+                "valid": True,
+                "phase": phase,
+                "reason": "worktree_no_child_watchdog_disabled",
+                "threshold_seconds": threshold,
+            }
+        started_at = str(payload.get("phase_started_at") or payload.get("phase_updated_at") or "")
+        try:
+            phase_age = max(0.0, time.time() - _parse_utc(started_at))
+        except Exception:
+            phase_age = 0.0
+        descendants = _process_descendant_snapshots(os.getpid())
+        active_workers = [
+            item
+            for item in descendants
+            if _looks_like_worktree_worker(str(item.get("cmdline") or ""))
+        ]
+        result: Dict[str, Any] = {
+            "required": True,
+            "valid": True,
+            "phase": phase,
+            "phase_age_seconds": round(phase_age, 3),
+            "threshold_seconds": threshold,
+            "active_worker_pids": [item.get("pid") for item in active_workers],
+            "active_worker_count": len(active_workers),
+        }
+        if active_workers:
+            result["reason"] = "active_worktree_worker"
+            return result
+        if phase_age < threshold:
+            result["reason"] = "within_no_child_grace"
+            return result
+        result["valid"] = False
+        result["reason"] = "worktree_phase_without_active_child"
+        result["descendant_count"] = len(descendants)
+        result["descendant_commands"] = [
+            {
+                "pid": item.get("pid"),
+                "ppid": item.get("ppid"),
+                "cmdline": str(item.get("cmdline") or "")[:300],
+            }
+            for item in descendants[:20]
+        ]
+        return result
 
     def _record_cycle_exception(self, *, cycle_index: int, exc: Exception) -> Dict[str, Any]:
         finished = _utc_now()
@@ -4127,6 +4195,7 @@ class LegalParserOptimizerDaemon:
             "require_clean_touched_files": self.config.require_clean_touched_files,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
+            "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
             "test_command": list(self.config.test_command),
         }
         (self.output_dir / "current_run.json").write_text(
@@ -5461,6 +5530,72 @@ def _parse_utc(value: str) -> float:
     return datetime.fromisoformat(value).timestamp()
 
 
+_WORKTREE_CHILD_PHASES = {
+    "requesting_worktree_edit",
+    "retrying_worktree_edit",
+    "repairing_failed_worktree_edit",
+    "repairing_failed_tests_before_rollback",
+}
+
+
+def _process_descendant_snapshots(root_pid: int) -> List[Dict[str, Any]]:
+    """Return a small /proc snapshot for descendants of ``root_pid``."""
+
+    proc_root = Path("/proc")
+    parents: Dict[int, int] = {}
+    commands: Dict[int, str] = {}
+    if not proc_root.exists():
+        return []
+    for entry in proc_root.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        try:
+            status_text = (entry / "status").read_text(encoding="utf-8", errors="replace")
+            ppid = 0
+            for line in status_text.splitlines():
+                if line.startswith("PPid:"):
+                    ppid = int(line.split(":", 1)[1].strip() or "0")
+                    break
+            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode(
+                "utf-8",
+                errors="replace",
+            ).strip()
+            if not cmdline:
+                comm = (entry / "comm").read_text(encoding="utf-8", errors="replace").strip()
+                cmdline = f"[{comm}]"
+        except Exception:
+            continue
+        parents[pid] = ppid
+        commands[pid] = cmdline
+
+    children: Dict[int, List[int]] = {}
+    for pid, ppid in parents.items():
+        children.setdefault(ppid, []).append(pid)
+    descendants: List[Dict[str, Any]] = []
+    stack = list(children.get(int(root_pid), []))
+    seen = set()
+    while stack:
+        pid = stack.pop(0)
+        if pid in seen:
+            continue
+        seen.add(pid)
+        descendants.append(
+            {
+                "pid": pid,
+                "ppid": parents.get(pid),
+                "cmdline": commands.get(pid, ""),
+            }
+        )
+        stack.extend(children.get(pid, []))
+    return descendants
+
+
+def _looks_like_worktree_worker(cmdline: str) -> bool:
+    text = " ".join(str(cmdline or "").lower().split())
+    return "codex" in text and " exec" in text
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the deterministic legal parser optimizer daemon.")
     parser.add_argument("--repo-root", default=".", help="Repository root for ipfs_datasets_py.")
@@ -5527,6 +5662,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Number of worktree repair attempts to try before rolling back a candidate that failed tests.",
     )
     parser.add_argument(
+        "--worktree-no-child-stall-seconds",
+        type=int,
+        default=int(os.environ.get("LEGAL_PARSER_DAEMON_WORKTREE_NO_CHILD_STALL_SECONDS", "240")),
+        help=(
+            "Maximum age of a worktree edit/repair phase without an active Codex child "
+            "before the daemon exits unhealthy for supervisor recovery."
+        ),
+    )
+    parser.add_argument(
         "--allow-patches-without-tests",
         action="store_true",
         help="Do not reject valid patches that lack a deontic test-file change.",
@@ -5573,6 +5717,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         codex_bin=str(args.codex_bin),
         repair_failed_tests_before_rollback=not bool(args.disable_failed_test_repair),
         failed_test_repair_attempts=max(0, int(args.failed_test_repair_attempts)),
+        worktree_no_child_stall_seconds=max(0, int(args.worktree_no_child_stall_seconds)),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
         require_production_and_tests=not bool(args.allow_patches_without_tests),

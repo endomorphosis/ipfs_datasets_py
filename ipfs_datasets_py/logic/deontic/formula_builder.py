@@ -1970,6 +1970,7 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     formula = build_deontic_formula_from_ir(norm)
     parser_warnings = list(norm.quality.parser_warnings)
     blockers = list(norm.blockers)
+    included_slots = _included_formula_slots(norm)
     omitted_slots = _omitted_formula_slots(norm)
     deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
     if not deterministic_resolution:
@@ -1998,6 +1999,7 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "repair_required": repair_required,
         "blockers": blockers,
         "parser_warnings": parser_warnings,
+        "included_formula_slots": included_slots,
         "omitted_formula_slots": omitted_slots,
         "deterministic_resolution": deterministic_resolution,
         "schema_version": norm.schema_version,
@@ -3001,6 +3003,26 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
     if recipient_record:
         omitted["recipients"] = [recipient_record]
     return omitted
+
+
+def _included_formula_slots(norm: LegalNormIR) -> List[str]:
+    """Return IR slots represented in the generated formula text."""
+
+    included: List[str] = ["actor", "modality"]
+    if str(norm.mental_state or "").strip():
+        included.append("mental_state")
+    if norm.conditions:
+        included.append("conditions")
+    if norm.temporal_constraints:
+        included.append("temporal_constraints")
+    procedure_preds = _formula_procedure_predicates(norm.procedure)
+    procedure_preds.extend(_supplemental_procedure_predicates(norm.procedure, procedure_preds))
+    if procedure_preds:
+        included.append("procedure")
+    included.append("action")
+    if norm.exceptions:
+        included.append("exceptions")
+    return included
 
 
 def _capped_slot_omission_records(

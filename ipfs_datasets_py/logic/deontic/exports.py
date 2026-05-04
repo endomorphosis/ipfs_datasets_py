@@ -3757,6 +3757,8 @@ def _deterministic_capability_profile_slots(
     requested = tuple(dict.fromkeys(str(slot) for slot in requested_slots if slot))
     if requested != DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS:
         return requested
+    if str(norm.mental_state or "").strip():
+        return ("actor", "modality", "mental_state", "action")
 
     family = _deterministic_norm_family(norm)
     return DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY.get(family, requested)

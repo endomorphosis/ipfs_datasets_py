@@ -20,6 +20,11 @@ SUPERVISOR_ROUTER_DEFAULT_MODE="llm_router_auto"
 # LOGIC_PORT_RESPECT_INHERITED_PROVIDER=1, because other daemons also use that
 # environment key.
 SLICE_MODE="${SLICE_MODE:-balanced}"
+PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"
+WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"
+WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
+WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}}"
+WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
 LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
 LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
@@ -56,6 +61,7 @@ SUPERVISOR_AGENTIC_SANDBOX="${SUPERVISOR_AGENTIC_SANDBOX:-danger-full-access}"
 SUPERVISOR_AGENTIC_FALLBACK_SANDBOX="${SUPERVISOR_AGENTIC_FALLBACK_SANDBOX:-auto}"
 CODEX_BIN="${CODEX_BIN:-codex}"
 export IPFS_DATASETS_PY_CODEX_SANDBOX="${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}"
+WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-$IPFS_DATASETS_PY_CODEX_SANDBOX}"
 export IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE="${IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE:-0}"
 
 STATUS_PATH="${STATUS_PATH:-$DAEMON_DIR/logic-port-daemon.status.json}"
@@ -172,6 +178,12 @@ write_supervisor_status() {
   "router_default_mode": "$SUPERVISOR_ROUTER_DEFAULT_MODE",
   "enable_ipfs_accelerate": "$IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE",
   "slice_mode": "$SLICE_MODE",
+  "proposal_transport": "$PROPOSAL_TRANSPORT",
+  "worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS,
+  "worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS,
+  "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
+  "worktree_root": "$WORKTREE_ROOT",
+  "codex_bin": "$CODEX_BIN",
   "proposal_attempts": $PROPOSAL_ATTEMPTS,
   "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,
   "preflight_repair_attempts": $PREFLIGHT_REPAIR_ATTEMPTS,
@@ -553,9 +565,9 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, or backup/restore validation around maintenance edits.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include stricter JSON-only prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify other daemon families, including the separate legal parser daemon or PPD daemons; subprocesses whose ancestor command contains parser_daemon, run_legal_parser_optimizer_daemon.sh, ppd/daemon/ppd_supervisor.py, or ppd/daemon/ppd_daemon.py are out of scope.
 
@@ -579,7 +591,7 @@ After editing, run:
 - PYTHONPATH=ipfs_datasets_py python3 -m py_compile ipfs_datasets_py/ipfs_datasets_py/optimizers/logic_port_daemon.py
 - PYTHONPATH=ipfs_datasets_py pytest -q ipfs_datasets_py/tests/unit_tests/optimizers/test_logic_port_daemon.py
 
-Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not the deterministic parser plans.
+Keep the daemon pointed at docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md, not the deterministic parser plans. Keep ephemeral worktree proposal generation as the supervised default.
 PROMPT
   } >> "$REPO_ROOT/$maintenance_log" 2>&1
   rc=$?
@@ -600,7 +612,7 @@ The previous maintenance attempt failed before it could make the daemon more rob
 
 Reason: $reason
 
-Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep default provider routing delegated to ipfs_datasets_py.llm_router unless an explicit LOGIC_PORT_PROVIDER override is supplied.
+Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
 Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
@@ -675,6 +687,7 @@ daemon_stuck_phase_reason() {
     "${child_pid:-0}" \
     "$LLM_TIMEOUT_SECONDS" \
     "$COMMAND_TIMEOUT_SECONDS" \
+    "$WORKTREE_EDIT_TIMEOUT_SECONDS" \
     "$SUPERVISOR_PHASE_STUCK_GRACE_SECONDS" <<'PY'
 import json
 import sys
@@ -685,7 +698,8 @@ status_path = Path(sys.argv[1])
 child_pid = int(sys.argv[2])
 llm_timeout = float(sys.argv[3])
 command_timeout = float(sys.argv[4])
-grace = float(sys.argv[5])
+worktree_timeout = float(sys.argv[5])
+grace = float(sys.argv[6])
 
 
 def parse_ts(value):
@@ -727,6 +741,12 @@ elif state in {
     "session_started",
 }:
     limit = max(llm_timeout, command_timeout) + grace
+elif state in {
+    "requesting_worktree_edit",
+    "retrying_worktree_edit",
+    "worktree_proposal_rejected",
+}:
+    limit = worktree_timeout + grace
 
 if limit is None:
     raise SystemExit(1)
@@ -914,8 +934,9 @@ pid_has_non_logic_port_daemon_ancestor() {
 process_cwd_is_logic_repo_local() {
   local pid="$1"
   local cwd=""
+  local worktree_abs="$REPO_ROOT/$WORKTREE_ROOT"
   cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
-  [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" ]]
+  [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" || "$cwd" == "$worktree_abs"* ]]
 }
 
 terminate_orphaned_logic_port_llm_calls() {

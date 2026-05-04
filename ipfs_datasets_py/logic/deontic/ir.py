@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -1221,8 +1222,17 @@ def _ir_slot_value_is_empty(value: Any) -> bool:
 
 def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
     spans: List[List[int]] = []
-    for field_name in _FIELD_SPAN_ALIASES.get(slot, (slot,)):
-        spans.extend(_normalized_span_records(norm.field_spans.get(field_name)))
+    skip_field_aliases = False
+    if slot == "mental_state":
+        spans.extend(_mental_state_span_from_action(norm))
+    elif slot == "action":
+        action_span = _action_span_without_mental_state(norm)
+        if action_span:
+            spans.append(action_span)
+            skip_field_aliases = True
+    if not skip_field_aliases:
+        for field_name in _FIELD_SPAN_ALIASES.get(slot, (slot,)):
+            spans.extend(_normalized_span_records(norm.field_spans.get(field_name)))
     if slot == "actor" and norm.norm_type == "applicability":
         spans.extend(_nested_slot_spans(norm.cross_references))
     if (
@@ -1233,6 +1243,45 @@ def _ir_slot_spans(norm: LegalNormIR, slot: str, value: Any) -> List[List[int]]:
         spans.extend(_normalized_span_records(norm.support_span.to_list()))
     spans.extend(_nested_slot_spans(value))
     return _dedupe_spans(spans)
+
+
+def _mental_state_span_from_action(norm: LegalNormIR) -> List[List[int]]:
+    explicit = _normalized_span_records(norm.field_spans.get("mental_state"))
+    if explicit:
+        return explicit
+
+    action_spans = _normalized_span_records(norm.field_spans.get("action"))
+    if not action_spans:
+        return []
+    mental_state = str(norm.mental_state or "").strip()
+    action = str(norm.action or "").strip()
+    if not mental_state or not re.match(
+        r"^" + re.escape(mental_state) + r"\b",
+        action,
+        re.IGNORECASE,
+    ):
+        return []
+
+    action_span = action_spans[0]
+    return [[action_span[0], action_span[0] + len(mental_state)]]
+
+
+def _action_span_without_mental_state(norm: LegalNormIR) -> List[int]:
+    action_spans = _normalized_span_records(norm.field_spans.get("action"))
+    if not action_spans:
+        return []
+    mental_spans = _mental_state_span_from_action(norm)
+    if not mental_spans:
+        return []
+    mental_state = str(norm.mental_state or "").strip()
+    action = str(norm.action or "").strip()
+    if not re.match(
+        r"^" + re.escape(mental_state) + r"\b\s+",
+        action,
+        re.IGNORECASE,
+    ):
+        return []
+    return [mental_spans[0][1] + 1, action_spans[0][1]]
 
 
 def _nested_slot_spans(value: Any) -> List[List[int]]:

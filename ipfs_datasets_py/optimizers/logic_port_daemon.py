@@ -4,7 +4,9 @@ The daemon is intentionally conservative:
 
 - it uses :mod:`ipfs_datasets_py.optimizers.common` session tooling;
 - it calls ``ipfs_datasets_py.llm_router.generate_text`` with ``gpt-5.5`` by
-  default;
+  default for legacy JSON/file proposals;
+- in supervised mode it can ask Codex to edit an isolated Git worktree directly
+  and then harvest Git's canonical diff plus complete file replacements;
 - it accepts patches only as unified diffs and applies them with ``git apply``;
 - it runs a configured validation command list after each applied patch;
 - it never executes arbitrary shell commands returned by the model.
@@ -21,6 +23,7 @@ import logging
 import os
 import queue
 import re
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -199,6 +202,17 @@ class LogicPortDaemonConfig:
     max_context_files: int = 6
     max_patch_lines: int = 180
     command_timeout_seconds: int = 300
+    proposal_transport: str = "llm_router"
+    worktree_edit_timeout_seconds: int = 300
+    worktree_stale_after_seconds: int = 7200
+    worktree_codex_sandbox: str = field(
+        default_factory=lambda: os.environ.get(
+            "LOGIC_PORT_DAEMON_WORKTREE_CODEX_SANDBOX",
+            os.environ.get("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"),
+        )
+    )
+    worktree_root: Path = field(default_factory=lambda: Path("ipfs_datasets_py/.daemon/logic-port-worktrees"))
+    codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
     max_new_tokens: int = 4096
     temperature: float = 0.1
     allow_local_fallback: bool = False
@@ -234,6 +248,32 @@ class LogicPortDaemonConfig:
     def resolve(self, path: Path) -> Path:
         return path if path.is_absolute() else self.repo_root / path
 
+    def proposal_transport_mode(self) -> str:
+        """Return normalized proposal transport mode."""
+
+        mode = str(self.proposal_transport or "llm_router").strip().lower()
+        aliases = {
+            "auto": "worktree",
+            "router": "llm_router",
+            "router-json": "llm_router",
+            "router_json": "llm_router",
+            "json": "llm_router",
+            "patch": "llm_router",
+            "direct": "worktree",
+            "direct_edit": "worktree",
+            "direct-edit": "worktree",
+            "patchless": "worktree",
+            "worktree_edit": "worktree",
+            "worktree-edit": "worktree",
+        }
+        mode = aliases.get(mode, mode)
+        if mode not in {"llm_router", "hybrid", "worktree"}:
+            return "llm_router"
+        return mode
+
+    def resolved_worktree_root(self) -> Path:
+        return self.resolve(self.worktree_root)
+
 
 @dataclass
 class LogicPortArtifact:
@@ -253,6 +293,7 @@ class LogicPortArtifact:
     errors: List[str] = field(default_factory=list)
     changed_files: List[str] = field(default_factory=list)
     failure_kind: str = ""
+    proposal_transport: str = ""
 
     @property
     def validation_passed(self) -> bool:
@@ -273,6 +314,7 @@ class LogicPortArtifact:
             "errors": self.errors,
             "changed_files": self.changed_files,
             "failure_kind": self.failure_kind,
+            "proposal_transport": self.proposal_transport,
             "raw_response_prefix": self.raw_response[:2000] if self.raw_response else "",
         }
 
@@ -810,6 +852,77 @@ def _patch_changed_files(patch: str) -> List[str]:
     return paths
 
 
+def _git_status_paths(stdout: str) -> List[str]:
+    """Return paths from ``git status --porcelain`` output."""
+
+    paths: List[str] = []
+    seen = set()
+    for line in stdout.splitlines():
+        if not line:
+            continue
+        path = line[3:].strip() if len(line) > 3 else ""
+        if " -> " in path:
+            path = path.rsplit(" -> ", 1)[1].strip()
+        if path and path not in seen:
+            seen.add(path)
+            paths.append(path)
+    return paths
+
+
+def _untracked_paths_from_git_status(stdout: str) -> List[str]:
+    paths: List[str] = []
+    seen = set()
+    for line in stdout.splitlines():
+        if not line.startswith("?? "):
+            continue
+        path = line[3:].strip()
+        if path and path not in seen:
+            seen.add(path)
+            paths.append(path)
+    return paths
+
+
+def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
+    """Return registered Git worktree paths from porcelain output."""
+
+    paths: List[Path] = []
+    for line in stdout.splitlines():
+        if not line.startswith("worktree "):
+            continue
+        path_text = line[len("worktree ") :].strip()
+        if path_text:
+            paths.append(Path(path_text).resolve())
+    return paths
+
+
+def _pid_is_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _owner_pid_from_worktree(path: Path, owner: Dict[str, Any]) -> Optional[int]:
+    try:
+        pid = int(owner.get("pid") or 0)
+    except (TypeError, ValueError):
+        pid = 0
+    if pid > 0:
+        return pid
+    match = re.search(r"_(\d+)$", path.name)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except ValueError:
+        return None
+
+
 def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
     paths = [edit.get("path", "") for edit in artifact.files if edit.get("path")]
     paths.extend(_patch_changed_files(artifact.patch))
@@ -1070,16 +1183,22 @@ def run_command(
     timeout_seconds: int,
     stdin: Optional[str] = None,
 ) -> CommandResult:
-    completed = subprocess.run(
-        list(command),
-        cwd=str(cwd),
-        input=stdin,
-        text=True,
-        capture_output=True,
-        timeout=timeout_seconds,
-        check=False,
-    )
-    return CommandResult(tuple(command), completed.returncode, completed.stdout, completed.stderr)
+    try:
+        completed = subprocess.run(
+            list(command),
+            cwd=str(cwd),
+            input=stdin,
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
+        return CommandResult(tuple(command), completed.returncode, completed.stdout, completed.stderr)
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
+        stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
+        timeout_message = f"Command timed out after {timeout_seconds}s"
+        return CommandResult(tuple(command), 124, stdout or "", (stderr + "\n" + timeout_message).strip())
 
 
 class LogicPortDaemonOptimizer(BaseOptimizer):
@@ -1106,6 +1225,19 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         self._last_status_payload: Dict[str, Any] = {}
 
     def generate(self, input_data: Any, context: OptimizationContext) -> LogicPortArtifact:
+        transport_mode = self.daemon_config.proposal_transport_mode()
+        if transport_mode == "worktree":
+            return self._generate_worktree_artifact(input_data=input_data, context=context)
+        if transport_mode == "hybrid":
+            worktree_artifact = self._generate_worktree_artifact(input_data=input_data, context=context)
+            if (worktree_artifact.files or worktree_artifact.patch.strip()) and not worktree_artifact.errors:
+                return worktree_artifact
+            self._write_status(
+                "worktree_proposal_fallback_to_router",
+                artifact=worktree_artifact.to_dict(),
+                selected_task=worktree_artifact.target_task,
+            )
+
         prompt = self._build_prompt(input_data=input_data, context=context)
         selected_task = self._current_plan_task()
         target_label = selected_task.label if selected_task else ""
@@ -1119,6 +1251,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             artifact = parse_llm_patch_response(response)
             artifact.dry_run = self.daemon_config.dry_run
             artifact.target_task = target_label
+            artifact.proposal_transport = "llm_router"
             if artifact.files:
                 artifact.files = _repair_common_typescript_file_edits(artifact.files)
             preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
@@ -1166,6 +1299,241 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 artifact=artifact.to_dict(),
             )
         return artifact
+
+    def _generate_worktree_artifact(self, *, input_data: Any, context: OptimizationContext) -> LogicPortArtifact:
+        selected_task = self._current_plan_task()
+        target_label = selected_task.label if selected_task else ""
+        attempts = max(1, int(self.daemon_config.proposal_attempts))
+        artifact = LogicPortArtifact(summary="No worktree proposal generated.", target_task=target_label)
+        previous_feedback = ""
+
+        for attempt in range(1, attempts + 1):
+            self._write_status(
+                "requesting_worktree_edit",
+                attempt=attempt,
+                attempts=attempts,
+                selected_task=target_label,
+                timeout_seconds=self.daemon_config.worktree_edit_timeout_seconds,
+                worktree_root=str(self.daemon_config.resolved_worktree_root()),
+            )
+            artifact = self._request_worktree_edit_artifact(
+                input_data=input_data,
+                context=context,
+                attempt=attempt,
+                attempts=attempts,
+                previous_feedback=previous_feedback,
+            )
+            artifact.dry_run = self.daemon_config.dry_run
+            artifact.target_task = target_label
+            artifact.proposal_transport = "worktree"
+            if artifact.files:
+                artifact.files = _repair_common_typescript_file_edits(artifact.files)
+
+            preflight_errors = self._preflight_artifact(artifact, selected_task=selected_task)
+            if artifact.files:
+                preflight_errors.extend(self._typescript_replacement_preflight_errors(artifact.files))
+            if preflight_errors:
+                artifact.errors.extend(preflight_errors)
+                artifact.failure_kind = artifact.failure_kind or "preflight"
+                previous_feedback = self._proposal_feedback(artifact)
+                self._write_status(
+                    "worktree_proposal_rejected",
+                    attempt=attempt,
+                    attempts=attempts,
+                    selected_task=target_label,
+                    artifact=artifact.to_dict(),
+                )
+                continue
+            if artifact.files or artifact.patch.strip():
+                return artifact
+
+            artifact.failure_kind = artifact.failure_kind or ("parse" if artifact.errors else "empty_proposal")
+            previous_feedback = self._proposal_feedback(artifact)
+            self._write_status(
+                "worktree_proposal_rejected",
+                attempt=attempt,
+                attempts=attempts,
+                selected_task=target_label,
+                artifact=artifact.to_dict(),
+            )
+        return artifact
+
+    def _request_worktree_edit_artifact(
+        self,
+        *,
+        input_data: Any,
+        context: OptimizationContext,
+        attempt: int,
+        attempts: int,
+        previous_feedback: str,
+    ) -> LogicPortArtifact:
+        repo_root = self.daemon_config.repo_root
+        worktree_root = self.daemon_config.resolved_worktree_root()
+        cleanup_result = self.cleanup_stale_worktrees()
+        worktree_root.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        worktree_path = worktree_root / f"cycle_{attempt:02d}_{stamp}_{os.getpid()}"
+        metadata_rel = ".logic_port_worktree_proposal.json"
+        owner_rel = ".logic_port_worktree_owner.json"
+        raw_trace: Dict[str, Any] = {
+            "transport": "worktree",
+            "attempt": attempt,
+            "attempts": attempts,
+            "worktree_path": str(worktree_path),
+            "metadata_path": metadata_rel,
+            "owner_path": owner_rel,
+            "cleanup_before_create": cleanup_result,
+        }
+
+        try:
+            add_result = run_command(
+                ("git", "worktree", "add", "--detach", str(worktree_path), "HEAD"),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
+            raw_trace["worktree_add"] = add_result.compact(limit=12000)
+            if not add_result.ok:
+                return LogicPortArtifact(
+                    summary="Worktree proposal failed before Codex edit.",
+                    raw_response=json.dumps(raw_trace, indent=2, default=str),
+                    errors=["git worktree add failed: " + (add_result.stderr or add_result.stdout).strip()[:1000]],
+                    failure_kind="worktree_add",
+                    proposal_transport="worktree",
+                )
+
+            self._write_worktree_owner_file(worktree_path / owner_rel, attempt=attempt)
+            prompt = self._build_worktree_edit_prompt(
+                input_data=input_data,
+                context=context,
+                metadata_rel=metadata_rel,
+                attempt=attempt,
+                attempts=attempts,
+                previous_feedback=previous_feedback,
+            )
+            codex_result = run_command(
+                (
+                    self.daemon_config.codex_bin,
+                    "exec",
+                    "--skip-git-repo-check",
+                    "--sandbox",
+                    self.daemon_config.worktree_codex_sandbox,
+                    "-m",
+                    self.daemon_config.model_name,
+                    "-C",
+                    str(worktree_path),
+                    "-",
+                ),
+                cwd=worktree_path,
+                stdin=prompt,
+                timeout_seconds=max(1, int(self.daemon_config.worktree_edit_timeout_seconds)),
+            )
+            raw_trace["codex_exec"] = codex_result.compact(limit=20000)
+
+            full_status = run_command(
+                ("git", "status", "--porcelain"),
+                cwd=worktree_path,
+                timeout_seconds=60,
+            )
+            raw_trace["full_status"] = full_status.compact(limit=12000)
+            disallowed_paths = self._disallowed_worktree_paths(
+                _git_status_paths(full_status.stdout),
+                metadata_rel=metadata_rel,
+                owner_rel=owner_rel,
+            )
+            if disallowed_paths:
+                raw_trace["disallowed_paths"] = disallowed_paths
+                return LogicPortArtifact(
+                    summary="Worktree proposal edited paths outside the logic-port allowlist.",
+                    raw_response=json.dumps(raw_trace, indent=2, default=str),
+                    errors=["Worktree proposal edited disallowed paths: " + ", ".join(disallowed_paths[:12])],
+                    failure_kind="worktree_disallowed_paths",
+                    proposal_transport="worktree",
+                )
+
+            diff_paths = self._worktree_diff_paths()
+            status_result = run_command(
+                ("git", "status", "--porcelain", "--", *diff_paths),
+                cwd=worktree_path,
+                timeout_seconds=60,
+            )
+            raw_trace["status"] = status_result.compact(limit=12000)
+            untracked_paths = _untracked_paths_from_git_status(status_result.stdout)
+            raw_trace["untracked_paths"] = untracked_paths
+            if untracked_paths:
+                add_intent = run_command(
+                    ("git", "add", "-N", "--", *untracked_paths),
+                    cwd=worktree_path,
+                    timeout_seconds=60,
+                )
+                raw_trace["git_add_intent_to_add"] = add_intent.compact(limit=12000)
+
+            diff_result = run_command(
+                ("git", "diff", "--binary", "--", *diff_paths),
+                cwd=worktree_path,
+                timeout_seconds=60,
+            )
+            raw_trace["git_diff"] = diff_result.compact(limit=20000)
+            patch = diff_result.stdout if diff_result.ok else ""
+            metadata = self._read_worktree_metadata(worktree_path / metadata_rel)
+            raw_trace["metadata"] = metadata
+            changed_files = _patch_changed_files(patch)
+            if not changed_files:
+                changed_files = [
+                    str(path)
+                    for path in metadata.get("changed_files", [])
+                    if isinstance(path, str) and path.strip()
+                ] if isinstance(metadata.get("changed_files"), list) else []
+            files = self._worktree_file_edits(worktree_path, changed_files)
+            validation_commands = [
+                [str(part) for part in command]
+                for command in metadata.get("validation_commands", [])
+                if isinstance(command, list) and all(isinstance(part, str) for part in command)
+            ] if isinstance(metadata.get("validation_commands"), list) else []
+            tasks = [
+                str(item)
+                for item in metadata.get("tasks", [])
+                if isinstance(item, (str, int, float)) and str(item).strip()
+            ] if isinstance(metadata.get("tasks"), list) else []
+
+            errors: List[str] = []
+            failure_kind = ""
+            if not patch.strip() and not files:
+                reason = "worktree edit produced no allowed TypeScript port changes"
+                if not codex_result.ok:
+                    reason = "worktree edit command failed without producing allowed changes: " + (
+                        codex_result.stderr or codex_result.stdout
+                    ).strip()[:1000]
+                    failure_kind = "worktree_codex_failed"
+                errors.append(reason)
+                failure_kind = failure_kind or "worktree_no_change"
+            selected_task = self._current_plan_task()
+
+            return LogicPortArtifact(
+                summary=str(metadata.get("summary") or "Worktree direct-edit proposal."),
+                impact=str(metadata.get("impact") or "Git harvested the isolated-worktree edits for validation."),
+                patch=patch,
+                files=files,
+                tasks=tasks or ([selected_task.label] if selected_task else []),
+                validation_commands=validation_commands,
+                raw_response=json.dumps(raw_trace, indent=2, default=str),
+                errors=errors,
+                failure_kind=failure_kind,
+                changed_files=changed_files,
+                proposal_transport="worktree",
+            )
+        finally:
+            remove_result = run_command(
+                ("git", "worktree", "remove", "--force", str(worktree_path)),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
+            if not remove_result.ok and worktree_path.exists():
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            run_command(
+                ("git", "worktree", "prune", "--expire", "now"),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
 
     def critique(self, artifact: LogicPortArtifact, context: OptimizationContext) -> Tuple[float, List[str]]:
         feedback: List[str] = []
@@ -1317,6 +1685,12 @@ Critical correction for attempt {attempt}:
         if preflight_errors:
             artifact.errors.extend(preflight_errors)
             artifact.failure_kind = "preflight"
+            return artifact
+
+        dirty_errors = self._dirty_touched_file_errors(_artifact_paths(artifact))
+        if dirty_errors:
+            artifact.errors.extend(dirty_errors)
+            artifact.failure_kind = "dirty_touched_files"
             return artifact
 
         if artifact.files:
@@ -1472,6 +1846,7 @@ Critical correction for attempt {attempt}:
             constraints={
                 "model_name": self.daemon_config.model_name,
                 "dry_run": self.daemon_config.dry_run,
+                "proposal_transport": self.daemon_config.proposal_transport_mode(),
             },
         )
         result = self.run_session({}, context)
@@ -1503,6 +1878,7 @@ Critical correction for attempt {attempt}:
                 "model_name": self.daemon_config.model_name,
                 "max_iterations": self.daemon_config.max_iterations,
                 "dry_run": self.daemon_config.dry_run,
+                "proposal_transport": self.daemon_config.proposal_transport_mode(),
             },
             component=self.__class__.__name__,
         )
@@ -2061,6 +2437,11 @@ Critical correction for attempt {attempt}:
             "blocked_backlog": blocked_backlog,
             "blocked_task_strategy": self.daemon_config.blocked_task_strategy,
             "slice_mode": self.daemon_config.slice_mode,
+            "proposal_transport": self.daemon_config.proposal_transport_mode(),
+            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+            "worktree_stale_after_seconds": self.daemon_config.worktree_stale_after_seconds,
+            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
+            "worktree_root": str(self.daemon_config.resolved_worktree_root()),
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "typescript_quality_failures": typescript_quality_failures,
@@ -2157,6 +2538,13 @@ Critical correction for attempt {attempt}:
             "heartbeat_at": now,
             "state": state,
             "slice_mode": self.daemon_config.slice_mode,
+            "model_name": self.daemon_config.model_name,
+            "provider": self._resolved_provider() or "auto",
+            "proposal_transport": self.daemon_config.proposal_transport_mode(),
+            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+            "worktree_stale_after_seconds": self.daemon_config.worktree_stale_after_seconds,
+            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
+            "worktree_root": str(self.daemon_config.resolved_worktree_root()),
             **details,
         }
         if state != "heartbeat":
@@ -2617,6 +3005,262 @@ Critical correction for attempt {attempt}:
     def _markdown_task_label(self, task: Optional[PlanTask]) -> str:
         return task.label.replace("`", "'") if task else "none"
 
+    def cleanup_stale_worktrees(self) -> Dict[str, Any]:
+        """Remove daemon-created proposal worktrees left behind by crashes."""
+
+        repo_root = self.daemon_config.repo_root
+        worktree_root = self.daemon_config.resolved_worktree_root()
+        stale_after = max(1, int(self.daemon_config.worktree_stale_after_seconds))
+        result: Dict[str, Any] = {
+            "valid": True,
+            "worktree_root": str(worktree_root),
+            "stale_after_seconds": stale_after,
+            "removed": [],
+            "skipped": [],
+            "errors": [],
+        }
+        prune_before = run_command(
+            ("git", "worktree", "prune", "--expire", "now"),
+            cwd=repo_root,
+            timeout_seconds=60,
+        )
+        result["prune_before"] = prune_before.compact(limit=12000)
+        if not worktree_root.exists():
+            return result
+
+        root_resolved = worktree_root.resolve()
+        list_result = run_command(
+            ("git", "worktree", "list", "--porcelain"),
+            cwd=repo_root,
+            timeout_seconds=60,
+        )
+        result["worktree_list"] = list_result.compact(limit=12000)
+        registered_paths = {str(path) for path in _git_worktree_paths_from_porcelain(list_result.stdout)}
+        now = time.time()
+
+        for candidate in sorted(worktree_root.glob("cycle_*")):
+            if not candidate.exists():
+                continue
+            try:
+                resolved = candidate.resolve()
+                if not resolved.is_relative_to(root_resolved):
+                    result["skipped"].append({"path": str(candidate), "reason": "outside_worktree_root"})
+                    continue
+                if not candidate.is_dir():
+                    result["skipped"].append({"path": str(candidate), "reason": "not_directory"})
+                    continue
+                owner = self._read_worktree_owner_file(candidate / ".logic_port_worktree_owner.json")
+                owner_pid = _owner_pid_from_worktree(candidate, owner)
+                owner_alive = bool(owner_pid and _pid_is_alive(owner_pid))
+                try:
+                    created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
+                except (OSError, TypeError, ValueError):
+                    created_at = candidate.stat().st_mtime
+                age_seconds = max(0.0, now - created_at)
+                if owner_alive:
+                    result["skipped"].append(
+                        {
+                            "path": str(candidate),
+                            "reason": "owner_pid_alive",
+                            "owner_pid": owner_pid,
+                            "age_seconds": round(age_seconds, 3),
+                        }
+                    )
+                    continue
+                if age_seconds < stale_after:
+                    result["skipped"].append(
+                        {
+                            "path": str(candidate),
+                            "reason": "not_stale_yet",
+                            "owner_pid": owner_pid,
+                            "age_seconds": round(age_seconds, 3),
+                        }
+                    )
+                    continue
+
+                registered = str(resolved) in registered_paths
+                if registered:
+                    remove_result = run_command(
+                        ("git", "worktree", "remove", "--force", str(resolved)),
+                        cwd=repo_root,
+                        timeout_seconds=60,
+                    )
+                    if not remove_result.ok and candidate.exists():
+                        shutil.rmtree(candidate, ignore_errors=True)
+                else:
+                    shutil.rmtree(candidate, ignore_errors=True)
+                    remove_result = CommandResult(
+                        ("shutil.rmtree", str(resolved)),
+                        0 if not candidate.exists() else 1,
+                        "",
+                        "" if not candidate.exists() else "directory still exists after rmtree",
+                    )
+                record = {
+                    "path": str(candidate),
+                    "registered": registered,
+                    "owner_pid": owner_pid,
+                    "age_seconds": round(age_seconds, 3),
+                    "remove": remove_result.compact(limit=12000),
+                }
+                if remove_result.ok:
+                    result["removed"].append(record)
+                else:
+                    result["valid"] = False
+                    result["errors"].append(record)
+            except Exception as exc:
+                result["valid"] = False
+                result["errors"].append({"path": str(candidate), "exception": f"{type(exc).__name__}: {exc}"})
+
+        prune_after = run_command(
+            ("git", "worktree", "prune", "--expire", "now"),
+            cwd=repo_root,
+            timeout_seconds=60,
+        )
+        result["prune_after"] = prune_after.compact(limit=12000)
+        if not prune_after.ok:
+            result["valid"] = False
+        return result
+
+    def _write_worktree_owner_file(self, path: Path, *, attempt: int) -> None:
+        payload = {
+            "schema": "ipfs_datasets_py.logic_port_worktree_owner",
+            "pid": os.getpid(),
+            "attempt": attempt,
+            "repo_root": str(self.daemon_config.repo_root),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at_epoch": time.time(),
+            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
+        }
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    def _read_worktree_owner_file(self, path: Path) -> Dict[str, Any]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _read_worktree_metadata(self, path: Path) -> Dict[str, Any]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def _build_worktree_edit_prompt(
+        self,
+        *,
+        input_data: Any,
+        context: OptimizationContext,
+        metadata_rel: str,
+        attempt: int,
+        attempts: int,
+        previous_feedback: str,
+    ) -> str:
+        selected_task = self._current_plan_task()
+        selected_task_text = selected_task.label if selected_task else "[No parsed task found]"
+        planning_context = self._build_prompt(input_data=input_data, context=context)
+        payload = {
+            "transport": "worktree_direct_edit",
+            "attempt": attempt,
+            "attempts": attempts,
+            "metadata_path": metadata_rel,
+            "selected_task": selected_task_text,
+            "allowed_edit_paths": self._worktree_diff_paths(),
+            "required_metadata_schema": {
+                "summary": "string",
+                "impact": "string",
+                "tasks": ["string"],
+                "changed_files": ["string"],
+                "validation_commands": [["string"]],
+            },
+            "previous_rejection_feedback": previous_feedback,
+        }
+        header = f"""You are Codex running inside a throwaway Git worktree for the TypeScript/WASM logic-port daemon.
+Edit files directly in this isolated worktree. Do not commit. Do not output or hand-author a patch.
+The daemon will harvest Git's canonical diff and complete file contents after your edit, then validate them in the real project.
+
+Task source:
+- Use docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md as the controlling task ledger.
+- Do not work from the deterministic legal-parser plans; that is a separate daemon.
+- The daemon-selected task for this cycle is: {selected_task_text}
+
+Hard constraints:
+- Port Python ipfs_datasets_py logic behavior into browser-native TypeScript/WASM.
+- Do not add server calls, Python runtime bridges, filesystem/subprocess/RPC fallbacks, or Node-only browser-runtime dependencies.
+- Keep Python ML and spaCy parity in scope through deterministic TypeScript, browser-native model artifacts, or explicit fail-closed local adapters.
+- Make one coherent implementation slice large enough to move parity, with focused Jest validation where relevant.
+- Only edit paths listed in allowed_edit_paths.
+- After editing, write strict JSON metadata to {metadata_rel}.
+
+Worktree metadata payload:
+{json.dumps(payload, indent=2, default=str)}
+
+The planning context below may say to return JSON with `files` or `patch`; ignore that output-format instruction in worktree mode. Use direct file edits plus metadata JSON instead.
+
+PLANNING CONTEXT:
+"""
+        prompt = header + planning_context
+        budget = max(4000, int(self.daemon_config.max_prompt_chars))
+        if len(prompt) > budget:
+            return prompt[:budget] + "\n\n[worktree edit prompt truncated]\n"
+        return prompt
+
+    def _worktree_diff_paths(self) -> List[str]:
+        paths = [
+            self._repo_relative_path(self.daemon_config.typescript_logic_dir).rstrip("/"),
+            "docs",
+            "ipfs_datasets_py/docs/logic",
+        ]
+        ordered: List[str] = []
+        seen = set()
+        for path in paths:
+            normalized = path.replace("\\", "/").strip()
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                ordered.append(normalized)
+        return ordered
+
+    def _repo_relative_path(self, path: Path) -> str:
+        candidate = path if path.is_absolute() else self.daemon_config.repo_root / path
+        try:
+            return candidate.relative_to(self.daemon_config.repo_root).as_posix()
+        except ValueError:
+            return path.as_posix().replace("\\", "/")
+
+    def _disallowed_worktree_paths(self, paths: Sequence[str], *, metadata_rel: str, owner_rel: str) -> List[str]:
+        ignored = {metadata_rel, owner_rel}
+        disallowed: List[str] = []
+        for path in paths:
+            normalized = path.replace("\\", "/")
+            if normalized in ignored:
+                continue
+            if any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
+                continue
+            disallowed.append(normalized)
+        return disallowed
+
+    def _worktree_file_edits(self, worktree_path: Path, changed_files: Sequence[str]) -> List[Dict[str, str]]:
+        edits: List[Dict[str, str]] = []
+        seen = set()
+        for path_text in changed_files:
+            normalized = path_text.replace("\\", "/").strip()
+            if not normalized or normalized in seen:
+                continue
+            if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
+                continue
+            path = worktree_path / normalized
+            if not path.exists() or not path.is_file():
+                continue
+            try:
+                content = path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            edits.append({"path": normalized, "content": content})
+            seen.add(normalized)
+        return edits
+
     def _safe_edit_path(self, raw_path: str) -> Path:
         if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
             raise ValueError(f"Unsafe file edit path: {raw_path!r}")
@@ -2625,10 +3269,38 @@ Critical correction for attempt {attempt}:
             raise ValueError(f"File edit path is outside daemon allowlist: {raw_path!r}")
         return self.daemon_config.resolve(Path(normalized))
 
+    def _dirty_touched_file_errors(self, paths: Sequence[str]) -> List[str]:
+        normalized_paths = []
+        seen = set()
+        for path in paths:
+            normalized = str(path or "").replace("\\", "/").strip()
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                normalized_paths.append(normalized)
+        if not normalized_paths:
+            return []
+        status = run_command(
+            ("git", "status", "--porcelain", "--", *normalized_paths),
+            cwd=self.daemon_config.repo_root,
+            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+        )
+        if not status.ok:
+            return []
+        dirty = _git_status_paths(status.stdout)
+        if not dirty:
+            return []
+        return [
+            "Rejected proposal because these touched files already have uncommitted changes in the main worktree: "
+            + ", ".join(dirty[:20])
+        ]
+
     def _apply_file_edits_with_validation(self, edits: List[Dict[str, str]]) -> Tuple[bool, List[CommandResult], List[str]]:
         originals: Dict[Path, Optional[str]] = {}
         touched: List[Path] = []
         applied = False
+        dirty_errors = self._dirty_touched_file_errors([str(edit.get("path", "")) for edit in edits])
+        if dirty_errors:
+            raise ValueError(dirty_errors[0])
         for edit in edits:
             path = self._safe_edit_path(edit["path"])
             if path not in originals:
@@ -2680,7 +3352,14 @@ Critical correction for attempt {attempt}:
                     f"Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
                 )
         paths = _artifact_paths(artifact)
-        if self.daemon_config.prefer_file_edits and artifact.patch.strip() and not artifact.files and _has_runtime_logic_change(paths):
+        patch_from_worktree = artifact.proposal_transport == "worktree" or self.daemon_config.proposal_transport_mode() == "worktree"
+        if (
+            self.daemon_config.prefer_file_edits
+            and artifact.patch.strip()
+            and not artifact.files
+            and _has_runtime_logic_change(paths)
+            and not patch_from_worktree
+        ):
             errors.append(
                 "Rejected proposal because runtime TypeScript changes must use JSON `files` complete replacements "
                 "instead of a unified diff patch for this daemon run."
@@ -3550,6 +4229,49 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--model", default="gpt-5.5", help="llm_router model name")
     parser.add_argument("--provider", default=None, help="Optional llm_router provider")
     parser.add_argument(
+        "--proposal-transport",
+        choices=("llm_router", "router", "router-json", "patch", "hybrid", "worktree", "patchless", "direct-edit"),
+        default=os.environ.get("LOGIC_PORT_DAEMON_PROPOSAL_TRANSPORT", "worktree"),
+        help=(
+            "How to obtain candidate changes. worktree lets Codex edit an isolated Git worktree "
+            "and the daemon harvests file replacements/diffs; llm_router uses legacy JSON files/patch proposals."
+        ),
+    )
+    parser.add_argument(
+        "--worktree-edit-timeout",
+        "--worktree-edit-timeout-seconds",
+        dest="worktree_edit_timeout",
+        type=int,
+        default=int(os.environ.get("LOGIC_PORT_DAEMON_WORKTREE_EDIT_TIMEOUT_SECONDS", "300")),
+        help="Timeout for isolated-worktree direct-edit proposal generation.",
+    )
+    parser.add_argument(
+        "--worktree-stale-after",
+        "--worktree-stale-after-seconds",
+        dest="worktree_stale_after",
+        type=int,
+        default=int(os.environ.get("LOGIC_PORT_DAEMON_WORKTREE_STALE_AFTER_SECONDS", "7200")),
+        help="Age after which dead daemon-created worktrees are pruned.",
+    )
+    parser.add_argument(
+        "--worktree-codex-sandbox",
+        default=os.environ.get(
+            "LOGIC_PORT_DAEMON_WORKTREE_CODEX_SANDBOX",
+            os.environ.get("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"),
+        ),
+        help="Codex sandbox mode used for direct-edit proposal worktrees.",
+    )
+    parser.add_argument(
+        "--worktree-root",
+        default=os.environ.get("LOGIC_PORT_DAEMON_WORKTREE_ROOT", "ipfs_datasets_py/.daemon/logic-port-worktrees"),
+        help="Directory for throwaway direct-edit Git worktrees.",
+    )
+    parser.add_argument(
+        "--codex-bin",
+        default=os.environ.get("CODEX_BIN", "codex"),
+        help="Codex executable used by worktree/direct-edit proposal transport.",
+    )
+    parser.add_argument(
         "--slice-mode",
         choices=("small", "balanced", "broad"),
         default="balanced",
@@ -3626,6 +4348,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         max_prompt_chars=max(4000, args.max_prompt_chars),
         llm_timeout_seconds=max(1, args.llm_timeout),
         command_timeout_seconds=max(1, args.command_timeout),
+        proposal_transport=str(args.proposal_transport),
+        worktree_edit_timeout_seconds=max(1, args.worktree_edit_timeout),
+        worktree_stale_after_seconds=max(1, args.worktree_stale_after),
+        worktree_codex_sandbox=str(args.worktree_codex_sandbox),
+        worktree_root=Path(args.worktree_root),
+        codex_bin=str(args.codex_bin),
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
         max_task_total_failure_rounds=max(0, args.max_task_failures),

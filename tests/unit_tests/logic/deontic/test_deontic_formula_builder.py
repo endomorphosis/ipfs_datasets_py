@@ -88,6 +88,14 @@ def test_ir_formula_builder_uses_detail_only_mental_state_slot():
 
     assert norm.mental_state == "knowingly"
     assert formula == "O(∀x (Inspector(x) ∧ Knowingly(x) → ApproveDischarge(x)))"
+    record = build_deontic_formula_record_from_ir(norm)
+    assert record["included_formula_slots"] == [
+        "actor",
+        "modality",
+        "mental_state",
+        "action",
+    ]
+    assert record["omitted_formula_slots"] == {}
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

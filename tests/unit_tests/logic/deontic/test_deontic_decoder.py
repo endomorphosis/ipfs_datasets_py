@@ -57,7 +57,30 @@ def test_decoder_reconstructs_separated_mental_state_slot_with_provenance():
     already_decoded = decode_legal_norm_ir(already_encoded)
 
     assert already_decoded.text == "Applicant shall knowingly file the report."
-    assert [phrase.slot for phrase in already_decoded.phrases] == ["actor", "modality", "action"]
+    assert [phrase.slot for phrase in already_decoded.phrases] == [
+        "actor",
+        "modality",
+        "mental_state",
+        "action",
+    ]
+
+
+def test_decoder_splits_source_grounded_mental_state_from_action_phrase():
+    element, norm, decoded = _decode("The inspector shall knowingly approve the discharge.")
+
+    assert norm.mental_state == "knowingly"
+    assert norm.action == "knowingly approve the discharge"
+    assert decoded.text == "Inspector shall knowingly approve the discharge."
+    assert [phrase.slot for phrase in decoded.phrases] == [
+        "actor",
+        "modality",
+        "mental_state",
+        "action",
+    ]
+    assert decoded.phrases[2].spans == [[20, 29]]
+    assert decoded.phrases[3].text == "approve the discharge"
+    assert decoded.phrases[3].spans == [[30, 51]]
+    assert element["field_spans"]["action"] == [20, 51]
 
 
 def test_decoder_reconstructs_separated_recipient_slot_with_provenance():

@@ -20,6 +20,7 @@ WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
 WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-danger-full-access}"
 REPAIR_FAILED_TESTS_BEFORE_ROLLBACK="${REPAIR_FAILED_TESTS_BEFORE_ROLLBACK:-1}"
 FAILED_TEST_REPAIR_ATTEMPTS="${FAILED_TEST_REPAIR_ATTEMPTS:-1}"
+WORKTREE_NO_CHILD_STALL_SECONDS="${WORKTREE_NO_CHILD_STALL_SECONDS:-240}"
 DAEMON_DIR="${DAEMON_DIR:-.daemon}"
 SUPERVISOR_HEARTBEAT_SECONDS="${SUPERVISOR_HEARTBEAT_SECONDS:-30}"
 WATCHDOG_STALE_AFTER_SECONDS="${WATCHDOG_STALE_AFTER_SECONDS:-420}"
@@ -290,6 +291,7 @@ write_supervisor_status() {
   "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
   "repair_failed_tests_before_rollback": $(json_bool "$REPAIR_FAILED_TESTS_BEFORE_ROLLBACK"),
   "failed_test_repair_attempts": $FAILED_TEST_REPAIR_ATTEMPTS,
+  "worktree_no_child_stall_seconds": $WORKTREE_NO_CHILD_STALL_SECONDS,
   "last_exit_code": $last_exit_code,
   "last_recycle_reason": "$last_recycle_reason"
 }
@@ -2156,6 +2158,126 @@ raise SystemExit(0 if age > threshold else 1)
 PY
 }
 
+worktree_phase_without_active_child_reason() {
+  python3 - "$REPO_ROOT/$CURRENT_STATUS_PATH" "${child_pid:-}" "$WORKTREE_NO_CHILD_STALL_SECONDS" <<'PY'
+import json
+import os
+import sys
+import time
+from pathlib import Path
+from datetime import datetime
+
+status_path, child_pid_raw, threshold_raw = sys.argv[1:4]
+worktree_phases = {
+    "requesting_worktree_edit",
+    "retrying_worktree_edit",
+    "repairing_failed_worktree_edit",
+    "repairing_failed_tests_before_rollback",
+}
+
+
+def parse_epoch(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
+def pid_alive(pid):
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except Exception:
+        return False
+
+
+def process_table():
+    parents = {}
+    commands = {}
+    proc_root = Path("/proc")
+    if not proc_root.exists():
+        return parents, commands
+    for entry in proc_root.iterdir():
+        if not entry.name.isdigit():
+            continue
+        pid = int(entry.name)
+        try:
+            ppid = 0
+            for line in (entry / "status").read_text(encoding="utf-8", errors="replace").splitlines():
+                if line.startswith("PPid:"):
+                    ppid = int(line.split(":", 1)[1].strip() or "0")
+                    break
+            cmdline = (entry / "cmdline").read_bytes().replace(b"\0", b" ").decode(
+                "utf-8",
+                errors="replace",
+            ).strip()
+            if not cmdline:
+                cmdline = "[" + (entry / "comm").read_text(encoding="utf-8", errors="replace").strip() + "]"
+        except Exception:
+            continue
+        parents[pid] = ppid
+        commands[pid] = cmdline
+    return parents, commands
+
+
+def descendants(root_pid, parents, commands):
+    children = {}
+    for pid, ppid in parents.items():
+        children.setdefault(ppid, []).append(pid)
+    stack = list(children.get(root_pid, []))
+    seen = set()
+    found = []
+    while stack:
+        pid = stack.pop(0)
+        if pid in seen:
+            continue
+        seen.add(pid)
+        found.append((pid, parents.get(pid), commands.get(pid, "")))
+        stack.extend(children.get(pid, []))
+    return found
+
+
+try:
+    status = json.loads(Path(status_path).read_text(encoding="utf-8"))
+except Exception:
+    raise SystemExit(1)
+phase = str(status.get("phase") or "")
+if phase not in worktree_phases:
+    raise SystemExit(1)
+try:
+    threshold = max(0.0, float(threshold_raw))
+except Exception:
+    threshold = 240.0
+if threshold <= 0:
+    raise SystemExit(1)
+phase_started = parse_epoch(status.get("phase_started_at") or status.get("phase_updated_at"))
+if phase_started is None:
+    raise SystemExit(1)
+phase_age = max(0.0, time.time() - phase_started)
+if phase_age < threshold:
+    raise SystemExit(1)
+daemon_pid = status.get("heartbeat_pid") or status.get("pid") or child_pid_raw
+if not daemon_pid or not pid_alive(daemon_pid):
+    raise SystemExit(1)
+parents, commands = process_table()
+desc = descendants(int(daemon_pid), parents, commands)
+workers = [
+    (pid, cmd)
+    for pid, _ppid, cmd in desc
+    if "codex" in cmd.lower() and " exec" in (" " + " ".join(cmd.lower().split()))
+]
+if workers:
+    raise SystemExit(1)
+print(
+    "worktree_phase_without_active_child:"
+    f"phase={phase}:age={phase_age:.1f}s:threshold={threshold:.1f}s:"
+    f"daemon_pid={daemon_pid}:descendants={len(desc)}"
+)
+PY
+}
+
 terminate_pid_tree() {
   local pid="$1"
   local child=""
@@ -2305,6 +2427,7 @@ while true; do
       --worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"
       --codex-bin "$CODEX_BIN"
       --failed-test-repair-attempts "$FAILED_TEST_REPAIR_ATTEMPTS"
+      --worktree-no-child-stall-seconds "$WORKTREE_NO_CHILD_STALL_SECONDS"
       --heartbeat-interval-seconds "$HEARTBEAT_INTERVAL_SECONDS"
       --test-timeout-seconds "$TEST_TIMEOUT_SECONDS"
       --apply-patches
@@ -2338,6 +2461,13 @@ while true; do
     if heartbeat_is_stale; then
       last_recycle_reason="stale_heartbeat"
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after stale daemon heartbeat older than ${WATCHDOG_STALE_AFTER_SECONDS}s" >> "$REPO_ROOT/$log_path"
+      stop_child
+      break
+    fi
+    worktree_no_child_reason="$(worktree_phase_without_active_child_reason || true)"
+    if [[ -n "$worktree_no_child_reason" ]]; then
+      last_recycle_reason="worktree_phase_without_active_child"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) watchdog recycling child $child_pid after $worktree_no_child_reason" >> "$REPO_ROOT/$log_path"
       stop_child
       break
     fi
