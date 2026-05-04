@@ -3788,6 +3788,22 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
 
+    if action_predicate.startswith((
+        "AdministerAgreement",
+        "AdministerContract",
+        "AdministerProcurement",
+        "Award",
+        "OpenBid",
+        "OpenBids",
+        "OpenProposal",
+        "OpenProposals",
+        "Procure",
+        "SelectBidder",
+        "SelectContractor",
+        "SelectVendor",
+        "Solicit",
+    )):
+        return "procurement_contracting_duty"
     if action_predicate.startswith(("Abate", "Remediate", "Mitigate", "Enforce", "Remedy")):
         return "enforcement_remedy_duty"
     if action_predicate.startswith((

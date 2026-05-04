@@ -505,6 +505,36 @@ def _normalize_procurement_award_light_verb_action(action_text: str) -> str:
             r"awards\s+(?:of|for)\s+(?:the\s+)?(.+)$",
             "award",
         ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|record|records|recorded|recording)\s+"
+            r"(?:a\s+|an\s+|the\s+)?selection\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "select",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|approve|approves|approved|approving|record|records|recorded|recording)\s+"
+            r"selections\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "select",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|hold|holds|held|holding|complete|completes|completed|completing|record|records|recorded|recording)\s+"
+            r"(?:a\s+|an\s+|the\s+)?bid\s+opening\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "open",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|hold|holds|held|holding|complete|completes|completed|completing|record|records|recorded|recording)\s+"
+            r"bid\s+openings\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "open",
+        ),
+        (
+            r"^(?:perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?contract\s+administration\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "administer",
+        ),
+        (
+            r"^(?:perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|carry\s+out|carries\s+out|carried\s+out|carrying\s+out|complete|completes|completed|completing)\s+"
+            r"contract\s+administrations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "administer",
+        ),
     ]
     for pattern, verb in patterns:
         match = re.match(pattern, text, re.IGNORECASE)
