@@ -9,6 +9,7 @@ SUPERVISOR_PID_PATH="${SUPERVISOR_PID_PATH:-$DAEMON_DIR/logic-port-daemon-superv
 CHILD_PID_PATH="${CHILD_PID_PATH:-$DAEMON_DIR/logic-port-daemon.pid}"
 STOP_GRACE_SECONDS="${STOP_GRACE_SECONDS:-10}"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-logic-port-daemon}"
+WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
 
 terminate_pid_tree() {
   local pid="$1"
@@ -85,18 +86,22 @@ terminate_repo_local_logic_codex_execs() {
   local pid=""
   local args=""
   local cwd=""
+  local worktree_abs="$REPO_ROOT/$WORKTREE_ROOT"
   while read -r pid args; do
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
       continue
     fi
-    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"--ephemeral --json -"* ]] && [[ "$args" != *"$WORKTREE_ROOT"* ]] && [[ "$args" != *"$worktree_abs"* ]]; then
       continue
     fi
     if pid_has_non_logic_port_daemon_ancestor "$pid"; then
       continue
     fi
     cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
-    if [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" ]]; then
+    if [[ "$cwd" == "$REPO_ROOT" || "$cwd" == "$REPO_ROOT/ipfs_datasets_py" || "$cwd" == "$worktree_abs"* ]]; then
       terminate_pid_tree "$pid"
     fi
   done < <(ps -eo pid=,args=)

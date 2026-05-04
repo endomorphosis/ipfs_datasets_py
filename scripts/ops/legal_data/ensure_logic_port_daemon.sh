@@ -14,6 +14,12 @@ ENSURE_LAUNCH_MODE="${ENSURE_LAUNCH_MODE:-nohup}"
 ENSURE_TMUX_RESTART_DELAY_SECONDS="${ENSURE_TMUX_RESTART_DELAY_SECONDS:-5}"
 TMUX_SESSION_NAME="${TMUX_SESSION_NAME:-logic-port-daemon}"
 LOGIC_PORT_PROVIDER="${LOGIC_PORT_PROVIDER:-}"
+PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"
+WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"
+WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
+WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}}"
+WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
+WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 cd "$REPO_ROOT" || exit 2
@@ -78,14 +84,21 @@ launch_supervisor() {
     if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
       tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
     fi
-    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
+    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") PROPOSAL_TRANSPORT=$(printf '%q' "$PROPOSAL_TRANSPORT") WORKTREE_EDIT_TIMEOUT_SECONDS=$(printf '%q' "$WORKTREE_EDIT_TIMEOUT_SECONDS") WORKTREE_STALE_AFTER_SECONDS=$(printf '%q' "$WORKTREE_STALE_AFTER_SECONDS") WORKTREE_CODEX_SANDBOX=$(printf '%q' "$WORKTREE_CODEX_SANDBOX") WORKTREE_ROOT=$(printf '%q' "$WORKTREE_ROOT") WORKTREE_REPAIR_ATTEMPTS=$(printf '%q' "$WORKTREE_REPAIR_ATTEMPTS") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
     if tmux new-session -d -s "$TMUX_SESSION_NAME" -c "$REPO_ROOT" "$command_text"; then
       launch_mode="tmux"
       launcher_pid="0"
       return 0
     fi
   fi
-  LOGIC_PORT_PROVIDER="$LOGIC_PORT_PROVIDER" nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
+  LOGIC_PORT_PROVIDER="$LOGIC_PORT_PROVIDER" \
+    PROPOSAL_TRANSPORT="$PROPOSAL_TRANSPORT" \
+    WORKTREE_EDIT_TIMEOUT_SECONDS="$WORKTREE_EDIT_TIMEOUT_SECONDS" \
+    WORKTREE_STALE_AFTER_SECONDS="$WORKTREE_STALE_AFTER_SECONDS" \
+    WORKTREE_CODEX_SANDBOX="$WORKTREE_CODEX_SANDBOX" \
+    WORKTREE_ROOT="$WORKTREE_ROOT" \
+    WORKTREE_REPAIR_ATTEMPTS="$WORKTREE_REPAIR_ATTEMPTS" \
+    nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
     </dev/null > "$SUPERVISOR_OUT_PATH" 2>&1 &
   launcher_pid=$!
 }
@@ -138,6 +151,9 @@ payload = {
     "launch_mode": launch_mode,
     "tmux_session_name": tmux_session_name,
     "tmux_restart_delay_seconds": int(tmux_restart_delay_seconds),
+    "proposal_transport": check.get("proposal_transport"),
+    "worktree_root": check.get("worktree_root"),
+    "worktree_repair_attempts": check.get("worktree_repair_attempts"),
     "supervisor_pid": supervisor_pid,
     "supervisor_pid_alive": supervisor_pid_alive,
     "supervisor_status": supervisor_status.get("status"),

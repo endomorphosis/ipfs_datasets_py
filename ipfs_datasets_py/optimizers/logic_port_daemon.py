@@ -213,6 +213,7 @@ class LogicPortDaemonConfig:
     )
     worktree_root: Path = field(default_factory=lambda: Path("ipfs_datasets_py/.daemon/logic-port-worktrees"))
     codex_bin: str = field(default_factory=lambda: os.environ.get("CODEX_BIN", "codex"))
+    worktree_repair_attempts: int = 1
     max_new_tokens: int = 4096
     temperature: float = 0.1
     allow_local_fallback: bool = False
@@ -1705,8 +1706,15 @@ Critical correction for attempt {attempt}:
                     artifact.errors.append("File edits made no content changes.")
                     artifact.failure_kind = "no_change"
                 else:
-                    repaired = self._repair_file_edits_after_validation(artifact, context=context)
+                    repaired = (
+                        self._repair_worktree_file_edits_after_validation(artifact, context=context)
+                        if artifact.proposal_transport == "worktree"
+                        else LogicPortArtifact(raw_response=artifact.raw_response)
+                    )
+                    if not repaired.files:
+                        repaired = self._repair_file_edits_after_validation(artifact, context=context)
                     if repaired.files:
+                        repaired.proposal_transport = repaired.proposal_transport or artifact.proposal_transport
                         repaired.files = _repair_common_typescript_file_edits(repaired.files)
                         preflight_errors = self._preflight_artifact(repaired, selected_task=self._current_plan_task())
                         preflight_errors.extend(self._typescript_replacement_preflight_errors(repaired.files))
@@ -2442,6 +2450,7 @@ Critical correction for attempt {attempt}:
             "worktree_stale_after_seconds": self.daemon_config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
             "worktree_root": str(self.daemon_config.resolved_worktree_root()),
+            "worktree_repair_attempts": self.daemon_config.worktree_repair_attempts,
             "plan_status_counts": status_counts,
             "failure_kind_counts": failure_kind_counts,
             "typescript_quality_failures": typescript_quality_failures,
@@ -2545,6 +2554,7 @@ Critical correction for attempt {attempt}:
             "worktree_stale_after_seconds": self.daemon_config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
             "worktree_root": str(self.daemon_config.resolved_worktree_root()),
+            "worktree_repair_attempts": self.daemon_config.worktree_repair_attempts,
             **details,
         }
         if state != "heartbeat":
@@ -3148,6 +3158,215 @@ Critical correction for attempt {attempt}:
             return {}
         return payload if isinstance(payload, dict) else {}
 
+    def _repair_worktree_file_edits_after_validation(
+        self,
+        artifact: LogicPortArtifact,
+        *,
+        context: OptimizationContext,
+    ) -> LogicPortArtifact:
+        attempts = max(0, int(self.daemon_config.worktree_repair_attempts))
+        if attempts <= 0 or not artifact.files:
+            return LogicPortArtifact(raw_response=artifact.raw_response, proposal_transport="worktree")
+
+        selected_task = self._current_plan_task()
+        selected_label = artifact.target_task or (selected_task.label if selected_task else "unknown")
+        repaired = LogicPortArtifact(raw_response=artifact.raw_response, proposal_transport="worktree")
+        for attempt in range(1, attempts + 1):
+            self._write_status(
+                "repairing_failed_worktree_validation",
+                attempt=attempt,
+                attempts=attempts,
+                selected_task=selected_label,
+                failed_commands=[" ".join(result.command) for result in artifact.validation_results if not result.ok],
+                timeout_seconds=self.daemon_config.worktree_edit_timeout_seconds,
+                worktree_root=str(self.daemon_config.resolved_worktree_root()),
+            )
+            repaired = self._request_worktree_validation_repair_artifact(
+                artifact=artifact,
+                context=context,
+                attempt=attempt,
+                attempts=attempts,
+            )
+            if repaired.files and not repaired.errors:
+                return repaired
+        return repaired
+
+    def _request_worktree_validation_repair_artifact(
+        self,
+        *,
+        artifact: LogicPortArtifact,
+        context: OptimizationContext,
+        attempt: int,
+        attempts: int,
+    ) -> LogicPortArtifact:
+        repo_root = self.daemon_config.repo_root
+        worktree_root = self.daemon_config.resolved_worktree_root()
+        cleanup_result = self.cleanup_stale_worktrees()
+        worktree_root.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        worktree_path = worktree_root / f"repair_{attempt:02d}_{stamp}_{os.getpid()}"
+        metadata_rel = ".logic_port_worktree_repair.json"
+        owner_rel = ".logic_port_worktree_owner.json"
+        raw_trace: Dict[str, Any] = {
+            "transport": "worktree_validation_repair",
+            "attempt": attempt,
+            "attempts": attempts,
+            "worktree_path": str(worktree_path),
+            "metadata_path": metadata_rel,
+            "owner_path": owner_rel,
+            "cleanup_before_create": cleanup_result,
+            "failed_validation_results": [result.compact(limit=12000) for result in artifact.validation_results if not result.ok],
+            "candidate_summary": artifact.summary,
+            "candidate_changed_files": _artifact_paths(artifact),
+        }
+
+        try:
+            add_result = run_command(
+                ("git", "worktree", "add", "--detach", str(worktree_path), "HEAD"),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
+            raw_trace["worktree_add"] = add_result.compact(limit=12000)
+            if not add_result.ok:
+                return LogicPortArtifact(
+                    summary="Worktree validation repair failed before Codex edit.",
+                    raw_response=json.dumps(raw_trace, indent=2, default=str),
+                    errors=["git worktree add failed during validation repair: " + (add_result.stderr or add_result.stdout).strip()[:1000]],
+                    failure_kind="worktree_repair_add",
+                    proposal_transport="worktree",
+                )
+
+            self._write_worktree_owner_file(worktree_path / owner_rel, attempt=attempt)
+            self._write_file_edits_to_root(worktree_path, artifact.files)
+            self._format_file_edits_in_root(worktree_path, [str(edit.get("path", "")) for edit in artifact.files])
+            base_patch = self._worktree_diff(worktree_path, raw_trace, label="base_candidate")
+
+            prompt = self._build_worktree_validation_repair_prompt(
+                artifact=artifact,
+                context=context,
+                metadata_rel=metadata_rel,
+                attempt=attempt,
+                attempts=attempts,
+            )
+            repair_result = run_command(
+                (
+                    self.daemon_config.codex_bin,
+                    "exec",
+                    "--skip-git-repo-check",
+                    "--sandbox",
+                    self.daemon_config.worktree_codex_sandbox,
+                    "-m",
+                    self.daemon_config.model_name,
+                    "-C",
+                    str(worktree_path),
+                    "-",
+                ),
+                cwd=worktree_path,
+                stdin=prompt,
+                timeout_seconds=max(1, int(self.daemon_config.worktree_edit_timeout_seconds)),
+            )
+            raw_trace["codex_repair_exec"] = repair_result.compact(limit=20000)
+
+            harvested = self._harvest_worktree_artifact(
+                worktree_path,
+                metadata_rel=metadata_rel,
+                owner_rel=owner_rel,
+                raw_trace=raw_trace,
+                default_summary="Worktree validation repair proposal.",
+                default_impact="Repaired the failed candidate in an isolated worktree before touching the main project again.",
+            )
+            if harvested.patch.strip() == base_patch.strip():
+                harvested.errors.append("Worktree validation repair made no changes beyond the failed candidate.")
+                harvested.failure_kind = harvested.failure_kind or "worktree_repair_no_change"
+                harvested.files = []
+                harvested.patch = ""
+            if not repair_result.ok and not harvested.files:
+                harvested.errors.append(
+                    "Worktree validation repair command failed without producing usable changes: "
+                    + (repair_result.stderr or repair_result.stdout).strip()[:1000]
+                )
+                harvested.failure_kind = harvested.failure_kind or "worktree_repair_codex_failed"
+            harvested.proposal_transport = "worktree"
+            harvested.target_task = artifact.target_task
+            if not harvested.tasks:
+                harvested.tasks = artifact.tasks
+            return harvested
+        finally:
+            remove_result = run_command(
+                ("git", "worktree", "remove", "--force", str(worktree_path)),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
+            if not remove_result.ok and worktree_path.exists():
+                shutil.rmtree(worktree_path, ignore_errors=True)
+            run_command(
+                ("git", "worktree", "prune", "--expire", "now"),
+                cwd=repo_root,
+                timeout_seconds=60,
+            )
+
+    def _build_worktree_validation_repair_prompt(
+        self,
+        *,
+        artifact: LogicPortArtifact,
+        context: OptimizationContext,
+        metadata_rel: str,
+        attempt: int,
+        attempts: int,
+    ) -> str:
+        selected_task = self._current_plan_task()
+        selected_task_text = artifact.target_task or (selected_task.label if selected_task else "[No parsed task found]")
+        failed_results = [result.compact(limit=16000) for result in artifact.validation_results if not result.ok]
+        attempted_files = [
+            {
+                "path": str(edit.get("path", "")),
+                "content_prefix": str(edit.get("content", ""))[:12000],
+            }
+            for edit in artifact.files[:8]
+        ]
+        payload = {
+            "transport": "worktree_validation_repair",
+            "attempt": attempt,
+            "attempts": attempts,
+            "metadata_path": metadata_rel,
+            "selected_task": selected_task_text,
+            "allowed_edit_paths": self._worktree_diff_paths(),
+            "failed_validation_results": failed_results,
+            "candidate_summary": artifact.summary,
+            "candidate_impact": artifact.impact,
+            "candidate_tasks": artifact.tasks,
+            "candidate_files": attempted_files,
+            "required_metadata_schema": {
+                "summary": "string",
+                "impact": "string",
+                "tasks": ["string"],
+                "changed_files": ["string"],
+                "validation_commands": [["string"]],
+            },
+        }
+        prompt = f"""You are Codex running inside a throwaway Git worktree for the TypeScript/WASM logic-port daemon.
+The previous direct-edit candidate is already applied in this isolated worktree, but the daemon's validation failed.
+
+Repair the files directly in this worktree. Do not commit. Do not output or hand-author a patch.
+The daemon will harvest Git's canonical diff and complete file contents after your repair, then rerun validation in the real project.
+
+Hard constraints:
+- Keep the repair scoped to the daemon-selected task: {selected_task_text}
+- Preserve browser-native TypeScript/WASM behavior with no server calls, Python runtime bridge, filesystem/subprocess/RPC fallback, or Node-only browser-runtime dependency.
+- Fix the exact TypeScript/test failures in failed_validation_results.
+- Prefer minimal, compileable repairs over broad rewrites.
+- Preserve public exports already present in touched modules unless the selected task explicitly removes them.
+- Only edit paths listed in allowed_edit_paths.
+- After editing, write strict JSON metadata to {metadata_rel}.
+
+Repair payload:
+{json.dumps(payload, indent=2, default=str)}
+"""
+        budget = max(4000, int(self.daemon_config.max_prompt_chars))
+        if len(prompt) > budget:
+            return prompt[:budget] + "\n\n[worktree validation repair prompt truncated]\n"
+        return prompt
+
     def _build_worktree_edit_prompt(
         self,
         *,
@@ -3260,6 +3479,129 @@ PLANNING CONTEXT:
             edits.append({"path": normalized, "content": content})
             seen.add(normalized)
         return edits
+
+    def _write_file_edits_to_root(self, root: Path, edits: Sequence[Dict[str, str]]) -> None:
+        for edit in edits:
+            raw_path = str(edit.get("path", ""))
+            if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
+                raise ValueError(f"Unsafe worktree repair edit path: {raw_path!r}")
+            normalized = raw_path.replace("\\", "/")
+            if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
+                raise ValueError(f"Worktree repair edit path is outside daemon allowlist: {raw_path!r}")
+            path = root / normalized
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(str(edit.get("content", "")), encoding="utf-8")
+
+    def _format_file_edits_in_root(self, root: Path, paths: Sequence[str]) -> None:
+        ts_paths = [
+            path.replace("\\", "/")
+            for path in paths
+            if path and path.replace("\\", "/").endswith((".ts", ".tsx"))
+        ]
+        if not ts_paths:
+            return
+        run_command(
+            ("npx", "prettier", "--write", *ts_paths),
+            cwd=root,
+            timeout_seconds=120,
+        )
+
+    def _worktree_diff(self, worktree_path: Path, raw_trace: Dict[str, Any], *, label: str) -> str:
+        diff_paths = self._worktree_diff_paths()
+        status_result = run_command(
+            ("git", "status", "--porcelain", "--", *diff_paths),
+            cwd=worktree_path,
+            timeout_seconds=60,
+        )
+        raw_trace[f"{label}_status"] = status_result.compact(limit=12000)
+        untracked_paths = _untracked_paths_from_git_status(status_result.stdout)
+        raw_trace[f"{label}_untracked_paths"] = untracked_paths
+        if untracked_paths:
+            add_intent = run_command(
+                ("git", "add", "-N", "--", *untracked_paths),
+                cwd=worktree_path,
+                timeout_seconds=60,
+            )
+            raw_trace[f"{label}_git_add_intent_to_add"] = add_intent.compact(limit=12000)
+        diff_result = run_command(
+            ("git", "diff", "--binary", "--", *diff_paths),
+            cwd=worktree_path,
+            timeout_seconds=60,
+        )
+        raw_trace[f"{label}_git_diff"] = diff_result.compact(limit=20000)
+        return diff_result.stdout if diff_result.ok else ""
+
+    def _harvest_worktree_artifact(
+        self,
+        worktree_path: Path,
+        *,
+        metadata_rel: str,
+        owner_rel: str,
+        raw_trace: Dict[str, Any],
+        default_summary: str,
+        default_impact: str,
+    ) -> LogicPortArtifact:
+        full_status = run_command(
+            ("git", "status", "--porcelain"),
+            cwd=worktree_path,
+            timeout_seconds=60,
+        )
+        raw_trace["full_status"] = full_status.compact(limit=12000)
+        disallowed_paths = self._disallowed_worktree_paths(
+            _git_status_paths(full_status.stdout),
+            metadata_rel=metadata_rel,
+            owner_rel=owner_rel,
+        )
+        if disallowed_paths:
+            raw_trace["disallowed_paths"] = disallowed_paths
+            return LogicPortArtifact(
+                summary="Worktree proposal edited paths outside the logic-port allowlist.",
+                raw_response=json.dumps(raw_trace, indent=2, default=str),
+                errors=["Worktree proposal edited disallowed paths: " + ", ".join(disallowed_paths[:12])],
+                failure_kind="worktree_disallowed_paths",
+                proposal_transport="worktree",
+            )
+
+        patch = self._worktree_diff(worktree_path, raw_trace, label="harvest")
+        metadata = self._read_worktree_metadata(worktree_path / metadata_rel)
+        raw_trace["metadata"] = metadata
+        changed_files = _patch_changed_files(patch)
+        if not changed_files:
+            changed_files = [
+                str(path)
+                for path in metadata.get("changed_files", [])
+                if isinstance(path, str) and path.strip()
+            ] if isinstance(metadata.get("changed_files"), list) else []
+        files = self._worktree_file_edits(worktree_path, changed_files)
+        validation_commands = [
+            [str(part) for part in command]
+            for command in metadata.get("validation_commands", [])
+            if isinstance(command, list) and all(isinstance(part, str) for part in command)
+        ] if isinstance(metadata.get("validation_commands"), list) else []
+        tasks = [
+            str(item)
+            for item in metadata.get("tasks", [])
+            if isinstance(item, (str, int, float)) and str(item).strip()
+        ] if isinstance(metadata.get("tasks"), list) else []
+        errors: List[str] = []
+        failure_kind = ""
+        if not patch.strip() and not files:
+            errors.append("worktree edit produced no allowed TypeScript port changes")
+            failure_kind = "worktree_no_change"
+        selected_task = self._current_plan_task()
+        return LogicPortArtifact(
+            summary=str(metadata.get("summary") or default_summary),
+            impact=str(metadata.get("impact") or default_impact),
+            patch=patch,
+            files=files,
+            tasks=tasks or ([selected_task.label] if selected_task else []),
+            validation_commands=validation_commands,
+            raw_response=json.dumps(raw_trace, indent=2, default=str),
+            errors=errors,
+            failure_kind=failure_kind,
+            changed_files=changed_files,
+            proposal_transport="worktree",
+        )
 
     def _safe_edit_path(self, raw_path: str) -> Path:
         if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
@@ -4272,6 +4614,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Codex executable used by worktree/direct-edit proposal transport.",
     )
     parser.add_argument(
+        "--worktree-repair-attempts",
+        type=int,
+        default=int(os.environ.get("LOGIC_PORT_DAEMON_WORKTREE_REPAIR_ATTEMPTS", "1")),
+        help="Worktree direct-edit repair attempts after a worktree candidate fails validation before falling back to legacy JSON repair.",
+    )
+    parser.add_argument(
         "--slice-mode",
         choices=("small", "balanced", "broad"),
         default="balanced",
@@ -4354,6 +4702,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         worktree_codex_sandbox=str(args.worktree_codex_sandbox),
         worktree_root=Path(args.worktree_root),
         codex_bin=str(args.codex_bin),
+        worktree_repair_attempts=max(0, args.worktree_repair_attempts),
         retry_interval_seconds=max(0.0, args.retry_interval),
         max_failure_cycles=max(0, args.max_failure_cycles),
         max_task_total_failure_rounds=max(0, args.max_task_failures),

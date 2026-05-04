@@ -163,6 +163,86 @@ def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
         assert records[0]["ir_slot_grounding"][0]["status"] == "grounded"
 
 
+def test_prover_syntax_records_align_decoder_ir_and_formula_slots():
+    examples = [
+        (
+            "The Director shall issue a permit within 10 days after application unless approval is denied.",
+            True,
+            [],
+            [],
+            [],
+            [],
+        ),
+        (
+            "The tenant must pay rent monthly.",
+            False,
+            ["temporal_constraints"],
+            ["temporal_constraints"],
+            [],
+            [],
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            False,
+            ["cross_references"],
+            [],
+            [],
+            ["exceptions"],
+        ),
+    ]
+
+    for (
+        text,
+        alignment_complete,
+        missing_decoded,
+        formula_missing_decoded,
+        formula_ungrounded,
+        omitted_formula_slots,
+    ) in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+        fingerprints = {record["slot_alignment_fingerprint"] for record in records}
+
+        assert len(records) == 5
+        assert len(fingerprints) == 1
+        assert all(
+            record["decoded_ir_slot_alignment"]["alignment_complete"] is alignment_complete
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["decoded_missing_grounded_ir_slots"]
+            == missing_decoded
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["formula_missing_decoded_slots"]
+            == formula_missing_decoded
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["formula_ungrounded_slots"]
+            == formula_ungrounded
+            for record in records
+        )
+        assert all(
+            record["decoded_ir_slot_alignment"]["omitted_formula_slot_names"]
+            == omitted_formula_slots
+            for record in records
+        )
+        assert all(
+            record["target_components"]["slot_alignment_complete"] is alignment_complete
+            for record in records
+        )
+        assert all(record["formula_slots"] for record in records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prover_syntax_records_expose_mental_state_components():
     norm = LegalNormIR.from_parser_element(
         extract_normative_elements(

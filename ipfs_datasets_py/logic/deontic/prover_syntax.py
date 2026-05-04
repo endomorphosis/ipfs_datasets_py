@@ -66,6 +66,10 @@ class ProverTargetSyntaxRecord:
     missing_ir_slots: List[str]
     ir_slot_grounding: List[Dict[str, Any]]
     ir_slot_grounding_fingerprint: str
+    formula_slots: List[str]
+    omitted_formula_slots: Dict[str, Any]
+    decoded_ir_slot_alignment: Dict[str, Any]
+    slot_alignment_fingerprint: str
     target_components: Dict[str, Any]
     syntax_valid: bool
     skipped: bool
@@ -160,7 +164,17 @@ def _validate_target_formula(
     decoded = decode_legal_norm_ir(norm)
     decoded_slot_summary = _decoded_slot_summary(decoded)
     ir_slot_summary = _ir_slot_grounding_summary(norm)
-    target_components = _target_components(target, exported_formula, ir_slot_summary)
+    alignment_summary = _decoded_ir_slot_alignment(
+        decoded_slot_summary,
+        ir_slot_summary,
+        formula_record,
+    )
+    target_components = _target_components(
+        target,
+        exported_formula,
+        ir_slot_summary,
+        alignment_summary,
+    )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
 
@@ -193,6 +207,10 @@ def _validate_target_formula(
         missing_ir_slots=ir_slot_summary["missing_ir_slots"],
         ir_slot_grounding=ir_slot_summary["ir_slot_grounding"],
         ir_slot_grounding_fingerprint=ir_slot_summary["ir_slot_grounding_fingerprint"],
+        formula_slots=alignment_summary["formula_slots"],
+        omitted_formula_slots=alignment_summary["omitted_formula_slots"],
+        decoded_ir_slot_alignment=alignment_summary,
+        slot_alignment_fingerprint=alignment_summary["slot_alignment_fingerprint"],
         target_components=target_components,
         syntax_valid=syntax_valid,
         skipped=False,
@@ -305,16 +323,98 @@ def _ir_slot_grounding_summary(norm: LegalNormIR) -> Dict[str, Any]:
     }
 
 
+def _decoded_ir_slot_alignment(
+    decoded_slot_summary: Dict[str, List[str]],
+    ir_slot_summary: Dict[str, Any],
+    formula_record: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Compare decoded slots, grounded IR slots, and formula-included slots."""
+
+    decoded_slots = _ordered_unique(decoded_slot_summary.get("decoded_slots") or [])
+    grounded_ir_slots = _ordered_unique(ir_slot_summary.get("grounded_ir_slots") or [])
+    formula_slots = _ordered_unique(formula_record.get("included_formula_slots") or [])
+    omitted_formula_slots = dict(formula_record.get("omitted_formula_slots") or {})
+    omitted_formula_slot_names = sorted(
+        str(slot) for slot in omitted_formula_slots.keys() if str(slot).strip()
+    )
+
+    decoded_set = set(decoded_slots)
+    grounded_ir_set = set(grounded_ir_slots)
+    formula_set = set(formula_slots)
+    missing_decoded = [
+        slot for slot in grounded_ir_slots if slot not in decoded_set
+    ]
+    ungrounded_decoded = [
+        slot for slot in decoded_slots if slot not in grounded_ir_set
+    ]
+    formula_missing_decoded = [
+        slot for slot in formula_slots if slot not in decoded_set
+    ]
+    formula_ungrounded = [
+        slot for slot in formula_slots if slot not in grounded_ir_set
+    ]
+    decoded_formula_overlap = [
+        slot for slot in decoded_slots if slot in formula_set
+    ]
+    grounded_formula_overlap = [
+        slot for slot in grounded_ir_slots if slot in formula_set
+    ]
+    complete = (
+        not missing_decoded
+        and not ungrounded_decoded
+        and not formula_missing_decoded
+        and not formula_ungrounded
+    )
+
+    fingerprint = _stable_fingerprint(
+        "|".join(decoded_slots),
+        "|".join(grounded_ir_slots),
+        "|".join(formula_slots),
+        "|".join(omitted_formula_slot_names),
+        str(complete),
+    )
+    return {
+        "decoded_slots": decoded_slots,
+        "grounded_ir_slots": grounded_ir_slots,
+        "formula_slots": formula_slots,
+        "omitted_formula_slots": omitted_formula_slots,
+        "omitted_formula_slot_names": omitted_formula_slot_names,
+        "decoded_formula_overlap": decoded_formula_overlap,
+        "grounded_formula_overlap": grounded_formula_overlap,
+        "decoded_missing_grounded_ir_slots": missing_decoded,
+        "ungrounded_decoded_slots": ungrounded_decoded,
+        "formula_missing_decoded_slots": formula_missing_decoded,
+        "formula_ungrounded_slots": formula_ungrounded,
+        "alignment_complete": complete,
+        "slot_alignment_fingerprint": fingerprint,
+    }
+
+
+def _ordered_unique(values: Iterable[Any]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
 def _target_components(
     target: str,
     exported_formula: str,
     ir_slot_summary: Dict[str, Any] | None = None,
+    alignment_summary: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
+    alignment_summary = alignment_summary or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
+    formula_slots = list(alignment_summary.get("formula_slots") or [])
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
@@ -330,6 +430,20 @@ def _target_components(
         "grounded_ir_slot_count": len(grounded_ir_slots),
         "ungrounded_ir_slot_count": len(ungrounded_ir_slots),
         "missing_ir_slot_count": len(missing_ir_slots),
+        "formula_slots": formula_slots,
+        "formula_slot_count": len(formula_slots),
+        "slot_alignment_complete": bool(
+            alignment_summary.get("alignment_complete") is True
+        ),
+        "decoded_missing_grounded_ir_slots": list(
+            alignment_summary.get("decoded_missing_grounded_ir_slots") or []
+        ),
+        "formula_missing_decoded_slots": list(
+            alignment_summary.get("formula_missing_decoded_slots") or []
+        ),
+        "formula_ungrounded_slots": list(
+            alignment_summary.get("formula_ungrounded_slots") or []
+        ),
     }
 
 

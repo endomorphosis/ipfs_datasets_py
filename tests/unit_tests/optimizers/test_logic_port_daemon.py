@@ -4,11 +4,14 @@ import time
 from pathlib import Path
 
 import ipfs_datasets_py.optimizers.logic_port_daemon as logic_port_daemon
+from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
     DEFAULT_PLAN_DOCS,
+    LogicPortArtifact,
     LogicPortDaemonConfig,
     LogicPortDaemonOptimizer,
     _repair_common_typescript_text_damage,
+    build_arg_parser,
     extract_plan_tasks,
     parse_llm_patch_response,
 )
@@ -53,6 +56,52 @@ class HangingRouter:
 
 def test_default_plan_docs_use_typescript_port_plan():
     assert DEFAULT_PLAN_DOCS == ("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md",)
+
+
+def test_cli_defaults_to_worktree_transport(monkeypatch):
+    monkeypatch.delenv("LOGIC_PORT_DAEMON_PROPOSAL_TRANSPORT", raising=False)
+    monkeypatch.delenv("LOGIC_PORT_DAEMON_WORKTREE_CODEX_SANDBOX", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_CODEX_SANDBOX", raising=False)
+
+    args = build_arg_parser().parse_args([])
+
+    assert args.proposal_transport == "worktree"
+    assert args.worktree_edit_timeout == 300
+    assert args.worktree_stale_after == 7200
+    assert args.worktree_codex_sandbox == "danger-full-access"
+    assert args.worktree_repair_attempts == 1
+
+
+def test_supervisor_uses_worktree_transport_by_default():
+    repo_root = Path(__file__).resolve().parents[3]
+    script = (repo_root / "scripts/ops/legal_data/run_logic_port_daemon.sh").read_text(encoding="utf-8")
+
+    assert 'PROPOSAL_TRANSPORT="${PROPOSAL_TRANSPORT:-worktree}"' in script
+    assert 'WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"' in script
+    assert 'WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"' in script
+    assert 'WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"' in script
+    assert '"proposal_transport": "$PROPOSAL_TRANSPORT"' in script
+    assert '"worktree_edit_timeout_seconds": $WORKTREE_EDIT_TIMEOUT_SECONDS' in script
+    assert '"worktree_repair_attempts": $WORKTREE_REPAIR_ATTEMPTS' in script
+    assert '--proposal-transport "$PROPOSAL_TRANSPORT"' in script
+    assert '--worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"' in script
+    assert '--worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"' in script
+    assert '--worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"' in script
+    assert '--worktree-root "$WORKTREE_ROOT"' in script
+    assert '--worktree-repair-attempts "$WORKTREE_REPAIR_ATTEMPTS"' in script
+    assert '--codex-bin "$CODEX_BIN"' in script
+
+
+def test_check_script_reports_worktree_transport_health_fields():
+    repo_root = Path(__file__).resolve().parents[3]
+    script = (repo_root / "scripts/ops/legal_data/check_logic_port_daemon.sh").read_text(encoding="utf-8")
+
+    assert '"proposal_transport": status.get("proposal_transport")' in script
+    assert '"worktree_edit_timeout_seconds": status.get("worktree_edit_timeout_seconds")' in script
+    assert '"worktree_stale_after_seconds": status.get("worktree_stale_after_seconds")' in script
+    assert '"worktree_codex_sandbox": status.get("worktree_codex_sandbox")' in script
+    assert '"worktree_root": status.get("worktree_root")' in script
+    assert '"worktree_repair_attempts": status.get("worktree_repair_attempts")' in script
 
 
 def test_parse_llm_patch_response_from_json():
@@ -143,6 +192,262 @@ def test_parse_llm_patch_response_marks_empty_codex_event_stream():
 
     assert artifact.failure_kind == "codex_empty_event_stream"
     assert artifact.errors == ["Codex returned JSONL startup events without an assistant proposal."]
+
+
+def test_worktree_transport_generates_file_edits_from_isolated_worktree(tmp_path, monkeypatch):
+    plan = tmp_path / "docs" / "IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
+    status = tmp_path / "docs" / "LOGIC_PORT_PARITY.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    plan.write_text("- [ ] Port worktree direct edit runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+    target_path = "src/lib/logic/worktreeFeature.ts"
+    canonical_diff = "\n".join(
+        [
+            f"diff --git a/{target_path} b/{target_path}",
+            "new file mode 100644",
+            "--- /dev/null",
+            f"+++ b/{target_path}",
+            "@@ -0,0 +1 @@",
+            "+export const worktreeFeature = true;",
+            "",
+        ]
+    )
+    calls = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
+        command = tuple(command)
+        calls.append({"command": command, "cwd": Path(cwd), "timeout": timeout_seconds, "stdin": stdin})
+        if command[:3] == ("git", "worktree", "prune"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "worktree", "list"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "worktree", "add"):
+            Path(command[-2]).mkdir(parents=True, exist_ok=True)
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[0] == "codex-test":
+            (Path(cwd) / target_path).parent.mkdir(parents=True, exist_ok=True)
+            (Path(cwd) / target_path).write_text("export const worktreeFeature = true;\n", encoding="utf-8")
+            (Path(cwd) / ".logic_port_worktree_proposal.json").write_text(
+                json.dumps(
+                    {
+                        "summary": "Worktree direct edit",
+                        "impact": "Adds a runtime file harvested from an isolated worktree.",
+                        "tasks": ["Task checkbox-1: Port worktree direct edit runtime feature"],
+                        "changed_files": [target_path],
+                        "validation_commands": [["npx", "tsc", "--noEmit"]],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return logic_port_daemon.CommandResult(command, 0, "edited", "")
+        if command[:3] == ("git", "status", "--porcelain") and len(command) == 3:
+            return logic_port_daemon.CommandResult(
+                command,
+                0,
+                f"?? .logic_port_worktree_owner.json\n?? .logic_port_worktree_proposal.json\n M {target_path}\n",
+                "",
+            )
+        if command[:3] == ("git", "status", "--porcelain"):
+            return logic_port_daemon.CommandResult(command, 0, f" M {target_path}\n", "")
+        if command[:3] == ("git", "diff", "--binary"):
+            return logic_port_daemon.CommandResult(command, 0, canonical_diff, "")
+        if command[:3] == ("git", "worktree", "remove"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        return logic_port_daemon.CommandResult(command, 0, "", "")
+
+    monkeypatch.setattr(logic_port_daemon, "run_command", fake_run_command)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        proposal_transport="worktree",
+        codex_bin="codex-test",
+        worktree_edit_timeout_seconds=77,
+        dry_run=True,
+        validation_commands=tuple(),
+    )
+
+    result = LogicPortDaemonOptimizer(config).run_once(session_id="worktree-transport")
+
+    assert result["valid"] is True
+    assert result["artifact"]["proposal_transport"] == "worktree"
+    assert result["artifact"]["files"] == [target_path]
+    assert result["artifact"]["has_patch"] is True
+    codex_call = next(call for call in calls if call["command"][0] == "codex-test")
+    assert codex_call["timeout"] == 77
+    assert "Edit files directly in this isolated worktree" in codex_call["stdin"]
+    assert ".logic_port_worktree_proposal.json" in codex_call["stdin"]
+    assert any(call["command"][:3] == ("git", "worktree", "remove") for call in calls)
+
+
+def test_preflight_allows_worktree_runtime_patch_without_file_replacements(tmp_path):
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    patch = "\n".join(
+        [
+            "diff --git a/src/lib/logic/runtime.ts b/src/lib/logic/runtime.ts",
+            "--- a/src/lib/logic/runtime.ts",
+            "+++ b/src/lib/logic/runtime.ts",
+            "@@ -1 +1 @@",
+            "-export const oldValue = false;",
+            "+export const oldValue = true;",
+            "",
+        ]
+    )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        proposal_transport="worktree",
+        prefer_file_edits=True,
+    )
+    artifact = LogicPortArtifact(patch=patch, proposal_transport="worktree")
+
+    errors = LogicPortDaemonOptimizer(config)._preflight_artifact(artifact)
+
+    assert not any("must use JSON `files`" in error for error in errors)
+
+
+def test_worktree_validation_failure_repairs_in_temporary_worktree(tmp_path, monkeypatch):
+    plan = tmp_path / "docs" / "IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
+    status = tmp_path / "docs" / "LOGIC_PORT_PARITY.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    target_path = "src/lib/logic/worktreeRepair.ts"
+    plan.parent.mkdir(parents=True, exist_ok=True)
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    (tmp_path / target_path).write_text("export const repaired = false;\n", encoding="utf-8")
+    plan.write_text("- [ ] Port repair runtime feature\n", encoding="utf-8")
+    status.write_text("| runtime | partial |\n", encoding="utf-8")
+
+    base_diff = "\n".join(
+        [
+            f"diff --git a/{target_path} b/{target_path}",
+            f"--- a/{target_path}",
+            f"+++ b/{target_path}",
+            "@@ -1 +1 @@",
+            "-export const repaired = false;",
+            "+export const repaired = 'bad';",
+            "",
+        ]
+    )
+    repaired_diff = base_diff.replace("+export const repaired = 'bad';", "+export const repaired = true;")
+    command_calls = []
+    diff_calls = {"count": 0}
+
+    def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
+        command = tuple(command)
+        cwd = Path(cwd)
+        command_calls.append({"command": command, "cwd": cwd, "stdin": stdin, "timeout": timeout_seconds})
+        if command[:3] == ("git", "status", "--porcelain") and cwd == tmp_path:
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "worktree", "prune"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "worktree", "list"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "worktree", "add"):
+            Path(command[-2]).mkdir(parents=True, exist_ok=True)
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("npx", "prettier", "--write"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[0] == "codex-test":
+            (cwd / target_path).write_text("export const repaired = true;\n", encoding="utf-8")
+            (cwd / ".logic_port_worktree_repair.json").write_text(
+                json.dumps(
+                    {
+                        "summary": "Repair validation failure in worktree",
+                        "impact": "The failing candidate is repaired before touching the main worktree again.",
+                        "tasks": ["Task checkbox-1: Port repair runtime feature"],
+                        "changed_files": [target_path],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return logic_port_daemon.CommandResult(command, 0, "repaired", "")
+        if command[:3] == ("git", "status", "--porcelain") and len(command) == 3:
+            return logic_port_daemon.CommandResult(
+                command,
+                0,
+                f"?? .logic_port_worktree_owner.json\n?? .logic_port_worktree_repair.json\n M {target_path}\n",
+                "",
+            )
+        if command[:3] == ("git", "status", "--porcelain"):
+            return logic_port_daemon.CommandResult(command, 0, f" M {target_path}\n", "")
+        if command[:3] == ("git", "add", "-N"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "diff", "--binary"):
+            diff_calls["count"] += 1
+            diff = base_diff if diff_calls["count"] == 1 else repaired_diff
+            return logic_port_daemon.CommandResult(command, 0, diff, "")
+        if command[:3] == ("git", "worktree", "remove"):
+            return logic_port_daemon.CommandResult(command, 0, "", "")
+        return logic_port_daemon.CommandResult(command, 0, "", "")
+
+    monkeypatch.setattr(logic_port_daemon, "run_command", fake_run_command)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        proposal_transport="worktree",
+        codex_bin="codex-test",
+        worktree_repair_attempts=1,
+        dry_run=False,
+        validation_commands=tuple(),
+    )
+    optimizer = LogicPortDaemonOptimizer(config)
+    monkeypatch.setattr(optimizer, "_typescript_replacement_preflight_errors", lambda edits: [])
+    states = []
+    monkeypatch.setattr(optimizer, "_write_status", lambda state, **details: states.append((state, details)))
+    apply_calls = {"count": 0}
+
+    def fake_apply_file_edits(edits):
+        apply_calls["count"] += 1
+        if apply_calls["count"] == 1:
+            return (
+                False,
+                [logic_port_daemon.CommandResult(("npm", "run", "validate:logic-port"), 1, "", "expected repaired to be true")],
+                [target_path],
+            )
+        assert edits == [{"path": target_path, "content": "export const repaired = true;\n"}]
+        return (
+            True,
+            [logic_port_daemon.CommandResult(("npm", "run", "validate:logic-port"), 0, "ok", "")],
+            [target_path],
+        )
+
+    monkeypatch.setattr(optimizer, "_apply_file_edits_with_validation", fake_apply_file_edits)
+    artifact = LogicPortArtifact(
+        summary="Candidate fails tests",
+        impact="Needs repair.",
+        files=[{"path": target_path, "content": "export const repaired = 'bad';\n"}],
+        target_task="Task checkbox-1: Port repair runtime feature",
+        proposal_transport="worktree",
+        dry_run=False,
+    )
+    context = OptimizationContext(session_id="repair-session", input_data={}, domain="logic-port")
+
+    result = optimizer.optimize(artifact, score=0.0, feedback=[], context=context)
+
+    assert result.applied is True
+    assert result.files == [{"path": target_path, "content": "export const repaired = true;\n"}]
+    assert result.summary == "Repair validation failure in worktree"
+    assert any(state == "repairing_failed_worktree_validation" for state, _details in states)
+    codex_call = next(call for call in command_calls if call["command"][0] == "codex-test")
+    assert "failed_validation_results" in codex_call["stdin"]
+    assert "expected repaired to be true" in codex_call["stdin"]
 
 
 def test_repair_common_typescript_text_damage_fills_lost_syntax():

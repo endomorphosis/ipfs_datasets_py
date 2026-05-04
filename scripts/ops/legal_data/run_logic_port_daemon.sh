@@ -25,6 +25,7 @@ WORKTREE_EDIT_TIMEOUT_SECONDS="${WORKTREE_EDIT_TIMEOUT_SECONDS:-300}"
 WORKTREE_STALE_AFTER_SECONDS="${WORKTREE_STALE_AFTER_SECONDS:-7200}"
 WORKTREE_CODEX_SANDBOX="${WORKTREE_CODEX_SANDBOX:-${IPFS_DATASETS_PY_CODEX_SANDBOX:-danger-full-access}}"
 WORKTREE_ROOT="${WORKTREE_ROOT:-ipfs_datasets_py/.daemon/logic-port-worktrees}"
+WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"
 LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER="${LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER:-${LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER:-1}}"
 LOGIC_PORT_FORCE_ALLOW_DURING_LEGAL_PARSER="$LOGIC_PORT_ALLOW_DURING_LEGAL_PARSER"
 DAEMON_DIR="${DAEMON_DIR:-ipfs_datasets_py/.daemon}"
@@ -183,6 +184,7 @@ write_supervisor_status() {
   "worktree_stale_after_seconds": $WORKTREE_STALE_AFTER_SECONDS,
   "worktree_codex_sandbox": "$WORKTREE_CODEX_SANDBOX",
   "worktree_root": "$WORKTREE_ROOT",
+  "worktree_repair_attempts": $WORKTREE_REPAIR_ATTEMPTS,
   "codex_bin": "$CODEX_BIN",
   "proposal_attempts": $PROPOSAL_ATTEMPTS,
   "file_repair_attempts": $FILE_REPAIR_ATTEMPTS,
@@ -565,9 +567,9 @@ The supervisor detected that the daemon may be stuck or not making meaningful pr
 
 Reason: $reason
 
-This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
+This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep WORKTREE_REPAIR_ATTEMPTS enabled so failed validation runs get a direct-edit repair pass in a temporary worktree before legacy JSON repair is considered. Keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, worktree_validation_repair, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better worktree failed-test repair, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify other daemon families, including the separate legal parser daemon or PPD daemons; subprocesses whose ancestor command contains parser_daemon, run_legal_parser_optimizer_daemon.sh, ppd/daemon/ppd_supervisor.py, or ppd/daemon/ppd_daemon.py are out of scope.
 
@@ -612,7 +614,7 @@ The previous maintenance attempt failed before it could make the daemon more rob
 
 Reason: $reason
 
-Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
+Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, keep WORKTREE_REPAIR_ATTEMPTS enabled for failed validation repair in temporary worktrees, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
 Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
@@ -745,6 +747,7 @@ elif state in {
     "requesting_worktree_edit",
     "retrying_worktree_edit",
     "worktree_proposal_rejected",
+    "repairing_failed_worktree_validation",
 }:
     limit = worktree_timeout + grace
 
@@ -763,12 +766,16 @@ stuck_llm_subprocess_reason() {
   local pid=""
   local etimes=""
   local args=""
-  local limit=$((LLM_TIMEOUT_SECONDS + SUPERVISOR_PHASE_STUCK_GRACE_SECONDS))
+  local limit=$(( (LLM_TIMEOUT_SECONDS > WORKTREE_EDIT_TIMEOUT_SECONDS ? LLM_TIMEOUT_SECONDS : WORKTREE_EDIT_TIMEOUT_SECONDS) + SUPERVISOR_PHASE_STUCK_GRACE_SECONDS ))
+  local worktree_abs="$REPO_ROOT/$WORKTREE_ROOT"
   while read -r pid etimes args; do
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
       continue
     fi
-    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"--ephemeral --json -"* ]] && [[ "$args" != *"$WORKTREE_ROOT"* ]] && [[ "$args" != *"$worktree_abs"* ]]; then
       continue
     fi
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
@@ -801,11 +808,15 @@ duplicate_llm_subprocess_reason() {
   local oldest_age=0
   local limit="$SUPERVISOR_PHASE_STUCK_GRACE_SECONDS"
   local seen_pgids=" "
+  local worktree_abs="$REPO_ROOT/$WORKTREE_ROOT"
   while read -r pid pgid etimes args; do
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
       continue
     fi
-    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"--ephemeral --json -"* ]] && [[ "$args" != *"$WORKTREE_ROOT"* ]] && [[ "$args" != *"$worktree_abs"* ]]; then
       continue
     fi
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
@@ -943,11 +954,15 @@ terminate_orphaned_logic_port_llm_calls() {
   local pid=""
   local args=""
   local cleaned=0
+  local worktree_abs="$REPO_ROOT/$WORKTREE_ROOT"
   while read -r pid args; do
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]]; then
       continue
     fi
-    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]] || [[ "$args" != *"--ephemeral --json -"* ]]; then
+    if [[ "$args" != *"codex exec --skip-git-repo-check"* ]]; then
+      continue
+    fi
+    if [[ "$args" != *"--ephemeral --json -"* ]] && [[ "$args" != *"$WORKTREE_ROOT"* ]] && [[ "$args" != *"$worktree_abs"* ]]; then
       continue
     fi
     if [[ "$args" != *"-m $MODEL_NAME"* ]] && [[ "$args" != *"--model $MODEL_NAME"* ]]; then
@@ -1077,6 +1092,13 @@ while true; do
       --repo-root .
       --model "$MODEL_NAME"
       --slice-mode "$SLICE_MODE"
+      --proposal-transport "$PROPOSAL_TRANSPORT"
+      --worktree-edit-timeout-seconds "$WORKTREE_EDIT_TIMEOUT_SECONDS"
+      --worktree-stale-after-seconds "$WORKTREE_STALE_AFTER_SECONDS"
+      --worktree-codex-sandbox "$WORKTREE_CODEX_SANDBOX"
+      --worktree-root "$WORKTREE_ROOT"
+      --worktree-repair-attempts "$WORKTREE_REPAIR_ATTEMPTS"
+      --codex-bin "$CODEX_BIN"
     )
     [[ -n "$PROVIDER" ]] && python3_args+=(--provider "$PROVIDER")
     python3_args+=(

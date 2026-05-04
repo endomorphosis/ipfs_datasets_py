@@ -14,7 +14,9 @@ Historical context:
 - `docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPROVEMENT_PLAN.md`
 - `docs/logic/DETERMINISTIC_LEGAL_PARSER_IMPLEMENTATION_PLAN.md`
 
-It then calls `ipfs_datasets_py.llm_router.generate_text()` with `model_name="gpt-5.5"` and asks for a conservative TypeScript port improvement. The Python daemon accepts an optional provider; when no provider is passed, `llm_router` owns provider selection and fallback policy. The supervised overnight script now ignores inherited generic `PROVIDER` values by default and leaves the daemon provider unset, so router auto-selection and fallback remain active while Codex CLI can still be selected by the router. `ensure_logic_port_daemon.sh` uses `LOGIC_PORT_PROVIDER` for deliberate overrides; set `LOGIC_PORT_PROVIDER=codex_cli` only when deliberately forcing Codex-only debugging. The supervised Codex subprocess uses `IPFS_DATASETS_PY_CODEX_SANDBOX=danger-full-access` by default because the local read-only/workspace sandbox has repeatedly terminated before returning a proposal in this environment. The daemon disables local Hugging Face fallback by default, because autonomous code changes should fail closed if the configured router cannot reach the requested model. The daemon only applies model output through allowlisted file replacements or `git apply`; it does not execute arbitrary commands returned by the model.
+It can still call `ipfs_datasets_py.llm_router.generate_text()` with `model_name="gpt-5.5"` for legacy JSON file/patch proposals. The supervised overnight path now defaults to `PROPOSAL_TRANSPORT=worktree`: Codex runs against a throwaway detached Git worktree, edits files directly there, writes `.logic_port_worktree_proposal.json` metadata, and exits. The daemon then harvests Git's canonical diff plus complete allowlisted file contents, removes the worktree, applies the harvested file replacements to the real project only after preflight checks, and runs validation. If validation fails, the daemon recreates the failed candidate inside another temporary worktree, asks Codex to repair the failing tests or TypeScript diagnostics in place, harvests the repaired files, and validates again before falling back to legacy JSON repair. This keeps unattended porting focused on actual TypeScript/WASM edits instead of fragile hand-authored patches.
+
+The Python daemon accepts an optional provider for the legacy router path; when no provider is passed, `llm_router` owns provider selection and fallback policy. The supervised overnight script ignores inherited generic `PROVIDER` values by default and leaves the daemon provider unset, so router auto-selection remains available for explicit `PROPOSAL_TRANSPORT=llm_router` or `hybrid` debugging. `ensure_logic_port_daemon.sh` uses `LOGIC_PORT_PROVIDER` for deliberate overrides; set `LOGIC_PORT_PROVIDER=codex_cli` only when deliberately forcing Codex-only debugging. The supervised worktree Codex subprocess uses `WORKTREE_CODEX_SANDBOX=danger-full-access` by default because the local read-only/workspace sandbox has repeatedly terminated before returning a proposal in this environment. The daemon disables local Hugging Face fallback by default, because autonomous code changes should fail closed if the configured route cannot reach the requested model. The daemon only applies model output through allowlisted worktree-harvested file replacements or `git apply`; it does not execute arbitrary commands returned by the model.
 
 ## Dry Run
 
@@ -41,6 +43,8 @@ With `--apply`, each patch must pass `git apply --check` before it is applied. A
 - `npm run validate:logic-port`
 
 Use `--validation-command` to override those checks, or `--skip-validation` for a fast local experiment.
+
+For the current supervised default, `--proposal-transport worktree` asks Codex to edit an ephemeral worktree instead of returning a patch. The daemon still records a patch artifact for audit, but applies complete file replacements harvested from that worktree whenever possible. `--worktree-repair-attempts 1` keeps a failed-validation candidate in the worktree workflow: after tests fail, the daemon creates a repair worktree with the failed files already applied and asks Codex to repair that concrete state before the next main-worktree validation. Use `--proposal-transport llm_router` only for legacy JSON proposal debugging, or `--proposal-transport hybrid` to try worktree first and fall back to the router JSON path if the direct-edit proposal produces no usable changes.
 
 ## Supervised Continuous Mode
 
@@ -95,6 +99,10 @@ The cooldown is scoped by maintenance reason family and current task, so a previ
 PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_daemon \
   --repo-root . \
   --slice-mode balanced \
+  --proposal-transport worktree \
+  --worktree-edit-timeout-seconds 300 \
+  --worktree-stale-after-seconds 7200 \
+  --worktree-repair-attempts 1 \
   --apply \
   --watch \
   --retry-interval 0 \
@@ -116,7 +124,7 @@ PYTHONPATH=ipfs_datasets_py python3 -m ipfs_datasets_py.optimizers.logic_port_da
   --log-file ipfs_datasets_py/.daemon/logic-port-daemon.jsonl
 ```
 
-Continuous mode runs without user input. If the configured `gpt-5.5` route is unavailable, it records a structured failure and starts the next cycle immediately by default. Time is bounded by operation timeouts, not by a fixed retry sleep: use `--llm-timeout 300` and `--command-timeout 300` to cap individual LLM and validation/git calls. When the route becomes available, it resumes patch generation, applies only patches that pass `git apply --check`, and then runs validation.
+Continuous mode runs without user input. In worktree transport, each proposal gets a bounded Codex direct-edit window controlled by `--worktree-edit-timeout-seconds 300`; failed or empty worktree edits are recorded as structured failures and the next cycle starts immediately by default. Time is bounded by operation timeouts, not by a fixed retry sleep: use `--llm-timeout 300`, `--command-timeout 300`, and `--worktree-edit-timeout-seconds 300` to cap individual router, validation/git, and direct-edit calls. When a proposal becomes usable, the daemon applies only allowlisted TypeScript/docs changes, validates them, repairs failed validation once in a fresh temporary worktree by default, and updates the port-plan task board only after accepted work.
 
 If a proposed patch fails `git apply --check`, the daemon stores the failed patch under `ipfs_datasets_py/.daemon/failed-patches/` and performs one automatic `gpt-5.5` repair attempt with the exact Git error before giving up on that cycle.
 
