@@ -10,8 +10,10 @@ These tools persist state using the same local snapshot/blob layout as
 Document analysis tools keep plaintext inside the wallet service boundary.
 `wallet_extract_document_text_redacted` uses the package attachment text
 extractor for text/PDF/image/OCR-capable documents and returns only redacted
-text plus extraction metadata. `wallet_analyze_document_redacted` returns a
-redacted derived summary, and
+text plus extraction metadata. `wallet_analyze_document_form_redacted` uses the
+package PDF form analyzer when possible and otherwise infers form-like fields
+from redacted extracted text, returning only field metadata and form stats.
+`wallet_analyze_document_redacted` returns a redacted derived summary, and
 `wallet_create_document_vector_profile` returns only safe profile metadata such
 as category counts and redacted per-chunk feature-signature hashes while
 storing the artifact encrypted.

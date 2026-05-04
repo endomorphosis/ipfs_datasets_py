@@ -12,6 +12,9 @@ from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analytics_private_cou
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_add_document import wallet_add_document
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_add_location import wallet_add_location
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_document_redacted import wallet_analyze_document_redacted
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_document_form_redacted import (
+    wallet_analyze_document_form_redacted,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_analyze_documents_redacted import (
     wallet_analyze_documents_redacted,
 )
@@ -277,6 +280,54 @@ async def test_wallet_tools_extract_document_text_redacted(tmp_path) -> None:
     assert extraction["output"]["output_policy"] == "redacted_extracted_text"
     assert extraction["output"]["extraction"]["method"] == "text"
     assert set(extraction["output"]["derived_facts"]["need_categories"]) >= {"housing", "food"}
+
+
+async def test_wallet_tools_analyze_document_form_redacted(tmp_path) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    owner_key = random_key().hex()
+    document = tmp_path / "intake-form.txt"
+    document.write_text(
+        "Full name: Jane Example\n"
+        "Email: jane@example.org\n"
+        "Phone: 503-555-1212\n"
+        "Rent assistance required: yes\n"
+        "SNAP enrollment: yes\n",
+        encoding="utf-8",
+    )
+    created = await wallet_create(
+        owner_did="did:key:owner",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    added = await wallet_add_document(
+        wallet_id=created["wallet_id"],
+        actor_did="did:key:owner",
+        actor_key_hex=owner_key,
+        path=str(document),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+
+    analysis = await wallet_analyze_document_form_redacted(
+        wallet_id=created["wallet_id"],
+        record_id=added["record_id"],
+        actor_did="did:key:owner",
+        actor_key_hex=owner_key,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+
+    assert analysis["status"] == "success"
+    serialized = json.dumps(analysis["output"])
+    assert "Jane Example" not in serialized
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert analysis["artifact"]["artifact_type"] == "redacted_document_form_analysis"
+    assert analysis["output"]["output_policy"] == "redacted_form_analysis"
+    assert analysis["output"]["form"]["field_count"] >= 5
+    assert analysis["output"]["form"]["data_type_counts"]["email"] == 1
+    assert analysis["output"]["form"]["data_type_counts"]["phone"] == 1
 
 
 async def test_wallet_tools_support_private_analytics_workflow(tmp_path) -> None:
