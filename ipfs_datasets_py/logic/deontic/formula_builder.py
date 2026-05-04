@@ -4078,7 +4078,7 @@ def _normalize_masking_pseudonymization_light_verb_action(action_text: str) -> s
 
 
 def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
-    """Project encryption, decryption, and tokenization nominalizations."""
+    """Project encryption, decryption, hashing, and tokenization nominalizations."""
 
     text = str(action_text or "").strip()
     if not text:
@@ -4103,6 +4103,16 @@ def _normalize_encryption_decryption_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"decrypt {target}" if target else text
+
+    hashing_patterns = [
+        r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:a\s+|the\s+)?hashing\s+of\s+(.+)$",
+        r"^hashing\s+of\s+(.+)$",
+    ]
+    for pattern in hashing_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"hash {target}" if target else text
 
     tokenization_patterns = [
         r"^(?:make|perform|conduct|complete|effectuate|carry\s+out)\s+(?:a\s+|the\s+)?tokeni[sz]ation\s+of\s+(.+)$",
@@ -5360,6 +5370,19 @@ def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"anonymize {target}" if target else text
+
+    deidentification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining)\s+"
+        r"(?:an?\s+|the\s+)?de-?identification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining)\s+"
+        r"de-?identifications\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^de-?identification\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in deidentification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"deidentify {target}" if target else text
 
     return text
 
