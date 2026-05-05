@@ -92,6 +92,72 @@ def artifact_validation_text(artifact: Mapping[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def file_edits_by_path(edits: Sequence[Mapping[str, Any]]) -> dict[str, str]:
+    """Return complete file-edit content keyed by normalized proposal path."""
+
+    return {
+        str(edit.get("path") or ""): str(edit.get("content") or "")
+        for edit in edits
+        if str(edit.get("path") or "")
+    }
+
+
+def match_diagnostic_edit_path(
+    diagnostic_path: str,
+    edits_by_path: Mapping[str, str],
+) -> str | None:
+    """Match a compiler diagnostic path to one proposed edit path."""
+
+    normalized = diagnostic_path.replace("\\", "/")
+    for edit_path in edits_by_path:
+        candidate = edit_path.replace("\\", "/")
+        if normalized.endswith(candidate) or candidate.endswith(normalized):
+            return edit_path
+        basename = candidate.rsplit("/", 1)[-1]
+        if basename and normalized.endswith(basename):
+            return edit_path
+    return None
+
+
+def render_typescript_diagnostic_context(
+    text: str,
+    edits_by_path: Mapping[str, str],
+    *,
+    radius: int = 2,
+    limit: int = 6000,
+) -> str:
+    """Render file-edit snippets around TypeScript diagnostic lines."""
+
+    if not edits_by_path:
+        return ""
+    snippets: list[str] = []
+    seen: set[tuple[str, int]] = set()
+    pattern = r"([^\s:()]+\.tsx?)\((\d+),(\d+)\):\s*error\s+(TS\d+):\s*([^\n]+)"
+    for match in re.finditer(pattern, text):
+        diagnostic_path = match.group(1)
+        line_number = int(match.group(2))
+        column = int(match.group(3))
+        code = match.group(4)
+        message = match.group(5).strip()
+        edit_path = match_diagnostic_edit_path(diagnostic_path, edits_by_path)
+        if edit_path is None or (edit_path, line_number) in seen:
+            continue
+        seen.add((edit_path, line_number))
+        lines = edits_by_path[edit_path].splitlines()
+        if not (1 <= line_number <= len(lines)):
+            continue
+        start = max(1, line_number - radius)
+        end = min(len(lines), line_number + radius)
+        rendered = [f"{edit_path}:{line_number}:{column} {code}: {message}"]
+        for current in range(start, end + 1):
+            marker = ">" if current == line_number else " "
+            rendered.append(f"{marker} {current}: {lines[current - 1]}")
+        snippets.append("\n".join(rendered))
+        if sum(len(item) for item in snippets) > limit:
+            break
+    return "\n\n".join(snippets)[:limit]
+
+
 def has_diagnostic_codes(text: str, codes: set[str] | frozenset[str]) -> bool:
     """Return whether ``text`` contains any daemon-specific diagnostic code."""
 

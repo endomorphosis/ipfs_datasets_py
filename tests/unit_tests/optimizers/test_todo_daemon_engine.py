@@ -83,6 +83,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     fallback_kind_for_task,
     failed_work_manifest,
     failed_work_workspace_payload,
+    file_edits_by_path,
     format_recent_failure_context,
     first_failure_block_decision,
     first_open_plan_task,
@@ -99,6 +100,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     managed_status_block_pattern,
     markdown_task_label,
     materialize_proposal_files,
+    match_diagnostic_edit_path,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
     parse_json_proposal,
@@ -129,6 +131,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     rank_relevant_context_file,
     repo_root_from_env,
     render_relevant_file_context,
+    render_typescript_diagnostic_context,
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
@@ -367,6 +370,37 @@ def test_relevant_file_context_helpers_are_reusable(tmp_path: Path) -> None:
     assert render_relevant_file_context(repo_root=repo, tracked_files=tracked_files, task_or_title=None) == (
         "[No selected task tokens available.]"
     )
+
+
+def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
+    edits = [
+        {
+            "path": "src/lib/logic/feature.ts",
+            "content": "\n".join(
+                [
+                    "export const before = true;",
+                    "export const value = ;",
+                    "export const after = true;",
+                ]
+            )
+            + "\n",
+        }
+    ]
+    edits_by_path = file_edits_by_path(edits)
+    diagnostic = "tmp/work/src/lib/logic/feature.ts(2,22): error TS1005: Expression expected."
+
+    rendered = render_typescript_diagnostic_context(
+        diagnostic,
+        edits_by_path,
+        radius=1,
+    )
+
+    assert match_diagnostic_edit_path("tmp/work/src/lib/logic/feature.ts", edits_by_path) == (
+        "src/lib/logic/feature.ts"
+    )
+    assert "src/lib/logic/feature.ts:2:22 TS1005: Expression expected." in rendered
+    assert "> 2: export const value = ;" in rendered
+    assert "  1: export const before = true;" in rendered
 
 
 def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:

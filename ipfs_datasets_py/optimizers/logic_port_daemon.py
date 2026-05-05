@@ -77,9 +77,12 @@ from ipfs_datasets_py.optimizers.todo_daemon.context import (
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
     diagnostic_signatures as _shared_diagnostic_signatures,
+    file_edits_by_path as _shared_file_edits_by_path,
     has_diagnostic_codes as _shared_has_diagnostic_codes,
+    match_diagnostic_edit_path as _shared_match_diagnostic_edit_path,
     quality_failure_counts as _shared_quality_failure_counts,
     recent_rollback_failure_count as _shared_recent_rollback_failure_count,
+    render_typescript_diagnostic_context as _shared_render_typescript_diagnostic_context,
     rollback_failure_counts as _shared_rollback_failure_counts,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
@@ -1189,7 +1192,7 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
         if not artifact.files or not artifact.errors:
             return ""
-        edits_by_path = {str(edit.get("path") or ""): str(edit.get("content") or "") for edit in artifact.files}
+        edits_by_path = _shared_file_edits_by_path(artifact.files)
         if not edits_by_path:
             return ""
         return self._render_typescript_diagnostic_context(
@@ -1207,45 +1210,16 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         radius: int = 2,
         limit: int = 6000,
     ) -> str:
-        if not edits_by_path:
-            return ""
-        snippets: List[str] = []
-        seen: set[Tuple[str, int]] = set()
-        for match in re.finditer(r"([^\s:()]+\.tsx?)\((\d+),(\d+)\):\s*error\s+(TS\d+):\s*([^\n]+)", text):
-            diagnostic_path = match.group(1)
-            line_number = int(match.group(2))
-            column = int(match.group(3))
-            code = match.group(4)
-            message = match.group(5).strip()
-            edit_path = self._match_diagnostic_edit_path(diagnostic_path, edits_by_path)
-            if edit_path is None or (edit_path, line_number) in seen:
-                continue
-            seen.add((edit_path, line_number))
-            lines = edits_by_path[edit_path].splitlines()
-            if not (1 <= line_number <= len(lines)):
-                continue
-            start = max(1, line_number - radius)
-            end = min(len(lines), line_number + radius)
-            rendered = [f"{edit_path}:{line_number}:{column} {code}: {message}"]
-            for current in range(start, end + 1):
-                marker = ">" if current == line_number else " "
-                rendered.append(f"{marker} {current}: {lines[current - 1]}")
-            snippets.append("\n".join(rendered))
-            if sum(len(item) for item in snippets) > limit:
-                break
-        return "\n\n".join(snippets)[:limit]
+        return _shared_render_typescript_diagnostic_context(
+            text,
+            edits_by_path,
+            radius=radius,
+            limit=limit,
+        )
 
     @staticmethod
     def _match_diagnostic_edit_path(diagnostic_path: str, edits_by_path: Dict[str, str]) -> Optional[str]:
-        normalized = diagnostic_path.replace("\\", "/")
-        for edit_path in edits_by_path:
-            candidate = edit_path.replace("\\", "/")
-            if normalized.endswith(candidate) or candidate.endswith(normalized):
-                return edit_path
-            basename = candidate.rsplit("/", 1)[-1]
-            if basename and normalized.endswith(basename):
-                return edit_path
-        return None
+        return _shared_match_diagnostic_edit_path(diagnostic_path, edits_by_path)
 
     def _build_retry_prompt(self, original_prompt: str, previous_feedback: str, *, attempt: int, attempts: int) -> str:
         return f"""{original_prompt}
@@ -3345,7 +3319,7 @@ PLANNING CONTEXT:
         ]
 
     def _typescript_preflight_diagnostic_context(self, diagnostics: Sequence[str], edits: Sequence[Dict[str, str]]) -> str:
-        edits_by_path = {str(edit.get("path") or ""): str(edit.get("content") or "") for edit in edits}
+        edits_by_path = _shared_file_edits_by_path(edits)
         return self._render_typescript_diagnostic_context("\n".join(diagnostics), edits_by_path)
 
     def _recent_failure_context(self, selected_task: Optional[PlanTask], *, limit: int = 3) -> str:
