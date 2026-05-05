@@ -4167,6 +4167,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Refer", "Remand")):
         return "case_routing_duty"
     if action_predicate.startswith((
+        "Arbitrate",
+        "Conciliate",
+        "Mediate",
+        "Negotiate",
+        "Settle",
+    )):
+        return "dispute_resolution_duty"
+    if action_predicate.startswith((
         "Adjudicate",
         "Decide",
         "Dismiss",

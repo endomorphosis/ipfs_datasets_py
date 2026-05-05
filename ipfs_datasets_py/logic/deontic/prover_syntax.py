@@ -516,9 +516,11 @@ def _target_components(
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
+    semantic_formula_family = _target_semantic_formula_family(source_symbols)
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
+        "semantic_formula_family": semantic_formula_family,
         "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
         "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
         "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
@@ -605,6 +607,31 @@ def _target_components(
             target_parse_profile.get("event_predicates") or []
         ),
     }
+
+
+def _target_semantic_formula_family(source_symbols: Sequence[str]) -> str:
+    """Return a compact semantic family from preserved source formula symbols."""
+
+    for symbol in source_symbols:
+        text = str(symbol or "").strip()
+        if text.startswith((
+            "Arbitrate",
+            "Conciliate",
+            "Mediate",
+            "Negotiate",
+            "Settle",
+        )):
+            return "dispute_resolution"
+        if text.startswith((
+            "Adjudicate",
+            "Decide",
+            "Dismiss",
+            "Dispose",
+            "Find",
+            "Hear",
+        )):
+            return "adjudicatory_process"
+    return "general"
 
 
 def _target_quality_gate(
