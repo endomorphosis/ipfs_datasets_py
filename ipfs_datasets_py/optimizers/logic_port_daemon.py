@@ -49,6 +49,7 @@ from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     CommandResult,
+    atomic_write_json as _shared_atomic_write_json,
     extract_codex_event_text_candidates as _shared_extract_codex_event_text_candidates,
     extract_json as _shared_extract_json_object,
     extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
@@ -75,6 +76,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.context import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
+    compact_status_artifact as _shared_compact_status_artifact,
     diagnostic_signatures as _shared_diagnostic_signatures,
     file_edits_by_path as _shared_file_edits_by_path,
     format_task_result_failure_context as _shared_format_task_result_failure_context,
@@ -2079,10 +2081,7 @@ Critical correction for attempt {attempt}:
         }
 
         path = self.daemon_config.resolve(self.daemon_config.progress_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        tmp.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        tmp.replace(path)
+        _shared_atomic_write_json(path, payload)
 
     def _start_status_heartbeat(self) -> Tuple[threading.Event, Optional[threading.Thread]]:
         stop = threading.Event()
@@ -2118,25 +2117,17 @@ Critical correction for attempt {attempt}:
         if self.daemon_config.status_path is None:
             return
         path = self.daemon_config.resolve(self.daemon_config.status_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = path.with_suffix(path.suffix + ".tmp")
-        tmp.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-        tmp.replace(path)
+        _shared_atomic_write_json(path, payload)
 
     def _write_status(self, state: str, **details: Any) -> None:
         if self.daemon_config.status_path is None:
             return
         artifact = details.get("artifact")
         if isinstance(artifact, dict):
-            details["artifact"] = {
-                "summary": artifact.get("summary", ""),
-                "target_task": artifact.get("target_task", ""),
-                "impact": artifact.get("impact", ""),
-                "valid_changed_files": artifact.get("changed_files", []),
-                "errors": artifact.get("errors", [])[:5] if isinstance(artifact.get("errors", []), list) else artifact.get("errors", []),
-                "failure_kind": _classify_failure_kind(artifact),
-                "validation_passed": artifact.get("validation_passed", False),
-            }
+            details["artifact"] = _shared_compact_status_artifact(
+                artifact,
+                classify_failure_kind=_classify_failure_kind,
+            )
         now = datetime.now(timezone.utc).isoformat()
         payload = {
             "schema": "ipfs_datasets_py.logic_port_daemon.status",

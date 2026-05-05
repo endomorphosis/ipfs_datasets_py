@@ -62,6 +62,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     canonical_daemon_names,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
+    compact_status_artifact,
     compact_validation_result,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
@@ -1038,6 +1039,27 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
     assert "Failure 1: kind=validation" in context
     assert "python3 -m compileall todo: compile failed" in context
     assert "retry guidance" in context
+    status_artifact = compact_status_artifact(
+        {
+            "summary": "large proposal",
+            "target_task": "Task checkbox-1: Port feature",
+            "impact": "updates runtime",
+            "changed_files": ["todo/source.py"],
+            "errors": ["one", "two", "three"],
+            "validation_passed": True,
+        },
+        classify_failure_kind=lambda _artifact: "validation",
+        max_errors=2,
+    )
+    assert status_artifact == {
+        "summary": "large proposal",
+        "target_task": "Task checkbox-1: Port feature",
+        "impact": "updates runtime",
+        "valid_changed_files": ["todo/source.py"],
+        "errors": ["one", "two"],
+        "failure_kind": "validation",
+        "validation_passed": True,
+    }
 
 
 def test_failure_block_and_exception_diagnostics_are_reusable() -> None:

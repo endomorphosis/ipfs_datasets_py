@@ -92,6 +92,26 @@ def artifact_validation_text(artifact: Mapping[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def compact_status_artifact(
+    artifact: Mapping[str, Any],
+    *,
+    classify_failure_kind: Callable[[Mapping[str, Any]], str] | None = None,
+    max_errors: int = 5,
+) -> dict[str, Any]:
+    """Return a compact artifact payload suitable for daemon status JSON."""
+
+    errors = artifact.get("errors", [])
+    return {
+        "summary": artifact.get("summary", ""),
+        "target_task": artifact.get("target_task", ""),
+        "impact": artifact.get("impact", ""),
+        "valid_changed_files": artifact.get("changed_files", []),
+        "errors": errors[:max_errors] if isinstance(errors, list) else errors,
+        "failure_kind": classify_failure_kind(artifact) if classify_failure_kind else str(artifact.get("failure_kind") or ""),
+        "validation_passed": artifact.get("validation_passed", False),
+    }
+
+
 def file_edits_by_path(edits: Sequence[Mapping[str, Any]]) -> dict[str, str]:
     """Return complete file-edit content keyed by normalized proposal path."""
 
