@@ -79,6 +79,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.history import (
     same_task_label as _shared_same_task_label,
     task_failure_summary as _shared_task_failure_summary,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.task_board import (
+    focused_task_board_excerpt as _shared_focused_task_board_excerpt,
+    truncate_text as _shared_truncate_text,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
     git_status_paths as _shared_git_status_paths,
@@ -92,7 +96,6 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     write_worktree_owner_file as _shared_write_worktree_owner_file,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
-    CHECKBOX_TASK_RE,
     PlanTask,
     clean_checkbox_title as _clean_checkbox_title,
     extract_plan_tasks,
@@ -344,65 +347,11 @@ def _read_text(path: Path, *, limit: Optional[int] = None) -> str:
 
 
 def _truncate_text(text: str, *, limit: Optional[int]) -> str:
-    if limit is not None and len(text) > limit:
-        return text[:limit] + "\n\n[truncated]\n"
-    return text
+    return _shared_truncate_text(text, limit=limit)
 
 
 def _focused_task_board_excerpt(markdown: str, selected_task: Optional[PlanTask], *, limit: int) -> str:
-    """Return a compact task-board excerpt centered on the selected task."""
-
-    if limit <= 0 or len(markdown) <= limit:
-        return markdown
-    if selected_task is None:
-        return _truncate_text(markdown, limit=limit)
-
-    lines = markdown.splitlines(keepends=True)
-    target_line_index: Optional[int] = None
-    if selected_task.task_id.startswith("checkbox-"):
-        try:
-            target_checkbox_index = int(selected_task.task_id.removeprefix("checkbox-"))
-        except ValueError:
-            target_checkbox_index = -1
-        current_checkbox_index = 0
-        for index, line in enumerate(lines):
-            if CHECKBOX_TASK_RE.match(line.rstrip("\n")):
-                current_checkbox_index += 1
-                if current_checkbox_index == target_checkbox_index:
-                    target_line_index = index
-                    break
-
-    if target_line_index is None:
-        needle = selected_task.title.strip()
-        for index, line in enumerate(lines):
-            if needle and needle in line:
-                target_line_index = index
-                break
-
-    if target_line_index is None:
-        return _truncate_text(markdown, limit=limit)
-
-    header = "[task-board excerpt centered on daemon-selected task]\n"
-    footer = "\n[task-board excerpt truncated around selected task]\n"
-    available = max(0, limit - len(header) - len(footer))
-    start = target_line_index
-    end = target_line_index + 1
-    excerpt = lines[target_line_index]
-
-    while len(excerpt) < available and (start > 0 or end < len(lines)):
-        grew = False
-        if start > 0 and len(excerpt) + len(lines[start - 1]) <= available:
-            start -= 1
-            excerpt = lines[start] + excerpt
-            grew = True
-        if end < len(lines) and len(excerpt) + len(lines[end]) <= available:
-            excerpt += lines[end]
-            end += 1
-            grew = True
-        if not grew:
-            break
-
-    return header + excerpt + footer
+    return _shared_focused_task_board_excerpt(markdown, selected_task, limit=limit)
 
 
 def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:

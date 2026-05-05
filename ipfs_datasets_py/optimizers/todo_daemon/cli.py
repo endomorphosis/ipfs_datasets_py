@@ -22,6 +22,7 @@ SpecPayloadBuilder = Callable[[ManagedDaemonSpec], Mapping[str, Any]]
 CheckFunction = Callable[..., Any]
 EnsureFunction = Callable[..., Any]
 StopFunction = Callable[..., Any]
+RunFunction = Callable[[Optional[Sequence[str]]], int]
 
 
 def json_print(payload: Mapping[str, Any]) -> None:
@@ -77,8 +78,9 @@ def build_lifecycle_arg_parser(
     restart_delay_dest: str = "restart_delay_seconds",
     default_stop_grace_seconds: float = 10.0,
     ensure_description: str = "Start the supervisor if the daemon is not healthy.",
+    run_description: Optional[str] = None,
 ) -> argparse.ArgumentParser:
-    """Build the standard ``check|ensure|stop|spec`` lifecycle parser."""
+    """Build the standard ``check|ensure|stop|spec`` lifecycle parser, optionally with ``run``."""
 
     parser = argparse.ArgumentParser(description=description)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -106,6 +108,10 @@ def build_lifecycle_arg_parser(
 
     spec_parser = subparsers.add_parser("spec", help="Print the resolved reusable daemon spec.")
     spec_parser.add_argument("--repo-root", default=None)
+
+    if run_description:
+        run = subparsers.add_parser("run", help=run_description)
+        run.add_argument("daemon_args", nargs=argparse.REMAINDER)
     return parser
 
 
@@ -142,8 +148,17 @@ def run_lifecycle_args(
     ensure_restart_kw: str = "tmux_restart_delay_seconds",
     spec_payload_builder: SpecPayloadBuilder = daemon_spec_payload,
     stop_not_running_message: str = "daemon supervisor is not running",
+    run_fn: Optional[RunFunction] = None,
 ) -> int:
     """Run parsed lifecycle CLI args against a managed daemon spec."""
+
+    if args.command == "run":
+        if run_fn is None:
+            return 2
+        daemon_args = list(getattr(args, "daemon_args", ()) or ())
+        if daemon_args and daemon_args[0] == "--":
+            daemon_args = daemon_args[1:]
+        return run_fn(daemon_args)
 
     spec = build_spec(getattr(args, "repo_root", None))
     if args.command == "check":
@@ -189,6 +204,7 @@ def run_lifecycle_cli(
     ensure_restart_kw: str = "tmux_restart_delay_seconds",
     spec_payload_builder: SpecPayloadBuilder = daemon_spec_payload,
     stop_not_running_message: str = "daemon supervisor is not running",
+    run_fn: Optional[RunFunction] = None,
 ) -> int:
     """Parse and run a standard todo-daemon lifecycle CLI."""
 
@@ -201,4 +217,5 @@ def run_lifecycle_cli(
         ensure_restart_kw=ensure_restart_kw,
         spec_payload_builder=spec_payload_builder,
         stop_not_running_message=stop_not_running_message,
+        run_fn=run_fn,
     )

@@ -557,6 +557,19 @@ def legal_parser_spec_payload(spec: ManagedDaemonSpec) -> Mapping[str, Any]:
     )
 
 
+def run_legal_parser_daemon_runtime(argv: Optional[Sequence[str]] = None) -> int:
+    """Run the packaged deterministic legal-parser daemon runtime.
+
+    This keeps the large domain optimizer in its existing module for backward
+    compatibility, but makes the runnable daemon available through the reusable
+    todo-daemon package dispatcher.
+    """
+
+    from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import main as runtime_main
+
+    return runtime_main(argv)
+
+
 def build_arg_parser():
     return build_lifecycle_arg_parser(
         description="Manage the legal-parser optimizer daemon lifecycle.",
@@ -569,6 +582,7 @@ def build_arg_parser():
         default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
         ensure_description="Start the wrapper/supervisor if unhealthy.",
         stop_description="Stop the wrapper, supervisor, daemon, and owned Codex calls.",
+        run_description="Run the legal-parser optimizer daemon runtime in the foreground.",
     )
 
 
@@ -582,6 +596,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         stop_fn=stop_legal_parser_daemon,
         ensure_restart_kw="restart_delay_seconds",
         spec_payload_builder=legal_parser_spec_payload,
+        run_fn=run_legal_parser_daemon_runtime,
         stop_not_running_message="legal-parser daemon supervisor is not running",
     )
 

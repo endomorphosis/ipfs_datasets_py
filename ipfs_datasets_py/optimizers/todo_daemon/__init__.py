@@ -78,11 +78,19 @@ from .history import (
 )
 from .diagnostics import (
     artifact_validation_text,
+    block_threshold_for_failure_kind,
+    count_recent_proposal_failures,
     diagnostic_signatures,
     has_diagnostic_codes,
+    is_retryable_proposal_failure,
+    prompt_limit_for_mode,
+    proposal_block_threshold,
+    proposal_error_text,
+    proposal_record_has_failure_markers,
     quality_failure_counts,
     recent_rollback_failure_count,
     rollback_failure_counts,
+    should_skip_validation_for_empty_proposal,
 )
 from .llm import (
     LlmRouterInvocation,
@@ -122,10 +130,12 @@ from .plans import PlanTask, extract_plan_tasks, replace_checkbox_mark, strip_da
 from .runner import PreTaskBlock, TodoDaemonHooks, TodoDaemonRunner
 from .task_board import (
     count_unmanaged_generated_status_sections,
+    focused_task_board_excerpt,
     generated_status_block,
     managed_status_block_pattern,
     strip_unmanaged_generated_status_sections,
     task_status_counts,
+    truncate_text,
     update_generated_status_block,
 )
 from .supervisor import (
@@ -207,6 +217,7 @@ __all__ = [
     "active_codex_exec_workers",
     "active_llm_process",
     "bind_file_replacement_apply_hook",
+    "block_threshold_for_failure_kind",
     "build_file_replacement_apply_proposal",
     "build_legal_parser_spec",
     "build_lifecycle_arg_parser",
@@ -224,6 +235,7 @@ __all__ = [
     "compact_message",
     "config_from_todo_runner_args",
     "count_unmanaged_generated_status_sections",
+    "count_recent_proposal_failures",
     "copy_if_exists",
     "current_python_executable_command",
     "current_task_failure_counts",
@@ -237,6 +249,7 @@ __all__ = [
     "extract_json",
     "extract_plan_tasks",
     "extract_text_from_codex_event_object",
+    "focused_task_board_excerpt",
     "ensure_daemon_running",
     "ensure_legal_parser_daemon",
     "heartbeat_is_stale",
@@ -246,6 +259,7 @@ __all__ = [
     "generated_status_block",
     "has_diagnostic_codes",
     "install_active_llm_signal_handlers",
+    "is_retryable_proposal_failure",
     "json_print",
     "launch_restarting_wrapper",
     "launch_supervised_child",
@@ -269,8 +283,12 @@ __all__ = [
     "pid_looks_like_worktree_owner",
     "print_todo_daemon_result",
     "process_groups_for_family",
+    "prompt_limit_for_mode",
+    "proposal_block_threshold",
     "proposal_diff_from_worktree",
+    "proposal_error_text",
     "proposal_files_from_worktree",
+    "proposal_record_has_failure_markers",
     "promote_worktree_files",
     "quality_failure_counts",
     "quoted_env_assignments",
@@ -290,11 +308,14 @@ __all__ = [
     "run_command",
     "run_lifecycle_args",
     "run_lifecycle_cli",
+    "run_legal_parser_daemon_runtime",
+    "run_logic_port_daemon_runtime",
     "run_supervisor_loop_cli",
     "run_todo_daemon",
     "run_todo_daemon_cli",
     "select_task",
     "same_task_label",
+    "should_skip_validation_for_empty_proposal",
     "should_use_compact_prompt_for_failures",
     "stop_daemon",
     "stop_legal_parser_daemon",
@@ -313,6 +334,7 @@ __all__ = [
     "terminate_active_llm_process",
     "terminate_process_group",
     "terminate_supervised_child",
+    "truncate_text",
     "unified_diff_stats",
     "untracked_paths_from_git_status_porcelain",
     "utc_now",
@@ -332,7 +354,12 @@ _LEGAL_PARSER_EXPORTS = {
     "ensure_legal_parser_daemon",
     "legal_parser_launch_env",
     "legal_parser_spec_payload",
+    "run_legal_parser_daemon_runtime",
     "stop_legal_parser_daemon",
+}
+
+_LOGIC_PORT_EXPORTS = {
+    "run_logic_port_daemon_runtime",
 }
 
 
@@ -341,4 +368,8 @@ def __getattr__(name):
         from . import legal_parser
 
         return getattr(legal_parser, name)
+    if name in _LOGIC_PORT_EXPORTS:
+        from . import logic_port
+
+        return getattr(logic_port, name)
     raise AttributeError(name)

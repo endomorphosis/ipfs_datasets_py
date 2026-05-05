@@ -121,6 +121,19 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
     )
 
 
+def run_logic_port_daemon_runtime(argv: Optional[Sequence[str]] = None) -> int:
+    """Run the packaged logic-port daemon runtime.
+
+    The implementation remains in the historical module so legacy imports stay
+    stable, while lifecycle dispatchers can expose it through the reusable
+    todo-daemon package shape.
+    """
+
+    from ipfs_datasets_py.optimizers.logic_port_daemon import main as runtime_main
+
+    return runtime_main(argv)
+
+
 def build_arg_parser() -> argparse.ArgumentParser:
     return build_lifecycle_arg_parser(
         description="Manage the logic-port optimizer daemon lifecycle.",
@@ -133,6 +146,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default_restart_delay_seconds=int(_env("ENSURE_TMUX_RESTART_DELAY_SECONDS", "5")),
         default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
         stop_description="Stop the supervisor, daemon child, and owned worktree LLM calls.",
+        run_description="Run the logic-port daemon runtime in the foreground.",
     )
 
 
@@ -145,6 +159,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         ensure_fn=ensure_daemon_running,
         stop_fn=stop_daemon,
         ensure_restart_kw="tmux_restart_delay_seconds",
+        run_fn=run_logic_port_daemon_runtime,
         stop_not_running_message="logic-port daemon supervisor is not running",
     )
 

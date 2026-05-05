@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
     artifact_validation_text,
+    block_threshold_for_failure_kind,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
     build_python_module_command,
@@ -36,15 +37,18 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     call_llm_router,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
+    count_recent_proposal_failures,
     count_unmanaged_generated_status_sections,
     current_task_failure_counts,
     daemon_spec_payload,
     diagnostic_signatures,
     extract_codex_event_text_candidates,
     extract_json,
+    focused_task_board_excerpt,
     generated_status_block,
     heartbeat_snapshot,
     has_diagnostic_codes,
+    is_retryable_proposal_failure,
     launch_supervised_child,
     last_task_attempt_index,
     looks_like_empty_codex_event_stream,
@@ -55,8 +59,12 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     parse_markdown_tasks,
     paths_from_git_status_porcelain,
     paths_from_unified_diff,
+    prompt_limit_for_mode,
+    proposal_block_threshold,
     proposal_diff_from_worktree,
+    proposal_error_text,
     promote_worktree_files,
+    proposal_record_has_failure_markers,
     quality_failure_counts,
     quoted_env_assignments,
     read_daemon_results,
@@ -69,6 +77,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
+    run_lifecycle_args,
     run_lifecycle_cli,
     run_supervisor_loop_cli,
     supervisor_loop_config_from_args,
@@ -76,6 +85,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     run_todo_daemon,
     run_todo_daemon_cli,
     select_task,
+    should_skip_validation_for_empty_proposal,
     should_use_compact_prompt_for_failures,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
@@ -84,6 +94,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     task_status_counts,
     temporary_validation_worktree,
     todo_daemon_proposals_payload,
+    truncate_text,
     unified_diff_stats,
     untracked_paths_from_git_status_porcelain,
     update_generated_status_block,
@@ -181,6 +192,29 @@ def test_task_board_generated_status_helpers_are_reusable() -> None:
     assert "<!-- daemon:start -->" in updated
     assert "Latest result: `valid`" in updated
     assert "stale" not in updated
+
+
+def test_task_board_focused_excerpt_helpers_are_reusable() -> None:
+    markdown = "\n".join(
+        [
+            "# Board",
+            "- [ ] Task checkbox-1: Alpha task.",
+            "alpha details",
+            "- [ ] Task checkbox-2: Beta task.",
+            "beta details",
+            "- [ ] Task checkbox-3: Gamma task.",
+            "gamma details",
+        ]
+    )
+    selected = parse_markdown_tasks(markdown)[1]
+
+    excerpt = focused_task_board_excerpt(markdown, selected, limit=110)
+
+    assert "[task-board excerpt centered on daemon-selected task]" in excerpt
+    assert "Task checkbox-2: Beta task." in excerpt
+    assert "Task checkbox-1: Alpha task." not in excerpt
+    assert truncate_text("abcdef", limit=3) == "abc\n\n[truncated]\n"
+    assert truncate_text("abcdef", limit=10) == "abcdef"
 
 
 def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
@@ -586,6 +620,54 @@ def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
         classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
         rollback_failure_kinds=frozenset({"quality"}),
     ) == 2
+
+
+def test_proposal_retry_policy_helpers_are_reusable() -> None:
+    retryable = Proposal(
+        failure_kind="validation",
+        errors=["provider timed out while generating candidate"],
+    )
+    empty_llm = Proposal(failure_kind="llm")
+    source_only = Proposal(
+        failure_kind="no_visible_source_change",
+        files=[{"path": "todo/status.json", "content": "{}\n"}],
+    )
+    record = {"failure_kind": "llm", "errors": ["llm_router child exited with code -15:"]}
+
+    assert is_retryable_proposal_failure(retryable)
+    assert proposal_error_text(retryable) == "provider timed out while generating candidate"
+    assert should_skip_validation_for_empty_proposal(empty_llm)
+    assert not should_skip_validation_for_empty_proposal(source_only)
+    assert block_threshold_for_failure_kind(
+        "syntax_preflight",
+        default_threshold=3,
+        capped_failure_kinds=frozenset({"syntax_preflight"}),
+        capped_threshold=2,
+    ) == 2
+    assert proposal_block_threshold(
+        source_only,
+        default_threshold=3,
+        exact_thresholds={"no_visible_source_change": 1},
+    ) == 1
+    assert prompt_limit_for_mode(
+        max_prompt_chars=60000,
+        max_compact_prompt_chars=3600,
+        compact_prompt=True,
+    ) == 3600
+    assert prompt_limit_for_mode(
+        max_prompt_chars=60000,
+        max_compact_prompt_chars=3600,
+        compact_prompt=False,
+    ) == 60000
+    assert proposal_record_has_failure_markers(
+        record,
+        failure_kind="llm",
+        markers=frozenset({"code -15"}),
+    )
+    assert count_recent_proposal_failures(
+        [{"failure_kind": "llm"}, {"failure_kind": "validation"}],
+        failure_kinds=frozenset({"llm"}),
+    ) == 1
 
 
 def test_git_parsing_helpers_are_reusable() -> None:
@@ -1155,6 +1237,7 @@ def test_reusable_lifecycle_cli_runs_check_ensure_and_spec(tmp_path: Path, capsy
         restart_delay_flag="--restart-delay-seconds",
         default_restart_delay_seconds=3,
         stop_description="Stop synthetic daemon.",
+        run_description="Run synthetic daemon.",
     )
 
     rc = run_lifecycle_cli(
@@ -1196,6 +1279,16 @@ def test_reusable_lifecycle_cli_runs_check_ensure_and_spec(tmp_path: Path, capsy
     assert spec_payload["runner"] == ["python3", "-m", "synthetic.daemon"]
     assert spec_payload["task_board_path"] == "todo/board.md"
 
+    run_seen: list[str] = []
+    rc = run_lifecycle_args(
+        parser.parse_args(["run", "--", "--once", "--flag"]),
+        build_spec=build_spec,
+        run_fn=lambda argv: run_seen.extend(list(argv or ())) or 7,
+    )
+
+    assert rc == 7
+    assert run_seen == ["--once", "--flag"]
+
 
 def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, capsys, monkeypatch) -> None:
     for name in (
@@ -1232,6 +1325,28 @@ def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, cap
 
     assert rc == 0
     assert listed["daemons"] == ["legal-parser", "logic-port"]
+
+    import ipfs_datasets_py.optimizers.todo_daemon.legal_parser as legal_parser_lifecycle
+    import ipfs_datasets_py.optimizers.todo_daemon.logic_port as logic_port_lifecycle
+
+    runtime_calls: list[tuple[str, list[str]]] = []
+    monkeypatch.setattr(
+        legal_parser_lifecycle,
+        "run_legal_parser_daemon_runtime",
+        lambda argv: runtime_calls.append(("legal-parser", list(argv or ()))) or 0,
+    )
+    monkeypatch.setattr(
+        logic_port_lifecycle,
+        "run_logic_port_daemon_runtime",
+        lambda argv: runtime_calls.append(("logic-port", list(argv or ()))) or 0,
+    )
+
+    assert todo_daemon_package_main(["legal-parser", "run", "--", "--max-cycles", "0"]) == 0
+    assert todo_daemon_package_main(["logic-port", "run", "--", "--max-iterations", "0"]) == 0
+    assert runtime_calls == [
+        ("legal-parser", ["--max-cycles", "0"]),
+        ("logic-port", ["--max-iterations", "0"]),
+    ]
 
     rc = todo_daemon_package_main(
         [
