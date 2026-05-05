@@ -174,6 +174,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
     action_text = _normalize_determination_light_verb_action(action_text)
+    action_text = _normalize_public_access_copy_light_verb_action(action_text)
     action_text = _normalize_calculation_computation_light_verb_action(action_text)
     action_text = _normalize_audit_examination_light_verb_action(action_text)
     action_text = _normalize_adjudication_hearing_light_verb_action(action_text)
@@ -468,6 +469,34 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_public_access_copy_light_verb_action(action_text: str) -> str:
+    """Collapse public-access copy nominalizations into operative copy acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    copy_patterns = [
+        (
+            r"^(?:furnish|furnishes|furnished|furnishing|provide|provides|provided|providing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing|supply|supplies|supplied|supplying)\s+"
+            r"(?:a\s+|an\s+|the\s+)?cop(?:y|ies)\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "provide copy of",
+        ),
+        (
+            r"^(?:make|makes|made|making|prepare|prepares|prepared|preparing|produce|produces|produced|producing|create|creates|created|creating)\s+"
+            r"(?:a\s+|an\s+|the\s+)?cop(?:y|ies)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "provide copy of",
+        ),
+    ]
+    for pattern, replacement in copy_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{replacement} {target}" if target else text
 
     return text
 

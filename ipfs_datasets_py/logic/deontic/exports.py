@@ -4102,6 +4102,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Comment", "Object", "Respond")):
         return "review_participation_duty"
     if action_predicate.startswith((
+        "PermitInspection",
+        "ProvideAccess",
+        "ProvideCopy",
+        "ProvidePublicAccess",
+        "ProvideRecordsInspection",
+    )):
+        return "public_access_records_duty"
+    if action_predicate.startswith((
         "FileAppeal",
         "FileApplication",
         "FilePetition",
