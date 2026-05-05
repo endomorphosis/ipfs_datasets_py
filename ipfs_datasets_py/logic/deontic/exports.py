@@ -965,6 +965,38 @@ def _summarize_prover_target_role_matrix(
         )
         for target in required
     }
+    status_distribution = Counter(status_by_target.values())
+    semantic_family_by_target = {
+        row["target"]: row["semantic_formula_family"]
+        for row in matrix
+        if row["target"] in required
+    }
+    syntax_status_by_target = {
+        row["target"]: row["syntax_status"]
+        for row in matrix
+        if row["target"] in required
+    }
+    formal_validation_by_target = {
+        row["target"]: row["formal_validation_complete"]
+        for row in matrix
+        if row["target"] in required
+    }
+    failed_quality_checks_by_target = {
+        row["target"]: list(row["failed_quality_checks"])
+        for row in matrix
+        if row["target"] in required
+    }
+    semantic_family_distribution = Counter(
+        family for family in semantic_family_by_target.values() if family
+    )
+    syntax_status_distribution = Counter(
+        status for status in syntax_status_by_target.values() if status
+    )
+    formal_validation_complete_count = sum(
+        1
+        for complete_value in formal_validation_by_target.values()
+        if complete_value is True
+    )
     required_count = len(required)
     complete = bool(
         required
@@ -1020,6 +1052,29 @@ def _summarize_prover_target_role_matrix(
         "target_formula_roles": sorted(dict.fromkeys(roles_by_target.values())),
         "target_dialect_families": sorted(dict.fromkeys(dialects_by_target.values())),
         "target_role_matrix_status_by_target": status_by_target,
+        "target_role_matrix_status_distribution": dict(
+            sorted(status_distribution.items())
+        ),
+        "target_semantic_family_by_target": dict(
+            sorted(semantic_family_by_target.items())
+        ),
+        "target_semantic_family_distribution": dict(
+            sorted(semantic_family_distribution.items())
+        ),
+        "target_syntax_status_by_target": dict(sorted(syntax_status_by_target.items())),
+        "target_syntax_status_distribution": dict(
+            sorted(syntax_status_distribution.items())
+        ),
+        "target_formal_validation_complete_by_target": dict(
+            sorted(formal_validation_by_target.items())
+        ),
+        "target_formal_validation_complete_count": formal_validation_complete_count,
+        "target_formal_validation_incomplete_count": (
+            len(formal_validation_by_target) - formal_validation_complete_count
+        ),
+        "target_failed_quality_checks_by_target": dict(
+            sorted(failed_quality_checks_by_target.items())
+        ),
         "missing_role_targets": missing_targets,
         "unknown_role_targets": sorted(unknown_role_targets),
         "unknown_dialect_targets": sorted(unknown_dialect_targets),

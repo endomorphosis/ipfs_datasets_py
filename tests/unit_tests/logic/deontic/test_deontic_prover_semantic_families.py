@@ -128,6 +128,31 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
     assert [row["target"] for row in role_summary["target_role_matrix"]] == list(
         LOCAL_PROVER_TARGETS
     )
+    assert role_summary["target_role_matrix_status_distribution"] == {
+        "complete": len(LOCAL_PROVER_TARGETS)
+    }
+    assert role_summary["target_semantic_family_by_target"] == {
+        target: "ordinary_duty" for target in LOCAL_PROVER_TARGETS
+    }
+    assert role_summary["target_semantic_family_distribution"] == {
+        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+    }
+    assert role_summary["target_syntax_status_by_target"] == {
+        target: "passed" for target in LOCAL_PROVER_TARGETS
+    }
+    assert role_summary["target_syntax_status_distribution"] == {
+        "passed": len(LOCAL_PROVER_TARGETS)
+    }
+    assert role_summary["target_formal_validation_complete_by_target"] == {
+        target: True for target in LOCAL_PROVER_TARGETS
+    }
+    assert role_summary["target_formal_validation_complete_count"] == len(
+        LOCAL_PROVER_TARGETS
+    )
+    assert role_summary["target_formal_validation_incomplete_count"] == 0
+    assert role_summary["target_failed_quality_checks_by_target"] == {
+        target: [] for target in LOCAL_PROVER_TARGETS
+    }
     assert all(
         row["formal_validation_complete"] is True
         for row in role_summary["target_role_matrix"]
@@ -193,6 +218,19 @@ def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
     assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
         "mismatched_role_and_dialect"
     )
+    assert role_summary["target_role_matrix_status_distribution"] == {
+        "complete": len(LOCAL_PROVER_TARGETS) - 1,
+        "mismatched_role_and_dialect": 1,
+    }
+    assert role_summary["target_syntax_status_distribution"] == {
+        "passed": len(LOCAL_PROVER_TARGETS)
+    }
+    assert role_summary["target_formal_validation_complete_count"] == len(
+        LOCAL_PROVER_TARGETS
+    )
+    assert role_summary["target_semantic_family_distribution"] == {
+        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+    }
     assert role_summary["target_roles_by_target"]["fol"] == "frame_record"
     assert role_summary["target_dialect_families_by_target"]["fol"] == "frame_logic"
     assert "mismatched_target_formula_role:fol:frame_record!=first_order_formula" in (
@@ -223,6 +261,20 @@ def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
     assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS)
     assert role_summary["target_role_matrix_coverage_rate"] == 1.0
     assert role_summary["target_role_incomplete_targets"] == []
+    assert role_summary["target_role_matrix_status_distribution"] == {
+        "complete": len(LOCAL_PROVER_TARGETS)
+    }
+    assert role_summary["target_formal_validation_complete_count"] == 0
+    assert role_summary["target_formal_validation_incomplete_count"] == len(
+        LOCAL_PROVER_TARGETS
+    )
+    assert role_summary["target_failed_quality_checks_by_target"] == {
+        target: ["formula_proof_ready", "formula_requires_validation"]
+        for target in LOCAL_PROVER_TARGETS
+    }
+    assert role_summary["target_syntax_status_distribution"] == {
+        "passed": len(LOCAL_PROVER_TARGETS)
+    }
     assert matrix["frame_logic"]["formula_role"] == "frame_record"
     assert matrix["frame_logic"]["dialect_family"] == "frame_logic"
     assert matrix["fol"]["formula_role"] == "first_order_formula"
