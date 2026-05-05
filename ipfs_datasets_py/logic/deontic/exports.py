@@ -564,6 +564,11 @@ def summarize_prover_syntax_target_coverage(
         elif current == "skipped" and status == "passed":
             status_by_target[target] = status
 
+    target_status_matrix_summary = _summarize_prover_required_target_status_matrix(
+        records,
+        required,
+    )
+
     passed_targets = sorted(
         target for target in required if status_by_target.get(target) == "passed"
     )
@@ -584,12 +589,130 @@ def summarize_prover_syntax_target_coverage(
         "failed_targets": failed_targets,
         "skipped_targets": skipped_targets,
         "missing_targets": missing_targets,
+        "target_status_matrix": target_status_matrix_summary["target_status_matrix"],
+        "target_status_by_target": target_status_matrix_summary[
+            "target_status_by_target"
+        ],
+        "target_record_count_by_target": target_status_matrix_summary[
+            "target_record_count_by_target"
+        ],
+        "target_duplicate_record_count": target_status_matrix_summary[
+            "target_duplicate_record_count"
+        ],
+        "target_duplicate_targets": target_status_matrix_summary[
+            "target_duplicate_targets"
+        ],
+        "target_status_matrix_complete": target_status_matrix_summary[
+            "target_status_matrix_complete"
+        ],
+        "target_status_matrix_requires_validation": target_status_matrix_summary[
+            "requires_validation"
+        ],
+        "target_status_matrix_blockers": target_status_matrix_summary[
+            "coverage_blockers"
+        ],
         "all_required_passed": bool(required)
         and len(passed_targets) == len(required)
         and not failed_targets
         and not skipped_targets
         and not missing_targets,
         "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
+    }
+
+
+def _summarize_prover_required_target_status_matrix(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str],
+) -> Dict[str, Any]:
+    """Return per-required-target syntax coverage diagnostics.
+
+    The aggregate pass rate is intentionally preserved for backward
+    compatibility. This matrix adds the missing operational detail: which
+    required target was absent, duplicated, skipped, or failed, and which
+    blockers explain the status.
+    """
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    statuses_by_target: Dict[str, List[str]] = {target: [] for target in required}
+    record_counts: Counter[str] = Counter()
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        if target not in statuses_by_target:
+            continue
+        statuses_by_target[target].append(_prover_syntax_record_status(record))
+        record_counts[target] += 1
+
+    matrix: List[Dict[str, Any]] = []
+    blockers: List[str] = []
+    duplicate_targets: List[str] = []
+    for target in required:
+        statuses = statuses_by_target[target]
+        record_count = record_counts.get(target, 0)
+        duplicate = record_count > 1
+        if duplicate:
+            duplicate_targets.append(target)
+
+        if not statuses:
+            status = "missing"
+        elif "failed" in statuses:
+            status = "failed"
+        elif all(item == "skipped" for item in statuses):
+            status = "skipped"
+        elif "passed" in statuses:
+            status = "passed"
+        else:
+            status = "failed"
+
+        target_blockers: List[str] = []
+        if status == "missing":
+            target_blockers.append(f"missing_prover_syntax_target:{target}")
+        elif status == "failed":
+            target_blockers.append(f"failed_prover_syntax_target:{target}")
+        elif status == "skipped":
+            target_blockers.append(f"skipped_prover_syntax_target:{target}")
+        if duplicate:
+            target_blockers.append(
+                f"duplicate_prover_syntax_target_record:{target}:{record_count}"
+            )
+        blockers.extend(target_blockers)
+
+        matrix.append(
+            {
+                "target": target,
+                "status": status,
+                "present": bool(statuses),
+                "passed": status == "passed",
+                "failed": status == "failed",
+                "skipped": status == "skipped",
+                "missing": status == "missing",
+                "duplicate": duplicate,
+                "record_count": record_count,
+                "statuses": list(statuses),
+                "blockers": target_blockers,
+            }
+        )
+
+    complete = bool(
+        required
+        and all(row["status"] == "passed" for row in matrix)
+        and not duplicate_targets
+    )
+    return {
+        "target_status_matrix": matrix,
+        "target_status_by_target": {row["target"]: row["status"] for row in matrix},
+        "target_record_count_by_target": {
+            row["target"]: row["record_count"] for row in matrix
+        },
+        "target_duplicate_record_count": sum(
+            max(0, row["record_count"] - 1) for row in matrix
+        ),
+        "target_duplicate_targets": duplicate_targets,
+        "requires_validation": not complete,
+        "coverage_blockers": blockers,
+        "target_status_matrix_complete": complete,
     }
 
 
