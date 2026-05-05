@@ -520,6 +520,146 @@ def test_decoder_renders_temporal_chains_without_losing_each_span():
     ]
 
 
+def test_decoder_renders_structured_procedure_event_chains_from_ir():
+    examples = [
+        (
+            "The Clerk shall serve the order.",
+            "serve the order",
+            [
+                {
+                    "event": "service",
+                    "relation": "triggered_by_certified_mailing_of",
+                    "anchor_event": "notice",
+                    "raw_text": "after certified mailing of the notice",
+                    "span": [30, 67],
+                },
+                {
+                    "event": "service",
+                    "relation": "triggered_by_docketing_of",
+                    "anchor_event": "appeal",
+                    "raw_text": "after docketing of the appeal",
+                    "span": [72, 101],
+                },
+            ],
+            "Clerk shall serve the order after certified mailing of the notice and after docketing of the appeal.",
+            [
+                "after certified mailing of the notice",
+                "after docketing of the appeal",
+            ],
+            [[30, 67], [72, 101]],
+        ),
+        (
+            "The Clerk shall record the deed.",
+            "record the deed",
+            [
+                {
+                    "event": "recordation",
+                    "relation": "triggered_by_signature_of",
+                    "anchor_event": "final order",
+                    "raw_text": "after signature of the final order",
+                    "span": [29, 63],
+                },
+                {
+                    "event": "recordation",
+                    "relation": "triggered_by_countersignature_of",
+                    "anchor_event": "certificate",
+                    "raw_text": "after countersignature of the certificate",
+                    "span": [68, 110],
+                },
+            ],
+            "Clerk shall record the deed after signature of the final order and after countersignature of the certificate.",
+            [
+                "after signature of the final order",
+                "after countersignature of the certificate",
+            ],
+            [[29, 63], [68, 110]],
+        ),
+        (
+            "The Treasurer shall release the permit.",
+            "release the permit",
+            [
+                {
+                    "event": "release",
+                    "relation": "triggered_by_payment_of",
+                    "anchor_event": "fee",
+                    "raw_text": "after payment of the fee",
+                    "span": [37, 61],
+                },
+                {
+                    "event": "release",
+                    "relation": "triggered_by_assessment_of",
+                    "anchor_event": "charges",
+                    "raw_text": "after assessment of charges",
+                    "span": [66, 93],
+                },
+            ],
+            "Treasurer shall release the permit after payment of the fee and after assessment of charges.",
+            ["after payment of the fee", "after assessment of charges"],
+            [[37, 61], [66, 93]],
+        ),
+    ]
+
+    for text, action, event_relations, expected_text, expected_phrases, expected_spans in examples:
+        _, norm, _ = _decode(text)
+        procedure_norm = replace(
+            norm,
+            action=action,
+            procedure={"event_relations": event_relations},
+        )
+
+        decoded = decode_legal_norm_ir(procedure_norm)
+
+        assert decoded.text == expected_text
+        assert decoded.missing_slots == []
+        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"] == expected_phrases
+        assert [phrase.spans for phrase in decoded.phrases if phrase.slot == "procedure"] == [
+            [span] for span in expected_spans
+        ]
+        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"] == [
+            "and"
+        ]
+        assert decoded.text.count(" and ") == 1
+
+
+def test_decoder_derives_procedure_phrase_when_raw_text_is_absent():
+    _, norm, _ = _decode("The Auditor shall certify the refund.")
+    procedure_norm = replace(
+        norm,
+        procedure={
+            "event_relations": [
+                {
+                    "event": "certification",
+                    "relation": "triggered_by_audit_of",
+                    "anchor_event": "account",
+                    "span": [41, 67],
+                }
+            ]
+        },
+    )
+
+    decoded = decode_legal_norm_ir(procedure_norm)
+
+    assert decoded.text == "Auditor shall certify the refund after audit of account."
+    procedure_phrase = next(phrase for phrase in decoded.phrases if phrase.slot == "procedure")
+    assert procedure_phrase.text == "after audit of account"
+    assert procedure_phrase.spans == [[41, 67]]
+    assert decoded.missing_slots == []
+
+
+def test_decoder_procedure_event_slice_preserves_unresolved_numbered_reference_gate():
+    element, norm, decoded = _decode(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )
+
+    assert decoded.text == "Secretary shall publish the notice except as provided in section 552."
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert "exception_requires_scope_review" in norm.blockers
+
+
 def test_decoder_connector_slice_preserves_unresolved_numbered_reference_repair_gate():
     element, norm, decoded = _decode(
         "The Secretary shall publish the notice except as provided in section 552."

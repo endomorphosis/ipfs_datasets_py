@@ -137,6 +137,24 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
             phrases.append(_detail_phrase(temporal_text, "temporal_constraints", temporal, norm))
             rendered_temporal += 1
 
+    rendered_procedure = 0
+    for procedure_event in _procedure_event_records(norm.procedure):
+        procedure_text = _procedure_event_phrase_text(procedure_event)
+        if (
+            procedure_text
+            and not _text_already_contains(action_phrase, procedure_text)
+            and not _text_already_contains(procedure_text, action_phrase)
+        ):
+            connector = _procedure_event_connector(
+                rendered_conditions,
+                rendered_temporal,
+                rendered_procedure,
+            )
+            if connector:
+                phrases.append(_fixed_phrase(connector, "procedure_connector"))
+            phrases.append(_detail_phrase(procedure_text, "procedure", procedure_event, norm))
+            rendered_procedure += 1
+
     rendered_exceptions = 0
     for exception in norm.exceptions:
         exception_text = _exception_phrase_text(exception)
@@ -439,6 +457,57 @@ def _temporal_phrase_text(record: Mapping[str, Any]) -> str:
     if re.search(r"\b\d+\b", value) or " after " in lowered or " before " in lowered:
         return f"within {value}"
     return value
+
+
+def _procedure_event_records(procedure: Mapping[str, Any]) -> List[Mapping[str, Any]]:
+    if not isinstance(procedure, Mapping):
+        return []
+    records = procedure.get("event_relations") or procedure.get("event_chain") or []
+    if not isinstance(records, Sequence) or isinstance(records, (str, bytes)):
+        return []
+    return [record for record in records if isinstance(record, Mapping)]
+
+
+def _procedure_event_phrase_text(record: Mapping[str, Any]) -> str:
+    value = _slot_text(record)
+    if value:
+        return value
+
+    relation = str(record.get("relation") or record.get("type") or "").strip().lower()
+    anchor = _clean_text(str(
+        record.get("anchor_event")
+        or record.get("anchor")
+        or record.get("event_anchor")
+        or ""
+    ))
+    if not anchor:
+        return ""
+
+    relation_prefixes = (
+        ("triggered_by_", "after"),
+        ("after_", "after"),
+        ("before_", "before"),
+        ("upon_", "upon"),
+    )
+    for prefix, connector in relation_prefixes:
+        if relation.startswith(prefix):
+            trigger = relation[len(prefix) :].replace("_", " ")
+            trigger = _strip_prefix(trigger, ("of", "on", "with", "by", "to"))
+            trigger = re.sub(r"\s+(?:of|on|with|by|to)$", "", trigger).strip()
+            return _clean_text(f"{connector} {trigger} of {anchor}")
+    return ""
+
+
+def _procedure_event_connector(
+    rendered_conditions: int,
+    rendered_temporal: int,
+    rendered_procedure: int,
+) -> str:
+    if rendered_procedure:
+        return "and"
+    if rendered_conditions or rendered_temporal:
+        return "and"
+    return ""
 
 
 def _definition_body(norm: LegalNormIR) -> str:
