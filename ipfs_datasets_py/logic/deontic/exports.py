@@ -400,6 +400,11 @@ def summarize_phase8_quality_records(
 
     reconstruction = summarize_reconstruction_slot_loss(decoder_records, required_slots)
     prover = summarize_prover_syntax_target_coverage(prover_syntax_records, required_targets)
+    prover_corpus = summarize_prover_syntax_target_corpus_coverage(
+        prover_syntax_records,
+        required_targets,
+    )
+    has_source_grounded_prover_records = _records_have_source_id(prover_syntax_records)
     provenance = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
 
     blockers = set(reconstruction.get("coverage_blockers") or [])
@@ -415,11 +420,23 @@ def summarize_phase8_quality_records(
         f"skipped_prover_syntax_target:{target}"
         for target in prover.get("skipped_targets", [])
     )
+    for blocker, count in (prover_corpus.get("coverage_blocker_distribution") or {}).items():
+        if count and has_source_grounded_prover_records:
+            blockers.add(str(blocker))
     blockers.update(provenance.get("coverage_blockers") or [])
+
+    prover_complete = False
+    if has_source_grounded_prover_records:
+        prover_complete = (
+            prover_corpus.get("all_sources_complete") is True
+            and prover_corpus.get("all_sources_required_targets_passed") is True
+        )
+    else:
+        prover_complete = prover.get("all_required_passed") is True
 
     complete = (
         reconstruction.get("slot_reconstruction_complete") is True
-        and prover.get("all_required_passed") is True
+        and prover_complete
         and provenance.get("all_checked_slots_grounded") is True
     )
 
@@ -429,8 +446,16 @@ def summarize_phase8_quality_records(
         "coverage_blockers": sorted(blockers),
         "reconstruction_slot_loss": reconstruction,
         "prover_syntax_target_coverage": prover,
+        "prover_syntax_corpus_coverage": prover_corpus,
         "ir_slot_provenance": provenance,
     }
+
+
+def _records_have_source_id(records: Sequence[Mapping[str, Any]]) -> bool:
+    return any(
+        isinstance(record, Mapping) and bool(str(record.get("source_id") or "").strip())
+        for record in records or []
+    )
 
 
 def build_phase8_quality_summary_records(

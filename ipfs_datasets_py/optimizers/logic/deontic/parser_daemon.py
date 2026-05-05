@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import hashlib
 import json
 import traceback
 import os
@@ -46,16 +45,23 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizerConfig,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
+    current_git_head as _shared_current_git_head,
+    dirty_paths_diff_summary as _shared_dirty_paths_diff_summary,
+    dirty_paths_fingerprint as _shared_dirty_paths_fingerprint,
     git_apply_command_for_strategy as _shared_git_apply_command_for_strategy,
     git_apply_check_with_fallbacks as _shared_git_apply_check_with_fallbacks,
     git_apply_commands as _shared_git_apply_commands,
     git_apply_with_strategy as _shared_git_apply_with_strategy,
+    git_path_activity_snapshot as _shared_git_path_activity_snapshot,
     paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
     retained_change_summary as _shared_retained_change_summary,
+    retained_patch_for_paths as _shared_retained_patch_for_paths,
     restore_path_snapshots as _shared_restore_path_snapshots,
+    restore_working_tree_diff as _shared_restore_working_tree_diff,
     snapshot_patch_paths as _shared_snapshot_patch_paths,
     unified_diff_stats as _shared_unified_diff_stats,
+    working_tree_diff as _shared_working_tree_diff,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     append_jsonl as _shared_append_jsonl,
@@ -799,41 +805,21 @@ class LegalParserParityOptimizer(BaseOptimizer):
         return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
 
     def _working_tree_diff(self) -> str:
-        result = _run_command(
-            ["git", "diff", "--binary"],
-            cwd=self.daemon_config.repo_root,
+        return _shared_working_tree_diff(
+            self.daemon_config.repo_root,
+            run_command_fn=_run_command,
             timeout=60,
         )
-        return str(result.get("stdout") or "")
 
     def _restore_working_tree_diff(self, expected_diff: str) -> Dict[str, Any]:
-        current_diff = self._working_tree_diff()
-        if current_diff == expected_diff:
-            return {"valid": True, "changed": False, "reason": "working_tree_unchanged"}
-        reverse_result = _run_command(
-            ["git", "apply", "-R", "-"],
-            cwd=self.daemon_config.repo_root,
-            input_text=current_diff,
+        return _shared_restore_working_tree_diff(
+            self.daemon_config.repo_root,
+            expected_diff,
+            run_command_fn=_run_command,
             timeout=60,
+            unchanged_reason="working_tree_unchanged",
+            restored_reason="restored_after_llm_side_effects",
         )
-        if not reverse_result.get("valid"):
-            return {"valid": False, "changed": False, "reverse": reverse_result}
-        result: Dict[str, Any] = {
-            "valid": True,
-            "changed": True,
-            "reason": "restored_after_llm_side_effects",
-            "reverse": reverse_result,
-        }
-        if expected_diff.strip():
-            reapply_result = _run_command(
-                ["git", "apply", "-"],
-                cwd=self.daemon_config.repo_root,
-                input_text=expected_diff,
-                timeout=60,
-            )
-            result["reapply_preexisting"] = reapply_result
-            result["valid"] = bool(reapply_result.get("valid"))
-        return result
 
     def _dirty_legal_parser_target_status(self) -> Dict[str, Any]:
         """Return dirty legal-parser files after an LLM-generation side effect."""
@@ -4259,36 +4245,21 @@ class LegalParserOptimizerDaemon:
             return {"cycle_index": 0}
 
     def _working_tree_diff(self) -> str:
-        result = _run_command(
-            ["git", "diff", "--binary"],
-            cwd=self.config.repo_root,
+        return _shared_working_tree_diff(
+            self.config.repo_root,
+            run_command_fn=_run_command,
             timeout=60,
         )
-        return str(result.get("stdout") or "")
 
     def _restore_working_tree_diff(self, pre_apply_diff: str) -> Dict[str, Any]:
-        current_diff = self._working_tree_diff()
-        if current_diff == pre_apply_diff:
-            return {"valid": True, "changed": False, "reason": "working_tree_already_restored"}
-        reverse_result = _run_command(
-            ["git", "apply", "-R", "-"],
-            cwd=self.config.repo_root,
-            input_text=current_diff,
+        return _shared_restore_working_tree_diff(
+            self.config.repo_root,
+            pre_apply_diff,
+            run_command_fn=_run_command,
             timeout=60,
+            unchanged_reason="working_tree_already_restored",
+            restored_reason=None,
         )
-        if not reverse_result.get("valid"):
-            return {"valid": False, "changed": False, "reverse": reverse_result}
-        restore_result = {"valid": True, "changed": True, "reverse": reverse_result}
-        if pre_apply_diff.strip():
-            reapply_result = _run_command(
-                ["git", "apply", "-"],
-                cwd=self.config.repo_root,
-                input_text=pre_apply_diff,
-                timeout=60,
-            )
-            restore_result["reapply_preexisting"] = reapply_result
-            restore_result["valid"] = bool(reapply_result.get("valid"))
-        return restore_result
 
     def _snapshot_patch_paths(self, unified_diff: str) -> Dict[str, Optional[str]]:
         return _shared_snapshot_patch_paths(self.config.repo_root, unified_diff)
@@ -4300,15 +4271,12 @@ class LegalParserOptimizerDaemon:
         return _shared_retained_change_summary(self.config.repo_root, snapshots)
 
     def _retained_patch_for_paths(self, snapshots: Dict[str, Optional[str]]) -> str:
-        paths = [path for path in snapshots if path]
-        if not paths:
-            return ""
-        result = _run_command(
-            ["git", "diff", "--binary", "--", *paths],
-            cwd=self.config.repo_root,
+        return _shared_retained_patch_for_paths(
+            self.config.repo_root,
+            snapshots,
+            run_command_fn=_run_command,
             timeout=60,
         )
-        return str(result.get("stdout") or "")
 
     def _dirty_touched_files(self, changed_files: Sequence[str]) -> List[str]:
         return _shared_dirty_worktree_paths(
@@ -4501,56 +4469,24 @@ class LegalParserOptimizerDaemon:
         }
 
     def _git_retained_work_snapshot(self) -> Dict[str, Any]:
-        target_paths = [
-            "ipfs_datasets_py/logic/deontic",
-            "tests/unit_tests/logic/deontic",
-            "ipfs_datasets_py/optimizers/logic/deontic",
-        ]
-        head = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
-        status = _run_command(["git", "status", "--short", "--", *target_paths], cwd=self.config.repo_root, timeout=30)
-        diff_stat = _run_command(["git", "diff", "--stat", "--", *target_paths], cwd=self.config.repo_root, timeout=30)
-        recent_commits = _run_command(
-            ["git", "log", "--oneline", "-5", "--", *target_paths],
-            cwd=self.config.repo_root,
+        return _shared_git_path_activity_snapshot(
+            self.config.repo_root,
+            target_paths=(
+                "ipfs_datasets_py/logic/deontic",
+                "tests/unit_tests/logic/deontic",
+                "ipfs_datasets_py/optimizers/logic/deontic",
+            ),
+            run_baseline_head=self.run_baseline_head,
+            run_command_fn=_run_command,
             timeout=30,
         )
-        commits_since_run_start = _run_command(
-            ["git", "log", "--oneline", f"{self.run_baseline_head}..HEAD", "--", *target_paths],
-            cwd=self.config.repo_root,
-            timeout=30,
-        )
-        diff_since_run_start = _run_command(
-            ["git", "diff", "--stat", f"{self.run_baseline_head}..HEAD", "--", *target_paths],
-            cwd=self.config.repo_root,
-            timeout=30,
-        )
-        uncommitted_files = [
-            line.strip()
-            for line in str(status.get("stdout") or "").splitlines()
-            if line.strip()
-        ]
-        return {
-            "head": str(head.get("stdout") or "").strip(),
-            "uncommitted_file_count": len(uncommitted_files),
-            "uncommitted_files": uncommitted_files,
-            "diff_stat": str(diff_stat.get("stdout") or "").strip(),
-            "run_baseline_head": self.run_baseline_head,
-            "commits_since_run_start": [
-                line.strip()
-                for line in str(commits_since_run_start.get("stdout") or "").splitlines()
-                if line.strip()
-            ],
-            "diff_since_run_start_stat": str(diff_since_run_start.get("stdout") or "").strip(),
-            "recent_commits": [
-                line.strip()
-                for line in str(recent_commits.get("stdout") or "").splitlines()
-                if line.strip()
-            ],
-        }
 
     def _current_head(self) -> str:
-        result = _run_command(["git", "rev-parse", "--short", "HEAD"], cwd=self.config.repo_root, timeout=30)
-        return str(result.get("stdout") or "").strip()
+        return _shared_current_git_head(
+            self.config.repo_root,
+            run_command_fn=_run_command,
+            timeout=30,
+        )
 
 
 def parse_cycle_proposal(raw_response: str) -> LegalParserCycleProposal:
@@ -4764,95 +4700,27 @@ def _test_files(paths: Sequence[str]) -> List[str]:
 def _dirty_target_fingerprint(*, repo_root: Path, status_stdout: str, paths: Sequence[str]) -> str:
     """Return a content-sensitive fingerprint for stranded parser target diffs."""
 
-    if not paths:
-        return ""
-    digest = hashlib.sha256()
-    digest.update(status_stdout.encode("utf-8", errors="replace"))
-    diff_result = _run_command(
-        ["git", "diff", "--binary", "--", *paths],
-        cwd=repo_root,
+    return _shared_dirty_paths_fingerprint(
+        repo_root,
+        status_stdout=status_stdout,
+        paths=paths,
+        run_command_fn=_run_command,
         timeout=60,
     )
-    digest.update(str(diff_result.get("stdout") or "").encode("utf-8", errors="replace"))
-    for rel_path in sorted(paths):
-        path = repo_root / rel_path
-        digest.update(rel_path.encode("utf-8", errors="replace"))
-        try:
-            digest.update(path.read_bytes())
-        except FileNotFoundError:
-            digest.update(b"__missing__")
-        except OSError as exc:
-            digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
-    return digest.hexdigest()
 
 
 def _dirty_target_diff_summary(*, repo_root: Path, paths: Sequence[str]) -> Dict[str, Any]:
     """Summarize stranded parser-target diffs for recovery decisions."""
 
-    if not paths:
-        return {}
-    diff_result = _run_command(
-        ["git", "diff", "--", *paths],
-        cwd=repo_root,
+    return _shared_dirty_paths_diff_summary(
+        repo_root,
+        paths,
+        run_command_fn=_run_command,
         timeout=60,
+        test_file_prefixes=("tests/unit_tests/logic/deontic/",),
+        production_file_prefixes=("ipfs_datasets_py/logic/deontic/",),
+        production_exclude_prefixes=("ipfs_datasets_py/logic/deontic/__pycache__/",),
     )
-    if not diff_result.get("valid"):
-        return {
-            "valid": False,
-            "error": {
-                "returncode": diff_result.get("returncode"),
-                "stderr_tail": str(diff_result.get("stderr") or "")[-1000:],
-            },
-        }
-    numstat_result = _run_command(
-        ["git", "diff", "--numstat", "--", *paths],
-        cwd=repo_root,
-        timeout=60,
-    )
-    per_file: List[Dict[str, Any]] = []
-    insertions = 0
-    deletions = 0
-    if numstat_result.get("valid"):
-        for line in str(numstat_result.get("stdout") or "").splitlines():
-            parts = line.split("\t")
-            if len(parts) < 3:
-                continue
-            added_raw, deleted_raw, path = parts[0], parts[1], parts[2]
-            try:
-                added = int(added_raw)
-            except ValueError:
-                added = 0
-            try:
-                deleted = int(deleted_raw)
-            except ValueError:
-                deleted = 0
-            insertions += added
-            deletions += deleted
-            per_file.append(
-                {
-                    "path": path,
-                    "insertions": added,
-                    "deletions": deleted,
-                    "deletion_heavy": deleted > added and deleted > 0,
-                }
-            )
-    else:
-        stats = _unified_diff_stats(str(diff_result.get("stdout") or ""))
-        insertions = int(stats.get("insertions") or 0)
-        deletions = int(stats.get("deletions") or 0)
-    diff_paths = _paths_from_unified_diff(str(diff_result.get("stdout") or ""))
-    deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
-    return {
-        "valid": True,
-        "files_changed": len(per_file) if per_file else len(diff_paths),
-        "insertions": insertions,
-        "deletions": deletions,
-        "deletion_heavy": deletions > insertions and deletions > 0,
-        "deletion_heavy_files": deletion_heavy_files,
-        "test_deletion_heavy_files": _test_files(deletion_heavy_files),
-        "production_deletion_heavy_files": _production_files(deletion_heavy_files),
-        "per_file": per_file,
-    }
 
 
 def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:

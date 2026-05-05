@@ -392,6 +392,119 @@ def test_prover_reconstruction_profile_preserves_blocked_reference_tokens_withou
     )
 
 
+def test_prover_syntax_records_carry_decoded_phrase_profiles():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            ["actor", "modality", "action"],
+            [],
+            [],
+            3,
+            3,
+        ),
+        (
+            "The inspector shall knowingly approve the discharge.",
+            ["actor", "modality", "mental_state", "action"],
+            [],
+            [],
+            4,
+            4,
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            ["actor", "modality", "action", "exceptions", "cross_references"],
+            ["exception_connector"],
+            ["cross_references"],
+            6,
+            4,
+        ),
+    ]
+
+    for (
+        text,
+        phrase_slots,
+        fixed_slots,
+        provenance_only_slots,
+        phrase_count,
+        legal_count,
+    ) in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = {
+            target.target: target.to_dict()
+            for target in validate_ir_with_provers(norm).targets
+        }
+
+        assert len(records) == 5
+        assert all(
+            record["decoded_phrase_profile"]["phrase_slots"] == phrase_slots
+            for record in records.values()
+        )
+        assert all(
+            record["decoded_phrase_profile"]["fixed_slots"] == fixed_slots
+            for record in records.values()
+        )
+        assert all(
+            record["decoded_phrase_profile"]["provenance_only_slots"]
+            == provenance_only_slots
+            for record in records.values()
+        )
+        assert all(
+            record["decoded_phrase_profile"]["phrase_count"] == phrase_count
+            for record in records.values()
+        )
+        assert all(
+            record["decoded_phrase_profile"]["legal_phrase_count"] == legal_count
+            for record in records.values()
+        )
+        assert all(
+            record["decoded_phrase_profile"]["decoded_phrase_profile_complete"] is True
+            for record in records.values()
+        )
+        assert all(
+            record["target_components"]["decoded_phrase_profile_complete"] is True
+            for record in records.values()
+        )
+        assert all(
+            record["target_components"]["decoded_phrase_slots"] == phrase_slots
+            for record in records.values()
+        )
+        assert len(
+            {
+                record["decoded_phrase_profile_fingerprint"]
+                for record in records.values()
+            }
+        ) == 5
+
+
+def test_prover_decoded_phrase_profile_preserves_protected_reference_blocker():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert all(record["proof_ready"] is False for record in records)
+    assert all(record["requires_validation"] is True for record in records)
+    assert all(
+        record["decoded_phrase_profile"]["provenance_only_slots"]
+        == ["cross_references"]
+        for record in records
+    )
+    assert all(
+        record["decoded_phrase_profile"]["fixed_slots"] == ["exception_connector"]
+        for record in records
+    )
+    assert all(
+        record["target_components"]["decoded_provenance_only_phrase_count"] == 1
+        for record in records
+    )
+
+
 def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
     examples = [
         (

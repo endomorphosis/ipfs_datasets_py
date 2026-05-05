@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Optional, Sequence
@@ -236,6 +237,271 @@ def retained_change_summary(repo_root: Path, snapshots: Mapping[str, Optional[st
         "created_files": created_files,
         "deleted_files": deleted_files,
         "reason": "content_changed" if changed_files else "no_file_content_changed_after_apply",
+    }
+
+
+def retained_patch_for_paths(
+    repo_root: Path,
+    snapshots: Mapping[str, Optional[str]],
+    *,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 60,
+) -> str:
+    """Return a binary Git diff for the normalized paths present in ``snapshots``."""
+
+    paths = unique_normalized_paths(str(path or "") for path in snapshots)
+    if not paths:
+        return ""
+    result = run_command_fn(
+        ["git", "diff", "--binary", "--", *paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    return str(result.get("stdout") or "")
+
+
+def working_tree_diff(
+    repo_root: Path,
+    *,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 60,
+) -> str:
+    """Return the full binary Git diff for ``repo_root``."""
+
+    result = run_command_fn(["git", "diff", "--binary"], cwd=repo_root, timeout=timeout)
+    return str(result.get("stdout") or "")
+
+
+def restore_working_tree_diff(
+    repo_root: Path,
+    expected_diff: str,
+    *,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 60,
+    unchanged_reason: str = "working_tree_unchanged",
+    restored_reason: Optional[str] = "restored_working_tree_diff",
+) -> dict[str, Any]:
+    """Restore the current worktree diff to ``expected_diff`` with reverse/apply."""
+
+    current_diff = working_tree_diff(repo_root, run_command_fn=run_command_fn, timeout=timeout)
+    if current_diff == expected_diff:
+        return {"valid": True, "changed": False, "reason": unchanged_reason}
+    reverse_result = run_command_fn(
+        ["git", "apply", "-R", "-"],
+        cwd=repo_root,
+        input_text=current_diff,
+        timeout=timeout,
+    )
+    if not reverse_result.get("valid"):
+        return {"valid": False, "changed": False, "reverse": reverse_result}
+    result: dict[str, Any] = {
+        "valid": True,
+        "changed": True,
+        "reverse": reverse_result,
+    }
+    if restored_reason is not None:
+        result["reason"] = restored_reason
+    if expected_diff.strip():
+        reapply_result = run_command_fn(
+            ["git", "apply", "-"],
+            cwd=repo_root,
+            input_text=expected_diff,
+            timeout=timeout,
+        )
+        result["reapply_preexisting"] = reapply_result
+        result["valid"] = bool(reapply_result.get("valid"))
+    return result
+
+
+def dirty_paths_fingerprint(
+    repo_root: Path,
+    *,
+    status_stdout: str,
+    paths: Sequence[str],
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 60,
+) -> str:
+    """Return a content-sensitive fingerprint for dirty repo-relative paths."""
+
+    normalized_paths = unique_normalized_paths(paths)
+    if not normalized_paths:
+        return ""
+    digest = hashlib.sha256()
+    digest.update(str(status_stdout or "").encode("utf-8", errors="replace"))
+    diff_result = run_command_fn(
+        ["git", "diff", "--binary", "--", *normalized_paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    digest.update(str(diff_result.get("stdout") or "").encode("utf-8", errors="replace"))
+    for rel_path in sorted(normalized_paths):
+        path = repo_root / rel_path
+        digest.update(rel_path.encode("utf-8", errors="replace"))
+        try:
+            digest.update(path.read_bytes())
+        except FileNotFoundError:
+            digest.update(b"__missing__")
+        except OSError as exc:
+            digest.update(f"__error__:{exc}".encode("utf-8", errors="replace"))
+    return digest.hexdigest()
+
+
+def dirty_paths_diff_summary(
+    repo_root: Path,
+    paths: Sequence[str],
+    *,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 60,
+    test_file_prefixes: Sequence[str] = (),
+    production_file_prefixes: Sequence[str] = (),
+    production_exclude_prefixes: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Summarize stranded dirty-path diffs for recovery and rollback decisions."""
+
+    normalized_paths = unique_normalized_paths(paths)
+    if not normalized_paths:
+        return {}
+    diff_result = run_command_fn(
+        ["git", "diff", "--", *normalized_paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    if not diff_result.get("valid"):
+        return {
+            "valid": False,
+            "error": {
+                "returncode": diff_result.get("returncode"),
+                "stderr_tail": str(diff_result.get("stderr") or "")[-1000:],
+            },
+        }
+    numstat_result = run_command_fn(
+        ["git", "diff", "--numstat", "--", *normalized_paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    per_file: list[dict[str, Any]] = []
+    insertions = 0
+    deletions = 0
+    if numstat_result.get("valid"):
+        for line in str(numstat_result.get("stdout") or "").splitlines():
+            parts = line.split("\t")
+            if len(parts) < 3:
+                continue
+            added_raw, deleted_raw, path = parts[0], parts[1], parts[2]
+            try:
+                added = int(added_raw)
+            except ValueError:
+                added = 0
+            try:
+                deleted = int(deleted_raw)
+            except ValueError:
+                deleted = 0
+            insertions += added
+            deletions += deleted
+            per_file.append(
+                {
+                    "path": path,
+                    "insertions": added,
+                    "deletions": deleted,
+                    "deletion_heavy": deleted > added and deleted > 0,
+                }
+            )
+    else:
+        stats = unified_diff_stats(str(diff_result.get("stdout") or ""))
+        insertions = int(stats.get("insertions") or 0)
+        deletions = int(stats.get("deletions") or 0)
+    diff_paths = paths_from_unified_diff(str(diff_result.get("stdout") or ""))
+    deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
+    return {
+        "valid": True,
+        "files_changed": len(per_file) if per_file else len(diff_paths),
+        "insertions": insertions,
+        "deletions": deletions,
+        "deletion_heavy": deletions > insertions and deletions > 0,
+        "deletion_heavy_files": deletion_heavy_files,
+        "test_deletion_heavy_files": _prefixed_paths(
+            deletion_heavy_files,
+            prefixes=test_file_prefixes,
+        ),
+        "production_deletion_heavy_files": _prefixed_paths(
+            deletion_heavy_files,
+            prefixes=production_file_prefixes,
+            exclude_prefixes=production_exclude_prefixes,
+        ),
+        "per_file": per_file,
+    }
+
+
+def current_git_head(
+    repo_root: Path,
+    *,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 30,
+    short: bool = True,
+) -> str:
+    """Return the current Git HEAD revision."""
+
+    command = ["git", "rev-parse"]
+    if short:
+        command.append("--short")
+    command.append("HEAD")
+    result = run_command_fn(command, cwd=repo_root, timeout=timeout)
+    return str(result.get("stdout") or "").strip()
+
+
+def git_path_activity_snapshot(
+    repo_root: Path,
+    *,
+    target_paths: Sequence[str],
+    run_baseline_head: str,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 30,
+    recent_commit_count: int = 5,
+) -> dict[str, Any]:
+    """Return compact status, diff, and commit activity for target paths."""
+
+    paths = unique_normalized_paths(target_paths)
+    revision_range = f"{run_baseline_head}..HEAD"
+    head = run_command_fn(["git", "rev-parse", "--short", "HEAD"], cwd=repo_root, timeout=timeout)
+    status = run_command_fn(["git", "status", "--short", "--", *paths], cwd=repo_root, timeout=timeout)
+    diff_stat = run_command_fn(["git", "diff", "--stat", "--", *paths], cwd=repo_root, timeout=timeout)
+    recent_commits = run_command_fn(
+        ["git", "log", "--oneline", f"-{max(1, int(recent_commit_count))}", "--", *paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    commits_since_run_start = run_command_fn(
+        ["git", "log", "--oneline", revision_range, "--", *paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    diff_since_run_start = run_command_fn(
+        ["git", "diff", "--stat", revision_range, "--", *paths],
+        cwd=repo_root,
+        timeout=timeout,
+    )
+    uncommitted_files = [
+        line.strip()
+        for line in str(status.get("stdout") or "").splitlines()
+        if line.strip()
+    ]
+    return {
+        "head": str(head.get("stdout") or "").strip(),
+        "uncommitted_file_count": len(uncommitted_files),
+        "uncommitted_files": uncommitted_files,
+        "diff_stat": str(diff_stat.get("stdout") or "").strip(),
+        "run_baseline_head": run_baseline_head,
+        "commits_since_run_start": [
+            line.strip()
+            for line in str(commits_since_run_start.get("stdout") or "").splitlines()
+            if line.strip()
+        ],
+        "diff_since_run_start_stat": str(diff_since_run_start.get("stdout") or "").strip(),
+        "recent_commits": [
+            line.strip()
+            for line in str(recent_commits.get("stdout") or "").splitlines()
+            if line.strip()
+        ],
     }
 
 

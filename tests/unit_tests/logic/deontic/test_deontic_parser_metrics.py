@@ -119,6 +119,11 @@ def test_summarize_parser_elements_includes_phase8_quality_metrics() -> None:
     assert summary["phase8_prover_required_target_count"] == 5
     assert summary["phase8_prover_present_required_target_count"] == 5
     assert summary["phase8_prover_syntax_valid_rate"] == 1.0
+    assert summary["phase8_prover_corpus_source_count"] == 2
+    assert summary["phase8_prover_corpus_complete_source_count"] == 2
+    assert summary["phase8_prover_corpus_source_complete_rate"] == 1.0
+    assert summary["phase8_prover_corpus_formal_syntax_valid_source_rate"] == 1.0
+    assert summary["phase8_prover_corpus_source_identity_complete"] is True
     assert summary["phase8_quality_record_count"] == 2
     assert summary["phase8_quality_complete_count"] == 0
     assert summary["phase8_quality_complete_rate"] == 0.0
@@ -126,7 +131,14 @@ def test_summarize_parser_elements_includes_phase8_quality_metrics() -> None:
     assert summary["phase8_quality_requires_validation_rate"] == 1.0
     assert summary["decoder_reconstruction_metrics"]["proof_ready_count"] == 1
     assert summary["prover_syntax_target_coverage"]["all_required_passed"] is True
+    assert summary["prover_syntax_corpus_coverage"]["all_sources_complete"] is True
+    assert summary["prover_syntax_corpus_coverage"][
+        "all_sources_required_targets_passed"
+    ] is True
     assert summary["phase8_quality_summary"]["requires_validation"] is True
+    assert summary["phase8_quality_summary"]["prover_syntax_corpus_coverage"][
+        "source_complete_rate"
+    ] == 1.0
     assert summary["parser_capability_profile_metrics"]["requires_validation"] is True
     assert summary["parser_capability_profile_metrics"][
         "coverage_blocker_distribution"
@@ -151,6 +163,8 @@ def test_summarize_phase8_parser_metrics_exposes_dedicated_surface() -> None:
     assert summary["phase8_decoder_reconstruction_record_count"] == 1
     assert summary["phase8_prover_required_target_count"] == 5
     assert summary["phase8_prover_syntax_valid_rate"] == 1.0
+    assert summary["phase8_prover_corpus_source_count"] == 1
+    assert summary["phase8_prover_corpus_source_complete_rate"] == 1.0
     assert summary["phase8_ir_grounded_slot_rate"] > 0.0
     assert summary["phase8_quality_record_count"] == 1
     assert summary["phase8_quality_summary"]["prover_syntax_target_coverage"][

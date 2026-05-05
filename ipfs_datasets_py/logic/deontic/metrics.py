@@ -16,6 +16,7 @@ from .exports import (
     summarize_deterministic_parser_capability_profile_records,
     summarize_ir_slot_provenance_audit_records,
     summarize_phase8_quality_records,
+    summarize_prover_syntax_target_corpus_coverage,
     summarize_prover_syntax_target_coverage,
 )
 from .ir import LegalNormIR
@@ -155,6 +156,9 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         capability_profile_records
     )
     prover_summary = summarize_prover_syntax_target_coverage(prover_syntax_records)
+    prover_corpus_summary = summarize_prover_syntax_target_corpus_coverage(
+        prover_syntax_records
+    )
     provenance_summary = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
     phase8_quality_summary = summarize_phase8_quality_records(
         decoder_records=decoder_records,
@@ -211,6 +215,19 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "present_required_target_count"
         ],
         "phase8_prover_syntax_valid_rate": prover_summary["syntax_valid_rate"],
+        "phase8_prover_corpus_source_count": prover_corpus_summary["source_count"],
+        "phase8_prover_corpus_complete_source_count": prover_corpus_summary[
+            "complete_source_count"
+        ],
+        "phase8_prover_corpus_source_complete_rate": prover_corpus_summary[
+            "source_complete_rate"
+        ],
+        "phase8_prover_corpus_formal_syntax_valid_source_rate": prover_corpus_summary[
+            "formal_syntax_valid_source_rate"
+        ],
+        "phase8_prover_corpus_source_identity_complete": prover_corpus_summary[
+            "source_identity_complete"
+        ],
         "phase8_ir_grounded_slot_rate": provenance_summary["grounded_slot_rate"],
         "phase8_quality_record_count": quality_record_count,
         "phase8_quality_complete_count": quality_complete_count,
@@ -229,6 +246,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "decoder_reconstruction_metrics": decoder_summary,
         "parser_capability_profile_metrics": capability_summary,
         "prover_syntax_target_coverage": prover_summary,
+        "prover_syntax_corpus_coverage": prover_corpus_summary,
         "ir_slot_provenance": provenance_summary,
         "phase8_quality_summary": phase8_quality_summary,
     }

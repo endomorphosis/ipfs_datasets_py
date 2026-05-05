@@ -105,6 +105,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     count_recent_proposal_failures,
     cycle_quality_gate_summary,
     count_unmanaged_generated_status_sections,
+    current_git_head,
     current_task_failure_counts,
     dataclass_worktree_config,
     daemon_alias_map,
@@ -112,6 +113,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     daemon_spec_payload,
     default_lifecycle_wrapper_script_specs,
     diagnostic_signatures,
+    dirty_paths_diff_summary,
+    dirty_paths_fingerprint,
     disallowed_worktree_paths,
     dirty_worktree_paths,
     exception_diagnostic,
@@ -142,6 +145,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     git_apply_command_for_strategy,
     git_apply_commands,
     git_apply_with_strategy,
+    git_path_activity_snapshot,
     heartbeat_snapshot,
     has_diagnostic_codes,
     is_retryable_proposal_failure,
@@ -198,6 +202,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     repair_common_typescript_file_edits,
     repair_common_typescript_text_damage,
     retained_change_summary,
+    retained_patch_for_paths,
     repo_relative_copy_paths,
     repo_relative_pathspec,
     repo_relative_worktree_path,
@@ -210,6 +215,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     resolve_artifact_directory,
     resolve_daemon_module,
     restore_path_snapshots,
+    restore_working_tree_diff,
     restarting_wrapper_alive,
     rank_relevant_context_file,
     repo_root_from_env,
@@ -274,6 +280,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     validation_worktree_for_spec,
     verify_promoted_worktree_files,
     wait_for_child_exit,
+    working_tree_diff,
     worktree_diff,
     worktree_file_edits,
     worktree_path_allowed,
@@ -2071,6 +2078,20 @@ def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:
     created.write_text("created\n", encoding="utf-8")
     summary = retained_change_summary(repo, snapshots)
     restore_result = restore_path_snapshots(repo, snapshots)
+    diff_calls: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout):
+        diff_calls.append(tuple(command))
+        assert cwd == repo
+        assert timeout == 13
+        return {"valid": True, "stdout": "diff --git a/tracked.txt b/tracked.txt\n", "stderr": ""}
+
+    retained_patch = retained_patch_for_paths(
+        repo,
+        {"tracked.txt": "before\n", "nested\\created.txt": None, "": None},
+        run_command_fn=fake_run_command,
+        timeout=13,
+    )
 
     assert snapshots == {"tracked.txt": "before\n", "nested/created.txt": None}
     assert duplicate_snapshots == snapshots
@@ -2082,9 +2103,169 @@ def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:
         "reason": "content_changed",
     }
     assert restore_result == {"valid": True, "restored": ["tracked.txt", "nested/created.txt"], "errors": []}
+    assert retained_patch == "diff --git a/tracked.txt b/tracked.txt\n"
+    assert diff_calls == [
+        ("git", "diff", "--binary", "--", "tracked.txt", "nested/created.txt")
+    ]
+    assert retained_patch_for_paths(repo, {}, run_command_fn=fake_run_command) == ""
     assert original.read_text(encoding="utf-8") == "before\n"
     assert not created.exists()
     assert retained_change_summary(repo, snapshots)["has_retained_changes"] is False
+
+
+def test_working_tree_diff_helpers_restore_expected_diff() -> None:
+    calls: list[tuple[tuple[str, ...], str]] = []
+    current_diff = "diff --git a/example.py b/example.py\n+side effect\n"
+    expected_diff = "diff --git a/baseline.py b/baseline.py\n+baseline\n"
+
+    def fake_run_command(command, *, cwd, timeout, input_text=None):
+        command_tuple = tuple(command)
+        calls.append((command_tuple, input_text or ""))
+        assert cwd == Path("/repo")
+        assert timeout == 17
+        if command_tuple == ("git", "diff", "--binary"):
+            return {"valid": True, "stdout": current_diff, "stderr": ""}
+        return {"valid": True, "stdout": "", "stderr": ""}
+
+    assert working_tree_diff(Path("/repo"), run_command_fn=fake_run_command, timeout=17) == current_diff
+    assert restore_working_tree_diff(
+        Path("/repo"),
+        expected_diff,
+        run_command_fn=fake_run_command,
+        timeout=17,
+        unchanged_reason="unchanged",
+        restored_reason="restored",
+    ) == {
+        "valid": True,
+        "changed": True,
+        "reverse": {"valid": True, "stdout": "", "stderr": ""},
+        "reason": "restored",
+        "reapply_preexisting": {"valid": True, "stdout": "", "stderr": ""},
+    }
+    assert calls == [
+        (("git", "diff", "--binary"), ""),
+        (("git", "diff", "--binary"), ""),
+        (("git", "apply", "-R", "-"), current_diff),
+        (("git", "apply", "-"), expected_diff),
+    ]
+
+
+def test_dirty_path_recovery_helpers_fingerprint_and_summarize(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    prod = repo / "ipfs_datasets_py/logic/deontic/parser.py"
+    test = repo / "tests/unit_tests/logic/deontic/test_parser.py"
+    prod.parent.mkdir(parents=True)
+    test.parent.mkdir(parents=True)
+    prod.write_text("VALUE = 1\n", encoding="utf-8")
+    test.write_text("def test_value():\n    assert True\n", encoding="utf-8")
+    calls: list[tuple[str, ...]] = []
+    diff_text = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/parser.py b/ipfs_datasets_py/logic/deontic/parser.py",
+            "--- a/ipfs_datasets_py/logic/deontic/parser.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/parser.py",
+            "@@ -1,2 +1 @@",
+            "-old",
+            "-line",
+            "+new",
+            "diff --git a/tests/unit_tests/logic/deontic/test_parser.py b/tests/unit_tests/logic/deontic/test_parser.py",
+            "--- a/tests/unit_tests/logic/deontic/test_parser.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_parser.py",
+            "@@ -1 +1,2 @@",
+            " test",
+            "+extra",
+        ]
+    )
+
+    def fake_run_command(command, *, cwd, timeout):
+        command_tuple = tuple(command)
+        calls.append(command_tuple)
+        assert cwd == repo
+        assert timeout == 19
+        if command_tuple[:3] == ("git", "diff", "--binary"):
+            return {"valid": True, "stdout": diff_text, "stderr": ""}
+        if command_tuple[:3] == ("git", "diff", "--numstat"):
+            return {
+                "valid": True,
+                "stdout": (
+                    "1\t2\tipfs_datasets_py/logic/deontic/parser.py\n"
+                    "1\t0\ttests/unit_tests/logic/deontic/test_parser.py\n"
+                ),
+                "stderr": "",
+            }
+        if command_tuple[:2] == ("git", "diff"):
+            return {"valid": True, "stdout": diff_text, "stderr": ""}
+        raise AssertionError(f"unexpected command: {command_tuple!r}")
+
+    fingerprint = dirty_paths_fingerprint(
+        repo,
+        status_stdout=" M ipfs_datasets_py/logic/deontic/parser.py\n",
+        paths=["ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py"],
+        run_command_fn=fake_run_command,
+        timeout=19,
+    )
+    summary = dirty_paths_diff_summary(
+        repo,
+        ["ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py"],
+        run_command_fn=fake_run_command,
+        timeout=19,
+        test_file_prefixes=("tests/unit_tests/logic/deontic/",),
+        production_file_prefixes=("ipfs_datasets_py/logic/deontic/",),
+    )
+
+    assert fingerprint
+    assert summary["valid"] is True
+    assert summary["files_changed"] == 2
+    assert summary["insertions"] == 2
+    assert summary["deletions"] == 2
+    assert summary["deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
+    assert summary["production_deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
+    assert summary["test_deletion_heavy_files"] == []
+    assert ("git", "diff", "--binary", "--", "ipfs_datasets_py/logic/deontic/parser.py", "tests/unit_tests/logic/deontic/test_parser.py") in calls
+    assert dirty_paths_fingerprint(repo, status_stdout="", paths=[], run_command_fn=fake_run_command) == ""
+    assert dirty_paths_diff_summary(repo, [], run_command_fn=fake_run_command) == {}
+
+
+def test_git_path_activity_snapshot_reports_target_activity() -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout):
+        command_tuple = tuple(command)
+        calls.append(command_tuple)
+        assert cwd == Path("/repo")
+        assert timeout == 23
+        if command_tuple[:3] == ("git", "rev-parse", "--short"):
+            return {"valid": True, "stdout": "abc123\n", "stderr": ""}
+        if command_tuple[:3] == ("git", "status", "--short"):
+            return {"valid": True, "stdout": " M todo/a.py\n?? docs/PLAN.md\n", "stderr": ""}
+        if command_tuple[:3] == ("git", "diff", "--stat") and "BASE..HEAD" in command_tuple:
+            return {"valid": True, "stdout": " todo/a.py | 2 +-\n", "stderr": ""}
+        if command_tuple[:3] == ("git", "diff", "--stat"):
+            return {"valid": True, "stdout": " docs/PLAN.md | 1 +\n", "stderr": ""}
+        if command_tuple[:4] == ("git", "log", "--oneline", "-3"):
+            return {"valid": True, "stdout": "abc123 latest\n", "stderr": ""}
+        if command_tuple[:3] == ("git", "log", "--oneline"):
+            return {"valid": True, "stdout": "def456 accepted\nabc123 latest\n", "stderr": ""}
+        raise AssertionError(f"unexpected command: {command_tuple!r}")
+
+    snapshot = git_path_activity_snapshot(
+        Path("/repo"),
+        target_paths=("todo", "todo", "docs\\PLAN.md"),
+        run_baseline_head="BASE",
+        run_command_fn=fake_run_command,
+        timeout=23,
+        recent_commit_count=3,
+    )
+
+    assert current_git_head(Path("/repo"), run_command_fn=fake_run_command, timeout=23) == "abc123"
+    assert snapshot["head"] == "abc123"
+    assert snapshot["uncommitted_file_count"] == 2
+    assert snapshot["uncommitted_files"] == ["M todo/a.py", "?? docs/PLAN.md"]
+    assert snapshot["run_baseline_head"] == "BASE"
+    assert snapshot["commits_since_run_start"] == ["def456 accepted", "abc123 latest"]
+    assert snapshot["recent_commits"] == ["abc123 latest"]
+    assert ("git", "status", "--short", "--", "todo", "docs/PLAN.md") in calls
+    assert ("git", "log", "--oneline", "BASE..HEAD", "--", "todo", "docs/PLAN.md") in calls
 
 
 def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:

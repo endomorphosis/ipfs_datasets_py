@@ -58,6 +58,8 @@ class ProverTargetSyntaxRecord:
     decoded_text: str
     decoded_slots: List[str]
     decoded_slot_fingerprint: str
+    decoded_phrase_profile: Dict[str, Any]
+    decoded_phrase_profile_fingerprint: str
     grounded_decoded_slots: List[str]
     ungrounded_decoded_slots: List[str]
     missing_decoded_slots: List[str]
@@ -175,6 +177,7 @@ def _validate_target_formula(
     exported_formula = _render_target_formula(norm, target, formula)
     decoded = decode_legal_norm_ir(norm)
     decoded_slot_summary = _decoded_slot_summary(decoded)
+    decoded_phrase_profile = _decoded_phrase_profile(target, norm, decoded)
     ir_slot_summary = _ir_slot_grounding_summary(norm)
     alignment_summary = _decoded_ir_slot_alignment(
         decoded_slot_summary,
@@ -207,6 +210,7 @@ def _validate_target_formula(
         target_dialect_profile,
         target_parse_profile,
         reconstruction_token_profile,
+        decoded_phrase_profile,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -243,6 +247,10 @@ def _validate_target_formula(
             "|".join(decoded_slot_summary["decoded_slots"]),
             decoded.text,
         ),
+        decoded_phrase_profile=decoded_phrase_profile,
+        decoded_phrase_profile_fingerprint=decoded_phrase_profile[
+            "decoded_phrase_profile_fingerprint"
+        ],
         grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
         ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
         missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
@@ -357,6 +365,92 @@ def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
         "grounded_decoded_slots": grounded_slots,
         "ungrounded_decoded_slots": ungrounded_slots,
         "missing_decoded_slots": missing_slots,
+    }
+
+
+def _decoded_phrase_profile(
+    target: str,
+    norm: LegalNormIR,
+    decoded: Any,
+) -> Dict[str, Any]:
+    """Audit the decoded phrase stream consumed by prover target records."""
+
+    phrase_slots: List[str] = []
+    grounded_phrase_slots: List[str] = []
+    ungrounded_phrase_slots: List[str] = []
+    fixed_slots: List[str] = []
+    provenance_only_slots: List[str] = []
+    phrase_texts: List[str] = []
+    phrase_count = 0
+    legal_phrase_count = 0
+    fixed_phrase_count = 0
+    provenance_only_phrase_count = 0
+    grounded_phrase_count = 0
+
+    for phrase in getattr(decoded, "phrases", []) or []:
+        phrase_count += 1
+        slot = str(getattr(phrase, "slot", "") or "").strip()
+        text = str(getattr(phrase, "text", "") or "").strip()
+        fixed = bool(getattr(phrase, "fixed", False))
+        provenance_only = bool(getattr(phrase, "provenance_only", False))
+        spans = list(getattr(phrase, "spans", []) or [])
+        if text:
+            phrase_texts.append(text)
+        if fixed:
+            fixed_phrase_count += 1
+            if slot and slot not in fixed_slots:
+                fixed_slots.append(slot)
+            continue
+        if provenance_only:
+            provenance_only_phrase_count += 1
+            if slot and slot not in provenance_only_slots:
+                provenance_only_slots.append(slot)
+        else:
+            legal_phrase_count += 1
+        if slot and slot not in phrase_slots:
+            phrase_slots.append(slot)
+        if spans:
+            grounded_phrase_count += 1
+            if slot and slot not in grounded_phrase_slots:
+                grounded_phrase_slots.append(slot)
+        elif slot and slot not in ungrounded_phrase_slots:
+            ungrounded_phrase_slots.append(slot)
+
+    missing_slots = [
+        str(slot)
+        for slot in getattr(decoded, "missing_slots", []) or []
+        if str(slot).strip()
+    ]
+    complete = not missing_slots and not ungrounded_phrase_slots
+    fingerprint = _stable_fingerprint(
+        target,
+        norm.source_id,
+        "|".join(phrase_slots),
+        "|".join(fixed_slots),
+        "|".join(provenance_only_slots),
+        "|".join(missing_slots),
+        "|".join(phrase_texts),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_id": norm.source_id,
+        "decoded_text": getattr(decoded, "text", ""),
+        "phrase_count": phrase_count,
+        "legal_phrase_count": legal_phrase_count,
+        "fixed_phrase_count": fixed_phrase_count,
+        "provenance_only_phrase_count": provenance_only_phrase_count,
+        "grounded_phrase_count": grounded_phrase_count,
+        "phrase_slots": phrase_slots,
+        "grounded_phrase_slots": grounded_phrase_slots,
+        "ungrounded_phrase_slots": ungrounded_phrase_slots,
+        "fixed_slots": fixed_slots,
+        "provenance_only_slots": provenance_only_slots,
+        "missing_slots": missing_slots,
+        "phrase_texts": phrase_texts,
+        "all_decoded_phrases_grounded": not ungrounded_phrase_slots,
+        "decoded_phrase_profile_complete": complete,
+        "decoded_phrase_profile_fingerprint": fingerprint,
     }
 
 
@@ -477,6 +571,7 @@ def _target_components(
     target_dialect_profile: Dict[str, Any] | None = None,
     target_parse_profile: Dict[str, Any] | None = None,
     reconstruction_token_profile: Dict[str, Any] | None = None,
+    decoded_phrase_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
@@ -485,6 +580,7 @@ def _target_components(
     target_dialect_profile = target_dialect_profile or {}
     target_parse_profile = target_parse_profile or {}
     reconstruction_token_profile = reconstruction_token_profile or {}
+    decoded_phrase_profile = decoded_phrase_profile or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
@@ -557,6 +653,24 @@ def _target_components(
         "reconstruction_token_profile_complete": bool(
             reconstruction_token_profile.get("reconstruction_token_profile_complete")
             is True
+        ),
+        "decoded_phrase_profile_complete": bool(
+            decoded_phrase_profile.get("decoded_phrase_profile_complete") is True
+        ),
+        "decoded_phrase_count": int(decoded_phrase_profile.get("phrase_count") or 0),
+        "decoded_legal_phrase_count": int(
+            decoded_phrase_profile.get("legal_phrase_count") or 0
+        ),
+        "decoded_fixed_phrase_count": int(
+            decoded_phrase_profile.get("fixed_phrase_count") or 0
+        ),
+        "decoded_provenance_only_phrase_count": int(
+            decoded_phrase_profile.get("provenance_only_phrase_count") or 0
+        ),
+        "decoded_phrase_slots": list(decoded_phrase_profile.get("phrase_slots") or []),
+        "decoded_fixed_slots": list(decoded_phrase_profile.get("fixed_slots") or []),
+        "decoded_provenance_only_slots": list(
+            decoded_phrase_profile.get("provenance_only_slots") or []
         ),
         "source_salient_token_count": int(
             reconstruction_token_profile.get("source_salient_token_count") or 0

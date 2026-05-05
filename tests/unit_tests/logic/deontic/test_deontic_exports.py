@@ -747,6 +747,85 @@ def test_phase8_quality_summary_combines_reconstruction_prover_and_provenance():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_phase8_quality_summary_uses_source_grouped_prover_corpus_coverage():
+    first = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The tenant must pay rent monthly."
+    )[0])
+    second = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The permittee may appeal the decision."
+    )[0])
+    required_slots = ("actor", "modality", "action")
+    decoder_records = build_decoder_records_from_irs([first, second])
+    provenance_records = build_ir_slot_provenance_audit_records(
+        [first, second],
+        slots=required_slots,
+    )
+    prover_records = []
+    for norm in (first, second):
+        prover_records.extend(build_prover_syntax_records_from_ir(norm))
+
+    summary = summarize_phase8_quality_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_records,
+        ir_slot_provenance_records=provenance_records,
+        required_slots=required_slots,
+    )
+
+    assert summary["prover_syntax_target_coverage"]["target_duplicate_record_count"] == 5
+    assert summary["prover_syntax_target_coverage"]["target_status_matrix_complete"] is False
+    assert summary["prover_syntax_corpus_coverage"]["source_count"] == 2
+    assert summary["prover_syntax_corpus_coverage"]["complete_source_count"] == 2
+    assert summary["prover_syntax_corpus_coverage"]["all_sources_complete"] is True
+    assert summary["prover_syntax_corpus_coverage"][
+        "all_sources_required_targets_passed"
+    ] is True
+    assert summary["phase8_quality_complete"] is True
+    assert summary["requires_validation"] is False
+    assert not any(
+        blocker.startswith("duplicate_prover_syntax_target_record")
+        for blocker in summary["coverage_blockers"]
+    )
+
+
+def test_phase8_quality_summary_keeps_source_level_prover_failures_blocking():
+    first = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The tenant must pay rent monthly."
+    )[0])
+    second = LegalNormIR.from_parser_element(extract_normative_elements(
+        "The permittee may appeal the decision."
+    )[0])
+    required_slots = ("actor", "modality", "action")
+    decoder_records = build_decoder_records_from_irs([first, second])
+    provenance_records = build_ir_slot_provenance_audit_records(
+        [first, second],
+        slots=required_slots,
+    )
+    prover_records = build_prover_syntax_records_from_ir(first)
+    prover_records.extend(
+        record
+        for record in build_prover_syntax_records_from_ir(second)
+        if record["target"] != "deontic_temporal_fol"
+    )
+
+    summary = summarize_phase8_quality_records(
+        decoder_records=decoder_records,
+        prover_syntax_records=prover_records,
+        ir_slot_provenance_records=provenance_records,
+        required_slots=required_slots,
+    )
+
+    assert summary["prover_syntax_corpus_coverage"]["source_count"] == 2
+    assert summary["prover_syntax_corpus_coverage"]["complete_source_count"] == 1
+    assert summary["prover_syntax_corpus_coverage"]["sources_requiring_validation"] == [
+        second.source_id
+    ]
+    assert summary["phase8_quality_complete"] is False
+    assert summary["requires_validation"] is True
+    assert "missing_prover_syntax_target:deontic_temporal_fol" in summary[
+        "coverage_blockers"
+    ]
+
+
 def test_ir_slot_provenance_audit_records_preserve_norm_order():
     elements = extract_normative_elements(
         "The Secretary shall (1) establish procedures; (2) submit a report.",
