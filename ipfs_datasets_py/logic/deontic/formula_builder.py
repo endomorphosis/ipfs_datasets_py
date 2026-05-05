@@ -405,12 +405,12 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
     patterns = [
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|send|sends|sent|sending|issue|issues|issued|issuing|deliver|delivers|delivered|delivering)[ ]+"
-            r"(?:a[ ]+|an[ ]+|the[ ]+)?notification[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
+            r"(?:a[ ]+|an[ ]+|the[ ]+)?notification[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
             "notify",
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|send|sends|sent|sending|issue|issues|issued|issuing|deliver|delivers|delivered|delivering)[ ]+"
-            r"notifications[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
+            r"notifications[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
             "notify",
         ),
         (
@@ -420,12 +420,12 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering)[ ]+"
-            r"(?:a[ ]+|the[ ]+)?disclosure[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
+            r"(?:a[ ]+|the[ ]+)?disclosure[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
             "disclose",
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering)[ ]+"
-            r"disclosures[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
+            r"disclosures[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
             "disclose",
         ),
     ]
@@ -1312,7 +1312,7 @@ def _normalize_notice_service_light_verb_action(action_text: str) -> str:
 
     patterns = [
         r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
-        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:of|about|regarding)\s+(.+)$",
+        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:of|about|regarding|concerning)\s+(.+)$",
         r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
         r"(?:a\s+|an\s+|the\s+)?notice\s+(?:to|upon|on)\s+(.+)$",
     ]
@@ -5377,6 +5377,34 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
     text = str(action_text or "").strip()
     if not text:
         return text
+
+    relief_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+            r"(?:an?\s+|the\s+)?stay\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "stay",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+            r"(?:an?\s+|the\s+)?continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "continue",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+            r"(?:an?\s+|the\s+)?postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "postpone",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
+            r"(?:an?\s+|the\s+)?deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "defer",
+        ),
+    ]
+    for pattern, verb in relief_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     waiver_patterns = [
         r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"

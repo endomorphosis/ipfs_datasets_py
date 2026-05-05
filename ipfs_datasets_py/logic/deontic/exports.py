@@ -4182,11 +4182,23 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
     if action_predicate.startswith((
+        "Continue",
+        "Defer",
+        "Extend",
+        "Postpone",
+        "Stay",
+        "Waive",
+    )):
+        return "administrative_relief_duty"
+    if action_predicate.startswith((
         "Announce",
         "Circulate",
+        "Disclose",
         "Disseminate",
         "Display",
         "Distribute",
+        "Notice",
+        "Notify",
         "Post",
         "Transmit",
     )):
