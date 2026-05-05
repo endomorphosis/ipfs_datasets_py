@@ -47,6 +47,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     append_accepted_work_ledger,
     append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
+    attempt_file_replacement_validation_repair,
     append_jsonl_ledger,
     artifact_string_items,
     artifact_validation_text,
@@ -139,6 +140,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     markdown_task_label,
     materialize_proposal_files,
     match_diagnostic_edit_path,
+    managed_git_worktree,
     missing_lifecycle_wrapper_core_lines,
     normalize_file_edits,
     normalize_string_item_lists,
@@ -831,6 +833,53 @@ def test_build_file_replacement_validation_repair_prompt_renders_failed_results_
     assert "pytest" not in prompt
     assert "- Edit only files under todo/." in prompt
     assert '{"summary":"short"' in prompt
+
+
+def test_attempt_file_replacement_validation_repair_updates_failed_candidate(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    worktree = tmp_path / "worktree"
+    (repo / "todo").mkdir(parents=True)
+    (worktree / "todo").mkdir(parents=True)
+    (repo / "todo" / "source.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (worktree / "todo" / "source.py").write_text("VALUE = 1\n", encoding="utf-8")
+    config = SyntheticDaemonConfig(repo_root=repo)
+    proposal = Proposal(
+        summary="Broken candidate",
+        target_task="Task checkbox-9: Repair candidate",
+        files=[{"path": "todo/source.py", "content": "VALUE = ;\n"}],
+        changed_files=["todo/source.py"],
+        validation_results=[CommandResult(("validate",), 1, "", "SyntaxError")],
+        errors=["Validation failed"],
+    )
+
+    repaired, changed, diff_text = attempt_file_replacement_validation_repair(
+        proposal,
+        config,
+        worktree,
+        enabled=True,
+        max_attempts=1,
+        build_prompt=lambda _proposal, _config: "repair this",
+        call_repair_model=lambda prompt, _config: json.dumps(
+            {
+                "summary": "Fixed candidate",
+                "impact": "Validation should pass.",
+                "files": [{"path": "todo/source.py", "content": "VALUE = 2\n"}],
+            }
+        ),
+        parse_repair=parse_json_proposal,
+        validate_write_path=lambda _path: [],
+        syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
+        run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
+        validation_commands_for_proposal=lambda _proposal, _config: (("validate",),),
+    )
+
+    assert repaired is True
+    assert changed == ["todo/source.py"]
+    assert proposal.summary == "Fixed candidate"
+    assert proposal.impact == "Validation should pass."
+    assert proposal.errors == []
+    assert proposal.files == [{"path": "todo/source.py", "content": "VALUE = 2\n"}]
+    assert "+VALUE = 2" in diff_text
 
 
 def test_normalize_file_edits_filters_invalid_entries() -> None:
@@ -2184,6 +2233,43 @@ def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None
     assert owner_pid_from_worktree(Path("cycle_01_20260101T000000000000Z_54321"), {}) == 54321
     assert calls.count(("git", "worktree", "prune", "--expire", "now")) == 2
     assert ("git", "worktree", "list", "--porcelain") in calls
+
+
+def test_managed_git_worktree_captures_lifecycle_trace(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    worktree = repo / ".daemon" / "worktrees" / "cycle_01"
+    calls: list[tuple[str, ...]] = []
+    owner_paths: list[Path] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
+        command = tuple(command)
+        calls.append(command)
+        if command[:3] == ("git", "worktree", "add"):
+            Path(command[-2]).mkdir(parents=True, exist_ok=True)
+        return CommandResult(command, 0, "", "")
+
+    with managed_git_worktree(
+        repo_root=repo,
+        worktree_path=worktree,
+        metadata_rel=".todo_metadata.json",
+        owner_rel=".todo_owner.json",
+        trace_context={"transport": "synthetic_worktree", "attempt": 2},
+        run_command_fn=fake_run_command,
+        owner_writer=lambda owner_path: owner_paths.append(owner_path),
+    ) as session:
+        assert session.ready is True
+        assert session.path == worktree
+        assert session.raw_trace["transport"] == "synthetic_worktree"
+        assert session.raw_trace["metadata_path"] == ".todo_metadata.json"
+        assert session.raw_trace["owner_path"] == ".todo_owner.json"
+        assert session.raw_trace["worktree_add"]["returncode"] == 0
+
+    assert owner_paths == [worktree / ".todo_owner.json"]
+    assert ("git", "worktree", "add", "--detach", str(worktree), "HEAD") in calls
+    assert ("git", "worktree", "remove", "--force", str(worktree)) in calls
+    assert ("git", "worktree", "prune", "--expire", "now") in calls
+    assert session.raw_trace["worktree_remove"]["returncode"] == 0
 
 
 def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path) -> None:

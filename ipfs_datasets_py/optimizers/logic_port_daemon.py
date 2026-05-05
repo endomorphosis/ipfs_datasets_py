@@ -23,7 +23,6 @@ import json
 import logging
 import os
 import re
-import shutil
 import sys
 import tempfile
 import threading
@@ -128,6 +127,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
     git_status_paths as _shared_git_status_paths,
     git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
+    managed_git_worktree as _shared_managed_git_worktree,
     owner_pid_from_worktree as _shared_owner_pid_from_worktree,
     pid_command_line as _shared_pid_command_line,
     pid_is_alive as _shared_pid_is_alive,
@@ -859,33 +859,34 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         worktree_path = worktree_root / f"cycle_{attempt:02d}_{stamp}_{os.getpid()}"
         metadata_rel = ".logic_port_worktree_proposal.json"
         owner_rel = ".logic_port_worktree_owner.json"
-        raw_trace: Dict[str, Any] = {
+        trace_context: Dict[str, Any] = {
             "transport": "worktree",
             "attempt": attempt,
             "attempts": attempts,
-            "worktree_path": str(worktree_path),
-            "metadata_path": metadata_rel,
-            "owner_path": owner_rel,
             "cleanup_before_create": cleanup_result,
         }
 
-        try:
-            add_result = run_command(
-                ("git", "worktree", "add", "--detach", str(worktree_path), "HEAD"),
-                cwd=repo_root,
-                timeout_seconds=60,
-            )
-            raw_trace["worktree_add"] = add_result.compact(limit=12000)
-            if not add_result.ok:
+        with _shared_managed_git_worktree(
+            repo_root=repo_root,
+            worktree_path=worktree_path,
+            metadata_rel=metadata_rel,
+            owner_rel=owner_rel,
+            trace_context=trace_context,
+            run_command_fn=run_command,
+            owner_writer=lambda owner_path: self._write_worktree_owner_file(owner_path, attempt=attempt),
+        ) as worktree_session:
+            raw_trace = worktree_session.raw_trace
+            add_result = worktree_session.add_result
+            if not worktree_session.ready:
+                add_output = (add_result.stderr or add_result.stdout) if add_result else ""
                 return LogicPortArtifact(
                     summary="Worktree proposal failed before Codex edit.",
                     raw_response=json.dumps(raw_trace, indent=2, default=str),
-                    errors=["git worktree add failed: " + (add_result.stderr or add_result.stdout).strip()[:1000]],
+                    errors=["git worktree add failed: " + add_output.strip()[:1000]],
                     failure_kind="worktree_add",
                     proposal_transport="worktree",
                 )
 
-            self._write_worktree_owner_file(worktree_path / owner_rel, attempt=attempt)
             prompt = self._build_worktree_edit_prompt(
                 input_data=input_data,
                 context=context,
@@ -1004,19 +1005,6 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 failure_kind=failure_kind,
                 changed_files=changed_files,
                 proposal_transport="worktree",
-            )
-        finally:
-            remove_result = run_command(
-                ("git", "worktree", "remove", "--force", str(worktree_path)),
-                cwd=repo_root,
-                timeout_seconds=60,
-            )
-            if not remove_result.ok and worktree_path.exists():
-                shutil.rmtree(worktree_path, ignore_errors=True)
-            run_command(
-                ("git", "worktree", "prune", "--expire", "now"),
-                cwd=repo_root,
-                timeout_seconds=60,
             )
 
     def critique(self, artifact: LogicPortArtifact, context: OptimizationContext) -> Tuple[float, List[str]]:
@@ -2515,36 +2503,37 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         worktree_path = worktree_root / f"repair_{attempt:02d}_{stamp}_{os.getpid()}"
         metadata_rel = ".logic_port_worktree_repair.json"
         owner_rel = ".logic_port_worktree_owner.json"
-        raw_trace: Dict[str, Any] = {
+        trace_context: Dict[str, Any] = {
             "transport": "worktree_validation_repair",
             "attempt": attempt,
             "attempts": attempts,
-            "worktree_path": str(worktree_path),
-            "metadata_path": metadata_rel,
-            "owner_path": owner_rel,
             "cleanup_before_create": cleanup_result,
             "failed_validation_results": [result.compact(limit=12000) for result in artifact.validation_results if not result.ok],
             "candidate_summary": artifact.summary,
             "candidate_changed_files": _artifact_paths(artifact),
         }
 
-        try:
-            add_result = run_command(
-                ("git", "worktree", "add", "--detach", str(worktree_path), "HEAD"),
-                cwd=repo_root,
-                timeout_seconds=60,
-            )
-            raw_trace["worktree_add"] = add_result.compact(limit=12000)
-            if not add_result.ok:
+        with _shared_managed_git_worktree(
+            repo_root=repo_root,
+            worktree_path=worktree_path,
+            metadata_rel=metadata_rel,
+            owner_rel=owner_rel,
+            trace_context=trace_context,
+            run_command_fn=run_command,
+            owner_writer=lambda owner_path: self._write_worktree_owner_file(owner_path, attempt=attempt),
+        ) as worktree_session:
+            raw_trace = worktree_session.raw_trace
+            add_result = worktree_session.add_result
+            if not worktree_session.ready:
+                add_output = (add_result.stderr or add_result.stdout) if add_result else ""
                 return LogicPortArtifact(
                     summary="Worktree validation repair failed before Codex edit.",
                     raw_response=json.dumps(raw_trace, indent=2, default=str),
-                    errors=["git worktree add failed during validation repair: " + (add_result.stderr or add_result.stdout).strip()[:1000]],
+                    errors=["git worktree add failed during validation repair: " + add_output.strip()[:1000]],
                     failure_kind="worktree_repair_add",
                     proposal_transport="worktree",
                 )
 
-            self._write_worktree_owner_file(worktree_path / owner_rel, attempt=attempt)
             self._write_file_edits_to_root(worktree_path, artifact.files)
             self._format_file_edits_in_root(worktree_path, [str(edit.get("path", "")) for edit in artifact.files])
             base_patch = self._worktree_diff(worktree_path, raw_trace, label="base_candidate")
@@ -2599,19 +2588,6 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             if not harvested.tasks:
                 harvested.tasks = artifact.tasks
             return harvested
-        finally:
-            remove_result = run_command(
-                ("git", "worktree", "remove", "--force", str(worktree_path)),
-                cwd=repo_root,
-                timeout_seconds=60,
-            )
-            if not remove_result.ok and worktree_path.exists():
-                shutil.rmtree(worktree_path, ignore_errors=True)
-            run_command(
-                ("git", "worktree", "prune", "--expire", "now"),
-                cwd=repo_root,
-                timeout_seconds=60,
-            )
 
     def _build_worktree_validation_repair_prompt(
         self,

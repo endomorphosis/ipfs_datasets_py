@@ -12,6 +12,7 @@ from typing import Any, Callable, Iterable
 from .engine import (
     CommandResult,
     Proposal,
+    compact_message,
     dataclass_worktree_config,
     extract_json,
     looks_like_empty_codex_event_stream,
@@ -195,6 +196,71 @@ def config_verify_promoted_worktree_files(
     """Verify promoted files against the daemon config's repository root."""
 
     return verify_promoted_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+
+
+def attempt_file_replacement_validation_repair(
+    proposal: Proposal,
+    config: Any,
+    worktree: Path,
+    *,
+    enabled: bool,
+    max_attempts: int,
+    build_prompt: Callable[[Proposal, Any], str],
+    call_repair_model: Callable[[str, Any], str],
+    parse_repair: Callable[[str], Proposal],
+    validate_write_path: Callable[[str], list[str]],
+    syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]],
+    run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]],
+    validation_commands_for_proposal: Callable[[Proposal, Any], tuple[tuple[str, ...], ...]],
+    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree,
+    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree,
+    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree,
+    worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config,
+) -> tuple[bool, list[str], str]:
+    """Attempt one validation-repair pass for a complete-file replacement proposal."""
+
+    if not enabled or max_attempts <= 0:
+        return False, proposal.changed_files, ""
+    try:
+        raw = call_repair_model(build_prompt(proposal, config), config)
+        repair = parse_repair(raw)
+    except BaseException as exc:
+        proposal.errors.append(f"Validation repair pass failed before producing JSON: {compact_message(exc)}")
+        return False, proposal.changed_files, ""
+    repair.target_task = proposal.target_task
+    repair_errors: list[str] = []
+    for item in repair.files:
+        repair_errors.extend(validate_write_path(item["path"]))
+    if repair_errors:
+        proposal.errors.extend(f"Validation repair pass rejected write path: {error}" for error in repair_errors)
+        return False, proposal.changed_files, ""
+    if not repair.files:
+        proposal.errors.append("Validation repair pass produced no file replacements.")
+        return False, proposal.changed_files, ""
+
+    changed = list(dict.fromkeys(proposal.changed_files + materialize_proposal_in_worktree(repair, config, worktree)))
+    repair_results, repair_preflight_errors, repair_failure_kind = syntax_preflight(worktree, changed, config)
+    proposal.validation_results = repair_results
+    if repair_preflight_errors:
+        proposal.errors.extend("Validation repair pass syntax preflight failed: " + error for error in repair_preflight_errors)
+        proposal.failure_kind = repair_failure_kind or "syntax_preflight"
+        return False, changed, proposal_diff_from_worktree(config, worktree, changed)
+
+    proposal.validation_results = run_validation(
+        worktree_config(config, worktree),
+        validation_commands_for_proposal(proposal, config),
+    )
+    if not all(result.ok for result in proposal.validation_results):
+        proposal.errors.append("Validation repair pass failed; candidate worktree was not promoted.")
+        proposal.failure_kind = "validation"
+        return False, changed, proposal_diff_from_worktree(config, worktree, changed)
+
+    proposal.summary = repair.summary or proposal.summary
+    proposal.impact = repair.impact or proposal.impact
+    proposal.files = proposal_files_from_worktree(worktree, changed)
+    proposal.changed_files = changed
+    proposal.errors = []
+    return True, changed, proposal_diff_from_worktree(config, worktree, changed)
 
 
 @dataclass(frozen=True)

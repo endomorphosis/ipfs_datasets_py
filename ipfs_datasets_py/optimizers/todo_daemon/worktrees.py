@@ -7,9 +7,11 @@ import os
 import re
 import shutil
 import time
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Iterator, Mapping, Optional, Sequence
 
 from .engine import CommandResult, run_command
 from .git_utils import (
@@ -21,6 +23,7 @@ from .git_utils import (
 
 CommandRunner = Callable[..., CommandResult]
 OwnerAlivePredicate = Callable[[int, Path, Path], bool]
+WorktreeOwnerWriter = Callable[[Path], None]
 
 
 def git_status_paths(stdout: str) -> list[str]:
@@ -141,6 +144,85 @@ def write_worktree_owner_file(
         payload.update(dict(extra))
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return payload
+
+
+@dataclass
+class GitWorktreeSession:
+    """State for a managed detached Git worktree lifecycle."""
+
+    repo_root: Path
+    path: Path
+    metadata_rel: str
+    owner_rel: str
+    raw_trace: dict[str, Any] = field(default_factory=dict)
+    add_result: Optional[CommandResult] = None
+
+    @property
+    def ready(self) -> bool:
+        """Return whether the detached worktree was created successfully."""
+
+        return bool(self.add_result and self.add_result.ok)
+
+
+@contextmanager
+def managed_git_worktree(
+    *,
+    repo_root: Path,
+    worktree_path: Path,
+    metadata_rel: str,
+    owner_rel: str,
+    trace_context: Optional[Mapping[str, Any]] = None,
+    run_command_fn: CommandRunner = run_command,
+    owner_writer: Optional[WorktreeOwnerWriter] = None,
+    add_timeout_seconds: int = 60,
+    remove_timeout_seconds: int = 60,
+    prune_on_exit: bool = True,
+) -> Iterator[GitWorktreeSession]:
+    """Create a detached Git worktree and always remove/prune it on exit."""
+
+    worktree_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_trace: dict[str, Any] = dict(trace_context or {})
+    raw_trace.update(
+        {
+            "worktree_path": str(worktree_path),
+            "metadata_path": metadata_rel,
+            "owner_path": owner_rel,
+        }
+    )
+    session = GitWorktreeSession(
+        repo_root=repo_root,
+        path=worktree_path,
+        metadata_rel=metadata_rel,
+        owner_rel=owner_rel,
+        raw_trace=raw_trace,
+    )
+    try:
+        add_result = run_command_fn(
+            ("git", "worktree", "add", "--detach", str(worktree_path), "HEAD"),
+            cwd=repo_root,
+            timeout_seconds=max(1, int(add_timeout_seconds)),
+        )
+        session.add_result = add_result
+        raw_trace["worktree_add"] = add_result.compact(limit=12000)
+        if add_result.ok and owner_writer is not None:
+            owner_writer(worktree_path / owner_rel)
+        yield session
+    finally:
+        remove_result = run_command_fn(
+            ("git", "worktree", "remove", "--force", str(worktree_path)),
+            cwd=repo_root,
+            timeout_seconds=max(1, int(remove_timeout_seconds)),
+        )
+        raw_trace["worktree_remove"] = remove_result.compact(limit=12000)
+        if not remove_result.ok and worktree_path.exists():
+            shutil.rmtree(worktree_path, ignore_errors=True)
+        if prune_on_exit:
+            prune_result = run_command_fn(
+                ("git", "worktree", "prune", "--expire", "now"),
+                cwd=repo_root,
+                timeout_seconds=max(1, int(remove_timeout_seconds)),
+            )
+            raw_trace["worktree_prune_after_remove"] = prune_result.compact(limit=12000)
 
 
 def cleanup_stale_daemon_worktrees(
