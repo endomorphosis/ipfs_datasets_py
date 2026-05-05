@@ -8,11 +8,14 @@ import hmac
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, Mapping
 
 from .exceptions import AccessDeniedError
 from .manifest import canonical_bytes
 from .models import Grant, WalletInvocation, utc_now
+
+WALLET_UCAN_TOKEN_PREFIX = "wallet-ucan-v1."
+WALLET_UCAN_PROFILE_ID = "wallet-ucan-v1"
 
 
 def resource_for_record(wallet_id: str, record_id: str) -> str:
@@ -184,6 +187,7 @@ def create_invocation(
     invocation = WalletInvocation(
         invocation_id=f"invocation-{uuid.uuid4().hex}",
         grant_id=grant.grant_id,
+        issuer_did=grant.issuer_did,
         audience_did=audience_did,
         resource=resource,
         ability=ability,
@@ -200,6 +204,8 @@ def invocation_signing_payload(invocation: WalletInvocation) -> Dict[str, Any]:
 
     data = invocation.to_dict()
     data.pop("signature", None)
+    if data.get("issuer_did") is None:
+        data.pop("issuer_did", None)
     return data
 
 
@@ -247,12 +253,92 @@ def assert_invocation_allows(
 
 def invocation_to_token(invocation: WalletInvocation) -> str:
     encoded = base64.urlsafe_b64encode(canonical_bytes(invocation.to_dict())).decode("ascii")
-    return f"wallet-ucan-v1.{encoded}"
+    return f"{WALLET_UCAN_TOKEN_PREFIX}{encoded}"
 
 
 def invocation_from_token(token: str) -> WalletInvocation:
-    prefix = "wallet-ucan-v1."
-    if not token.startswith(prefix):
+    if not token.startswith(WALLET_UCAN_TOKEN_PREFIX):
         raise ValueError("Unsupported wallet invocation token")
-    payload = base64.urlsafe_b64decode(token[len(prefix) :].encode("ascii"))
+    payload = base64.urlsafe_b64decode(token[len(WALLET_UCAN_TOKEN_PREFIX) :].encode("ascii"))
     return WalletInvocation(**json.loads(payload.decode("utf-8")))
+
+
+def wallet_ucan_profile() -> Dict[str, Any]:
+    """Return the stable wallet UCAN profile used by wallet invocation tokens."""
+
+    return {
+        "profile": WALLET_UCAN_PROFILE_ID,
+        "token_prefix": WALLET_UCAN_TOKEN_PREFIX.rstrip("."),
+        "encoding": "base64url(canonical-json(WalletInvocation))",
+        "signature": "hmac-sha256 over canonical invocation payload with signature removed",
+        "resource_scheme": "wallet://",
+        "required_invocation_fields": [
+            "invocation_id",
+            "grant_id",
+            "issuer_did",
+            "audience_did",
+            "resource",
+            "ability",
+            "caveats",
+            "issued_at",
+            "nonce",
+            "signature",
+        ],
+        "optional_invocation_fields": ["expires_at"],
+        "caveats": [
+            "not_before",
+            "nbf",
+            "record_ids",
+            "allowed_record_ids",
+            "data_types",
+            "allowed_data_types",
+            "purpose",
+            "output_types",
+            "allowed_output_types",
+            "user_presence_required",
+            "require_user_presence",
+            "user_present",
+            "user_presence",
+            "max_delegation_depth",
+        ],
+    }
+
+
+def invocation_to_ucan_profile_payload(
+    invocation: WalletInvocation,
+    *,
+    grant: Grant | Mapping[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Map a wallet invocation into a UCAN-compatible inspection payload.
+
+    This is a deterministic compatibility envelope for integrators. It does not
+    claim byte-for-byte `ucanto` token encoding; it exposes the fields that a
+    UCAN verifier or bridge must preserve.
+    """
+
+    grant_dict = grant.to_dict() if isinstance(grant, Grant) else dict(grant or {})
+    issuer_did = invocation.issuer_did or grant_dict.get("issuer_did")
+    if not issuer_did:
+        raise ValueError("issuer_did is required for UCAN profile payload export")
+    capability = {
+        "with": invocation.resource,
+        "can": invocation.ability,
+        "nb": dict(invocation.caveats or {}),
+    }
+    payload = {
+        "profile": WALLET_UCAN_PROFILE_ID,
+        "ucan": {
+            "iss": issuer_did,
+            "aud": invocation.audience_did,
+            "att": [capability],
+            "nnc": invocation.nonce,
+            "fct": invocation.issued_at,
+            "sig": invocation.signature,
+            "prf": [invocation.grant_id],
+        },
+        "wallet_invocation": invocation.to_dict(),
+        "wallet_grant": grant_dict or None,
+    }
+    if invocation.expires_at:
+        payload["ucan"]["exp"] = invocation.expires_at
+    return payload

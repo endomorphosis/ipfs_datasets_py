@@ -344,6 +344,46 @@ def test_document_form_analysis_returns_redacted_field_metadata(tmp_path):
     assert "record/analyze_form_redacted" in actions
 
 
+def test_redacted_graphrag_returns_safe_graph_without_entity_text(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    housing = tmp_path / "housing.txt"
+    food = tmp_path / "food.txt"
+    housing.write_text(
+        "Jane Example emailed jane@example.org about rent assistance and utility shutoff support.",
+        encoding="utf-8",
+    )
+    food.write_text(
+        "Call 503-555-1212 about SNAP enrollment and medical clinic referrals.",
+        encoding="utf-8",
+    )
+    housing_record = service.add_document(wallet.wallet_id, housing)
+    food_record = service.add_document(wallet.wallet_id, food)
+
+    result = service.create_redacted_graphrag(
+        wallet.wallet_id,
+        [housing_record.record_id, food_record.record_id],
+        actor_did=OWNER,
+    )
+
+    output = result["output"]
+    serialized = json.dumps(output)
+    assert result["artifact"].artifact_type == "redacted_document_graphrag"
+    assert output["output_policy"] == "redacted_graphrag"
+    assert output["source_record_count"] == 2
+    assert output["graph"]["graph_type"] == "redacted_category_entity_graph"
+    assert output["graph"]["node_count"] >= 4
+    assert output["graph"]["category_record_counts"]["housing"] == 1
+    assert output["graph"]["category_record_counts"]["food"] == 1
+    assert output["graph"]["category_record_counts"]["health"] == 1
+    assert "Jane Example" not in serialized
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
+    assert "SNAP enrollment" not in serialized
+    actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
+    assert "record/graphrag_redacted" in actions
+
+
 def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -440,6 +480,21 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         grant_id=form_analysis_grant.grant_id,
     )["output"]["output_policy"] == "redacted_form_analysis"
 
+    graphrag_grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did="did:key:graphrag-reviewer",
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"output_types": ["redacted_graphrag"]},
+    )
+    assert service.create_redacted_graphrag(
+        wallet.wallet_id,
+        [record.record_id],
+        actor_did="did:key:graphrag-reviewer",
+        grant_id=graphrag_grant.grant_id,
+    )["output"]["output_policy"] == "redacted_graphrag"
+
     with pytest.raises(AccessDeniedError, match="output_types"):
         service.decrypt_record(
             wallet.wallet_id,
@@ -479,6 +534,13 @@ def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
         service.analyze_document_form_with_redaction(
             wallet.wallet_id,
             record.record_id,
+            actor_did=ADVOCATE,
+            grant_id=summary_only.grant_id,
+        )
+    with pytest.raises(AccessDeniedError, match="output_types"):
+        service.create_redacted_graphrag(
+            wallet.wallet_id,
+            [record.record_id],
             actor_did=ADVOCATE,
             grant_id=summary_only.grant_id,
         )

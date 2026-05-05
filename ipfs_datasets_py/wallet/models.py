@@ -250,6 +250,7 @@ class WalletInvocation:
     expires_at: Optional[str] = None
     nonce: str = ""
     signature: str = ""
+    issuer_did: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)

@@ -25,6 +25,9 @@ from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_document_vecto
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_location_region_proof import (
     wallet_create_location_region_proof,
 )
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_redacted_graphrag import (
+    wallet_create_redacted_graphrag,
+)
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_extract_document_text_redacted import (
     wallet_extract_document_text_redacted,
 )
@@ -328,6 +331,64 @@ async def test_wallet_tools_analyze_document_form_redacted(tmp_path) -> None:
     assert analysis["output"]["form"]["field_count"] >= 5
     assert analysis["output"]["form"]["data_type_counts"]["email"] == 1
     assert analysis["output"]["form"]["data_type_counts"]["phone"] == 1
+
+
+async def test_wallet_tools_create_redacted_graphrag(tmp_path) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    owner_key = random_key().hex()
+    first_doc = tmp_path / "housing.txt"
+    second_doc = tmp_path / "food-health.txt"
+    first_doc.write_text(
+        "Jane Example uses jane@example.org for rent assistance and utility shutoff support.",
+        encoding="utf-8",
+    )
+    second_doc.write_text(
+        "Call 503-555-1212 about SNAP and medical clinic referrals.",
+        encoding="utf-8",
+    )
+    created = await wallet_create(
+        owner_did="did:key:owner",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    first = await wallet_add_document(
+        wallet_id=created["wallet_id"],
+        actor_did="did:key:owner",
+        actor_key_hex=owner_key,
+        path=str(first_doc),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    second = await wallet_add_document(
+        wallet_id=created["wallet_id"],
+        actor_did="did:key:owner",
+        actor_key_hex=owner_key,
+        path=str(second_doc),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+
+    graph = await wallet_create_redacted_graphrag(
+        wallet_id=created["wallet_id"],
+        record_ids=[first["record_id"], second["record_id"]],
+        actor_did="did:key:owner",
+        actor_key_hex=owner_key,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+
+    assert graph["status"] == "success"
+    serialized = json.dumps(graph["output"])
+    assert graph["artifact"]["artifact_type"] == "redacted_document_graphrag"
+    assert graph["output"]["output_policy"] == "redacted_graphrag"
+    assert graph["output"]["graph"]["graph_type"] == "redacted_category_entity_graph"
+    assert graph["output"]["graph"]["category_record_counts"]["housing"] == 1
+    assert graph["output"]["graph"]["category_record_counts"]["food"] == 1
+    assert graph["output"]["graph"]["category_record_counts"]["health"] == 1
+    assert "Jane Example" not in serialized
+    assert "jane@example.org" not in serialized
+    assert "503-555-1212" not in serialized
 
 
 async def test_wallet_tools_support_private_analytics_workflow(tmp_path) -> None:

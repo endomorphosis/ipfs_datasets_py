@@ -2097,6 +2097,151 @@ class DataWalletService:
         )
         return {"artifact": artifact, "output": output}
 
+    def create_redacted_graphrag(
+        self,
+        wallet_id: str,
+        record_ids: List[str],
+        *,
+        actor_did: str,
+        grant_id: Optional[str] = None,
+        actor_secret: Optional[bytes] = None,
+        max_chars_per_record: int = 20_000,
+        max_bytes_per_record: int = 200_000,
+        use_ocr: bool = True,
+        invocation_caveats: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Create an encrypted redacted GraphRAG artifact from authorized document records."""
+        if actor_secret is not None:
+            self.set_principal_secret(actor_did, actor_secret)
+        ordered_record_ids = list(dict.fromkeys(record_ids))
+        if not ordered_record_ids:
+            raise ValueError("At least one record_id is required")
+        if max_chars_per_record < 1:
+            raise ValueError("max_chars_per_record must be at least 1")
+        if max_bytes_per_record < 1:
+            raise ValueError("max_bytes_per_record must be at least 1")
+
+        wallet = self._wallet(wallet_id)
+        if actor_did != wallet.owner_did:
+            operation_caveats = self._operation_caveats(
+                invocation_caveats,
+                output_types=["redacted_graphrag"],
+            )
+            if grant_id is None:
+                raise AccessDeniedError("GraphRAG creation requires a grant")
+            grant = self.grants[grant_id]
+            for record_id in ordered_record_ids:
+                self._assert_grant_allows(
+                    grant,
+                    wallet_id=wallet_id,
+                    audience_did=actor_did,
+                    resource=resource_for_record(wallet_id, record_id),
+                    ability="record/analyze",
+                    invocation_caveats=operation_caveats,
+                )
+
+        per_record: List[Dict[str, Any]] = []
+        combined_redactions = {label: 0 for label in self.REDACTION_PATTERNS}
+        category_record_counts = {category: 0 for category in self.DERIVED_FACT_KEYWORDS}
+        entity_type_counts: Dict[str, int] = {}
+        extraction_methods: Dict[str, int] = {}
+        total_raw_text_chars = 0
+
+        for record_id in ordered_record_ids:
+            record = self._record(wallet_id, record_id)
+            if record.data_type != "document":
+                raise ValueError("Redacted GraphRAG creation requires document records")
+            plaintext, metadata = self._decrypt_record_bytes_and_metadata(
+                wallet_id,
+                record,
+                actor_did=actor_did,
+                actor_secret=actor_secret,
+            )
+            extraction = self._extract_document_text_from_bytes(
+                plaintext,
+                metadata=metadata,
+                record_id=record_id,
+                max_chars=max_chars_per_record,
+                max_bytes=max_bytes_per_record,
+                use_ocr=use_ocr,
+            )
+            method = str(extraction.get("method") or "unknown")
+            extraction_methods[method] = extraction_methods.get(method, 0) + 1
+            extracted_text = str(extraction.get("text") or "")
+            redacted_text, redaction_counts = self._redact_text(extracted_text)
+            facts = self._derive_document_facts(redacted_text)
+            record_entity_counts = self._extract_graphrag_entity_type_counts(redacted_text)
+            total_raw_text_chars += len(extracted_text)
+            for label, count in redaction_counts.items():
+                combined_redactions[label] = combined_redactions.get(label, 0) + count
+            for category in facts["need_categories"]:
+                category_record_counts[category] = category_record_counts.get(category, 0) + 1
+            for entity_type, count in record_entity_counts.items():
+                entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + count
+            per_record.append(
+                {
+                    "record_id": record_id,
+                    "derived_facts": facts,
+                    "redaction_counts": redaction_counts,
+                    "entity_type_counts": record_entity_counts,
+                    "extraction_method": method,
+                    "raw_text_chars": len(extracted_text),
+                }
+            )
+
+        graph = self._build_redacted_graphrag_graph(
+            per_record,
+            category_record_counts=category_record_counts,
+            entity_type_counts=entity_type_counts,
+            redaction_counts=combined_redactions,
+        )
+        output = {
+            "output_policy": "redacted_graphrag",
+            "graph": graph,
+            "per_record": per_record,
+            "source_record_ids": ordered_record_ids,
+            "source_record_count": len(ordered_record_ids),
+            "raw_text_chars": total_raw_text_chars,
+            "extraction_methods": dict(sorted(extraction_methods.items())),
+        }
+        artifact_key = random_key()
+        encrypted = encrypt_bytes(
+            canonical_bytes(output),
+            artifact_key,
+            {"wallet_id": wallet_id, "record_ids": ordered_record_ids, "kind": "redacted_graphrag"},
+        )
+        ref = self.storage.put(canonical_bytes(encrypted.to_dict()))
+        artifact = DerivedArtifact(
+            artifact_id=f"artifact-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            source_record_ids=ordered_record_ids,
+            artifact_type="redacted_document_graphrag",
+            output_policy="redacted_graphrag",
+            encrypted_payload_ref=ref,
+        )
+        self.derived_artifacts[artifact.artifact_id] = artifact
+        for record_id in ordered_record_ids:
+            self.versions[self._record(wallet_id, record_id).current_version_id].derived_artifact_ids.append(
+                artifact.artifact_id
+            )
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="record/graphrag_redacted",
+            resource=",".join(resource_for_record(wallet_id, record_id) for record_id in ordered_record_ids),
+            decision="allow",
+            details={
+                "artifact_id": artifact.artifact_id,
+                "artifact_type": artifact.artifact_type,
+                "source_record_count": len(ordered_record_ids),
+                "node_count": graph["node_count"],
+                "edge_count": graph["edge_count"],
+            },
+            grant_id=grant_id,
+        )
+        return {"artifact": artifact, "output": output}
+
     def _derive_vector_profile(self, redacted_text: str, *, chunk_size_words: int) -> Dict[str, Any]:
         words = re.findall(r"[A-Za-z][A-Za-z'-]*|\[REDACTED_[A-Z_]+\]", redacted_text)
         chunks = [
@@ -2435,6 +2580,142 @@ class DataWalletService:
         if "name" in lower:
             return "person_name"
         return "string"
+
+    def _extract_graphrag_entity_type_counts(self, redacted_text: str) -> Dict[str, int]:
+        try:
+            from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator
+
+            entities = GraphRAGIntegrator().extract_entities(redacted_text)
+        except Exception:
+            entities = []
+        counts: Dict[str, int] = {}
+        for entity in entities:
+            entity_type = str(getattr(entity, "type", "entity") or "entity")
+            counts[entity_type] = counts.get(entity_type, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def _build_redacted_graphrag_graph(
+        self,
+        per_record: List[Dict[str, Any]],
+        *,
+        category_record_counts: Dict[str, int],
+        entity_type_counts: Dict[str, int],
+        redaction_counts: Dict[str, int],
+    ) -> Dict[str, Any]:
+        nodes: List[Dict[str, Any]] = []
+        edges: List[Dict[str, Any]] = []
+        for item in per_record:
+            record_node_id = f"record:{item['record_id']}"
+            nodes.append(
+                {
+                    "id": record_node_id,
+                    "kind": "record",
+                    "record_id": item["record_id"],
+                    "raw_text_chars": item["raw_text_chars"],
+                    "extraction_method": item["extraction_method"],
+                }
+            )
+            for category in item["derived_facts"]["need_categories"]:
+                category_node_id = f"need:{category}"
+                edges.append(
+                    {
+                        "source": record_node_id,
+                        "target": category_node_id,
+                        "relation": "has_need_category",
+                        "weight": 1,
+                    }
+                )
+            for redaction_type, count in item["redaction_counts"].items():
+                if count <= 0:
+                    continue
+                redaction_node_id = f"redaction:{redaction_type}"
+                edges.append(
+                    {
+                        "source": record_node_id,
+                        "target": redaction_node_id,
+                        "relation": "contains_redaction_type",
+                        "weight": count,
+                    }
+                )
+            for entity_type, count in item["entity_type_counts"].items():
+                if count <= 0:
+                    continue
+                entity_node_id = f"entity_type:{entity_type}"
+                edges.append(
+                    {
+                        "source": record_node_id,
+                        "target": entity_node_id,
+                        "relation": "mentions_entity_type",
+                        "weight": count,
+                    }
+                )
+
+        for category, count in sorted(category_record_counts.items()):
+            if count <= 0:
+                continue
+            nodes.append(
+                {
+                    "id": f"need:{category}",
+                    "kind": "need_category",
+                    "label": category,
+                    "record_count": count,
+                }
+            )
+        for redaction_type, count in sorted(redaction_counts.items()):
+            if count <= 0:
+                continue
+            nodes.append(
+                {
+                    "id": f"redaction:{redaction_type}",
+                    "kind": "redaction_type",
+                    "label": redaction_type,
+                    "count": count,
+                }
+            )
+        for entity_type, count in sorted(entity_type_counts.items()):
+            if count <= 0:
+                continue
+            nodes.append(
+                {
+                    "id": f"entity_type:{entity_type}",
+                    "kind": "entity_type",
+                    "label": entity_type,
+                    "count": count,
+                }
+            )
+
+        categories = [category for category, count in sorted(category_record_counts.items()) if count > 0]
+        for left_index, left in enumerate(categories):
+            for right in categories[left_index + 1 :]:
+                cooccurrence = sum(
+                    1
+                    for item in per_record
+                    if left in item["derived_facts"]["need_categories"]
+                    and right in item["derived_facts"]["need_categories"]
+                )
+                if cooccurrence <= 0:
+                    continue
+                edges.append(
+                    {
+                        "source": f"need:{left}",
+                        "target": f"need:{right}",
+                        "relation": "co_occurs_with",
+                        "weight": cooccurrence,
+                    }
+                )
+
+        return {
+            "graph_type": "redacted_category_entity_graph",
+            "nodes": nodes,
+            "edges": edges,
+            "node_count": len(nodes),
+            "edge_count": len(edges),
+            "category_record_counts": {
+                key: value for key, value in sorted(category_record_counts.items()) if value > 0
+            },
+            "entity_type_counts": dict(sorted(entity_type_counts.items())),
+            "redaction_counts": dict(sorted(redaction_counts.items())),
+        }
 
     @staticmethod
     def _document_suffix_from_metadata(metadata: Dict[str, Any]) -> str:

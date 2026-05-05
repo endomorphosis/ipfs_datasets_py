@@ -20,3 +20,7 @@ storing the artifact encrypted.
 `wallet_analyze_documents_redacted` performs cross-record document analysis only
 over authorized record IDs and returns aggregate-safe need categories, redaction
 counts, and per-record derived facts without document text.
+`wallet_create_redacted_graphrag` creates a redacted GraphRAG artifact from
+authorized wallet documents by collapsing extracted entities to entity-type
+counts and graph edges over record, need-category, redaction-type, and
+entity-type nodes.
