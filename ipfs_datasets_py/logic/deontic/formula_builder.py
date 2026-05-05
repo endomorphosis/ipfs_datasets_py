@@ -206,6 +206,9 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_docketing_calendaring_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
+    action_text = _normalize_public_records_copy_light_verb_action(action_text)
+    action_text = _normalize_financial_assurance_light_verb_action(action_text)
+    action_text = _normalize_procedural_relief_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_procurement_award_light_verb_action(action_text)
@@ -978,6 +981,90 @@ def _normalize_verification_light_verb_action(action_text: str) -> str:
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"verify {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_public_records_copy_light_verb_action(action_text: str) -> str:
+    """Project records-copy nominalizations to public-access predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    copy_patterns = [
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"(?:a\s+|the\s+)?copy\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
+        r"copies\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^copy\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in copy_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"provide copy {target}" if target else text
+
+    return text
+
+
+def _normalize_financial_assurance_light_verb_action(action_text: str) -> str:
+    """Project financial-assurance deposit nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    deposit_patterns = [
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|post|posts|posted|posting|submit|submits|submitted|submitting)\s+"
+        r"(?:a\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|post|posts|posted|posting|submit|submits|submitted|submitting)\s+"
+        r"deposits\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in deposit_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"deposit {target}" if target else text
+
+    return text
+
+
+def _normalize_procedural_relief_light_verb_action(action_text: str) -> str:
+    """Project stay, continuance, postponement, and deferral nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    relief_patterns = [
+        (
+            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?stay\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "stay",
+        ),
+        (
+            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?continuance\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "continue",
+        ),
+        (
+            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?postponement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "postpone",
+        ),
+        (
+            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?deferral\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "defer",
+        ),
+    ]
+    for pattern, verb in relief_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 

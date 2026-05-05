@@ -492,9 +492,19 @@ def _target_components(
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
+    semantic_profile = _semantic_formula_profile(
+        source_symbols,
+        exported_symbols,
+        formula_slots,
+    )
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
+        "semantic_formula_family": semantic_profile["semantic_formula_family"],
+        "semantic_formula_predicate": semantic_profile["semantic_formula_predicate"],
+        "semantic_formula_symbols": semantic_profile["semantic_formula_symbols"],
+        "semantic_formula_source": semantic_profile["semantic_formula_source"],
+        "semantic_formula_slot_count": semantic_profile["semantic_formula_slot_count"],
         "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
         "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
         "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
@@ -581,6 +591,156 @@ def _target_components(
             target_parse_profile.get("event_predicates") or []
         ),
     }
+
+
+def _semantic_formula_profile(
+    source_symbols: Sequence[str],
+    exported_symbols: Sequence[str],
+    formula_slots: Sequence[str],
+) -> Dict[str, Any]:
+    """Classify the target-visible formula semantics for Phase 8 reports."""
+
+    symbols = _ordered_unique(source_symbols)
+    symbol_source = "source_formula_symbols"
+    if not symbols:
+        symbols = _ordered_unique(exported_symbols)
+        symbol_source = "exported_formula_symbols"
+
+    predicate = _semantic_formula_predicate(symbols)
+    family = _semantic_formula_family(predicate)
+    return {
+        "semantic_formula_family": family,
+        "semantic_formula_predicate": predicate,
+        "semantic_formula_symbols": symbols,
+        "semantic_formula_source": symbol_source,
+        "semantic_formula_slot_count": len(_ordered_unique(formula_slots)),
+    }
+
+
+def _semantic_formula_predicate(symbols: Sequence[str]) -> str:
+    ordered_symbols = _ordered_unique(symbols)
+    if not ordered_symbols:
+        return ""
+
+    frame_predicates = {
+        "AppliesTo",
+        "Definition",
+        "ExemptFrom",
+        "ExpiresAfter",
+        "Lifecycle",
+        "ValidFor",
+    }
+    for symbol in ordered_symbols:
+        if symbol in frame_predicates:
+            return symbol
+    return ordered_symbols[-1]
+
+
+def _semantic_formula_family(predicate: str) -> str:
+    value = str(predicate or "").strip()
+    if not value:
+        return "unknown"
+    if value == "Definition":
+        return "definition"
+    if value == "AppliesTo":
+        return "applicability_rule"
+    if value == "ExemptFrom":
+        return "exemption_rule"
+    if value == "ValidFor":
+        return "instrument_lifecycle_validity"
+    if value == "ExpiresAfter":
+        return "instrument_lifecycle_expiration"
+    if value == "Lifecycle":
+        return "instrument_lifecycle"
+    if value.startswith((
+        "Arbitrate",
+        "Conciliate",
+        "Mediate",
+        "Negotiate",
+        "Settle",
+    )):
+        return "dispute_resolution_duty"
+    if value.startswith((
+        "DepositSecurity",
+        "EstablishEscrow",
+        "MaintainLiabilityInsurance",
+        "PostBond",
+        "ProvideProofInsurance",
+        "ReleaseBond",
+    )):
+        return "financial_assurance_duty"
+    if value.startswith((
+        "Continue",
+        "Defer",
+        "Extend",
+        "Postpone",
+        "Stay",
+        "Waive",
+    )):
+        return "administrative_relief_duty"
+    if value.startswith((
+        "AdministerAgreement",
+        "AdministerContract",
+        "AdministerProcurement",
+        "Award",
+        "OpenBid",
+        "OpenBids",
+        "OpenProposal",
+        "OpenProposals",
+        "Procure",
+        "SelectBidder",
+        "SelectContractor",
+        "SelectVendor",
+        "Solicit",
+    )):
+        return "procurement_contracting_duty"
+    if value.startswith((
+        "Acknowledge",
+        "Authenticate",
+        "Attest",
+        "Confirm",
+        "Notarize",
+        "Ratify",
+    )):
+        return "document_authentication_duty"
+    if value.startswith((
+        "Announce",
+        "Circulate",
+        "Disseminate",
+        "Display",
+        "Distribute",
+        "Post",
+        "Transmit",
+    )):
+        return "public_information_duty"
+    if value.startswith(("Comment", "Object", "Respond")):
+        return "review_participation_duty"
+    if value.startswith(("Abate", "Enforce", "Mitigate", "Remediate", "Remedy")):
+        return "enforcement_remedy_duty"
+    if value.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
+        return "regulatory_control_duty"
+    if value.startswith((
+        "Analyze",
+        "Diagnose",
+        "Examine",
+        "Immunize",
+        "Screen",
+        "Vaccinate",
+    )):
+        return "health_compliance_duty"
+    if value.startswith((
+        "Adjudicate",
+        "Decide",
+        "Dismiss",
+        "Dispose",
+        "Find",
+    )):
+        return "judicial_disposition_duty"
+    if value.startswith(("FileAppeal", "MakeAppeal", "SubmitAppeal")):
+        return "administrative_review_request_duty"
+    if value.startswith(("Cancel", "Revoke", "Suspend")):
+        return "instrument_status_duty"
+    return "ordinary_duty"
 
 
 def _target_quality_gate(

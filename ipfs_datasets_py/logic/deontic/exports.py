@@ -584,6 +584,8 @@ def build_prover_syntax_target_coverage_record(
     """
 
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
+    quality_gate_summary = _summarize_prover_target_quality_gates(records)
+    summary = {**summary, "quality_gate_summary": quality_gate_summary}
     blockers: List[str] = []
     blockers.extend(
         f"missing_prover_syntax_target:{target}"
@@ -597,8 +599,18 @@ def build_prover_syntax_target_coverage_record(
         f"skipped_prover_syntax_target:{target}"
         for target in summary["skipped_targets"]
     )
+    if quality_gate_summary["quality_gate_record_count"]:
+        blockers.extend(
+            f"failed_prover_quality_check:{check}"
+            for check in quality_gate_summary["failed_quality_check_distribution"]
+        )
 
     normalized_source_id = str(source_id or "").strip()
+    quality_gates_complete = (
+        quality_gate_summary["quality_gate_record_count"] == 0
+        or quality_gate_summary["quality_gate_complete_rate"] == 1.0
+    )
+    formal_syntax_valid = bool(summary["all_required_passed"] and quality_gates_complete)
     return {
         "prover_syntax_summary_id": _stable_id(
             "prover-syntax-coverage",
@@ -611,9 +623,10 @@ def build_prover_syntax_target_coverage_record(
         "present_required_target_count": summary["present_required_target_count"],
         "record_count": summary["record_count"],
         "syntax_valid_rate": summary["syntax_valid_rate"],
-        "formal_syntax_valid": summary["all_required_passed"],
-        "requires_validation": not summary["all_required_passed"],
+        "formal_syntax_valid": formal_syntax_valid,
+        "requires_validation": not formal_syntax_valid,
         "coverage_blockers": blockers,
+        "quality_gate_summary": quality_gate_summary,
         "coverage_summary": summary,
     }
 
@@ -659,6 +672,50 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
+
+
+def _summarize_prover_target_quality_gates(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize per-target Phase 8 quality gates for coverage rows."""
+
+    gate_records: List[tuple[str, Mapping[str, Any]]] = []
+    failed_checks: Counter[str] = Counter()
+    complete_targets: List[str] = []
+    incomplete_targets: List[str] = []
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        gate = record.get("target_quality_gate")
+        if not isinstance(gate, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        gate_records.append((target, gate))
+        if gate.get("formal_validation_complete") is True:
+            if target:
+                complete_targets.append(target)
+        elif target:
+            incomplete_targets.append(target)
+        for check in gate.get("failed_quality_checks") or []:
+            check_text = str(check or "").strip()
+            if check_text:
+                failed_checks[check_text] += 1
+
+    record_count = len(gate_records)
+    complete_targets = sorted(dict.fromkeys(complete_targets))
+    incomplete_targets = sorted(dict.fromkeys(incomplete_targets))
+    return {
+        "quality_gate_record_count": record_count,
+        "quality_gate_complete_targets": complete_targets,
+        "quality_gate_incomplete_targets": incomplete_targets,
+        "quality_gate_complete_count": len(complete_targets),
+        "quality_gate_incomplete_count": len(incomplete_targets),
+        "quality_gate_complete_rate": round(len(complete_targets) / record_count, 6)
+        if record_count
+        else 0.0,
+        "failed_quality_check_distribution": dict(sorted(failed_checks.items())),
+    }
 
 
 def build_ir_slot_provenance_audit_record(
@@ -3710,6 +3767,9 @@ def summarize_reconstruction_slot_loss(
     missing_slots: set[str] = set()
     ungrounded_slots: set[str] = set()
     source_ids: set[str] = set()
+    per_source_grounded: Dict[str, set[str]] = {}
+    per_source_missing: Dict[str, set[str]] = {}
+    per_source_ungrounded: Dict[str, set[str]] = {}
 
     for record in records or []:
         if not isinstance(record, Mapping):
@@ -3719,9 +3779,12 @@ def summarize_reconstruction_slot_loss(
         if source_id:
             source_ids.add(source_id)
 
-        grounded_slots.update(_slot_names_from_record(record, "grounded_slots"))
-        missing_slots.update(_slot_names_from_record(record, "missing_slots"))
-        ungrounded_slots.update(_slot_names_from_record(record, "ungrounded_slots"))
+        record_grounded = set(_slot_names_from_record(record, "grounded_slots"))
+        record_missing = set(_slot_names_from_record(record, "missing_slots"))
+        record_ungrounded = set(_slot_names_from_record(record, "ungrounded_slots"))
+        grounded_slots.update(record_grounded)
+        missing_slots.update(record_missing)
+        ungrounded_slots.update(record_ungrounded)
 
         for slot_record in _slot_grounding_records(record):
             slot_name = str(
@@ -3739,10 +3802,13 @@ def summarize_reconstruction_slot_loss(
             ).strip().lower()
             if slot_record.get("grounded") is True or status in {"grounded", "present"}:
                 grounded_slots.add(slot_name)
+                record_grounded.add(slot_name)
             elif slot_record.get("ungrounded") is True or status in {"ungrounded", "unprovenanced"}:
                 ungrounded_slots.add(slot_name)
+                record_ungrounded.add(slot_name)
             elif slot_record.get("missing") is True or status in {"missing", "omitted"}:
                 missing_slots.add(slot_name)
+                record_missing.add(slot_name)
 
         provenance = record.get("decoded_phrase_provenance") or record.get("phrase_provenance")
         if isinstance(provenance, Sequence) and not isinstance(provenance, (str, bytes)):
@@ -3755,13 +3821,27 @@ def summarize_reconstruction_slot_loss(
                 spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
                 if spans:
                     grounded_slots.add(slot_name)
-                elif phrase.get("fixed_connective") is not True:
+                    record_grounded.add(slot_name)
+                elif phrase.get("fixed_connective") is not True and phrase.get("fixed") is not True:
                     ungrounded_slots.add(slot_name)
+                    record_ungrounded.add(slot_name)
+
+        if source_id:
+            per_source_grounded.setdefault(source_id, set()).update(record_grounded)
+            per_source_missing.setdefault(source_id, set()).update(record_missing)
+            per_source_ungrounded.setdefault(source_id, set()).update(record_ungrounded)
 
     grounded_required = sorted(slot for slot in required if slot in grounded_slots)
     missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)
     extra_ungrounded = sorted(slot for slot in ungrounded_slots if slot not in required)
     ungrounded_required = sorted(slot for slot in required if slot in ungrounded_slots)
+    slot_source_status = _reconstruction_slot_source_status(
+        required,
+        source_ids,
+        per_source_grounded,
+        per_source_missing,
+        per_source_ungrounded,
+    )
     blockers = [f"missing_reconstruction_slot:{slot}" for slot in missing_required]
     blockers.extend(f"ungrounded_reconstruction_slot:{slot}" for slot in ungrounded_required)
     blockers.extend(f"ungrounded_decoded_slot:{slot}" for slot in extra_ungrounded)
@@ -3778,6 +3858,7 @@ def summarize_reconstruction_slot_loss(
         "missing_required_slots": missing_required,
         "ungrounded_required_slots": ungrounded_required,
         "extra_ungrounded_slots": extra_ungrounded,
+        "slot_source_status": slot_source_status,
         "required_slot_count": required_count,
         "grounded_required_slot_count": grounded_count,
         "missing_required_slot_count": len(missing_required),
@@ -3822,6 +3903,7 @@ def build_reconstruction_slot_loss_record(
         "grounded_required_slot_rate": summary["grounded_required_slot_rate"],
         "ungrounded_decoded_slot_rate": summary["ungrounded_decoded_slot_rate"],
         "slot_reconstruction_complete": summary["slot_reconstruction_complete"],
+        "slot_source_status": summary["slot_source_status"],
         "requires_validation": not summary["slot_reconstruction_complete"],
         "coverage_blockers": summary["coverage_blockers"],
         "coverage_summary": summary,
@@ -3854,6 +3936,45 @@ def build_reconstruction_slot_loss_records(
         build_reconstruction_slot_loss_record(source_id, grouped[source_id], required_slots)
         for source_id in sorted(grouped)
     ]
+
+
+def _reconstruction_slot_source_status(
+    required_slots: Sequence[str],
+    source_ids: set[str],
+    per_source_grounded: Mapping[str, set[str]],
+    per_source_missing: Mapping[str, set[str]],
+    per_source_ungrounded: Mapping[str, set[str]],
+) -> Dict[str, Dict[str, List[str]]]:
+    """Return source-indexed reconstruction status for each required slot."""
+
+    status: Dict[str, Dict[str, List[str]]] = {}
+    ordered_sources = sorted(source_ids)
+    for slot in required_slots:
+        slot_name = str(slot or "").strip()
+        if not slot_name:
+            continue
+        grounded_source_ids = [
+            source_id
+            for source_id in ordered_sources
+            if slot_name in per_source_grounded.get(source_id, set())
+        ]
+        ungrounded_source_ids = [
+            source_id
+            for source_id in ordered_sources
+            if slot_name in per_source_ungrounded.get(source_id, set())
+        ]
+        missing_source_ids = [
+            source_id
+            for source_id in ordered_sources
+            if slot_name not in per_source_grounded.get(source_id, set())
+            or slot_name in per_source_missing.get(source_id, set())
+        ]
+        status[slot_name] = {
+            "grounded_source_ids": grounded_source_ids,
+            "missing_source_ids": missing_source_ids,
+            "ungrounded_source_ids": ungrounded_source_ids,
+        }
+    return status
 
 
 def _slot_names_from_record(record: Mapping[str, Any], key: str) -> set[str]:
@@ -3964,6 +4085,46 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
 
+    if action_predicate.startswith((
+        "Acknowledge",
+        "Authenticate",
+        "Attest",
+        "Confirm",
+        "Notarize",
+        "Ratify",
+    )):
+        return "document_authentication_duty"
+    if action_predicate.startswith((
+        "PermitInspection",
+        "ProvideAccess",
+        "ProvideCopy",
+        "ProvidePublicAccess",
+        "ProvideRecordsInspection",
+    )):
+        return "public_access_records_duty"
+    if action_predicate.startswith((
+        "DepositSecurity",
+        "EstablishEscrow",
+        "MaintainLiabilityInsurance",
+        "PostBond",
+        "ProvideProofInsurance",
+        "ReleaseBond",
+    )):
+        return "financial_assurance_duty"
+    if action_predicate.startswith((
+        "Arbitrate",
+        "Conciliate",
+        "Mediate",
+        "Settle",
+    )):
+        return "dispute_resolution_duty"
+    if action_predicate.startswith((
+        "Continue",
+        "Defer",
+        "Postpone",
+        "Stay",
+    )):
+        return "administrative_relief_duty"
     if action_predicate.startswith((
         "AdministerAgreement",
         "AdministerContract",

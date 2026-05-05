@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import time
@@ -15,6 +16,19 @@ from ipfs_datasets_py.optimizers.logic_port_daemon import (
     build_arg_parser,
     extract_plan_tasks,
     parse_llm_patch_response,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.core import ManagedDaemonSpec, check_daemon_health
+from ipfs_datasets_py.optimizers.todo_daemon.legal_parser import (
+    build_legal_parser_spec,
+    check_legal_parser_health,
+    legal_parser_launch_env,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.logic_port import build_logic_port_spec, logic_port_launch_env
+from ipfs_datasets_py.optimizers.todo_daemon.plans import (
+    PlanTask,
+    extract_plan_tasks as extract_generic_plan_tasks,
+    replace_checkbox_mark,
+    strip_daemon_task_board,
 )
 
 
@@ -57,6 +71,241 @@ class HangingRouter:
 
 def test_default_plan_docs_use_typescript_port_plan():
     assert DEFAULT_PLAN_DOCS == ("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md",)
+
+
+def test_reusable_todo_daemon_health_reports_logic_port_fields(tmp_path):
+    daemon_dir = tmp_path / ".daemon"
+    daemon_dir.mkdir()
+    status_path = daemon_dir / "daemon.status.json"
+    progress_path = daemon_dir / "daemon.progress.json"
+    supervisor_path = daemon_dir / "supervisor.status.json"
+    supervisor_pid_path = daemon_dir / "supervisor.pid"
+    child_pid_path = daemon_dir / "daemon.pid"
+    now = logic_port_daemon.datetime.now(logic_port_daemon.timezone.utc).isoformat()
+    pid = os.getpid()
+    status_path.write_text(
+        json.dumps(
+            {
+                "heartbeat_at": now,
+                "heartbeat_pid": pid,
+                "proposal_transport": "worktree",
+                "worktree_edit_timeout_seconds": 300,
+                "auto_commit": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    progress_path.write_text(
+        json.dumps({"updated_at": now, "current_task": "Task checkbox-1: portable daemon"}),
+        encoding="utf-8",
+    )
+    supervisor_path.write_text(
+        json.dumps(
+            {
+                "updated_at": now,
+                "status": "running",
+                "supervisor_pid": pid,
+                "daemon_pid": pid,
+                "task_board_path": "docs/todo.md",
+            }
+        ),
+        encoding="utf-8",
+    )
+    supervisor_pid_path.write_text(str(pid), encoding="utf-8")
+    spec = ManagedDaemonSpec(
+        name="example",
+        schema="example.todo_daemon",
+        repo_root=tmp_path,
+        daemon_dir=daemon_dir,
+        runner=("bash", "run_example_daemon.sh"),
+        status_path=status_path,
+        progress_path=progress_path,
+        supervisor_status_path=supervisor_path,
+        supervisor_pid_path=supervisor_pid_path,
+        child_pid_path=child_pid_path,
+        supervisor_out_path=daemon_dir / "supervisor.out",
+        ensure_status_path=daemon_dir / "ensure.status.json",
+        ensure_check_path=daemon_dir / "ensure-check.json",
+        task_board_path=Path("docs/todo.md"),
+    )
+
+    health = check_daemon_health(spec, stale_after_seconds=180)
+
+    assert health.exit_code == 0
+    assert health.payload["alive"] is True
+    assert health.payload["status"] == "running"
+    assert health.payload["proposal_transport"] == "worktree"
+    assert health.payload["worktree_edit_timeout_seconds"] == 300
+    assert health.payload["current_task"] == "Task checkbox-1: portable daemon"
+    assert health.payload["task_board_path"] == "docs/todo.md"
+
+
+def test_logic_port_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monkeypatch):
+    monkeypatch.delenv("PROPOSAL_TRANSPORT", raising=False)
+    monkeypatch.delenv("WORKTREE_REPAIR_ATTEMPTS", raising=False)
+    monkeypatch.delenv("AUTO_COMMIT", raising=False)
+    monkeypatch.delenv("LOGIC_PORT_PROVIDER", raising=False)
+    monkeypatch.delenv("PROVIDER", raising=False)
+
+    spec = build_logic_port_spec(str(tmp_path))
+    launch_env = logic_port_launch_env()
+
+    assert spec.name == "logic-port"
+    assert spec.runner == ("bash", "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh")
+    assert spec.task_board_path == Path("docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")
+    assert spec.tmux_session_name == "logic-port-daemon"
+    assert "ipfs_datasets_py.optimizers.logic_port_daemon" in spec.daemon_process_match_all
+    assert launch_env["PROPOSAL_TRANSPORT"] == "worktree"
+    assert launch_env["WORKTREE_REPAIR_ATTEMPTS"] == "1"
+    assert launch_env["AUTO_COMMIT"] == "1"
+    assert launch_env["PROVIDER"] == ""
+
+
+def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monkeypatch):
+    for name in (
+        "MODEL_NAME",
+        "PROVIDER",
+        "IPFS_DATASETS_PY_LLM_PROVIDER",
+        "DAEMON_DIR",
+        "OUTPUT_DIR",
+        "RUN_SCRIPT",
+        "LEGAL_PARSER_DAEMON_WORKTREE_ROOT",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    spec = build_legal_parser_spec(str(tmp_path))
+    launch_env = legal_parser_launch_env()
+
+    assert spec.name == "legal-parser"
+    assert spec.schema == "ipfs_datasets_py.legal_parser_daemon"
+    assert spec.runner == ("bash", "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh")
+    assert spec.status_path == Path("artifacts/legal_parser_optimizer_daemon/current_status.json")
+    assert spec.progress_path == Path("artifacts/legal_parser_optimizer_daemon/progress_summary.json")
+    assert spec.tmux_session_name == "legal-parser-daemon"
+    assert spec.worktree_root == Path(".daemon/legal-parser-worktrees")
+    assert "ipfs_datasets_py.optimizers.logic.deontic.parser_daemon" in spec.daemon_process_match_all
+    assert launch_env["MODEL_NAME"] == "gpt-5.5"
+    assert launch_env["PROVIDER"] == "llm_router"
+    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
+
+
+def test_reusable_todo_daemon_health_reports_legal_parser_legacy_fields(tmp_path, monkeypatch):
+    for name in (
+        "DAEMON_DIR",
+        "OUTPUT_DIR",
+        "SUPERVISOR_STATUS_PATH",
+        "SUPERVISOR_PID_PATH",
+        "CHILD_PID_PATH",
+        "ENSURE_STATUS_PATH",
+        "CHECK_LOG_PATH",
+        "SUPERVISOR_LOCK_PATH",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    spec = build_legal_parser_spec(str(tmp_path))
+    now = logic_port_daemon.datetime.now(logic_port_daemon.timezone.utc).isoformat()
+    pid = os.getpid()
+
+    def write_spec_json(path: Path, payload: dict):
+        resolved = spec.resolve(path)
+        assert resolved is not None
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.write_text(json.dumps(payload), encoding="utf-8")
+
+    write_spec_json(
+        spec.status_path,
+        {
+            "heartbeat_at": now,
+            "heartbeat_pid": pid,
+            "cycle_index": 17,
+            "phase": "requesting_worktree_edit",
+            "phase_started_at": now,
+            "model_name": "gpt-5.5",
+            "provider": "llm_router",
+            "proposal_transport": "worktree",
+            "worktree_edit_timeout_seconds": 1200,
+            "worktree_stale_after_seconds": 7200,
+            "worktree_codex_sandbox": "danger-full-access",
+            "repair_failed_tests_before_rollback": True,
+            "failed_test_repair_attempts": 2,
+            "worktree_no_child_stall_seconds": 999999,
+            "dirty_legal_parser_targets_diff_summary": "clean",
+        },
+    )
+    write_spec_json(
+        spec.progress_path,
+        {
+            "stalled_metric_cycles": 0,
+            "cycles_since_meaningful_progress": 1,
+            "dirty_legal_parser_targets_diff_summary": "clean",
+        },
+    )
+    write_spec_json(
+        spec.supervisor_status_path,
+        {
+            "updated_at": now,
+            "status": "running",
+            "supervisor_pid": pid,
+            "formal_logic_goal": "encoder decoder IR syntax checks across theorem provers",
+            "agentic_acceptance_stall_cycles": 3,
+            "agentic_state_path": "artifacts/legal_parser_optimizer_daemon/agentic_state.json",
+        },
+    )
+    write_spec_json(
+        spec.ensure_status_path,
+        {
+            "status": "already_running",
+            "checked_at": now,
+            "wrapper_pid": None,
+            "supervisor_pid_alive": True,
+        },
+    )
+    write_spec_json(
+        Path("artifacts/legal_parser_optimizer_daemon/agentic_state.json"),
+        {
+            "dirty_legal_parser_targets_confirmed": False,
+            "effective_phase_stall_threshold_seconds": 999999,
+        },
+    )
+
+    health = check_legal_parser_health(spec, stale_after_seconds=180)
+
+    assert health["alive"] is True
+    assert health["cycle_index"] == 17
+    assert health["phase"] == "requesting_worktree_edit"
+    assert health["proposal_transport"] == "worktree"
+    assert health["worktree_edit_timeout_seconds"] == 1200
+    assert health["repair_failed_tests_before_rollback"] is True
+    assert health["failed_test_repair_attempts"] == 2
+    assert health["worktree_no_child_stall_seconds"] == 999999
+    assert health["worktree_phase_worker_status"]["required"] is True
+    assert health["formal_logic_goal"] == "encoder decoder IR syntax checks across theorem provers"
+    assert health["agentic_acceptance_stall_cycles"] == 3
+    assert health["ensure_status"] == "already_running"
+    assert health["progress_dirty_legal_parser_targets_diff_summary"] == "clean"
+
+
+def test_reusable_todo_plan_parser_strips_generated_board_and_replaces_marks():
+    markdown = """# Plan
+
+- [ ] Implement first reusable task
+- [!] Keep blocked task
+
+<!-- logic-port-daemon-task-board:start -->
+- [ ] generated board item should be ignored
+<!-- logic-port-daemon-task-board:end -->
+"""
+
+    tasks = extract_generic_plan_tasks(markdown)
+    replaced = replace_checkbox_mark(strip_daemon_task_board(markdown), tasks[0], "x")
+
+    assert tasks == [
+        PlanTask("checkbox-1", "Implement first reusable task", "needed"),
+        PlanTask("checkbox-2", "Keep blocked task", "blocked"),
+    ]
+    assert "generated board item should be ignored" not in strip_daemon_task_board(markdown)
+    assert "- [x] Implement first reusable task" in replaced
+    assert "- [!] Keep blocked task" in replaced
 
 
 def test_cli_defaults_to_worktree_transport(monkeypatch):

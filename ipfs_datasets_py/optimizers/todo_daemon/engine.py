@@ -1,0 +1,523 @@
+"""Reusable task-board and validation-worktree engine for todo daemons."""
+
+from __future__ import annotations
+
+import difflib
+import json
+import re
+import shutil
+import subprocess
+import time
+import uuid
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Callable, Iterable, Iterator, Optional
+
+
+DEFAULT_CHECKBOX_RE = re.compile(r"^(?P<prefix>\s*-\s+\[)(?P<mark>[ xX~!])(?P<suffix>\]\s+)(?P<title>.+)$")
+JSON_BLOCK_RE = re.compile(r"```json\s*([\s\S]*?)\s*```", re.IGNORECASE)
+
+
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def read_text(path: Path, limit: Optional[int] = None) -> str:
+    text = path.read_text(encoding="utf-8")
+    if limit is not None and len(text) > limit:
+        return text[:limit] + "\n\n[truncated]\n"
+    return text
+
+
+def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def append_jsonl(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, sort_keys=True) + "\n")
+
+
+def compact_message(value: Any, limit: int = 700) -> str:
+    text = str(value or "")
+    text = re.sub(
+        r"<!doctype html[\s\S]*",
+        "[html response omitted]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"<(?:html|head|body|script|style|svg|path|div|meta|noscript)\b[\s\S]*",
+        "[html response omitted]",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(r"__cf_chl_[A-Za-z0-9_.=-]+", "__cf_chl_[omitted]", text)
+    text = re.sub(r"c[A-Z][A-Za-z0-9_]*:\s*'[^']{80,}'", "cloudflare_token: '[omitted]'", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) > limit:
+        return text[:limit].rstrip() + "..."
+    return text
+
+
+@dataclass(frozen=True)
+class Task:
+    index: int
+    title: str
+    status: str
+    checkbox_id: int
+
+    @property
+    def label(self) -> str:
+        return f"Task checkbox-{self.checkbox_id}: {self.title}"
+
+
+@dataclass(frozen=True)
+class CommandResult:
+    command: tuple[str, ...]
+    returncode: int
+    stdout: str
+    stderr: str
+
+    @property
+    def ok(self) -> bool:
+        return self.returncode == 0
+
+    def compact(self, limit: int = 5000) -> dict[str, Any]:
+        return {
+            "command": list(self.command),
+            "returncode": self.returncode,
+            "stdout": compact_message(self.stdout, limit=limit),
+            "stderr": compact_message(self.stderr, limit=limit),
+        }
+
+
+@dataclass
+class Proposal:
+    summary: str = ""
+    impact: str = ""
+    files: list[dict[str, str]] = field(default_factory=list)
+    validation_commands: list[list[str]] = field(default_factory=list)
+    raw_response: str = ""
+    errors: list[str] = field(default_factory=list)
+    failure_kind: str = ""
+    target_task: str = ""
+    changed_files: list[str] = field(default_factory=list)
+    validation_results: list[CommandResult] = field(default_factory=list)
+    applied: bool = False
+    dry_run: bool = True
+    trusted_validation_commands: bool = False
+    requires_visible_source_change: bool = False
+    promotion_verified: bool = False
+    promotion_errors: list[str] = field(default_factory=list)
+
+    @property
+    def valid(self) -> bool:
+        return self.applied and not self.errors and all(result.ok for result in self.validation_results)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "summary": self.summary,
+            "impact": self.impact,
+            "target_task": self.target_task,
+            "files": [item.get("path", "") for item in self.files],
+            "changed_files": self.changed_files,
+            "applied": self.applied,
+            "dry_run": self.dry_run,
+            "validation_passed": bool(self.validation_results) and all(result.ok for result in self.validation_results),
+            "validation_results": [result.compact() for result in self.validation_results],
+            "errors": [compact_message(error) for error in self.errors],
+            "failure_kind": self.failure_kind,
+            "trusted_validation_commands": self.trusted_validation_commands,
+            "requires_visible_source_change": self.requires_visible_source_change,
+            "promotion_verified": self.promotion_verified,
+            "promotion_errors": [compact_message(error) for error in self.promotion_errors],
+        }
+
+
+@dataclass(frozen=True)
+class PathPolicy:
+    allowed_write_prefixes: tuple[str, ...]
+    disallowed_write_prefixes: tuple[str, ...] = ()
+    private_write_path_fragments: tuple[str, ...] = ()
+    private_write_path_tokens: frozenset[str] = frozenset()
+    runtime_only_change_paths: frozenset[str] = frozenset()
+    ignored_visible_prefixes: tuple[str, ...] = ()
+    visible_source_prefixes: tuple[str, ...] = ()
+    visible_source_suffixes: tuple[str, ...] = (".py", ".ts", ".tsx", ".json", ".md")
+
+    def validate_write_path(self, path: str, *, daemon_label: str = "todo daemon") -> list[str]:
+        errors: list[str] = []
+        try:
+            normalized = normalized_relative_path(path)
+        except ValueError as exc:
+            return [str(exc)]
+        if any(normalized.startswith(prefix) for prefix in self.disallowed_write_prefixes):
+            errors.append(f"disallowed {daemon_label} write target: {normalized}")
+        if not any(
+            normalized.startswith(prefix) or normalized == prefix.rstrip("/")
+            for prefix in self.allowed_write_prefixes
+        ):
+            errors.append(f"write target is outside {daemon_label} allowlist: {normalized}")
+        if self.is_private_write_path(normalized):
+            errors.append(f"private/session artifacts may not be generated by {daemon_label} proposals: {normalized}")
+        return errors
+
+    def is_private_write_path(self, normalized: str) -> bool:
+        lowered = normalized.lower()
+        if any(fragment in lowered for fragment in self.private_write_path_fragments):
+            return True
+        tokens = [token for token in re.split(r"[/._-]+", lowered) if token]
+        return any(token in self.private_write_path_tokens for token in tokens)
+
+    def has_visible_source_change(self, changed_files: Iterable[str]) -> bool:
+        for path in changed_files:
+            normalized = Path(path).as_posix()
+            if normalized in self.runtime_only_change_paths:
+                continue
+            if any(normalized.startswith(prefix) for prefix in self.ignored_visible_prefixes):
+                continue
+            if (
+                any(normalized.startswith(prefix) for prefix in self.visible_source_prefixes)
+                and normalized.endswith(self.visible_source_suffixes)
+            ):
+                return True
+        return False
+
+
+@dataclass(frozen=True)
+class ValidationWorkspaceSpec:
+    repo_root: Path
+    worktree_dir: Path
+    marker_name: str = "todo-worktree.json"
+    copy_paths: tuple[Path, ...] = ()
+    root_files: tuple[str, ...] = ()
+    external_reference_paths: tuple[Path, ...] = ()
+    ignore: Optional[Callable[[str, list[str]], set[str]]] = None
+    stale_seconds: int = 7200
+
+    def resolve(self, path: Path) -> Path:
+        return path if path.is_absolute() else self.repo_root / path
+
+
+def parse_markdown_tasks(
+    markdown: str,
+    *,
+    checkbox_re: re.Pattern[str] = DEFAULT_CHECKBOX_RE,
+) -> list[Task]:
+    tasks: list[Task] = []
+    for line in markdown.splitlines():
+        match = checkbox_re.match(line)
+        if not match:
+            continue
+        mark = match.group("mark")
+        raw_title = match.group("title").strip()
+        checkbox_id = len(tasks) + 1
+        title = raw_title
+        id_match = re.match(r"Task checkbox-(?P<id>\d+):\s*(?P<title>.+)$", raw_title)
+        if id_match:
+            checkbox_id = int(id_match.group("id"))
+            title = id_match.group("title").strip()
+        status = "needed"
+        if mark.lower() == "x":
+            status = "complete"
+        elif mark == "~":
+            status = "in-progress"
+        elif mark == "!":
+            status = "blocked"
+        tasks.append(Task(index=len(tasks) + 1, title=title, status=status, checkbox_id=checkbox_id))
+    return tasks
+
+
+def select_task(
+    tasks: Iterable[Task],
+    *,
+    revisit_blocked: bool = False,
+    protected_blocked_checkbox_ids: Iterable[int] = (),
+) -> Optional[Task]:
+    task_list = list(tasks)
+    for task in task_list:
+        if task.status in {"needed", "in-progress"}:
+            return task
+    if revisit_blocked:
+        protected = set(protected_blocked_checkbox_ids)
+        for task in task_list:
+            if task.status == "blocked" and task.checkbox_id not in protected:
+                return task
+    return None
+
+
+def extract_json(text: str) -> Optional[dict[str, Any]]:
+    match = JSON_BLOCK_RE.search(text)
+    candidates = [match.group(1)] if match else []
+    stripped = text.strip()
+    if stripped.startswith("{") and stripped.endswith("}"):
+        candidates.append(stripped)
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start >= 0 and end > start:
+        candidates.append(stripped[start : end + 1])
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def parse_json_proposal(text: str) -> Proposal:
+    parsed = extract_json(text)
+    if parsed is None:
+        return Proposal(raw_response=text, errors=["LLM response did not contain a JSON object."], failure_kind="parse")
+    files: list[dict[str, str]] = []
+    raw_files = parsed.get("files", [])
+    if isinstance(raw_files, list):
+        for item in raw_files:
+            if not isinstance(item, dict):
+                continue
+            path = item.get("path")
+            content = item.get("content")
+            if isinstance(path, str) and isinstance(content, str):
+                files.append({"path": path, "content": content})
+    commands: list[list[str]] = []
+    raw_commands = parsed.get("validation_commands", [])
+    if isinstance(raw_commands, list):
+        for command in raw_commands:
+            if isinstance(command, list) and all(isinstance(part, str) for part in command):
+                commands.append(command)
+    return Proposal(
+        summary=str(parsed.get("summary", "")),
+        impact=str(parsed.get("impact", "")),
+        files=files,
+        validation_commands=commands,
+        raw_response=text,
+    )
+
+
+def normalized_relative_path(path: str) -> str:
+    candidate = Path(path)
+    if candidate.is_absolute():
+        raise ValueError(f"absolute paths are not allowed: {path}")
+    normalized = candidate.as_posix()
+    if normalized.startswith("../") or "/../" in normalized or normalized == "..":
+        raise ValueError(f"path traversal is not allowed: {path}")
+    return normalized
+
+
+def run_command(command: tuple[str, ...], *, cwd: Path, timeout: int) -> CommandResult:
+    completed = subprocess.run(
+        list(command),
+        cwd=str(cwd),
+        text=True,
+        capture_output=True,
+        timeout=timeout,
+        check=False,
+    )
+    return CommandResult(command=command, returncode=completed.returncode, stdout=completed.stdout, stderr=completed.stderr)
+
+
+def diff_for_file(path: str, before: str, after: str) -> str:
+    return "".join(
+        difflib.unified_diff(
+            before.splitlines(keepends=True),
+            after.splitlines(keepends=True),
+            fromfile=f"a/{path}",
+            tofile=f"b/{path}",
+        )
+    )
+
+
+def copy_if_exists(
+    source: Path,
+    destination: Path,
+    *,
+    ignore: Optional[Callable[[str, list[str]], set[str]]] = None,
+) -> None:
+    if not source.exists():
+        return
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if source.is_dir():
+        shutil.copytree(source, destination, symlinks=True, dirs_exist_ok=True, ignore=ignore)
+    else:
+        shutil.copy2(source, destination)
+
+
+def link_or_copy_if_exists(source: Path, destination: Path) -> None:
+    if not source.exists():
+        return
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        destination.symlink_to(source.resolve(), target_is_directory=source.is_dir())
+    except OSError:
+        copy_if_exists(source, destination)
+
+
+def worktree_marker_payload(*, state: str, source_root: Path) -> dict[str, Any]:
+    return {
+        "created_at": utc_now(),
+        "schema_version": 1,
+        "source_root": source_root.as_posix(),
+        "state": state,
+        "transport": "ephemeral_worktree",
+    }
+
+
+def cleanup_stale_validation_worktrees(
+    worktree_root: Path,
+    *,
+    marker_name: str = "todo-worktree.json",
+    max_age_seconds: int = 7200,
+) -> list[str]:
+    if not worktree_root.exists():
+        return []
+    cutoff = time.time() - float(max_age_seconds)
+    removed: list[str] = []
+    for child in worktree_root.iterdir():
+        marker = child / marker_name
+        if not child.is_dir() or not marker.exists():
+            continue
+        try:
+            if child.stat().st_mtime > cutoff:
+                continue
+            shutil.rmtree(child)
+            removed.append(child.name)
+        except FileNotFoundError:
+            continue
+    return removed
+
+
+@contextmanager
+def temporary_validation_worktree(spec: ValidationWorkspaceSpec) -> Iterator[Path]:
+    cleanup_stale_validation_worktrees(
+        spec.resolve(spec.worktree_dir),
+        marker_name=spec.marker_name,
+        max_age_seconds=spec.stale_seconds,
+    )
+    root = spec.resolve(spec.worktree_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    worktree = root / f"cycle-{stamp}-{uuid.uuid4().hex[:8]}"
+    worktree.mkdir(parents=True)
+    marker = worktree / spec.marker_name
+    marker.write_text(
+        json.dumps(worktree_marker_payload(state="initializing", source_root=spec.repo_root), indent=2, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
+    try:
+        for rel in spec.copy_paths:
+            copy_if_exists(spec.resolve(rel), worktree / rel, ignore=spec.ignore)
+        for root_file in spec.root_files:
+            copy_if_exists(spec.repo_root / root_file, worktree / root_file)
+        for rel in spec.external_reference_paths:
+            link_or_copy_if_exists(spec.resolve(rel), worktree / rel)
+        marker.write_text(
+            json.dumps(worktree_marker_payload(state="ready", source_root=spec.repo_root), indent=2, sort_keys=True)
+            + "\n",
+            encoding="utf-8",
+        )
+        yield worktree
+    finally:
+        try:
+            shutil.rmtree(worktree)
+        except FileNotFoundError:
+            pass
+
+
+def materialize_proposal_files(proposal: Proposal, worktree: Path) -> list[str]:
+    changed: list[str] = []
+    seen: set[str] = set()
+    for item in proposal.files:
+        rel = normalized_relative_path(item["path"])
+        target = worktree / rel
+        before = target.read_text(encoding="utf-8") if target.exists() else None
+        after = item["content"]
+        if before == after:
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(after, encoding="utf-8")
+        if rel not in seen:
+            seen.add(rel)
+            changed.append(rel)
+    return changed
+
+
+def proposal_files_from_worktree(worktree: Path, changed: Iterable[str]) -> list[dict[str, str]]:
+    files: list[dict[str, str]] = []
+    for rel in changed:
+        target = worktree / rel
+        if target.exists():
+            files.append({"path": rel, "content": target.read_text(encoding="utf-8")})
+    return files
+
+
+def proposal_diff_from_worktree(repo_root: Path, worktree: Path, changed: Iterable[str]) -> str:
+    parts: list[str] = []
+    for rel in changed:
+        source = repo_root / rel
+        candidate = worktree / rel
+        before = source.read_text(encoding="utf-8") if source.exists() else ""
+        after = candidate.read_text(encoding="utf-8") if candidate.exists() else ""
+        parts.append(diff_for_file(rel, before, after))
+    return "".join(parts)
+
+
+def promote_worktree_files(repo_root: Path, worktree: Path, changed: Iterable[str]) -> None:
+    for rel in changed:
+        source = worktree / rel
+        target = repo_root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+def verify_promoted_worktree_files(repo_root: Path, worktree: Path, changed: Iterable[str]) -> list[str]:
+    errors: list[str] = []
+    for rel in changed:
+        source = worktree / rel
+        target = repo_root / rel
+        if not source.exists():
+            errors.append(f"accepted worktree source is missing after validation: {rel}")
+            continue
+        if not target.exists():
+            errors.append(f"main worktree target is missing after promotion: {rel}")
+            continue
+        try:
+            source_text = source.read_text(encoding="utf-8")
+            target_text = target.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            errors.append(f"could not verify promoted text file {rel}: {exc}")
+            continue
+        if source_text != target_text:
+            errors.append(f"main worktree target differs from accepted worktree after promotion: {rel}")
+    return errors
+
+
+def workspace_artifact_payload(
+    proposal: Proposal,
+    *,
+    transport: str,
+    promoted: bool,
+    reason: str = "",
+) -> dict[str, Any]:
+    return {
+        "artifact_kind": "ephemeral-workspace",
+        "schema_version": 1,
+        "created_at": utc_now(),
+        "transport": transport,
+        "promoted_to_main_worktree": promoted,
+        "reason": reason,
+        "target_task": proposal.target_task,
+        "summary": proposal.summary,
+        "changed_files": list(proposal.changed_files),
+        "validation_passed": bool(proposal.validation_results)
+        and all(result.ok for result in proposal.validation_results),
+        "validation_commands": [list(result.command) for result in proposal.validation_results],
+    }

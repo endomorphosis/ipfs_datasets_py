@@ -74,6 +74,12 @@ def test_batch_prover_target_coverage_keeps_unresolved_numbered_exception_blocke
         "formula_proof_ready": 5,
         "formula_requires_validation": 5,
     }
+    assert records[0]["formal_syntax_valid"] is False
+    assert records[0]["requires_validation"] is True
+    assert records[0]["coverage_blockers"] == [
+        "failed_prover_quality_check:formula_proof_ready",
+        "failed_prover_quality_check:formula_requires_validation",
+    ]
     assert norm.proof_ready is False
     assert "cross_reference_requires_resolution" in norm.blockers
     assert "exception_requires_scope_review" in norm.blockers

@@ -276,6 +276,106 @@ def test_capability_profiles_classify_public_access_records_duties():
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
+def test_capability_profiles_classify_dispute_resolution_duties_across_prover_targets():
+    examples = [
+        (
+            "The Coordinator shall conduct mediation of the dispute.",
+            "conduct mediation of the dispute",
+            "O(∀x (Coordinator(x) → MediateDispute(x)))",
+            "MediateDispute",
+        ),
+        (
+            "The Officer shall provide arbitration of the claim.",
+            "provide arbitration of the claim",
+            "O(∀x (Officer(x) → ArbitrateClaim(x)))",
+            "ArbitrateClaim",
+        ),
+        (
+            "The Board shall make a settlement of the appeal.",
+            "make a settlement of the appeal",
+            "O(∀x (Board(x) → SettleAppeal(x)))",
+            "SettleAppeal",
+        ),
+        (
+            "The Officer shall conduct conciliation of the dispute.",
+            "conduct conciliation of the dispute",
+            "O(∀x (Officer(x) → ConciliateDispute(x)))",
+            "ConciliateDispute",
+        ),
+        (
+            "The Commission shall undertake negotiation of the agreement.",
+            "undertake negotiation of the agreement",
+            "O(∀x (Commission(x) → NegotiateAgreement(x)))",
+            "NegotiateAgreement",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, expected_symbol in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        formula_record = build_deontic_formula_record_from_ir(norm)
+        prover_records = [
+            target.to_dict() for target in validate_ir_with_provers(norm).targets
+        ]
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert formula_record["formula"] == expected_formula
+        assert formula_record["proof_ready"] is True
+        assert formula_record["requires_validation"] is False
+        assert formula_record["repair_required"] is False
+        assert len(prover_records) == 5
+        assert all(record["syntax_valid"] is True for record in prover_records)
+        assert all(record["proof_ready"] is True for record in prover_records)
+        assert all(
+            expected_symbol in record["exported_formula_symbols"]
+            for record in prover_records
+        )
+        assert all(
+            record["target_components"]["semantic_formula_family"]
+            == "dispute_resolution"
+            for record in prover_records
+        )
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "dispute_resolution_duty",
+        "dispute_resolution_duty",
+        "dispute_resolution_duty",
+        "dispute_resolution_duty",
+        "dispute_resolution_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, _, formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
+    assert all(record["formula_proof_ready"] is True for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_capability_profiles_classify_financial_assurance_duties():
     examples = [
         (

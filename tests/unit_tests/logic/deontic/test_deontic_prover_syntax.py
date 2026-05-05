@@ -489,6 +489,68 @@ def test_prover_syntax_records_audit_target_formula_symbols():
         assert len({record["target_symbol_alignment_fingerprint"] for record in records}) == 5
 
 
+def test_prover_target_components_classify_semantic_formula_families():
+    examples = [
+        (
+            "The Coordinator shall conduct mediation of the dispute.",
+            "MediateDispute",
+            "dispute_resolution_duty",
+        ),
+        (
+            "The Officer shall provide arbitration of the claim.",
+            "ArbitrateClaim",
+            "dispute_resolution_duty",
+        ),
+        (
+            "The Board shall make a settlement of the appeal.",
+            "SettleAppeal",
+            "dispute_resolution_duty",
+        ),
+        (
+            "The Permittee shall post a bond.",
+            "PostBond",
+            "financial_assurance_duty",
+        ),
+        (
+            "This section applies to food carts.",
+            "AppliesTo",
+            "applicability_rule",
+        ),
+    ]
+
+    for text, expected_predicate, expected_family in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert all(
+            record["target_components"]["semantic_formula_family"] == expected_family
+            for record in records
+        )
+        assert all(
+            record["target_components"]["semantic_formula_predicate"]
+            == expected_predicate
+            for record in records
+        )
+        assert all(
+            expected_predicate
+            in record["target_components"]["semantic_formula_symbols"]
+            for record in records
+        )
+        assert all(
+            record["target_components"]["semantic_formula_source"]
+            == "source_formula_symbols"
+            for record in records
+        )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prover_syntax_symbol_audit_keeps_blocked_reference_formula_grounded():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

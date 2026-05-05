@@ -48,6 +48,16 @@ from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
     log_session_complete,
     log_session_start,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.plans import (
+    CHECKBOX_TASK_RE,
+    PlanTask,
+    clean_checkbox_title as _clean_checkbox_title,
+    extract_plan_tasks,
+    replace_checkbox_mark as _replace_checkbox_mark,
+    status_from_checkbox as _status_from_checkbox,
+    status_from_task_block as _status_from_task_block,
+    strip_daemon_task_board as _strip_daemon_task_board,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -66,12 +76,6 @@ DEFAULT_VALIDATION_COMMANDS = (
 
 JSON_BLOCK_RE = re.compile(r"```json\s*([\s\S]*?)\s*```", re.IGNORECASE)
 DIFF_BLOCK_RE = re.compile(r"```(?:diff|patch)\s*([\s\S]*?)\s*```", re.IGNORECASE)
-TASK_HEADING_RE = re.compile(r"^### Task\s+([^:\n]+):\s+(.+)$", re.MULTILINE)
-CHECKBOX_TASK_RE = re.compile(r"^(?P<indent>\s*)-\s+\[(?P<mark>[ xX~!])\]\s+(?P<title>.+)$", re.MULTILINE)
-DAEMON_TASK_BOARD_RE = re.compile(
-    r"\n?<!-- logic-port-daemon-task-board:start -->[\s\S]*?<!-- logic-port-daemon-task-board:end -->\n?",
-    re.MULTILINE,
-)
 FORBIDDEN_PATCH_SNIPPETS = (
     "from 'vitest'",
     'from "vitest"',
@@ -167,19 +171,6 @@ class CommandResult:
             "stdout": self.stdout[-limit:],
             "stderr": self.stderr[-limit:],
         }
-
-
-@dataclass(frozen=True)
-class PlanTask:
-    """Task extracted from a markdown implementation plan."""
-
-    task_id: str
-    title: str
-    status: str
-
-    @property
-    def label(self) -> str:
-        return f"Task {self.task_id}: {self.title}"
 
 
 @dataclass
@@ -664,59 +655,6 @@ def _obvious_typescript_text_damage(content: str) -> List[str]:
     return findings
 
 
-def _strip_daemon_task_board(text: str) -> str:
-    return DAEMON_TASK_BOARD_RE.sub("\n", text).rstrip() + "\n"
-
-
-def _status_from_task_block(block: str) -> str:
-    status_match = re.search(r"^Status:\s*(.+)$", block, re.MULTILINE)
-    if not status_match:
-        return "needed"
-    status = status_match.group(1).strip().lower()
-    if "implemented" in status and "partially" not in status:
-        return "complete"
-    if "partial" in status or "in progress" in status:
-        return "in-progress"
-    if "blocked" in status:
-        return "blocked"
-    return "needed"
-
-
-def _status_from_checkbox(mark: str) -> str:
-    if mark.lower() == "x":
-        return "complete"
-    if mark == "~":
-        return "in-progress"
-    if mark == "!":
-        return "blocked"
-    return "needed"
-
-
-def _clean_checkbox_title(title: str) -> str:
-    return re.sub(r"\s+<!--.*?-->\s*$", "", title).strip()
-
-
-def _replace_checkbox_mark(markdown: str, task: PlanTask, mark: str) -> str:
-    if not task.task_id.startswith("checkbox-"):
-        return markdown
-    try:
-        target_index = int(task.task_id.removeprefix("checkbox-"))
-    except ValueError:
-        return markdown
-
-    current_index = 0
-    lines = markdown.splitlines(keepends=True)
-    for index, line in enumerate(lines):
-        match = CHECKBOX_TASK_RE.match(line.rstrip("\n"))
-        if not match:
-            continue
-        current_index += 1
-        if current_index == target_index:
-            lines[index] = re.sub(r"^(\s*-\s+\[)[ xX~!](\]\s+)", rf"\g<1>{mark}\2", line, count=1)
-            break
-    return "".join(lines)
-
-
 def _read_daemon_results(path: Path) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
     if not path.exists():
         return []
@@ -1171,40 +1109,6 @@ def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
 
 def _has_logic_test_change(paths: Sequence[str]) -> bool:
     return any(path.startswith(RUNTIME_LOGIC_PREFIX) and path.endswith(".test.ts") for path in paths)
-
-
-def extract_plan_tasks(markdown: str) -> List[PlanTask]:
-    """Extract ordered implementation tasks from the markdown plan."""
-
-    text = _strip_daemon_task_board(markdown)
-    matches = list(TASK_HEADING_RE.finditer(text))
-    tasks: List[PlanTask] = []
-    for index, match in enumerate(matches):
-        block_start = match.end()
-        block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        block = text[block_start:block_end]
-        tasks.append(
-            PlanTask(
-                task_id=match.group(1).strip(),
-                title=match.group(2).strip(),
-                status=_status_from_task_block(block),
-            )
-        )
-    if tasks:
-        return tasks
-
-    for index, match in enumerate(CHECKBOX_TASK_RE.finditer(text), start=1):
-        title = _clean_checkbox_title(match.group("title"))
-        if not title:
-            continue
-        tasks.append(
-            PlanTask(
-                task_id=f"checkbox-{index}",
-                title=title,
-                status=_status_from_checkbox(match.group("mark")),
-            )
-        )
-    return tasks
 
 
 def run_command(
