@@ -4090,6 +4090,20 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "administrative_relief_duty"
     if action_predicate.startswith((
+        "DepositSecurity",
+        "EstablishEscrow",
+        "FileBond",
+        "FurnishBond",
+        "MaintainInsurance",
+        "MaintainLiabilityInsurance",
+        "PostBond",
+        "ProvideBond",
+        "ProvideProofInsurance",
+        "ReleaseBond",
+        "SubmitBond",
+    )):
+        return "financial_assurance_duty"
+    if action_predicate.startswith((
         "Announce",
         "Circulate",
         "Disseminate",

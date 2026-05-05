@@ -154,6 +154,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
+    action_text = _normalize_financial_assurance_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_referral_remand_light_verb_action(action_text)
@@ -1514,6 +1515,54 @@ def _normalize_payment_light_verb_action(action_text: str) -> str:
         normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
         if normalized != text:
             return normalized
+    return text
+
+
+def _normalize_financial_assurance_light_verb_action(action_text: str) -> str:
+    """Collapse bond, deposit, escrow, and insurance nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "deposit",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
+            r"deposits\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "deposit",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?proof\s+of\s+(?:the\s+)?(.+)$",
+            "provide proof of",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
+            r"proofs\s+of\s+(?:the\s+)?(.+)$",
+            "provide proof of",
+        ),
+        (
+            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?bond\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "post bond for",
+        ),
+        (
+            r"^(?:establish|establishes|established|establishing|maintain|maintains|maintained|maintaining|create|creates|created|creating|fund|funds|funded|funding)\s+"
+            r"(?:an?\s+|the\s+)?escrow\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "establish escrow for",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{replacement} {target}" if target else text
+
     return text
 
 
