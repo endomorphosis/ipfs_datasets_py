@@ -7,9 +7,9 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional
+from typing import Any, Callable, Iterable, Mapping, Optional
 
-from .engine import Proposal, compact_message, utc_now, workspace_artifact_payload
+from .engine import Proposal, compact_message, run_command, utc_now, workspace_artifact_payload
 
 
 DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME = "accepted-work.jsonl"
@@ -26,6 +26,15 @@ class WorkSidecarPaths:
 
     manifest: Path
     workspace: Path
+    diff: Path
+    stat: Path
+
+
+@dataclass(frozen=True)
+class AcceptedWorkEvidencePaths:
+    """Legacy accepted-work evidence files written for one accepted daemon result."""
+
+    manifest: Path
     diff: Path
     stat: Path
 
@@ -296,6 +305,65 @@ def accepted_work_evidence_manifest(
         "diff_stat": diff_stat,
         "diff_available": bool(diff_available),
     }
+
+
+def write_accepted_work_evidence_artifacts(
+    *,
+    root: Path,
+    repo_root: Path,
+    artifact: Mapping[str, Any],
+    changed_files: Iterable[str],
+    run_command_fn: Callable[..., Any] = run_command,
+    command_timeout_seconds: int = 120,
+    now: Any = None,
+) -> list[str]:
+    """Write manifest, diff, and stat evidence for accepted daemon work."""
+
+    changed_file_list = [str(path) for path in changed_files if str(path)]
+    if not changed_file_list:
+        return []
+    root.mkdir(parents=True, exist_ok=True)
+    base = timestamped_artifact_base(
+        root,
+        summary=str(artifact.get("summary") or artifact.get("target_task") or "accepted-work"),
+        fallback="accepted-work",
+        now=now,
+    )
+    timestamp = base.name.split("-", 1)[0]
+    diff = run_command_fn(
+        ("git", "diff", "--", *changed_file_list),
+        cwd=repo_root,
+        timeout_seconds=command_timeout_seconds,
+    )
+    diff_stat = run_command_fn(
+        ("git", "diff", "--stat", "--", *changed_file_list),
+        cwd=repo_root,
+        timeout_seconds=command_timeout_seconds,
+    )
+    manifest = accepted_work_evidence_manifest(
+        timestamp=timestamp,
+        target_task=str(artifact.get("target_task") or ""),
+        summary=str(artifact.get("summary") or ""),
+        impact=str(artifact.get("impact") or ""),
+        changed_files=changed_file_list,
+        validation_results=artifact.get("validation_results", []),
+        diff_stat=diff_stat.stdout if diff_stat.ok else "",
+        diff_available=bool(diff.ok and diff.stdout.strip()),
+    )
+
+    paths = AcceptedWorkEvidencePaths(
+        manifest=Path(str(base) + ".json"),
+        diff=Path(str(base) + ".diff"),
+        stat=Path(str(base) + ".stat.txt"),
+    )
+    paths.manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    paths.diff.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
+    paths.stat.write_text(diff_stat.stdout if diff_stat.ok else "", encoding="utf-8")
+    return [
+        as_repo_path(paths.manifest, repo_root),
+        as_repo_path(paths.diff, repo_root),
+        as_repo_path(paths.stat, repo_root),
+    ]
 
 
 def build_accepted_work_ledger_entry(

@@ -9,12 +9,14 @@ from pathlib import Path
 
 from ipfs_datasets_py.optimizers.todo_daemon import (
     ACCEPTED_WORK_LEDGER_SCHEMA_VERSION,
+    AcceptedWorkEvidencePaths,
     AutoCommitConfig,
     CommandResult,
     DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
     FailureBlockRule,
     FileReplacementHooks,
     FileReplacementTodoDaemonRunner,
+    LifecycleWrapperSpec,
     LlmRouterInvocation,
     ManagedDaemonSpec,
     PathPolicy,
@@ -95,6 +97,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     is_retryable_proposal_failure,
     launch_supervised_child,
     last_task_attempt_index,
+    lifecycle_wrapper_core_lines,
+    lifecycle_wrapper_payload,
     load_deterministic_progress_manifest,
     load_daemon_main,
     looks_like_empty_codex_event_stream,
@@ -132,6 +136,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     rank_relevant_context_file,
     repo_root_from_env,
     render_relevant_file_context,
+    render_lifecycle_wrapper,
     render_typescript_diagnostic_context,
     rollback_failure_counts,
     rounds_since_last_valid,
@@ -178,6 +183,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     wait_for_child_exit,
     worktree_phase_worker_status,
     write_json,
+    write_accepted_work_evidence_artifacts,
     write_work_sidecars,
     write_worktree_owner_file,
 )
@@ -1294,6 +1300,36 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         title="Example Daemon Accepted Work",
         description="Example accepted-work evidence.",
     )
+    commands: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds):
+        commands.append(tuple(command))
+        assert cwd == repo
+        assert timeout_seconds == 17
+        stdout = "todo/source.py | 1 +\n" if "--stat" in command else diff_text
+        return CommandResult(tuple(command), 0, stdout, "")
+
+    legacy_root = artifact_dir / "legacy"
+    legacy_paths = write_accepted_work_evidence_artifacts(
+        root=legacy_root,
+        repo_root=repo,
+        artifact={
+            "target_task": proposal.target_task,
+            "summary": proposal.summary,
+            "impact": proposal.impact,
+            "validation_results": [result.compact() for result in proposal.validation_results],
+        },
+        changed_files=proposal.changed_files,
+        run_command_fn=fake_run_command,
+        command_timeout_seconds=17,
+        now=lambda: "2026-05-05T01:02:03Z",
+    )
+    legacy_base = legacy_root / "20260505T010203Z-runtime-feature-works"
+    legacy_sidecars = AcceptedWorkEvidencePaths(
+        manifest=Path(str(legacy_base) + ".json"),
+        diff=Path(str(legacy_base) + ".diff"),
+        stat=Path(str(legacy_base) + ".stat.txt"),
+    )
     failed_manifest = failed_work_manifest(
         Proposal(
             summary="Broken edit",
@@ -1338,6 +1374,18 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert "# Example Daemon Accepted Work" in markdown_log.read_text(encoding="utf-8")
     assert "`todo/source.py`" in markdown_log.read_text(encoding="utf-8")
     assert "- Validation: `pytest -q` -> `0`" in markdown_log.read_text(encoding="utf-8")
+    assert commands == [
+        ("git", "diff", "--", "todo/source.py"),
+        ("git", "diff", "--stat", "--", "todo/source.py"),
+    ]
+    assert legacy_paths == [
+        as_repo_path(legacy_sidecars.manifest, repo),
+        as_repo_path(legacy_sidecars.diff, repo),
+        as_repo_path(legacy_sidecars.stat, repo),
+    ]
+    assert legacy_sidecars.diff.read_text(encoding="utf-8") == diff_text
+    assert legacy_sidecars.stat.read_text(encoding="utf-8") == "todo/source.py | 1 +\n"
+    assert json.loads(legacy_sidecars.manifest.read_text(encoding="utf-8"))["diff_available"] is True
     assert failed_manifest["reason"] == "validation"
     assert failed_manifest["validation_results"][0]["returncode"] == 1
     assert failed_workspace["reason"] == "validation"
@@ -1635,6 +1683,88 @@ def test_restart_wrapper_command_builder_is_reusable() -> None:
     assert "legal-parser supervisor exited with code" in command
     assert "wrapper restarting in %ss" in command
     assert "sleep 11; done" in command
+
+
+def test_lifecycle_wrapper_renderer_matches_legacy_shell_shape() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    cases = [
+        (
+            LifecycleWrapperSpec(
+                daemon="logic-port",
+                command="check",
+                repo_root_ancestor="../../../..",
+                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/check_logic_port_daemon.sh",
+        ),
+        (
+            LifecycleWrapperSpec(
+                daemon="logic-port",
+                command="ensure",
+                repo_root_ancestor="../../../..",
+                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/ensure_logic_port_daemon.sh",
+        ),
+        (
+            LifecycleWrapperSpec(
+                daemon="logic-port",
+                command="stop",
+                repo_root_ancestor="../../../..",
+                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/stop_logic_port_daemon.sh",
+        ),
+        (
+            LifecycleWrapperSpec(
+                daemon="legal-parser",
+                command="check",
+                repo_root_ancestor="../../..",
+                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh",
+        ),
+        (
+            LifecycleWrapperSpec(
+                daemon="legal-parser",
+                command="ensure",
+                repo_root_ancestor="../../..",
+                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh",
+        ),
+        (
+            LifecycleWrapperSpec(
+                daemon="legal-parser",
+                command="stop",
+                repo_root_ancestor="../../..",
+                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
+            ),
+            repo_root / "scripts/ops/legal_data/stop_legal_parser_optimizer_daemon.sh",
+        ),
+    ]
+
+    for spec, script_path in cases:
+        script = script_path.read_text(encoding="utf-8")
+        payload = lifecycle_wrapper_payload(spec)
+        for line in lifecycle_wrapper_core_lines(spec):
+            assert line in script
+        assert payload["daemon"] == spec.daemon
+        assert payload["command"] == spec.command
+
+    rendered = render_lifecycle_wrapper(
+        LifecycleWrapperSpec(
+            daemon="example",
+            command="check",
+            repo_root_ancestor="../..",
+            pythonpath_expr="$REPO_ROOT/src${PYTHONPATH:+:$PYTHONPATH}",
+            compatibility_markers=("legacy marker",),
+        )
+    )
+
+    assert rendered.startswith("#!/usr/bin/env bash\nset -uo pipefail\n")
+    assert "# legacy marker" in rendered
+    assert "exec python3 -m ipfs_datasets_py.optimizers.todo_daemon example check \"$@\"" in rendered
 
 
 def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:

@@ -62,12 +62,11 @@ from ipfs_datasets_py.optimizers.todo_daemon.auto_commit import (
     build_auto_commit_subject as _shared_build_auto_commit_subject,
     repo_relative_pathspec as _shared_repo_relative_pathspec,
     safe_auto_commit_pathspecs as _shared_safe_auto_commit_pathspecs,
-    slugify as _shared_slugify,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.artifacts import (
-    accepted_work_evidence_manifest as _shared_accepted_work_evidence_manifest,
     accepted_work_markdown_entry as _shared_accepted_work_markdown_entry,
     append_accepted_work_markdown_log as _shared_append_accepted_work_markdown_log,
+    write_accepted_work_evidence_artifacts as _shared_write_accepted_work_evidence_artifacts,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.context import (
     rank_relevant_context_file as _shared_rank_relevant_context_file,
@@ -644,10 +643,6 @@ def _task_failure_summary(
         classify_failure_kind=_classify_failure_kind,
         compact=lambda value, limit: _compact_message(value, limit=limit),
     )
-
-
-def _slugify(value: str, *, limit: int = 80) -> str:
-    return _shared_slugify(value or "accepted-work", limit=limit)
 
 
 def _patch_changed_files(patch: str) -> List[str]:
@@ -2314,44 +2309,13 @@ Critical correction for attempt {attempt}:
     def _write_accepted_work_artifacts(self, artifact: Dict[str, Any], changed_files: List[str]) -> List[str]:
         if self.daemon_config.accepted_work_artifact_dir is None:
             return []
-        root = self.daemon_config.resolve(self.daemon_config.accepted_work_artifact_dir)
-        root.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        stem = f"{timestamp}-{_slugify(str(artifact.get('summary') or artifact.get('target_task') or 'accepted-work'))}"
-
-        diff = run_command(
-            ("git", "diff", "--", *changed_files),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=120,
-        )
-        diff_stat = run_command(
-            ("git", "diff", "--stat", "--", *changed_files),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=120,
-        )
-        manifest = _shared_accepted_work_evidence_manifest(
-            timestamp=timestamp,
-            target_task=str(artifact.get("target_task") or ""),
-            summary=str(artifact.get("summary") or ""),
-            impact=str(artifact.get("impact") or ""),
+        return _shared_write_accepted_work_evidence_artifacts(
+            root=self.daemon_config.resolve(self.daemon_config.accepted_work_artifact_dir),
+            repo_root=self.daemon_config.repo_root,
+            artifact=artifact,
             changed_files=changed_files,
-            validation_results=artifact.get("validation_results", []),
-            diff_stat=diff_stat.stdout if diff_stat.ok else "",
-            diff_available=bool(diff.ok and diff.stdout.strip()),
+            run_command_fn=run_command,
         )
-
-        manifest_path = root / f"{stem}.json"
-        diff_path = root / f"{stem}.diff"
-        stat_path = root / f"{stem}.stat.txt"
-        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-        diff_path.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
-        stat_path.write_text(diff_stat.stdout if diff_stat.ok else "", encoding="utf-8")
-
-        return [
-            str(manifest_path.relative_to(self.daemon_config.repo_root)),
-            str(diff_path.relative_to(self.daemon_config.repo_root)),
-            str(stat_path.relative_to(self.daemon_config.repo_root)),
-        ]
 
     def _update_task_board(self, results: List[Dict[str, Any]]) -> None:
         if self.daemon_config.dry_run or not self.daemon_config.update_task_board or self.daemon_config.task_board_doc is None:

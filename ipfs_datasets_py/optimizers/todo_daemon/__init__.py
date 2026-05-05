@@ -16,6 +16,12 @@ from .cli import (
     run_lifecycle_args,
     run_lifecycle_cli,
 )
+from .lifecycle_wrapper import (
+    LifecycleWrapperSpec,
+    lifecycle_wrapper_core_lines,
+    lifecycle_wrapper_payload,
+    render_lifecycle_wrapper,
+)
 from .app import (
     TodoDaemonRuntimeConfig,
     build_todo_runner_arg_parser,
@@ -41,6 +47,7 @@ from .artifacts import (
     DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
     DEFAULT_ACCEPTED_WORK_LOG_DESCRIPTION,
     DEFAULT_ACCEPTED_WORK_LOG_TITLE,
+    AcceptedWorkEvidencePaths,
     WorkSidecarPaths,
     accepted_work_evidence_manifest,
     accepted_work_manifest,
@@ -59,6 +66,7 @@ from .artifacts import (
     timestamped_artifact_base,
     validation_command_summaries,
     write_json,
+    write_accepted_work_evidence_artifacts,
     write_work_sidecars,
 )
 from .deterministic_fallback import (
@@ -284,6 +292,7 @@ __all__ = [
     "DEFAULT_CONTEXT_STOPWORDS",
     "DEFAULT_CONTEXT_SUFFIXES",
     "AutoCommitConfig",
+    "AcceptedWorkEvidencePaths",
     "DaemonHealth",
     "EnsureResult",
     "FileReplacementHooks",
@@ -292,6 +301,7 @@ __all__ = [
     "HeartbeatSnapshot",
     "FileReplacementTodoDaemonRunner",
     "LlmRouterInvocation",
+    "LifecycleWrapperSpec",
     "ManagedDaemonSpec",
     "PathPolicy",
     "PlanTask",
@@ -409,6 +419,8 @@ __all__ = [
     "load_daemon_main",
     "legal_parser_launch_env",
     "legal_parser_spec_payload",
+    "lifecycle_wrapper_core_lines",
+    "lifecycle_wrapper_payload",
     "link_or_copy_if_exists",
     "looks_like_empty_codex_event_stream",
     "match_diagnostic_edit_path",
@@ -451,6 +463,7 @@ __all__ = [
     "replace_checkbox_mark",
     "replace_task_mark",
     "render_relevant_file_context",
+    "render_lifecycle_wrapper",
     "render_typescript_diagnostic_context",
     "resolve_daemon_module",
     "repo_root_from_env",
@@ -518,6 +531,7 @@ __all__ = [
     "worktree_phase_worker_status",
     "write_worktree_owner_file",
     "write_json",
+    "write_accepted_work_evidence_artifacts",
     "write_work_sidecars",
     "wait_for_child_exit",
 ]
