@@ -91,6 +91,94 @@ def test_capability_profiles_classify_administrative_formula_families():
     assert all(record["repair_required"] is False for record in capability_records)
 
 
+def test_capability_profiles_classify_document_authentication_duties():
+    examples = [
+        (
+            "The Clerk shall make an acknowledgment of the receipt.",
+            "O(∀x (Clerk(x) → AcknowledgeReceipt(x)))",
+            "AcknowledgeReceipt",
+        ),
+        (
+            "The officer shall perform authentication of the identity.",
+            "O(∀x (Officer(x) → AuthenticateIdentity(x)))",
+            "AuthenticateIdentity",
+        ),
+        (
+            "The Clerk shall make an attestation of the signature.",
+            "O(∀x (Clerk(x) → AttestSignature(x)))",
+            "AttestSignature",
+        ),
+        (
+            "The notary shall perform notarization of the affidavit.",
+            "O(∀x (Notary(x) → NotarizeAffidavit(x)))",
+            "NotarizeAffidavit",
+        ),
+        (
+            "The Board shall approve ratification of the agreement.",
+            "O(∀x (Board(x) → RatifyAgreement(x)))",
+            "RatifyAgreement",
+        ),
+        (
+            "The Director shall provide confirmation of the filing.",
+            "O(∀x (Director(x) → ConfirmFiling(x)))",
+            "ConfirmFiling",
+        ),
+    ]
+
+    norms = []
+    for text, expected_formula, expected_symbol in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        formula_record = build_deontic_formula_record_from_ir(norm)
+        prover_records = [
+            target.to_dict() for target in validate_ir_with_provers(norm).targets
+        ]
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0]:action_span[1]] == norm.action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert formula_record["formula"] == expected_formula
+        assert formula_record["proof_ready"] is True
+        assert formula_record["requires_validation"] is False
+        assert formula_record["repair_required"] is False
+        assert len(prover_records) == 5
+        assert all(record["syntax_valid"] is True for record in prover_records)
+        assert all(
+            expected_symbol in record["exported_formula_symbols"]
+            for record in prover_records
+        )
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "document_authentication_duty",
+        "document_authentication_duty",
+        "document_authentication_duty",
+        "document_authentication_duty",
+        "document_authentication_duty",
+        "document_authentication_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
+    assert all(record["formula_proof_ready"] is True for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+
 def test_capability_profiles_include_decoder_reconstruction_slot_coverage():
     examples = [
         (

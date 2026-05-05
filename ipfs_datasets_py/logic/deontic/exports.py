@@ -4163,6 +4163,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Translate",
     )):
         return "records_information_processing_duty"
+    if action_predicate.startswith((
+        "Acknowledge",
+        "Authenticate",
+        "Attest",
+        "Confirm",
+        "Notarize",
+        "Ratify",
+    )):
+        return "document_authentication_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
