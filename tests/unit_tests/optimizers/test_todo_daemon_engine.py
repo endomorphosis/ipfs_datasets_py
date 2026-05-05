@@ -2603,6 +2603,25 @@ def test_worktree_diff_helper_intent_adds_untracked_files_and_records_trace(tmp_
     assert trace["candidate_status"]["returncode"] == 0
     assert trace["candidate_git_add_intent_to_add"]["returncode"] == 0
     assert trace["candidate_git_diff"]["returncode"] == 0
+
+    unprefixed_trace: dict[str, object] = {}
+
+    def trace_result_formatter(result, limit):
+        return {"valid": result.ok, "stdout": result.stdout[-limit:]}
+
+    assert worktree_diff(
+        worktree_path=worktree,
+        paths=["docs/PLAN.md"],
+        raw_trace=unprefixed_trace,
+        label="",
+        timeout_seconds=9,
+        run_command_fn=fake_run_command,
+        trace_result_formatter=trace_result_formatter,
+    ).startswith("diff --git")
+    assert "status" in unprefixed_trace
+    assert "_status" not in unprefixed_trace
+    assert unprefixed_trace["status"]["valid"] is True
+
     assert worktree_diff(
         worktree_path=worktree,
         paths=[],

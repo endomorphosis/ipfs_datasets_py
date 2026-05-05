@@ -211,7 +211,10 @@ def worktree_diff(
             timeout_seconds=timeout_seconds,
         )
         if raw_trace is not None:
-            raw_trace[_trace_key(label, "git_add_intent_to_add")] = trace_result_formatter(add_intent, 12000)
+            raw_trace[_trace_key(label, "git_add_intent_to_add")] = trace_result_formatter(
+                add_intent,
+                12000,
+            )
 
     diff_result = _run_command_with_timeout(
         run_command_fn,
