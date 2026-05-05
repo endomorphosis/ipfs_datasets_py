@@ -74,6 +74,13 @@ from .supervisor import (
     read_heartbeat_snapshot,
     worktree_phase_worker_status,
 )
+from .wrapper import (
+    RestartingWrapperLaunch,
+    build_restart_loop_command,
+    launch_restarting_wrapper,
+    pid_matches_command_fragments,
+    quoted_env_assignments,
+)
 
 __all__ = [
     "CommandResult",
@@ -88,6 +95,7 @@ __all__ = [
     "PlanTask",
     "PreTaskBlock",
     "Proposal",
+    "RestartingWrapperLaunch",
     "StopResult",
     "SupervisorStatusContext",
     "Task",
@@ -102,6 +110,7 @@ __all__ = [
     "bind_file_replacement_apply_hook",
     "build_legal_parser_spec",
     "build_lifecycle_arg_parser",
+    "build_restart_loop_command",
     "build_todo_runner_arg_parser",
     "check_daemon_health",
     "check_legal_parser_health",
@@ -120,6 +129,7 @@ __all__ = [
     "heartbeat_is_stale",
     "heartbeat_snapshot",
     "json_print",
+    "launch_restarting_wrapper",
     "legal_parser_launch_env",
     "legal_parser_spec_payload",
     "link_or_copy_if_exists",
@@ -127,9 +137,11 @@ __all__ = [
     "normalized_relative_path",
     "parse_json_proposal",
     "parse_markdown_tasks",
+    "pid_matches_command_fragments",
     "proposal_diff_from_worktree",
     "proposal_files_from_worktree",
     "promote_worktree_files",
+    "quoted_env_assignments",
     "read_text",
     "read_heartbeat_snapshot",
     "replace_checkbox_mark",

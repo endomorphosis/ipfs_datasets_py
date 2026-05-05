@@ -25,8 +25,6 @@ import os
 import queue
 import re
 import shutil
-import signal
-import subprocess
 import tempfile
 import threading
 import time
@@ -47,6 +45,26 @@ from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
     log_iteration_started,
     log_session_complete,
     log_session_start,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.engine import (
+    CommandResult,
+    extract_codex_event_text_candidates as _shared_extract_codex_event_text_candidates,
+    extract_json as _shared_extract_json_object,
+    extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
+    looks_like_empty_codex_event_stream as _shared_looks_like_empty_codex_event_stream,
+    read_text as _shared_read_text,
+    run_command as _shared_run_command,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.history import (
+    current_task_failure_counts as _shared_current_task_failure_counts,
+    last_task_attempt_index as _shared_last_task_attempt_index,
+    normalize_task_label as _shared_normalize_task_label,
+    read_daemon_results as _shared_read_daemon_results,
+    recent_failure_count as _shared_recent_failure_count,
+    recent_total_failure_count as _shared_recent_total_failure_count,
+    rounds_since_last_valid as _shared_rounds_since_last_valid,
+    same_task_label as _shared_same_task_label,
+    task_failure_summary as _shared_task_failure_summary,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
     CHECKBOX_TASK_RE,
@@ -149,28 +167,6 @@ FIXTURE_VALIDATION_TASK_KEYWORDS = (
 
 RUNTIME_LOGIC_PREFIX = "src/lib/logic/"
 PARITY_FIXTURE_PREFIX = "src/lib/logic/parity/"
-
-
-@dataclass(frozen=True)
-class CommandResult:
-    """Result from a validation or git command."""
-
-    command: Tuple[str, ...]
-    returncode: int
-    stdout: str
-    stderr: str
-
-    @property
-    def ok(self) -> bool:
-        return self.returncode == 0
-
-    def compact(self, limit: int = 6000) -> Dict[str, Any]:
-        return {
-            "command": list(self.command),
-            "returncode": self.returncode,
-            "stdout": self.stdout[-limit:],
-            "stderr": self.stderr[-limit:],
-        }
 
 
 @dataclass
@@ -319,10 +315,7 @@ class LogicPortArtifact:
 
 
 def _read_text(path: Path, *, limit: Optional[int] = None) -> str:
-    text = path.read_text(encoding="utf-8")
-    if limit is not None and len(text) > limit:
-        return text[:limit] + "\n\n[truncated]\n"
-    return text
+    return _shared_read_text(path, limit=limit)
 
 
 def _truncate_text(text: str, *, limit: Optional[int]) -> str:
@@ -388,95 +381,21 @@ def _focused_task_board_excerpt(markdown: str, selected_task: Optional[PlanTask]
 
 
 def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
-    match = JSON_BLOCK_RE.search(text)
-    candidates = [match.group(1)] if match else []
-    stripped = text.strip()
-    if stripped.startswith("{") and stripped.endswith("}"):
-        candidates.append(stripped)
-    candidates.extend(_extract_codex_event_text_candidates(stripped))
-    start = stripped.find("{")
-    end = stripped.rfind("}")
-    if start >= 0 and end > start:
-        candidates.append(stripped[start : end + 1])
-
-    for candidate in candidates:
-        try:
-            parsed = json.loads(candidate)
-            if isinstance(parsed, dict):
-                return parsed
-        except json.JSONDecodeError:
-            continue
-    return None
+    return _shared_extract_json_object(text)
 
 
 def _extract_codex_event_text_candidates(text: str) -> List[str]:
     """Extract assistant text candidates from Codex JSONL event streams."""
 
-    candidates: List[str] = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line.startswith("{") or not line.endswith("}"):
-            continue
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(event, dict):
-            continue
-        for value in (
-            _extract_text_from_codex_event_object(event),
-            _extract_text_from_codex_event_object(event.get("item")),
-            _extract_text_from_codex_event_object(event.get("message")),
-        ):
-            if value:
-                candidates.append(value)
-    return list(reversed(candidates))
+    return _shared_extract_codex_event_text_candidates(text)
 
 
 def _extract_text_from_codex_event_object(value: Any) -> str:
-    if not isinstance(value, dict):
-        return ""
-    value_type = value.get("type")
-    if value_type in {"agent_message", "assistant_message"} and isinstance(value.get("text"), str):
-        return value["text"].strip()
-    if value_type == "message" and value.get("role") == "assistant":
-        content = value.get("content")
-        if isinstance(content, list):
-            parts: List[str] = []
-            for item in content:
-                if isinstance(item, dict) and item.get("type") in {"text", "output_text"} and isinstance(item.get("text"), str):
-                    parts.append(item["text"])
-            return "".join(parts).strip()
-        if isinstance(value.get("text"), str):
-            return value["text"].strip()
-    return ""
+    return _shared_extract_text_from_codex_event_object(value)
 
 
 def _looks_like_empty_codex_event_stream(text: str) -> bool:
-    if not text.strip():
-        return False
-    saw_codex_event = False
-    saw_assistant_text = False
-    for line in text.splitlines():
-        line = line.strip()
-        if not line.startswith("{") or not line.endswith("}"):
-            continue
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if not isinstance(event, dict):
-            continue
-        event_type = str(event.get("type") or "")
-        if event_type.startswith(("thread.", "turn.", "item.")):
-            saw_codex_event = True
-        if (
-            _extract_text_from_codex_event_object(event)
-            or _extract_text_from_codex_event_object(event.get("item"))
-            or _extract_text_from_codex_event_object(event.get("message"))
-        ):
-            saw_assistant_text = True
-    return saw_codex_event and not saw_assistant_text
+    return _shared_looks_like_empty_codex_event_stream(text)
 
 
 def parse_llm_patch_response(text: str) -> LogicPortArtifact:
@@ -656,58 +575,28 @@ def _obvious_typescript_text_damage(content: str) -> List[str]:
 
 
 def _read_daemon_results(path: Path) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
-    if not path.exists():
-        return []
-    rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.strip():
-            continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        for result in record.get("results", []) or []:
-            if isinstance(result, dict):
-                artifact = result.get("artifact", {})
-                if isinstance(artifact, dict):
-                    rows.append((result, artifact))
-    return rows
+    return _shared_read_daemon_results(path)
 
 
 def _normalize_task_label(value: str) -> str:
-    normalized = str(value or "").replace("`", "").strip()
-    normalized = re.sub(r"\s+", " ", normalized)
-    return normalized
+    return _shared_normalize_task_label(value)
 
 
 def _same_task_label(left: str, right: str) -> bool:
-    return _normalize_task_label(left) == _normalize_task_label(right)
+    return _shared_same_task_label(left, right)
 
 
 def _recent_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str, failure_kind: str) -> int:
-    count = 0
-    for result, artifact in reversed(rows):
-        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            continue
-        if result.get("valid"):
-            break
-        row_failure_kind = _classify_failure_kind(artifact)
-        if row_failure_kind == failure_kind:
-            count += 1
-            continue
-        break
-    return count
+    return _shared_recent_failure_count(
+        rows,
+        task_label,
+        failure_kind,
+        classify_failure_kind=_classify_failure_kind,
+    )
 
 
 def _recent_total_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
-    count = 0
-    for result, artifact in reversed(rows):
-        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            continue
-        if result.get("valid"):
-            break
-        count += 1
-    return count
+    return _shared_recent_total_failure_count(rows, task_label)
 
 
 def _recent_rollback_quality_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
@@ -729,34 +618,19 @@ def _current_task_failure_counts(
     rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     task_label: str,
 ) -> Dict[str, Any]:
-    total = 0
-    by_kind: Dict[str, int] = {}
-    for result, artifact in reversed(rows):
-        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            continue
-        if result.get("valid"):
-            break
-        total += 1
-        kind = _classify_failure_kind(artifact)
-        by_kind[kind] = by_kind.get(kind, 0) + 1
-    return {"total_since_success": total, "by_kind_since_success": by_kind}
+    return _shared_current_task_failure_counts(
+        rows,
+        task_label,
+        classify_failure_kind=_classify_failure_kind,
+    )
 
 
 def _rounds_since_last_valid(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> int:
-    count = 0
-    for result, _artifact in reversed(rows):
-        if result.get("valid"):
-            break
-        count += 1
-    return count
+    return _shared_rounds_since_last_valid(rows)
 
 
 def _last_task_attempt_index(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
-    for index in range(len(rows) - 1, -1, -1):
-        _result, artifact = rows[index]
-        if _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            return index
-    return -1
+    return _shared_last_task_attempt_index(rows, task_label)
 
 
 
@@ -764,22 +638,12 @@ def _task_failure_summary(
     rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     task_label: str,
 ) -> Dict[str, Any]:
-    counts = _current_task_failure_counts(rows, task_label)
-    latest_failure: Dict[str, Any] = {}
-    for result, artifact in reversed(rows):
-        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            continue
-        if result.get("valid"):
-            break
-        latest_failure = {
-            "summary": _compact_message(artifact.get("summary", ""), limit=240),
-            "failure_kind": _classify_failure_kind(artifact),
-            "errors": [_compact_message(error, limit=240) for error in artifact.get("errors", [])[:3]]
-            if isinstance(artifact.get("errors", []), list)
-            else [_compact_message(artifact.get("errors", ""), limit=240)],
-        }
-        break
-    return {**counts, "latest_failure": latest_failure}
+    return _shared_task_failure_summary(
+        rows,
+        task_label,
+        classify_failure_kind=_classify_failure_kind,
+        compact=lambda value, limit: _compact_message(value, limit=limit),
+    )
 
 
 def _slugify(value: str, *, limit: int = 80) -> str:

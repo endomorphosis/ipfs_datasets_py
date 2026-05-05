@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -26,6 +25,7 @@ from .core import (
 )
 from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
 from .supervisor import heartbeat_snapshot, worktree_phase_worker_status
+from .wrapper import launch_restarting_wrapper, pid_matches_command_fragments
 
 
 JsonDict = Dict[str, Any]
@@ -126,15 +126,12 @@ def pid_is_legal_parser_supervisor(pid: Any) -> bool:
 
 
 def pid_is_legal_parser_wrapper(pid: Any) -> bool:
-    try:
-        pid_int = int(pid)
-    except Exception:
-        return False
-    args = _pid_args(pid_int)
-    return (
-        pid_alive(pid_int)
-        and "run_legal_parser_optimizer_daemon.sh" in args
-        and "legal-parser supervisor exited with code" in args
+    return pid_matches_command_fragments(
+        pid,
+        (
+            "run_legal_parser_optimizer_daemon.sh",
+            "legal-parser supervisor exited with code",
+        ),
     )
 
 
@@ -409,55 +406,21 @@ def _launch_wrapper(
 
     out_path = spec.resolve(spec.supervisor_out_path)
     assert out_path is not None
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_pid_path = _wrapper_pid_path(spec)
-    wrapper_pid_path.parent.mkdir(parents=True, exist_ok=True)
 
-    model = shlex.quote(env.get("MODEL_NAME", "gpt-5.5"))
-    provider = shlex.quote(env.get("PROVIDER", "llm_router"))
-    router_provider = shlex.quote(env.get("IPFS_DATASETS_PY_LLM_PROVIDER", "codex_cli"))
-    run_script = shlex.quote(spec.runner[-1])
-    restart_delay = shlex.quote(str(int(restart_delay_seconds)))
-    command_text = (
-        f"while true; do MODEL_NAME={model} PROVIDER={provider} "
-        f"IPFS_DATASETS_PY_LLM_PROVIDER={router_provider} bash {run_script}; "
-        "rc=$?; "
-        "printf '%s legal-parser supervisor exited with code %s; wrapper restarting in %ss\\n' "
-        f"\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"$rc\" {restart_delay}; "
-        f"sleep {restart_delay}; done"
-    )
-
-    if launch_mode == "tmux" and spec.tmux_session_name and _tmux_available():
-        if _tmux_has_session(spec.tmux_session_name):
-            subprocess.run(
-                ("tmux", "kill-session", "-t", spec.tmux_session_name),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                check=False,
-            )
-        result = subprocess.run(
-            ("tmux", "new-session", "-d", "-s", spec.tmux_session_name, "-c", str(spec.repo_root), command_text),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
-        if result.returncode == 0:
-            wrapper_pid_path.write_text("0\n", encoding="utf-8")
-            return "tmux", 0
-
-    out_handle = out_path.open("wb")
-    process = subprocess.Popen(
-        ("bash", "-lc", command_text),
-        cwd=str(spec.repo_root),
+    launch = launch_restarting_wrapper(
+        repo_root=spec.repo_root,
+        command=("bash", spec.runner[-1]),
+        out_path=out_path,
+        pid_path=wrapper_pid_path,
         env=env,
-        stdin=subprocess.DEVNULL,
-        stdout=out_handle,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
+        env_keys=("MODEL_NAME", "PROVIDER", "IPFS_DATASETS_PY_LLM_PROVIDER"),
+        launch_mode=launch_mode,
+        restart_delay_seconds=restart_delay_seconds,
+        restart_message="legal-parser supervisor exited with code",
+        tmux_session_name=spec.tmux_session_name,
     )
-    out_handle.close()
-    wrapper_pid_path.write_text(f"{process.pid}\n", encoding="utf-8")
-    return "nohup_loop", int(process.pid)
+    return launch.mode, launch.pid
 
 
 def ensure_legal_parser_daemon(

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 import re
+import signal
 import shutil
 import subprocess
 import time
@@ -13,7 +15,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Optional
+from typing import Any, Callable, Iterable, Iterator, Optional, Sequence
 
 
 DEFAULT_CHECKBOX_RE = re.compile(r"^(?P<prefix>\s*-\s+\[)(?P<mark>[ xX~!])(?P<suffix>\]\s+)(?P<title>.+)$")
@@ -259,6 +261,7 @@ def extract_json(text: str) -> Optional[dict[str, Any]]:
     stripped = text.strip()
     if stripped.startswith("{") and stripped.endswith("}"):
         candidates.append(stripped)
+    candidates.extend(extract_codex_event_text_candidates(stripped))
     start = stripped.find("{")
     end = stripped.rfind("}")
     if start >= 0 and end > start:
@@ -271,6 +274,84 @@ def extract_json(text: str) -> Optional[dict[str, Any]]:
         except json.JSONDecodeError:
             continue
     return None
+
+
+def extract_codex_event_text_candidates(text: str) -> list[str]:
+    """Extract assistant text candidates from Codex JSONL event streams."""
+
+    candidates: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("{") or not line.endswith("}"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        for value in (
+            extract_text_from_codex_event_object(event),
+            extract_text_from_codex_event_object(event.get("item")),
+            extract_text_from_codex_event_object(event.get("message")),
+        ):
+            if value:
+                candidates.append(value)
+    return list(reversed(candidates))
+
+
+def extract_text_from_codex_event_object(value: Any) -> str:
+    """Return assistant text from one Codex event-like object, if present."""
+
+    if not isinstance(value, dict):
+        return ""
+    value_type = value.get("type")
+    if value_type in {"agent_message", "assistant_message"} and isinstance(value.get("text"), str):
+        return value["text"].strip()
+    if value_type == "message" and value.get("role") == "assistant":
+        content = value.get("content")
+        if isinstance(content, list):
+            parts: list[str] = []
+            for item in content:
+                if (
+                    isinstance(item, dict)
+                    and item.get("type") in {"text", "output_text"}
+                    and isinstance(item.get("text"), str)
+                ):
+                    parts.append(item["text"])
+            return "".join(parts).strip()
+        if isinstance(value.get("text"), str):
+            return value["text"].strip()
+    return ""
+
+
+def looks_like_empty_codex_event_stream(text: str) -> bool:
+    """Return whether a JSONL response contains Codex events but no assistant text."""
+
+    if not text.strip():
+        return False
+    saw_codex_event = False
+    saw_assistant_text = False
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("{") or not line.endswith("}"):
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+        event_type = str(event.get("type") or "")
+        if event_type.startswith(("thread.", "turn.", "item.")):
+            saw_codex_event = True
+        if (
+            extract_text_from_codex_event_object(event)
+            or extract_text_from_codex_event_object(event.get("item"))
+            or extract_text_from_codex_event_object(event.get("message"))
+        ):
+            saw_assistant_text = True
+    return saw_codex_event and not saw_assistant_text
 
 
 def parse_json_proposal(text: str) -> Proposal:
@@ -312,16 +393,65 @@ def normalized_relative_path(path: str) -> str:
     return normalized
 
 
-def run_command(command: tuple[str, ...], *, cwd: Path, timeout: int) -> CommandResult:
-    completed = subprocess.run(
-        list(command),
-        cwd=str(cwd),
-        text=True,
-        capture_output=True,
-        timeout=timeout,
-        check=False,
-    )
-    return CommandResult(command=command, returncode=completed.returncode, stdout=completed.stdout, stderr=completed.stderr)
+def run_command(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    timeout: Optional[int] = None,
+    timeout_seconds: Optional[int] = None,
+    stdin: Optional[str] = None,
+) -> CommandResult:
+    """Run a command with captured output and process-group timeout cleanup."""
+
+    effective_timeout = timeout_seconds if timeout_seconds is not None else timeout
+    if effective_timeout is None:
+        raise TypeError("run_command() requires timeout or timeout_seconds")
+    process: Optional[subprocess.Popen[str]] = None
+    try:
+        process = subprocess.Popen(
+            list(command),
+            cwd=str(cwd),
+            stdin=subprocess.PIPE if stdin is not None else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            start_new_session=True,
+        )
+        stdout, stderr = process.communicate(input=stdin, timeout=effective_timeout)
+        return CommandResult(tuple(command), process.returncode, stdout or "", stderr or "")
+    except subprocess.TimeoutExpired as exc:
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            except PermissionError:
+                try:
+                    process.terminate()
+                except ProcessLookupError:
+                    pass
+            try:
+                stdout_after, stderr_after = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except PermissionError:
+                    try:
+                        process.kill()
+                    except ProcessLookupError:
+                        pass
+                stdout_after, stderr_after = process.communicate()
+            stdout = stdout_after or exc.stdout or ""
+            stderr = stderr_after or exc.stderr or ""
+        else:
+            stdout = exc.stdout or ""
+            stderr = exc.stderr or ""
+        stdout = stdout if isinstance(stdout, str) else stdout.decode("utf-8", errors="replace")
+        stderr = stderr if isinstance(stderr, str) else stderr.decode("utf-8", errors="replace")
+        timeout_message = f"Command timed out after {effective_timeout}s"
+        return CommandResult(tuple(command), 124, stdout or "", (stderr + "\n" + timeout_message).strip())
 
 
 def diff_for_file(path: str, before: str, after: str) -> str:
