@@ -37,6 +37,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     TodoDaemonRegistration,
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
+    AcceptedWorkPersistenceResult,
     WorkSidecarPaths,
     accepted_work_evidence_manifest,
     accepted_work_manifest,
@@ -153,6 +154,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     parse_file_replacement_response,
     parse_json_proposal,
     parse_markdown_tasks,
+    persist_proposal_accepted_work,
+    persist_proposal_failed_work,
     plan_task_from_latest_result,
     paths_from_file_edits,
     paths_from_git_status_porcelain,
@@ -2081,6 +2084,66 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert failed_workspace["reason"] == "validation"
     write_json(artifact_dir / "extra.json", {"ok": True})
     assert json.loads((artifact_dir / "extra.json").read_text(encoding="utf-8")) == {"ok": True}
+
+
+def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    accepted_dir = repo / ".daemon" / "accepted-work"
+    failed_dir = repo / ".daemon" / "failed-work"
+    diff_text = "diff --git a/todo/source.py b/todo/source.py\n+VALUE = 2\n"
+    proposal = Proposal(
+        summary="Persist proposal work",
+        impact="Reusable accepted/failed persistence.",
+        target_task="Task checkbox-4: Persist work.",
+        files=[{"path": "todo/source.py", "content": "VALUE = 2\n"}],
+        changed_files=["todo/source.py"],
+        validation_results=[CommandResult(("pytest", "-q"), 0, "ok", "")],
+        promotion_verified=True,
+    )
+
+    accepted = persist_proposal_accepted_work(
+        repo_root=repo,
+        accepted_dir=accepted_dir,
+        proposal=proposal,
+        diff_text=diff_text,
+        transport="ephemeral_worktree",
+        write_sidecars_enabled=True,
+    )
+    ledger_only = persist_proposal_accepted_work(
+        repo_root=repo,
+        accepted_dir=accepted_dir,
+        proposal=proposal,
+        diff_text=diff_text,
+        transport="direct",
+        write_sidecars_enabled=False,
+    )
+    failed = persist_proposal_failed_work(
+        failed_dir=failed_dir,
+        proposal=Proposal(
+            summary="Persist failed work",
+            target_task=proposal.target_task,
+            changed_files=["todo/source.py"],
+            validation_results=[CommandResult(("pytest", "-q"), 1, "", "failed")],
+            errors=["validation failed"],
+        ),
+        diff_text=diff_text,
+        reason="validation",
+        transport="ephemeral_worktree",
+    )
+
+    assert isinstance(accepted, AcceptedWorkPersistenceResult)
+    assert accepted.artifacts is not None
+    assert accepted.ledger_path == accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
+    assert accepted.ledger_entry["artifacts"]["mode"] == "sidecars"
+    assert accepted.artifacts.diff.read_text(encoding="utf-8") == diff_text
+    assert ledger_only.artifacts is None
+    assert ledger_only.ledger_entry["artifacts"]["mode"] == "ledger_only"
+    ledger_rows = [json.loads(line) for line in accepted.ledger_path.read_text(encoding="utf-8").splitlines()]
+    assert [row["transport"] for row in ledger_rows] == ["ephemeral_worktree", "direct"]
+    assert failed.manifest.exists()
+    assert json.loads(failed.manifest.read_text(encoding="utf-8"))["reason"] == "validation"
+    assert json.loads(failed.workspace.read_text(encoding="utf-8"))["promoted"] is False
+    assert failed.diff.read_text(encoding="utf-8") == diff_text
 
 
 def test_deterministic_fallback_helpers_are_reusable(tmp_path: Path) -> None:

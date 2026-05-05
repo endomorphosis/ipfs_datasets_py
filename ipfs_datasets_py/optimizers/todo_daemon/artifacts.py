@@ -47,6 +47,15 @@ class AcceptedWorkEvidencePaths:
     stat: Path
 
 
+@dataclass(frozen=True)
+class AcceptedWorkPersistenceResult:
+    """Artifacts and ledger row written for one accepted daemon work item."""
+
+    artifacts: Optional[WorkSidecarPaths]
+    ledger_entry: dict[str, Any]
+    ledger_path: Path
+
+
 def slugify_artifact_name(value: str, *, fallback: str, limit: int = 80) -> str:
     """Return a filesystem-friendly slug for daemon artifact filenames."""
 
@@ -529,3 +538,73 @@ def append_jsonl_ledger(directory: Path, entry: dict[str, Any], *, filename: str
     ledger_path = directory / filename
     append_jsonl(ledger_path, entry)
     return ledger_path
+
+
+def persist_proposal_accepted_work(
+    *,
+    repo_root: Path,
+    accepted_dir: Path,
+    proposal: Proposal,
+    diff_text: str,
+    transport: str = "direct",
+    write_sidecars_enabled: bool = False,
+    ledger_filename: str = DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+) -> AcceptedWorkPersistenceResult:
+    """Persist accepted proposal evidence and append the accepted-work ledger."""
+
+    accepted_dir.mkdir(parents=True, exist_ok=True)
+    artifacts: Optional[WorkSidecarPaths] = None
+    if write_sidecars_enabled:
+        base = timestamped_artifact_base(
+            accepted_dir,
+            summary=proposal.summary,
+            fallback="accepted-work",
+        )
+        artifacts = write_work_sidecars(
+            base=base,
+            manifest=accepted_work_manifest(proposal, transport=transport),
+            workspace=accepted_work_workspace_payload(proposal, transport=transport),
+            diff_text=diff_text,
+            changed_files=proposal.changed_files,
+        )
+    entry = build_proposal_accepted_work_ledger_entry(
+        repo_root=repo_root,
+        accepted_dir=accepted_dir,
+        proposal=proposal,
+        transport=transport,
+        artifacts=artifacts,
+        diff_text=diff_text,
+        ledger_filename=ledger_filename,
+    )
+    ledger_path = append_accepted_work_ledger(accepted_dir, entry, filename=ledger_filename)
+    return AcceptedWorkPersistenceResult(
+        artifacts=artifacts,
+        ledger_entry=entry,
+        ledger_path=ledger_path,
+    )
+
+
+def persist_proposal_failed_work(
+    *,
+    failed_dir: Path,
+    proposal: Proposal,
+    diff_text: str,
+    reason: str,
+    transport: str = "direct",
+) -> WorkSidecarPaths:
+    """Persist failed proposal sidecars for one daemon work item."""
+
+    failed_dir.mkdir(parents=True, exist_ok=True)
+    base = timestamped_artifact_base(
+        failed_dir,
+        summary=proposal.summary or reason,
+        fallback="failed-work",
+        reason=reason,
+    )
+    return write_work_sidecars(
+        base=base,
+        manifest=failed_work_manifest(proposal, reason=reason, transport=transport),
+        workspace=failed_work_workspace_payload(proposal, reason=reason, transport=transport),
+        diff_text=diff_text,
+        changed_files=proposal.changed_files,
+    )
