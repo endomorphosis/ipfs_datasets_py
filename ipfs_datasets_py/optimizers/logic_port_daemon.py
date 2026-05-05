@@ -68,6 +68,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.llm import (
     LlmRouterInvocation,
     call_llm_router,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
+    paths_from_patch_and_file_edits as _shared_paths_from_patch_and_file_edits,
+    paths_from_unified_diff as _shared_paths_from_unified_diff,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.history import (
     current_task_failure_counts as _shared_current_task_failure_counts,
     last_task_attempt_index as _shared_last_task_attempt_index,
@@ -620,14 +624,7 @@ def _slugify(value: str, *, limit: int = 80) -> str:
 
 
 def _patch_changed_files(patch: str) -> List[str]:
-    paths: List[str] = []
-    seen = set()
-    for match in re.finditer(r"^diff --git a/(.*?) b/(.*?)$", patch, re.MULTILINE):
-        path = match.group(2).strip()
-        if path and path not in seen:
-            seen.add(path)
-            paths.append(path)
-    return paths
+    return _shared_paths_from_unified_diff(patch)
 
 
 def _git_status_paths(stdout: str) -> List[str]:
@@ -668,16 +665,7 @@ def _owner_pid_from_worktree(path: Path, owner: Dict[str, Any]) -> Optional[int]
 
 
 def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
-    paths = [edit.get("path", "") for edit in artifact.files if edit.get("path")]
-    paths.extend(_patch_changed_files(artifact.patch))
-    seen = set()
-    ordered: List[str] = []
-    for path in paths:
-        normalized = path.replace("\\", "/")
-        if normalized and normalized not in seen:
-            seen.add(normalized)
-            ordered.append(normalized)
-    return ordered
+    return _shared_paths_from_patch_and_file_edits(artifact.patch, artifact.files)
 
 
 def _task_allows_non_runtime_only(task: Optional[PlanTask]) -> bool:

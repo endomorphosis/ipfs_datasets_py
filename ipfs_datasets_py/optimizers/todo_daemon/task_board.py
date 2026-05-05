@@ -7,7 +7,7 @@ import re
 from collections.abc import Iterable, Mapping
 from typing import Any, Callable, Optional
 
-from .engine import Task, utc_now
+from .engine import DEFAULT_CHECKBOX_RE, Task, parse_markdown_tasks, select_task, utc_now
 from .plans import CHECKBOX_TASK_RE
 
 
@@ -86,6 +86,50 @@ def focused_task_board_excerpt(markdown: str, selected_task: Any, *, limit: int)
             break
 
     return header + excerpt + footer
+
+
+def replace_task_mark(
+    markdown: str,
+    selected: Task,
+    mark: str,
+    *,
+    checkbox_re: re.Pattern[str] = DEFAULT_CHECKBOX_RE,
+) -> str:
+    """Replace the checkbox mark for ``selected`` by task-board ordinal."""
+
+    seen = 0
+    lines = markdown.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        match = checkbox_re.match(line.rstrip("\n"))
+        if not match:
+            continue
+        seen += 1
+        if seen == selected.index:
+            newline = "\n" if line.endswith("\n") else ""
+            lines[index] = (
+                f"{match.group('prefix')}{mark}{match.group('suffix')}{match.group('title')}{newline}"
+            )
+            break
+    return "".join(lines)
+
+
+def should_sleep_between_task_cycles(
+    markdown: str,
+    *,
+    parse_tasks_fn: Callable[[str], list[Task]] = parse_markdown_tasks,
+    revisit_blocked: bool = False,
+    protected_blocked_checkbox_ids: Iterable[int] = (),
+) -> bool:
+    """Return whether a watch loop should pause because no task is selectable."""
+
+    return (
+        select_task(
+            parse_tasks_fn(markdown),
+            revisit_blocked=revisit_blocked,
+            protected_blocked_checkbox_ids=protected_blocked_checkbox_ids,
+        )
+        is None
+    )
 
 
 def managed_status_block_pattern(start_marker: str, end_marker: str) -> re.Pattern[str]:

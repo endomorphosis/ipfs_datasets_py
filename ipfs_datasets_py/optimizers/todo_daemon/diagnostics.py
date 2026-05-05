@@ -6,7 +6,7 @@ import re
 from collections.abc import Callable, Sequence
 from typing import Any, Mapping
 
-from .engine import Proposal
+from .engine import Proposal, compact_message
 from .history import FailureClassifier, ResultRow, same_task_label
 
 
@@ -182,6 +182,70 @@ def count_recent_proposal_failures(
         if failure_kinds is None or kind in failure_kinds:
             count += 1
     return count
+
+
+def count_proposal_records_with_failure_markers(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    failure_kind: str,
+    markers: set[str] | frozenset[str],
+) -> int:
+    """Count proposal records matching one failure kind and at least one error marker."""
+
+    return sum(
+        1
+        for record in records
+        if proposal_record_has_failure_markers(
+            record,
+            failure_kind=failure_kind,
+            markers=markers,
+        )
+    )
+
+
+FailureContextGuidance = Callable[[Sequence[Mapping[str, Any]]], Sequence[str]]
+
+
+def format_recent_failure_context(
+    failures: Sequence[Mapping[str, Any]],
+    *,
+    empty_message: str = "No recent failures for this task.",
+    guidance: FailureContextGuidance | None = None,
+    summary_limit: int = 300,
+    error_limit: int = 300,
+    validation_output_limit: int = 900,
+) -> str:
+    """Format recent proposal failures for a compact LLM repair prompt."""
+
+    if not failures:
+        return empty_message
+    parts: list[str] = []
+    for index, failure in enumerate(failures, start=1):
+        validation_bits: list[str] = []
+        for result in failure.get("validation_results", []) or []:
+            if not isinstance(result, Mapping) or int(result.get("returncode", 0)) == 0:
+                continue
+            command = " ".join(str(part) for part in result.get("command", []))
+            output = str(result.get("stdout", "")) + " " + str(result.get("stderr", ""))
+            validation_bits.append(
+                f"{command}: {compact_message(output, limit=validation_output_limit)}"
+            )
+        errors = failure.get("errors", []) or []
+        if not isinstance(errors, list):
+            errors = [errors]
+        parts.append(
+            "\n".join(
+                [
+                    f"Failure {index}: kind={failure.get('failure_kind', '')}",
+                    f"summary={compact_message(failure.get('summary', ''), limit=summary_limit)}",
+                    f"errors={'; '.join(compact_message(error, limit=error_limit) for error in errors[:3])}",
+                    f"validation={'; '.join(validation_bits) if validation_bits else '<none>'}",
+                ]
+            )
+        )
+    if guidance is not None:
+        parts.extend(str(item) for item in guidance(failures) if item)
+    return "\n\n".join(parts)
 
 
 def diagnostic_signatures(text: str, *, max_message_chars: int = 120) -> list[str]:

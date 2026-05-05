@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 
 def paths_from_git_status_porcelain(stdout: str) -> list[str]:
@@ -61,6 +61,31 @@ def paths_from_unified_diff(unified_diff: str) -> list[str]:
             if candidate not in paths:
                 paths.append(candidate)
     return paths
+
+
+def unique_normalized_paths(paths: Iterable[str]) -> list[str]:
+    """Return unique non-empty paths normalized to POSIX separators."""
+
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for path in paths:
+        normalized = str(path or "").replace("\\", "/").strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            ordered.append(normalized)
+    return ordered
+
+
+def paths_from_file_edits(edits: Iterable[Mapping[str, Any]], *, path_key: str = "path") -> list[str]:
+    """Return unique paths from complete-file edit records."""
+
+    return unique_normalized_paths(str(edit.get(path_key) or "") for edit in edits if isinstance(edit, Mapping))
+
+
+def paths_from_patch_and_file_edits(patch: str, edits: Iterable[Mapping[str, Any]]) -> list[str]:
+    """Return unique paths from file replacements followed by unified-diff paths."""
+
+    return unique_normalized_paths([*paths_from_file_edits(edits), *paths_from_unified_diff(patch)])
 
 
 def _prefixed_paths(

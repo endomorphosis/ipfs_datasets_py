@@ -22,6 +22,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     Task,
     TodoDaemonHooks,
     TodoDaemonRunner,
+    TodoDaemonRegistration,
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
@@ -35,15 +36,21 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
     call_llm_router,
+    canonical_daemon_names,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
+    count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
     count_unmanaged_generated_status_sections,
     current_task_failure_counts,
+    daemon_alias_map,
+    daemon_registry_payload,
     daemon_spec_payload,
     diagnostic_signatures,
+    dispatcher_choices,
     extract_codex_event_text_candidates,
     extract_json,
+    format_recent_failure_context,
     focused_task_board_excerpt,
     generated_status_block,
     heartbeat_snapshot,
@@ -51,13 +58,16 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     is_retryable_proposal_failure,
     launch_supervised_child,
     last_task_attempt_index,
+    load_daemon_main,
     looks_like_empty_codex_event_stream,
     managed_status_block_pattern,
     materialize_proposal_files,
     owner_pid_from_worktree,
     parse_json_proposal,
     parse_markdown_tasks,
+    paths_from_file_edits,
     paths_from_git_status_porcelain,
+    paths_from_patch_and_file_edits,
     paths_from_unified_diff,
     prompt_limit_for_mode,
     proposal_block_threshold,
@@ -74,9 +84,12 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     recent_proposal_failures,
     recent_rollback_failure_count,
     recent_total_failure_count,
+    replace_task_mark,
+    resolve_daemon_module,
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
+    run_validation_commands,
     run_lifecycle_args,
     run_lifecycle_cli,
     run_supervisor_loop_cli,
@@ -86,6 +99,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     run_todo_daemon_cli,
     select_task,
     should_skip_validation_for_empty_proposal,
+    should_sleep_between_task_cycles,
     should_use_compact_prompt_for_failures,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
@@ -96,8 +110,10 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     todo_daemon_proposals_payload,
     truncate_text,
     unified_diff_stats,
+    unique_normalized_paths,
     untracked_paths_from_git_status_porcelain,
     update_generated_status_block,
+    validation_commands_for_proposal,
     verify_promoted_worktree_files,
     wait_for_child_exit,
     worktree_phase_worker_status,
@@ -192,6 +208,34 @@ def test_task_board_generated_status_helpers_are_reusable() -> None:
     assert "<!-- daemon:start -->" in updated
     assert "Latest result: `valid`" in updated
     assert "stale" not in updated
+
+
+def test_task_board_mark_and_watch_sleep_helpers_are_reusable() -> None:
+    markdown = "\n".join(
+        [
+            "- [x] Task checkbox-1: Done.",
+            "- [!] Task checkbox-2: Blocked.",
+            "- [ ] Task checkbox-3: Needed.",
+        ]
+    )
+    tasks = parse_markdown_tasks(markdown)
+
+    updated = replace_task_mark(markdown, tasks[2], "~")
+    complete = replace_task_mark(updated, tasks[2], "x")
+
+    assert "- [~] Task checkbox-3: Needed." in updated
+    assert not should_sleep_between_task_cycles(markdown)
+    assert should_sleep_between_task_cycles(complete, revisit_blocked=False)
+    assert should_sleep_between_task_cycles(
+        complete,
+        revisit_blocked=True,
+        protected_blocked_checkbox_ids={2},
+    )
+    assert not should_sleep_between_task_cycles(
+        complete,
+        revisit_blocked=True,
+        protected_blocked_checkbox_ids=set(),
+    )
 
 
 def test_task_board_focused_excerpt_helpers_are_reusable() -> None:
@@ -381,6 +425,40 @@ def test_shared_run_command_supports_timeout_seconds_and_stdin(tmp_path: Path) -
     assert ok.stdout.strip() == "OK"
     assert timed_out.returncode == 124
     assert "Command timed out after 1s" in timed_out.stderr
+
+
+def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
+    default_commands = (("python3", "-c", "print('default')"),)
+    trusted = Proposal(
+        validation_commands=[["python3", "-c", "print('trusted')"]],
+        trusted_validation_commands=True,
+    )
+    untrusted = Proposal(
+        validation_commands=[["python3", "-c", "print('ignored')"]],
+        trusted_validation_commands=False,
+    )
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds):
+        calls.append(tuple(command))
+        assert cwd == tmp_path
+        assert timeout_seconds == 11
+        return CommandResult(tuple(command), 0, "ok", "")
+
+    results = run_validation_commands(
+        repo_root=tmp_path,
+        commands=validation_commands_for_proposal(trusted, default_commands),
+        timeout_seconds=11,
+        run_command_fn=fake_run_command,
+    )
+
+    assert validation_commands_for_proposal(trusted, default_commands) == (
+        ("python3", "-c", "print('trusted')"),
+    )
+    assert validation_commands_for_proposal(untrusted, default_commands) == default_commands
+    assert calls == [("python3", "-c", "print('trusted')")]
+    assert results[0].ok
 
 
 def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: Path, monkeypatch) -> None:
@@ -664,10 +742,36 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
         failure_kind="llm",
         markers=frozenset({"code -15"}),
     )
+    assert count_proposal_records_with_failure_markers(
+        [record, {"failure_kind": "llm", "errors": ["other"]}],
+        failure_kind="llm",
+        markers=frozenset({"code -15"}),
+    ) == 1
     assert count_recent_proposal_failures(
         [{"failure_kind": "llm"}, {"failure_kind": "validation"}],
         failure_kinds=frozenset({"llm"}),
     ) == 1
+    context = format_recent_failure_context(
+        [
+            {
+                "failure_kind": "validation",
+                "summary": "bad candidate",
+                "errors": ["SyntaxError: invalid syntax"],
+                "validation_results": [
+                    {
+                        "command": ["python3", "-m", "compileall", "todo"],
+                        "returncode": 1,
+                        "stdout": "",
+                        "stderr": "compile failed",
+                    }
+                ],
+            }
+        ],
+        guidance=lambda failures: ["retry guidance"] if failures else [],
+    )
+    assert "Failure 1: kind=validation" in context
+    assert "python3 -m compileall todo: compile failed" in context
+    assert "retry guidance" in context
 
 
 def test_git_parsing_helpers_are_reusable() -> None:
@@ -711,6 +815,25 @@ def test_git_parsing_helpers_are_reusable() -> None:
         "tests/unit_tests/logic/deontic/test_parser.py"
     ]
     assert paths_from_unified_diff(diff) == [
+        "ipfs_datasets_py/logic/deontic/parser.py",
+        "tests/unit_tests/logic/deontic/test_parser.py",
+    ]
+    assert unique_normalized_paths(["todo\\one.py", "todo/one.py", "", "todo/two.py"]) == [
+        "todo/one.py",
+        "todo/two.py",
+    ]
+    assert paths_from_file_edits(
+        [
+            {"path": "todo\\one.py", "content": "one"},
+            {"path": "todo/two.py", "content": "two"},
+            {"content": "ignored"},
+        ]
+    ) == ["todo/one.py", "todo/two.py"]
+    assert paths_from_patch_and_file_edits(
+        diff,
+        [{"path": "todo\\one.py", "content": "one"}],
+    ) == [
+        "todo/one.py",
         "ipfs_datasets_py/logic/deontic/parser.py",
         "tests/unit_tests/logic/deontic/test_parser.py",
     ]
@@ -1288,6 +1411,40 @@ def test_reusable_lifecycle_cli_runs_check_ensure_and_spec(tmp_path: Path, capsy
 
     assert rc == 7
     assert run_seen == ["--once", "--flag"]
+
+
+def test_todo_daemon_registry_helpers_are_reusable() -> None:
+    registrations = (
+        TodoDaemonRegistration(
+            name="example-daemon",
+            module="example.package.daemon",
+            aliases=("example_daemon", "example"),
+        ),
+    )
+
+    assert canonical_daemon_names(registrations) == ("example-daemon",)
+    assert daemon_alias_map(registrations) == {
+        "example-daemon": "example.package.daemon",
+        "example_daemon": "example.package.daemon",
+        "example": "example.package.daemon",
+    }
+    assert dispatcher_choices(registrations, extra_commands=("list",)) == (
+        "example",
+        "example-daemon",
+        "example_daemon",
+        "list",
+    )
+    assert resolve_daemon_module("example", registrations) == "example.package.daemon"
+    assert daemon_registry_payload(registrations) == {
+        "daemons": [
+            {
+                "name": "example-daemon",
+                "module": "example.package.daemon",
+                "aliases": ["example_daemon", "example"],
+            }
+        ]
+    }
+    assert callable(load_daemon_main("logic_port"))
 
 
 def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, capsys, monkeypatch) -> None:

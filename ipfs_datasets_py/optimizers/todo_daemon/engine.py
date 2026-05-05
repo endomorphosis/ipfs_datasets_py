@@ -458,6 +458,39 @@ def run_command(
         return CommandResult(tuple(command), 124, stdout or "", (stderr + "\n" + timeout_message).strip())
 
 
+def validation_commands_for_proposal(
+    proposal: Proposal,
+    default_commands: Sequence[Sequence[str]],
+) -> tuple[tuple[str, ...], ...]:
+    """Return trusted proposal validation commands or daemon defaults."""
+
+    if proposal.trusted_validation_commands and proposal.validation_commands:
+        return tuple(tuple(command) for command in proposal.validation_commands)
+    return tuple(tuple(command) for command in default_commands)
+
+
+def run_validation_commands(
+    *,
+    repo_root: Path,
+    commands: Sequence[Sequence[str]],
+    timeout_seconds: int,
+    run_command_fn: Callable[..., CommandResult] = run_command,
+) -> list[CommandResult]:
+    """Run validation commands with the shared timeout-aware command runner."""
+
+    results: list[CommandResult] = []
+    for command in commands:
+        try:
+            results.append(
+                run_command_fn(tuple(command), cwd=repo_root, timeout_seconds=timeout_seconds)
+            )
+        except TypeError as exc:
+            if "timeout_seconds" not in str(exc):
+                raise
+            results.append(run_command_fn(tuple(command), cwd=repo_root, timeout=timeout_seconds))
+    return results
+
+
 def diff_for_file(path: str, before: str, after: str) -> str:
     return "".join(
         difflib.unified_diff(
