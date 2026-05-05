@@ -25,6 +25,7 @@ import os
 import queue
 import re
 import shutil
+import signal
 import subprocess
 import tempfile
 import threading
@@ -914,6 +915,29 @@ def _pid_is_alive(pid: int) -> bool:
     return True
 
 
+def _pid_command_line(pid: int) -> str:
+    try:
+        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return ""
+    return raw.replace(b"\0", b" ").decode("utf-8", errors="replace").strip()
+
+
+def _pid_looks_like_logic_port_owner(pid: int, *, repo_root: Path, worktree_path: Path) -> bool:
+    if not _pid_is_alive(pid):
+        return False
+    command_line = _pid_command_line(pid)
+    if not command_line:
+        return True
+    normalized_repo = str(repo_root.resolve())
+    normalized_worktree = str(worktree_path.resolve())
+    if "ipfs_datasets_py.optimizers.logic_port_daemon" in command_line:
+        return normalized_repo in command_line or "--repo-root" in command_line
+    if "codex" in command_line and normalized_worktree in command_line:
+        return True
+    return False
+
+
 def _owner_pid_from_worktree(path: Path, owner: Dict[str, Any]) -> Optional[int]:
     try:
         pid = int(owner.get("pid") or 0)
@@ -1190,20 +1214,50 @@ def run_command(
     timeout_seconds: int,
     stdin: Optional[str] = None,
 ) -> CommandResult:
+    process: Optional[subprocess.Popen[str]] = None
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             list(command),
             cwd=str(cwd),
-            input=stdin,
+            stdin=subprocess.PIPE if stdin is not None else None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
+            start_new_session=True,
         )
-        return CommandResult(tuple(command), completed.returncode, completed.stdout, completed.stderr)
+        stdout, stderr = process.communicate(input=stdin, timeout=timeout_seconds)
+        return CommandResult(tuple(command), process.returncode, stdout or "", stderr or "")
     except subprocess.TimeoutExpired as exc:
-        stdout = exc.stdout if isinstance(exc.stdout, str) else (exc.stdout or b"").decode("utf-8", errors="replace")
-        stderr = exc.stderr if isinstance(exc.stderr, str) else (exc.stderr or b"").decode("utf-8", errors="replace")
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            except PermissionError:
+                try:
+                    process.terminate()
+                except ProcessLookupError:
+                    pass
+            try:
+                stdout_after, stderr_after = process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except PermissionError:
+                    try:
+                        process.kill()
+                    except ProcessLookupError:
+                        pass
+                stdout_after, stderr_after = process.communicate()
+            stdout = stdout_after or exc.stdout or ""
+            stderr = stderr_after or exc.stderr or ""
+        else:
+            stdout = exc.stdout or ""
+            stderr = exc.stderr or ""
+        stdout = stdout if isinstance(stdout, str) else stdout.decode("utf-8", errors="replace")
+        stderr = stderr if isinstance(stderr, str) else stderr.decode("utf-8", errors="replace")
         timeout_message = f"Command timed out after {timeout_seconds}s"
         return CommandResult(tuple(command), 124, stdout or "", (stderr + "\n" + timeout_message).strip())
 
@@ -3270,6 +3324,7 @@ Critical correction for attempt {attempt}:
             "valid": True,
             "worktree_root": str(worktree_root),
             "stale_after_seconds": stale_after,
+            "patterns": ["cycle_*", "repair_*"],
             "removed": [],
             "skipped": [],
             "errors": [],
@@ -3293,7 +3348,17 @@ Critical correction for attempt {attempt}:
         registered_paths = {str(path) for path in _git_worktree_paths_from_porcelain(list_result.stdout)}
         now = time.time()
 
-        for candidate in sorted(worktree_root.glob("cycle_*")):
+        candidates: List[Path] = []
+        seen_candidates: set[Path] = set()
+        for pattern in ("cycle_*", "repair_*"):
+            for candidate in worktree_root.glob(pattern):
+                resolved_candidate = candidate.resolve()
+                if resolved_candidate in seen_candidates:
+                    continue
+                seen_candidates.add(resolved_candidate)
+                candidates.append(candidate)
+
+        for candidate in sorted(candidates):
             if not candidate.exists():
                 continue
             try:
@@ -3306,7 +3371,14 @@ Critical correction for attempt {attempt}:
                     continue
                 owner = self._read_worktree_owner_file(candidate / ".logic_port_worktree_owner.json")
                 owner_pid = _owner_pid_from_worktree(candidate, owner)
-                owner_alive = bool(owner_pid and _pid_is_alive(owner_pid))
+                owner_alive = bool(
+                    owner_pid
+                    and _pid_looks_like_logic_port_owner(
+                        owner_pid,
+                        repo_root=repo_root,
+                        worktree_path=candidate,
+                    )
+                )
                 try:
                     created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
                 except (OSError, TypeError, ValueError):

@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -101,6 +102,19 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert '--worktree-root "$WORKTREE_ROOT"' in script
     assert '--worktree-repair-attempts "$WORKTREE_REPAIR_ATTEMPTS"' in script
     assert '--codex-bin "$CODEX_BIN"' in script
+    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"' in script
+    assert "startup_failure_maintenance_reason()" in script
+    assert "startup_stale_failure:" in script
+    assert "supervisor invoking startup failure maintenance" in script
+
+
+def test_ensure_passes_startup_failure_maintenance_to_supervisor():
+    repo_root = Path(__file__).resolve().parents[3]
+    script = (repo_root / "scripts/ops/legal_data/ensure_logic_port_daemon.sh").read_text(encoding="utf-8")
+
+    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"' in script
+    assert 'SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE"' in script
+    assert '"agentic_startup_failure_maintenance": startup_failure_maintenance' in script
 
 
 def test_check_script_reports_worktree_transport_health_fields():
@@ -206,6 +220,25 @@ def test_parse_llm_patch_response_marks_empty_codex_event_stream():
 
     assert artifact.failure_kind == "codex_empty_event_stream"
     assert artifact.errors == ["Codex returned JSONL startup events without an assistant proposal."]
+
+
+def test_run_command_timeout_kills_process_group(tmp_path):
+    child_script = (
+        "import subprocess, sys, time\n"
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'], stdout=sys.stdout, stderr=sys.stderr)\n"
+        "time.sleep(30)\n"
+    )
+
+    started = time.time()
+    result = logic_port_daemon.run_command(
+        (sys.executable, "-c", child_script),
+        cwd=tmp_path,
+        timeout_seconds=1,
+    )
+
+    assert result.returncode == 124
+    assert "Command timed out after 1s" in result.stderr
+    assert time.time() - started < 7
 
 
 def test_worktree_transport_generates_file_edits_from_isolated_worktree(tmp_path, monkeypatch):
@@ -464,6 +497,46 @@ def test_worktree_validation_failure_repairs_in_temporary_worktree(tmp_path, mon
     codex_call = next(call for call in command_calls if call["command"][0] == "codex-test")
     assert "failed_validation_results" in codex_call["stdin"]
     assert "expected repaired to be true" in codex_call["stdin"]
+
+
+def test_cleanup_stale_worktrees_sweeps_cycle_and_repair_worktrees(tmp_path, monkeypatch):
+    worktree_root = tmp_path / ".daemon" / "logic-port-worktrees"
+    cycle = worktree_root / "cycle_01_20260101T000000000000Z_12345"
+    repair = worktree_root / "repair_01_20260101T000000000000Z_12345"
+    for path in (cycle, repair):
+        path.mkdir(parents=True)
+        (path / ".logic_port_worktree_owner.json").write_text(
+            json.dumps({"pid": 12345, "created_at_epoch": 1}),
+            encoding="utf-8",
+        )
+    calls = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
+        command = tuple(command)
+        calls.append(command)
+        if command[:3] == ("git", "worktree", "list"):
+            return logic_port_daemon.CommandResult(
+                command,
+                0,
+                f"worktree {cycle.resolve()}\nworktree {repair.resolve()}\n",
+                "",
+            )
+        return logic_port_daemon.CommandResult(command, 0, "", "")
+
+    monkeypatch.setattr(logic_port_daemon, "run_command", fake_run_command)
+    monkeypatch.setattr(logic_port_daemon, "_pid_looks_like_logic_port_owner", lambda *args, **kwargs: False)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        worktree_root=worktree_root,
+        worktree_stale_after_seconds=1,
+    )
+
+    result = LogicPortDaemonOptimizer(config).cleanup_stale_worktrees()
+
+    removed_paths = {Path(item["path"]).name for item in result["removed"]}
+    assert {"cycle_01_20260101T000000000000Z_12345", "repair_01_20260101T000000000000Z_12345"} <= removed_paths
+    assert ("git", "worktree", "remove", "--force", str(cycle.resolve())) in calls
+    assert ("git", "worktree", "remove", "--force", str(repair.resolve())) in calls
 
 
 def test_repair_common_typescript_text_damage_fills_lost_syntax():

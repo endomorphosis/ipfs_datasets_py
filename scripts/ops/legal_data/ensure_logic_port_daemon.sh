@@ -23,6 +23,7 @@ WORKTREE_REPAIR_ATTEMPTS="${WORKTREE_REPAIR_ATTEMPTS:-1}"
 AUTO_COMMIT="${AUTO_COMMIT:-1}"
 AUTO_COMMIT_STARTUP_DIRTY="${AUTO_COMMIT_STARTUP_DIRTY:-1}"
 AUTO_COMMIT_BRANCH="${AUTO_COMMIT_BRANCH:-main}"
+SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"
 
 mkdir -p "$REPO_ROOT/$DAEMON_DIR"
 cd "$REPO_ROOT" || exit 2
@@ -87,7 +88,7 @@ launch_supervisor() {
     if tmux has-session -t "$TMUX_SESSION_NAME" 2>/dev/null; then
       tmux kill-session -t "$TMUX_SESSION_NAME" 2>/dev/null || true
     fi
-    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") PROPOSAL_TRANSPORT=$(printf '%q' "$PROPOSAL_TRANSPORT") WORKTREE_EDIT_TIMEOUT_SECONDS=$(printf '%q' "$WORKTREE_EDIT_TIMEOUT_SECONDS") WORKTREE_STALE_AFTER_SECONDS=$(printf '%q' "$WORKTREE_STALE_AFTER_SECONDS") WORKTREE_CODEX_SANDBOX=$(printf '%q' "$WORKTREE_CODEX_SANDBOX") WORKTREE_ROOT=$(printf '%q' "$WORKTREE_ROOT") WORKTREE_REPAIR_ATTEMPTS=$(printf '%q' "$WORKTREE_REPAIR_ATTEMPTS") AUTO_COMMIT=$(printf '%q' "$AUTO_COMMIT") AUTO_COMMIT_STARTUP_DIRTY=$(printf '%q' "$AUTO_COMMIT_STARTUP_DIRTY") AUTO_COMMIT_BRANCH=$(printf '%q' "$AUTO_COMMIT_BRANCH") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
+    command_text="while true; do LOGIC_PORT_PROVIDER=$(printf '%q' "$LOGIC_PORT_PROVIDER") PROPOSAL_TRANSPORT=$(printf '%q' "$PROPOSAL_TRANSPORT") WORKTREE_EDIT_TIMEOUT_SECONDS=$(printf '%q' "$WORKTREE_EDIT_TIMEOUT_SECONDS") WORKTREE_STALE_AFTER_SECONDS=$(printf '%q' "$WORKTREE_STALE_AFTER_SECONDS") WORKTREE_CODEX_SANDBOX=$(printf '%q' "$WORKTREE_CODEX_SANDBOX") WORKTREE_ROOT=$(printf '%q' "$WORKTREE_ROOT") WORKTREE_REPAIR_ATTEMPTS=$(printf '%q' "$WORKTREE_REPAIR_ATTEMPTS") AUTO_COMMIT=$(printf '%q' "$AUTO_COMMIT") AUTO_COMMIT_STARTUP_DIRTY=$(printf '%q' "$AUTO_COMMIT_STARTUP_DIRTY") AUTO_COMMIT_BRANCH=$(printf '%q' "$AUTO_COMMIT_BRANCH") SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE=$(printf '%q' "$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE") bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh </dev/null > $(printf '%q' "$out_abs") 2>&1; rc=\$?; printf '%s supervisor exited with code %s; tmux wrapper restarting in %ss\\n' \"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\" \"\$rc\" \"$ENSURE_TMUX_RESTART_DELAY_SECONDS\" >> $(printf '%q' "$out_abs"); sleep $ENSURE_TMUX_RESTART_DELAY_SECONDS; done"
     if tmux new-session -d -s "$TMUX_SESSION_NAME" -c "$REPO_ROOT" "$command_text"; then
       launch_mode="tmux"
       launcher_pid="0"
@@ -104,6 +105,7 @@ launch_supervisor() {
     AUTO_COMMIT="$AUTO_COMMIT" \
     AUTO_COMMIT_STARTUP_DIRTY="$AUTO_COMMIT_STARTUP_DIRTY" \
     AUTO_COMMIT_BRANCH="$AUTO_COMMIT_BRANCH" \
+    SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE" \
     nohup setsid -f bash ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh \
     </dev/null > "$SUPERVISOR_OUT_PATH" 2>&1 &
   launcher_pid=$!
@@ -111,7 +113,7 @@ launch_supervisor() {
 
 write_start_status() {
   local ensure_status="$1"
-  python3 - "$ENSURE_STATUS_PATH" "$checked_at" "$CHECK_LOG_PATH" "$ensure_status" "$launcher_pid" "$SUPERVISOR_PID_PATH" "$SUPERVISOR_STATUS_PATH" "$ENSURE_STARTUP_WAIT_SECONDS" "$launch_mode" "$TMUX_SESSION_NAME" "$ENSURE_TMUX_RESTART_DELAY_SECONDS" <<'PY'
+  python3 - "$ENSURE_STATUS_PATH" "$checked_at" "$CHECK_LOG_PATH" "$ensure_status" "$launcher_pid" "$SUPERVISOR_PID_PATH" "$SUPERVISOR_STATUS_PATH" "$ENSURE_STARTUP_WAIT_SECONDS" "$launch_mode" "$TMUX_SESSION_NAME" "$ENSURE_TMUX_RESTART_DELAY_SECONDS" "$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE" <<'PY'
 import json
 import os
 import sys
@@ -128,7 +130,8 @@ import sys
     launch_mode,
     tmux_session_name,
     tmux_restart_delay_seconds,
-) = sys.argv[1:12]
+    startup_failure_maintenance,
+) = sys.argv[1:13]
 try:
     with open(check_path, "r", encoding="utf-8") as handle:
         check = json.load(handle)
@@ -157,6 +160,7 @@ payload = {
     "launch_mode": launch_mode,
     "tmux_session_name": tmux_session_name,
     "tmux_restart_delay_seconds": int(tmux_restart_delay_seconds),
+    "agentic_startup_failure_maintenance": startup_failure_maintenance,
     "proposal_transport": check.get("proposal_transport"),
     "worktree_root": check.get("worktree_root"),
     "worktree_repair_attempts": check.get("worktree_repair_attempts"),

@@ -61,6 +61,7 @@ BLOCKED_TASK_STRATEGY="${BLOCKED_TASK_STRATEGY:-fewest-failures}"
 PLAN_REPLENISHMENT_LIMIT="${PLAN_REPLENISHMENT_LIMIT:-12}"
 SUPERVISOR_AGENTIC_MAINTENANCE="${SUPERVISOR_AGENTIC_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE:-0}"
+SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE="${SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE:-1}"
 SUPERVISOR_AGENTIC_STAGNANT_ROUNDS="${SUPERVISOR_AGENTIC_STAGNANT_ROUNDS:-12}"
 SUPERVISOR_AGENTIC_TASK_FAILURES="${SUPERVISOR_AGENTIC_TASK_FAILURES:-6}"
 SUPERVISOR_AGENTIC_PROPOSAL_FAILURES="${SUPERVISOR_AGENTIC_PROPOSAL_FAILURES:-3}"
@@ -168,6 +169,7 @@ write_supervisor_status() {
   "supervisor_lock_path": "$SUPERVISOR_LOCK_PATH",
   "agentic_maintenance_enabled": $SUPERVISOR_AGENTIC_MAINTENANCE,
   "agentic_startup_maintenance_enabled": $SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE,
+  "agentic_startup_failure_maintenance_enabled": $SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE,
   "agentic_stagnant_rounds": $SUPERVISOR_AGENTIC_STAGNANT_ROUNDS,
   "agentic_task_failures": $SUPERVISOR_AGENTIC_TASK_FAILURES,
   "agentic_proposal_failures": $SUPERVISOR_AGENTIC_PROPOSAL_FAILURES,
@@ -496,6 +498,109 @@ raise SystemExit(1)
 PY
 }
 
+startup_failure_maintenance_reason() {
+  if [[ "$SUPERVISOR_AGENTIC_MAINTENANCE" != "1" ]] || [[ "$SUPERVISOR_AGENTIC_STARTUP_FAILURE_MAINTENANCE" != "1" ]]; then
+    return 1
+  fi
+  python3 - \
+    "$REPO_ROOT/$PROGRESS_PATH" \
+    "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" \
+    "$SUPERVISOR_AGENTIC_COOLDOWN_SECONDS" <<'PY'
+import json
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+progress_path = Path(sys.argv[1])
+state_path = Path(sys.argv[2])
+cooldown_seconds = int(sys.argv[3])
+now_epoch = int(time.time())
+
+
+def read_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def parse_ts(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def reason_family(value: str) -> str:
+    return value.split(":", 1)[0] if value else ""
+
+
+progress = read_json(progress_path)
+latest = progress.get("latest_round") if isinstance(progress.get("latest_round"), dict) else {}
+if not latest or latest.get("valid"):
+    raise SystemExit(1)
+
+failure_kind = str(latest.get("failure_kind") or "invalid_no_change")
+changed_files = latest.get("changed_files") or []
+errors = " ".join(str(error) for error in latest.get("errors") or [])
+infra_failure_kinds = {
+    "worktree_codex_failed",
+    "worktree_repair_codex_failed",
+    "timeout",
+    "codex_empty_event_stream",
+    "provider_http_403",
+}
+infra_error_needles = (
+    "failed to refresh available models",
+    "timeout waiting for child process to exit",
+    "generation exceeded daemon deadline",
+    "Command timed out after",
+)
+if changed_files:
+    raise SystemExit(1)
+if failure_kind not in infra_failure_kinds and not any(needle in errors for needle in infra_error_needles):
+    raise SystemExit(1)
+
+updated_at = parse_ts(progress.get("updated_at"))
+age = 0
+if updated_at is not None:
+    age = int(max(0.0, (datetime.now(timezone.utc) - updated_at).total_seconds()))
+
+reason = f"startup_stale_failure:{failure_kind}:age:{age}"
+current_task = str(progress.get("current_task") or latest.get("target_task") or "")
+state = read_json(state_path)
+last_maintenance_at = int(state.get("last_maintenance_at") or 0)
+last_reason = str(state.get("last_maintenance_reason") or "")
+last_task = str(state.get("last_maintenance_task") or "")
+cooling_down = (
+    last_maintenance_at > 0
+    and now_epoch - last_maintenance_at < cooldown_seconds
+    and reason_family(reason) == reason_family(last_reason)
+    and current_task == last_task
+)
+state.update(
+    {
+        "updated_at_epoch": now_epoch,
+        "startup_candidate_reason": reason,
+        "startup_candidate_task": current_task,
+        "startup_candidate_failure_kind": failure_kind,
+        "startup_candidate_age_seconds": age,
+        "startup_candidate_cooling_down": cooling_down,
+        "startup_suppressed_candidate_reason": reason if cooling_down else "",
+    }
+)
+state_path.parent.mkdir(parents=True, exist_ok=True)
+state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+if cooling_down:
+    raise SystemExit(1)
+print(reason)
+raise SystemExit(0)
+PY
+}
+
 mark_agentic_maintenance_ran() {
   local reason="$1"
   python3 - "$REPO_ROOT/$SUPERVISOR_AGENTIC_STATE_PATH" "$REPO_ROOT/$PROGRESS_PATH" "$reason" <<'PY'
@@ -548,7 +653,7 @@ run_agentic_maintenance() {
   local maintenance_timeout="$SUPERVISOR_AGENTIC_TIMEOUT_SECONDS"
   local rc=0
   case "$reason" in
-    stuck_phase:*|stuck_llm_subprocess:*|duplicate_llm_subprocesses:*)
+    stuck_phase:*|stuck_llm_subprocess:*|duplicate_llm_subprocesses:*|startup_stale_failure:*)
       maintenance_timeout="$SUPERVISOR_STUCK_MAINTENANCE_TIMEOUT_SECONDS"
       ;;
   esac
@@ -583,7 +688,7 @@ Reason: $reason
 
 This maintenance pass is allowed to make the supervisor and daemon more robust automatically. Prefer infrastructure fixes that let future unattended rounds recover without user input. Keep the supervised TypeScript port path on PROPOSAL_TRANSPORT=worktree by default so Codex edits ephemeral worktrees; keep WORKTREE_REPAIR_ATTEMPTS enabled so failed validation runs get a direct-edit repair pass in a temporary worktree before legacy JSON repair is considered. Keep AUTO_COMMIT and AUTO_COMMIT_STARTUP_DIRTY enabled so accepted daemon-owned TypeScript/docs work is committed on main before later cycles collide with dirty files. Keep the llm_router JSON proposal path available as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM/worktree Codex call detection, or backup/restore validation around maintenance edits.
 
-If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, worktree_validation_repair, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better worktree failed-test repair, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
+If the reason mentions proposal_quality_failures, rollback_quality_failures, typescript_quality_failures, repeated_typescript_diagnostic, orphaned_llm_calls, startup_stale_failure, stuck_phase, stuck_llm_subprocess, duplicate_llm_subprocesses, worktree_phase_without_active_child, worktree_validation_repair, or supervisor_infrastructure, inspect the daemon result log and patch the daemon or supervisor so future cycles avoid that bad loop. Typical fixes include safer ephemeral-worktree harvesting, stricter direct-edit prompts, better worktree failed-test repair, better raw-response capture, earlier TypeScript preflight checks, stronger proposal retry feedback, tighter validation-repair prompts, better task blocking, safer subprocess cleanup, or clearer status fields that let the supervisor diagnose the same failure mode sooner.
 
 If repeated TypeScript-quality failures are caused by ambitious malformed file replacements, patch the daemon prompt, retry feedback, task blocking, or task-selection logic so it lands smaller compileable browser-native scaffolds first. If the supervisor itself stopped while the daemon was still stale or failing, patch the supervisor startup/restart path so it can invoke maintenance before launching another child. If repo-local Codex/router subprocesses outlive their daemon or maintenance parent, patch cleanup and stuck-detection so those orphaned LLM calls become an automatic infrastructure-maintenance trigger rather than a manual intervention. Do not kill or modify other daemon families, including the separate legal parser daemon or PPD daemons; subprocesses whose ancestor command contains parser_daemon, run_legal_parser_optimizer_daemon.sh, ppd/daemon/ppd_supervisor.py, or ppd/daemon/ppd_daemon.py are out of scope.
 
@@ -630,7 +735,7 @@ Reason: $reason
 
 Improve only the daemon/supervisor implementation, tests, or docs from the allowed files. Keep PROPOSAL_TRANSPORT=worktree as the supervised default, keep WORKTREE_REPAIR_ATTEMPTS enabled for failed validation repair in temporary worktrees, keep AUTO_COMMIT/AUTO_COMMIT_STARTUP_DIRTY enabled for accepted daemon-owned work, and preserve the llm_router JSON proposal path as explicit legacy/fallback behavior unless an explicit LOGIC_PORT_PROVIDER override is supplied.
 
-Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
+Focus on making future unattended rounds recover automatically from repeated TypeScript-quality proposal failures, repeated TypeScript diagnostic signatures, stale startup failures, stuck LLM phases, orphaned LLM subprocesses, reverted launcher cleanup, and stale supervisor exits. Preserve existing supervisor robustness guards; do not remove tmux ensure launch support, non-logic-daemon cleanup exclusions, orphaned LLM call detection, stuck-phase detection, or backup/restore validation around maintenance edits.
 
 Do not run `stop_logic_port_daemon.sh`, `ensure_logic_port_daemon.sh`, `run_logic_port_daemon.sh`, `run_legal_parser_optimizer_daemon.sh`, or any command that sends signals to daemon/supervisor processes. Validate shell syntax with `bash -n` only; the parent supervisor must remain alive and launch the next daemon cycle after this maintenance pass.
 
@@ -1076,6 +1181,13 @@ if terminate_orphaned_logic_port_llm_calls; then
   else
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaned up $last_orphaned_llm_cleanup_count startup orphaned logic-port LLM calls; startup maintenance disabled so continuing to daemon launch" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
   fi
+fi
+
+startup_failure_reason="$(startup_failure_maintenance_reason || true)"
+if [[ -n "$startup_failure_reason" ]]; then
+  last_recycle_reason="startup_failure_maintenance"
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) supervisor invoking startup failure maintenance: $startup_failure_reason" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
+  run_infrastructure_maintenance_if_needed "$startup_failure_reason" || true
 fi
 
 if [[ "$SUPERVISOR_AGENTIC_STARTUP_MAINTENANCE" == "1" ]]; then
