@@ -161,6 +161,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
     action_text = _normalize_classification_reclassification_light_verb_action(action_text)
+    action_text = _normalize_data_quality_processing_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_translation_interpretation_light_verb_action(action_text)
     action_text = _normalize_transcription_summarization_light_verb_action(action_text)
@@ -5578,6 +5579,68 @@ def _normalize_classification_reclassification_light_verb_action(action_text: st
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"reclassify {target}" if target else text
+
+    return text
+
+
+def _normalize_data_quality_processing_light_verb_action(action_text: str) -> str:
+    """Project data-quality processing nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    light_verbs = (
+        r"make|makes|made|making|complete|completes|completed|completing|"
+        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
+        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
+        r"carry\s+out|carries\s+out|carried\s+out"
+    )
+    patterns = [
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?matching\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "match",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "compare",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?validation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "validate",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "normalize",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "deduplicate",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?cross-?check(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "cross check",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
+
+    bare_patterns = {
+        r"^matching\s+(?:of|for)\s+(?:the\s+)?(.+)$": "match",
+        r"^comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$": "compare",
+        r"^validation\s+(?:of|for)\s+(?:the\s+)?(.+)$": "validate",
+        r"^normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$": "normalize",
+        r"^deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$": "deduplicate",
+        r"^cross-?checking\s+(?:of|for)\s+(?:the\s+)?(.+)$": "cross check",
+    }
+    for pattern, verb in bare_patterns.items():
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 

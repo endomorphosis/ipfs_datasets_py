@@ -66,6 +66,18 @@ from ipfs_datasets_py.optimizers.todo_daemon.history import (
     same_task_label as _shared_same_task_label,
     task_failure_summary as _shared_task_failure_summary,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
+    cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
+    git_status_paths as _shared_git_status_paths,
+    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
+    owner_pid_from_worktree as _shared_owner_pid_from_worktree,
+    pid_command_line as _shared_pid_command_line,
+    pid_is_alive as _shared_pid_is_alive,
+    pid_looks_like_worktree_owner as _shared_pid_looks_like_worktree_owner,
+    read_json_object as _shared_read_json_object,
+    untracked_paths_from_git_status as _shared_untracked_paths_from_git_status,
+    write_worktree_owner_file as _shared_write_worktree_owner_file,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
     CHECKBOX_TASK_RE,
     PlanTask,
@@ -665,95 +677,38 @@ def _patch_changed_files(patch: str) -> List[str]:
 def _git_status_paths(stdout: str) -> List[str]:
     """Return paths from ``git status --porcelain`` output."""
 
-    paths: List[str] = []
-    seen = set()
-    for line in stdout.splitlines():
-        if not line:
-            continue
-        path = line[3:].strip() if len(line) > 3 else ""
-        if " -> " in path:
-            path = path.rsplit(" -> ", 1)[1].strip()
-        if path and path not in seen:
-            seen.add(path)
-            paths.append(path)
-    return paths
+    return _shared_git_status_paths(stdout)
 
 
 def _untracked_paths_from_git_status(stdout: str) -> List[str]:
-    paths: List[str] = []
-    seen = set()
-    for line in stdout.splitlines():
-        if not line.startswith("?? "):
-            continue
-        path = line[3:].strip()
-        if path and path not in seen:
-            seen.add(path)
-            paths.append(path)
-    return paths
+    return _shared_untracked_paths_from_git_status(stdout)
 
 
 def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
     """Return registered Git worktree paths from porcelain output."""
 
-    paths: List[Path] = []
-    for line in stdout.splitlines():
-        if not line.startswith("worktree "):
-            continue
-        path_text = line[len("worktree ") :].strip()
-        if path_text:
-            paths.append(Path(path_text).resolve())
-    return paths
+    return _shared_git_worktree_paths_from_porcelain(stdout)
 
 
 def _pid_is_alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
+    return _shared_pid_is_alive(pid)
 
 
 def _pid_command_line(pid: int) -> str:
-    try:
-        raw = Path(f"/proc/{pid}/cmdline").read_bytes()
-    except OSError:
-        return ""
-    return raw.replace(b"\0", b" ").decode("utf-8", errors="replace").strip()
+    return _shared_pid_command_line(pid)
 
 
 def _pid_looks_like_logic_port_owner(pid: int, *, repo_root: Path, worktree_path: Path) -> bool:
-    if not _pid_is_alive(pid):
-        return False
-    command_line = _pid_command_line(pid)
-    if not command_line:
-        return True
-    normalized_repo = str(repo_root.resolve())
-    normalized_worktree = str(worktree_path.resolve())
-    if "ipfs_datasets_py.optimizers.logic_port_daemon" in command_line:
-        return normalized_repo in command_line or "--repo-root" in command_line
-    if "codex" in command_line and normalized_worktree in command_line:
-        return True
-    return False
+    return _shared_pid_looks_like_worktree_owner(
+        pid,
+        repo_root=repo_root,
+        worktree_path=worktree_path,
+        daemon_process_fragment="ipfs_datasets_py.optimizers.logic_port_daemon",
+    )
 
 
 def _owner_pid_from_worktree(path: Path, owner: Dict[str, Any]) -> Optional[int]:
-    try:
-        pid = int(owner.get("pid") or 0)
-    except (TypeError, ValueError):
-        pid = 0
-    if pid > 0:
-        return pid
-    match = re.search(r"_(\d+)$", path.name)
-    if not match:
-        return None
-    try:
-        return int(match.group(1))
-    except ValueError:
-        return None
+    return _shared_owner_pid_from_worktree(path, owner)
 
 
 def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
@@ -3046,162 +3001,37 @@ Critical correction for attempt {attempt}:
         """Remove daemon-created proposal worktrees left behind by crashes."""
 
         repo_root = self.daemon_config.repo_root
-        worktree_root = self.daemon_config.resolved_worktree_root()
-        stale_after = max(1, int(self.daemon_config.worktree_stale_after_seconds))
-        result: Dict[str, Any] = {
-            "valid": True,
-            "worktree_root": str(worktree_root),
-            "stale_after_seconds": stale_after,
-            "patterns": ["cycle_*", "repair_*"],
-            "removed": [],
-            "skipped": [],
-            "errors": [],
-        }
-        prune_before = run_command(
-            ("git", "worktree", "prune", "--expire", "now"),
-            cwd=repo_root,
-            timeout_seconds=60,
+        return _shared_cleanup_stale_daemon_worktrees(
+            repo_root=repo_root,
+            worktree_root=self.daemon_config.resolved_worktree_root(),
+            stale_after_seconds=max(1, int(self.daemon_config.worktree_stale_after_seconds)),
+            owner_filename=".logic_port_worktree_owner.json",
+            patterns=("cycle_*", "repair_*"),
+            run_command_fn=run_command,
+            owner_alive=lambda pid, _repo_root, worktree_path: _pid_looks_like_logic_port_owner(
+                pid,
+                repo_root=repo_root,
+                worktree_path=worktree_path,
+            ),
         )
-        result["prune_before"] = prune_before.compact(limit=12000)
-        if not worktree_root.exists():
-            return result
-
-        root_resolved = worktree_root.resolve()
-        list_result = run_command(
-            ("git", "worktree", "list", "--porcelain"),
-            cwd=repo_root,
-            timeout_seconds=60,
-        )
-        result["worktree_list"] = list_result.compact(limit=12000)
-        registered_paths = {str(path) for path in _git_worktree_paths_from_porcelain(list_result.stdout)}
-        now = time.time()
-
-        candidates: List[Path] = []
-        seen_candidates: set[Path] = set()
-        for pattern in ("cycle_*", "repair_*"):
-            for candidate in worktree_root.glob(pattern):
-                resolved_candidate = candidate.resolve()
-                if resolved_candidate in seen_candidates:
-                    continue
-                seen_candidates.add(resolved_candidate)
-                candidates.append(candidate)
-
-        for candidate in sorted(candidates):
-            if not candidate.exists():
-                continue
-            try:
-                resolved = candidate.resolve()
-                if not resolved.is_relative_to(root_resolved):
-                    result["skipped"].append({"path": str(candidate), "reason": "outside_worktree_root"})
-                    continue
-                if not candidate.is_dir():
-                    result["skipped"].append({"path": str(candidate), "reason": "not_directory"})
-                    continue
-                owner = self._read_worktree_owner_file(candidate / ".logic_port_worktree_owner.json")
-                owner_pid = _owner_pid_from_worktree(candidate, owner)
-                owner_alive = bool(
-                    owner_pid
-                    and _pid_looks_like_logic_port_owner(
-                        owner_pid,
-                        repo_root=repo_root,
-                        worktree_path=candidate,
-                    )
-                )
-                try:
-                    created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
-                except (OSError, TypeError, ValueError):
-                    created_at = candidate.stat().st_mtime
-                age_seconds = max(0.0, now - created_at)
-                if owner_alive:
-                    result["skipped"].append(
-                        {
-                            "path": str(candidate),
-                            "reason": "owner_pid_alive",
-                            "owner_pid": owner_pid,
-                            "age_seconds": round(age_seconds, 3),
-                        }
-                    )
-                    continue
-                if age_seconds < stale_after:
-                    result["skipped"].append(
-                        {
-                            "path": str(candidate),
-                            "reason": "not_stale_yet",
-                            "owner_pid": owner_pid,
-                            "age_seconds": round(age_seconds, 3),
-                        }
-                    )
-                    continue
-
-                registered = str(resolved) in registered_paths
-                if registered:
-                    remove_result = run_command(
-                        ("git", "worktree", "remove", "--force", str(resolved)),
-                        cwd=repo_root,
-                        timeout_seconds=60,
-                    )
-                    if not remove_result.ok and candidate.exists():
-                        shutil.rmtree(candidate, ignore_errors=True)
-                else:
-                    shutil.rmtree(candidate, ignore_errors=True)
-                    remove_result = CommandResult(
-                        ("shutil.rmtree", str(resolved)),
-                        0 if not candidate.exists() else 1,
-                        "",
-                        "" if not candidate.exists() else "directory still exists after rmtree",
-                    )
-                record = {
-                    "path": str(candidate),
-                    "registered": registered,
-                    "owner_pid": owner_pid,
-                    "age_seconds": round(age_seconds, 3),
-                    "remove": remove_result.compact(limit=12000),
-                }
-                if remove_result.ok:
-                    result["removed"].append(record)
-                else:
-                    result["valid"] = False
-                    result["errors"].append(record)
-            except Exception as exc:
-                result["valid"] = False
-                result["errors"].append({"path": str(candidate), "exception": f"{type(exc).__name__}: {exc}"})
-
-        prune_after = run_command(
-            ("git", "worktree", "prune", "--expire", "now"),
-            cwd=repo_root,
-            timeout_seconds=60,
-        )
-        result["prune_after"] = prune_after.compact(limit=12000)
-        if not prune_after.ok:
-            result["valid"] = False
-        return result
 
     def _write_worktree_owner_file(self, path: Path, *, attempt: int) -> None:
-        payload = {
-            "schema": "ipfs_datasets_py.logic_port_worktree_owner",
-            "pid": os.getpid(),
-            "attempt": attempt,
-            "repo_root": str(self.daemon_config.repo_root),
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "created_at_epoch": time.time(),
-            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
-            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
-        }
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _shared_write_worktree_owner_file(
+            path,
+            schema="ipfs_datasets_py.logic_port_worktree_owner",
+            repo_root=self.daemon_config.repo_root,
+            attempt=attempt,
+            extra={
+                "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+                "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
+            },
+        )
 
     def _read_worktree_owner_file(self, path: Path) -> Dict[str, Any]:
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return {}
-        return payload if isinstance(payload, dict) else {}
+        return _shared_read_json_object(path)
 
     def _read_worktree_metadata(self, path: Path) -> Dict[str, Any]:
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return {}
-        return payload if isinstance(payload, dict) else {}
+        return _shared_read_json_object(path)
 
     def _repair_worktree_file_edits_after_validation(
         self,

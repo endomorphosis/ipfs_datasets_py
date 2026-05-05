@@ -4292,6 +4292,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Translate",
     )):
         return "records_information_processing_duty"
+    if action_predicate.startswith((
+        "Compare",
+        "CrossCheck",
+        "Deduplicate",
+        "Match",
+        "Normalize",
+        "Validate",
+    )):
+        return "data_quality_processing_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:

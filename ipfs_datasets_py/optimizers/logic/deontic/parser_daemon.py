@@ -47,6 +47,13 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizationContext,
     OptimizerConfig,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
+    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
+    paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
+    paths_from_unified_diff as _shared_paths_from_unified_diff,
+    unified_diff_stats as _shared_unified_diff_stats,
+    untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
+)
 
 
 DEFAULT_PROBE_CORPUS: List[Dict[str, str]] = [
@@ -5131,42 +5138,19 @@ def _run_command(
 def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
     """Return unique paths from plain ``git status --porcelain`` output."""
 
-    paths: List[str] = []
-    for line in stdout.splitlines():
-        path = line[3:].strip()
-        if " -> " in path:
-            path = path.rsplit(" -> ", 1)[1].strip()
-        if path and path not in paths:
-            paths.append(path)
-    return paths
+    return _shared_paths_from_git_status_porcelain(stdout)
 
 
 def _untracked_paths_from_git_status_porcelain(stdout: str) -> List[str]:
     """Return unique untracked paths from plain ``git status --porcelain`` output."""
 
-    paths: List[str] = []
-    for line in stdout.splitlines():
-        if not line.startswith("?? "):
-            continue
-        path = line[3:].strip()
-        if " -> " in path:
-            path = path.rsplit(" -> ", 1)[1].strip()
-        if path and path not in paths:
-            paths.append(path)
-    return paths
+    return _shared_untracked_paths_from_git_status_porcelain(stdout)
 
 
 def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
     """Return worktree paths from ``git worktree list --porcelain`` output."""
 
-    paths: List[Path] = []
-    for line in stdout.splitlines():
-        if not line.startswith("worktree "):
-            continue
-        path_text = line[len("worktree ") :].strip()
-        if path_text:
-            paths.append(Path(path_text).resolve())
-    return paths
+    return _shared_git_worktree_paths_from_porcelain(stdout)
 
 
 def _pid_is_alive(pid: int) -> bool:
@@ -5198,14 +5182,7 @@ def _owner_pid_from_worktree(path: Path, owner: Mapping[str, Any]) -> Optional[i
 
 
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:
-    paths: List[str] = []
-    for match in re.finditer(r"^diff --git a/(.+?) b/(.+?)$", unified_diff, flags=re.MULTILINE):
-        for candidate in (match.group(1), match.group(2)):
-            if candidate == "/dev/null":
-                continue
-            if candidate not in paths:
-                paths.append(candidate)
-    return paths
+    return _shared_paths_from_unified_diff(unified_diff)
 
 
 def _production_files(paths: Sequence[str]) -> List[str]:
@@ -5316,47 +5293,12 @@ def _dirty_target_diff_summary(*, repo_root: Path, paths: Sequence[str]) -> Dict
 
 
 def _unified_diff_stats(unified_diff: str) -> Dict[str, Any]:
-    files = _paths_from_unified_diff(unified_diff)
-    insertions = 0
-    deletions = 0
-    per_file: List[Dict[str, Any]] = []
-    current_file: Optional[Dict[str, Any]] = None
-    for line in unified_diff.splitlines():
-        match = re.match(r"^diff --git a/(.+?) b/(.+?)$", line)
-        if match:
-            path = match.group(2) if match.group(2) != "/dev/null" else match.group(1)
-            current_file = {
-                "path": path,
-                "insertions": 0,
-                "deletions": 0,
-                "deletion_heavy": False,
-            }
-            per_file.append(current_file)
-            continue
-        if line.startswith("+++") or line.startswith("---"):
-            continue
-        if line.startswith("+"):
-            insertions += 1
-            if current_file is not None:
-                current_file["insertions"] = int(current_file["insertions"]) + 1
-        elif line.startswith("-"):
-            deletions += 1
-            if current_file is not None:
-                current_file["deletions"] = int(current_file["deletions"]) + 1
-    for item in per_file:
-        item["deletion_heavy"] = int(item["deletions"]) > int(item["insertions"]) and int(item["deletions"]) > 0
-    deletion_heavy_files = [str(item["path"]) for item in per_file if item.get("deletion_heavy")]
-    return {
-        "files_changed": len(files),
-        "insertions": insertions,
-        "deletions": deletions,
-        "changed_files": files,
-        "deletion_heavy": deletions > insertions and deletions > 0,
-        "deletion_heavy_files": deletion_heavy_files,
-        "test_deletion_heavy_files": _test_files(deletion_heavy_files),
-        "production_deletion_heavy_files": _production_files(deletion_heavy_files),
-        "per_file": per_file,
-    }
+    return _shared_unified_diff_stats(
+        unified_diff,
+        test_file_prefixes=("tests/unit_tests/logic/deontic/",),
+        production_file_prefixes=("ipfs_datasets_py/logic/deontic/",),
+        production_exclude_prefixes=("ipfs_datasets_py/logic/deontic/__pycache__/",),
+    )
 
 
 def _cycle_was_kept(cycle_payload: Dict[str, Any]) -> bool:

@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_restart_loop_command,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
+    cleanup_stale_daemon_worktrees,
     current_task_failure_counts,
     daemon_spec_payload,
     extract_codex_event_text_candidates,
@@ -32,23 +33,32 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     last_task_attempt_index,
     looks_like_empty_codex_event_stream,
     materialize_proposal_files,
+    owner_pid_from_worktree,
     parse_json_proposal,
     parse_markdown_tasks,
+    paths_from_git_status_porcelain,
+    paths_from_unified_diff,
     proposal_diff_from_worktree,
     promote_worktree_files,
     quoted_env_assignments,
     read_daemon_results,
+    read_json_object,
     recent_failure_count,
     recent_total_failure_count,
     rounds_since_last_valid,
     run_command,
     run_lifecycle_cli,
+    run_todo_daemon,
     run_todo_daemon_cli,
     select_task,
     task_failure_summary,
     temporary_validation_worktree,
+    todo_daemon_proposals_payload,
+    unified_diff_stats,
+    untracked_paths_from_git_status_porcelain,
     verify_promoted_worktree_files,
     worktree_phase_worker_status,
+    write_worktree_owner_file,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.__main__ import (
     daemon_names,
@@ -253,6 +263,102 @@ def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
     assert last_task_attempt_index(parsed, "Task A") == 2
     assert summary["latest_failure"]["failure_kind"] == "validation"
     assert summary["latest_failure"]["errors"] == ["bad type"]
+
+
+def test_git_parsing_helpers_are_reusable() -> None:
+    status = "\n".join(
+        [
+            " M ipfs_datasets_py/logic/deontic/parser.py",
+            "R  old.py -> new.py",
+            "?? tests/unit_tests/logic/deontic/test_parser.py",
+        ]
+    )
+    diff = "\n".join(
+        [
+            "diff --git a/ipfs_datasets_py/logic/deontic/parser.py b/ipfs_datasets_py/logic/deontic/parser.py",
+            "--- a/ipfs_datasets_py/logic/deontic/parser.py",
+            "+++ b/ipfs_datasets_py/logic/deontic/parser.py",
+            "@@ -1,2 +1,1 @@",
+            "-old",
+            "-line",
+            "+new",
+            "diff --git a/tests/unit_tests/logic/deontic/test_parser.py b/tests/unit_tests/logic/deontic/test_parser.py",
+            "--- a/tests/unit_tests/logic/deontic/test_parser.py",
+            "+++ b/tests/unit_tests/logic/deontic/test_parser.py",
+            "@@ -1 +1,2 @@",
+            " test",
+            "+extra",
+        ]
+    )
+
+    stats = unified_diff_stats(
+        diff,
+        test_file_prefixes=("tests/unit_tests/logic/deontic/",),
+        production_file_prefixes=("ipfs_datasets_py/logic/deontic/",),
+    )
+
+    assert paths_from_git_status_porcelain(status) == [
+        "ipfs_datasets_py/logic/deontic/parser.py",
+        "new.py",
+        "tests/unit_tests/logic/deontic/test_parser.py",
+    ]
+    assert untracked_paths_from_git_status_porcelain(status) == [
+        "tests/unit_tests/logic/deontic/test_parser.py"
+    ]
+    assert paths_from_unified_diff(diff) == [
+        "ipfs_datasets_py/logic/deontic/parser.py",
+        "tests/unit_tests/logic/deontic/test_parser.py",
+    ]
+    assert stats["files_changed"] == 2
+    assert stats["insertions"] == 2
+    assert stats["deletions"] == 2
+    assert stats["deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
+    assert stats["production_deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
+    assert stats["test_deletion_heavy_files"] == []
+
+
+def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    worktree_root = repo / ".daemon" / "worktrees"
+    cycle = worktree_root / "cycle_01_20260101T000000000000Z_12345"
+    repair = worktree_root / "repair_01_20260101T000000000000Z_12345"
+    for index, path in enumerate((cycle, repair), start=1):
+        path.mkdir(parents=True)
+        owner_path = path / ".todo_owner.json"
+        write_worktree_owner_file(
+            owner_path,
+            schema="synthetic.todo_owner",
+            repo_root=repo,
+            attempt=index,
+            extra={"created_at_epoch": 1},
+        )
+        assert read_json_object(owner_path)["attempt"] == index
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds, stdin=None):
+        calls.append(tuple(command))
+        if tuple(command[:3]) == ("git", "worktree", "list"):
+            return CommandResult(tuple(command), 0, "", "")
+        return CommandResult(tuple(command), 0, "", "")
+
+    result = cleanup_stale_daemon_worktrees(
+        repo_root=repo,
+        worktree_root=worktree_root,
+        stale_after_seconds=10,
+        owner_filename=".todo_owner.json",
+        run_command_fn=fake_run_command,
+        owner_alive=lambda _pid, _repo, _worktree: False,
+        now_epoch=100,
+    )
+
+    assert result["valid"] is True
+    assert {Path(item["path"]).name for item in result["removed"]} == {cycle.name, repair.name}
+    assert not cycle.exists()
+    assert not repair.exists()
+    assert owner_pid_from_worktree(Path("cycle_01_20260101T000000000000Z_54321"), {}) == 54321
+    assert calls.count(("git", "worktree", "prune", "--expire", "now")) == 2
+    assert ("git", "worktree", "list", "--porcelain") in calls
 
 
 def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path) -> None:
@@ -837,9 +943,19 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
         ),
     )
 
-    proposal = FileReplacementTodoDaemonRunner(config, runner_hooks, file_hooks).run()[0]
+    proposals = run_todo_daemon(
+        config,
+        runner_factory=lambda runner_config: FileReplacementTodoDaemonRunner(
+            runner_config,
+            runner_hooks,
+            file_hooks,
+        ),
+    )
+    proposal = proposals[0]
+    payload = todo_daemon_proposals_payload(proposals)
 
     assert proposal.valid
+    assert payload[0]["summary"] == "Concrete accepted work"
     assert accepted == ["Concrete accepted work"]
     assert (repo / "todo" / "source.py").read_text(encoding="utf-8") == "VALUE = 3\n"
     assert "- [x] Task checkbox-3: Concrete file runner task." in board.read_text(encoding="utf-8")

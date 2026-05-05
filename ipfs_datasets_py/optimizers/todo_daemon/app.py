@@ -15,6 +15,7 @@ from .runner import TodoDaemonHooks, TodoDaemonRunner
 
 HooksFactory = Callable[[Any], TodoDaemonHooks]
 ConfigFactory = Callable[[argparse.Namespace], Any]
+RunnerFactory = Callable[[Any], TodoDaemonRunner]
 
 
 @dataclass
@@ -129,19 +130,61 @@ def todo_daemon_exit_code(proposals: Sequence[Proposal]) -> int:
     return 0 if latest.valid else 1
 
 
+def todo_daemon_proposals_payload(proposals: Sequence[Proposal]) -> list[dict[str, Any]]:
+    """Return the legacy list-shaped JSON payload for a daemon run."""
+
+    return [proposal.to_dict() for proposal in proposals]
+
+
+def print_todo_daemon_result(
+    proposals: Sequence[Proposal],
+    *,
+    output: str = "summary",
+) -> None:
+    """Print a daemon run result using a stable JSON shape."""
+
+    if output == "proposals":
+        payload: Any = todo_daemon_proposals_payload(proposals)
+    elif output == "summary":
+        payload = todo_daemon_run_summary(proposals)
+    else:
+        raise ValueError(f"unsupported todo daemon output mode: {output}")
+    print(json.dumps(payload, indent=2, sort_keys=output == "summary"))
+
+
+def run_todo_daemon(
+    config: Any,
+    *,
+    hooks_factory: Optional[HooksFactory] = None,
+    runner_factory: Optional[RunnerFactory] = None,
+) -> list[Proposal]:
+    """Run a todo daemon from package-level factories."""
+
+    if runner_factory is not None:
+        return list(runner_factory(config).run())
+    if hooks_factory is None:
+        raise ValueError("hooks_factory is required when runner_factory is not provided")
+    return list(TodoDaemonRunner(config, hooks_factory(config)).run())
+
+
 def run_todo_daemon_cli(
     argv: Optional[Sequence[str]],
     *,
-    hooks_factory: HooksFactory,
+    hooks_factory: Optional[HooksFactory] = None,
+    runner_factory: Optional[RunnerFactory] = None,
     config_factory: ConfigFactory = config_from_todo_runner_args,
     parser: Optional[argparse.ArgumentParser] = None,
+    output: str = "summary",
 ) -> int:
     """Parse args, run ``TodoDaemonRunner``, print JSON, and return an exit code."""
 
     parser = parser or build_todo_runner_arg_parser()
     args = parser.parse_args(argv)
     config = config_factory(args)
-    hooks = hooks_factory(config)
-    proposals = TodoDaemonRunner(config, hooks).run()
-    print(json.dumps(todo_daemon_run_summary(proposals), indent=2, sort_keys=True))
+    proposals = run_todo_daemon(
+        config,
+        hooks_factory=hooks_factory,
+        runner_factory=runner_factory,
+    )
+    print_todo_daemon_result(proposals, output=output)
     return todo_daemon_exit_code(proposals)
