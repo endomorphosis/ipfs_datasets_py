@@ -13,6 +13,7 @@ def test_wallet_is_canonical_generic_wallet_import() -> None:
         AccessRequest,
         AnalyticsTemplate,
         DataWalletService,
+        DeterministicLocationDistanceProofBackend,
         DeterministicLocationRegionProofBackend,
         ProofBackendRegistry,
         SimulatedProofBackend,
@@ -25,6 +26,7 @@ def test_wallet_is_canonical_generic_wallet_import() -> None:
     assert WalletService is DataWalletService
     assert AccessRequest.__name__ == "AccessRequest"
     assert AnalyticsTemplate.__name__ == "AnalyticsTemplate"
+    assert DeterministicLocationDistanceProofBackend.__name__ == "DeterministicLocationDistanceProofBackend"
     assert DeterministicLocationRegionProofBackend.__name__ == "DeterministicLocationRegionProofBackend"
     assert ProofBackendRegistry.__name__ == "ProofBackendRegistry"
     assert SimulatedProofBackend.__name__ == "SimulatedProofBackend"

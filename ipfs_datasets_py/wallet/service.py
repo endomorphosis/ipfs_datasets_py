@@ -32,7 +32,13 @@ from .exceptions import (
     GrantError,
     MissingRecordError,
 )
-from .location import make_coarse_location_claim, region_membership_statement, serialize_location
+from .location import (
+    distance_membership_statement,
+    haversine_distance_km,
+    make_coarse_location_claim,
+    region_membership_statement,
+    serialize_location,
+)
 from .manifest import canonical_bytes, canonical_dumps
 from .models import (
     AggregateResult,
@@ -1473,6 +1479,94 @@ class DataWalletService:
             "record_id": record_id,
         }
         receipt = self.proof_backend.prove_location_region(
+            wallet_id=wallet_id,
+            statement=statement,
+            public_inputs=public_inputs,
+            witness=witness,
+            witness_record_ids=[record_id],
+        )
+        if receipt.is_simulated and not self.allow_simulated_proofs:
+            raise DataWalletError("Simulated proofs are disabled for this wallet service")
+        if not self.proof_backend.verify(receipt):
+            raise DataWalletError("Proof verification failed")
+        self.proofs[receipt.proof_id] = receipt
+        self.versions[record.current_version_id].proof_receipt_ids.append(receipt.proof_id)
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="proof/create",
+            resource=resource_for_location(wallet_id, record_id),
+            decision="allow",
+            details={"proof_type": receipt.proof_type, "is_simulated": receipt.is_simulated},
+            grant_id=grant_id,
+        )
+        return receipt
+
+    def create_location_distance_proof(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        target_id: str,
+        target_lat: float,
+        target_lon: float,
+        max_distance_km: float,
+        grant_id: Optional[str] = None,
+    ) -> ProofReceipt:
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "location":
+            raise ValueError("Record is not a location record")
+        if float(max_distance_km) <= 0:
+            raise ValueError("max_distance_km must be positive")
+        if actor_did != self._wallet(wallet_id).owner_did:
+            if grant_id is None:
+                raise AccessDeniedError("Location distance proof requires a grant")
+            self._assert_grant_allows(
+                self.grants[grant_id],
+                wallet_id=wallet_id,
+                audience_did=actor_did,
+                resource=resource_for_location(wallet_id, record_id),
+                ability="location/prove_distance",
+            )
+        raw = self.decrypt_record(wallet_id, record_id, actor_did=self._wallet(wallet_id).owner_did)
+        payload = json.loads(raw.decode("utf-8"))
+        distance_km = haversine_distance_km(
+            payload["lat"],
+            payload["lon"],
+            target_lat,
+            target_lon,
+        )
+        if distance_km > float(max_distance_km):
+            raise DataWalletError("Location is outside the requested distance threshold")
+        statement = distance_membership_statement(
+            payload["lat"],
+            payload["lon"],
+            target_id=target_id,
+            target_lat=target_lat,
+            target_lon=target_lon,
+            max_distance_km=max_distance_km,
+        )
+        public_inputs = {
+            "target_id": target_id,
+            "claim": "location_within_distance",
+            "max_distance_km": float(max_distance_km),
+            "target_policy_hash": statement["target_policy_hash"],
+        }
+        witness = {
+            "lat": payload["lat"],
+            "lon": payload["lon"],
+            "target_lat": float(target_lat),
+            "target_lon": float(target_lon),
+            "max_distance_km": float(max_distance_km),
+            "wallet_id": wallet_id,
+            "record_id": record_id,
+        }
+        prove_distance = getattr(self.proof_backend, "prove_location_distance", None)
+        if not callable(prove_distance):
+            raise DataWalletError("Configured proof backend does not support location_distance")
+        receipt = prove_distance(
             wallet_id=wallet_id,
             statement=statement,
             public_inputs=public_inputs,

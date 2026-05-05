@@ -36,6 +36,7 @@ from .models import (
 from .multisig import operation_requires_approval
 from .privacy import AnalyticsPrivacyPolicy
 from .proofs import (
+    DeterministicLocationDistanceProofBackend,
     DeterministicLocationRegionProofBackend,
     ProofBackend,
     ProofBackendRegistry,
@@ -52,6 +53,12 @@ from .storage import (
     WalletStorageBackendConfig,
     WalletStorageConfig,
     create_encrypted_blob_store,
+)
+from .ucan import (
+    WALLET_UCAN_PROFILE_ID,
+    WALLET_UCAN_TOKEN_PREFIX,
+    invocation_to_ucan_profile_payload,
+    wallet_ucan_profile,
 )
 
 WalletService = DataWalletService
@@ -72,6 +79,7 @@ __all__ = [
     "DataWalletError",
     "DataWalletService",
     "DecryptionError",
+    "DeterministicLocationDistanceProofBackend",
     "DeterministicLocationRegionProofBackend",
     "DerivedArtifact",
     "Grant",
@@ -99,6 +107,10 @@ __all__ = [
     "WalletStorageHealthReport",
     "WalletStorageBackendConfig",
     "WalletStorageConfig",
+    "WALLET_UCAN_PROFILE_ID",
+    "WALLET_UCAN_TOKEN_PREFIX",
     "create_encrypted_blob_store",
+    "invocation_to_ucan_profile_payload",
     "operation_requires_approval",
+    "wallet_ucan_profile",
 ]

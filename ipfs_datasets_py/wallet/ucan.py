@@ -235,6 +235,8 @@ def assert_invocation_allows(
         raise AccessDeniedError("Invocation audience does not match actor")
     if invocation.grant_id != grant.grant_id:
         raise AccessDeniedError("Invocation grant does not match")
+    if invocation.issuer_did is not None and invocation.issuer_did != grant.issuer_did:
+        raise AccessDeniedError("Invocation issuer does not match grant")
     if invocation.resource != resource or invocation.ability != ability:
         raise AccessDeniedError("Invocation capability does not match requested action")
     if is_expired(invocation.expires_at):

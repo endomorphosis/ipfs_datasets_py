@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -17,11 +18,13 @@ from ipfs_datasets_py.wallet import (
     AccessDeniedError,
     ApprovalRequiredError,
     DataWalletError,
+    DeterministicLocationDistanceProofBackend,
     DeterministicLocationRegionProofBackend,
     ProofReceipt,
     WalletInvocation,
     WalletService,
 )
+from ipfs_datasets_py.wallet.manifest import canonical_bytes
 from ipfs_datasets_py.wallet.privacy import noisy_count
 from ipfs_datasets_py.wallet.storage import (
     FilecoinEncryptedBlobStore,
@@ -31,12 +34,16 @@ from ipfs_datasets_py.wallet.storage import (
     S3EncryptedBlobStore,
 )
 from ipfs_datasets_py.wallet.ucan import (
+    WALLET_UCAN_TOKEN_PREFIX,
     invocation_from_token,
     invocation_to_token,
+    invocation_to_ucan_profile_payload,
     resource_for_export,
     resource_for_location,
     resource_for_record,
     resource_for_wallet,
+    sign_invocation,
+    wallet_ucan_profile,
 )
 
 
@@ -1231,6 +1238,90 @@ def test_location_region_proof_accepts_deterministic_integration_backend(tmp_pat
     assert "-122.678385" not in public_receipt
 
 
+def test_location_distance_proof_hides_precise_point_and_target_coordinates(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_location(wallet.wallet_id, location.record_id)],
+        abilities=["location/prove_distance"],
+        caveats={"purpose": "service_matching", "proof_type": "location_distance"},
+    )
+
+    receipt = service.create_location_distance_proof(
+        wallet.wallet_id,
+        location.record_id,
+        actor_did=ADVOCATE,
+        target_id="shelter-west",
+        target_lat=45.516,
+        target_lon=-122.679,
+        max_distance_km=1.0,
+        grant_id=grant.grant_id,
+    )
+
+    assert receipt.is_simulated is True
+    assert receipt.proof_type == "location_distance"
+    assert receipt.public_inputs["claim"] == "location_within_distance"
+    assert receipt.public_inputs["target_id"] == "shelter-west"
+    assert receipt.public_inputs["max_distance_km"] == 1.0
+    assert receipt.public_inputs["target_policy_hash"]
+    public_receipt = json.dumps(receipt.to_dict())
+    for secret in ("45.515232", "-122.678385", "45.516", "-122.679"):
+        assert secret not in public_receipt
+
+
+def test_location_distance_proof_rejects_out_of_range_claim(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    with pytest.raises(DataWalletError, match="outside"):
+        service.create_location_distance_proof(
+            wallet.wallet_id,
+            location.record_id,
+            actor_did=OWNER,
+            target_id="far-service",
+            target_lat=47.6062,
+            target_lon=-122.3321,
+            max_distance_km=1.0,
+        )
+
+    assert service.proofs == {}
+
+
+def test_location_distance_proof_accepts_deterministic_integration_backend(tmp_path):
+    service = WalletService(
+        storage_dir=tmp_path,
+        proof_backend=DeterministicLocationDistanceProofBackend(),
+        allow_simulated_proofs=False,
+    )
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+
+    receipt = service.create_location_distance_proof(
+        wallet.wallet_id,
+        location.record_id,
+        actor_did=OWNER,
+        target_id="shelter-west",
+        target_lat=45.516,
+        target_lon=-122.679,
+        max_distance_km=1.0,
+    )
+
+    assert receipt.is_simulated is False
+    assert receipt.proof_type == "location_distance"
+    assert receipt.proof_system == "deterministic-test-proof"
+    assert receipt.circuit_id == "deterministic-location-distance-v0.1"
+    assert receipt.proof_artifact_ref and receipt.proof_artifact_ref.startswith("deterministic-proof://")
+    assert service.proof_backend.verify(receipt) is True
+    public_receipt = json.dumps(receipt.to_dict())
+    for secret in ("45.515232", "-122.678385", "45.516", "-122.679"):
+        assert secret not in public_receipt
+
+
 def test_proof_receipt_snapshot_import_accepts_legacy_receipt_schema(tmp_path):
     service = WalletService(
         storage_dir=tmp_path,
@@ -1613,6 +1704,105 @@ def test_signed_invocation_allows_delegate_analysis_and_round_trips_token(tmp_pa
     assert "invocation/verify" in actions
 
 
+def test_wallet_ucan_profile_payload_exports_capability_without_plaintext(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "profile-case-note.txt"
+    source.write_text("Tenant needs confidential rental assistance.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+    )
+
+    token_invocation = invocation_from_token(invocation_to_token(invocation))
+    profile = wallet_ucan_profile()
+    payload = invocation_to_ucan_profile_payload(token_invocation, grant=grant)
+    serialized = json.dumps(payload)
+
+    assert token_invocation.issuer_did == OWNER
+    assert profile["token_prefix"] == WALLET_UCAN_TOKEN_PREFIX.rstrip(".")
+    assert payload["profile"] == profile["profile"]
+    assert payload["ucan"]["iss"] == OWNER
+    assert payload["ucan"]["aud"] == ADVOCATE
+    assert payload["ucan"]["att"] == [
+        {
+            "with": resource,
+            "can": "record/analyze",
+            "nb": {"purpose": "case_review", "output_types": ["summary"]},
+        }
+    ]
+    assert "confidential rental assistance" not in serialized
+
+
+def test_legacy_invocation_token_without_issuer_remains_verifiable(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "legacy-invocation.txt"
+    source.write_text("Legacy invocation should still work.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+    )
+    legacy_invocation = WalletInvocation(
+        **(invocation.to_dict() | {"issuer_did": None, "signature": ""})
+    )
+    legacy_invocation.signature = sign_invocation(legacy_invocation, delegate_secret)
+    legacy_payload = legacy_invocation.to_dict()
+    legacy_payload.pop("issuer_did", None)
+    legacy_token = (
+        WALLET_UCAN_TOKEN_PREFIX
+        + base64.urlsafe_b64encode(canonical_bytes(legacy_payload)).decode("ascii")
+    )
+    restored = invocation_from_token(legacy_token)
+
+    artifact = service.analyze_record_summary_with_invocation(
+        wallet.wallet_id,
+        record.record_id,
+        actor_did=ADVOCATE,
+        invocation=restored,
+        actor_secret=delegate_secret,
+    )
+
+    assert restored.issuer_did is None
+    assert artifact.artifact_type == "summary"
+
+
 def test_access_request_approval_can_issue_invocation(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     owner_secret = b"o" * 32
@@ -1856,6 +2046,10 @@ def test_invocation_rejects_tampering_wrong_ability_and_revoked_grant(tmp_path):
         actor_secret=delegate_secret,
     )
     tampered = WalletInvocation(**(invocation.to_dict() | {"caveats": {"tampered": True}}))
+    tampered_issuer = WalletInvocation(
+        **(invocation.to_dict() | {"issuer_did": "did:key:other", "signature": ""})
+    )
+    tampered_issuer.signature = sign_invocation(tampered_issuer, delegate_secret)
 
     with pytest.raises(AccessDeniedError, match="capability"):
         service.verify_invocation(
@@ -1870,6 +2064,15 @@ def test_invocation_rejects_tampering_wrong_ability_and_revoked_grant(tmp_path):
         service.verify_invocation(
             wallet.wallet_id,
             tampered,
+            actor_did=ADVOCATE,
+            resource=resource_for_record(wallet.wallet_id, record.record_id),
+            ability="record/analyze",
+            actor_secret=delegate_secret,
+        )
+    with pytest.raises(AccessDeniedError, match="issuer"):
+        service.verify_invocation(
+            wallet.wallet_id,
+            tampered_issuer,
             actor_did=ADVOCATE,
             resource=resource_for_record(wallet.wallet_id, record.record_id),
             ability="record/analyze",
