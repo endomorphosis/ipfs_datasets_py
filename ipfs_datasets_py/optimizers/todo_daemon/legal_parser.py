@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 from .core import (
     ManagedDaemonSpec,
     StopResult,
-    child_pids,
     iter_processes,
     now_iso,
     now_utc,
@@ -26,6 +25,7 @@ from .core import (
     write_json,
 )
 from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
+from .supervisor import heartbeat_snapshot, worktree_phase_worker_status
 
 
 JsonDict = Dict[str, Any]
@@ -169,61 +169,6 @@ def _wrapper_alive(spec: ManagedDaemonSpec, launch_mode: str) -> bool:
     return pid_is_legal_parser_wrapper(read_pid_file(_wrapper_pid_path(spec)))
 
 
-def _descendant_processes(root_pid: Any) -> List[JsonDict]:
-    try:
-        root = int(root_pid)
-    except Exception:
-        return []
-    stack = list(child_pids(root))
-    seen: set[int] = set()
-    found: List[JsonDict] = []
-    while stack:
-        pid = stack.pop(0)
-        if pid in seen:
-            continue
-        seen.add(pid)
-        found.append({"pid": pid, "cmdline": process_args(pid)})
-        stack.extend(child_pids(pid))
-    return found
-
-
-def _worktree_phase_worker_status(
-    current: Mapping[str, Any],
-    daemon_pid: Any,
-    threshold_seconds: float,
-) -> JsonDict:
-    phase = str(current.get("phase") or "")
-    phases = {
-        "requesting_worktree_edit",
-        "retrying_worktree_edit",
-        "repairing_failed_worktree_edit",
-        "repairing_failed_tests_before_rollback",
-    }
-    if phase not in phases:
-        return {"required": False, "phase": phase}
-    now = now_utc()
-    started = parse_timestamp(current.get("phase_started_at") or current.get("phase_updated_at"))
-    age = None if started is None else max(0.0, (now - started).total_seconds())
-    descendants = _descendant_processes(daemon_pid)
-    workers = [
-        item
-        for item in descendants
-        if "codex" in str(item.get("cmdline") or "").lower()
-        and " exec" in (" " + " ".join(str(item.get("cmdline") or "").lower().split()))
-    ]
-    stalled = bool(age is not None and threshold_seconds > 0 and age >= threshold_seconds and not workers)
-    return {
-        "required": True,
-        "phase": phase,
-        "phase_age_seconds": None if age is None else round(age, 3),
-        "threshold_seconds": threshold_seconds,
-        "active_worker_pids": [item.get("pid") for item in workers],
-        "active_worker_count": len(workers),
-        "descendant_count": len(descendants),
-        "stalled_without_active_worker": stalled,
-    }
-
-
 def check_legal_parser_health(
     spec: Optional[ManagedDaemonSpec] = None,
     *,
@@ -239,13 +184,13 @@ def check_legal_parser_health(
     supervisor_state = read_json(spec.repo_root / str(supervisor.get("agentic_state_path") or ""))
 
     now = now_utc()
-    heartbeat_at = parse_timestamp(current.get("heartbeat_at") or current.get("updated_at"))
-    heartbeat_age = None if heartbeat_at is None else max(0.0, (now - heartbeat_at).total_seconds())
+    heartbeat = heartbeat_snapshot(current, stale_after_seconds=stale_after_seconds, now=now)
+    heartbeat_age = heartbeat.age_seconds
 
-    daemon_pid = current.get("heartbeat_pid") or current.get("pid")
+    daemon_pid = heartbeat.pid
     supervisor_pid = supervisor.get("supervisor_pid") or read_pid_file(spec.resolve(spec.supervisor_pid_path))
     supervisor_alive = pid_alive(supervisor_pid) if supervisor_pid else False
-    daemon_alive = pid_alive(daemon_pid) if daemon_pid else False
+    daemon_alive = heartbeat.pid_alive
 
     supervisor_status = str(supervisor.get("status") or "")
     maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
@@ -267,7 +212,7 @@ def check_legal_parser_health(
     ):
         maintenance_age = max(0.0, (now - maintenance_started_at).total_seconds())
         maintenance_fresh = maintenance_age <= maintenance_timeout + 60.0
-    daemon_fresh = heartbeat_age is not None and heartbeat_age <= stale_after_seconds
+    daemon_fresh = heartbeat.fresh
     alive = bool(supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh))
     status_label = "maintenance_running" if maintenance_fresh else "running" if alive else "stale_or_stopped"
 
@@ -320,7 +265,7 @@ def check_legal_parser_health(
         "failed_test_repair_attempts": current.get("failed_test_repair_attempts")
         or supervisor.get("failed_test_repair_attempts"),
         "worktree_no_child_stall_seconds": worktree_no_child_threshold,
-        "worktree_phase_worker_status": _worktree_phase_worker_status(
+        "worktree_phase_worker_status": worktree_phase_worker_status(
             current,
             daemon_pid,
             worktree_no_child_threshold,

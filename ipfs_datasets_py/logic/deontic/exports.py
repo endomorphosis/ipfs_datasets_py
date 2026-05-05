@@ -4147,6 +4147,19 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
     if action_predicate.startswith((
+        "AnalyzeSafety",
+        "AssessRisk",
+        "DevelopCompliancePlan",
+        "ImplementCompliancePlan",
+        "ImplementCorrectiveActionPlan",
+        "MaintainComplianceProgram",
+        "PlanEmergencyResponse",
+        "PrepareCompliancePlan",
+        "PrepareCorrectiveActionPlan",
+        "SubmitCompliancePlan",
+    )):
+        return "compliance_planning_duty"
+    if action_predicate.startswith((
         "Analyze",
         "Diagnose",
         "Examine",

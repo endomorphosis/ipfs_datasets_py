@@ -62,12 +62,26 @@ from .file_replacement import (
 )
 from .plans import PlanTask, extract_plan_tasks, replace_checkbox_mark, strip_daemon_task_board
 from .runner import PreTaskBlock, TodoDaemonHooks, TodoDaemonRunner
+from .supervisor import (
+    DEFAULT_WORKTREE_PHASES,
+    HeartbeatSnapshot,
+    SupervisorStatusContext,
+    active_codex_exec_workers,
+    build_supervisor_status_payload,
+    descendant_processes,
+    heartbeat_is_stale,
+    heartbeat_snapshot,
+    read_heartbeat_snapshot,
+    worktree_phase_worker_status,
+)
 
 __all__ = [
     "CommandResult",
+    "DEFAULT_WORKTREE_PHASES",
     "DaemonHealth",
     "EnsureResult",
     "FileReplacementHooks",
+    "HeartbeatSnapshot",
     "FileReplacementTodoDaemonRunner",
     "ManagedDaemonSpec",
     "PathPolicy",
@@ -75,6 +89,7 @@ __all__ = [
     "PreTaskBlock",
     "Proposal",
     "StopResult",
+    "SupervisorStatusContext",
     "Task",
     "TodoDaemonHooks",
     "TodoDaemonRunner",
@@ -83,6 +98,7 @@ __all__ = [
     "append_jsonl",
     "apply_file_replacement_proposal",
     "atomic_write_json",
+    "active_codex_exec_workers",
     "bind_file_replacement_apply_hook",
     "build_legal_parser_spec",
     "build_lifecycle_arg_parser",
@@ -94,11 +110,15 @@ __all__ = [
     "config_from_todo_runner_args",
     "copy_if_exists",
     "daemon_spec_payload",
+    "build_supervisor_status_payload",
+    "descendant_processes",
     "diff_for_file",
     "extract_json",
     "extract_plan_tasks",
     "ensure_daemon_running",
     "ensure_legal_parser_daemon",
+    "heartbeat_is_stale",
+    "heartbeat_snapshot",
     "json_print",
     "legal_parser_launch_env",
     "legal_parser_spec_payload",
@@ -111,6 +131,7 @@ __all__ = [
     "proposal_files_from_worktree",
     "promote_worktree_files",
     "read_text",
+    "read_heartbeat_snapshot",
     "replace_checkbox_mark",
     "run_command",
     "run_lifecycle_args",
@@ -127,6 +148,7 @@ __all__ = [
     "verify_promoted_worktree_files",
     "workspace_artifact_payload",
     "worktree_marker_payload",
+    "worktree_phase_worker_status",
 ]
 
 

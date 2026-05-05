@@ -169,6 +169,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_health_compliance_light_verb_action(action_text)
+    action_text = _normalize_compliance_planning_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
@@ -470,6 +471,40 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
+
+    return text
+
+
+def _normalize_compliance_planning_light_verb_action(action_text: str) -> str:
+    """Project compliance planning and risk-review nominalizations to acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|make|makes|made|making|prepare|prepares|prepared|preparing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?risk\s+assessment\s*(?:(?:of|for|on)\s+(?:the\s+)?(.+))?$",
+            "assess risk",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|make|makes|made|making|prepare|prepares|prepared|preparing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?safety\s+analysis\s*(?:(?:of|for|on)\s+(?:the\s+)?(.+))?$",
+            "analyze safety",
+        ),
+        (
+            r"^(?:prepare|prepares|prepared|preparing|develop|develops|developed|developing|adopt|adopts|adopted|adopting|maintain|maintains|maintained|maintaining|implement|implements|implemented|implementing|submit|submits|submitted|submitting)\s+"
+            r"(?:a\s+|an\s+|the\s+)?emergency\s+response\s+plan\s*(?:(?:for|of)\s+(?:the\s+)?(.+))?$",
+            "plan emergency response",
+        ),
+    ]
+    for pattern, verb_phrase in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        target = _normalized_light_verb_target(match.group(1) or "")
+        return f"{verb_phrase} {target}".strip()
 
     return text
 

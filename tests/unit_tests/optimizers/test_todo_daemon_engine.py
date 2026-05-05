@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.todo_daemon import (
@@ -20,8 +21,10 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
     build_lifecycle_arg_parser,
+    build_supervisor_status_payload,
     build_todo_runner_arg_parser,
     daemon_spec_payload,
+    heartbeat_snapshot,
     materialize_proposal_files,
     parse_json_proposal,
     parse_markdown_tasks,
@@ -32,6 +35,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     select_task,
     temporary_validation_worktree,
     verify_promoted_worktree_files,
+    worktree_phase_worker_status,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.__main__ import (
     daemon_names,
@@ -177,6 +181,84 @@ def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path)
         assert verify_promoted_worktree_files(repo, worktree, changed) == []
 
     assert not any((repo / ".daemon" / "worktrees").iterdir())
+
+
+def test_supervisor_heartbeat_and_worker_watchdog_helpers_are_reusable() -> None:
+    now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    current = {
+        "heartbeat_at": (now - timedelta(seconds=5)).isoformat(),
+        "heartbeat_pid": 999999999,
+        "phase": "requesting_worktree_edit",
+        "phase_started_at": (now - timedelta(seconds=45)).isoformat(),
+    }
+
+    heartbeat = heartbeat_snapshot(current, stale_after_seconds=30, now=now)
+    stale_heartbeat = heartbeat_snapshot(
+        {**current, "heartbeat_at": (now - timedelta(seconds=31)).isoformat()},
+        stale_after_seconds=30,
+        now=now,
+    )
+    worker_status = worktree_phase_worker_status(
+        current,
+        daemon_pid=999999999,
+        threshold_seconds=30,
+        now=now,
+    )
+
+    assert heartbeat.age_seconds == 5
+    assert heartbeat.fresh is True
+    assert heartbeat.stale is False
+    assert heartbeat.pid_alive is False
+    assert stale_heartbeat.stale is True
+    assert worker_status["required"] is True
+    assert worker_status["phase"] == "requesting_worktree_edit"
+    assert worker_status["phase_age_seconds"] == 45
+    assert worker_status["active_worker_count"] == 0
+    assert worker_status["stalled_without_active_worker"] is True
+
+
+def test_supervisor_status_payload_builder_is_reusable(tmp_path: Path) -> None:
+    spec = ManagedDaemonSpec(
+        name="synthetic",
+        schema="synthetic.todo_daemon",
+        repo_root=tmp_path,
+        daemon_dir=Path(".daemon"),
+        runner=("python3", "-m", "synthetic.daemon"),
+        status_path=Path(".daemon/status.json"),
+        progress_path=Path(".daemon/progress.json"),
+        supervisor_status_path=Path(".daemon/supervisor.json"),
+        supervisor_pid_path=Path(".daemon/supervisor.pid"),
+        child_pid_path=Path(".daemon/child.pid"),
+        supervisor_out_path=Path(".daemon/supervisor.out"),
+        ensure_status_path=Path(".daemon/ensure.json"),
+        ensure_check_path=Path(".daemon/ensure-check.json"),
+        supervisor_lock_path=Path(".daemon/supervisor.lock"),
+    )
+
+    payload = build_supervisor_status_payload(
+        spec,
+        status="running",
+        run_id="run-1",
+        log_path=".daemon/run.log",
+        daemon_pid=123,
+        restart_count=2,
+        last_exit_code=None,
+        supervisor_pid=456,
+        static_fields={"watchdog_stale_after_seconds": 90},
+        extra={"model_name": "gpt-5.5"},
+    )
+
+    assert payload["schema"] == "synthetic.todo_daemon.supervisor"
+    assert payload["status"] == "running"
+    assert payload["supervisor_pid"] == 456
+    assert payload["daemon_pid"] == 123
+    assert payload["restart_count"] == 2
+    assert payload["current_status_path"] == ".daemon/status.json"
+    assert payload["progress_path"] == ".daemon/progress.json"
+    assert payload["child_pid_path"] == ".daemon/child.pid"
+    assert payload["supervisor_lock_path"] == ".daemon/supervisor.lock"
+    assert payload["watchdog_stale_after_seconds"] == 90
+    assert payload["model_name"] == "gpt-5.5"
 
 
 def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Path) -> None:
