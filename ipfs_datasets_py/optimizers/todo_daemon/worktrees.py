@@ -26,6 +26,22 @@ OwnerAlivePredicate = Callable[[int, Path, Path], bool]
 WorktreeOwnerWriter = Callable[[Path], None]
 
 
+def _run_command_with_timeout(
+    run_command_fn: CommandRunner,
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    timeout_seconds: int,
+) -> CommandResult:
+    normalized_timeout = max(1, int(timeout_seconds))
+    try:
+        return run_command_fn(tuple(command), cwd=cwd, timeout_seconds=normalized_timeout)
+    except TypeError as exc:
+        if "timeout_seconds" not in str(exc):
+            raise
+        return run_command_fn(tuple(command), cwd=cwd, timeout=normalized_timeout)
+
+
 def git_status_paths(stdout: str) -> list[str]:
     """Return paths from ``git status --porcelain`` output."""
 
@@ -130,23 +146,72 @@ def dirty_worktree_paths(
     normalized_paths = unique_worktree_paths(paths)
     if not normalized_paths:
         return []
-    try:
-        status = run_command_fn(
-            ("git", "status", "--porcelain", "--", *normalized_paths),
-            cwd=repo_root,
-            timeout_seconds=max(1, int(timeout_seconds)),
-        )
-    except TypeError as exc:
-        if "timeout_seconds" not in str(exc):
-            raise
-        status = run_command_fn(
-            ("git", "status", "--porcelain", "--", *normalized_paths),
-            cwd=repo_root,
-            timeout=max(1, int(timeout_seconds)),
-        )
+    status = _run_command_with_timeout(
+        run_command_fn,
+        ("git", "status", "--porcelain", "--", *normalized_paths),
+        cwd=repo_root,
+        timeout_seconds=timeout_seconds,
+    )
     if not status.ok:
         return []
     return git_status_paths(status.stdout)
+
+
+def worktree_diff(
+    *,
+    worktree_path: Path,
+    paths: Sequence[str | Path],
+    raw_trace: Optional[dict[str, Any]] = None,
+    label: str = "worktree",
+    timeout_seconds: int = 60,
+    run_command_fn: CommandRunner = run_command,
+) -> str:
+    """Return a binary Git diff for a normalized worktree path subset.
+
+    Untracked files are staged with intent-to-add before diffing so callers can
+    harvest new complete-file changes without accepting the whole worktree.
+    """
+
+    normalized_paths = unique_worktree_paths(paths)
+    if not normalized_paths:
+        if raw_trace is not None:
+            raw_trace[f"{label}_status"] = {"skipped": True, "reason": "no_paths"}
+            raw_trace[f"{label}_untracked_paths"] = []
+            raw_trace[f"{label}_git_diff"] = {"skipped": True, "reason": "no_paths"}
+        return ""
+
+    status_result = _run_command_with_timeout(
+        run_command_fn,
+        ("git", "status", "--porcelain", "--", *normalized_paths),
+        cwd=worktree_path,
+        timeout_seconds=timeout_seconds,
+    )
+    if raw_trace is not None:
+        raw_trace[f"{label}_status"] = status_result.compact(limit=12000)
+
+    untracked_paths = untracked_paths_from_git_status(status_result.stdout)
+    if raw_trace is not None:
+        raw_trace[f"{label}_untracked_paths"] = untracked_paths
+
+    if untracked_paths:
+        add_intent = _run_command_with_timeout(
+            run_command_fn,
+            ("git", "add", "-N", "--", *untracked_paths),
+            cwd=worktree_path,
+            timeout_seconds=timeout_seconds,
+        )
+        if raw_trace is not None:
+            raw_trace[f"{label}_git_add_intent_to_add"] = add_intent.compact(limit=12000)
+
+    diff_result = _run_command_with_timeout(
+        run_command_fn,
+        ("git", "diff", "--binary", "--", *normalized_paths),
+        cwd=worktree_path,
+        timeout_seconds=timeout_seconds,
+    )
+    if raw_trace is not None:
+        raw_trace[f"{label}_git_diff"] = diff_result.compact(limit=20000)
+    return diff_result.stdout if diff_result.ok else ""
 
 
 def worktree_file_edits(

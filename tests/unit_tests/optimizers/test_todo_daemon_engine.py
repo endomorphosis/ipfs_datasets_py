@@ -257,6 +257,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     validation_worktree_for_spec,
     verify_promoted_worktree_files,
     wait_for_child_exit,
+    worktree_diff,
     worktree_file_edits,
     worktree_path_allowed,
     worktree_phase_worker_status,
@@ -2482,6 +2483,55 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
         ("git", "status", "--porcelain", "--", "src/lib/logic/a.ts", "docs/PLAN.md")
     ]
 
+    diff_trace: dict[str, object] = {}
+    diff_calls: list[tuple[str, ...]] = []
+
+    def fake_diff_run_command(command, *, cwd, timeout_seconds):
+        command_tuple = tuple(command)
+        diff_calls.append(command_tuple)
+        assert cwd == worktree
+        assert timeout_seconds == 9
+        if command_tuple[:3] == ("git", "status", "--porcelain"):
+            return CommandResult(command_tuple, 0, "?? docs/NEW.md\n M src/lib/logic/a.ts\n", "")
+        if command_tuple[:3] == ("git", "add", "-N"):
+            return CommandResult(command_tuple, 0, "", "")
+        if command_tuple[:3] == ("git", "diff", "--binary"):
+            return CommandResult(command_tuple, 0, "diff --git a/docs/NEW.md b/docs/NEW.md\n", "")
+        raise AssertionError(f"unexpected command: {command_tuple}")
+
+    assert worktree_diff(
+        worktree_path=worktree,
+        paths=["docs/NEW.md", "docs\\NEW.md", Path("src/lib/logic/a.ts")],
+        raw_trace=diff_trace,
+        label="harvest",
+        timeout_seconds=9,
+        run_command_fn=fake_diff_run_command,
+    ) == "diff --git a/docs/NEW.md b/docs/NEW.md\n"
+    assert diff_calls == [
+        ("git", "status", "--porcelain", "--", "docs/NEW.md", "src/lib/logic/a.ts"),
+        ("git", "add", "-N", "--", "docs/NEW.md"),
+        ("git", "diff", "--binary", "--", "docs/NEW.md", "src/lib/logic/a.ts"),
+    ]
+    assert diff_trace["harvest_untracked_paths"] == ["docs/NEW.md"]
+    assert diff_trace["harvest_git_add_intent_to_add"]["returncode"] == 0
+    assert diff_trace["harvest_git_diff"]["stdout"] == "diff --git a/docs/NEW.md b/docs/NEW.md"
+
+    empty_trace: dict[str, object] = {}
+
+    def fail_run_command(*_args, **_kwargs):
+        raise AssertionError("worktree_diff should not run Git for empty pathsets")
+
+    assert worktree_diff(
+        worktree_path=worktree,
+        paths=[""],
+        raw_trace=empty_trace,
+        label="empty",
+        run_command_fn=fail_run_command,
+    ) == ""
+    assert empty_trace["empty_status"] == {"skipped": True, "reason": "no_paths"}
+    assert empty_trace["empty_untracked_paths"] == []
+    assert empty_trace["empty_git_diff"] == {"skipped": True, "reason": "no_paths"}
+
     edits = worktree_file_edits(
         worktree,
         [
@@ -2512,6 +2562,57 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
             assert "path" in str(exc)
         else:
             raise AssertionError("expected unsafe worktree edit path to be rejected")
+
+
+def test_worktree_diff_helper_intent_adds_untracked_files_and_records_trace(tmp_path: Path) -> None:
+    worktree = tmp_path / "worktree"
+    worktree.mkdir()
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds):
+        command = tuple(command)
+        calls.append(command)
+        assert cwd == worktree
+        assert timeout_seconds == 9
+        if command[:3] == ("git", "status", "--porcelain"):
+            return CommandResult(command, 0, " M src/lib/logic/a.ts\n?? docs/PLAN.md\n", "")
+        if command[:3] == ("git", "add", "-N"):
+            return CommandResult(command, 0, "", "")
+        if command[:3] == ("git", "diff", "--binary"):
+            return CommandResult(command, 0, "diff --git a/src/lib/logic/a.ts b/src/lib/logic/a.ts\n", "")
+        raise AssertionError(f"unexpected command: {command!r}")
+
+    trace: dict[str, object] = {}
+    diff_text = worktree_diff(
+        worktree_path=worktree,
+        paths=["src\\lib\\logic\\a.ts", "src/lib/logic/a.ts", "docs/PLAN.md", ""],
+        raw_trace=trace,
+        label="candidate",
+        timeout_seconds=9,
+        run_command_fn=fake_run_command,
+    )
+    empty_trace: dict[str, object] = {}
+
+    assert diff_text.startswith("diff --git")
+    assert calls == [
+        ("git", "status", "--porcelain", "--", "src/lib/logic/a.ts", "docs/PLAN.md"),
+        ("git", "add", "-N", "--", "docs/PLAN.md"),
+        ("git", "diff", "--binary", "--", "src/lib/logic/a.ts", "docs/PLAN.md"),
+    ]
+    assert trace["candidate_untracked_paths"] == ["docs/PLAN.md"]
+    assert trace["candidate_status"]["returncode"] == 0
+    assert trace["candidate_git_add_intent_to_add"]["returncode"] == 0
+    assert trace["candidate_git_diff"]["returncode"] == 0
+    assert worktree_diff(
+        worktree_path=worktree,
+        paths=[],
+        raw_trace=empty_trace,
+        label="empty",
+        run_command_fn=fake_run_command,
+    ) == ""
+    assert empty_trace["empty_status"] == {"skipped": True, "reason": "no_paths"}
+    assert empty_trace["empty_untracked_paths"] == []
+    assert empty_trace["empty_git_diff"] == {"skipped": True, "reason": "no_paths"}
 
 
 def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path) -> None:

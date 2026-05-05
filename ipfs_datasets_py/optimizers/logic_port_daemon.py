@@ -140,7 +140,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     repo_relative_worktree_path as _shared_repo_relative_worktree_path,
     resolve_worktree_file_edit_path as _shared_resolve_worktree_file_edit_path,
     unique_worktree_paths as _shared_unique_worktree_paths,
-    untracked_paths_from_git_status as _shared_untracked_paths_from_git_status,
+    worktree_diff as _shared_worktree_diff,
     worktree_file_edits as _shared_worktree_file_edits,
     write_worktree_file_edits_to_root as _shared_write_worktree_file_edits_to_root,
     write_worktree_owner_file as _shared_write_worktree_owner_file,
@@ -555,10 +555,6 @@ def _git_status_paths(stdout: str) -> List[str]:
     """Return paths from ``git status --porcelain`` output."""
 
     return _shared_git_status_paths(stdout)
-
-
-def _untracked_paths_from_git_status(stdout: str) -> List[str]:
-    return _shared_untracked_paths_from_git_status(stdout)
 
 
 def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
@@ -2685,29 +2681,14 @@ PLANNING CONTEXT:
         _shared_format_typescript_paths(root, paths)
 
     def _worktree_diff(self, worktree_path: Path, raw_trace: Dict[str, Any], *, label: str) -> str:
-        diff_paths = self._worktree_diff_paths()
-        status_result = run_command(
-            ("git", "status", "--porcelain", "--", *diff_paths),
-            cwd=worktree_path,
+        return _shared_worktree_diff(
+            worktree_path=worktree_path,
+            paths=self._worktree_diff_paths(),
+            raw_trace=raw_trace,
+            label=label,
             timeout_seconds=60,
+            run_command_fn=run_command,
         )
-        raw_trace[f"{label}_status"] = status_result.compact(limit=12000)
-        untracked_paths = _untracked_paths_from_git_status(status_result.stdout)
-        raw_trace[f"{label}_untracked_paths"] = untracked_paths
-        if untracked_paths:
-            add_intent = run_command(
-                ("git", "add", "-N", "--", *untracked_paths),
-                cwd=worktree_path,
-                timeout_seconds=60,
-            )
-            raw_trace[f"{label}_git_add_intent_to_add"] = add_intent.compact(limit=12000)
-        diff_result = run_command(
-            ("git", "diff", "--binary", "--", *diff_paths),
-            cwd=worktree_path,
-            timeout_seconds=60,
-        )
-        raw_trace[f"{label}_git_diff"] = diff_result.compact(limit=20000)
-        return diff_result.stdout if diff_result.ok else ""
 
     def _harvest_worktree_artifact(
         self,
