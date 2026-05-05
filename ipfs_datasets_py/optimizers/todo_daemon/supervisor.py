@@ -11,6 +11,7 @@ from typing import Any, Mapping, Optional, Sequence
 from .core import (
     ManagedDaemonSpec,
     child_pids,
+    first_present,
     now_utc,
     parse_timestamp,
     pid_alive,
@@ -176,7 +177,9 @@ def worktree_phase_worker_status(
     phase = str(current.get("phase") or "")
     if phase not in phases:
         return {"required": False, "phase": phase}
-    started = _aware_utc(parse_timestamp(current.get("phase_started_at") or current.get("phase_updated_at")))
+    started = _aware_utc(
+        parse_timestamp(first_present(current.get("phase_started_at"), current.get("phase_updated_at")))
+    )
     now_at = _aware_utc(now) or now_utc()
     age = None if started is None else max(0.0, (now_at - started).total_seconds())
     root_pid = daemon_pid or current.get("heartbeat_pid") or current.get("pid")

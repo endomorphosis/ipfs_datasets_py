@@ -89,6 +89,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     quality_failure_counts as _shared_quality_failure_counts,
     recent_rollback_failure_count as _shared_recent_rollback_failure_count,
     render_typescript_diagnostic_context as _shared_render_typescript_diagnostic_context,
+    render_proposal_feedback as _shared_render_proposal_feedback,
     rollback_failure_counts as _shared_rollback_failure_counts,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
@@ -1073,15 +1074,14 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
         return min(score, 1.0), feedback
 
     def _proposal_feedback(self, artifact: LogicPortArtifact) -> str:
-        diagnostic_context = self._typescript_diagnostic_context(artifact)
-        parts = [
-            f"summary={artifact.summary or '<empty>'}",
-            f"failure_kind={artifact.failure_kind or '<empty>'}",
-            f"errors={'; '.join(artifact.errors[:3]) if artifact.errors else '<none>'}",
-            f"typescript_diagnostic_context={diagnostic_context or '<none>'}",
-            f"response_prefix={artifact.raw_response[:1200]}",
-        ]
-        return "\n".join(parts)
+        return _shared_render_proposal_feedback(
+            summary=artifact.summary,
+            failure_kind=artifact.failure_kind,
+            errors=artifact.errors,
+            diagnostic_context=self._typescript_diagnostic_context(artifact),
+            raw_response=artifact.raw_response,
+            diagnostic_label="typescript_diagnostic_context",
+        )
 
     def _typescript_diagnostic_context(self, artifact: LogicPortArtifact, *, radius: int = 2, limit: int = 6000) -> str:
         """Render failing replacement lines around TypeScript diagnostics for retry prompts."""

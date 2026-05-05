@@ -351,10 +351,12 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
     supervisor = read_json(spec.resolve(spec.supervisor_status_path))
     checked_at = now_utc()
     heartbeat_at = parse_timestamp(
-        status.get("heartbeat_at")
-        or status.get("updated_at")
-        or progress.get("updated_at")
-        or supervisor.get("updated_at")
+        first_present(
+            status.get("heartbeat_at"),
+            status.get("updated_at"),
+            progress.get("updated_at"),
+            supervisor.get("updated_at"),
+        )
     )
     heartbeat_age = None
     if heartbeat_at is not None:
@@ -363,7 +365,7 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
     supervisor_pid = supervisor.get("supervisor_pid") or read_pid_file(spec.resolve(spec.supervisor_pid_path))
     supervisor_alive = bool(supervisor_pid and pid_alive(supervisor_pid))
     supervisor_daemon_pid = supervisor.get("daemon_pid")
-    status_daemon_pid = status.get("heartbeat_pid") or status.get("pid")
+    status_daemon_pid = first_present(status.get("heartbeat_pid"), status.get("pid"))
     daemon_pid = supervisor_daemon_pid if supervisor_alive and supervisor_daemon_pid else status_daemon_pid
     daemon_alive = bool(daemon_pid and pid_alive(daemon_pid))
     fresh = heartbeat_age is not None and heartbeat_age <= stale_after_seconds

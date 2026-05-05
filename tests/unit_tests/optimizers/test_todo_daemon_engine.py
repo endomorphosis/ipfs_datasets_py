@@ -167,6 +167,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     repo_root_from_env,
     render_relevant_file_context,
     render_lifecycle_wrapper,
+    render_proposal_feedback,
     render_typescript_diagnostic_context,
     rollback_failure_counts,
     rounds_since_last_valid,
@@ -468,6 +469,30 @@ def test_artifact_failure_classifier_handles_provider_parse_and_quality_failures
     assert classify_artifact_failure_kind({"failure_kind": "preflight", "errors": ["ignored"]}) == "preflight"
     assert classify_artifact_failure_kind({"validation_results": [{"stderr": "error TS1005"}]}) == "validation"
     assert classify_artifact_failure_kind({}) == "invalid_no_change"
+
+
+def test_proposal_feedback_renderer_is_reusable() -> None:
+    rendered = render_proposal_feedback(
+        summary="Rejected proposal",
+        failure_kind="preflight",
+        errors=["first", "second", "third", "fourth"],
+        diagnostic_context="src/example.ts:1:1 TS1005",
+        diagnostic_label="typescript_diagnostic_context",
+        raw_response="abcdef",
+        max_errors=3,
+        raw_response_limit=4,
+    )
+
+    assert rendered == "\n".join(
+        [
+            "summary=Rejected proposal",
+            "failure_kind=preflight",
+            "errors=first; second; third",
+            "typescript_diagnostic_context=src/example.ts:1:1 TS1005",
+            "response_prefix=abcd",
+        ]
+    )
+    assert "fourth" not in rendered
 
 
 def test_task_result_failure_context_helper_is_reusable() -> None:

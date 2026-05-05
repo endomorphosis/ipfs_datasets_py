@@ -190,9 +190,11 @@ def check_legal_parser_health(
 
     try:
         worktree_no_child_threshold = float(
-            current.get("worktree_no_child_stall_seconds")
-            or supervisor.get("worktree_no_child_stall_seconds")
-            or 0
+            first_present(
+                current.get("worktree_no_child_stall_seconds"),
+                supervisor.get("worktree_no_child_stall_seconds"),
+                0,
+            )
         )
     except Exception:
         worktree_no_child_threshold = 0.0

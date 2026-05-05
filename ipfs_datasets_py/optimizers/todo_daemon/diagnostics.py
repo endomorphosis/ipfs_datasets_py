@@ -137,6 +137,31 @@ def classify_artifact_failure_kind(
     return default_failure_kind
 
 
+def render_proposal_feedback(
+    *,
+    summary: str = "",
+    failure_kind: str = "",
+    errors: Sequence[Any] = (),
+    diagnostic_context: str = "",
+    raw_response: str = "",
+    diagnostic_label: str = "diagnostic_context",
+    max_errors: int = 3,
+    raw_response_limit: int = 1200,
+) -> str:
+    """Render compact retry feedback for a rejected daemon proposal."""
+
+    selected_errors = [str(error) for error in list(errors)[: max(0, int(max_errors))]]
+    return "\n".join(
+        [
+            f"summary={summary or '<empty>'}",
+            f"failure_kind={failure_kind or '<empty>'}",
+            f"errors={'; '.join(selected_errors) if selected_errors else '<none>'}",
+            f"{diagnostic_label}={diagnostic_context or '<none>'}",
+            f"response_prefix={str(raw_response or '')[: max(0, int(raw_response_limit))]}",
+        ]
+    )
+
+
 def compact_status_artifact(
     artifact: Mapping[str, Any],
     *,
