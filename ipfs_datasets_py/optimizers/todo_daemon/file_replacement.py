@@ -10,6 +10,8 @@ from typing import Any, Callable, Iterable
 from .engine import CommandResult, Proposal
 from .runner import TodoDaemonHooks, TodoDaemonRunner
 
+ApplyProposalHook = Callable[[Proposal, Any], Proposal]
+
 
 @dataclass(frozen=True)
 class FileReplacementHooks:
@@ -140,6 +142,18 @@ def apply_file_replacement_proposal(
     return proposal
 
 
+def build_file_replacement_apply_proposal(
+    file_replacement_hooks: FileReplacementHooks,
+) -> ApplyProposalHook:
+    """Return a runner-compatible apply hook for file-replacement proposals."""
+
+    return lambda proposal, config: apply_file_replacement_proposal(
+        proposal,
+        config,
+        file_replacement_hooks,
+    )
+
+
 def bind_file_replacement_apply_hook(
     runner_hooks: TodoDaemonHooks,
     file_replacement_hooks: FileReplacementHooks,
@@ -152,11 +166,7 @@ def bind_file_replacement_apply_hook(
         replace_task_mark=runner_hooks.replace_task_mark,
         update_generated_status=runner_hooks.update_generated_status,
         produce_proposal=runner_hooks.produce_proposal,
-        apply_proposal=lambda proposal, config: apply_file_replacement_proposal(
-            proposal,
-            config,
-            file_replacement_hooks,
-        ),
+        apply_proposal=build_file_replacement_apply_proposal(file_replacement_hooks),
         run_validation=runner_hooks.run_validation,
         should_skip_validation=runner_hooks.should_skip_validation,
         is_retryable_failure=runner_hooks.is_retryable_failure,

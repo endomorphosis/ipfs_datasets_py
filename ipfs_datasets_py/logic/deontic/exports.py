@@ -585,7 +585,12 @@ def build_prover_syntax_target_coverage_record(
 
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
     quality_gate_summary = _summarize_prover_target_quality_gates(records)
-    summary = {**summary, "quality_gate_summary": quality_gate_summary}
+    semantic_family_summary = _summarize_prover_target_semantic_families(records)
+    summary = {
+        **summary,
+        "quality_gate_summary": quality_gate_summary,
+        "semantic_family_summary": semantic_family_summary,
+    }
     blockers: List[str] = []
     blockers.extend(
         f"missing_prover_syntax_target:{target}"
@@ -627,6 +632,14 @@ def build_prover_syntax_target_coverage_record(
         "requires_validation": not formal_syntax_valid,
         "coverage_blockers": blockers,
         "quality_gate_summary": quality_gate_summary,
+        "semantic_family_summary": semantic_family_summary,
+        "semantic_formula_families": semantic_family_summary["semantic_formula_families"],
+        "semantic_formula_family_distribution": semantic_family_summary[
+            "semantic_formula_family_distribution"
+        ],
+        "target_semantic_family_consistent": semantic_family_summary[
+            "target_semantic_family_consistent"
+        ],
         "coverage_summary": summary,
     }
 
@@ -715,6 +728,46 @@ def _summarize_prover_target_quality_gates(
         if record_count
         else 0.0,
         "failed_quality_check_distribution": dict(sorted(failed_checks.items())),
+    }
+
+
+def _summarize_prover_target_semantic_families(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize target-visible formula families across prover dialect rows."""
+
+    family_counts: Counter[str] = Counter()
+    target_families: Dict[str, str] = {}
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        components = record.get("target_components")
+        family = ""
+        if isinstance(components, Mapping):
+            family = str(components.get("semantic_formula_family") or "").strip()
+        if not family:
+            family = str(record.get("semantic_formula_family") or "").strip()
+        if not family:
+            family = "unknown"
+        family_counts[family] += 1
+        if target:
+            target_families[target] = family
+
+    families = sorted(family_counts)
+    known_families = [family for family in families if family != "unknown"]
+    return {
+        "semantic_family_record_count": sum(family_counts.values()),
+        "semantic_formula_families": families,
+        "semantic_formula_family_distribution": dict(sorted(family_counts.items())),
+        "target_semantic_families": dict(sorted(target_families.items())),
+        "target_semantic_family_consistent": bool(
+            family_counts and len(known_families) == 1 and "unknown" not in family_counts
+        ),
+        "semantic_formula_family": known_families[0]
+        if len(known_families) == 1 and "unknown" not in family_counts
+        else "",
     }
 
 

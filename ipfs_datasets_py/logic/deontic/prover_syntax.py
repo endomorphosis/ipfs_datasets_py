@@ -704,6 +704,14 @@ def _semantic_formula_family(predicate: str) -> str:
     )):
         return "document_authentication_duty"
     if value.startswith((
+        "PermitInspection",
+        "ProvideAccess",
+        "ProvideCopy",
+        "ProvidePublicAccess",
+        "ProvideRecordsInspection",
+    )):
+        return "public_access_records_duty"
+    if value.startswith((
         "Announce",
         "Circulate",
         "Disseminate",
@@ -738,6 +746,58 @@ def _semantic_formula_family(predicate: str) -> str:
         return "judicial_disposition_duty"
     if value.startswith(("FileAppeal", "MakeAppeal", "SubmitAppeal")):
         return "administrative_review_request_duty"
+    if value.startswith((
+        "Accession",
+        "DocumentChainCustody",
+        "InventoryEvidence",
+        "PreserveEvidence",
+    )):
+        return "evidence_custody_duty"
+    if value.startswith((
+        "Anonymize",
+        "Decrypt",
+        "Deidentify",
+        "Destroy",
+        "Detokenize",
+        "Encrypt",
+        "Erase",
+        "Expunge",
+        "Hash",
+        "Mask",
+        "Pseudonymize",
+        "Redact",
+        "Seal",
+        "Tokenize",
+        "Unseal",
+    )):
+        return "data_protection_duty"
+    if value.startswith((
+        "Archive",
+        "Memorialize",
+        "Preserve",
+        "Record",
+        "Restore",
+        "Retain",
+    )):
+        return "legal_recordkeeping_duty"
+    if value.startswith((
+        "Catalog",
+        "Index",
+        "Interpret",
+        "Summarize",
+        "Transcribe",
+        "Translate",
+    )):
+        return "records_information_processing_duty"
+    if value.startswith((
+        "Compare",
+        "CrossCheck",
+        "Deduplicate",
+        "Match",
+        "Normalize",
+        "Validate",
+    )):
+        return "data_quality_processing_duty"
     if value.startswith(("Cancel", "Revoke", "Suspend")):
         return "instrument_status_duty"
     return "ordinary_duty"

@@ -27,6 +27,7 @@ The legacy shell wrappers remain stable, but the logic-port wrappers now delegat
 7. Use `extract_json()`, `extract_codex_event_text_candidates()`, and `looks_like_empty_codex_event_stream()` when proposal output may arrive as Codex JSONL events rather than plain JSON.
 8. Use `read_daemon_results()`, `recent_failure_count()`, `current_task_failure_counts()`, and `task_failure_summary()` for retry budgets, blocked-task decisions, and self-repair context.
 9. Use `cleanup_stale_daemon_worktrees()`, `write_worktree_owner_file()`, and `pid_looks_like_worktree_owner()` for temporary worktree ownership, stale-worktree garbage collection, and crash recovery.
-10. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner` or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
+10. Use `SupervisedChildSpec`, `launch_supervised_child()`, `wait_for_child_exit()`, `clear_child_pid_file()`, `RestartPolicy`, and `supervised_log_path()` when a supervisor needs to launch a long-running module child with durable logs, PID markers, latest-log symlinks, and consistent restart delays.
+11. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner`, `build_file_replacement_apply_proposal()`, or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
 
 This keeps future daemons deterministic at the control-flow layer: lifecycle management, task bookkeeping, repair-safe worktrees, and durable progress reporting stay shared, while each daemon owns only its task interpretation and proposal-production logic.

@@ -14,22 +14,28 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     PathPolicy,
     PreTaskBlock,
     Proposal,
+    RestartPolicy,
+    SupervisedChildSpec,
     Task,
     TodoDaemonHooks,
     TodoDaemonRunner,
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
+    build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
+    build_python_module_command,
     build_restart_loop_command,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
+    clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
     current_task_failure_counts,
     daemon_spec_payload,
     extract_codex_event_text_candidates,
     extract_json,
     heartbeat_snapshot,
+    launch_supervised_child,
     last_task_attempt_index,
     looks_like_empty_codex_event_stream,
     materialize_proposal_files,
@@ -51,12 +57,15 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     run_todo_daemon,
     run_todo_daemon_cli,
     select_task,
+    supervised_log_path,
+    supervisor_run_id,
     task_failure_summary,
     temporary_validation_worktree,
     todo_daemon_proposals_payload,
     unified_diff_stats,
     untracked_paths_from_git_status_porcelain,
     verify_promoted_worktree_files,
+    wait_for_child_exit,
     worktree_phase_worker_status,
     write_worktree_owner_file,
 )
@@ -501,6 +510,48 @@ def test_restart_wrapper_command_builder_is_reusable() -> None:
     assert "sleep 11; done" in command
 
 
+def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:
+    run_id = supervisor_run_id(datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc))
+    command = (
+        "python3",
+        "-c",
+        "import os; print('child-ok:' + os.environ.get('EXAMPLE_DAEMON', ''))",
+    )
+    spec = SupervisedChildSpec(
+        repo_root=tmp_path,
+        command=command,
+        log_path=supervised_log_path(Path(".daemon"), prefix="synthetic_child", run_id=run_id),
+        child_pid_path=Path(".daemon/child.pid"),
+        latest_log_path=Path(".daemon/latest.log"),
+        env={"EXAMPLE_DAEMON": "todo"},
+    )
+
+    child = launch_supervised_child(spec)
+    rc = wait_for_child_exit(child)
+
+    assert run_id == "20260102T030405Z"
+    assert build_python_module_command("synthetic.daemon", ("--once",), python_executable="py") == (
+        "py",
+        "-u",
+        "-m",
+        "synthetic.daemon",
+        "--once",
+    )
+    assert RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
+        "no_change"
+    ) == 2
+    assert RestartPolicy(restart_backoff_seconds=30, fast_restart_backoff_seconds=2).delay_for_status(
+        "validation_failed"
+    ) == 30
+    assert rc == 0
+    assert child.child_pid_path.read_text(encoding="utf-8").strip() == str(child.pid)
+    assert child.latest_log_path is not None
+    assert child.latest_log_path.is_symlink()
+    assert child.latest_log_path.read_text(encoding="utf-8").strip() == "child-ok:todo"
+    assert clear_child_pid_file(child) is True
+    assert not child.child_pid_path.exists()
+
+
 def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -554,14 +605,13 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
         ),
     )
 
-    result = apply_file_replacement_proposal(
+    result = build_file_replacement_apply_proposal(hooks)(
         Proposal(
             summary="Accepted reusable flow",
             files=[{"path": "todo/source.py", "content": "VALUE = 2\n"}],
             requires_visible_source_change=True,
         ),
         config,
-        hooks,
     )
 
     assert result.valid
