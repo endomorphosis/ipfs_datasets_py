@@ -7,10 +7,63 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-from .engine import CommandResult, Proposal
+from .engine import (
+    CommandResult,
+    Proposal,
+    dataclass_worktree_config,
+    promote_worktree_files,
+    proposal_diff_from_worktree,
+    verify_promoted_worktree_files,
+)
 from .runner import TodoDaemonHooks, TodoDaemonRunner
 
 ApplyProposalHook = Callable[[Proposal, Any], Proposal]
+
+
+def config_repo_root(config: Any, *, repo_root_field: str = "repo_root") -> Path:
+    """Return the repository root path from a daemon config object."""
+
+    try:
+        value = getattr(config, str(repo_root_field or "repo_root"))
+    except AttributeError as exc:
+        raise AttributeError(f"daemon config does not define {repo_root_field!r}") from exc
+    return Path(value)
+
+
+def config_proposal_diff_from_worktree(
+    config: Any,
+    worktree: Path,
+    changed: Iterable[str],
+    *,
+    repo_root_field: str = "repo_root",
+) -> str:
+    """Return a proposal diff using the daemon config's repository root."""
+
+    return proposal_diff_from_worktree(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+
+
+def config_promote_worktree_files(
+    config: Any,
+    worktree: Path,
+    changed: Iterable[str],
+    *,
+    repo_root_field: str = "repo_root",
+) -> None:
+    """Promote accepted worktree files into the daemon config's repository root."""
+
+    promote_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+
+
+def config_verify_promoted_worktree_files(
+    config: Any,
+    worktree: Path,
+    changed: Iterable[str],
+    *,
+    repo_root_field: str = "repo_root",
+) -> list[str]:
+    """Verify promoted files against the daemon config's repository root."""
+
+    return verify_promoted_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
 
 
 @dataclass(frozen=True)
@@ -23,7 +76,6 @@ class FileReplacementHooks:
     proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str]
     validation_commands_for_proposal: Callable[[Proposal, Any], tuple[tuple[str, ...], ...]]
     run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]]
-    worktree_config: Callable[[Any, Path], Any]
     syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]]
     has_visible_source_change: Callable[[Iterable[str]], bool]
     attempt_validation_repair: Callable[[Proposal, Any, Path], tuple[bool, list[str], str]]
@@ -32,6 +84,7 @@ class FileReplacementHooks:
     verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]]
     persist_failed_work: Callable[[Proposal, Any, str, str, str], None]
     persist_accepted_work: Callable[[Proposal, Any, str, str], None]
+    worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config
     no_visible_source_change_message: str = (
         "Accepted work must promote at least one visible source or fixture file; "
         "runtime-only progress records are not sufficient."
@@ -178,13 +231,14 @@ def apply_file_replacement_proposal(
         return proposal
 
     with hooks.temporary_validation_worktree(config) as worktree:
+        worktree_config = hooks.worktree_config(config, worktree)
         changed = hooks.materialize_proposal_in_worktree(proposal, config, worktree)
         proposal.changed_files = changed
         if not changed:
             proposal.errors.append("Proposal made no content changes.")
             proposal.failure_kind = "no_change"
             proposal.validation_results = hooks.run_validation(
-                hooks.worktree_config(config, worktree),
+                worktree_config,
                 proposal_validation_commands,
             )
             hooks.persist_failed_work(proposal, config, "", "no_change", "ephemeral_worktree")
@@ -194,7 +248,7 @@ def apply_file_replacement_proposal(
             proposal.errors.append(hooks.no_visible_source_change_message)
             proposal.failure_kind = "no_visible_source_change"
             proposal.validation_results = hooks.run_validation(
-                hooks.worktree_config(config, worktree),
+                worktree_config,
                 proposal_validation_commands,
             )
             hooks.persist_failed_work(
@@ -225,7 +279,7 @@ def apply_file_replacement_proposal(
             return proposal
 
         proposal.validation_results = hooks.run_validation(
-            hooks.worktree_config(config, worktree),
+            worktree_config,
             proposal_validation_commands,
         )
         if not all(result.ok for result in proposal.validation_results):

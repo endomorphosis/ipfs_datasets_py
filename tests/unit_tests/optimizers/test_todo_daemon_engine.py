@@ -85,10 +85,15 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     compact_status_artifact,
     compact_validation_result,
     compact_validation_results,
+    config_promote_worktree_files,
+    config_proposal_diff_from_worktree,
+    config_repo_root,
+    config_verify_promoted_worktree_files,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
     count_unmanaged_generated_status_sections,
     current_task_failure_counts,
+    dataclass_worktree_config,
     daemon_alias_map,
     daemon_registry_payload,
     daemon_spec_payload,
@@ -2137,6 +2142,69 @@ def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path)
     assert not any((repo / ".daemon" / "worktrees").iterdir())
 
 
+def test_dataclass_worktree_config_copies_config_with_repo_root_override(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class CustomRootConfig:
+        project_root: Path
+        apply: bool = True
+
+    config = SyntheticDaemonConfig(
+        repo_root=tmp_path / "repo",
+        status_file=Path("custom/status.json"),
+        apply=True,
+    )
+    worktree = tmp_path / "worktree"
+
+    scoped = dataclass_worktree_config(config, worktree, apply=False, interval_seconds=1.5)
+    custom = dataclass_worktree_config(
+        CustomRootConfig(project_root=tmp_path / "project"),
+        worktree,
+        repo_root_field="project_root",
+        apply=False,
+    )
+
+    assert scoped.repo_root == worktree
+    assert scoped.status_file == Path("custom/status.json")
+    assert scoped.apply is False
+    assert scoped.interval_seconds == 1.5
+    assert config.repo_root == tmp_path / "repo"
+    assert config.apply is True
+    assert custom.project_root == worktree
+    assert custom.apply is False
+    try:
+        dataclass_worktree_config({"repo_root": tmp_path}, worktree)
+    except TypeError as exc:
+        assert "dataclass config instance" in str(exc)
+    else:
+        raise AssertionError("expected dataclass_worktree_config to reject non-dataclass configs")
+
+
+def test_config_repo_root_file_replacement_helpers_use_daemon_config_root(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class CustomRootConfig:
+        project_root: Path
+
+    repo = tmp_path / "repo"
+    worktree = tmp_path / "worktree"
+    repo.mkdir()
+    worktree.mkdir()
+    (repo / "todo").mkdir()
+    (worktree / "todo").mkdir()
+    (repo / "todo" / "source.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (worktree / "todo" / "source.py").write_text("VALUE = 2\n", encoding="utf-8")
+    changed = ["todo/source.py"]
+
+    config = SyntheticDaemonConfig(repo_root=repo)
+    diff = config_proposal_diff_from_worktree(config, worktree, changed)
+
+    assert config_repo_root(config) == repo
+    assert config_repo_root(CustomRootConfig(project_root=repo), repo_root_field="project_root") == repo
+    assert "+VALUE = 2" in diff
+    config_promote_worktree_files(config, worktree, changed)
+    assert config_verify_promoted_worktree_files(config, worktree, changed) == []
+    assert (repo / "todo" / "source.py").read_text(encoding="utf-8") == "VALUE = 2\n"
+
+
 def test_supervisor_heartbeat_and_worker_watchdog_helpers_are_reusable() -> None:
     now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     current = {
@@ -2564,14 +2632,9 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
             proposal,
             worktree,
         ),
-        proposal_diff_from_worktree=lambda _config, worktree, changed: proposal_diff_from_worktree(
-            repo,
-            worktree,
-            changed,
-        ),
+        proposal_diff_from_worktree=config_proposal_diff_from_worktree,
         validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
         run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
-        worktree_config=lambda _config, worktree: SyntheticDaemonConfig(repo_root=worktree),
         syntax_preflight=lambda _worktree, _changed, _config: (
             [CommandResult(("synthetic-preflight",), 0, "ok", "")],
             [],
@@ -2580,12 +2643,8 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
         proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=lambda _config, worktree, changed: promote_worktree_files(repo, worktree, changed),
-        verify_promoted_worktree_files=lambda _config, worktree, changed: verify_promoted_worktree_files(
-            repo,
-            worktree,
-            changed,
-        ),
+        promote_worktree_files=config_promote_worktree_files,
+        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -2623,13 +2682,12 @@ def test_file_replacement_apply_flow_rejects_disallowed_paths(tmp_path: Path) ->
         proposal_diff_from_worktree=lambda _config, _worktree, _changed: "",
         validation_commands_for_proposal=lambda _proposal, _config: (),
         run_validation=lambda _config, _commands: [],
-        worktree_config=lambda _config, worktree: SyntheticDaemonConfig(repo_root=worktree),
         syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
         has_visible_source_change=lambda _changed: False,
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
         proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=lambda _config, _worktree, _changed: None,
-        verify_promoted_worktree_files=lambda _config, _worktree, _changed: [],
+        promote_worktree_files=config_promote_worktree_files,
+        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -3111,14 +3169,9 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
             proposal,
             worktree,
         ),
-        proposal_diff_from_worktree=lambda _config, worktree, changed: proposal_diff_from_worktree(
-            repo,
-            worktree,
-            changed,
-        ),
+        proposal_diff_from_worktree=config_proposal_diff_from_worktree,
         validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
         run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
-        worktree_config=lambda _config, worktree: SyntheticDaemonConfig(repo_root=worktree),
         syntax_preflight=lambda _worktree, _changed, _config: (
             [CommandResult(("synthetic-preflight",), 0, "ok", "")],
             [],
@@ -3127,12 +3180,8 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
         proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=lambda _config, worktree, changed: promote_worktree_files(repo, worktree, changed),
-        verify_promoted_worktree_files=lambda _config, worktree, changed: verify_promoted_worktree_files(
-            repo,
-            worktree,
-            changed,
-        ),
+        promote_worktree_files=config_promote_worktree_files,
+        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, _diff_text, _reason, _transport: None,
         persist_accepted_work=lambda proposal, _config, _diff_text, _transport: accepted.append(
             proposal.summary

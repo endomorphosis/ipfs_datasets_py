@@ -12,7 +12,7 @@ import subprocess
 import time
 import uuid
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, is_dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator, Mapping, Optional, Sequence
@@ -311,6 +311,27 @@ def build_validation_workspace_spec(
         ignore=ignore,
         stale_seconds=int(stale_seconds),
     )
+
+
+def dataclass_worktree_config(
+    config: Any,
+    worktree: Path,
+    *,
+    repo_root_field: str = "repo_root",
+    **overrides: Any,
+) -> Any:
+    """Return a dataclass config copy scoped to a validation worktree."""
+
+    if not is_dataclass(config) or isinstance(config, type):
+        raise TypeError("dataclass_worktree_config requires a dataclass config instance")
+    values = dict(overrides)
+    values[str(repo_root_field or "repo_root")] = worktree
+    try:
+        return replace(config, **values)
+    except TypeError as exc:
+        raise TypeError(
+            f"dataclass_worktree_config requires a dataclass config with a {repo_root_field!r} field"
+        ) from exc
 
 
 def parse_markdown_tasks(
