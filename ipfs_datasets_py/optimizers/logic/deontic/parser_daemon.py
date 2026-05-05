@@ -68,6 +68,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.status import (
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
     git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
+    managed_git_worktree as _shared_managed_git_worktree,
     owner_pid_from_worktree as _shared_owner_pid_from_worktree,
     pid_is_alive as _shared_pid_is_alive,
     read_json_object as _shared_read_json_object,

@@ -222,6 +222,59 @@ def test_prover_syntax_target_corpus_coverage_accepts_persisted_coverage_rows():
     assert summary["all_sources_required_targets_passed"] is True
 
 
+def test_prover_syntax_target_corpus_coverage_marks_missing_source_ids_incomplete():
+    records = [
+        {
+            "prover_target": target,
+            "syntax_valid": True,
+        }
+        for target in LOCAL_PROVER_SYNTAX_TARGETS
+    ]
+
+    summary = summarize_prover_syntax_target_corpus_coverage(records)
+
+    assert summary["record_count"] == 5
+    assert summary["source_count"] == 1
+    assert summary["source_id_missing_record_count"] == 5
+    assert summary["sources_with_missing_source_id"] == ["unknown"]
+    assert summary["source_identity_complete"] is False
+    assert summary["complete_source_count"] == 0
+    assert summary["sources_requiring_validation"] == ["unknown"]
+    assert summary["source_blockers_by_source"]["unknown"] == [
+        "missing_prover_syntax_source_id"
+    ]
+    assert summary["coverage_blocker_distribution"] == {
+        "missing_prover_syntax_source_id": 1
+    }
+    assert summary["all_sources_complete"] is False
+    assert summary["all_sources_required_targets_passed"] is True
+
+
+def test_prover_syntax_target_corpus_coverage_marks_persisted_row_missing_source_id():
+    coverage = build_prover_syntax_target_coverage_record(
+        "",
+        [
+            {"target": target, "syntax_valid": True}
+            for target in LOCAL_PROVER_SYNTAX_TARGETS
+        ],
+    )
+
+    summary = summarize_prover_syntax_target_corpus_coverage([coverage])
+
+    assert summary["source_count"] == 1
+    assert summary["source_id_missing_record_count"] == 1
+    assert summary["sources_with_missing_source_id"] == ["unknown"]
+    assert summary["source_status_by_source"]["unknown"] == {
+        target: "passed" for target in LOCAL_PROVER_SYNTAX_TARGETS
+    }
+    assert summary["source_missing_targets_by_source"]["unknown"] == []
+    assert summary["source_blockers_by_source"]["unknown"] == [
+        "missing_prover_syntax_source_id"
+    ]
+    assert summary["complete_source_count"] == 0
+    assert summary["formal_syntax_valid_source_rate"] == 1.0
+
+
 def test_prover_target_coverage_slice_preserves_numbered_exception_repair_blocker():
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

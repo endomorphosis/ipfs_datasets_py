@@ -637,12 +637,17 @@ def summarize_prover_syntax_target_corpus_coverage(
     raw_records_by_source: Dict[str, List[Mapping[str, Any]]] = {}
     source_summaries: Dict[str, Dict[str, Any]] = {}
     record_count = 0
+    source_id_missing_record_count = 0
+    sources_with_missing_source_id: set[str] = set()
 
     for record in records or []:
         if not isinstance(record, Mapping):
             continue
         record_count += 1
         source_id = _prover_syntax_record_source_id(record)
+        if not _prover_syntax_record_has_source_id(record):
+            source_id_missing_record_count += 1
+            sources_with_missing_source_id.add(source_id)
         coverage_summary = record.get("coverage_summary")
         if isinstance(coverage_summary, Mapping):
             source_summaries[source_id] = dict(coverage_summary)
@@ -680,6 +685,8 @@ def summarize_prover_syntax_target_corpus_coverage(
             str(target) for target in list(summary.get("missing_targets") or [])
         ]
         blockers = _prover_coverage_blockers(summary)
+        if source_id in sources_with_missing_source_id:
+            blockers = [*blockers, "missing_prover_syntax_source_id"]
         source_missing_targets_by_source[source_id] = missing_targets
         source_blockers_by_source[source_id] = blockers
         blocker_distribution.update(blockers)
@@ -691,7 +698,10 @@ def summarize_prover_syntax_target_corpus_coverage(
                 target_pass_distribution[target] += 1
 
         duplicate_record_count += int(summary.get("target_duplicate_record_count") or 0)
-        source_complete = bool(summary.get("target_status_matrix_complete") is True)
+        source_complete = bool(
+            summary.get("target_status_matrix_complete") is True
+            and source_id not in sources_with_missing_source_id
+        )
         if source_complete:
             complete_source_count += 1
             sources_with_complete_required_targets.append(source_id)
@@ -713,6 +723,9 @@ def summarize_prover_syntax_target_corpus_coverage(
         "source_status_by_source": source_status_by_source,
         "source_missing_targets_by_source": source_missing_targets_by_source,
         "source_blockers_by_source": source_blockers_by_source,
+        "source_id_missing_record_count": source_id_missing_record_count,
+        "sources_with_missing_source_id": sorted(sources_with_missing_source_id),
+        "source_identity_complete": source_id_missing_record_count == 0,
         "target_presence_distribution": dict(sorted(target_presence_distribution.items())),
         "target_pass_distribution": dict(sorted(target_pass_distribution.items())),
         "target_duplicate_record_count": duplicate_record_count,
@@ -963,6 +976,13 @@ def _prover_syntax_record_source_id(record: Mapping[str, Any]) -> str:
         if value:
             return value
     return "unknown"
+
+
+def _prover_syntax_record_has_source_id(record: Mapping[str, Any]) -> bool:
+    for key in ("source_id", "norm_source_id", "legal_source_id"):
+        if str(record.get(key) or "").strip():
+            return True
+    return False
 
 
 def _prover_coverage_blockers(summary: Mapping[str, Any]) -> List[str]:

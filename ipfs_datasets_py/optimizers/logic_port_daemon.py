@@ -914,98 +914,26 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
             )
             raw_trace["codex_exec"] = codex_result.compact(limit=20000)
 
-            full_status = run_command(
-                ("git", "status", "--porcelain"),
-                cwd=worktree_path,
-                timeout_seconds=60,
-            )
-            raw_trace["full_status"] = full_status.compact(limit=12000)
-            disallowed_paths = self._disallowed_worktree_paths(
-                _git_status_paths(full_status.stdout),
+            harvested = self._harvest_worktree_artifact(
+                worktree_path,
                 metadata_rel=metadata_rel,
                 owner_rel=owner_rel,
+                raw_trace=raw_trace,
+                default_summary="Worktree direct-edit proposal.",
+                default_impact="Git harvested the isolated-worktree edits for validation.",
             )
-            if disallowed_paths:
-                raw_trace["disallowed_paths"] = disallowed_paths
-                return LogicPortArtifact(
-                    summary="Worktree proposal edited paths outside the logic-port allowlist.",
-                    raw_response=json.dumps(raw_trace, indent=2, default=str),
-                    errors=["Worktree proposal edited disallowed paths: " + ", ".join(disallowed_paths[:12])],
-                    failure_kind="worktree_disallowed_paths",
-                    proposal_transport="worktree",
-                )
-
-            diff_paths = self._worktree_diff_paths()
-            status_result = run_command(
-                ("git", "status", "--porcelain", "--", *diff_paths),
-                cwd=worktree_path,
-                timeout_seconds=60,
-            )
-            raw_trace["status"] = status_result.compact(limit=12000)
-            untracked_paths = _untracked_paths_from_git_status(status_result.stdout)
-            raw_trace["untracked_paths"] = untracked_paths
-            if untracked_paths:
-                add_intent = run_command(
-                    ("git", "add", "-N", "--", *untracked_paths),
-                    cwd=worktree_path,
-                    timeout_seconds=60,
-                )
-                raw_trace["git_add_intent_to_add"] = add_intent.compact(limit=12000)
-
-            diff_result = run_command(
-                ("git", "diff", "--binary", "--", *diff_paths),
-                cwd=worktree_path,
-                timeout_seconds=60,
-            )
-            raw_trace["git_diff"] = diff_result.compact(limit=20000)
-            patch = diff_result.stdout if diff_result.ok else ""
-            metadata = self._read_worktree_metadata(worktree_path / metadata_rel)
-            raw_trace["metadata"] = metadata
-            changed_files = _patch_changed_files(patch)
-            if not changed_files:
-                changed_files = [
-                    str(path)
-                    for path in metadata.get("changed_files", [])
-                    if isinstance(path, str) and path.strip()
-                ] if isinstance(metadata.get("changed_files"), list) else []
-            files = self._worktree_file_edits(worktree_path, changed_files)
-            validation_commands = [
-                [str(part) for part in command]
-                for command in metadata.get("validation_commands", [])
-                if isinstance(command, list) and all(isinstance(part, str) for part in command)
-            ] if isinstance(metadata.get("validation_commands"), list) else []
-            tasks = [
-                str(item)
-                for item in metadata.get("tasks", [])
-                if isinstance(item, (str, int, float)) and str(item).strip()
-            ] if isinstance(metadata.get("tasks"), list) else []
-
-            errors: List[str] = []
-            failure_kind = ""
-            if not patch.strip() and not files:
-                reason = "worktree edit produced no allowed TypeScript port changes"
-                if not codex_result.ok:
-                    reason = "worktree edit command failed without producing allowed changes: " + (
-                        codex_result.stderr or codex_result.stdout
-                    ).strip()[:1000]
-                    failure_kind = "worktree_codex_failed"
-                errors.append(reason)
-                failure_kind = failure_kind or "worktree_no_change"
-            selected_task = self._current_plan_task()
-
-            return LogicPortArtifact(
-                summary=str(metadata.get("summary") or "Worktree direct-edit proposal."),
-                impact=str(metadata.get("impact") or "Git harvested the isolated-worktree edits for validation."),
-                patch=patch,
-                files=files,
-                tasks=tasks or ([selected_task.label] if selected_task else []),
-                validation_commands=validation_commands,
-                raw_response=json.dumps(raw_trace, indent=2, default=str),
-                errors=errors,
-                failure_kind=failure_kind,
-                changed_files=changed_files,
-                proposal_transport="worktree",
-            )
+            if (
+                not codex_result.ok
+                and harvested.failure_kind in {"", "worktree_no_change"}
+                and not harvested.files
+                and not harvested.patch.strip()
+            ):
+                message = "worktree edit command failed without producing allowed changes: " + (
+                    codex_result.stderr or codex_result.stdout
+                ).strip()[:1000]
+                harvested.errors = [message]
+                harvested.failure_kind = "worktree_codex_failed"
+            return harvested
 
     def critique(self, artifact: LogicPortArtifact, context: OptimizationContext) -> Tuple[float, List[str]]:
         feedback: List[str] = []
