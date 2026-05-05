@@ -982,52 +982,12 @@ def run_command(
     timeout_seconds: int,
     stdin: Optional[str] = None,
 ) -> CommandResult:
-    process: Optional[subprocess.Popen[str]] = None
-    try:
-        process = subprocess.Popen(
-            list(command),
-            cwd=str(cwd),
-            stdin=subprocess.PIPE if stdin is not None else None,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            start_new_session=True,
-        )
-        stdout, stderr = process.communicate(input=stdin, timeout=timeout_seconds)
-        return CommandResult(tuple(command), process.returncode, stdout or "", stderr or "")
-    except subprocess.TimeoutExpired as exc:
-        if process is not None:
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            except PermissionError:
-                try:
-                    process.terminate()
-                except ProcessLookupError:
-                    pass
-            try:
-                stdout_after, stderr_after = process.communicate(timeout=5)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                except PermissionError:
-                    try:
-                        process.kill()
-                    except ProcessLookupError:
-                        pass
-                stdout_after, stderr_after = process.communicate()
-            stdout = stdout_after or exc.stdout or ""
-            stderr = stderr_after or exc.stderr or ""
-        else:
-            stdout = exc.stdout or ""
-            stderr = exc.stderr or ""
-        stdout = stdout if isinstance(stdout, str) else stdout.decode("utf-8", errors="replace")
-        stderr = stderr if isinstance(stderr, str) else stderr.decode("utf-8", errors="replace")
-        timeout_message = f"Command timed out after {timeout_seconds}s"
-        return CommandResult(tuple(command), 124, stdout or "", (stderr + "\n" + timeout_message).strip())
+    return _shared_run_command(
+        command,
+        cwd=cwd,
+        timeout_seconds=timeout_seconds,
+        stdin=stdin,
+    )
 
 
 class LogicPortDaemonOptimizer(BaseOptimizer):

@@ -21,18 +21,31 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
     build_lifecycle_arg_parser,
+    build_restart_loop_command,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
+    current_task_failure_counts,
     daemon_spec_payload,
+    extract_codex_event_text_candidates,
+    extract_json,
     heartbeat_snapshot,
+    last_task_attempt_index,
+    looks_like_empty_codex_event_stream,
     materialize_proposal_files,
     parse_json_proposal,
     parse_markdown_tasks,
     proposal_diff_from_worktree,
     promote_worktree_files,
+    quoted_env_assignments,
+    read_daemon_results,
+    recent_failure_count,
+    recent_total_failure_count,
+    rounds_since_last_valid,
+    run_command,
     run_lifecycle_cli,
     run_todo_daemon_cli,
     select_task,
+    task_failure_summary,
     temporary_validation_worktree,
     verify_promoted_worktree_files,
     worktree_phase_worker_status,
@@ -131,6 +144,36 @@ def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> N
     assert proposal.validation_commands == [["python3", "-m", "compileall", "todo"]]
 
 
+def test_codex_jsonl_helpers_parse_assistant_proposals() -> None:
+    response = "\n".join(
+        [
+            json.dumps({"type": "thread.started", "thread_id": "example"}),
+            json.dumps(
+                {
+                    "type": "item.completed",
+                    "item": {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": "```json\n{\"summary\":\"from codex\",\"files\":[]}\n```",
+                            }
+                        ],
+                    },
+                }
+            ),
+        ]
+    )
+
+    candidates = extract_codex_event_text_candidates(response)
+
+    assert candidates == ["```json\n{\"summary\":\"from codex\",\"files\":[]}\n```"]
+    assert extract_json(response) == {"summary": "from codex", "files": []}
+    assert looks_like_empty_codex_event_stream(json.dumps({"type": "thread.started"}))
+    assert not looks_like_empty_codex_event_stream(response)
+
+
 def test_command_result_compaction_omits_html_and_provider_tokens() -> None:
     compacted = CommandResult(
         command=("example",),
@@ -141,6 +184,75 @@ def test_command_result_compaction_omits_html_and_provider_tokens() -> None:
 
     assert "challenge" not in compacted["stdout"]
     assert "__cf_chl_tk=secret" not in compacted["stderr"]
+
+
+def test_shared_run_command_supports_timeout_seconds_and_stdin(tmp_path: Path) -> None:
+    ok = run_command(
+        ("python3", "-c", "import sys; print(sys.stdin.read().upper())"),
+        cwd=tmp_path,
+        timeout_seconds=5,
+        stdin="ok",
+    )
+    timed_out = run_command(
+        ("python3", "-c", "import time; time.sleep(30)"),
+        cwd=tmp_path,
+        timeout_seconds=1,
+    )
+
+    assert ok.ok
+    assert ok.stdout.strip() == "OK"
+    assert timed_out.returncode == 124
+    assert "Command timed out after 1s" in timed_out.stderr
+
+
+def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
+    log = tmp_path / "daemon.jsonl"
+    rows = [
+        {"results": [{"valid": True, "artifact": {"target_task": "Task `A`", "summary": "done"}}]},
+        {
+            "results": [
+                {
+                    "valid": False,
+                    "artifact": {
+                        "target_task": "Task A",
+                        "summary": "first",
+                        "failure_kind": "preflight",
+                        "errors": ["bad path"],
+                    },
+                }
+            ]
+        },
+        {
+            "results": [
+                {
+                    "valid": False,
+                    "artifact": {
+                        "target_task": "Task `A`",
+                        "summary": "second",
+                        "failure_kind": "validation",
+                        "errors": ["bad type"],
+                    },
+                }
+            ]
+        },
+    ]
+    log.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+
+    parsed = read_daemon_results(log)
+    summary = task_failure_summary(parsed, "Task A")
+
+    assert len(parsed) == 3
+    assert recent_failure_count(parsed, "Task A", "validation") == 1
+    assert recent_failure_count(parsed, "Task A", "preflight") == 0
+    assert recent_total_failure_count(parsed, "Task A") == 2
+    assert current_task_failure_counts(parsed, "Task A") == {
+        "total_since_success": 2,
+        "by_kind_since_success": {"validation": 1, "preflight": 1},
+    }
+    assert rounds_since_last_valid(parsed) == 2
+    assert last_task_attempt_index(parsed, "Task A") == 2
+    assert summary["latest_failure"]["failure_kind"] == "validation"
+    assert summary["latest_failure"]["errors"] == ["bad type"]
 
 
 def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path) -> None:
@@ -259,6 +371,28 @@ def test_supervisor_status_payload_builder_is_reusable(tmp_path: Path) -> None:
     assert payload["supervisor_lock_path"] == ".daemon/supervisor.lock"
     assert payload["watchdog_stale_after_seconds"] == 90
     assert payload["model_name"] == "gpt-5.5"
+
+
+def test_restart_wrapper_command_builder_is_reusable() -> None:
+    assert quoted_env_assignments(
+        {"MODEL_NAME": "gpt 5.5", "PROVIDER": "llm_router"},
+        ("MODEL_NAME", "MISSING", "PROVIDER"),
+    ) == "MODEL_NAME='gpt 5.5' PROVIDER=llm_router"
+
+    command = build_restart_loop_command(
+        ("bash", "scripts/run_daemon.sh"),
+        env={"MODEL_NAME": "gpt-5.5", "PROVIDER": "llm_router"},
+        env_keys=("MODEL_NAME", "PROVIDER"),
+        restart_delay_seconds=11,
+        restart_message="legal-parser supervisor exited with code",
+    )
+
+    assert command.startswith(
+        "while true; do MODEL_NAME=gpt-5.5 PROVIDER=llm_router bash scripts/run_daemon.sh; "
+    )
+    assert "legal-parser supervisor exited with code" in command
+    assert "wrapper restarting in %ss" in command
+    assert "sleep 11; done" in command
 
 
 def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Path) -> None:

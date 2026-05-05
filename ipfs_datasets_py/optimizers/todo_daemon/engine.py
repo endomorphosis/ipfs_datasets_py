@@ -261,7 +261,11 @@ def extract_json(text: str) -> Optional[dict[str, Any]]:
     stripped = text.strip()
     if stripped.startswith("{") and stripped.endswith("}"):
         candidates.append(stripped)
-    candidates.extend(extract_codex_event_text_candidates(stripped))
+    for event_candidate in extract_codex_event_text_candidates(stripped):
+        candidates.append(event_candidate)
+        event_match = JSON_BLOCK_RE.search(event_candidate)
+        if event_match:
+            candidates.append(event_match.group(1))
     start = stripped.find("{")
     end = stripped.rfind("}")
     if start >= 0 and end > start:

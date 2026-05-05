@@ -1,6 +1,6 @@
 # Reusable Todo Daemon Module
 
-`ipfs_datasets_py.optimizers.todo_daemon` contains the shared runner, lifecycle, and temporary-worktree primitives used by optimizer daemons. New unattended todo daemons should live as small domain modules that provide configuration and hooks, then reuse this package instead of copying the logic-port shell/Python scaffolding.
+`ipfs_datasets_py.optimizers.todo_daemon` contains the shared runner, lifecycle, supervisor, process, result-history, JSONL parsing, and temporary-worktree primitives used by optimizer daemons. New unattended todo daemons should live as small domain modules that provide configuration and hooks, then reuse this package instead of copying the logic-port shell/Python scaffolding.
 
 ## Package Entry Point
 
@@ -22,6 +22,9 @@ The legacy shell wrappers remain stable, but the logic-port wrappers now delegat
 2. Build a lifecycle CLI with `build_lifecycle_arg_parser()` and `run_lifecycle_cli()`.
 3. Implement `TodoDaemonHooks` for domain behavior: task parsing, task selection, proposal generation, validation, task-board status updates, retry policy, and exception diagnostics.
 4. Use `TodoDaemonRunner` for heartbeat, progress JSON, task-board marking, result logs, watch-loop handling, and crash capture.
-5. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner` or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
+5. Use `run_command()` for validation and git commands so timeouts clean up the full process group and optional stdin is captured consistently.
+6. Use `extract_json()`, `extract_codex_event_text_candidates()`, and `looks_like_empty_codex_event_stream()` when proposal output may arrive as Codex JSONL events rather than plain JSON.
+7. Use `read_daemon_results()`, `recent_failure_count()`, `current_task_failure_counts()`, and `task_failure_summary()` for retry budgets, blocked-task decisions, and self-repair context.
+8. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner` or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
 
 This keeps future daemons deterministic at the control-flow layer: lifecycle management, task bookkeeping, repair-safe worktrees, and durable progress reporting stay shared, while each daemon owns only its task interpretation and proposal-production logic.
