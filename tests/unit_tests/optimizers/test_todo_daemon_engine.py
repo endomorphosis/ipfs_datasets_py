@@ -2090,8 +2090,10 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
 
 def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
-    accepted_dir = repo / ".daemon" / "accepted-work"
-    failed_dir = repo / ".daemon" / "failed-work"
+    accepted_dir = Path(".daemon/accepted-work")
+    failed_dir = Path(".daemon/failed-work")
+    resolved_accepted_dir = repo / accepted_dir
+    resolved_failed_dir = repo / failed_dir
     diff_text = "diff --git a/todo/source.py b/todo/source.py\n+VALUE = 2\n"
     proposal = Proposal(
         summary="Persist proposal work",
@@ -2113,14 +2115,14 @@ def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: 
     )
     ledger_only = persist_proposal_accepted_work(
         repo_root=repo,
-        accepted_dir=Path(".daemon/accepted-work"),
+        accepted_dir=accepted_dir,
         proposal=proposal,
         diff_text=diff_text,
         transport="direct",
         write_sidecars_enabled=False,
     )
     failed = persist_proposal_failed_work(
-        failed_dir=Path(".daemon/failed-work"),
+        failed_dir=failed_dir,
         proposal=Proposal(
             summary="Persist failed work",
             target_task=proposal.target_task,
@@ -2135,16 +2137,18 @@ def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: 
     )
 
     assert isinstance(accepted, AcceptedWorkPersistenceResult)
-    assert resolve_artifact_directory(Path(".daemon/accepted-work"), repo_root=repo) == accepted_dir
+    assert resolve_artifact_directory(accepted_dir, repo_root=repo) == resolved_accepted_dir
     assert accepted.artifacts is not None
-    assert accepted.ledger_path == accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
+    assert accepted.ledger_path == resolved_accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
     assert accepted.ledger_entry["artifacts"]["mode"] == "sidecars"
+    assert accepted.ledger_entry["artifacts"]["manifest"].startswith(".daemon/accepted-work/")
     assert accepted.artifacts.diff.read_text(encoding="utf-8") == diff_text
     assert ledger_only.artifacts is None
     assert ledger_only.ledger_entry["artifacts"]["mode"] == "ledger_only"
     ledger_rows = [json.loads(line) for line in accepted.ledger_path.read_text(encoding="utf-8").splitlines()]
     assert [row["transport"] for row in ledger_rows] == ["ephemeral_worktree", "direct"]
     assert failed.manifest.exists()
+    assert failed.manifest.parent == resolved_failed_dir
     assert json.loads(failed.manifest.read_text(encoding="utf-8"))["reason"] == "validation"
     assert json.loads(failed.workspace.read_text(encoding="utf-8"))["promoted"] is False
     assert failed.diff.read_text(encoding="utf-8") == diff_text
