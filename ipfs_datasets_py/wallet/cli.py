@@ -395,20 +395,33 @@ def main(argv: Optional[list[str]] = None) -> int:
             service = _service(args.blob_dir)
             bundle = json.loads(args.path.read_text(encoding="utf-8"))
             computed_hash = service.export_bundle_hash(bundle)
+            embedded_hash = bundle.get("bundle_hash")
+            hash_valid = isinstance(embedded_hash, str) and embedded_hash == computed_hash
+            schema_valid = False
+            schema_error = None
+            if hash_valid:
+                try:
+                    service.validate_export_bundle_schema(bundle)
+                    schema_valid = True
+                except Exception as exc:
+                    schema_error = str(exc)
             _emit(
                 {
                     "status": "ok",
-                    "valid": service.verify_export_bundle(bundle),
+                    "valid": hash_valid and schema_valid,
+                    "hash_valid": hash_valid,
+                    "schema_valid": schema_valid,
                     "bundle_id": bundle.get("bundle_id"),
-                    "bundle_hash": bundle.get("bundle_hash"),
+                    "bundle_hash": embedded_hash,
                     "computed_hash": computed_hash,
+                    **({"schema_error": schema_error} if schema_error else {}),
                 },
                 json_output=args.json_output,
             )
             return 0
 
         if args.command == "import-export-bundle":
-            service = _service(args.blob_dir)
+            service = _load_all(args.wallet_dir, args.blob_dir)
             bundle = json.loads(args.path.read_text(encoding="utf-8"))
             result = service.import_export_bundle(bundle)
             _save(service, args.wallet_dir, result["wallet_id"])

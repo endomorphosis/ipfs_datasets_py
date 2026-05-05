@@ -109,6 +109,7 @@ class DataWalletService:
             r"(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Ln|Lane|Way|Ct|Court)\b",
             re.IGNORECASE,
         ),
+        "person_name": re.compile(r"\b[A-Z][a-z]+(?:[ \t]+[A-Z][a-z]+){1,3}\b"),
     }
     DERIVED_FACT_KEYWORDS = {
         "housing": ("rent", "eviction", "shelter", "housing", "homeless", "utility", "shutoff"),
@@ -2399,7 +2400,7 @@ class DataWalletService:
         }
         redaction_features = {
             token.lower().strip("[]"): redacted_text.count(token)
-            for token in ("[REDACTED_EMAIL]", "[REDACTED_PHONE]", "[REDACTED_SSN]", "[REDACTED_ADDRESS]")
+            for token in (f"[REDACTED_{label.upper()}]" for label in self.REDACTION_PATTERNS)
         }
         feature_vector.update(redaction_features)
         return {
@@ -2423,7 +2424,7 @@ class DataWalletService:
         signature.update(
             {
                 token.lower().strip("[]"): chunk_text.count(token)
-                for token in ("[REDACTED_EMAIL]", "[REDACTED_PHONE]", "[REDACTED_SSN]", "[REDACTED_ADDRESS]")
+                for token in (f"[REDACTED_{label.upper()}]" for label in self.REDACTION_PATTERNS)
             }
         )
         return signature
@@ -3553,11 +3554,25 @@ class DataWalletService:
         unsigned.pop("bundle_id", None)
         return sha256_hex(canonical_bytes(unsigned))
 
-    def verify_export_bundle(self, bundle: Dict[str, Any]) -> bool:
-        """Verify the bundle's embedded hash without trusting JSON key order."""
-
+    def _verify_export_bundle_hash(self, bundle: Dict[str, Any]) -> bool:
         expected = bundle.get("bundle_hash")
         return isinstance(expected, str) and self.export_bundle_hash(bundle) == expected
+
+    def verify_export_bundle(self, bundle: Dict[str, Any]) -> bool:
+        """Verify the bundle's embedded hash and required descriptor schema."""
+
+        if not self._verify_export_bundle_hash(bundle):
+            return False
+        try:
+            self.validate_export_bundle_schema(bundle)
+        except (KeyError, TypeError, ValueError):
+            return False
+        return True
+
+    def validate_export_bundle_schema(self, bundle: Dict[str, Any]) -> None:
+        """Raise when an export bundle omits required encrypted descriptors."""
+
+        self._validate_export_bundle_shape(bundle)
 
     def import_export_bundle(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
         """Validate and register an encrypted export bundle.
@@ -3567,7 +3582,7 @@ class DataWalletService:
         available.
         """
 
-        if not self.verify_export_bundle(bundle):
+        if not self._verify_export_bundle_hash(bundle):
             raise AccessDeniedError("Export bundle hash verification failed")
         self._validate_export_bundle_shape(bundle)
         wallet_data = dict(bundle.get("wallet") or {})
@@ -3658,7 +3673,7 @@ class DataWalletService:
     def verify_export_bundle_storage(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
         """Verify local availability of encrypted blobs referenced by a bundle."""
 
-        if not self.verify_export_bundle(bundle):
+        if not self._verify_export_bundle_hash(bundle):
             raise AccessDeniedError("Export bundle hash verification failed")
         self._validate_export_bundle_shape(bundle)
         wallet_id = str((bundle.get("wallet") or {}).get("wallet_id") or "")

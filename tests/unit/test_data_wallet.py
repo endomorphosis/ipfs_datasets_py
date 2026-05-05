@@ -162,7 +162,7 @@ def test_redacted_document_analysis_masks_sensitive_fields(tmp_path):
     wallet = service.create_wallet(owner_did=OWNER)
     source = tmp_path / "intake.txt"
     source.write_text(
-        "Jane can be reached at jane@example.org or 503-555-1212. "
+        "Jane Example can be reached at jane@example.org or 503-555-1212. "
         "SSN 123-45-6789. Lives at 123 Main St. Needs rent and SNAP help.",
         encoding="utf-8",
     )
@@ -182,10 +182,12 @@ def test_redacted_document_analysis_masks_sensitive_fields(tmp_path):
     assert "503-555-1212" not in serialized
     assert "123-45-6789" not in serialized
     assert "123 Main St" not in serialized
+    assert "Jane Example" not in serialized
     assert output["redaction_counts"]["email"] == 1
     assert output["redaction_counts"]["phone"] == 1
     assert output["redaction_counts"]["ssn"] == 1
     assert output["redaction_counts"]["address"] == 1
+    assert output["redaction_counts"]["person_name"] == 1
     assert set(output["derived_facts"]["need_categories"]) >= {"housing", "food"}
     actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
     assert "record/analyze_redacted" in actions
@@ -196,7 +198,7 @@ def test_document_vector_profile_is_redacted_and_hashed(tmp_path):
     wallet = service.create_wallet(owner_did=OWNER)
     source = tmp_path / "case-plan.txt"
     source.write_text(
-        "Jane can be reached at jane@example.org or 503-555-1212. "
+        "Jane Example can be reached at jane@example.org or 503-555-1212. "
         "She needs rent assistance, SNAP support, and a clinic appointment.",
         encoding="utf-8",
     )
@@ -215,10 +217,11 @@ def test_document_vector_profile_is_redacted_and_hashed(tmp_path):
     assert output["output_policy"] == "encrypted_vector_profile"
     assert "jane@example.org" not in serialized
     assert "503-555-1212" not in serialized
-    assert "Jane" not in serialized
+    assert "Jane Example" not in serialized
     assert output["profile"]["profile_type"] == "redacted_lexical_hash_vector"
     assert output["profile"]["chunk_count"] >= 1
     assert all(len(chunk_hash) == 64 for chunk_hash in output["profile"]["chunk_hashes"])
+    assert output["profile"]["feature_vector"]["redacted_person_name"] == 1
     assert output["profile"]["feature_vector"]["housing"] >= 1
     assert output["profile"]["feature_vector"]["food"] >= 1
     assert output["profile"]["feature_vector"]["health"] >= 1
@@ -1560,11 +1563,13 @@ def test_export_bundle_requires_grant_and_excludes_plaintext_location(tmp_path):
     wrong_type["bundle_id"] = f"export-{wrong_type['bundle_hash'][:24]}"
     with pytest.raises(ValueError, match="Unsupported"):
         imported.import_export_bundle(wrong_type)
+    assert imported.verify_export_bundle(wrong_type) is False
     missing_versions = {**bundle, "versions": []}
     missing_versions["bundle_hash"] = imported.export_bundle_hash(missing_versions)
     missing_versions["bundle_id"] = f"export-{missing_versions['bundle_hash'][:24]}"
     with pytest.raises(ValueError, match="version"):
         imported.import_export_bundle(missing_versions)
+    assert imported.verify_export_bundle(missing_versions) is False
 
     service.revoke_grant(wallet.wallet_id, grant.grant_id, actor_did=OWNER)
     with pytest.raises(AccessDeniedError):

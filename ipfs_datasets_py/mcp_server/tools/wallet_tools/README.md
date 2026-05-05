@@ -24,3 +24,10 @@ counts, and per-record derived facts without document text.
 authorized wallet documents by collapsing extracted entities to entity-type
 counts and graph edges over record, need-category, redaction-type, and
 entity-type nodes.
+`wallet_create_record_grant`, `wallet_issue_record_invocation`, and
+`wallet_decrypt_document` expose bounded UCAN record-sharing flows while
+preserving the same caveat, user-presence, and revocation checks as the wallet
+service. `wallet_create_export_grant`, `wallet_issue_export_invocation`,
+`wallet_create_export_bundle`, `wallet_verify_export_bundle`,
+`wallet_import_export_bundle`, and `wallet_export_bundle_storage` expose
+encrypted export workflows without returning plaintext.

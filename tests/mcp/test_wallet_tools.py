@@ -22,16 +22,27 @@ from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create import wallet_
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_document_vector_profile import (
     wallet_create_document_vector_profile,
 )
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_bundle import wallet_create_export_bundle
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_export_grant import wallet_create_export_grant
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_location_region_proof import (
     wallet_create_location_region_proof,
 )
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_record_grant import wallet_create_record_grant
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_create_redacted_graphrag import (
     wallet_create_redacted_graphrag,
 )
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_decrypt_document import wallet_decrypt_document
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_export_bundle_storage import wallet_export_bundle_storage
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_extract_document_text_redacted import (
     wallet_extract_document_text_redacted,
 )
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_grant_receipts import wallet_grant_receipts
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_import_export_bundle import wallet_import_export_bundle
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_export_invocation import wallet_issue_export_invocation
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_issue_record_invocation import wallet_issue_record_invocation
 from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_list_records import wallet_list_records
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_revoke_grant import wallet_revoke_grant
+from ipfs_datasets_py.mcp_server.tools.wallet_tools.wallet_verify_export_bundle import wallet_verify_export_bundle
 from ipfs_datasets_py.wallet.crypto import random_key
 
 
@@ -450,6 +461,211 @@ async def test_wallet_tools_support_private_analytics_workflow(tmp_path) -> None
     assert result["released"] is True
 
 
+async def test_wallet_tools_share_export_import_and_revoke_end_to_end(tmp_path) -> None:
+    wallet_dir = tmp_path / "wallets"
+    blob_dir = tmp_path / "blobs"
+    owner_key = random_key().hex()
+    delegate_key = random_key().hex()
+    owner_did = "did:key:mcp-owner"
+    delegate_did = "did:key:mcp-delegate"
+    document = tmp_path / "mcp-share.txt"
+    plaintext = "MCP delegate may read this document after explicit authorization."
+    document.write_text(plaintext, encoding="utf-8")
+
+    created = await wallet_create(
+        owner_did=owner_did,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert created["status"] == "success"
+    wallet_id = created["wallet_id"]
+
+    added = await wallet_add_document(
+        wallet_id=wallet_id,
+        actor_did=owner_did,
+        actor_key_hex=owner_key,
+        path=str(document),
+        title="MCP shared document",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert added["status"] == "success"
+    record_id = added["record_id"]
+
+    denied = await wallet_decrypt_document(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        actor_did=delegate_did,
+        actor_key_hex=delegate_key,
+        out_path=str(tmp_path / "denied.txt"),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert denied["status"] == "error"
+    assert "grant" in denied["message"]
+
+    grant = await wallet_create_record_grant(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        issuer_did=owner_did,
+        audience_did=delegate_did,
+        abilities=["record/decrypt"],
+        issuer_key_hex=owner_key,
+        audience_key_hex=delegate_key,
+        purpose="benefits_application",
+        output_types=["plaintext"],
+        user_presence_required=True,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert grant["status"] == "success"
+    assert grant["grant"]["caveats"]["user_presence_required"] is True
+
+    missing_presence = await wallet_issue_record_invocation(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        grant_id=grant["grant_id"],
+        actor_did=delegate_did,
+        ability="record/decrypt",
+        actor_key_hex=delegate_key,
+        purpose="benefits_application",
+        output_types=["plaintext"],
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert missing_presence["status"] == "error"
+    assert "user presence" in missing_presence["message"]
+
+    invocation = await wallet_issue_record_invocation(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        grant_id=grant["grant_id"],
+        actor_did=delegate_did,
+        ability="record/decrypt",
+        actor_key_hex=delegate_key,
+        purpose="benefits_application",
+        output_types=["plaintext"],
+        user_present=True,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert invocation["status"] == "success"
+    assert invocation["invocation_token"].startswith("wallet-ucan-v1.")
+
+    delegated_out = tmp_path / "delegated.txt"
+    decrypted = await wallet_decrypt_document(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        actor_did=delegate_did,
+        actor_key_hex=delegate_key,
+        invocation_token=invocation["invocation_token"],
+        out_path=str(delegated_out),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert decrypted["status"] == "success"
+    assert delegated_out.read_text(encoding="utf-8") == plaintext
+
+    receipts = await wallet_grant_receipts(
+        wallet_id=wallet_id,
+        audience_did=delegate_did,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert receipts["status"] == "success"
+    assert any(receipt["grant_id"] == grant["grant_id"] for receipt in receipts["receipts"])
+
+    export_grant = await wallet_create_export_grant(
+        wallet_id=wallet_id,
+        record_ids=[record_id],
+        issuer_did=owner_did,
+        audience_did=delegate_did,
+        issuer_key_hex=owner_key,
+        audience_key_hex=delegate_key,
+        purpose="benefits_portability",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert export_grant["status"] == "success"
+    export_invocation = await wallet_issue_export_invocation(
+        wallet_id=wallet_id,
+        grant_id=export_grant["grant_id"],
+        actor_did=delegate_did,
+        actor_key_hex=delegate_key,
+        record_ids=[record_id],
+        purpose="benefits_portability",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert export_invocation["status"] == "success"
+
+    bundle_path = tmp_path / "mcp-export.json"
+    bundle = await wallet_create_export_bundle(
+        wallet_id=wallet_id,
+        actor_did=delegate_did,
+        actor_key_hex=delegate_key,
+        invocation_token=export_invocation["invocation_token"],
+        record_ids=[record_id],
+        out_path=str(bundle_path),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert bundle["status"] == "success"
+    assert bundle["record_count"] == 1
+    serialized_bundle = json.dumps(bundle["bundle"], sort_keys=True)
+    assert plaintext not in serialized_bundle
+
+    verified = await wallet_verify_export_bundle(path=str(bundle_path), blob_dir=str(blob_dir))
+    assert verified["status"] == "success"
+    assert verified["valid"] is True
+    storage = await wallet_export_bundle_storage(
+        path=str(bundle_path),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert storage["status"] == "success"
+    assert storage["ok"] is True
+    imported = await wallet_import_export_bundle(
+        path=str(bundle_path),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert imported["status"] == "success"
+    assert imported["record_count"] == 1
+
+    revoked = await wallet_revoke_grant(
+        wallet_id=wallet_id,
+        grant_id=grant["grant_id"],
+        actor_did=owner_did,
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert revoked["status"] == "success"
+    assert revoked["grant_status"] == "revoked"
+
+    blocked = await wallet_decrypt_document(
+        wallet_id=wallet_id,
+        record_id=record_id,
+        actor_did=delegate_did,
+        actor_key_hex=delegate_key,
+        invocation_token=invocation["invocation_token"],
+        out_path=str(tmp_path / "blocked.txt"),
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert blocked["status"] == "error"
+    assert "not active" in blocked["message"]
+
+    revoked_receipts = await wallet_grant_receipts(
+        wallet_id=wallet_id,
+        audience_did=delegate_did,
+        status_filter="revoked",
+        wallet_dir=str(wallet_dir),
+        blob_dir=str(blob_dir),
+    )
+    assert any(receipt["grant_id"] == grant["grant_id"] for receipt in revoked_receipts["receipts"])
+
+
 async def test_hierarchical_manager_discovers_wallet_tools() -> None:
     manager = HierarchicalToolManager()
     categories = await manager.list_categories()
@@ -470,3 +686,9 @@ async def test_hierarchical_manager_dispatches_wallet_tool(tmp_path) -> None:
     )
     assert result["status"] == "success"
     assert result["wallet_id"].startswith("wallet-")
+
+    tools = await manager.list_tools("wallet_tools")
+    assert tools["status"] == "success"
+    tool_names = {entry["name"] for entry in tools["tools"]}
+    assert "wallet_create_export_bundle" in tool_names
+    assert "wallet_revoke_grant" in tool_names
