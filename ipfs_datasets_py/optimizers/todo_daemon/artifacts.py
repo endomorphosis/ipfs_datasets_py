@@ -196,6 +196,22 @@ def compact_validation_result(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def compact_validation_results(validation_results: Iterable[Any]) -> list[dict[str, Any]]:
+    """Return compact validation-result payloads from mappings or result objects."""
+
+    compacted: list[dict[str, Any]] = []
+    for result in validation_results:
+        payload: Any
+        compact = getattr(result, "compact", None)
+        if callable(compact):
+            payload = compact()
+        else:
+            payload = result
+        if isinstance(payload, Mapping):
+            compacted.append(compact_validation_result(dict(payload)))
+    return compacted
+
+
 def validation_command_summaries(validation_results: Iterable[Any]) -> list[str]:
     """Return human-readable validation command summaries for markdown evidence."""
 
@@ -457,6 +473,37 @@ def build_scoped_accepted_work_ledger_entry(
         promotion_verified=promotion_verified,
         promotion_errors=promotion_errors,
         ledger_path=resolved_accepted_dir / ledger_filename,
+        created_at=created_at,
+        ledger_filename=ledger_filename,
+    )
+
+
+def build_proposal_accepted_work_ledger_entry(
+    *,
+    repo_root: Path,
+    accepted_dir: Path,
+    proposal: Proposal,
+    transport: str,
+    artifacts: Optional[WorkSidecarPaths],
+    diff_text: str = "",
+    ledger_filename: str = DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+    created_at: str | None = None,
+) -> dict[str, Any]:
+    """Build a scoped accepted-work ledger entry from a daemon proposal."""
+
+    return build_scoped_accepted_work_ledger_entry(
+        repo_root=repo_root,
+        accepted_dir=accepted_dir,
+        target_task=proposal.target_task,
+        summary=proposal.summary,
+        impact=proposal.impact,
+        changed_files=proposal.changed_files,
+        transport=transport,
+        artifacts=artifacts,
+        validation_results=compact_validation_results(proposal.validation_results),
+        diff_text=diff_text,
+        promotion_verified=proposal.promotion_verified,
+        promotion_errors=proposal.promotion_errors,
         created_at=created_at,
         ledger_filename=ledger_filename,
     )

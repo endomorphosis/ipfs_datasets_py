@@ -54,6 +54,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     blocked_task_backlog_markdown,
     build_auto_commit_subject,
     build_accepted_work_ledger_entry,
+    build_proposal_accepted_work_ledger_entry,
     build_scoped_accepted_work_ledger_entry,
     build_blocked_task_backlog,
     build_deterministic_progress_record,
@@ -77,6 +78,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     cleanup_stale_daemon_worktrees,
     compact_status_artifact,
     compact_validation_result,
+    compact_validation_results,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
     count_unmanaged_generated_status_sections,
@@ -1710,6 +1712,15 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         promotion_verified=proposal.promotion_verified,
         created_at="2026-05-05T01:02:04Z",
     )
+    proposal_entry = build_proposal_accepted_work_ledger_entry(
+        repo_root=repo,
+        accepted_dir=artifact_dir,
+        proposal=proposal,
+        transport="ephemeral_worktree",
+        artifacts=None,
+        diff_text=diff_text,
+        created_at="2026-05-05T01:02:05Z",
+    )
     scoped_ledger_path = append_accepted_work_ledger(artifact_dir, scoped_entry)
     evidence_manifest = accepted_work_evidence_manifest(
         timestamp="20260505T010203Z",
@@ -1803,10 +1814,18 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert ledger_rows[0]["summary"] == proposal.summary
     assert ledger_rows[1]["artifacts"]["mode"] == "ledger_only"
     assert ledger_rows[1]["artifacts"]["ledger"] == ".daemon/accepted-work/accepted-work.jsonl"
+    assert proposal_entry["summary"] == proposal.summary
+    assert proposal_entry["target_task"] == proposal.target_task
+    assert proposal_entry["promotion"]["verified"] is True
+    assert proposal_entry["validation_results"] == [{"command": ["pytest", "-q"], "returncode": 0}]
     assert compact_validation_result({"command": "bad", "returncode": "not-int"}) == {
         "command": [],
         "returncode": 1,
     }
+    assert compact_validation_results([proposal.validation_results[0], {"command": "bad"}]) == [
+        {"command": ["pytest", "-q"], "returncode": 0},
+        {"command": [], "returncode": 0},
+    ]
     assert evidence_manifest["validation"] == [{"command": ["pytest", "-q"], "returncode": 0}]
     assert evidence_manifest["diff_available"] is True
     assert validation_command_summaries([{"command": ["pytest", "-q"], "returncode": 0}, "ignored"]) == [
