@@ -4758,6 +4758,22 @@ def test_cycle_quality_gate_summary_synthesizes_legacy_cycle_records():
     assert "quality_gate_summary" in summary["patch_failure_tail"]
 
 
+def test_cycle_quality_gate_summary_fills_partial_recorded_recovery_records():
+    summary = _cycle_quality_gate_summary(
+        {
+            "quality_gate_summary": {"patch_valid": False},
+            "patch_check": {"valid": False, "stderr": "KeyError: 'quality_gate_summary'"},
+            "apply_result": {"rolled_back": True, "reason": "patch_check_failed"},
+        }
+    )
+
+    assert summary["source"] == "recorded_partial_with_synthesized_defaults"
+    assert summary["valid"] is False
+    assert summary["failed_gates"] == ["patch_check", "patch_check_failed"]
+    assert summary["patch_valid"] is False
+    assert "quality_gate_summary" in summary["patch_failure_tail"]
+
+
 def test_repeated_rejection_family_groups_exhausted_candidate_validation_failures():
     rejections = [
         {

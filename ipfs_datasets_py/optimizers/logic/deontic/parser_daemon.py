@@ -4989,12 +4989,7 @@ def _quality_gate_summary(
 def _cycle_quality_gate_summary(cycle_payload: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a cycle quality summary even for legacy records missing the field."""
 
-    existing = cycle_payload.get("quality_gate_summary")
-    if isinstance(existing, Mapping):
-        summary = dict(existing)
-        summary.setdefault("source", "recorded")
-        return summary
-    summary = _quality_gate_summary(
+    synthesized = _quality_gate_summary(
         proposal_quality=cycle_payload.get("proposal_quality")
         if isinstance(cycle_payload.get("proposal_quality"), Mapping)
         else {},
@@ -5011,8 +5006,19 @@ def _cycle_quality_gate_summary(cycle_payload: Mapping[str, Any]) -> Dict[str, A
         if isinstance(cycle_payload.get("apply_result"), Mapping)
         else {},
     )
-    summary["source"] = "synthesized_from_legacy_cycle"
-    return summary
+    existing = cycle_payload.get("quality_gate_summary")
+    if isinstance(existing, Mapping):
+        summary = {**synthesized, **dict(existing)}
+        expected_keys = set(synthesized)
+        source = (
+            "recorded"
+            if expected_keys <= set(existing)
+            else "recorded_partial_with_synthesized_defaults"
+        )
+        summary.setdefault("source", source)
+        return summary
+    synthesized["source"] = "synthesized_from_legacy_cycle"
+    return synthesized
 
 
 def _command_output_text(value: Any) -> str:
