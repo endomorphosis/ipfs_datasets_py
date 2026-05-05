@@ -25,6 +25,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     PlanTask,
     PreTaskBlock,
     Proposal,
+    ProposalPreflightPolicy,
     RestartPolicy,
     SupervisedChildSpec,
     SupervisorLoop,
@@ -126,10 +127,12 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     paths_from_git_status_porcelain,
     paths_from_patch_and_file_edits,
     paths_from_unified_diff,
+    paths_include_required_change,
     prompt_limit_for_mode,
     proposal_block_threshold,
     proposal_diff_from_worktree,
     proposal_error_text,
+    preflight_proposal_payload,
     promote_worktree_files,
     proposal_record_has_failure_markers,
     quality_failure_counts,
@@ -178,6 +181,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     supervisor_run_id,
     task_failure_summary,
     task_has_deterministic_fallback,
+    task_title_contains_any,
     task_status_counts,
     task_title_tokens,
     temporary_validation_worktree,
@@ -197,6 +201,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     worktree_phase_worker_status,
     write_json,
     write_accepted_work_evidence_artifacts,
+    write_status_json,
     write_work_sidecars,
     write_worktree_owner_file,
 )
@@ -568,6 +573,66 @@ def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
     )
     assert policy.has_visible_source_change(["todo/source.py"])
     assert not policy.has_visible_source_change(["todo/runtime/status.json"])
+
+
+def test_proposal_preflight_policy_helpers_are_reusable() -> None:
+    policy = ProposalPreflightPolicy(
+        forbidden_snippets=("from 'vitest'",),
+        forbidden_snippet_message="forbidden {snippet}",
+        prefer_file_edits=True,
+        file_edit_required_prefixes=("src/runtime/",),
+        file_edit_required_message="runtime patch needs files",
+        implementation_required_prefixes=("src/runtime/",),
+        implementation_excluded_prefixes=("src/runtime/parity/",),
+        non_implementation_task_keywords=("docs", "fixture"),
+        implementation_required_message="implementation needs runtime",
+        fixture_task_keywords=("fixture",),
+        fixture_test_prefixes=("src/runtime/",),
+        fixture_test_suffixes=(".test.ts",),
+        fixture_test_required_message="fixture needs test",
+    )
+
+    implementation_task = Task(index=1, title="Port runtime feature", status="needed", checkbox_id=1)
+    fixture_task = Task(index=2, title="Add fixture parity capture", status="needed", checkbox_id=2)
+
+    assert task_title_contains_any(fixture_task, ("fixture",))
+    assert paths_include_required_change(
+        ["src/runtime/parity/data.json", "src/runtime/feature.ts"],
+        prefixes=("src/runtime/",),
+        excluded_prefixes=("src/runtime/parity/",),
+    )
+    assert preflight_proposal_payload(
+        patch="diff --git a/src/runtime/feature.ts b/src/runtime/feature.ts\nfrom 'vitest'",
+        files=[],
+        paths=["src/runtime/feature.ts"],
+        selected_task=implementation_task,
+        proposal_transport="llm_router",
+        default_transport="llm_router",
+        policy=policy,
+    ) == ["forbidden from 'vitest'", "runtime patch needs files"]
+    assert preflight_proposal_payload(
+        patch="",
+        files=[{"path": "docs/note.md", "content": "ok"}],
+        paths=["docs/note.md"],
+        selected_task=implementation_task,
+        policy=policy,
+    ) == ["implementation needs runtime"]
+    assert preflight_proposal_payload(
+        patch="",
+        files=[{"path": "src/runtime/parity/fixtures.json", "content": "[]"}],
+        paths=["src/runtime/parity/fixtures.json"],
+        selected_task=fixture_task,
+        policy=policy,
+    ) == ["fixture needs test"]
+    assert preflight_proposal_payload(
+        patch="diff --git a/src/runtime/feature.ts b/src/runtime/feature.ts\n",
+        files=[],
+        paths=["src/runtime/feature.ts"],
+        selected_task=implementation_task,
+        proposal_transport="worktree",
+        default_transport="llm_router",
+        policy=policy,
+    ) == []
 
 
 def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> None:
@@ -1074,7 +1139,7 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
     }
 
 
-def test_status_payload_helpers_preserve_active_state_for_heartbeats() -> None:
+def test_status_payload_helpers_preserve_active_state_for_heartbeats(tmp_path: Path) -> None:
     snapshot = ActiveStatusSnapshot(state="initializing", started_at="t0")
 
     selected = advance_active_status_snapshot(
@@ -1156,6 +1221,18 @@ def test_status_payload_helpers_preserve_active_state_for_heartbeats() -> None:
     assert heartbeat["active_state_started_at"] == "s1"
     assert heartbeat["heartbeat_interval_seconds"] == 15.0
     assert heartbeat["model_name"] == "gpt-5.5"
+
+    output = tmp_path / "nested" / "status.json"
+    write_status_json(
+        output,
+        {"created_at": datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)},
+        trailing_newline=True,
+    )
+
+    assert output.read_text(encoding="utf-8").endswith("\n")
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "created_at": "2026-01-02 03:04:05+00:00"
+    }
 
 
 def test_failure_block_and_exception_diagnostics_are_reusable() -> None:

@@ -38,6 +38,123 @@ class FileReplacementHooks:
     )
 
 
+@dataclass(frozen=True)
+class ProposalPreflightPolicy:
+    """Configurable preflight guardrails for proposal patch/file payloads."""
+
+    forbidden_snippets: tuple[str, ...] = ()
+    forbidden_snippet_message: str = "Rejected proposal because it contains forbidden snippet {snippet}."
+    prefer_file_edits: bool = False
+    file_edit_required_prefixes: tuple[str, ...] = ()
+    file_edit_excluded_prefixes: tuple[str, ...] = ()
+    file_edit_patch_exempt_transports: frozenset[str] = frozenset({"worktree"})
+    file_edit_required_message: str = (
+        "Rejected proposal because matching path changes must use JSON `files` complete replacements."
+    )
+    implementation_required_prefixes: tuple[str, ...] = ()
+    implementation_excluded_prefixes: tuple[str, ...] = ()
+    non_implementation_task_keywords: tuple[str, ...] = ()
+    implementation_required_message: str = (
+        "Rejected proposal because the selected task appears to require implementation work, "
+        "but the proposal does not change a required implementation file."
+    )
+    fixture_task_keywords: tuple[str, ...] = ()
+    fixture_test_prefixes: tuple[str, ...] = ()
+    fixture_test_suffixes: tuple[str, ...] = ()
+    fixture_test_required_message: str = (
+        "Rejected proposal because fixture work must update a corresponding validation test file."
+    )
+
+
+def task_title_contains_any(task_or_title: Any, keywords: Iterable[str]) -> bool:
+    """Return whether a task-like object or title contains any keyword."""
+
+    if task_or_title is None:
+        return False
+    title = task_or_title if isinstance(task_or_title, str) else getattr(task_or_title, "title", "")
+    lowered = str(title or "").lower()
+    return any(str(keyword).lower() in lowered for keyword in keywords)
+
+
+def paths_include_required_change(
+    paths: Iterable[str],
+    *,
+    prefixes: Iterable[str],
+    excluded_prefixes: Iterable[str] = (),
+    suffixes: Iterable[str] = (),
+) -> bool:
+    """Return whether changed paths contain an included, non-excluded path."""
+
+    include = tuple(str(prefix) for prefix in prefixes if str(prefix))
+    exclude = tuple(str(prefix) for prefix in excluded_prefixes if str(prefix))
+    required_suffixes = tuple(str(suffix) for suffix in suffixes if str(suffix))
+    for path in paths:
+        text = str(path)
+        if include and not text.startswith(include):
+            continue
+        if exclude and text.startswith(exclude):
+            continue
+        if required_suffixes and not text.endswith(required_suffixes):
+            continue
+        return True
+    return False
+
+
+def preflight_proposal_payload(
+    *,
+    patch: str,
+    files: Iterable[dict[str, Any]],
+    paths: Iterable[str],
+    selected_task: Any = None,
+    proposal_transport: str = "",
+    default_transport: str = "",
+    policy: ProposalPreflightPolicy,
+) -> list[str]:
+    """Run reusable preflight checks for patch/file proposal payloads."""
+
+    file_list = list(files)
+    path_list = [str(path) for path in paths]
+    errors: list[str] = []
+    candidates = [patch, *(str(edit.get("content", "")) for edit in file_list)]
+    for snippet in policy.forbidden_snippets:
+        if any(snippet in candidate for candidate in candidates):
+            errors.append(policy.forbidden_snippet_message.format(snippet=snippet))
+    has_file_required_change = paths_include_required_change(
+        path_list,
+        prefixes=policy.file_edit_required_prefixes,
+        excluded_prefixes=policy.file_edit_excluded_prefixes,
+    )
+    patch_exempt = (
+        proposal_transport in policy.file_edit_patch_exempt_transports
+        or default_transport in policy.file_edit_patch_exempt_transports
+    )
+    if policy.prefer_file_edits and patch.strip() and not file_list and has_file_required_change and not patch_exempt:
+        errors.append(policy.file_edit_required_message)
+
+    if selected_task is not None and path_list:
+        implementation_change = paths_include_required_change(
+            path_list,
+            prefixes=policy.implementation_required_prefixes,
+            excluded_prefixes=policy.implementation_excluded_prefixes,
+        )
+        allows_non_implementation = task_title_contains_any(
+            selected_task,
+            policy.non_implementation_task_keywords,
+        )
+        if policy.implementation_required_prefixes and not allows_non_implementation and not implementation_change:
+            errors.append(policy.implementation_required_message)
+
+        fixture_task = task_title_contains_any(selected_task, policy.fixture_task_keywords)
+        fixture_test_change = paths_include_required_change(
+            path_list,
+            prefixes=policy.fixture_test_prefixes,
+            suffixes=policy.fixture_test_suffixes,
+        )
+        if policy.fixture_task_keywords and fixture_task and not fixture_test_change:
+            errors.append(policy.fixture_test_required_message)
+    return errors
+
+
 def apply_file_replacement_proposal(
     proposal: Proposal,
     config: Any,

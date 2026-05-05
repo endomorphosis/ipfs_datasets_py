@@ -57,6 +57,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
 from ipfs_datasets_py.optimizers.todo_daemon.status import (
     build_status_phase_key as _shared_build_status_phase_key,
     status_key_started_at as _shared_status_key_started_at,
+    write_status_json as _shared_write_status_json,
 )
 
 
@@ -3065,15 +3066,7 @@ class LegalParserOptimizerDaemon:
     def _write_status_file_atomic(self, payload: Mapping[str, Any]) -> None:
         """Write current status JSON without exposing a truncated file."""
 
-        tmp_path = self.status_file.with_name(
-            f".{self.status_file.name}.{os.getpid()}.{threading.get_ident()}.tmp"
-        )
-        try:
-            tmp_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-            tmp_path.replace(self.status_file)
-        finally:
-            if tmp_path.exists():
-                tmp_path.unlink()
+        _shared_write_status_json(self.status_file, payload)
 
     def _start_heartbeat(self) -> None:
         interval = float(self.config.heartbeat_interval_seconds)
@@ -3945,7 +3938,7 @@ class LegalParserOptimizerDaemon:
             self._append_accepted_change(cycle_payload)
         progress = self._build_progress_summary(latest_cycle=cycle_payload)
         progress_path = self.output_dir / "progress_summary.json"
-        progress_path.write_text(json.dumps(progress, indent=2, default=str), encoding="utf-8")
+        _shared_write_status_json(progress_path, progress)
         self._write_progress_report(progress)
 
     def _sync_progress_from_existing_cycles(self) -> None:
@@ -3964,10 +3957,7 @@ class LegalParserOptimizerDaemon:
             encoding="utf-8",
         )
         progress = self._build_progress_summary(latest_cycle=cycles[-1])
-        (self.output_dir / "progress_summary.json").write_text(
-            json.dumps(progress, indent=2, default=str),
-            encoding="utf-8",
-        )
+        _shared_write_status_json(self.output_dir / "progress_summary.json", progress)
         self._write_progress_report(progress)
 
     def _append_accepted_change(self, cycle_payload: Dict[str, Any]) -> None:

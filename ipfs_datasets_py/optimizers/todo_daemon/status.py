@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
+import threading
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Mapping, Optional
 
 from .engine import utc_now
@@ -72,6 +75,28 @@ def build_status_phase_key(
         limit = max(1, int(retry_reason_limit))
         parts.append(f"retry={str(retry_reason)[:limit]}")
     return "|".join(parts)
+
+
+def write_status_json(
+    path: Path,
+    payload: Mapping[str, Any],
+    *,
+    sort_keys: bool = False,
+    trailing_newline: bool = False,
+) -> None:
+    """Atomically write daemon status/progress JSON with ``default=str`` support."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+    text = json.dumps(payload, indent=2, default=str, sort_keys=sort_keys)
+    if trailing_newline:
+        text += "\n"
+    try:
+        tmp_path.write_text(text, encoding="utf-8")
+        tmp_path.replace(path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
 
 
 def advance_active_status_snapshot(

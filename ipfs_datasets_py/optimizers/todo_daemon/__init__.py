@@ -203,9 +203,13 @@ from .worktrees import (
 from .file_replacement import (
     FileReplacementHooks,
     FileReplacementTodoDaemonRunner,
+    ProposalPreflightPolicy,
     apply_file_replacement_proposal,
     bind_file_replacement_apply_hook,
     build_file_replacement_apply_proposal,
+    paths_include_required_change,
+    preflight_proposal_payload,
+    task_title_contains_any,
 )
 from .plans import (
     PlanTask,
@@ -229,6 +233,7 @@ from .status import (
     build_status_phase_key,
     status_key_started_at,
     status_started_at,
+    write_status_json,
 )
 from .registry import (
     DEFAULT_DAEMON_REGISTRATIONS,
@@ -324,6 +329,7 @@ __all__ = [
     "PlanTask",
     "PreTaskBlock",
     "Proposal",
+    "ProposalPreflightPolicy",
     "RestartingWrapperLaunch",
     "RestartPolicy",
     "StopResult",
@@ -463,6 +469,7 @@ __all__ = [
     "paths_from_git_status_porcelain",
     "paths_from_patch_and_file_edits",
     "paths_from_unified_diff",
+    "paths_include_required_change",
     "owner_pid_from_worktree",
     "pid_command_line",
     "pid_is_alive",
@@ -475,6 +482,7 @@ __all__ = [
     "proposal_diff_from_worktree",
     "proposal_error_text",
     "proposal_files_from_worktree",
+    "preflight_proposal_payload",
     "proposal_record_has_failure_markers",
     "promote_worktree_files",
     "quality_failure_counts",
@@ -539,6 +547,7 @@ __all__ = [
     "task_failure_summary",
     "task_has_deterministic_fallback",
     "task_title_tokens",
+    "task_title_contains_any",
     "task_status_counts",
     "terminate_active_llm_process",
     "terminate_process_group",
@@ -560,6 +569,7 @@ __all__ = [
     "write_worktree_owner_file",
     "write_json",
     "write_accepted_work_evidence_artifacts",
+    "write_status_json",
     "write_work_sidecars",
     "wait_for_child_exit",
 ]

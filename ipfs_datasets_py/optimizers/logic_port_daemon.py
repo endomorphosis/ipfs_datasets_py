@@ -30,7 +30,7 @@ import tempfile
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -94,6 +94,12 @@ from ipfs_datasets_py.optimizers.todo_daemon.llm import (
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     paths_from_patch_and_file_edits as _shared_paths_from_patch_and_file_edits,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.file_replacement import (
+    ProposalPreflightPolicy,
+    paths_include_required_change as _shared_paths_include_required_change,
+    preflight_proposal_payload as _shared_preflight_proposal_payload,
+    task_title_contains_any as _shared_task_title_contains_any,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.history import (
     current_task_failure_counts as _shared_current_task_failure_counts,
@@ -232,6 +238,32 @@ FIXTURE_VALIDATION_TASK_KEYWORDS = (
 
 RUNTIME_LOGIC_PREFIX = "src/lib/logic/"
 PARITY_FIXTURE_PREFIX = "src/lib/logic/parity/"
+LOGIC_PORT_PREFLIGHT_POLICY = ProposalPreflightPolicy(
+    forbidden_snippets=FORBIDDEN_PATCH_SNIPPETS,
+    forbidden_snippet_message=(
+        "Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
+    ),
+    file_edit_required_prefixes=(RUNTIME_LOGIC_PREFIX,),
+    file_edit_excluded_prefixes=(PARITY_FIXTURE_PREFIX,),
+    file_edit_required_message=(
+        "Rejected proposal because runtime TypeScript changes must use JSON `files` complete replacements "
+        "instead of a unified diff patch for this daemon run."
+    ),
+    implementation_required_prefixes=(RUNTIME_LOGIC_PREFIX,),
+    implementation_excluded_prefixes=(PARITY_FIXTURE_PREFIX,),
+    non_implementation_task_keywords=NON_RUNTIME_TASK_KEYWORDS,
+    implementation_required_message=(
+        "Rejected proposal because the selected port-plan task appears to require implementation work, "
+        "but the proposal does not change any runtime TypeScript file under src/lib/logic/."
+    ),
+    fixture_task_keywords=FIXTURE_VALIDATION_TASK_KEYWORDS,
+    fixture_test_prefixes=(RUNTIME_LOGIC_PREFIX,),
+    fixture_test_suffixes=(".test.ts",),
+    fixture_test_required_message=(
+        "Rejected proposal because fixture/capture/parity work must update a src/lib/logic/*.test.ts file "
+        "that loads or asserts the generated fixture."
+    ),
+)
 
 
 @dataclass
@@ -697,17 +729,11 @@ def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
 
 
 def _task_allows_non_runtime_only(task: Optional[PlanTask]) -> bool:
-    if task is None:
-        return False
-    title = task.title.lower()
-    return any(keyword in title for keyword in NON_RUNTIME_TASK_KEYWORDS)
+    return _shared_task_title_contains_any(task, NON_RUNTIME_TASK_KEYWORDS)
 
 
 def _task_requires_fixture_validation(task: Optional[PlanTask]) -> bool:
-    if task is None:
-        return False
-    title = task.title.lower()
-    return any(keyword in title for keyword in FIXTURE_VALIDATION_TASK_KEYWORDS)
+    return _shared_task_title_contains_any(task, FIXTURE_VALIDATION_TASK_KEYWORDS)
 
 
 def _task_is_explicit_failure(task: Optional[PlanTask]) -> bool:
@@ -797,11 +823,19 @@ def _rollback_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[s
 
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:
-    return any(path.startswith(RUNTIME_LOGIC_PREFIX) and not path.startswith(PARITY_FIXTURE_PREFIX) for path in paths)
+    return _shared_paths_include_required_change(
+        paths,
+        prefixes=(RUNTIME_LOGIC_PREFIX,),
+        excluded_prefixes=(PARITY_FIXTURE_PREFIX,),
+    )
 
 
 def _has_logic_test_change(paths: Sequence[str]) -> bool:
-    return any(path.startswith(RUNTIME_LOGIC_PREFIX) and path.endswith(".test.ts") for path in paths)
+    return _shared_paths_include_required_change(
+        paths,
+        prefixes=(RUNTIME_LOGIC_PREFIX,),
+        suffixes=(".test.ts",),
+    )
 
 
 def run_command(
@@ -3172,37 +3206,16 @@ PLANNING CONTEXT:
         )
 
     def _preflight_artifact(self, artifact: LogicPortArtifact, *, selected_task: Optional[PlanTask] = None) -> List[str]:
-        errors: List[str] = []
-        candidates = [artifact.patch, *(edit.get("content", "") for edit in artifact.files)]
-        for snippet in FORBIDDEN_PATCH_SNIPPETS:
-            if any(snippet in candidate for candidate in candidates):
-                errors.append(
-                    f"Rejected proposal because it imports {snippet}; logic tests use Jest globals without test-framework imports."
-                )
         paths = _artifact_paths(artifact)
-        patch_from_worktree = artifact.proposal_transport == "worktree" or self.daemon_config.proposal_transport_mode() == "worktree"
-        if (
-            self.daemon_config.prefer_file_edits
-            and artifact.patch.strip()
-            and not artifact.files
-            and _has_runtime_logic_change(paths)
-            and not patch_from_worktree
-        ):
-            errors.append(
-                "Rejected proposal because runtime TypeScript changes must use JSON `files` complete replacements "
-                "instead of a unified diff patch for this daemon run."
-            )
-        if selected_task and paths and not _task_allows_non_runtime_only(selected_task) and not _has_runtime_logic_change(paths):
-            errors.append(
-                "Rejected proposal because the selected port-plan task appears to require implementation work, "
-                "but the proposal does not change any runtime TypeScript file under src/lib/logic/."
-            )
-        if selected_task and paths and _task_requires_fixture_validation(selected_task) and not _has_logic_test_change(paths):
-            errors.append(
-                "Rejected proposal because fixture/capture/parity work must update a src/lib/logic/*.test.ts file "
-                "that loads or asserts the generated fixture."
-            )
-        return errors
+        return _shared_preflight_proposal_payload(
+            patch=artifact.patch,
+            files=artifact.files,
+            paths=paths,
+            selected_task=selected_task,
+            proposal_transport=artifact.proposal_transport,
+            default_transport=self.daemon_config.proposal_transport_mode(),
+            policy=replace(LOGIC_PORT_PREFLIGHT_POLICY, prefer_file_edits=self.daemon_config.prefer_file_edits),
+        )
 
     def _typescript_replacement_preflight_errors(self, edits: List[Dict[str, str]]) -> List[str]:
         ts_edits = [
