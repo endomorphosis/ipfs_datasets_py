@@ -48,7 +48,9 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     git_apply_command_for_strategy as _shared_git_apply_command_for_strategy,
+    git_apply_check_with_fallbacks as _shared_git_apply_check_with_fallbacks,
     git_apply_commands as _shared_git_apply_commands,
+    git_apply_with_strategy as _shared_git_apply_with_strategy,
     paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
     retained_change_summary as _shared_retained_change_summary,
@@ -1692,54 +1694,25 @@ class LegalParserParityOptimizer(BaseOptimizer):
         return files[:8]
 
     def check_patch(self, unified_diff: str) -> Dict[str, Any]:
-        if not unified_diff.strip():
-            return {"valid": False, "returncode": 1, "stdout": "", "stderr": "empty unified diff"}
-        attempts: List[Dict[str, Any]] = []
-        for strategy, command in self._git_apply_commands(check=True):
-            result = _run_command(
-                command,
-                cwd=self.daemon_config.repo_root,
-                input_text=unified_diff,
-                timeout=30,
-            )
-            result["apply_strategy"] = strategy
-            attempts.append(result)
-            if result.get("valid"):
-                return {
-                    **result,
-                    "fallback_attempts": attempts,
-                    "strict_check": attempts[0],
-                }
-        stderr = "\n".join(
-            f"[{item.get('apply_strategy')}] {str(item.get('stderr') or '').strip()}"
-            for item in attempts
-            if str(item.get("stderr") or "").strip()
+        return _shared_git_apply_check_with_fallbacks(
+            unified_diff,
+            repo_root=self.daemon_config.repo_root,
+            run_command_fn=_run_command,
+            timeout=30,
         )
-        final = dict(attempts[-1] if attempts else {})
-        final.update(
-            {
-                "valid": False,
-                "apply_strategy": "none",
-                "fallback_attempts": attempts,
-                "strict_check": attempts[0] if attempts else {},
-                "stderr": stderr or str(final.get("stderr") or ""),
-            }
-        )
-        return final
 
     def apply_patch(self, unified_diff: str) -> Dict[str, Any]:
         check = self.check_patch(unified_diff)
         if not check["valid"]:
             return {"applied": False, "check": check, "apply": None}
         strategy = str(check.get("apply_strategy") or "strict")
-        apply_command = self._git_apply_command_for_strategy(strategy, check=False)
-        apply_result = _run_command(
-            apply_command,
-            cwd=self.daemon_config.repo_root,
-            input_text=unified_diff,
+        apply_result = _shared_git_apply_with_strategy(
+            unified_diff,
+            repo_root=self.daemon_config.repo_root,
+            strategy=strategy,
+            run_command_fn=_run_command,
             timeout=30,
         )
-        apply_result["apply_strategy"] = strategy
         return {"applied": bool(apply_result["valid"]), "check": check, "apply": apply_result}
 
     def _git_apply_commands(self, *, check: bool) -> List[Tuple[str, List[str]]]:

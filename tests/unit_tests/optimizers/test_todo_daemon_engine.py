@@ -135,8 +135,10 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     focused_task_board_excerpt,
     format_typescript_paths,
     generated_status_block,
+    git_apply_check_with_fallbacks,
     git_apply_command_for_strategy,
     git_apply_commands,
+    git_apply_with_strategy,
     heartbeat_snapshot,
     has_diagnostic_codes,
     is_retryable_proposal_failure,
@@ -1894,6 +1896,37 @@ def test_git_parsing_helpers_are_reusable() -> None:
 
 
 def test_git_apply_strategy_helpers_are_reusable() -> None:
+    calls: list[list[str]] = []
+
+    def fake_run_command(command, *, cwd, input_text=None, timeout=60):
+        command = list(command)
+        calls.append(command)
+        assert cwd == Path("/repo")
+        assert input_text == "diff --git a/example.py b/example.py\n"
+        assert timeout == 11
+        valid = "--3way" in command
+        return {
+            "valid": valid,
+            "returncode": 0 if valid else 1,
+            "command": command,
+            "stdout": "",
+            "stderr": "" if valid else "error: patch failed: stale context",
+        }
+
+    check = git_apply_check_with_fallbacks(
+        "diff --git a/example.py b/example.py\n",
+        repo_root=Path("/repo"),
+        run_command_fn=fake_run_command,
+        timeout=11,
+    )
+    applied = git_apply_with_strategy(
+        "diff --git a/example.py b/example.py\n",
+        repo_root=Path("/repo"),
+        strategy="three_way",
+        run_command_fn=fake_run_command,
+        timeout=11,
+    )
+
     assert git_apply_commands(check=True) == [
         ("strict", ["git", "apply", "--check", "--recount", "-"]),
         (
@@ -1915,6 +1948,21 @@ def test_git_apply_strategy_helpers_are_reusable() -> None:
         "--recount",
         "-",
     ]
+    assert check["valid"] is True
+    assert check["apply_strategy"] == "three_way"
+    assert [item["apply_strategy"] for item in check["fallback_attempts"]] == [
+        "strict",
+        "whitespace_fix",
+        "three_way",
+    ]
+    assert check["strict_check"]["valid"] is False
+    assert applied["valid"] is True
+    assert applied["apply_strategy"] == "three_way"
+    assert git_apply_check_with_fallbacks("", repo_root=Path("/repo"), run_command_fn=fake_run_command)["stderr"] == (
+        "empty unified diff"
+    )
+    assert any("--check" in call and "--3way" in call for call in calls)
+    assert any("--check" not in call and "--3way" in call for call in calls)
 
 
 def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:

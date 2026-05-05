@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence
 
 
 SNAPSHOT_ERROR_PREFIX = "__SNAPSHOT_ERROR__:"
@@ -88,6 +88,75 @@ def git_apply_command_for_strategy(strategy: str, *, check: bool) -> list[str]:
         if candidate_strategy == strategy:
             return command
     return commands[0][1]
+
+
+def git_apply_check_with_fallbacks(
+    unified_diff: str,
+    *,
+    repo_root: Path,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 30,
+) -> dict[str, Any]:
+    """Run ``git apply --check`` with reusable fallback strategies."""
+
+    if not unified_diff.strip():
+        return {"valid": False, "returncode": 1, "stdout": "", "stderr": "empty unified diff"}
+    attempts: list[dict[str, Any]] = []
+    for strategy, command in git_apply_commands(check=True):
+        result = dict(
+            run_command_fn(
+                command,
+                cwd=repo_root,
+                input_text=unified_diff,
+                timeout=timeout,
+            )
+        )
+        result["apply_strategy"] = strategy
+        attempts.append(result)
+        if result.get("valid"):
+            return {
+                **result,
+                "fallback_attempts": attempts,
+                "strict_check": attempts[0],
+            }
+    stderr = "\n".join(
+        f"[{item.get('apply_strategy')}] {str(item.get('stderr') or '').strip()}"
+        for item in attempts
+        if str(item.get("stderr") or "").strip()
+    )
+    final = dict(attempts[-1] if attempts else {})
+    final.update(
+        {
+            "valid": False,
+            "apply_strategy": "none",
+            "fallback_attempts": attempts,
+            "strict_check": attempts[0] if attempts else {},
+            "stderr": stderr or str(final.get("stderr") or ""),
+        }
+    )
+    return final
+
+
+def git_apply_with_strategy(
+    unified_diff: str,
+    *,
+    repo_root: Path,
+    strategy: str,
+    run_command_fn: Callable[..., Mapping[str, Any]],
+    timeout: int = 30,
+) -> dict[str, Any]:
+    """Apply ``unified_diff`` with a named reusable ``git apply`` strategy."""
+
+    result = dict(
+        run_command_fn(
+            git_apply_command_for_strategy(strategy, check=False),
+            cwd=repo_root,
+            input_text=unified_diff,
+            timeout=timeout,
+        )
+    )
+    result["apply_strategy"] = strategy
+    return result
 
 
 def snapshot_paths(repo_root: Path, paths: Iterable[str]) -> dict[str, Optional[str]]:
