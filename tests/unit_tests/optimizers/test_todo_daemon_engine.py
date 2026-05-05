@@ -995,6 +995,95 @@ def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:
     assert subject.stdout.strip() == "chore(todo-test): runtime feature works"
 
 
+def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    artifact_dir = repo / ".daemon" / "accepted-work"
+    diff_text = "diff --git a/todo/source.py b/todo/source.py\n+VALUE = 2\n"
+    proposal = Proposal(
+        summary="Runtime feature works",
+        impact="Reusable artifact evidence.",
+        target_task="Task checkbox-1: Port feature",
+        files=[{"path": "todo/source.py", "content": "VALUE = 2\n"}],
+        changed_files=["todo/source.py"],
+        validation_results=[CommandResult(("pytest", "-q"), 0, "ok", "")],
+        promotion_verified=True,
+    )
+
+    base = timestamped_artifact_base(
+        artifact_dir,
+        summary=proposal.summary,
+        fallback="accepted-work",
+        reason="accepted",
+        now=lambda: "2026-05-05T01:02:03Z",
+    )
+    paths = write_work_sidecars(
+        base=base,
+        manifest=accepted_work_manifest(proposal, transport="ephemeral_worktree"),
+        workspace=accepted_work_workspace_payload(proposal, transport="ephemeral_worktree"),
+        diff_text=diff_text,
+        changed_files=proposal.changed_files,
+    )
+    ledger_entry = build_accepted_work_ledger_entry(
+        repo_root=repo,
+        target_task=proposal.target_task,
+        summary=proposal.summary,
+        impact=proposal.impact,
+        changed_files=proposal.changed_files,
+        transport="ephemeral_worktree",
+        artifacts=paths,
+        validation_results=[result.compact() for result in proposal.validation_results],
+        diff_text=diff_text,
+        promotion_verified=proposal.promotion_verified,
+        created_at="2026-05-05T01:02:03Z",
+    )
+    ledger_path = append_jsonl_ledger(
+        artifact_dir,
+        ledger_entry,
+        filename=DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+    )
+    failed_manifest = failed_work_manifest(
+        Proposal(
+            summary="Broken edit",
+            target_task="Task checkbox-2: Broken",
+            errors=["Traceback line\nwith details"],
+            validation_results=[CommandResult(("pytest",), 1, "", "failed")],
+        ),
+        reason="validation",
+        transport="ephemeral_worktree",
+    )
+    failed_workspace = failed_work_workspace_payload(
+        Proposal(summary="Broken edit", changed_files=["todo/source.py"]),
+        reason="validation",
+        transport="ephemeral_worktree",
+    )
+
+    assert isinstance(paths, WorkSidecarPaths)
+    assert base.name == "20260505T010203Z-accepted-runtime-feature-works"
+    assert sidecar_paths(base) == paths
+    assert slugify_artifact_name("Runtime Feature Works!", fallback="work") == "runtime-feature-works"
+    assert paths.manifest.exists()
+    assert paths.workspace.exists()
+    assert paths.diff.read_text(encoding="utf-8") == diff_text
+    assert paths.stat.read_text(encoding="utf-8") == "todo/source.py\n"
+    assert json.loads(paths.manifest.read_text(encoding="utf-8"))["promotion_verified"] is True
+    assert json.loads(paths.workspace.read_text(encoding="utf-8"))["promoted"] is True
+    assert ledger_entry["schema_version"] == ACCEPTED_WORK_LEDGER_SCHEMA_VERSION
+    assert ledger_entry["validation_passed"] is True
+    assert ledger_entry["artifacts"]["manifest"] == as_repo_path(paths.manifest, repo)
+    assert ledger_entry["diff"]["line_count"] == len(diff_text.splitlines())
+    assert ledger_path.name == DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
+    assert json.loads(ledger_path.read_text(encoding="utf-8").splitlines()[0])["summary"] == proposal.summary
+    assert compact_validation_result({"command": "bad", "returncode": "not-int"}) == {
+        "command": [],
+        "returncode": 1,
+    }
+    assert failed_manifest["reason"] == "validation"
+    assert failed_manifest["validation_results"][0]["returncode"] == 1
+    assert failed_workspace["reason"] == "validation"
+    write_json(artifact_dir / "extra.json", {"ok": True})
+    assert json.loads((artifact_dir / "extra.json").read_text(encoding="utf-8")) == {"ok": True}
+
+
 def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     worktree_root = repo / ".daemon" / "worktrees"

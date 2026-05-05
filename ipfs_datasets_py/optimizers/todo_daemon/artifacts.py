@@ -133,22 +133,26 @@ def accepted_work_manifest(
 def failed_work_workspace_payload(proposal: Proposal, *, reason: str, transport: str) -> dict[str, Any]:
     """Build the standard failed-work workspace payload."""
 
-    return workspace_artifact_payload(
+    payload = workspace_artifact_payload(
         proposal,
         transport=transport,
         promoted=False,
         reason=reason,
     )
+    payload["promoted"] = False
+    return payload
 
 
 def accepted_work_workspace_payload(proposal: Proposal, *, transport: str) -> dict[str, Any]:
     """Build the standard accepted-work workspace payload."""
 
-    return workspace_artifact_payload(
+    payload = workspace_artifact_payload(
         proposal,
         transport=transport,
         promoted=True,
     )
+    payload["promoted"] = True
+    return payload
 
 
 def as_repo_path(path: Path, repo_root: Path) -> str:
