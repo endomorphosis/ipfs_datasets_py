@@ -23,6 +23,7 @@ from .git_utils import (
 
 CommandRunner = Callable[..., CommandResult]
 OwnerAlivePredicate = Callable[[int, Path, Path], bool]
+TraceResultFormatter = Callable[[CommandResult, int], Any]
 WorktreeOwnerWriter = Callable[[Path], None]
 
 
@@ -40,6 +41,14 @@ def _run_command_with_timeout(
         if "timeout_seconds" not in str(exc):
             raise
         return run_command_fn(tuple(command), cwd=cwd, timeout=normalized_timeout)
+
+
+def _trace_key(label: Optional[str], name: str) -> str:
+    return name if not label else f"{label}_{name}"
+
+
+def _compact_trace_result(result: CommandResult, limit: int) -> dict[str, Any]:
+    return result.compact(limit=limit)
 
 
 def git_status_paths(stdout: str) -> list[str]:
@@ -165,6 +174,7 @@ def worktree_diff(
     label: str = "worktree",
     timeout_seconds: int = 60,
     run_command_fn: CommandRunner = run_command,
+    trace_result_formatter: TraceResultFormatter = _compact_trace_result,
 ) -> str:
     """Return a binary Git diff for a normalized worktree path subset.
 
@@ -175,9 +185,9 @@ def worktree_diff(
     normalized_paths = unique_worktree_paths(paths)
     if not normalized_paths:
         if raw_trace is not None:
-            raw_trace[f"{label}_status"] = {"skipped": True, "reason": "no_paths"}
-            raw_trace[f"{label}_untracked_paths"] = []
-            raw_trace[f"{label}_git_diff"] = {"skipped": True, "reason": "no_paths"}
+            raw_trace[_trace_key(label, "status")] = {"skipped": True, "reason": "no_paths"}
+            raw_trace[_trace_key(label, "untracked_paths")] = []
+            raw_trace[_trace_key(label, "git_diff")] = {"skipped": True, "reason": "no_paths"}
         return ""
 
     status_result = _run_command_with_timeout(
@@ -187,11 +197,11 @@ def worktree_diff(
         timeout_seconds=timeout_seconds,
     )
     if raw_trace is not None:
-        raw_trace[f"{label}_status"] = status_result.compact(limit=12000)
+        raw_trace[_trace_key(label, "status")] = trace_result_formatter(status_result, 12000)
 
     untracked_paths = untracked_paths_from_git_status(status_result.stdout)
     if raw_trace is not None:
-        raw_trace[f"{label}_untracked_paths"] = untracked_paths
+        raw_trace[_trace_key(label, "untracked_paths")] = untracked_paths
 
     if untracked_paths:
         add_intent = _run_command_with_timeout(
@@ -201,7 +211,7 @@ def worktree_diff(
             timeout_seconds=timeout_seconds,
         )
         if raw_trace is not None:
-            raw_trace[f"{label}_git_add_intent_to_add"] = add_intent.compact(limit=12000)
+            raw_trace[_trace_key(label, "git_add_intent_to_add")] = trace_result_formatter(add_intent, 12000)
 
     diff_result = _run_command_with_timeout(
         run_command_fn,
@@ -210,7 +220,7 @@ def worktree_diff(
         timeout_seconds=timeout_seconds,
     )
     if raw_trace is not None:
-        raw_trace[f"{label}_git_diff"] = diff_result.compact(limit=20000)
+        raw_trace[_trace_key(label, "git_diff")] = trace_result_formatter(diff_result, 20000)
     return diff_result.stdout if diff_result.ok else ""
 
 

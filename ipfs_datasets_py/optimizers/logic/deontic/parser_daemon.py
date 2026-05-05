@@ -50,7 +50,6 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
     unified_diff_stats as _shared_unified_diff_stats,
-    untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     append_jsonl as _shared_append_jsonl,
@@ -67,12 +66,11 @@ from ipfs_datasets_py.optimizers.todo_daemon.status import (
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
     dirty_worktree_paths as _shared_dirty_worktree_paths,
-    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     managed_git_worktree as _shared_managed_git_worktree,
-    owner_pid_from_worktree as _shared_owner_pid_from_worktree,
     pid_is_alive as _shared_pid_is_alive,
     read_json_object as _shared_read_json_object,
     unique_worktree_paths as _shared_unique_worktree_paths,
+    worktree_diff as _shared_worktree_diff,
     write_worktree_owner_file as _shared_write_worktree_owner_file,
 )
 
@@ -507,13 +505,14 @@ class LegalParserParityOptimizer(BaseOptimizer):
             "repair_context": dict(repair_context or {}),
         }
 
+        worktree_command_runner = command_runner_from_legacy_function(_run_command)
         with _shared_managed_git_worktree(
             repo_root=repo_root,
             worktree_path=worktree_path,
             metadata_rel=metadata_rel,
             owner_rel=owner_rel,
             trace_context=trace_context,
-            run_command_fn=command_runner_from_legacy_function(_run_command),
+            run_command_fn=worktree_command_runner,
             owner_writer=lambda owner_path: self._write_worktree_owner_file(
                 owner_path,
                 cycle_index=cycle_index,
@@ -546,30 +545,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
                             + str(base_apply_result.get("stderr") or "").strip()[:1000]
                         ),
                     )
-                diff_paths = self._worktree_diff_paths()
-                base_status_result = _run_command(
-                    ["git", "status", "--porcelain", "--", *diff_paths],
-                    cwd=worktree_path,
-                    timeout=60,
+                base_worktree_diff = _shared_worktree_diff(
+                    worktree_path=worktree_path,
+                    paths=self._worktree_diff_paths(),
+                    raw_trace=raw_trace,
+                    label="base",
+                    timeout_seconds=60,
+                    run_command_fn=worktree_command_runner,
+                    trace_result_formatter=_legacy_command_result_trace,
                 )
-                raw_trace["base_status"] = base_status_result
-                base_untracked_paths = _untracked_paths_from_git_status_porcelain(
-                    str(base_status_result.get("stdout") or "")
-                )
-                raw_trace["base_untracked_paths"] = base_untracked_paths
-                if base_untracked_paths:
-                    raw_trace["base_git_add_intent_to_add"] = _run_command(
-                        ["git", "add", "-N", "--", *base_untracked_paths],
-                        cwd=worktree_path,
-                        timeout=60,
-                    )
-                base_diff_result = _run_command(
-                    ["git", "diff", "--binary", "--", *diff_paths],
-                    cwd=worktree_path,
-                    timeout=60,
-                )
-                raw_trace["base_git_diff"] = base_diff_result
-                base_worktree_diff = str(base_diff_result.get("stdout") or "")
 
             prompt = self.build_worktree_edit_prompt(
                 cycle_index=cycle_index,
@@ -600,29 +584,15 @@ class LegalParserParityOptimizer(BaseOptimizer):
             )
             raw_trace["codex_exec"] = codex_result
 
-            diff_paths = self._worktree_diff_paths()
-            status_result = _run_command(
-                ["git", "status", "--porcelain", "--", *diff_paths],
-                cwd=worktree_path,
-                timeout=60,
+            unified_diff = _shared_worktree_diff(
+                worktree_path=worktree_path,
+                paths=self._worktree_diff_paths(),
+                raw_trace=raw_trace,
+                label="",
+                timeout_seconds=60,
+                run_command_fn=worktree_command_runner,
+                trace_result_formatter=_legacy_command_result_trace,
             )
-            raw_trace["status"] = status_result
-            untracked_paths = _untracked_paths_from_git_status_porcelain(str(status_result.get("stdout") or ""))
-            raw_trace["untracked_paths"] = untracked_paths
-            if untracked_paths:
-                raw_trace["git_add_intent_to_add"] = _run_command(
-                    ["git", "add", "-N", "--", *untracked_paths],
-                    cwd=worktree_path,
-                    timeout=60,
-                )
-
-            diff_result = _run_command(
-                ["git", "diff", "--binary", "--", *diff_paths],
-                cwd=worktree_path,
-                timeout=60,
-            )
-            raw_trace["git_diff"] = diff_result
-            unified_diff = str(diff_result.get("stdout") or "")
             metadata = self._read_worktree_metadata(worktree_path / metadata_rel)
             raw_trace["metadata"] = metadata
 
@@ -5025,30 +4995,20 @@ def _run_command(
         }
 
 
+def _legacy_command_result_trace(result: Any, limit: int) -> Dict[str, Any]:
+    return {
+        "valid": bool(getattr(result, "ok", False)),
+        "returncode": getattr(result, "returncode", None),
+        "command": list(getattr(result, "command", ())),
+        "stdout": str(getattr(result, "stdout", ""))[-limit:],
+        "stderr": str(getattr(result, "stderr", ""))[-limit:],
+    }
+
+
 def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
     """Return unique paths from plain ``git status --porcelain`` output."""
 
     return _shared_paths_from_git_status_porcelain(stdout)
-
-
-def _untracked_paths_from_git_status_porcelain(stdout: str) -> List[str]:
-    """Return unique untracked paths from plain ``git status --porcelain`` output."""
-
-    return _shared_untracked_paths_from_git_status_porcelain(stdout)
-
-
-def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
-    """Return worktree paths from ``git worktree list --porcelain`` output."""
-
-    return _shared_git_worktree_paths_from_porcelain(stdout)
-
-
-def _pid_is_alive(pid: int) -> bool:
-    return _shared_pid_is_alive(pid)
-
-
-def _owner_pid_from_worktree(path: Path, owner: Mapping[str, Any]) -> Optional[int]:
-    return _shared_owner_pid_from_worktree(path, owner)
 
 
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:

@@ -130,11 +130,8 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     disallowed_worktree_paths as _shared_disallowed_worktree_paths,
     dirty_worktree_paths as _shared_dirty_worktree_paths,
     git_status_paths as _shared_git_status_paths,
-    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     managed_git_worktree as _shared_managed_git_worktree,
-    owner_pid_from_worktree as _shared_owner_pid_from_worktree,
     pid_command_line as _shared_pid_command_line,
-    pid_is_alive as _shared_pid_is_alive,
     pid_looks_like_worktree_owner as _shared_pid_looks_like_worktree_owner,
     read_json_object as _shared_read_json_object,
     repo_relative_worktree_path as _shared_repo_relative_worktree_path,
@@ -551,22 +548,6 @@ def _patch_changed_files(patch: str) -> List[str]:
     return _shared_paths_from_unified_diff(patch)
 
 
-def _git_status_paths(stdout: str) -> List[str]:
-    """Return paths from ``git status --porcelain`` output."""
-
-    return _shared_git_status_paths(stdout)
-
-
-def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
-    """Return registered Git worktree paths from porcelain output."""
-
-    return _shared_git_worktree_paths_from_porcelain(stdout)
-
-
-def _pid_is_alive(pid: int) -> bool:
-    return _shared_pid_is_alive(pid)
-
-
 def _pid_command_line(pid: int) -> str:
     return _shared_pid_command_line(pid)
 
@@ -578,10 +559,6 @@ def _pid_looks_like_logic_port_owner(pid: int, *, repo_root: Path, worktree_path
         worktree_path=worktree_path,
         daemon_process_fragment="ipfs_datasets_py.optimizers.logic_port_daemon",
     )
-
-
-def _owner_pid_from_worktree(path: Path, owner: Dict[str, Any]) -> Optional[int]:
-    return _shared_owner_pid_from_worktree(path, owner)
 
 
 def _artifact_paths(artifact: LogicPortArtifact) -> List[str]:
@@ -2707,7 +2684,7 @@ PLANNING CONTEXT:
         )
         raw_trace["full_status"] = full_status.compact(limit=12000)
         disallowed_paths = self._disallowed_worktree_paths(
-            _git_status_paths(full_status.stdout),
+            _shared_git_status_paths(full_status.stdout),
             metadata_rel=metadata_rel,
             owner_rel=owner_rel,
         )
