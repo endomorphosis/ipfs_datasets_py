@@ -5082,6 +5082,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Validate",
     )):
         return "data_quality_processing_duty"
+    if action_predicate.startswith((
+        "Geocode",
+        "Georeference",
+        "Map",
+        "Survey",
+    )):
+        return "geospatial_records_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:

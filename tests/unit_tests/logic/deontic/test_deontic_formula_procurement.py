@@ -134,6 +134,88 @@ def test_procurement_slice_preserves_unresolved_numbered_exception_repair_gate()
     assert "exception_requires_scope_review" in blocked_record["blockers"]
 
 
+def test_geospatial_record_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Surveyor shall perform mapping of the parcels.",
+            "perform mapping of the parcels",
+            "O(∀x (Surveyor(x) → MapParcels(x)))",
+            "PerformMappingParcels",
+        ),
+        (
+            "The Assessor shall conduct geocoding of the addresses.",
+            "conduct geocoding of the addresses",
+            "O(∀x (Assessor(x) → GeocodeAddresses(x)))",
+            "ConductGeocodingAddresses",
+        ),
+        (
+            "The Clerk shall prepare georeferencing of the plats.",
+            "prepare georeferencing of the plats",
+            "O(∀x (Clerk(x) → GeoreferencePlats(x)))",
+            "PrepareGeoreferencingPlats",
+        ),
+        (
+            "The Department shall maintain a survey of the boundaries.",
+            "maintain a survey of the boundaries",
+            "O(∀x (Department(x) → SurveyBoundaries(x)))",
+            "MaintainSurveyBoundaries",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "geospatial_records_duty",
+        "geospatial_records_duty",
+        "geospatial_records_duty",
+        "geospatial_records_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        expected_formula for _, _, expected_formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_rulemaking_enactment_amendment_and_repeal_export_operative_predicates():
     examples = [
         (

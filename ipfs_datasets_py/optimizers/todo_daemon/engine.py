@@ -313,6 +313,38 @@ def build_validation_workspace_spec(
     )
 
 
+def config_validation_workspace_spec(
+    config: Any,
+    *,
+    repo_root_field: str = "repo_root",
+    worktree_dir_field: str = "worktree_dir",
+    stale_seconds_field: str = "worktree_stale_seconds",
+    marker_name: str = "todo-worktree.json",
+    copy_paths: Iterable[Path] = (),
+    root_files: Iterable[str] = (),
+    external_reference_paths: Iterable[Path] = (),
+    ignore: Optional[Callable[[str, list[str]], set[str]]] = None,
+    default_stale_seconds: int = 7200,
+) -> ValidationWorkspaceSpec:
+    """Build a validation-worktree spec using standard daemon config fields."""
+
+    try:
+        worktree_dir = Path(getattr(config, str(worktree_dir_field or "worktree_dir")))
+    except AttributeError as exc:
+        raise AttributeError(f"daemon config does not define {worktree_dir_field!r}") from exc
+    stale_seconds = getattr(config, str(stale_seconds_field or "worktree_stale_seconds"), default_stale_seconds)
+    return build_validation_workspace_spec(
+        repo_root=config_repo_root(config, repo_root_field=repo_root_field),
+        worktree_dir=worktree_dir,
+        marker_name=marker_name,
+        copy_paths=copy_paths,
+        root_files=root_files,
+        external_reference_paths=external_reference_paths,
+        ignore=ignore,
+        stale_seconds=int(stale_seconds),
+    )
+
+
 def dataclass_worktree_config(
     config: Any,
     worktree: Path,
@@ -781,6 +813,33 @@ def cleanup_stale_validation_worktrees(
     return removed
 
 
+def cleanup_stale_config_validation_worktrees(
+    config: Any,
+    *,
+    marker_name: str = "todo-worktree.json",
+    max_age_seconds: Optional[int] = None,
+    repo_root_field: str = "repo_root",
+    worktree_dir_field: str = "worktree_dir",
+    stale_seconds_field: str = "worktree_stale_seconds",
+    default_stale_seconds: int = 7200,
+) -> list[str]:
+    """Remove stale validation worktrees using root, worktree dir, and age from config."""
+
+    spec = config_validation_workspace_spec(
+        config,
+        repo_root_field=repo_root_field,
+        worktree_dir_field=worktree_dir_field,
+        stale_seconds_field=stale_seconds_field,
+        marker_name=marker_name,
+        default_stale_seconds=default_stale_seconds,
+    )
+    return cleanup_stale_validation_worktrees(
+        spec.resolve(spec.worktree_dir),
+        marker_name=marker_name,
+        max_age_seconds=int(spec.stale_seconds if max_age_seconds is None else max_age_seconds),
+    )
+
+
 @contextmanager
 def temporary_validation_worktree(spec: ValidationWorkspaceSpec) -> Iterator[Path]:
     cleanup_stale_validation_worktrees(
@@ -817,6 +876,38 @@ def temporary_validation_worktree(spec: ValidationWorkspaceSpec) -> Iterator[Pat
             shutil.rmtree(worktree)
         except FileNotFoundError:
             pass
+
+
+@contextmanager
+def temporary_config_validation_worktree(
+    config: Any,
+    *,
+    repo_root_field: str = "repo_root",
+    worktree_dir_field: str = "worktree_dir",
+    stale_seconds_field: str = "worktree_stale_seconds",
+    marker_name: str = "todo-worktree.json",
+    copy_paths: Iterable[Path] = (),
+    root_files: Iterable[str] = (),
+    external_reference_paths: Iterable[Path] = (),
+    ignore: Optional[Callable[[str, list[str]], set[str]]] = None,
+    default_stale_seconds: int = 7200,
+) -> Iterator[Path]:
+    """Create a temporary validation worktree from standard daemon config fields."""
+
+    spec = config_validation_workspace_spec(
+        config,
+        repo_root_field=repo_root_field,
+        worktree_dir_field=worktree_dir_field,
+        stale_seconds_field=stale_seconds_field,
+        marker_name=marker_name,
+        copy_paths=copy_paths,
+        root_files=root_files,
+        external_reference_paths=external_reference_paths,
+        ignore=ignore,
+        default_stale_seconds=default_stale_seconds,
+    )
+    with temporary_validation_worktree(spec) as worktree:
+        yield worktree
 
 
 def materialize_proposal_files(proposal: Proposal, worktree: Path) -> list[str]:

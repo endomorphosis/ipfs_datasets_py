@@ -120,6 +120,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.task_board import (
     truncate_text as _shared_truncate_text,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.typescript import (
+    format_typescript_paths as _shared_format_typescript_paths,
     obvious_typescript_text_damage as _shared_obvious_typescript_text_damage,
     repair_common_typescript_file_edits as _shared_repair_common_typescript_file_edits,
     repair_common_typescript_text_damage as _shared_repair_common_typescript_text_damage,
@@ -136,6 +137,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     pid_looks_like_worktree_owner as _shared_pid_looks_like_worktree_owner,
     read_json_object as _shared_read_json_object,
     repo_relative_worktree_path as _shared_repo_relative_worktree_path,
+    resolve_worktree_file_edit_path as _shared_resolve_worktree_file_edit_path,
     unique_worktree_paths as _shared_unique_worktree_paths,
     untracked_paths_from_git_status as _shared_untracked_paths_from_git_status,
     worktree_file_edits as _shared_worktree_file_edits,
@@ -2679,18 +2681,7 @@ PLANNING CONTEXT:
         )
 
     def _format_file_edits_in_root(self, root: Path, paths: Sequence[str]) -> None:
-        ts_paths = [
-            path.replace("\\", "/")
-            for path in paths
-            if path and path.replace("\\", "/").endswith((".ts", ".tsx"))
-        ]
-        if not ts_paths:
-            return
-        run_command(
-            ("npx", "prettier", "--write", *ts_paths),
-            cwd=root,
-            timeout_seconds=120,
-        )
+        _shared_format_typescript_paths(root, paths)
 
     def _worktree_diff(self, worktree_path: Path, raw_trace: Dict[str, Any], *, label: str) -> str:
         diff_paths = self._worktree_diff_paths()
@@ -2790,12 +2781,12 @@ PLANNING CONTEXT:
         )
 
     def _safe_edit_path(self, raw_path: str) -> Path:
-        if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
-            raise ValueError(f"Unsafe file edit path: {raw_path!r}")
-        normalized = raw_path.replace("\\", "/")
-        if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
-            raise ValueError(f"File edit path is outside daemon allowlist: {raw_path!r}")
-        return self.daemon_config.resolve(Path(normalized))
+        return _shared_resolve_worktree_file_edit_path(
+            self.daemon_config.repo_root,
+            raw_path,
+            allowed_prefixes=ALLOWED_WRITE_PREFIXES,
+            error_prefix="File edit",
+        )
 
     def _dirty_touched_file_errors(self, paths: Sequence[str]) -> List[str]:
         normalized_paths = []
@@ -2868,14 +2859,7 @@ PLANNING CONTEXT:
                         path.write_text(original, encoding="utf-8")
 
     def _format_file_edits(self, paths: List[Path]) -> None:
-        ts_paths = [str(path.relative_to(self.daemon_config.repo_root)) for path in paths if path.suffix in {".ts", ".tsx"}]
-        if not ts_paths:
-            return
-        run_command(
-            ("npx", "prettier", "--write", *ts_paths),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=120,
-        )
+        _shared_format_typescript_paths(self.daemon_config.repo_root, paths)
 
     def _preflight_artifact(self, artifact: LogicPortArtifact, *, selected_task: Optional[PlanTask] = None) -> List[str]:
         paths = _artifact_paths(artifact)

@@ -83,6 +83,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     clear_child_pid_file,
     classify_artifact_failure_kind,
     cleanup_stale_daemon_worktrees,
+    cleanup_stale_config_validation_worktrees,
     command_runner_from_legacy_function,
     command_result_from_object,
     command_results_from_objects,
@@ -96,6 +97,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     config_proposal_diff_from_worktree,
     config_repo_root,
     config_validation_commands_for_proposal,
+    config_validation_workspace_spec,
     config_verify_promoted_worktree_files,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
@@ -129,6 +131,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     first_failure_block_decision,
     first_open_plan_task,
     focused_task_board_excerpt,
+    format_typescript_paths,
     generated_status_block,
     heartbeat_snapshot,
     has_diagnostic_codes,
@@ -184,6 +187,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     repo_relative_copy_paths,
     repo_relative_pathspec,
     repo_relative_worktree_path,
+    resolve_worktree_file_edit_path,
     recent_failure_count,
     recent_proposal_failures,
     recent_rollback_failure_count,
@@ -233,11 +237,13 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     task_title_contains_any,
     task_status_counts,
     task_title_tokens,
+    temporary_config_validation_worktree,
     temporary_validation_worktree,
     timestamped_artifact_base,
     todo_daemon_proposals_payload,
     truncate_text,
     tranche_number_from_title,
+    typescript_format_pathspecs,
     unified_diff_stats,
     unique_normalized_paths,
     unique_worktree_paths,
@@ -1219,6 +1225,35 @@ def test_typescript_repair_helpers_are_reusable() -> None:
         "line 1: missing comparison operator before .length: if (index  values.length) {",
         "line 2: bare TypeScript generic alias: const x: Promise = y;",
     ]
+
+    calls: list[tuple[tuple[str, ...], Path, int]] = []
+
+    def fake_run_command(command, *, cwd, timeout_seconds):
+        calls.append((tuple(command), cwd, timeout_seconds))
+        return CommandResult(tuple(command), 0, "formatted", "")
+
+    root = Path("/repo")
+    format_result = format_typescript_paths(
+        root,
+        [
+            root / "src/example.ts",
+            "src/example.ts",
+            "src/component.tsx",
+            "README.md",
+        ],
+        timeout_seconds=33,
+        run_command_fn=fake_run_command,
+    )
+
+    assert typescript_format_pathspecs(
+        [root / "src/example.ts", "src/example.ts", "src/component.tsx", "README.md"],
+        root=root,
+    ) == ["src/example.ts", "src/component.tsx"]
+    assert format_result and format_result.ok
+    assert calls == [
+        (("npx", "prettier", "--write", "src/example.ts", "src/component.tsx"), root, 33)
+    ]
+    assert format_typescript_paths(root, ["README.md"], run_command_fn=fake_run_command) is None
 
 
 def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
@@ -2417,6 +2452,11 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
     assert repo_relative_worktree_path(outside, repo_root=repo) == outside.as_posix()
     assert worktree_path_allowed("src/lib/logic/a.ts", allowed_prefixes=allowed) is True
     assert worktree_path_allowed("src/lib/logic.ts", allowed_prefixes=allowed) is False
+    assert resolve_worktree_file_edit_path(
+        root,
+        "src\\lib\\logic\\a.ts",
+        allowed_prefixes=allowed,
+    ) == root / "src/lib/logic/a.ts"
     assert disallowed_worktree_paths(
         ["src/lib/logic/a.ts", "docs\\PLAN.md", ".metadata.json", "package.json", "package.json"],
         allowed_prefixes=allowed,
@@ -2503,6 +2543,56 @@ def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path)
         assert "+VALUE = 2" in diff
         promote_worktree_files(repo, worktree, changed)
         assert verify_promoted_worktree_files(repo, worktree, changed) == []
+
+    assert not any((repo / ".daemon" / "worktrees").iterdir())
+
+
+def test_config_validation_worktree_helpers_use_daemon_config_fields(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class WorktreeConfig:
+        repo_root: Path
+        worktree_dir: Path = Path(".daemon/worktrees")
+        worktree_stale_seconds: int = 0
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "todo").mkdir()
+    (repo / "todo" / "source.py").write_text("VALUE = 1\n", encoding="utf-8")
+    (repo / "docs").mkdir()
+    (repo / "docs" / "PLAN.md").write_text("Synthetic plan\n", encoding="utf-8")
+    (repo / "package.json").write_text("{}\n", encoding="utf-8")
+    outside = tmp_path / "outside.md"
+    outside.write_text("outside\n", encoding="utf-8")
+    config = WorktreeConfig(repo_root=repo)
+    stale = repo / ".daemon" / "worktrees" / "stale"
+    stale.mkdir(parents=True)
+    (stale / "example-worktree.json").write_text("{}", encoding="utf-8")
+
+    spec = config_validation_workspace_spec(
+        config,
+        marker_name="example-worktree.json",
+        copy_paths=(Path("todo"), repo / "docs" / "PLAN.md", outside),
+        root_files=("package.json",),
+    )
+    removed = cleanup_stale_config_validation_worktrees(
+        config,
+        marker_name="example-worktree.json",
+        max_age_seconds=0,
+    )
+
+    assert spec.repo_root == repo
+    assert spec.copy_paths == (Path("todo"), Path("docs/PLAN.md"))
+    assert removed == ["stale"]
+    with temporary_config_validation_worktree(
+        config,
+        marker_name="example-worktree.json",
+        copy_paths=(Path("todo"), repo / "docs" / "PLAN.md", outside),
+        root_files=("package.json",),
+    ) as worktree:
+        assert (worktree / "example-worktree.json").exists()
+        assert (worktree / "todo" / "source.py").read_text(encoding="utf-8") == "VALUE = 1\n"
+        assert (worktree / "docs" / "PLAN.md").exists()
+        assert (worktree / "package.json").exists()
 
     assert not any((repo / ".daemon" / "worktrees").iterdir())
 

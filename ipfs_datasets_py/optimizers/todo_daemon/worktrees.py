@@ -81,6 +81,24 @@ def worktree_path_allowed(path: str | Path, *, allowed_prefixes: Sequence[str]) 
     return any(normalized.startswith(prefix) for prefix in allowed_prefixes)
 
 
+def resolve_worktree_file_edit_path(
+    root: Path,
+    path: str | Path,
+    *,
+    allowed_prefixes: Sequence[str],
+    error_prefix: str = "Worktree edit",
+) -> Path:
+    """Resolve a complete-file edit path under ``root`` after traversal and allowlist checks."""
+
+    raw_path = str(path)
+    normalized = normalize_worktree_path(raw_path)
+    if not normalized or normalized.startswith("/") or ".." in Path(normalized).parts:
+        raise ValueError(f"{error_prefix} path is unsafe: {raw_path!r}")
+    if not worktree_path_allowed(normalized, allowed_prefixes=allowed_prefixes):
+        raise ValueError(f"{error_prefix} path is outside daemon allowlist: {raw_path!r}")
+    return root / normalized
+
+
 def disallowed_worktree_paths(
     paths: Sequence[str | Path],
     *,
@@ -133,13 +151,12 @@ def write_worktree_file_edits_to_root(
     """Write complete file edits into ``root`` after allowlist and traversal checks."""
 
     for edit in edits:
-        raw_path = str(edit.get("path", ""))
-        normalized = normalize_worktree_path(raw_path)
-        if not normalized or normalized.startswith("/") or ".." in Path(normalized).parts:
-            raise ValueError(f"{error_prefix} path is unsafe: {raw_path!r}")
-        if not worktree_path_allowed(normalized, allowed_prefixes=allowed_prefixes):
-            raise ValueError(f"{error_prefix} path is outside daemon allowlist: {raw_path!r}")
-        path = root / normalized
+        path = resolve_worktree_file_edit_path(
+            root,
+            str(edit.get("path", "")),
+            allowed_prefixes=allowed_prefixes,
+            error_prefix=error_prefix,
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(str(edit.get("content", "")), encoding="utf-8")
 

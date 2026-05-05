@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Sequence
+from pathlib import Path
+from typing import Callable, Dict, List, Optional, Sequence
+
+from .engine import CommandResult, run_command
 
 
 def repair_common_typescript_text_damage(content: str) -> str:
@@ -108,6 +111,46 @@ def repair_common_typescript_file_edits(edits: Sequence[Dict[str, str]]) -> List
         else:
             repaired.append(dict(edit))
     return repaired
+
+
+def typescript_format_pathspecs(paths: Sequence[str | Path], *, root: Optional[Path] = None) -> List[str]:
+    """Return unique TS/TSX pathspecs suitable for formatting commands."""
+
+    pathspecs: List[str] = []
+    seen: set[str] = set()
+    for path in paths:
+        candidate = Path(path)
+        if root is not None and candidate.is_absolute():
+            try:
+                text = candidate.relative_to(root).as_posix()
+            except ValueError:
+                text = candidate.as_posix()
+        else:
+            text = str(path).replace("\\", "/").strip()
+        if not text or not text.endswith((".ts", ".tsx")) or text in seen:
+            continue
+        seen.add(text)
+        pathspecs.append(text)
+    return pathspecs
+
+
+def format_typescript_paths(
+    root: Path,
+    paths: Sequence[str | Path],
+    *,
+    timeout_seconds: int = 120,
+    run_command_fn: Callable[..., CommandResult] = run_command,
+) -> Optional[CommandResult]:
+    """Run Prettier for TS/TSX paths relative to ``root`` when there is work to format."""
+
+    pathspecs = typescript_format_pathspecs(paths, root=root)
+    if not pathspecs:
+        return None
+    return run_command_fn(
+        ("npx", "prettier", "--write", *pathspecs),
+        cwd=root,
+        timeout_seconds=timeout_seconds,
+    )
 
 
 def obvious_typescript_text_damage(content: str) -> List[str]:
