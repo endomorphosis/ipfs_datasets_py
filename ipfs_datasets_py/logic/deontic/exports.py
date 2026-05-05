@@ -60,6 +60,29 @@ LOCAL_PROVER_SYNTAX_TARGETS = (
     "deontic_temporal_fol",
 )
 
+LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS: Dict[str, Dict[str, str]] = {
+    "frame_logic": {
+        "formula_role": "frame_record",
+        "dialect_family": "frame_logic",
+    },
+    "deontic_cec": {
+        "formula_role": "event_calculus_state",
+        "dialect_family": "event_calculus",
+    },
+    "fol": {
+        "formula_role": "first_order_formula",
+        "dialect_family": "first_order",
+    },
+    "deontic_fol": {
+        "formula_role": "deontic_first_order_formula",
+        "dialect_family": "deontic_first_order",
+    },
+    "deontic_temporal_fol": {
+        "formula_role": "temporal_deontic_first_order_formula",
+        "dialect_family": "deontic_temporal_first_order",
+    },
+}
+
 DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
     "actor",
     "modality",
@@ -893,12 +916,38 @@ def _summarize_prover_target_role_matrix(
         for target, dialect in dialects_by_target.items()
         if dialect in {"", "unknown"}
     ]
+    expected_roles_by_target = {
+        target: LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS[target]["formula_role"]
+        for target in required
+        if target in LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS
+    }
+    expected_dialects_by_target = {
+        target: LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS[target]["dialect_family"]
+        for target in required
+        if target in LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS
+    }
+    mismatched_role_targets = [
+        target
+        for target, role in roles_by_target.items()
+        if target in expected_roles_by_target
+        and role not in {"", "unknown"}
+        and role != expected_roles_by_target[target]
+    ]
+    mismatched_dialect_targets = [
+        target
+        for target, dialect in dialects_by_target.items()
+        if target in expected_dialects_by_target
+        and dialect not in {"", "unknown"}
+        and dialect != expected_dialects_by_target[target]
+    ]
     complete_targets = [
         target
         for target in required
         if target in roles_by_target
         and target not in unknown_role_targets
         and target not in unknown_dialect_targets
+        and target not in mismatched_role_targets
+        and target not in mismatched_dialect_targets
     ]
     incomplete_targets = [
         target for target in required if target not in complete_targets
@@ -911,6 +960,8 @@ def _summarize_prover_target_role_matrix(
             missing_targets,
             unknown_role_targets,
             unknown_dialect_targets,
+            mismatched_role_targets,
+            mismatched_dialect_targets,
         )
         for target in required
     }
@@ -920,6 +971,8 @@ def _summarize_prover_target_role_matrix(
         and not missing_targets
         and not unknown_role_targets
         and not unknown_dialect_targets
+        and not mismatched_role_targets
+        and not mismatched_dialect_targets
     )
     blockers: List[str] = []
     blockers.extend(f"missing_target_role:{target}" for target in missing_targets)
@@ -930,6 +983,16 @@ def _summarize_prover_target_role_matrix(
     blockers.extend(
         f"unknown_target_dialect_family:{target}"
         for target in sorted(unknown_dialect_targets)
+    )
+    blockers.extend(
+        "mismatched_target_formula_role:"
+        f"{target}:{roles_by_target[target]}!={expected_roles_by_target[target]}"
+        for target in sorted(mismatched_role_targets)
+    )
+    blockers.extend(
+        "mismatched_target_dialect_family:"
+        f"{target}:{dialects_by_target[target]}!={expected_dialects_by_target[target]}"
+        for target in sorted(mismatched_dialect_targets)
     )
 
     return {
@@ -950,12 +1013,18 @@ def _summarize_prover_target_role_matrix(
         "target_role_matrix": matrix,
         "target_roles_by_target": dict(sorted(roles_by_target.items())),
         "target_dialect_families_by_target": dict(sorted(dialects_by_target.items())),
+        "expected_target_roles_by_target": dict(sorted(expected_roles_by_target.items())),
+        "expected_target_dialect_families_by_target": dict(
+            sorted(expected_dialects_by_target.items())
+        ),
         "target_formula_roles": sorted(dict.fromkeys(roles_by_target.values())),
         "target_dialect_families": sorted(dict.fromkeys(dialects_by_target.values())),
         "target_role_matrix_status_by_target": status_by_target,
         "missing_role_targets": missing_targets,
         "unknown_role_targets": sorted(unknown_role_targets),
         "unknown_dialect_targets": sorted(unknown_dialect_targets),
+        "mismatched_role_targets": sorted(mismatched_role_targets),
+        "mismatched_dialect_targets": sorted(mismatched_dialect_targets),
         "requires_validation": not complete,
         "coverage_blockers": blockers,
         "target_role_matrix_complete": complete,
@@ -969,6 +1038,8 @@ def _target_role_matrix_status(
     missing_targets: Sequence[str],
     unknown_role_targets: Sequence[str],
     unknown_dialect_targets: Sequence[str],
+    mismatched_role_targets: Sequence[str],
+    mismatched_dialect_targets: Sequence[str],
 ) -> str:
     if target in missing_targets:
         return "missing"
@@ -978,6 +1049,12 @@ def _target_role_matrix_status(
         return "unknown_role"
     if target in unknown_dialect_targets:
         return "unknown_dialect"
+    if target in mismatched_role_targets and target in mismatched_dialect_targets:
+        return "mismatched_role_and_dialect"
+    if target in mismatched_role_targets:
+        return "mismatched_role"
+    if target in mismatched_dialect_targets:
+        return "mismatched_dialect"
     if target in roles_by_target and target in dialects_by_target:
         return "complete"
     return "missing"

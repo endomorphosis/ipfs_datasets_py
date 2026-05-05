@@ -18,7 +18,7 @@ python3 -m ipfs_datasets_py.optimizers.todo_daemon supervise --help
 ```
 
 The legacy shell wrappers remain stable, but they delegate to the package dispatcher so future daemons can follow the same shape.
-For direct `python -m` invocation in environments without `ipfs_accelerate_py`, set `IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE=0`; the maintained lifecycle shell wrappers already do this.
+For direct `python -m` invocation in environments without `ipfs_accelerate_py`, set `IPFS_DATASETS_PY_MINIMAL_IMPORTS=1 IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE=0`; the maintained lifecycle shell wrappers already do this.
 
 ## Reuse Pattern
 

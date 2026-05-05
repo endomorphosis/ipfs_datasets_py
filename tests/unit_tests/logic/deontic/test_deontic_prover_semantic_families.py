@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.logic.deontic.exports import (
     build_deterministic_parser_capability_profile_record,
+    build_prover_syntax_target_coverage_record,
     build_prover_syntax_target_coverage_records_from_irs,
 )
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
@@ -135,6 +136,73 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
         row["failed_quality_checks"] == []
         for row in role_summary["target_role_matrix"]
     )
+    assert role_summary["expected_target_roles_by_target"] == {
+        "deontic_cec": "event_calculus_state",
+        "deontic_fol": "deontic_first_order_formula",
+        "deontic_temporal_fol": "temporal_deontic_first_order_formula",
+        "fol": "first_order_formula",
+        "frame_logic": "frame_record",
+    }
+    assert role_summary["expected_target_dialect_families_by_target"] == {
+        "deontic_cec": "event_calculus",
+        "deontic_fol": "deontic_first_order",
+        "deontic_temporal_fol": "deontic_temporal_first_order",
+        "fol": "first_order",
+        "frame_logic": "frame_logic",
+    }
+    assert role_summary["mismatched_role_targets"] == []
+    assert role_summary["mismatched_dialect_targets"] == []
+
+
+def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
+    records = [
+        target.to_dict()
+        for target in validate_ir_with_provers(
+            LegalNormIR.from_parser_element(
+                extract_normative_elements("The tenant must pay rent monthly.")[0]
+            )
+        ).targets
+    ]
+    for record in records:
+        if record["target"] == "fol":
+            record["target_formula_role"] = "frame_record"
+            record["target_dialect_profile"] = {
+                **record["target_dialect_profile"],
+                "dialect_family": "frame_logic",
+            }
+            record["target_components"] = {
+                **record["target_components"],
+                "formula_role": "frame_record",
+                "dialect_family": "frame_logic",
+            }
+
+    coverage = build_prover_syntax_target_coverage_record(
+        "deontic:mismatched-target-role",
+        records,
+    )
+    role_summary = coverage["target_role_matrix_summary"]
+
+    assert coverage["formal_syntax_valid"] is True
+    assert coverage["coverage_blockers"] == []
+    assert coverage["target_role_matrix_complete"] is False
+    assert coverage["target_role_matrix_requires_validation"] is True
+    assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS) - 1
+    assert role_summary["target_role_incomplete_targets"] == ["fol"]
+    assert role_summary["mismatched_role_targets"] == ["fol"]
+    assert role_summary["mismatched_dialect_targets"] == ["fol"]
+    assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
+        "mismatched_role_and_dialect"
+    )
+    assert role_summary["target_roles_by_target"]["fol"] == "frame_record"
+    assert role_summary["target_dialect_families_by_target"]["fol"] == "frame_logic"
+    assert "mismatched_target_formula_role:fol:frame_record!=first_order_formula" in (
+        coverage["target_role_matrix_blockers"]
+    )
+    assert "mismatched_target_dialect_family:fol:frame_logic!=first_order" in (
+        coverage["target_role_matrix_blockers"]
+    )
+    assert coverage["coverage_summary"]["target_role_matrix_complete"] is False
+    assert coverage["coverage_summary"]["target_role_matrix_requires_validation"] is True
 
 
 def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
