@@ -374,24 +374,40 @@ def normalize_file_edits(value: Any) -> list[dict[str, str]]:
     return edits
 
 
+def normalize_string_items(
+    value: Any,
+    *,
+    accepted_scalar_types: tuple[type[Any], ...] = (str,),
+) -> list[str]:
+    """Return scalar proposal items normalized to strings."""
+
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, accepted_scalar_types)]
+
+
+def normalize_string_item_lists(value: Any) -> list[list[str]]:
+    """Return nested all-string proposal item lists."""
+
+    if not isinstance(value, list):
+        return []
+    return [
+        list(command)
+        for command in value
+        if isinstance(command, list) and all(isinstance(part, str) for part in command)
+    ]
+
+
 def normalize_validation_commands(value: Any) -> list[list[str]]:
     """Return valid validation commands from a JSON-like proposal value."""
 
-    commands: list[list[str]] = []
-    if not isinstance(value, list):
-        return commands
-    for command in value:
-        if isinstance(command, list) and all(isinstance(part, str) for part in command):
-            commands.append(command)
-    return commands
+    return normalize_string_item_lists(value)
 
 
 def normalize_task_references(value: Any) -> list[str]:
     """Return string task references from a JSON-like proposal value."""
 
-    if not isinstance(value, list):
-        return []
-    return [str(item) for item in value if isinstance(item, (str, int, float))]
+    return normalize_string_items(value, accepted_scalar_types=(str, int, float))
 
 
 def parse_json_proposal(text: str) -> Proposal:

@@ -79,6 +79,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.context import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
+    classify_artifact_failure_kind as _shared_classify_artifact_failure_kind,
     compact_status_artifact as _shared_compact_status_artifact,
     diagnostic_signatures as _shared_diagnostic_signatures,
     file_edits_by_path as _shared_file_edits_by_path,
@@ -642,28 +643,11 @@ def _compact_message(value: Any, *, limit: int = 600) -> str:
 
 
 def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
-    explicit = str(artifact.get("failure_kind") or "")
-    errors = " ".join(str(error) for error in artifact.get("errors", []) if error)
-    validation = artifact.get("validation_results", [])
-    validation_text = errors
-    if isinstance(validation, list):
-        for item in validation:
-            if isinstance(item, dict):
-                validation_text += " " + str(item.get("stdout", "")) + " " + str(item.get("stderr", ""))
-    lower = validation_text.lower()
-    if _has_typescript_quality_diagnostics(validation_text):
-        return "typescript_quality"
-    if explicit:
-        return explicit
-    if "cloudflare" in lower or "403 forbidden" in lower or "plugins/featured" in lower or "analytics-events" in lower:
-        return "provider_http_403"
-    if "timed out" in lower:
-        return "timeout"
-    if "did not contain json" in lower:
-        return "parse"
-    if "ts1005" in lower or "ts" in lower and "error" in lower:
-        return "validation"
-    return "invalid_no_change"
+    return _shared_classify_artifact_failure_kind(
+        artifact,
+        quality_detector=_has_typescript_quality_diagnostics,
+        quality_failure_kind="typescript_quality",
+    )
 
 
 def _has_typescript_quality_diagnostics(text: str) -> bool:

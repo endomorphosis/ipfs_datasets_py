@@ -60,6 +60,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_lifecycle_arg_parser,
     build_active_status_payload,
     build_heartbeat_status_payload,
+    build_ready_after_supervisor_repair_status,
     build_python_module_command,
     build_restart_loop_command,
     build_status_phase_key,
@@ -70,6 +71,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     call_with_thread_deadline,
     canonical_daemon_names,
     clear_child_pid_file,
+    classify_artifact_failure_kind,
     cleanup_stale_daemon_worktrees,
     compact_status_artifact,
     compact_validation_result,
@@ -121,6 +123,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     match_diagnostic_edit_path,
     missing_lifecycle_wrapper_core_lines,
     normalize_file_edits,
+    normalize_string_item_lists,
+    normalize_string_items,
     normalize_task_references,
     normalize_validation_commands,
     obvious_typescript_text_damage,
@@ -436,6 +440,31 @@ def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
     assert "  1: export const before = true;" in rendered
 
 
+def test_artifact_failure_classifier_handles_provider_parse_and_quality_failures() -> None:
+    assert (
+        classify_artifact_failure_kind(
+            {
+                "errors": ["403 Forbidden <html><body>challenge</body></html>"],
+                "validation_results": [],
+            }
+        )
+        == "provider_http_403"
+    )
+    assert classify_artifact_failure_kind({"errors": ["call timed out"]}) == "timeout"
+    assert classify_artifact_failure_kind({"errors": ["LLM response did not contain JSON"]}) == "parse"
+    assert (
+        classify_artifact_failure_kind(
+            {"failure_kind": "validation", "validation_results": [{"stderr": "error TS2314"}]},
+            quality_detector=lambda text: "TS2314" in text,
+            quality_failure_kind="typescript_quality",
+        )
+        == "typescript_quality"
+    )
+    assert classify_artifact_failure_kind({"failure_kind": "preflight", "errors": ["ignored"]}) == "preflight"
+    assert classify_artifact_failure_kind({"validation_results": [{"stderr": "error TS1005"}]}) == "validation"
+    assert classify_artifact_failure_kind({}) == "invalid_no_change"
+
+
 def test_task_result_failure_context_helper_is_reusable() -> None:
     rows = [
         (
@@ -677,6 +706,14 @@ def test_normalize_file_edits_filters_invalid_entries() -> None:
 
 
 def test_normalize_validation_commands_filters_invalid_entries() -> None:
+    assert normalize_string_item_lists(
+        [
+            ["python3", "-m", "pytest"],
+            ["npm", 123],
+            "pytest",
+            [],
+        ]
+    ) == [["python3", "-m", "pytest"], []]
     assert normalize_validation_commands(
         [
             ["python3", "-m", "pytest"],
@@ -689,6 +726,15 @@ def test_normalize_validation_commands_filters_invalid_entries() -> None:
 
 
 def test_normalize_task_references_filters_invalid_entries() -> None:
+    assert normalize_string_items(["Task A", 7, 2.5, {"title": "ignored"}, None]) == ["Task A"]
+    assert normalize_string_items(
+        ["Task A", 7, 2.5, {"title": "ignored"}, None],
+        accepted_scalar_types=(str, int, float),
+    ) == [
+        "Task A",
+        "7",
+        "2.5",
+    ]
     assert normalize_task_references(["Task A", 7, 2.5, {"title": "ignored"}, None]) == [
         "Task A",
         "7",
@@ -1352,6 +1398,26 @@ def test_status_payload_helpers_preserve_active_state_for_heartbeats(tmp_path: P
     assert heartbeat["active_state_started_at"] == "s1"
     assert heartbeat["heartbeat_interval_seconds"] == 15.0
     assert heartbeat["model_name"] == "gpt-5.5"
+
+    ready = build_ready_after_supervisor_repair_status(
+        created_at="r1",
+        previous_status={
+            "active_state": "calling_llm",
+            "active_target_task": "Task checkbox-1: Port feature.",
+        },
+        repair_state="ready_after_supervisor_repair",
+        supervisor_action="reconcile_dead_worker_and_restart",
+        supervisor_reason="worker exited mid-cycle",
+        reset_task_labels=("Port feature.",),
+    )
+
+    assert ready["updated_at"] == "r1"
+    assert ready["state"] == "ready_after_supervisor_repair"
+    assert ready["active_state"] == "ready_after_supervisor_repair"
+    assert ready["active_target_task"] == ""
+    assert ready["previous_state"] == "calling_llm"
+    assert ready["previous_target_task"] == "Task checkbox-1: Port feature."
+    assert ready["reset_task_labels"] == ["Port feature."]
 
     output = tmp_path / "nested" / "status.json"
     write_status_json(

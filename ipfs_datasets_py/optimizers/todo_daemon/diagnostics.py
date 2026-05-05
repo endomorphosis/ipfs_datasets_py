@@ -27,6 +27,17 @@ DEFAULT_RETRY_ERROR_MARKERS = frozenset(
     }
 )
 DEFAULT_SKIP_VALIDATION_FAILURE_KINDS = frozenset({"llm", "parse", "empty_proposal"})
+DEFAULT_PROVIDER_HTTP_FAILURE_MARKERS = frozenset(
+    {
+        "cloudflare",
+        "403 forbidden",
+        "plugins/featured",
+        "analytics-events",
+    }
+)
+DEFAULT_TIMEOUT_FAILURE_MARKERS = frozenset({"timed out"})
+DEFAULT_PARSE_FAILURE_MARKERS = frozenset({"did not contain json"})
+DEFAULT_VALIDATION_FAILURE_MARKERS = frozenset({"ts1005"})
 
 
 @dataclass(frozen=True)
@@ -90,6 +101,40 @@ def artifact_validation_text(artifact: Mapping[str, Any]) -> str:
                 parts.append(str(item.get("stdout") or ""))
                 parts.append(str(item.get("stderr") or ""))
     return "\n".join(parts)
+
+
+def classify_artifact_failure_kind(
+    artifact: Mapping[str, Any],
+    *,
+    quality_detector: Callable[[str], bool] | None = None,
+    quality_failure_kind: str = "quality",
+    provider_http_markers: set[str] | frozenset[str] = DEFAULT_PROVIDER_HTTP_FAILURE_MARKERS,
+    timeout_markers: set[str] | frozenset[str] = DEFAULT_TIMEOUT_FAILURE_MARKERS,
+    parse_markers: set[str] | frozenset[str] = DEFAULT_PARSE_FAILURE_MARKERS,
+    validation_markers: set[str] | frozenset[str] = DEFAULT_VALIDATION_FAILURE_MARKERS,
+    validation_detector: Callable[[str], bool] | None = None,
+    default_failure_kind: str = "invalid_no_change",
+) -> str:
+    """Classify a daemon artifact by explicit kind, validation text, and common provider failures."""
+
+    text = artifact_validation_text(artifact)
+    lower = text.lower()
+    if quality_detector is not None and quality_detector(text):
+        return quality_failure_kind
+    explicit = str(artifact.get("failure_kind") or "")
+    if explicit:
+        return explicit
+    if any(marker in lower for marker in provider_http_markers):
+        return "provider_http_403"
+    if any(marker in lower for marker in timeout_markers):
+        return "timeout"
+    if any(marker in lower for marker in parse_markers):
+        return "parse"
+    if validation_detector is not None and validation_detector(text):
+        return "validation"
+    if any(marker in lower for marker in validation_markers) or ("ts" in lower and "error" in lower):
+        return "validation"
+    return default_failure_kind
 
 
 def compact_status_artifact(
