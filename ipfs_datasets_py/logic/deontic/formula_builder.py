@@ -186,6 +186,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_evidence_custody_light_verb_action(action_text)
     action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
     action_text = _normalize_codification_compilation_light_verb_action(action_text)
+    action_text = _normalize_meeting_governance_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
@@ -6785,6 +6786,54 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"supplement {target}" if target else text
+
+    return text
+
+
+def _normalize_meeting_governance_light_verb_action(action_text: str) -> str:
+    """Project public-meeting governance nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    meeting_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|keep|keeps|kept|keeping|publish|publishes|published|publishing)\s+"
+            r"(?:the\s+)?minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "record minutes",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|set|sets|setting)\s+"
+            r"(?:an?\s+|the\s+)?agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "set agenda",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|take|takes|took|taken|taking|call|calls|called|calling)\s+"
+            r"(?:a\s+|the\s+)?roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "call roll",
+        ),
+        (
+            r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|publish|publishes|published|publishing|post|posts|posted|posting|issue|issues|issued|issuing)\s+"
+            r"(?:a\s+|the\s+)?meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$",
+            "notice meeting",
+        ),
+        (
+            r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|publish|publishes|published|publishing|post|posts|posted|posting|issue|issues|issued|issuing)\s+"
+            r"(?:a\s+|the\s+)?notice\s+of\s+(?:the\s+)?meeting\s+(?:to|for)\s+(?:the\s+)?(.+)$",
+            "notice meeting",
+        ),
+        (r"^minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record minutes"),
+        (r"^agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$", "set agenda"),
+        (r"^roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$", "call roll"),
+        (r"^meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
+        (r"^notice\s+of\s+(?:the\s+)?meeting\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
+    ]
+    for pattern, verb in meeting_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 

@@ -54,6 +54,9 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     unified_diff_stats as _shared_unified_diff_stats,
     untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.llm import (
+    call_with_thread_deadline as _shared_call_with_thread_deadline,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.status import (
     build_status_phase_key as _shared_build_status_phase_key,
     status_key_started_at as _shared_status_key_started_at,
@@ -402,9 +405,9 @@ class LegalParserParityOptimizer(BaseOptimizer):
         prompt = self.build_patch_prompt(cycle_index=cycle_index, evaluation=evaluation, feedback=feedback)
         pre_llm_diff = self._working_tree_diff()
         try:
-            with self._read_only_codex_cli_generation():
+            def generate_response() -> str:
                 if self.llm_backend is not None:
-                    raw_response = self.llm_backend.generate(
+                    return self.llm_backend.generate(
                         prompt,
                         method=OptimizationMethod.TEST_DRIVEN,
                         max_tokens=self.daemon_config.llm_max_tokens,
@@ -419,19 +422,29 @@ class LegalParserParityOptimizer(BaseOptimizer):
                             "sandbox": "read-only",
                         },
                     )
-                else:
-                    from ipfs_datasets_py import llm_router
+                from ipfs_datasets_py import llm_router
 
-                    raw_response = llm_router.generate_text(
-                        prompt,
-                        provider=self.daemon_config.llm_router_provider(),
-                        model_name=self.daemon_config.model_name,
-                        max_tokens=self.daemon_config.llm_max_tokens,
-                        temperature=self.daemon_config.llm_temperature,
-                        timeout=self.daemon_config.llm_timeout_seconds,
-                        allow_local_fallback=False,
-                        disable_model_retry=True,
-                    )
+                return llm_router.generate_text(
+                    prompt,
+                    provider=self.daemon_config.llm_router_provider(),
+                    model_name=self.daemon_config.model_name,
+                    max_tokens=self.daemon_config.llm_max_tokens,
+                    temperature=self.daemon_config.llm_temperature,
+                    timeout=self.daemon_config.llm_timeout_seconds,
+                    allow_local_fallback=False,
+                    disable_model_retry=True,
+                )
+
+            with self._read_only_codex_cli_generation():
+                raw_response = _shared_call_with_thread_deadline(
+                    generate_response,
+                    timeout_seconds=max(0.0, float(self.daemon_config.llm_timeout_seconds)),
+                    thread_name="legal-parser-llm-router",
+                    timeout_message=lambda elapsed, timeout, thread_name: (
+                        f"legal parser llm proposal generation exceeded daemon deadline "
+                        f"after {elapsed:.1f}s in {thread_name} (timeout={timeout:.1f}s)"
+                    ),
+                )
         finally:
             restore_result = self._restore_working_tree_diff(pre_llm_diff)
             if not restore_result.get("valid"):

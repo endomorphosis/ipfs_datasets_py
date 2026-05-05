@@ -672,6 +672,30 @@ def test_optimizer_builds_gpt55_router_request_without_calling_real_llm(tmp_path
     assert call["router_kwargs"]["sandbox"] == "read-only"
 
 
+def test_optimizer_enforces_daemon_side_llm_deadline(tmp_path, monkeypatch):
+    class _SlowRouter:
+        def generate(self, prompt, method, max_tokens=2000, temperature=0.7, router_kwargs=None):
+            time.sleep(0.2)
+            return "{}"
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "workspace-write")
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        llm_timeout_seconds=0.01,
+        run_tests=False,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_SlowRouter())
+
+    try:
+        optimizer.request_llm_patch(cycle_index=1, evaluation={"metrics": {}}, feedback=["gap"])
+    except TimeoutError as exc:
+        assert "legal parser llm proposal generation exceeded daemon deadline" in str(exc)
+    else:
+        raise AssertionError("expected request_llm_patch to enforce daemon-side deadline")
+    assert __import__("os").environ["IPFS_DATASETS_PY_CODEX_SANDBOX"] == "workspace-write"
+
+
 def test_optimizer_forces_codex_cli_generation_read_only(tmp_path, monkeypatch):
     monkeypatch.setenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "workspace-write")
     fake_router = _FakeRouter(

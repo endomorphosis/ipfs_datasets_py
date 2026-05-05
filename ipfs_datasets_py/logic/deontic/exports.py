@@ -4737,6 +4737,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "evidence_custody_duty"
     if action_predicate.startswith((
+        "CallRoll",
+        "NoticeMeeting",
+        "RecordMinutes",
+        "SetAgenda",
+    )):
+        return "meeting_governance_duty"
+    if action_predicate.startswith((
         "Archive",
         "Memorialize",
         "Preserve",
