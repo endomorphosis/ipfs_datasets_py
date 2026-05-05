@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import os
+import queue
 import signal
 import subprocess
 import tempfile
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 
 from .engine import compact_message
 
@@ -39,6 +42,8 @@ class LlmRouterInvocation:
 
 
 _ACTIVE_LLM_PROCESS: Optional[subprocess.Popen[Any]] = None
+DeadlineTimeoutCallback = Callable[[float, float, str], None]
+DeadlineMessageBuilder = Callable[[float, float, str], str]
 
 
 def collect_descendant_pids(pid: int) -> list[int]:
@@ -252,6 +257,52 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
         details = compact_message((completed.stdout or "") + " " + (completed.stderr or ""), limit=1200)
         raise RuntimeError(f"llm_router child exited with code {completed.returncode}: {details}")
     return completed.stdout
+
+
+def call_with_thread_deadline(
+    generator: Callable[..., Any],
+    *args: Any,
+    timeout_seconds: float,
+    thread_name: str = "todo-daemon-call",
+    on_timeout: DeadlineTimeoutCallback | None = None,
+    timeout_message: DeadlineMessageBuilder | None = None,
+    empty_result_message: str = "daemon call thread ended without returning a result",
+    **kwargs: Any,
+) -> str:
+    """Run a blocking generator in a daemon thread and enforce a caller deadline."""
+
+    timeout = float(timeout_seconds)
+    if timeout <= 0:
+        return str(generator(*args, **kwargs))
+
+    result_queue: "queue.Queue[tuple[str, Any]]" = queue.Queue(maxsize=1)
+
+    def invoke() -> None:
+        try:
+            result_queue.put(("ok", str(generator(*args, **kwargs))))
+        except BaseException as exc:  # pragma: no cover - defensive thread boundary.
+            result_queue.put(("error", exc))
+
+    thread = threading.Thread(target=invoke, name=thread_name, daemon=True)
+    started = time.time()
+    thread.start()
+    thread.join(timeout=timeout)
+    if thread.is_alive():
+        elapsed = time.time() - started
+        if on_timeout is not None:
+            on_timeout(elapsed, timeout, thread.name)
+        if timeout_message is None:
+            message = f"daemon call exceeded deadline after {elapsed:.1f}s (timeout={timeout:.1f}s)"
+        else:
+            message = timeout_message(elapsed, timeout, thread.name)
+        raise TimeoutError(message)
+    try:
+        kind, payload = result_queue.get_nowait()
+    except queue.Empty as exc:  # pragma: no cover - thread finished without publishing a result.
+        raise RuntimeError(empty_result_message) from exc
+    if kind == "error":
+        raise payload
+    return str(payload)
 
 
 def active_llm_process() -> Optional[subprocess.Popen[Any]]:

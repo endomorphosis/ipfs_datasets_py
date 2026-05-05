@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -66,6 +67,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
     call_llm_router,
+    call_with_thread_deadline,
     canonical_daemon_names,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
@@ -769,6 +771,68 @@ def test_shared_run_command_supports_timeout_seconds_and_stdin(tmp_path: Path) -
     assert ok.stdout.strip() == "OK"
     assert timed_out.returncode == 124
     assert "Command timed out after 1s" in timed_out.stderr
+
+
+def test_thread_deadline_helper_returns_text_and_forwards_kwargs() -> None:
+    def generate(prefix: str, *, suffix: str) -> str:
+        return f"{prefix}-{suffix}"
+
+    assert (
+        call_with_thread_deadline(
+            generate,
+            "ok",
+            suffix="done",
+            timeout_seconds=1,
+            thread_name="test-deadline-success",
+        )
+        == "ok-done"
+    )
+
+
+def test_thread_deadline_helper_reraises_worker_exception() -> None:
+    class ExpectedError(RuntimeError):
+        pass
+
+    def generate() -> str:
+        raise ExpectedError("worker failed")
+
+    try:
+        call_with_thread_deadline(generate, timeout_seconds=1, thread_name="test-deadline-error")
+    except ExpectedError as exc:
+        assert str(exc) == "worker failed"
+    else:  # pragma: no cover - assertion branch.
+        raise AssertionError("expected worker exception to be reraised")
+
+
+def test_thread_deadline_helper_reports_timeout() -> None:
+    timeouts: list[tuple[float, float, str]] = []
+
+    def generate() -> str:
+        time.sleep(0.2)
+        return "late"
+
+    def on_timeout(elapsed: float, timeout: float, thread_name: str) -> None:
+        timeouts.append((elapsed, timeout, thread_name))
+
+    def timeout_message(elapsed: float, timeout: float, thread_name: str) -> str:
+        return f"{thread_name} timed out after {elapsed:.3f}s / {timeout:.3f}s"
+
+    try:
+        call_with_thread_deadline(
+            generate,
+            timeout_seconds=0.01,
+            thread_name="test-deadline-timeout",
+            on_timeout=on_timeout,
+            timeout_message=timeout_message,
+        )
+    except TimeoutError as exc:
+        assert "test-deadline-timeout timed out" in str(exc)
+    else:  # pragma: no cover - assertion branch.
+        raise AssertionError("expected timeout")
+
+    assert timeouts
+    assert timeouts[0][1] == 0.01
+    assert timeouts[0][2] == "test-deadline-timeout"
 
 
 def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:

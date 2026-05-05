@@ -22,7 +22,6 @@ import argparse
 import json
 import logging
 import os
-import queue
 import re
 import shutil
 import sys
@@ -90,6 +89,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
     LlmRouterInvocation,
     call_llm_router,
+    call_with_thread_deadline as _shared_call_with_thread_deadline,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     paths_from_patch_and_file_edits as _shared_paths_from_patch_and_file_edits,
@@ -3688,41 +3688,32 @@ Current repository file contents after rollback:
         **kwargs: Any,
     ) -> str:
         timeout_seconds = float(self.daemon_config.llm_timeout_seconds)
-        if timeout_seconds <= 0:
-            return str(generator(*args, **kwargs))
 
-        result_queue: "queue.Queue[Tuple[str, Any]]" = queue.Queue(maxsize=1)
-
-        def invoke() -> None:
-            try:
-                result_queue.put(("ok", str(generator(*args, **kwargs))))
-            except BaseException as exc:  # pragma: no cover - defensive thread boundary.
-                result_queue.put(("error", exc))
-
-        thread = threading.Thread(target=invoke, name="logic-port-llm-call", daemon=True)
-        started = time.time()
-        thread.start()
-        thread.join(timeout=timeout_seconds)
-        if thread.is_alive():
-            elapsed = time.time() - started
+        def record_timeout(elapsed: float, timeout: float, thread_name: str) -> None:
             self._write_status(
                 "llm_call_timeout",
                 provider=status_provider or "auto",
-                timeout_seconds=timeout_seconds,
+                timeout_seconds=timeout,
                 elapsed_seconds=round(elapsed, 3),
-                pending_thread=thread.name,
+                pending_thread=thread_name,
             )
-            raise TimeoutError(
+
+        def timeout_message(elapsed: float, timeout: float, _thread_name: str) -> str:
+            return (
                 f"llm_router generation exceeded daemon deadline after {elapsed:.1f}s "
-                f"(timeout={timeout_seconds:.1f}s, provider={status_provider or 'auto'})"
+                f"(timeout={timeout:.1f}s, provider={status_provider or 'auto'})"
             )
-        try:
-            kind, payload = result_queue.get_nowait()
-        except queue.Empty as exc:  # pragma: no cover - thread finished without publishing a result.
-            raise RuntimeError("llm_router generation thread ended without returning a result") from exc
-        if kind == "error":
-            raise payload
-        return str(payload)
+
+        return _shared_call_with_thread_deadline(
+            generator,
+            *args,
+            timeout_seconds=timeout_seconds,
+            thread_name="logic-port-llm-call",
+            on_timeout=record_timeout,
+            timeout_message=timeout_message,
+            empty_result_message="llm_router generation thread ended without returning a result",
+            **kwargs,
+        )
 
     def _call_llm(self, prompt: str) -> str:
         provider = self._resolved_provider()
