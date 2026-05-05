@@ -33,6 +33,32 @@ def test_prover_target_coverage_record_marks_complete_local_report_valid():
     assert coverage["coverage_summary"]["all_required_passed"] is True
 
 
+def test_prover_target_coverage_record_reports_incomplete_role_matrix_without_blocking_syntax():
+    records = [_record(target) for target in LOCAL_PROVER_SYNTAX_TARGETS]
+
+    coverage = build_prover_syntax_target_coverage_record(
+        "deontic:minimal-target-records",
+        records,
+    )
+    role_summary = coverage["target_role_matrix_summary"]
+
+    assert coverage["formal_syntax_valid"] is True
+    assert coverage["coverage_blockers"] == []
+    assert coverage["target_role_matrix_complete"] is False
+    assert coverage["target_role_matrix_requires_validation"] is True
+    assert coverage["target_role_matrix_blockers"] == [
+        f"unknown_target_formula_role:{target}"
+        for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+    ] + [
+        f"unknown_target_dialect_family:{target}"
+        for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+    ]
+    assert role_summary["target_role_matrix_status_by_target"] == {
+        target: "unknown_role_and_dialect" for target in LOCAL_PROVER_SYNTAX_TARGETS
+    }
+    assert coverage["coverage_summary"]["target_role_matrix_requires_validation"] is True
+
+
 def test_prover_target_coverage_record_blocks_missing_required_targets():
     records = [
         _record("frame_logic"),

@@ -598,6 +598,12 @@ def build_prover_syntax_target_coverage_record(
         "target_role_matrix_complete": target_role_matrix_summary[
             "target_role_matrix_complete"
         ],
+        "target_role_matrix_requires_validation": target_role_matrix_summary[
+            "requires_validation"
+        ],
+        "target_role_matrix_blockers": target_role_matrix_summary[
+            "coverage_blockers"
+        ],
     }
     blockers: List[str] = []
     blockers.extend(
@@ -644,6 +650,12 @@ def build_prover_syntax_target_coverage_record(
         "target_role_matrix_summary": target_role_matrix_summary,
         "target_role_matrix_complete": target_role_matrix_summary[
             "target_role_matrix_complete"
+        ],
+        "target_role_matrix_requires_validation": target_role_matrix_summary[
+            "requires_validation"
+        ],
+        "target_role_matrix_blockers": target_role_matrix_summary[
+            "coverage_blockers"
         ],
         "semantic_formula_families": semantic_family_summary["semantic_formula_families"],
         "semantic_formula_family_distribution": semantic_family_summary[
@@ -891,12 +903,33 @@ def _summarize_prover_target_role_matrix(
     incomplete_targets = [
         target for target in required if target not in complete_targets
     ]
+    status_by_target = {
+        target: _target_role_matrix_status(
+            target,
+            roles_by_target,
+            dialects_by_target,
+            missing_targets,
+            unknown_role_targets,
+            unknown_dialect_targets,
+        )
+        for target in required
+    }
     required_count = len(required)
     complete = bool(
         required
         and not missing_targets
         and not unknown_role_targets
         and not unknown_dialect_targets
+    )
+    blockers: List[str] = []
+    blockers.extend(f"missing_target_role:{target}" for target in missing_targets)
+    blockers.extend(
+        f"unknown_target_formula_role:{target}"
+        for target in sorted(unknown_role_targets)
+    )
+    blockers.extend(
+        f"unknown_target_dialect_family:{target}"
+        for target in sorted(unknown_dialect_targets)
     )
 
     return {
@@ -919,11 +952,35 @@ def _summarize_prover_target_role_matrix(
         "target_dialect_families_by_target": dict(sorted(dialects_by_target.items())),
         "target_formula_roles": sorted(dict.fromkeys(roles_by_target.values())),
         "target_dialect_families": sorted(dict.fromkeys(dialects_by_target.values())),
+        "target_role_matrix_status_by_target": status_by_target,
         "missing_role_targets": missing_targets,
         "unknown_role_targets": sorted(unknown_role_targets),
         "unknown_dialect_targets": sorted(unknown_dialect_targets),
+        "requires_validation": not complete,
+        "coverage_blockers": blockers,
         "target_role_matrix_complete": complete,
     }
+
+
+def _target_role_matrix_status(
+    target: str,
+    roles_by_target: Mapping[str, str],
+    dialects_by_target: Mapping[str, str],
+    missing_targets: Sequence[str],
+    unknown_role_targets: Sequence[str],
+    unknown_dialect_targets: Sequence[str],
+) -> str:
+    if target in missing_targets:
+        return "missing"
+    if target in unknown_role_targets and target in unknown_dialect_targets:
+        return "unknown_role_and_dialect"
+    if target in unknown_role_targets:
+        return "unknown_role"
+    if target in unknown_dialect_targets:
+        return "unknown_dialect"
+    if target in roles_by_target and target in dialects_by_target:
+        return "complete"
+    return "missing"
 
 
 def build_ir_slot_provenance_audit_record(
