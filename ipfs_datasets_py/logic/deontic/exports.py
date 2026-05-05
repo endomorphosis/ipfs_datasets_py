@@ -620,6 +620,119 @@ def summarize_prover_syntax_target_coverage(
     }
 
 
+def summarize_prover_syntax_target_corpus_coverage(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize prover-target coverage across a corpus of source norms.
+
+    Callers may pass raw target syntax rows or the persisted rows produced by
+    ``build_prover_syntax_target_coverage_record``. The corpus summary keeps
+    per-source completeness separate from syntax validity so duplicate,
+    missing, skipped, and failed target records remain visible in Phase 8
+    reports without changing parser repair gates.
+    """
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    raw_records_by_source: Dict[str, List[Mapping[str, Any]]] = {}
+    source_summaries: Dict[str, Dict[str, Any]] = {}
+    record_count = 0
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        record_count += 1
+        source_id = _prover_syntax_record_source_id(record)
+        coverage_summary = record.get("coverage_summary")
+        if isinstance(coverage_summary, Mapping):
+            source_summaries[source_id] = dict(coverage_summary)
+            continue
+        raw_records_by_source.setdefault(source_id, []).append(record)
+
+    for source_id, source_records in raw_records_by_source.items():
+        source_summaries[source_id] = summarize_prover_syntax_target_coverage(
+            source_records,
+            required,
+        )
+
+    source_status_by_source: Dict[str, Dict[str, str]] = {}
+    source_missing_targets_by_source: Dict[str, List[str]] = {}
+    source_blockers_by_source: Dict[str, List[str]] = {}
+    target_presence_distribution: Counter[str] = Counter()
+    target_pass_distribution: Counter[str] = Counter()
+    blocker_distribution: Counter[str] = Counter()
+    duplicate_record_count = 0
+    complete_source_count = 0
+    formal_syntax_valid_count = 0
+    sources_with_complete_required_targets: List[str] = []
+    sources_requiring_validation: List[str] = []
+
+    for source_id in sorted(source_summaries):
+        summary = source_summaries[source_id]
+        status_by_target = {
+            target: str(status)
+            for target, status in dict(summary.get("target_status_by_target") or {}).items()
+        }
+        source_status_by_source[source_id] = {
+            target: status_by_target.get(target, "missing") for target in required
+        }
+        missing_targets = [
+            str(target) for target in list(summary.get("missing_targets") or [])
+        ]
+        blockers = _prover_coverage_blockers(summary)
+        source_missing_targets_by_source[source_id] = missing_targets
+        source_blockers_by_source[source_id] = blockers
+        blocker_distribution.update(blockers)
+
+        for target, status in source_status_by_source[source_id].items():
+            if status != "missing":
+                target_presence_distribution[target] += 1
+            if status == "passed":
+                target_pass_distribution[target] += 1
+
+        duplicate_record_count += int(summary.get("target_duplicate_record_count") or 0)
+        source_complete = bool(summary.get("target_status_matrix_complete") is True)
+        if source_complete:
+            complete_source_count += 1
+            sources_with_complete_required_targets.append(source_id)
+        else:
+            sources_requiring_validation.append(source_id)
+        if summary.get("all_required_passed") is True:
+            formal_syntax_valid_count += 1
+
+    source_count = len(source_summaries)
+    incomplete_source_count = source_count - complete_source_count
+    return {
+        "required_targets": list(required),
+        "record_count": record_count,
+        "source_count": source_count,
+        "complete_source_count": complete_source_count,
+        "incomplete_source_count": incomplete_source_count,
+        "sources_with_complete_required_targets": sources_with_complete_required_targets,
+        "sources_requiring_validation": sources_requiring_validation,
+        "source_status_by_source": source_status_by_source,
+        "source_missing_targets_by_source": source_missing_targets_by_source,
+        "source_blockers_by_source": source_blockers_by_source,
+        "target_presence_distribution": dict(sorted(target_presence_distribution.items())),
+        "target_pass_distribution": dict(sorted(target_pass_distribution.items())),
+        "target_duplicate_record_count": duplicate_record_count,
+        "coverage_blocker_distribution": dict(sorted(blocker_distribution.items())),
+        "all_sources_complete": bool(source_count and complete_source_count == source_count),
+        "all_sources_required_targets_passed": bool(
+            source_count and formal_syntax_valid_count == source_count
+        ),
+        "source_complete_rate": round(complete_source_count / source_count, 6)
+        if source_count
+        else 0.0,
+        "formal_syntax_valid_source_rate": round(
+            formal_syntax_valid_count / source_count,
+            6,
+        )
+        if source_count
+        else 0.0,
+    }
+
+
 def _summarize_prover_required_target_status_matrix(
     records: Sequence[Mapping[str, Any]],
     required_targets: Sequence[str],
@@ -842,6 +955,26 @@ def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:
         if value:
             return value
     return ""
+
+
+def _prover_syntax_record_source_id(record: Mapping[str, Any]) -> str:
+    for key in ("source_id", "norm_source_id", "legal_source_id"):
+        value = str(record.get(key) or "").strip()
+        if value:
+            return value
+    return "unknown"
+
+
+def _prover_coverage_blockers(summary: Mapping[str, Any]) -> List[str]:
+    for key in (
+        "target_status_matrix_blockers",
+        "coverage_blockers",
+        "blockers",
+    ):
+        value = summary.get(key)
+        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+            return [str(item) for item in value if item]
+    return []
 
 
 def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:

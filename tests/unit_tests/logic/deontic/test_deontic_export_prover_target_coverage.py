@@ -2,6 +2,8 @@
 
 from ipfs_datasets_py.logic.deontic.exports import (
     LOCAL_PROVER_SYNTAX_TARGETS,
+    build_prover_syntax_target_coverage_record,
+    summarize_prover_syntax_target_corpus_coverage,
     summarize_prover_syntax_target_coverage,
 )
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
@@ -124,6 +126,100 @@ def test_prover_syntax_target_coverage_matrix_reports_duplicate_records():
     assert summary["target_status_matrix_blockers"] == [
         "duplicate_prover_syntax_target_record:fol:2"
     ]
+
+
+def test_prover_syntax_target_corpus_coverage_groups_raw_rows_by_source():
+    records = [
+        {
+            "source_id": "deontic:complete",
+            "prover_target": target,
+            "syntax_valid": True,
+        }
+        for target in LOCAL_PROVER_SYNTAX_TARGETS
+    ]
+    records.extend(
+        [
+            {
+                "source_id": "deontic:partial",
+                "prover_target": "frame_logic",
+                "syntax_valid": True,
+            },
+            {
+                "source_id": "deontic:partial",
+                "prover_target": "deontic_cec",
+                "syntax_valid": False,
+            },
+            {
+                "source_id": "deontic:partial",
+                "prover_target": "fol",
+                "status": "skipped",
+            },
+        ]
+    )
+
+    summary = summarize_prover_syntax_target_corpus_coverage(records)
+
+    assert summary["source_count"] == 2
+    assert summary["complete_source_count"] == 1
+    assert summary["incomplete_source_count"] == 1
+    assert summary["sources_with_complete_required_targets"] == ["deontic:complete"]
+    assert summary["sources_requiring_validation"] == ["deontic:partial"]
+    assert summary["source_complete_rate"] == 0.5
+    assert summary["formal_syntax_valid_source_rate"] == 0.5
+    assert summary["source_status_by_source"]["deontic:partial"] == {
+        "frame_logic": "passed",
+        "deontic_cec": "failed",
+        "fol": "skipped",
+        "deontic_fol": "missing",
+        "deontic_temporal_fol": "missing",
+    }
+    assert summary["source_missing_targets_by_source"]["deontic:partial"] == [
+        "deontic_fol",
+        "deontic_temporal_fol",
+    ]
+    assert summary["coverage_blocker_distribution"] == {
+        "failed_prover_syntax_target:deontic_cec": 1,
+        "missing_prover_syntax_target:deontic_fol": 1,
+        "missing_prover_syntax_target:deontic_temporal_fol": 1,
+        "skipped_prover_syntax_target:fol": 1,
+    }
+
+
+def test_prover_syntax_target_corpus_coverage_accepts_persisted_coverage_rows():
+    complete = build_prover_syntax_target_coverage_record(
+        "deontic:complete",
+        [
+            {"target": target, "syntax_valid": True}
+            for target in LOCAL_PROVER_SYNTAX_TARGETS
+        ],
+    )
+    duplicate = build_prover_syntax_target_coverage_record(
+        "deontic:duplicate",
+        [
+            {"target": target, "syntax_valid": True}
+            for target in LOCAL_PROVER_SYNTAX_TARGETS
+        ]
+        + [{"target": "fol", "syntax_valid": True}],
+    )
+
+    summary = summarize_prover_syntax_target_corpus_coverage([complete, duplicate])
+
+    assert summary["record_count"] == 2
+    assert summary["source_count"] == 2
+    assert summary["complete_source_count"] == 1
+    assert summary["sources_requiring_validation"] == ["deontic:duplicate"]
+    assert summary["target_duplicate_record_count"] == 1
+    assert summary["target_presence_distribution"] == {
+        target: 2 for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+    }
+    assert summary["target_pass_distribution"] == {
+        target: 2 for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
+    }
+    assert summary["coverage_blocker_distribution"] == {
+        "duplicate_prover_syntax_target_record:fol:2": 1
+    }
+    assert summary["all_sources_complete"] is False
+    assert summary["all_sources_required_targets_passed"] is True
 
 
 def test_prover_target_coverage_slice_preserves_numbered_exception_repair_blocker():
