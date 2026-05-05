@@ -121,6 +121,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     match_diagnostic_edit_path,
     missing_lifecycle_wrapper_core_lines,
     normalize_file_edits,
+    normalize_task_references,
     normalize_validation_commands,
     obvious_typescript_text_damage,
     owner_pid_from_worktree,
@@ -685,6 +686,15 @@ def test_normalize_validation_commands_filters_invalid_entries() -> None:
         ]
     ) == [["python3", "-m", "pytest"], []]
     assert normalize_validation_commands({"command": ["pytest"]}) == []
+
+
+def test_normalize_task_references_filters_invalid_entries() -> None:
+    assert normalize_task_references(["Task A", 7, 2.5, {"title": "ignored"}, None]) == [
+        "Task A",
+        "7",
+        "2.5",
+    ]
+    assert normalize_task_references("Task A") == []
 
 
 def test_task_board_status_helpers_are_reusable() -> None:

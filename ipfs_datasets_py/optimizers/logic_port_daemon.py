@@ -54,6 +54,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
     looks_like_empty_codex_event_stream as _shared_looks_like_empty_codex_event_stream,
     normalize_file_edits as _shared_normalize_file_edits,
+    normalize_task_references as _shared_normalize_task_references,
     normalize_validation_commands as _shared_normalize_validation_commands,
     read_text as _shared_read_text,
     run_command as _shared_run_command,
@@ -462,7 +463,7 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
             impact=str(parsed.get("impact", "")),
             patch=str(parsed.get("patch", "")),
             files=_parse_file_edits(parsed.get("files", [])),
-            tasks=[str(item) for item in parsed.get("tasks", []) if isinstance(item, (str, int, float))],
+            tasks=_shared_normalize_task_references(parsed.get("tasks", [])),
             validation_commands=_shared_normalize_validation_commands(parsed.get("validation_commands", [])),
             raw_response=text,
         )

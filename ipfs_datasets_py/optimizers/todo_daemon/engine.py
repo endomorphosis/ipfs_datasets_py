@@ -386,6 +386,14 @@ def normalize_validation_commands(value: Any) -> list[list[str]]:
     return commands
 
 
+def normalize_task_references(value: Any) -> list[str]:
+    """Return string task references from a JSON-like proposal value."""
+
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if isinstance(item, (str, int, float))]
+
+
 def parse_json_proposal(text: str) -> Proposal:
     parsed = extract_json(text)
     if parsed is None:
