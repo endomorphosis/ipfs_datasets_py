@@ -53,6 +53,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     extract_json as _shared_extract_json_object,
     extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
     looks_like_empty_codex_event_stream as _shared_looks_like_empty_codex_event_stream,
+    normalize_file_edits as _shared_normalize_file_edits,
     read_text as _shared_read_text,
     run_command as _shared_run_command,
 )
@@ -487,17 +488,7 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
 
 
 def _parse_file_edits(value: Any) -> List[Dict[str, str]]:
-    edits: List[Dict[str, str]] = []
-    if not isinstance(value, list):
-        return edits
-    for item in value:
-        if not isinstance(item, dict):
-            continue
-        path = item.get("path")
-        content = item.get("content")
-        if isinstance(path, str) and isinstance(content, str):
-            edits.append({"path": path, "content": content})
-    return edits
+    return _shared_normalize_file_edits(value)
 
 
 def _repair_common_typescript_text_damage(content: str) -> str:

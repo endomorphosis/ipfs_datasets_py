@@ -358,20 +358,26 @@ def looks_like_empty_codex_event_stream(text: str) -> bool:
     return saw_codex_event and not saw_assistant_text
 
 
+def normalize_file_edits(value: Any) -> list[dict[str, str]]:
+    """Return valid complete-file edits from a JSON-like proposal value."""
+
+    edits: list[dict[str, str]] = []
+    if not isinstance(value, list):
+        return edits
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        path = item.get("path")
+        content = item.get("content")
+        if isinstance(path, str) and isinstance(content, str):
+            edits.append({"path": path, "content": content})
+    return edits
+
+
 def parse_json_proposal(text: str) -> Proposal:
     parsed = extract_json(text)
     if parsed is None:
         return Proposal(raw_response=text, errors=["LLM response did not contain a JSON object."], failure_kind="parse")
-    files: list[dict[str, str]] = []
-    raw_files = parsed.get("files", [])
-    if isinstance(raw_files, list):
-        for item in raw_files:
-            if not isinstance(item, dict):
-                continue
-            path = item.get("path")
-            content = item.get("content")
-            if isinstance(path, str) and isinstance(content, str):
-                files.append({"path": path, "content": content})
     commands: list[list[str]] = []
     raw_commands = parsed.get("validation_commands", [])
     if isinstance(raw_commands, list):
@@ -381,7 +387,7 @@ def parse_json_proposal(text: str) -> Proposal:
     return Proposal(
         summary=str(parsed.get("summary", "")),
         impact=str(parsed.get("impact", "")),
-        files=files,
+        files=normalize_file_edits(parsed.get("files", [])),
         validation_commands=commands,
         raw_response=text,
     )

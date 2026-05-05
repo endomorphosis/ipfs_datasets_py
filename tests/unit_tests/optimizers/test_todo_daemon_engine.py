@@ -120,6 +120,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     materialize_proposal_files,
     match_diagnostic_edit_path,
     missing_lifecycle_wrapper_core_lines,
+    normalize_file_edits,
     obvious_typescript_text_damage,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
@@ -659,6 +660,18 @@ def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> N
     assert proposal.summary == "Reusable proposal"
     assert proposal.files == [{"path": "todo/source.py", "content": "VALUE = 1\n"}]
     assert proposal.validation_commands == [["python3", "-m", "compileall", "todo"]]
+
+
+def test_normalize_file_edits_filters_invalid_entries() -> None:
+    assert normalize_file_edits(
+        [
+            {"path": "todo/source.py", "content": "VALUE = 1\n", "extra": "ignored"},
+            {"path": "todo/ignored.py"},
+            {"path": 123, "content": "bad"},
+            "not-a-file",
+        ]
+    ) == [{"path": "todo/source.py", "content": "VALUE = 1\n"}]
+    assert normalize_file_edits({"path": "todo/source.py", "content": "VALUE = 1\n"}) == []
 
 
 def test_task_board_status_helpers_are_reusable() -> None:
