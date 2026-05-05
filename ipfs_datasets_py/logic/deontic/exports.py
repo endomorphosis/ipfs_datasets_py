@@ -4081,6 +4081,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
     if action_predicate.startswith((
+        "Continue",
+        "Defer",
+        "Extend",
+        "Postpone",
+        "Stay",
+        "Waive",
+    )):
+        return "administrative_relief_duty"
+    if action_predicate.startswith((
         "Announce",
         "Circulate",
         "Disseminate",
@@ -4143,8 +4152,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Find",
     )):
         return "judicial_disposition_duty"
-    if action_predicate.startswith(("Waive", "Extend")):
-        return "administrative_relief_duty"
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
         return "registration_lifecycle_duty"
     if action_predicate.startswith((

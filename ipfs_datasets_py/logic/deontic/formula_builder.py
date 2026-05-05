@@ -158,6 +158,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_referral_remand_light_verb_action(action_text)
     action_text = _normalize_waiver_extension_light_verb_action(action_text)
+    action_text = _normalize_stay_continuance_deferral_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
     action_text = _normalize_classification_reclassification_light_verb_action(action_text)
@@ -5316,6 +5317,56 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"extend {target}" if target else text
+
+    return text
+
+
+def _normalize_stay_continuance_deferral_light_verb_action(action_text: str) -> str:
+    """Project timing-relief nominalizations to operative administrative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    relief_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
+            r"(?:an?\s+|the\s+)?stay\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
+            "stay",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
+            r"(?:an?\s+|the\s+)?continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "continue",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
+            r"(?:an?\s+|the\s+)?postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "postpone",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
+            r"(?:an?\s+|the\s+)?deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "defer",
+        ),
+    ]
+    for pattern, verb in relief_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
+
+    direct_patterns = [
+        (r"^stay\s+(?:of|for|from)\s+(?:the\s+)?(.+)$", "stay"),
+        (r"^continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "continue"),
+        (r"^postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "postpone"),
+        (r"^deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "defer"),
+    ]
+    for pattern, verb in direct_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     return text
 

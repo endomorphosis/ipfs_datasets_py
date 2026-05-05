@@ -6,7 +6,11 @@ from ipfs_datasets_py.logic.deontic.formula_builder import (
     build_deontic_formula_records_from_irs,
     parser_element_to_formula_record,
 )
+from ipfs_datasets_py.logic.deontic.exports import (
+    build_deterministic_parser_capability_profile_records,
+)
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+from ipfs_datasets_py.logic.deontic.prover_syntax import validate_ir_with_provers
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
     build_deontic_formula,
     extract_normative_elements,
@@ -8758,6 +8762,80 @@ def test_waiver_extension_light_verb_duties_export_operative_predicates():
         assert record["proof_ready"] is True
         assert record["requires_validation"] is False
         assert record["repair_required"] is False
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_stay_continuance_postponement_deferral_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Director shall grant a stay of the proceeding.",
+            "grant a stay of the proceeding",
+            "O(∀x (Director(x) → StayProceeding(x)))",
+            "GrantStayProceeding",
+        ),
+        (
+            "The Board shall order a continuance of the hearing.",
+            "order a continuance of the hearing",
+            "O(∀x (Board(x) → ContinueHearing(x)))",
+            "OrderContinuanceHearing",
+        ),
+        (
+            "The Clerk shall approve postponement of the deadline.",
+            "approve postponement of the deadline",
+            "O(∀x (Clerk(x) → PostponeDeadline(x)))",
+            "ApprovePostponementDeadline",
+        ),
+        (
+            "The agency shall authorize deferral of the payment.",
+            "authorize deferral of the payment",
+            "O(∀x (Agency(x) → DeferPayment(x)))",
+            "AuthorizeDeferralPayment",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "administrative_relief_duty",
+        "administrative_relief_duty",
+        "administrative_relief_duty",
+        "administrative_relief_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, _, formula, _ in examples
+    ]
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
