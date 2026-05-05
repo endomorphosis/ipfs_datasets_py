@@ -25,7 +25,6 @@ import json
 import traceback
 import os
 import re
-import shutil
 import subprocess
 import sys
 import threading
@@ -499,33 +498,34 @@ class LegalParserParityOptimizer(BaseOptimizer):
         worktree_path = worktree_root / f"cycle_{cycle_index:04d}_{stamp}_{os.getpid()}"
         metadata_rel = ".legal_parser_worktree_proposal.json"
         owner_rel = ".legal_parser_worktree_owner.json"
-        raw_trace: Dict[str, Any] = {
+        trace_context: Dict[str, Any] = {
             "transport": "worktree",
-            "worktree_path": str(worktree_path),
-            "metadata_path": metadata_rel,
-            "owner_path": owner_rel,
             "cleanup_before_create": cleanup_result,
             "base_unified_diff_chars": len(base_unified_diff or ""),
             "repair_context": dict(repair_context or {}),
         }
 
-        try:
-            add_result = _run_command(
-                ["git", "worktree", "add", "--detach", str(worktree_path), "HEAD"],
-                cwd=repo_root,
-                timeout=60,
-            )
-            raw_trace["worktree_add"] = add_result
-            if not add_result.get("valid"):
+        with _shared_managed_git_worktree(
+            repo_root=repo_root,
+            worktree_path=worktree_path,
+            metadata_rel=metadata_rel,
+            owner_rel=owner_rel,
+            trace_context=trace_context,
+            run_command_fn=command_runner_from_legacy_function(_run_command),
+            owner_writer=lambda owner_path: self._write_worktree_owner_file(
+                owner_path,
+                cycle_index=cycle_index,
+            ),
+        ) as worktree_session:
+            raw_trace = worktree_session.raw_trace
+            add_result = worktree_session.add_result
+            if not worktree_session.ready:
+                add_output = str((add_result.stderr or add_result.stdout) if add_result else "")
                 return LegalParserCycleProposal(
                     summary="worktree proposal failed",
                     raw_response=json.dumps(raw_trace, indent=2, default=str),
-                    parse_error="git worktree add failed: " + str(add_result.get("stderr") or "").strip()[:1000],
+                    parse_error="git worktree add failed: " + add_output.strip()[:1000],
                 )
-            self._write_worktree_owner_file(
-                worktree_path / owner_rel,
-                cycle_index=cycle_index,
-            )
             base_worktree_diff = ""
             if base_unified_diff.strip():
                 base_apply_result = _run_command(
@@ -698,14 +698,6 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 unified_diff=unified_diff,
                 raw_response=raw_response,
             )
-        finally:
-            remove_result = _run_command(
-                ["git", "worktree", "remove", "--force", str(worktree_path)],
-                cwd=repo_root,
-                timeout=60,
-            )
-            if not remove_result.get("valid") and worktree_path.exists():
-                shutil.rmtree(worktree_path, ignore_errors=True)
 
     def cleanup_stale_worktrees(self) -> Dict[str, Any]:
         """Remove daemon-created direct-edit worktrees left behind by crashes."""
