@@ -183,6 +183,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     recent_rollback_failure_count,
     recent_total_failure_count,
     replace_task_mark,
+    resolve_artifact_directory,
     resolve_daemon_module,
     restarting_wrapper_alive,
     rank_relevant_context_file,
@@ -191,6 +192,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     render_lifecycle_wrapper,
     render_file_edit_diagnostic_context,
     render_proposal_feedback,
+    resolve_artifact_directory,
     render_typescript_diagnostic_context,
     rollback_failure_counts,
     rounds_since_last_valid,
@@ -2111,14 +2113,14 @@ def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: 
     )
     ledger_only = persist_proposal_accepted_work(
         repo_root=repo,
-        accepted_dir=accepted_dir,
+        accepted_dir=Path(".daemon/accepted-work"),
         proposal=proposal,
         diff_text=diff_text,
         transport="direct",
         write_sidecars_enabled=False,
     )
     failed = persist_proposal_failed_work(
-        failed_dir=failed_dir,
+        failed_dir=Path(".daemon/failed-work"),
         proposal=Proposal(
             summary="Persist failed work",
             target_task=proposal.target_task,
@@ -2129,9 +2131,11 @@ def test_proposal_work_persistence_helpers_write_ledgers_and_sidecars(tmp_path: 
         diff_text=diff_text,
         reason="validation",
         transport="ephemeral_worktree",
+        repo_root=repo,
     )
 
     assert isinstance(accepted, AcceptedWorkPersistenceResult)
+    assert resolve_artifact_directory(Path(".daemon/accepted-work"), repo_root=repo) == accepted_dir
     assert accepted.artifacts is not None
     assert accepted.ledger_path == accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
     assert accepted.ledger_entry["artifacts"]["mode"] == "sidecars"

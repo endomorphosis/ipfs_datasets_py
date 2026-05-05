@@ -540,6 +540,15 @@ def append_jsonl_ledger(directory: Path, entry: dict[str, Any], *, filename: str
     return ledger_path
 
 
+def resolve_artifact_directory(directory: Path, *, repo_root: Optional[Path] = None) -> Path:
+    """Resolve a daemon artifact directory against ``repo_root`` when it is relative."""
+
+    path = Path(directory)
+    if path.is_absolute() or repo_root is None:
+        return path
+    return Path(repo_root) / path
+
+
 def persist_proposal_accepted_work(
     *,
     repo_root: Path,
@@ -552,6 +561,7 @@ def persist_proposal_accepted_work(
 ) -> AcceptedWorkPersistenceResult:
     """Persist accepted proposal evidence and append the accepted-work ledger."""
 
+    accepted_dir = resolve_artifact_directory(accepted_dir, repo_root=repo_root)
     accepted_dir.mkdir(parents=True, exist_ok=True)
     artifacts: Optional[WorkSidecarPaths] = None
     if write_sidecars_enabled:
@@ -591,9 +601,11 @@ def persist_proposal_failed_work(
     diff_text: str,
     reason: str,
     transport: str = "direct",
+    repo_root: Optional[Path] = None,
 ) -> WorkSidecarPaths:
     """Persist failed proposal sidecars for one daemon work item."""
 
+    failed_dir = resolve_artifact_directory(failed_dir, repo_root=repo_root)
     failed_dir.mkdir(parents=True, exist_ok=True)
     base = timestamped_artifact_base(
         failed_dir,
