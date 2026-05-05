@@ -243,6 +243,97 @@ def test_prover_target_role_matrix_reports_role_and_dialect_mismatches():
     assert coverage["coverage_summary"]["target_role_matrix_requires_validation"] is True
 
 
+def test_prover_target_role_matrix_reports_duplicate_required_target_records():
+    records = [
+        target.to_dict()
+        for target in validate_ir_with_provers(
+            LegalNormIR.from_parser_element(
+                extract_normative_elements("The tenant must pay rent monthly.")[0]
+            )
+        ).targets
+    ]
+    duplicate_fol = dict(next(record for record in records if record["target"] == "fol"))
+    records.append(duplicate_fol)
+
+    coverage = build_prover_syntax_target_coverage_record(
+        "deontic:duplicate-target-role",
+        records,
+    )
+    role_summary = coverage["target_role_matrix_summary"]
+
+    assert coverage["target_role_matrix_complete"] is False
+    assert coverage["target_role_matrix_requires_validation"] is True
+    assert coverage["target_role_matrix_blockers"] == [
+        "duplicate_target_role_records:fol:2"
+    ]
+    assert role_summary["target_role_input_record_count"] == len(LOCAL_PROVER_TARGETS) + 1
+    assert role_summary["target_role_record_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_unique_target_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_duplicate_record_count"] == 1
+    assert role_summary["target_role_duplicate_targets"] == ["fol"]
+    assert role_summary["duplicate_role_targets"] == ["fol"]
+    assert role_summary["target_role_record_count_by_target"]["fol"] == 2
+    assert role_summary["target_role_duplicate_statuses_by_target"] == {
+        "fol": ["passed", "passed"]
+    }
+    assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
+        "duplicate_records"
+    )
+    assert role_summary["target_role_matrix_status_distribution"] == {
+        "complete": len(LOCAL_PROVER_TARGETS) - 1,
+        "duplicate_records": 1,
+    }
+    assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS) - 1
+    assert role_summary["target_role_incomplete_targets"] == ["fol"]
+    assert role_summary["target_syntax_status_distribution"] == {
+        "passed": len(LOCAL_PROVER_TARGETS)
+    }
+    assert coverage["coverage_summary"]["target_role_matrix_blockers"] == [
+        "duplicate_target_role_records:fol:2"
+    ]
+
+
+def test_prover_target_role_matrix_reports_duplicate_failed_target_statuses():
+    records = [
+        target.to_dict()
+        for target in validate_ir_with_provers(
+            LegalNormIR.from_parser_element(
+                extract_normative_elements("The tenant must pay rent monthly.")[0]
+            )
+        ).targets
+    ]
+    failed_fol = dict(next(record for record in records if record["target"] == "fol"))
+    failed_fol["status"] = "failed"
+    failed_fol["syntax_valid"] = False
+    records.append(failed_fol)
+
+    coverage = build_prover_syntax_target_coverage_record(
+        "deontic:duplicate-failed-target-role",
+        records,
+    )
+    role_summary = coverage["target_role_matrix_summary"]
+
+    assert coverage["formal_syntax_valid"] is False
+    assert coverage["requires_validation"] is True
+    assert coverage["coverage_summary"]["failed_targets"] == ["fol"]
+    assert "failed_prover_syntax_target:fol" in coverage["coverage_blockers"]
+    assert coverage["target_role_matrix_complete"] is False
+    assert coverage["target_role_matrix_blockers"] == [
+        "duplicate_target_role_records:fol:2"
+    ]
+    assert role_summary["target_role_duplicate_statuses_by_target"] == {
+        "fol": ["passed", "failed"]
+    }
+    assert role_summary["target_role_matrix_status_by_target"]["fol"] == (
+        "duplicate_records"
+    )
+    assert role_summary["target_syntax_status_by_target"]["fol"] == "passed"
+    assert role_summary["target_role_matrix_coverage_rate"] == 0.8
+    assert role_summary["target_semantic_family_distribution"] == {
+        "ordinary_duty": len(LOCAL_PROVER_TARGETS)
+    }
+
+
 def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
     norm = LegalNormIR.from_parser_element(
         extract_normative_elements(
