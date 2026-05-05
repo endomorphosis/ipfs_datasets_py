@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 from .core import (
     ManagedDaemonSpec,
     StopResult,
+    first_present,
     iter_processes,
     now_iso,
     now_utc,
@@ -221,20 +222,32 @@ def check_legal_parser_health(
         "ensure_supervisor_pid_alive": ensure.get("supervisor_pid_alive"),
         "cycle_index": current.get("cycle_index"),
         "phase": current.get("phase"),
-        "model_name": current.get("model_name") or supervisor.get("model_name"),
-        "provider": current.get("provider") or supervisor.get("provider"),
-        "proposal_transport": current.get("proposal_transport") or supervisor.get("proposal_transport"),
-        "worktree_edit_timeout_seconds": current.get("worktree_edit_timeout_seconds")
-        or supervisor.get("worktree_edit_timeout_seconds"),
-        "worktree_stale_after_seconds": current.get("worktree_stale_after_seconds")
-        or supervisor.get("worktree_stale_after_seconds"),
-        "worktree_codex_sandbox": current.get("worktree_codex_sandbox")
-        or supervisor.get("worktree_codex_sandbox"),
-        "repair_failed_tests_before_rollback": current.get("repair_failed_tests_before_rollback")
-        if current.get("repair_failed_tests_before_rollback") is not None
-        else supervisor.get("repair_failed_tests_before_rollback"),
-        "failed_test_repair_attempts": current.get("failed_test_repair_attempts")
-        or supervisor.get("failed_test_repair_attempts"),
+        "model_name": first_present(current.get("model_name"), supervisor.get("model_name")),
+        "provider": first_present(current.get("provider"), supervisor.get("provider")),
+        "proposal_transport": first_present(
+            current.get("proposal_transport"),
+            supervisor.get("proposal_transport"),
+        ),
+        "worktree_edit_timeout_seconds": first_present(
+            current.get("worktree_edit_timeout_seconds"),
+            supervisor.get("worktree_edit_timeout_seconds"),
+        ),
+        "worktree_stale_after_seconds": first_present(
+            current.get("worktree_stale_after_seconds"),
+            supervisor.get("worktree_stale_after_seconds"),
+        ),
+        "worktree_codex_sandbox": first_present(
+            current.get("worktree_codex_sandbox"),
+            supervisor.get("worktree_codex_sandbox"),
+        ),
+        "repair_failed_tests_before_rollback": first_present(
+            current.get("repair_failed_tests_before_rollback"),
+            supervisor.get("repair_failed_tests_before_rollback"),
+        ),
+        "failed_test_repair_attempts": first_present(
+            current.get("failed_test_repair_attempts"),
+            supervisor.get("failed_test_repair_attempts"),
+        ),
         "worktree_no_child_stall_seconds": worktree_no_child_threshold,
         "worktree_phase_worker_status": worktree_phase_worker_status(
             current,

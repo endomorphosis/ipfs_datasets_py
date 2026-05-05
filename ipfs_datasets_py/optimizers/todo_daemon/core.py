@@ -148,6 +148,15 @@ def now_iso() -> str:
     return now_utc().isoformat()
 
 
+def first_present(*values: Any) -> Any:
+    """Return the first value that is neither ``None`` nor an empty string."""
+
+    for value in values:
+        if value is not None and value != "":
+            return value
+    return None
+
+
 def _as_utc_datetime(value: Optional[datetime]) -> Optional[datetime]:
     if value is None:
         return None
@@ -367,13 +376,7 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
 
     alive = bool(supervisor_alive and ((daemon_alive and fresh) or maintenance.fresh))
     status_label = "maintenance_running" if maintenance.fresh else "running" if alive else "stale_or_stopped"
-    active_state = status.get("active_state") or status.get("state") or progress.get("active_state")
-
-    def first_present(*values: Any) -> Any:
-        for value in values:
-            if value is not None and value != "":
-                return value
-        return None
+    active_state = first_present(status.get("active_state"), status.get("state"), progress.get("active_state"))
 
     payload: JsonDict = {
         "alive": alive,
@@ -395,15 +398,18 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
         "stop_grace_seconds": supervisor.get("stop_grace_seconds"),
         "last_recycle_reason": supervisor.get("last_recycle_reason"),
         "active_state": active_state,
-        "active_state_started_at": status.get("active_state_started_at") or status.get("state_started_at"),
-        "current_task": progress.get("current_task") or status.get("selected_task"),
+        "active_state_started_at": first_present(
+            status.get("active_state_started_at"),
+            status.get("state_started_at"),
+        ),
+        "current_task": first_present(progress.get("current_task"), status.get("selected_task")),
         "plan_status_counts": progress.get("plan_status_counts"),
         "failure_kind_counts": progress.get("failure_kind_counts"),
         "typescript_quality_failures": progress.get("typescript_quality_failures"),
         "stagnant_rounds_since_valid": progress.get("stagnant_rounds_since_valid"),
         "latest_round": progress.get("latest_round"),
-        "model_name": status.get("model_name") or supervisor.get("model_name"),
-        "provider": status.get("provider") or supervisor.get("provider"),
+        "model_name": first_present(status.get("model_name"), supervisor.get("model_name")),
+        "provider": first_present(status.get("provider"), supervisor.get("provider")),
         "router_default_mode": supervisor.get("router_default_mode"),
         "enable_ipfs_accelerate": supervisor.get("enable_ipfs_accelerate"),
         "proposal_transport": first_present(
@@ -454,8 +460,10 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
         "status_path": spec.repo_relative(spec.status_path),
         "progress_path": spec.repo_relative(spec.progress_path),
         "supervisor_status_path": spec.repo_relative(spec.supervisor_status_path),
-        "supervisor_lock_path": supervisor.get("supervisor_lock_path")
-        or spec.repo_relative(spec.supervisor_lock_path),
+        "supervisor_lock_path": first_present(
+            supervisor.get("supervisor_lock_path"),
+            spec.repo_relative(spec.supervisor_lock_path),
+        ),
         "agentic_maintenance_enabled": supervisor.get("agentic_maintenance_enabled"),
         "agentic_stagnant_rounds": supervisor.get("agentic_stagnant_rounds"),
         "agentic_task_failures": supervisor.get("agentic_task_failures"),
@@ -465,7 +473,7 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
         "agentic_cooldown_seconds": supervisor.get("agentic_cooldown_seconds"),
         "agentic_timeout_seconds": supervisor.get("agentic_timeout_seconds"),
         "agentic_stuck_maintenance_timeout_seconds": supervisor.get("agentic_stuck_maintenance_timeout_seconds"),
-        "task_board_path": supervisor.get("task_board_path") or spec.repo_relative(spec.task_board_path),
+        "task_board_path": first_present(supervisor.get("task_board_path"), spec.repo_relative(spec.task_board_path)),
         "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
         "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),
         "active_agentic_maintenance_age_seconds": maintenance.rounded_age_seconds,

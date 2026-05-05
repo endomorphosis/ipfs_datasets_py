@@ -424,6 +424,55 @@ def build_accepted_work_ledger_entry(
     }
 
 
+def build_scoped_accepted_work_ledger_entry(
+    *,
+    repo_root: Path,
+    accepted_dir: Path,
+    target_task: str,
+    summary: str,
+    impact: str,
+    changed_files: Iterable[str],
+    transport: str,
+    artifacts: Optional[WorkSidecarPaths],
+    validation_results: Iterable[dict[str, Any]],
+    diff_text: str = "",
+    promotion_verified: bool = False,
+    promotion_errors: Optional[Iterable[str]] = None,
+    created_at: str | None = None,
+    ledger_filename: str = DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+) -> dict[str, Any]:
+    """Build an accepted-work ledger entry scoped to a daemon artifact directory."""
+
+    resolved_accepted_dir = accepted_dir if accepted_dir.is_absolute() else repo_root / accepted_dir
+    return build_accepted_work_ledger_entry(
+        repo_root=repo_root,
+        target_task=target_task,
+        summary=summary,
+        impact=impact,
+        changed_files=changed_files,
+        transport=transport,
+        artifacts=artifacts,
+        validation_results=validation_results,
+        diff_text=diff_text,
+        promotion_verified=promotion_verified,
+        promotion_errors=promotion_errors,
+        ledger_path=resolved_accepted_dir / ledger_filename,
+        created_at=created_at,
+        ledger_filename=ledger_filename,
+    )
+
+
+def append_accepted_work_ledger(
+    accepted_dir: Path,
+    entry: dict[str, Any],
+    *,
+    filename: str = DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+) -> Path:
+    """Append one JSON object to a daemon accepted-work ledger."""
+
+    return append_jsonl_ledger(accepted_dir, entry, filename=filename)
+
+
 def append_jsonl_ledger(directory: Path, entry: dict[str, Any], *, filename: str) -> Path:
     """Append one JSON object to a daemon artifact ledger."""
 

@@ -43,6 +43,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     accepted_work_markdown_entry,
     accepted_work_workspace_payload,
     advance_active_status_snapshot,
+    append_accepted_work_ledger,
     append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
     append_jsonl_ledger,
@@ -53,6 +54,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     blocked_task_backlog_markdown,
     build_auto_commit_subject,
     build_accepted_work_ledger_entry,
+    build_scoped_accepted_work_ledger_entry,
     build_blocked_task_backlog,
     build_deterministic_progress_record,
     build_deterministic_replacement_proposal,
@@ -99,6 +101,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     failed_work_manifest,
     failed_work_workspace_payload,
     file_edits_by_path,
+    first_present,
     format_recent_failure_context,
     format_task_result_failure_context,
     first_failure_block_decision,
@@ -1668,6 +1671,21 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         ledger_entry,
         filename=DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
     )
+    scoped_entry = build_scoped_accepted_work_ledger_entry(
+        repo_root=repo,
+        accepted_dir=artifact_dir,
+        target_task=proposal.target_task,
+        summary="Ledger only runtime feature",
+        impact=proposal.impact,
+        changed_files=proposal.changed_files,
+        transport="ephemeral_worktree",
+        artifacts=None,
+        validation_results=[result.compact() for result in proposal.validation_results],
+        diff_text=diff_text,
+        promotion_verified=proposal.promotion_verified,
+        created_at="2026-05-05T01:02:04Z",
+    )
+    scoped_ledger_path = append_accepted_work_ledger(artifact_dir, scoped_entry)
     evidence_manifest = accepted_work_evidence_manifest(
         timestamp="20260505T010203Z",
         target_task=proposal.target_task,
@@ -1755,7 +1773,11 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert ledger_entry["artifacts"]["manifest"] == as_repo_path(paths.manifest, repo)
     assert ledger_entry["diff"]["line_count"] == len(diff_text.splitlines())
     assert ledger_path.name == DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
-    assert json.loads(ledger_path.read_text(encoding="utf-8").splitlines()[0])["summary"] == proposal.summary
+    assert scoped_ledger_path == ledger_path
+    ledger_rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+    assert ledger_rows[0]["summary"] == proposal.summary
+    assert ledger_rows[1]["artifacts"]["mode"] == "ledger_only"
+    assert ledger_rows[1]["artifacts"]["ledger"] == ".daemon/accepted-work/accepted-work.jsonl"
     assert compact_validation_result({"command": "bad", "returncode": "not-int"}) == {
         "command": [],
         "returncode": 1,
@@ -2076,6 +2098,13 @@ def test_supervisor_maintenance_snapshot_supports_legacy_suffix_statuses() -> No
     assert snapshot.fresh is True
     assert snapshot.timeout_seconds == 75
     assert snapshot.rounded_age_seconds == 50
+
+
+def test_first_present_preserves_false_and_zero_status_values() -> None:
+    assert first_present(None, "", "fallback") == "fallback"
+    assert first_present(None, False, "fallback") is False
+    assert first_present("", 0, "fallback") == 0
+    assert first_present(None, "") is None
 
 
 def test_supervisor_status_payload_builder_is_reusable(tmp_path: Path) -> None:
