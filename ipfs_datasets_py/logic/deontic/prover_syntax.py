@@ -884,6 +884,45 @@ def _target_quality_gate(
     if not known_local_target:
         failed_checks.append("known_local_target")
 
+    quality_checks = _target_quality_gate_checks(
+        syntax_valid=syntax_valid,
+        formula_proof_ready=formula_proof_ready,
+        formula_requires_validation=formula_requires_validation,
+        symbol_alignment_complete=symbol_alignment_complete,
+        dialect_complete=dialect_complete,
+        parse_complete=parse_complete,
+        token_complete=token_complete,
+        known_local_target=known_local_target,
+        diagnostic_codes=diagnostic_codes,
+    )
+    quality_blockers = [
+        record["blocker"]
+        for record in quality_checks
+        if record.get("passed") is False and record.get("blocking") is True
+    ]
+    source_grounding_diagnostics = {
+        "parser_warnings": list(norm.quality.parser_warnings),
+        "blockers": list(norm.blockers),
+        "missing_ir_slots": list(alignment_summary.get("decoded_missing_grounded_ir_slots") or []),
+        "ungrounded_decoded_slots": list(alignment_summary.get("ungrounded_decoded_slots") or []),
+        "formula_missing_decoded_slots": list(
+            alignment_summary.get("formula_missing_decoded_slots") or []
+        ),
+        "formula_ungrounded_slots": list(alignment_summary.get("formula_ungrounded_slots") or []),
+        "omitted_formula_slot_names": list(
+            alignment_summary.get("omitted_formula_slot_names") or []
+        ),
+        "missing_exported_formula_symbols": list(
+            symbol_alignment.get("missing_exported_formula_symbols") or []
+        ),
+        "unreconstructed_source_tokens": list(
+            reconstruction_token_profile.get("unreconstructed_source_tokens") or []
+        ),
+        "added_decoded_tokens": list(
+            reconstruction_token_profile.get("added_decoded_tokens") or []
+        ),
+    }
+
     fingerprint = _stable_fingerprint(
         norm.source_id,
         target,
@@ -894,6 +933,7 @@ def _target_quality_gate(
         str(formal_validation_complete),
         str(parser_theorem_promotable),
         "|".join(failed_checks),
+        "|".join(quality_blockers),
         "|".join(diagnostic_codes),
     )
     return {
@@ -913,8 +953,86 @@ def _target_quality_gate(
         "formal_validation_complete": formal_validation_complete,
         "parser_theorem_promotable": parser_theorem_promotable,
         "failed_quality_checks": failed_checks,
+        "quality_gate_checks": quality_checks,
+        "quality_gate_blockers": quality_blockers,
+        "source_grounding_diagnostics": source_grounding_diagnostics,
         "target_quality_gate_fingerprint": fingerprint,
     }
+
+
+def _target_quality_gate_checks(
+    *,
+    syntax_valid: bool,
+    formula_proof_ready: bool,
+    formula_requires_validation: bool,
+    symbol_alignment_complete: bool,
+    dialect_complete: bool,
+    parse_complete: bool,
+    token_complete: bool,
+    known_local_target: bool,
+    diagnostic_codes: Sequence[str],
+) -> List[Dict[str, Any]]:
+    checks = [
+        (
+            "syntax",
+            syntax_valid,
+            "syntax diagnostics must be empty",
+            list(diagnostic_codes),
+        ),
+        (
+            "formula_proof_ready",
+            formula_proof_ready,
+            "formula record must be proof-ready",
+            [],
+        ),
+        (
+            "formula_requires_validation",
+            not formula_requires_validation,
+            "formula record must not require validation",
+            [],
+        ),
+        (
+            "symbol_alignment",
+            symbol_alignment_complete,
+            "target formula must preserve source formula symbols",
+            [],
+        ),
+        (
+            "target_dialect",
+            dialect_complete,
+            "target dialect profile must be complete",
+            [],
+        ),
+        (
+            "target_parse",
+            parse_complete,
+            "target parse profile must be complete",
+            [],
+        ),
+        (
+            "reconstruction_tokens",
+            token_complete,
+            "decoder reconstruction token profile must be complete",
+            [],
+        ),
+        (
+            "known_local_target",
+            known_local_target,
+            "target must be one of the local prover dialects",
+            [],
+        ),
+    ]
+    return [
+        {
+            "check": name,
+            "passed": bool(passed),
+            "blocking": True,
+            "blocker": "" if passed else f"failed_prover_quality_check:{name}",
+            "description": description,
+            "diagnostic_codes": codes,
+        }
+        for name, passed, description, codes in checks
+    ]
 
 
 _RECONSTRUCTION_TOKEN_STOPWORDS = {

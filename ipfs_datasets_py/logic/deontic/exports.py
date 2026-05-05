@@ -5072,10 +5072,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "code_maintenance_duty"
     if action_predicate.startswith((
+        "Abstract",
+        "Caption",
         "Catalog",
+        "Excerpt",
         "Index",
         "Interpret",
         "Summarize",
+        "Tag",
         "Transcribe",
         "Translate",
     )):

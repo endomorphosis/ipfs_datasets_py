@@ -267,6 +267,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
     action_text = _normalize_transcription_translation_light_verb_action(action_text)
+    action_text = _normalize_derivative_records_processing_light_verb_action(action_text)
     action_text = _normalize_codification_recodification_light_verb_action(action_text)
     action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
     action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
@@ -4753,6 +4754,44 @@ def _normalize_transcription_translation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"translate {target}" if target else text
+
+    return text
+
+
+def _normalize_derivative_records_processing_light_verb_action(action_text: str) -> str:
+    """Project derivative-record nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    nominalizations = {
+        "abstracts?": "abstract",
+        "excerpts?": "excerpt",
+        "captions?|captioning": "caption",
+        "tags?|tagging": "tag",
+    }
+    leading_verbs = (
+        r"make|makes|made|making|complete|completes|completed|completing|"
+        r"perform|performs|performed|performing|execute|executes|executed|executing|"
+        r"provide|provides|provided|providing|record|records|recorded|recording|"
+        r"require|requires|required|requiring|order|orders|ordered|ordering|"
+        r"authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|"
+        r"create|creates|created|creating|maintain|maintains|maintained|maintaining|"
+        r"prepare|prepares|prepared|preparing|publish|publishes|published|publishing|"
+        r"assign|assigns|assigned|assigning"
+    )
+
+    for nominalization, verb in nominalizations.items():
+        patterns = [
+            rf"^(?:{leading_verbs})\s+(?:an?\s+|the\s+)?(?:{nominalization})\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            rf"^(?:{nominalization})\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        ]
+        for pattern in patterns:
+            match = re.match(pattern, text, re.IGNORECASE)
+            if match:
+                target = _normalized_light_verb_target(match.group(1))
+                return f"{verb} {target}" if target else text
 
     return text
 

@@ -753,6 +753,24 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         record["target_quality_gate"]["failed_quality_checks"] == []
         for record in proof_ready_records
     )
+    assert all(
+        [
+            check["check"]
+            for check in record["target_quality_gate"]["quality_gate_checks"]
+            if check["passed"] is False
+        ]
+        == []
+        for record in proof_ready_records
+    )
+    assert all(
+        record["target_quality_gate"]["quality_gate_blockers"] == []
+        for record in proof_ready_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"]["parser_warnings"]
+        == []
+        for record in proof_ready_records
+    )
     assert len(
         {
             record["target_quality_gate_fingerprint"]
@@ -772,6 +790,20 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         record["target_quality_gate"]["parser_proof_ready"] is False
         for record in resolved_records
     )
+    assert all(
+        record["target_quality_gate"]["quality_gate_blockers"] == []
+        for record in resolved_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"]["parser_warnings"]
+        == ["cross_reference_requires_resolution"]
+        for record in resolved_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"]["blockers"]
+        == ["cross_reference_requires_resolution"]
+        for record in resolved_records
+    )
 
     assert all(
         record["target_quality_gate"]["formal_validation_complete"] is False
@@ -784,6 +816,44 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
     assert all(
         record["target_quality_gate"]["failed_quality_checks"]
         == ["formula_proof_ready", "formula_requires_validation"]
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["quality_gate_blockers"]
+        == [
+            "failed_prover_quality_check:formula_proof_ready",
+            "failed_prover_quality_check:formula_requires_validation",
+        ]
+        for record in blocked_records
+    )
+    assert all(
+        [
+            check["check"]
+            for check in record["target_quality_gate"]["quality_gate_checks"]
+            if check["passed"] is False
+        ]
+        == ["formula_proof_ready", "formula_requires_validation"]
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"]["parser_warnings"]
+        == ["cross_reference_requires_resolution", "exception_requires_scope_review"]
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"][
+            "omitted_formula_slot_names"
+        ]
+        == ["exceptions"]
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["source_grounding_diagnostics"]["blockers"]
+        == [
+            "cross_reference_requires_resolution",
+            "exception_requires_scope_review",
+            "llm_repair_required",
+        ]
         for record in blocked_records
     )
 
