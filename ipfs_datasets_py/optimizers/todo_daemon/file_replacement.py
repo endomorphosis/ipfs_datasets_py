@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from contextlib import AbstractContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -11,13 +12,97 @@ from .engine import (
     CommandResult,
     Proposal,
     dataclass_worktree_config,
+    extract_json,
+    looks_like_empty_codex_event_stream,
+    materialize_proposal_files,
+    normalize_file_edits,
+    normalize_task_references,
+    normalize_validation_commands,
     promote_worktree_files,
     proposal_diff_from_worktree,
+    proposal_files_from_worktree as engine_proposal_files_from_worktree,
+    temporary_validation_worktree,
     verify_promoted_worktree_files,
 )
 from .runner import TodoDaemonHooks, TodoDaemonRunner
 
 ApplyProposalHook = Callable[[Proposal, Any], Proposal]
+DIFF_BLOCK_RE = re.compile(r"```(?:diff|patch)\s*([\s\S]*?)\s*```", re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class FileReplacementResponse:
+    """Parsed JSON/file-replacement or fenced-diff proposal response."""
+
+    summary: str = ""
+    impact: str = ""
+    patch: str = ""
+    files: list[dict[str, str]] = field(default_factory=list)
+    tasks: list[str] = field(default_factory=list)
+    validation_commands: list[list[str]] = field(default_factory=list)
+    raw_response: str = ""
+    errors: list[str] = field(default_factory=list)
+    failure_kind: str = ""
+
+
+def parse_file_replacement_response(
+    text: str,
+    *,
+    parse_error_message: str = "LLM response did not contain JSON or a fenced diff patch.",
+    empty_codex_event_stream_message: str = "Codex returned JSONL startup events without an assistant proposal.",
+    empty_codex_event_stream_failure_kind: str = "codex_empty_event_stream",
+    fenced_diff_summary: str = "Patch extracted from fenced diff block.",
+) -> FileReplacementResponse:
+    """Parse a model response into reusable file replacements or a patch fallback."""
+
+    parsed = extract_json(text)
+    if parsed is not None:
+        return FileReplacementResponse(
+            summary=str(parsed.get("summary", "")),
+            impact=str(parsed.get("impact", "")),
+            patch=str(parsed.get("patch", "")),
+            files=normalize_file_edits(parsed.get("files", [])),
+            tasks=normalize_task_references(parsed.get("tasks", [])),
+            validation_commands=normalize_validation_commands(parsed.get("validation_commands", [])),
+            raw_response=text,
+        )
+
+    diff_match = DIFF_BLOCK_RE.search(text)
+    if diff_match:
+        return FileReplacementResponse(summary=fenced_diff_summary, patch=diff_match.group(1), raw_response=text)
+
+    if looks_like_empty_codex_event_stream(text):
+        return FileReplacementResponse(
+            raw_response=text,
+            errors=[empty_codex_event_stream_message],
+            failure_kind=empty_codex_event_stream_failure_kind,
+        )
+
+    return FileReplacementResponse(raw_response=text, errors=[parse_error_message])
+
+
+def validation_worktree_for_spec(
+    spec: Any,
+) -> Callable[[Any], AbstractContextManager[Path]]:
+    """Return a hook that opens a static validation-worktree spec."""
+
+    return lambda _config: temporary_validation_worktree(spec)
+
+
+def materialize_proposal_files_in_worktree(
+    proposal: Proposal,
+    _config: Any,
+    worktree: Path,
+) -> list[str]:
+    """Materialize proposal complete-file replacements into a validation worktree."""
+
+    return materialize_proposal_files(proposal, worktree)
+
+
+def proposal_files_from_validation_worktree(worktree: Path, changed: Iterable[str]) -> list[dict[str, str]]:
+    """Read complete-file proposal payloads back from a validation worktree."""
+
+    return engine_proposal_files_from_worktree(worktree, changed)
 
 
 def config_repo_root(config: Any, *, repo_root_field: str = "repo_root") -> Path:
@@ -72,18 +157,18 @@ class FileReplacementHooks:
 
     validate_write_path: Callable[[str], list[str]]
     temporary_validation_worktree: Callable[[Any], AbstractContextManager[Path]]
-    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]]
-    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str]
     validation_commands_for_proposal: Callable[[Proposal, Any], tuple[tuple[str, ...], ...]]
     run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]]
     syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]]
     has_visible_source_change: Callable[[Iterable[str]], bool]
     attempt_validation_repair: Callable[[Proposal, Any, Path], tuple[bool, list[str], str]]
-    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]]
-    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None]
-    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]]
     persist_failed_work: Callable[[Proposal, Any, str, str, str], None]
     persist_accepted_work: Callable[[Proposal, Any, str, str], None]
+    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree
+    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree
+    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree
+    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None] = config_promote_worktree_files
+    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]] = config_verify_promoted_worktree_files
     worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config
     no_visible_source_change_message: str = (
         "Accepted work must promote at least one visible source or fixture file; "

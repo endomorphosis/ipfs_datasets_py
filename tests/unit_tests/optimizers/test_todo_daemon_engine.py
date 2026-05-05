@@ -146,6 +146,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     obvious_typescript_text_damage,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
+    parse_file_replacement_response,
     parse_json_proposal,
     parse_markdown_tasks,
     plan_task_from_latest_result,
@@ -228,6 +229,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     upsert_deterministic_progress_record,
     validation_commands_for_proposal,
     validation_command_summaries,
+    validation_worktree_for_spec,
     verify_promoted_worktree_files,
     wait_for_child_exit,
     worktree_phase_worker_status,
@@ -735,6 +737,49 @@ def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> N
     assert proposal.summary == "Reusable proposal"
     assert proposal.files == [{"path": "todo/source.py", "content": "VALUE = 1\n"}]
     assert proposal.validation_commands == [["python3", "-m", "compileall", "todo"]]
+
+
+def test_parse_file_replacement_response_accepts_json_file_edits_and_patch_fallback() -> None:
+    patch = "diff --git a/todo/source.py b/todo/source.py\n--- a/todo/source.py\n+++ b/todo/source.py\n"
+    response = parse_file_replacement_response(
+        json.dumps(
+            {
+                "summary": "Reusable response",
+                "impact": "Exercises shared file replacement parser",
+                "patch": patch,
+                "tasks": ["Task 1", 2],
+                "files": [
+                    {"path": "todo/source.py", "content": "VALUE = 2\n"},
+                    {"path": "todo/ignored.py"},
+                ],
+                "validation_commands": [["python3", "-m", "py_compile", "todo/source.py"]],
+            }
+        )
+    )
+    diff_response = parse_file_replacement_response("```diff\ndiff --git a/a b/a\n--- a/a\n+++ b/a\n```\n")
+
+    assert response.summary == "Reusable response"
+    assert response.impact == "Exercises shared file replacement parser"
+    assert response.patch == patch
+    assert response.tasks == ["Task 1", "2"]
+    assert response.files == [{"path": "todo/source.py", "content": "VALUE = 2\n"}]
+    assert response.validation_commands == [["python3", "-m", "py_compile", "todo/source.py"]]
+    assert "diff --git" in diff_response.patch
+    assert diff_response.summary == "Patch extracted from fenced diff block."
+
+
+def test_parse_file_replacement_response_marks_empty_codex_event_stream() -> None:
+    response = "\n".join(
+        [
+            json.dumps({"type": "thread.started", "thread_id": "example"}),
+            json.dumps({"type": "turn.started"}),
+        ]
+    )
+
+    proposal = parse_file_replacement_response(response)
+
+    assert proposal.failure_kind == "codex_empty_event_stream"
+    assert proposal.errors == ["Codex returned JSONL startup events without an assistant proposal."]
 
 
 def test_normalize_file_edits_filters_invalid_entries() -> None:
@@ -2627,12 +2672,7 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
 
     hooks = FileReplacementHooks(
         validate_write_path=lambda path: [] if path.startswith("todo/") else ["outside allowlist"],
-        temporary_validation_worktree=lambda _config: temporary_validation_worktree(spec),
-        materialize_proposal_in_worktree=lambda proposal, _config, worktree: materialize_proposal_files(
-            proposal,
-            worktree,
-        ),
-        proposal_diff_from_worktree=config_proposal_diff_from_worktree,
+        temporary_validation_worktree=validation_worktree_for_spec(spec),
         validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
         run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
         syntax_preflight=lambda _worktree, _changed, _config: (
@@ -2642,9 +2682,6 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
         ),
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
-        proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=config_promote_worktree_files,
-        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -2678,16 +2715,11 @@ def test_file_replacement_apply_flow_rejects_disallowed_paths(tmp_path: Path) ->
         temporary_validation_worktree=lambda _config: temporary_validation_worktree(
             ValidationWorkspaceSpec(repo_root=tmp_path, worktree_dir=Path(".daemon/worktrees"))
         ),
-        materialize_proposal_in_worktree=lambda _proposal, _config, _worktree: [],
-        proposal_diff_from_worktree=lambda _config, _worktree, _changed: "",
         validation_commands_for_proposal=lambda _proposal, _config: (),
         run_validation=lambda _config, _commands: [],
         syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
         has_visible_source_change=lambda _changed: False,
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
-        proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=config_promote_worktree_files,
-        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, diff_text, reason, transport: failed.append(
             (reason, transport, diff_text)
         ),
@@ -3164,12 +3196,7 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
     accepted: list[str] = []
     file_hooks = FileReplacementHooks(
         validate_write_path=lambda path: [] if path.startswith("todo/") else ["outside allowlist"],
-        temporary_validation_worktree=lambda _config: temporary_validation_worktree(spec),
-        materialize_proposal_in_worktree=lambda proposal, _config, worktree: materialize_proposal_files(
-            proposal,
-            worktree,
-        ),
-        proposal_diff_from_worktree=config_proposal_diff_from_worktree,
+        temporary_validation_worktree=validation_worktree_for_spec(spec),
         validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
         run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
         syntax_preflight=lambda _worktree, _changed, _config: (
@@ -3179,9 +3206,6 @@ def test_file_replacement_todo_daemon_runner_uses_reusable_apply_flow(tmp_path: 
         ),
         has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
         attempt_validation_repair=lambda proposal, _config, _worktree: (False, proposal.changed_files, ""),
-        proposal_files_from_worktree=lambda _worktree, _changed: [],
-        promote_worktree_files=config_promote_worktree_files,
-        verify_promoted_worktree_files=config_verify_promoted_worktree_files,
         persist_failed_work=lambda _proposal, _config, _diff_text, _reason, _transport: None,
         persist_accepted_work=lambda proposal, _config, _diff_text, _transport: accepted.append(
             proposal.summary

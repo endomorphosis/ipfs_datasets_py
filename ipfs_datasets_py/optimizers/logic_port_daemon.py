@@ -104,6 +104,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
 from ipfs_datasets_py.optimizers.todo_daemon.file_replacement import (
     ProposalPreflightPolicy,
     paths_include_required_change as _shared_paths_include_required_change,
+    parse_file_replacement_response as _shared_parse_file_replacement_response,
     preflight_proposal_payload as _shared_preflight_proposal_payload,
     task_title_contains_any as _shared_task_title_contains_any,
 )
@@ -174,8 +175,6 @@ DEFAULT_VALIDATION_COMMANDS = (
     ("npm", "run", "validate:logic-port"),
 )
 
-JSON_BLOCK_RE = re.compile(r"```json\s*([\s\S]*?)\s*```", re.IGNORECASE)
-DIFF_BLOCK_RE = re.compile(r"```(?:diff|patch)\s*([\s\S]*?)\s*```", re.IGNORECASE)
 FORBIDDEN_PATCH_SNIPPETS = (
     "from 'vitest'",
     'from "vitest"',
@@ -459,30 +458,18 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
     A fenced diff block is accepted as a fallback to make manual testing easy.
     """
 
-    parsed = _extract_json_object(text)
-    if parsed is not None:
-        return LogicPortArtifact(
-            summary=str(parsed.get("summary", "")),
-            impact=str(parsed.get("impact", "")),
-            patch=str(parsed.get("patch", "")),
-            files=_parse_file_edits(parsed.get("files", [])),
-            tasks=_shared_normalize_task_references(parsed.get("tasks", [])),
-            validation_commands=_shared_normalize_validation_commands(parsed.get("validation_commands", [])),
-            raw_response=text,
-        )
-
-    diff_match = DIFF_BLOCK_RE.search(text)
-    if diff_match:
-        return LogicPortArtifact(summary="Patch extracted from fenced diff block.", patch=diff_match.group(1), raw_response=text)
-
-    if _looks_like_empty_codex_event_stream(text):
-        return LogicPortArtifact(
-            raw_response=text,
-            errors=["Codex returned JSONL startup events without an assistant proposal."],
-            failure_kind="codex_empty_event_stream",
-        )
-
-    return LogicPortArtifact(raw_response=text, errors=["LLM response did not contain JSON or a fenced diff patch."])
+    parsed = _shared_parse_file_replacement_response(text)
+    return LogicPortArtifact(
+        summary=parsed.summary,
+        impact=parsed.impact,
+        patch=parsed.patch,
+        files=list(parsed.files),
+        tasks=list(parsed.tasks),
+        validation_commands=list(parsed.validation_commands),
+        raw_response=parsed.raw_response,
+        errors=list(parsed.errors),
+        failure_kind=parsed.failure_kind,
+    )
 
 
 def _parse_file_edits(value: Any) -> List[Dict[str, str]]:
