@@ -64,6 +64,11 @@ from ipfs_datasets_py.optimizers.todo_daemon.auto_commit import (
     safe_auto_commit_pathspecs as _shared_safe_auto_commit_pathspecs,
     slugify as _shared_slugify,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.artifacts import (
+    accepted_work_evidence_manifest as _shared_accepted_work_evidence_manifest,
+    accepted_work_markdown_entry as _shared_accepted_work_markdown_entry,
+    append_accepted_work_markdown_log as _shared_append_accepted_work_markdown_log,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
     diagnostic_signatures as _shared_diagnostic_signatures,
@@ -2237,40 +2242,21 @@ Critical correction for attempt {attempt}:
 
         artifact_paths = self._write_accepted_work_artifacts(artifact, changed_files)
         path = self.daemon_config.resolve(self.daemon_config.accepted_work_log_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if not path.exists():
-            path.write_text(
-                "# Logic Port Daemon Accepted Work\n\n"
-                "This file is append-only daemon evidence for validated work that changed files used by the TypeScript port.\n\n",
-                encoding="utf-8",
-            )
-
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-        validation_results = artifact.get("validation_results", [])
-        validation_commands = []
-        for item in validation_results:
-            command = item.get("command") if isinstance(item, dict) else None
-            returncode = item.get("returncode") if isinstance(item, dict) else None
-            if command is not None:
-                validation_commands.append(f"`{' '.join(command)}` -> `{returncode}`")
-        entry = [
-            f"## {timestamp}",
-            "",
-            f"- Target: `{artifact.get('target_task') or 'unknown'}`",
-            f"- Summary: {artifact.get('summary') or 'No summary'}",
-        ]
-        if artifact.get("impact"):
-            entry.append(f"- Impact: {artifact.get('impact')}")
-        entry.append(f"- Changed files: {', '.join(f'`{file}`' for file in changed_files)}")
-        if artifact_paths:
-            entry.append(f"- Evidence: {', '.join(f'`{item}`' for item in artifact_paths)}")
-        if validation_commands:
-            entry.append(f"- Validation: {', '.join(validation_commands)}")
-        entry.append("")
-
-        with path.open("a", encoding="utf-8") as handle:
-            handle.write("\n".join(entry))
-            handle.write("\n")
+        _shared_append_accepted_work_markdown_log(
+            path,
+            _shared_accepted_work_markdown_entry(
+                timestamp=timestamp,
+                target_task=str(artifact.get("target_task") or "unknown"),
+                summary=str(artifact.get("summary") or "No summary"),
+                impact=str(artifact.get("impact") or ""),
+                changed_files=changed_files,
+                evidence_paths=artifact_paths,
+                validation_results=artifact.get("validation_results", []),
+            ),
+            title="Logic Port Daemon Accepted Work",
+            description="This file is append-only daemon evidence for validated work that changed files used by the TypeScript port.",
+        )
 
     def _auto_commit_accepted_results(self, results: List[Dict[str, Any]]) -> None:
         if not results:
@@ -2396,20 +2382,16 @@ Critical correction for attempt {attempt}:
             cwd=self.daemon_config.repo_root,
             timeout_seconds=120,
         )
-        validation = []
-        for item in artifact.get("validation_results", []):
-            if isinstance(item, dict):
-                validation.append({"command": item.get("command", []), "returncode": item.get("returncode")})
-        manifest = {
-            "timestamp": timestamp,
-            "target_task": artifact.get("target_task", ""),
-            "summary": artifact.get("summary", ""),
-            "impact": artifact.get("impact", ""),
-            "changed_files": changed_files,
-            "validation": validation,
-            "diff_stat": diff_stat.stdout if diff_stat.ok else "",
-            "diff_available": bool(diff.ok and diff.stdout.strip()),
-        }
+        manifest = _shared_accepted_work_evidence_manifest(
+            timestamp=timestamp,
+            target_task=str(artifact.get("target_task") or ""),
+            summary=str(artifact.get("summary") or ""),
+            impact=str(artifact.get("impact") or ""),
+            changed_files=changed_files,
+            validation_results=artifact.get("validation_results", []),
+            diff_stat=diff_stat.stdout if diff_stat.ok else "",
+            diff_available=bool(diff.ok and diff.stdout.strip()),
+        )
 
         manifest_path = root / f"{stem}.json"
         diff_path = root / f"{stem}.diff"

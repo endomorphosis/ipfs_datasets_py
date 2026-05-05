@@ -32,8 +32,11 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
     WorkSidecarPaths,
+    accepted_work_evidence_manifest,
     accepted_work_manifest,
+    accepted_work_markdown_entry,
     accepted_work_workspace_payload,
+    append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
     append_jsonl_ledger,
     artifact_validation_text,
@@ -162,6 +165,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     update_generated_status_block,
     upsert_deterministic_progress_record,
     validation_commands_for_proposal,
+    validation_command_summaries,
     verify_promoted_worktree_files,
     wait_for_child_exit,
     worktree_phase_worker_status,
@@ -1128,6 +1132,32 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         ledger_entry,
         filename=DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
     )
+    evidence_manifest = accepted_work_evidence_manifest(
+        timestamp="20260505T010203Z",
+        target_task=proposal.target_task,
+        summary=proposal.summary,
+        impact=proposal.impact,
+        changed_files=proposal.changed_files,
+        validation_results=[result.compact() for result in proposal.validation_results],
+        diff_stat="todo/source.py | 1 +",
+        diff_available=True,
+    )
+    markdown_entry = accepted_work_markdown_entry(
+        timestamp="2026-05-05 01:02:03 UTC",
+        target_task=proposal.target_task,
+        summary=proposal.summary,
+        impact=proposal.impact,
+        changed_files=proposal.changed_files,
+        evidence_paths=[as_repo_path(paths.manifest, repo)],
+        validation_results=[result.compact() for result in proposal.validation_results],
+    )
+    markdown_log = artifact_dir / "accepted.md"
+    append_accepted_work_markdown_log(
+        markdown_log,
+        markdown_entry,
+        title="Example Daemon Accepted Work",
+        description="Example accepted-work evidence.",
+    )
     failed_manifest = failed_work_manifest(
         Proposal(
             summary="Broken edit",
@@ -1164,6 +1194,14 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         "command": [],
         "returncode": 1,
     }
+    assert evidence_manifest["validation"] == [{"command": ["pytest", "-q"], "returncode": 0}]
+    assert evidence_manifest["diff_available"] is True
+    assert validation_command_summaries([{"command": ["pytest", "-q"], "returncode": 0}, "ignored"]) == [
+        "`pytest -q` -> `0`",
+    ]
+    assert "# Example Daemon Accepted Work" in markdown_log.read_text(encoding="utf-8")
+    assert "`todo/source.py`" in markdown_log.read_text(encoding="utf-8")
+    assert "- Validation: `pytest -q` -> `0`" in markdown_log.read_text(encoding="utf-8")
     assert failed_manifest["reason"] == "validation"
     assert failed_manifest["validation_results"][0]["returncode"] == 1
     assert failed_workspace["reason"] == "validation"

@@ -7,13 +7,17 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Iterable, Mapping, Optional
 
 from .engine import Proposal, compact_message, utc_now, workspace_artifact_payload
 
 
 DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME = "accepted-work.jsonl"
 ACCEPTED_WORK_LEDGER_SCHEMA_VERSION = 2
+DEFAULT_ACCEPTED_WORK_LOG_TITLE = "Todo Daemon Accepted Work"
+DEFAULT_ACCEPTED_WORK_LOG_DESCRIPTION = (
+    "This file is append-only daemon evidence for validated work that changed daemon-owned files."
+)
 
 
 @dataclass(frozen=True)
@@ -180,6 +184,117 @@ def compact_validation_result(result: dict[str, Any]) -> dict[str, Any]:
     return {
         "command": [str(part) for part in command],
         "returncode": returncode,
+    }
+
+
+def validation_command_summaries(validation_results: Iterable[Any]) -> list[str]:
+    """Return human-readable validation command summaries for markdown evidence."""
+
+    summaries: list[str] = []
+    for item in validation_results:
+        if not isinstance(item, Mapping):
+            continue
+        command = item.get("command")
+        if not isinstance(command, (list, tuple)):
+            continue
+        parts = [str(part) for part in command if str(part)]
+        if not parts:
+            continue
+        summaries.append(f"`{' '.join(parts)}` -> `{item.get('returncode')}`")
+    return summaries
+
+
+def accepted_work_markdown_header(
+    *,
+    title: str = DEFAULT_ACCEPTED_WORK_LOG_TITLE,
+    description: str = DEFAULT_ACCEPTED_WORK_LOG_DESCRIPTION,
+) -> str:
+    """Return the standard header for append-only accepted-work markdown logs."""
+
+    normalized_title = str(title or DEFAULT_ACCEPTED_WORK_LOG_TITLE).strip().lstrip("#").strip()
+    normalized_description = str(description or DEFAULT_ACCEPTED_WORK_LOG_DESCRIPTION).strip()
+    return f"# {normalized_title}\n\n{normalized_description}\n\n"
+
+
+def accepted_work_markdown_entry(
+    *,
+    timestamp: str,
+    target_task: str,
+    summary: str,
+    impact: str = "",
+    changed_files: Iterable[str],
+    evidence_paths: Iterable[str] = (),
+    validation_results: Iterable[Any] = (),
+) -> str:
+    """Return one append-only accepted-work markdown entry."""
+
+    changed_file_list = [str(path) for path in changed_files if str(path)]
+    evidence_path_list = [str(path) for path in evidence_paths if str(path)]
+    validation_commands = validation_command_summaries(validation_results)
+    entry = [
+        f"## {timestamp}",
+        "",
+        f"- Target: `{target_task or 'unknown'}`",
+        f"- Summary: {summary or 'No summary'}",
+    ]
+    if impact:
+        entry.append(f"- Impact: {impact}")
+    entry.append(f"- Changed files: {', '.join(f'`{file}`' for file in changed_file_list)}")
+    if evidence_path_list:
+        entry.append(f"- Evidence: {', '.join(f'`{item}`' for item in evidence_path_list)}")
+    if validation_commands:
+        entry.append(f"- Validation: {', '.join(validation_commands)}")
+    entry.append("")
+    return "\n".join(entry) + "\n"
+
+
+def append_accepted_work_markdown_log(
+    path: Path,
+    entry: str,
+    *,
+    title: str = DEFAULT_ACCEPTED_WORK_LOG_TITLE,
+    description: str = DEFAULT_ACCEPTED_WORK_LOG_DESCRIPTION,
+) -> None:
+    """Append one entry to an accepted-work markdown log, creating the header if needed."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        path.write_text(
+            accepted_work_markdown_header(title=title, description=description),
+            encoding="utf-8",
+        )
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(entry.rstrip())
+        handle.write("\n\n")
+
+
+def accepted_work_evidence_manifest(
+    *,
+    timestamp: str,
+    target_task: str,
+    summary: str,
+    impact: str,
+    changed_files: Iterable[str],
+    validation_results: Iterable[Any],
+    diff_stat: str = "",
+    diff_available: bool = False,
+) -> dict[str, Any]:
+    """Build the compact manifest for accepted-work evidence sidecars."""
+
+    validation = [
+        compact_validation_result(dict(item))
+        for item in validation_results
+        if isinstance(item, Mapping)
+    ]
+    return {
+        "timestamp": timestamp,
+        "target_task": target_task,
+        "summary": summary,
+        "impact": impact,
+        "changed_files": [str(path) for path in changed_files],
+        "validation": validation,
+        "diff_stat": diff_stat,
+        "diff_available": bool(diff_available),
     }
 
 
