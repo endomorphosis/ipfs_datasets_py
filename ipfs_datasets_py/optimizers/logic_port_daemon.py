@@ -50,13 +50,6 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     CommandResult,
     atomic_write_json as _shared_atomic_write_json,
     compact_message as _shared_compact_message,
-    extract_codex_event_text_candidates as _shared_extract_codex_event_text_candidates,
-    extract_json as _shared_extract_json_object,
-    extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
-    looks_like_empty_codex_event_stream as _shared_looks_like_empty_codex_event_stream,
-    normalize_file_edits as _shared_normalize_file_edits,
-    normalize_task_references as _shared_normalize_task_references,
-    normalize_validation_commands as _shared_normalize_validation_commands,
     read_text as _shared_read_text,
     run_command as _shared_run_command,
 )
@@ -433,24 +426,6 @@ def _focused_task_board_excerpt(markdown: str, selected_task: Optional[PlanTask]
     return _shared_focused_task_board_excerpt(markdown, selected_task, limit=limit)
 
 
-def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
-    return _shared_extract_json_object(text)
-
-
-def _extract_codex_event_text_candidates(text: str) -> List[str]:
-    """Extract assistant text candidates from Codex JSONL event streams."""
-
-    return _shared_extract_codex_event_text_candidates(text)
-
-
-def _extract_text_from_codex_event_object(value: Any) -> str:
-    return _shared_extract_text_from_codex_event_object(value)
-
-
-def _looks_like_empty_codex_event_stream(text: str) -> bool:
-    return _shared_looks_like_empty_codex_event_stream(text)
-
-
 def parse_llm_patch_response(text: str) -> LogicPortArtifact:
     """Parse a model response into a patch artifact.
 
@@ -470,10 +445,6 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
         errors=list(parsed.errors),
         failure_kind=parsed.failure_kind,
     )
-
-
-def _parse_file_edits(value: Any) -> List[Dict[str, str]]:
-    return _shared_normalize_file_edits(value)
 
 
 def _repair_common_typescript_text_damage(content: str) -> str:
