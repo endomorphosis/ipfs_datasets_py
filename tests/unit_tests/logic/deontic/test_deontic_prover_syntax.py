@@ -777,3 +777,89 @@ def test_prover_syntax_unknown_target_still_requires_validation():
     assert records[1]["syntax_valid"] is False
     assert records[1]["requires_validation"] is True
     assert records[1]["diagnostics"][0]["code"] == "unknown_target"
+
+
+def test_prover_syntax_accepts_local_target_aliases_as_canonical_targets():
+    element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    canonical = validate_ir_with_provers(norm)
+    aliased = validate_ir_with_provers(
+        norm,
+        targets=[
+            "frame-logic",
+            "DCEC",
+            "first-order-logic",
+            "deontic-first-order-logic",
+            "TDFOL",
+        ],
+    )
+    canonical_records = [target.to_dict() for target in canonical.targets]
+    aliased_records = [target.to_dict() for target in aliased.targets]
+
+    assert [record["target"] for record in aliased_records] == [
+        "frame_logic",
+        "deontic_cec",
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+    ]
+    assert aliased.syntax_valid is True
+    assert aliased.proof_ready is True
+    assert aliased.requires_validation is False
+    assert aliased.valid_target_count == 5
+    assert [record["exported_formula"] for record in aliased_records] == [
+        record["exported_formula"] for record in canonical_records
+    ]
+    assert all(record["diagnostics"] == [] for record in aliased_records)
+    assert all(
+        record["target_quality_gate"]["known_local_target"] is True
+        for record in aliased_records
+    )
+
+
+def test_prover_syntax_alias_normalization_deduplicates_and_preserves_unknown_targets():
+    element = extract_normative_elements("The tenant must pay rent monthly.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    report = validate_ir_with_provers(
+        norm,
+        targets=[
+            "fol",
+            "first-order",
+            "deontic-fol",
+            "DFOL",
+            "temporal-deontic-fol",
+            "unknown-target",
+        ],
+    )
+    records = [target.to_dict() for target in report.targets]
+
+    assert [record["target"] for record in records] == [
+        "fol",
+        "deontic_fol",
+        "deontic_temporal_fol",
+        "unknown_target",
+    ]
+    assert records[0]["exported_formula"] == (
+        "forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))"
+    )
+    assert records[1]["exported_formula"] == (
+        "O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x)))"
+    )
+    assert records[2]["exported_formula"] == (
+        "always(O(forall x. (Tenant(x) and PeriodMonthly(x) -> PayRentMonthly(x))))"
+    )
+    assert records[3]["syntax_valid"] is False
+    assert records[3]["requires_validation"] is True
+    assert records[3]["target_quality_gate"]["known_local_target"] is False
+    assert records[3]["target_quality_gate"]["failed_quality_checks"] == [
+        "syntax",
+        "target_dialect",
+        "target_parse",
+        "known_local_target",
+    ]
+    assert records[3]["diagnostics"][0]["code"] == "unknown_target"
+    assert report.syntax_valid is False
+    assert report.proof_ready is False
+    assert report.requires_validation is True

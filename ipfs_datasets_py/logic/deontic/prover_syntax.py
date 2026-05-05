@@ -30,6 +30,29 @@ LOCAL_PROVER_TARGETS = (
     "deontic_temporal_fol",
 )
 
+LOCAL_PROVER_TARGET_ALIASES = {
+    "frame": "frame_logic",
+    "frame_logic": "frame_logic",
+    "frame_logic_target": "frame_logic",
+    "flogic": "frame_logic",
+    "deontic_cec": "deontic_cec",
+    "deontic_event_calculus": "deontic_cec",
+    "dcec": "deontic_cec",
+    "event_calculus": "deontic_cec",
+    "first_order": "fol",
+    "first_order_logic": "fol",
+    "fol": "fol",
+    "deontic_first_order": "deontic_fol",
+    "deontic_first_order_logic": "deontic_fol",
+    "deontic_fol": "deontic_fol",
+    "dfol": "deontic_fol",
+    "deontic_temporal_first_order": "deontic_temporal_fol",
+    "deontic_temporal_first_order_logic": "deontic_temporal_fol",
+    "deontic_temporal_fol": "deontic_temporal_fol",
+    "tdfol": "deontic_temporal_fol",
+    "temporal_deontic_fol": "deontic_temporal_fol",
+}
+
 PROVER_IR_AUDIT_SLOTS = (
     "actor",
     "modality",
@@ -160,6 +183,7 @@ def _normalize_targets(targets: Iterable[str] | None) -> List[str]:
     normalized: List[str] = []
     for target in targets:
         value = str(target or "").strip().lower().replace("-", "_")
+        value = LOCAL_PROVER_TARGET_ALIASES.get(value, value)
         if not value or value in normalized:
             continue
         normalized.append(value)
