@@ -18,6 +18,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     LlmRouterInvocation,
     ManagedDaemonSpec,
     PathPolicy,
+    PlanTask,
     PreTaskBlock,
     Proposal,
     RestartPolicy,
@@ -39,8 +40,12 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     as_repo_path,
     auto_commit_paths,
     block_threshold_for_failure_kind,
+    blocked_task_backlog_markdown,
     build_auto_commit_subject,
     build_accepted_work_ledger_entry,
+    build_blocked_task_backlog,
+    build_deterministic_progress_record,
+    build_deterministic_replacement_proposal,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
     build_python_module_command,
@@ -71,10 +76,13 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     env_value,
     extract_codex_event_text_candidates,
     extract_json,
+    extract_plan_tasks,
+    fallback_kind_for_task,
     failed_work_manifest,
     failed_work_workspace_payload,
     format_recent_failure_context,
     first_failure_block_decision,
+    first_open_plan_task,
     focused_task_board_excerpt,
     generated_status_block,
     heartbeat_snapshot,
@@ -82,13 +90,17 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     is_retryable_proposal_failure,
     launch_supervised_child,
     last_task_attempt_index,
+    load_deterministic_progress_manifest,
     load_daemon_main,
     looks_like_empty_codex_event_stream,
     managed_status_block_pattern,
+    markdown_task_label,
     materialize_proposal_files,
     owner_pid_from_worktree,
+    open_task_has_deterministic_fallback,
     parse_json_proposal,
     parse_markdown_tasks,
+    plan_task_from_latest_result,
     paths_from_file_edits,
     paths_from_git_status_porcelain,
     paths_from_patch_and_file_edits,
@@ -125,6 +137,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     run_todo_daemon_cli,
     safe_auto_commit_pathspecs,
     select_task,
+    select_blocked_plan_task,
+    select_next_plan_task,
     should_skip_validation_for_empty_proposal,
     should_sleep_between_task_cycles,
     should_use_compact_prompt_for_failures,
@@ -135,15 +149,18 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     supervised_log_path,
     supervisor_run_id,
     task_failure_summary,
+    task_has_deterministic_fallback,
     task_status_counts,
     temporary_validation_worktree,
     timestamped_artifact_base,
     todo_daemon_proposals_payload,
     truncate_text,
+    tranche_number_from_title,
     unified_diff_stats,
     unique_normalized_paths,
     untracked_paths_from_git_status_porcelain,
     update_generated_status_block,
+    upsert_deterministic_progress_record,
     validation_commands_for_proposal,
     verify_promoted_worktree_files,
     wait_for_child_exit,
@@ -292,6 +309,76 @@ def test_task_board_focused_excerpt_helpers_are_reusable() -> None:
     assert "Task checkbox-1: Alpha task." not in excerpt
     assert truncate_text("abcdef", limit=3) == "abc\n\n[truncated]\n"
     assert truncate_text("abcdef", limit=10) == "abcdef"
+
+
+def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:
+    markdown = "\n".join(
+        [
+            "- [x] Complete task",
+            "- [!] Blocked alpha",
+            "- [!] Blocked beta",
+            "- [ ] Open `runtime` task",
+        ]
+    )
+    tasks = extract_plan_tasks(markdown)
+    rows = [
+        (
+            {"valid": False},
+            {
+                "target_task": "Task checkbox-2: Blocked alpha",
+                "failure_kind": "validation",
+                "summary": "bad alpha",
+                "errors": ["first", "second", "third"],
+            },
+        )
+    ]
+
+    def failure_summary(_rows, task_label):
+        if "Blocked alpha" in task_label:
+            return {
+                "total_since_success": 3,
+                "by_kind_since_success": {"validation": 3},
+                "latest_failure": {
+                    "failure_kind": "validation",
+                    "summary": "bad alpha",
+                    "errors": ["first", "second", "third"],
+                },
+            }
+        return {"total_since_success": 1, "by_kind_since_success": {"parse": 1}, "latest_failure": {}}
+
+    backlog = build_blocked_task_backlog(
+        tasks,
+        rows,
+        failure_summary_fn=failure_summary,
+        failure_budget_exhausted_fn=lambda task, _rows: task.task_id == "checkbox-2",
+        limit=4,
+    )
+    backlog_markdown = blocked_task_backlog_markdown(backlog)
+    selected_blocked = select_blocked_plan_task(
+        tasks,
+        rows,
+        strategy="fewest-failures",
+        failure_budget_exhausted_fn=lambda task, _rows: task.task_id == "checkbox-2",
+        recent_total_failure_count_fn=lambda _rows, label: 5 if "alpha" in label.lower() else 1,
+        last_task_attempt_index_fn=lambda _rows, _label: 0,
+    )
+
+    assert markdown_task_label(tasks[3]) == "Task checkbox-4: Open 'runtime' task"
+    assert first_open_plan_task(tasks) == tasks[3]
+    assert select_next_plan_task(tasks) == tasks[3]
+    assert plan_task_from_latest_result(
+        tasks,
+        {"artifact": {"target_task": "Task checkbox-4: Open 'runtime' task"}},
+    ) == tasks[3]
+    assert backlog[0]["failure_budget_exhausted"] is True
+    assert "failure kinds: `{\"validation\": 3}`" in backlog_markdown
+    assert "latest errors: first; second" in backlog_markdown
+    assert selected_blocked == tasks[2]
+    assert select_next_plan_task(
+        tasks[:3],
+        revisit_blocked=True,
+        blocked_selector=lambda blocked_tasks: select_blocked_plan_task(blocked_tasks, rows),
+    ) == tasks[1]
 
 
 def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
@@ -1082,6 +1169,69 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert failed_workspace["reason"] == "validation"
     write_json(artifact_dir / "extra.json", {"ok": True})
     assert json.loads((artifact_dir / "extra.json").read_text(encoding="utf-8")) == {"ok": True}
+
+
+def test_deterministic_fallback_helpers_are_reusable(tmp_path: Path) -> None:
+    rules = (("processor-suite integration", "processor_suite"),)
+    task = Task(
+        index=1,
+        title="Add processor-suite integration planning tranche 7 coverage.",
+        status="needed",
+        checkbox_id=42,
+    )
+    manifest_path = tmp_path / "progress.json"
+    existing = {
+        "schemaVersion": 1,
+        "strategy": "deterministic",
+        "records": [
+            {"checkboxId": 41, "taskLabel": "Task checkbox-41: Prior"},
+            {"checkboxId": "42", "taskLabel": "Task checkbox-42: Stale by string id"},
+        ],
+    }
+    manifest_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    loaded = load_deterministic_progress_manifest(manifest_path, strategy="deterministic")
+    record = build_deterministic_progress_record(
+        task,
+        "processor_suite",
+        source_evidence_ids=("evidence:one",),
+        artifact_contracts=("archive_manifest",),
+        guardrails=("fixture_only",),
+        blocked_actions=("submit",),
+        runtime_policy={"live": False},
+        now=lambda: "2026-05-05T00:00:00Z",
+    )
+    updated = upsert_deterministic_progress_record(
+        loaded,
+        task,
+        record,
+        now=lambda: "2026-05-05T00:01:00Z",
+    )
+    proposal = build_deterministic_replacement_proposal(
+        selected=task,
+        fallback_kind="processor_suite",
+        manifest=updated,
+        progress_path=Path("todo/progress.json"),
+        source_files=(("todo/source.py", "VALUE = 1\n"),),
+        validation_commands=(("python3", "-m", "py_compile", "todo/source.py"),),
+        impact="Keeps deterministic fallback reusable.",
+    )
+
+    assert fallback_kind_for_task(task, rules) == "processor_suite"
+    assert task_has_deterministic_fallback(task, rules)
+    assert open_task_has_deterministic_fallback([task], rules)
+    assert tranche_number_from_title(task.title) == 7
+    assert record["sourceEvidenceIds"] == ["evidence:one"]
+    assert record["artifactContracts"] == ["archive_manifest"]
+    assert record["blockedActions"] == ["submit"]
+    assert updated["updatedAt"] == "2026-05-05T00:01:00Z"
+    assert [item["checkboxId"] for item in updated["records"]] == [41, 42]
+    assert proposal.trusted_validation_commands is True
+    assert proposal.requires_visible_source_change is True
+    assert proposal.target_task == task.label
+    assert proposal.files[0] == {"path": "todo/source.py", "content": "VALUE = 1\n"}
+    assert proposal.files[1]["path"] == "todo/progress.json"
+    assert "\"fallbackKind\": \"processor_suite\"" in proposal.files[1]["content"]
 
 
 def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None:

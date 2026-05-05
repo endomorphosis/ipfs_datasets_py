@@ -109,9 +109,15 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
     PlanTask,
+    blocked_task_backlog_markdown as _shared_blocked_task_backlog_markdown,
+    build_blocked_task_backlog as _shared_build_blocked_task_backlog,
     clean_checkbox_title as _clean_checkbox_title,
     extract_plan_tasks,
+    markdown_task_label as _shared_markdown_task_label,
+    plan_task_from_latest_result as _shared_plan_task_from_latest_result,
     replace_checkbox_mark as _replace_checkbox_mark,
+    select_blocked_plan_task as _shared_select_blocked_plan_task,
+    select_next_plan_task as _shared_select_next_plan_task,
     status_from_checkbox as _status_from_checkbox,
     status_from_task_block as _status_from_task_block,
     strip_daemon_task_board as _strip_daemon_task_board,
@@ -2449,20 +2455,7 @@ Critical correction for attempt {attempt}:
         path.write_text(updated, encoding="utf-8")
 
     def _task_from_latest_result(self, tasks: Sequence[PlanTask], latest: Dict[str, Any]) -> Optional[PlanTask]:
-        artifact = latest.get("artifact", {}) if isinstance(latest.get("artifact"), dict) else {}
-        target_label = str(artifact.get("target_task") or "").replace("`", "'").strip()
-        if not target_label:
-            return None
-        for task in tasks:
-            if self._markdown_task_label(task) == target_label or task.label == target_label:
-                return task
-        id_match = re.search(r"Task\s+([^:\s]+):", target_label)
-        if id_match:
-            task_id = id_match.group(1)
-            for task in tasks:
-                if task.task_id == task_id:
-                    return task
-        return None
+        return _shared_plan_task_from_latest_result(tasks, latest)
 
     def _should_block_task(self, task: PlanTask, latest: Dict[str, Any]) -> bool:
         if self.daemon_config.max_task_failure_rounds <= 0 and self.daemon_config.max_task_total_failure_rounds <= 0:
@@ -2490,89 +2483,41 @@ Critical correction for attempt {attempt}:
         rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     ) -> List[Dict[str, Any]]:
         limit = max(0, int(self.daemon_config.blocked_backlog_limit))
-        if limit <= 0:
-            return []
-        backlog: List[Dict[str, Any]] = []
-        for task in tasks:
-            if task.status != "blocked":
-                continue
-            summary = _task_failure_summary(rows, task.label)
-            backlog.append(
-                {
-                    "task": task.label,
-                    "task_id": task.task_id,
-                    "title": task.title,
-                    "total_failures_since_success": summary.get("total_since_success", 0),
-                    "failure_kinds_since_success": summary.get("by_kind_since_success", {}),
-                    "latest_failure": summary.get("latest_failure", {}),
-                    "failure_budget_exhausted": self._task_failure_budget_exhausted(task, rows),
-                }
-            )
-            if len(backlog) >= limit:
-                break
-        return backlog
+        return _shared_build_blocked_task_backlog(
+            tasks,
+            rows,
+            failure_summary_fn=lambda history_rows, task_label: _task_failure_summary(history_rows, task_label),
+            failure_budget_exhausted_fn=self._task_failure_budget_exhausted,
+            limit=limit,
+        )
 
     def _blocked_task_backlog_markdown(
         self,
         tasks: Sequence[PlanTask],
         rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]],
     ) -> str:
-        backlog = self._blocked_task_backlog(tasks, rows)
-        if not backlog:
-            return "[No blocked tasks in the current daemon backlog.]"
-        lines: List[str] = []
-        for item in backlog:
-            latest = item.get("latest_failure", {}) if isinstance(item.get("latest_failure"), dict) else {}
-            errors = latest.get("errors", []) if isinstance(latest.get("errors", []), list) else []
-            task_label = str(item.get("task", "")).replace("`", "'")
-            lines.append(f"- `{task_label}`")
-            lines.append(f"  - failures since success: `{item.get('total_failures_since_success', 0)}`")
-            if item.get("failure_budget_exhausted"):
-                lines.append("  - autonomous revisit: `skipped; task failure budget exhausted`")
-            kinds = item.get("failure_kinds_since_success", {})
-            if kinds:
-                lines.append(f"  - failure kinds: `{json.dumps(kinds, sort_keys=True)}`")
-            if latest:
-                lines.append(f"  - latest failure kind: `{latest.get('failure_kind', '')}`")
-                if latest.get("summary"):
-                    lines.append(f"  - latest summary: {latest.get('summary')}")
-                if errors:
-                    lines.append(f"  - latest errors: {'; '.join(str(error) for error in errors[:2])}")
-        return "\n".join(lines)
+        return _shared_blocked_task_backlog_markdown(self._blocked_task_backlog(tasks, rows))
 
     def _select_next_plan_task(self, tasks: List[PlanTask]) -> Optional[PlanTask]:
-        for status in ("needed", "in-progress"):
-            for task in tasks:
-                if task.status == status:
-                    return task
-        if self.daemon_config.revisit_blocked_tasks:
-            return self._select_blocked_plan_task(tasks)
-        return None
+        return _shared_select_next_plan_task(
+            tasks,
+            revisit_blocked=self.daemon_config.revisit_blocked_tasks,
+            blocked_selector=lambda plan_tasks: self._select_blocked_plan_task(plan_tasks),
+        )
 
     def _select_blocked_plan_task(self, tasks: Sequence[PlanTask]) -> Optional[PlanTask]:
         rows: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
         if self.daemon_config.result_log_path is not None:
             rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
-        blocked = []
-        for index, task in enumerate(tasks):
-            if task.status != "blocked":
-                continue
-            if self._blocked_task_dependency_reason(task, tasks):
-                continue
-            if self._task_failure_budget_exhausted(task, rows):
-                continue
-            blocked.append((index, task))
-        if not blocked:
-            return None
-        strategy = self.daemon_config.blocked_task_strategy
-        if strategy == "plan-order" or self.daemon_config.result_log_path is None:
-            return blocked[0][1]
-
-        if strategy == "fewest-failures":
-            return min(blocked, key=lambda item: (_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
-        if strategy == "most-failures":
-            return min(blocked, key=lambda item: (-_recent_total_failure_count(rows, item[1].label), _last_task_attempt_index(rows, item[1].label), item[0]))[1]
-        return blocked[0][1]
+        return _shared_select_blocked_plan_task(
+            tasks,
+            rows,
+            strategy=self.daemon_config.blocked_task_strategy,
+            dependency_reason_fn=self._blocked_task_dependency_reason,
+            failure_budget_exhausted_fn=self._task_failure_budget_exhausted,
+            recent_total_failure_count_fn=_recent_total_failure_count,
+            last_task_attempt_index_fn=_last_task_attempt_index,
+        )
 
     def _task_failure_budget_exhausted(
         self,
@@ -2769,7 +2714,7 @@ Critical correction for attempt {attempt}:
         return "Selection policy: choose the first port-plan checkbox that is not marked complete, keep the daemon scoped to that task, and update this board after every daemon round."
 
     def _markdown_task_label(self, task: Optional[PlanTask]) -> str:
-        return task.label.replace("`", "'") if task else "none"
+        return _shared_markdown_task_label(task)
 
     def cleanup_stale_worktrees(self) -> Dict[str, Any]:
         """Remove daemon-created proposal worktrees left behind by crashes."""
