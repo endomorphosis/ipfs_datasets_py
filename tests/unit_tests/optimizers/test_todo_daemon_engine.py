@@ -329,7 +329,7 @@ def test_relevant_file_context_helpers_are_reusable(tmp_path: Path) -> None:
     docs = repo / "docs"
     docs.mkdir()
     (docs / "runtime.md").write_text("runtime docs\n", encoding="utf-8")
-    task = Task(index=1, title="Port runtime feature with TypeScript parity", status="needed")
+    task = Task(index=1, title="Port runtime feature with TypeScript parity", status="needed", checkbox_id=1)
     tracked_files = "\n".join(
         [
             "src/lib/logic/unrelated.ts",
