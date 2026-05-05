@@ -248,6 +248,57 @@ def render_typescript_diagnostic_context(
     return "\n\n".join(snippets)[:limit]
 
 
+def render_file_edit_diagnostic_context(
+    *,
+    errors: Sequence[Any] | str,
+    files: Sequence[Mapping[str, Any]],
+    radius: int = 2,
+    limit: int = 6000,
+    diagnostic_renderer: Callable[..., str] = render_typescript_diagnostic_context,
+) -> str:
+    """Render diagnostic context for complete-file edits and error text."""
+
+    if not files or not errors:
+        return ""
+    edits_by_path = file_edits_by_path(files)
+    if not edits_by_path:
+        return ""
+    text = errors if isinstance(errors, str) else "\n".join(str(error) for error in errors)
+    return diagnostic_renderer(text, edits_by_path, radius=radius, limit=limit)
+
+
+DEFAULT_FILE_REPLACEMENT_RETRY_CORRECTIONS = (
+    "- Return ONLY one JSON object. No markdown fence, no explanation before or after it.",
+    "- Use the `files` array with complete replacement file contents.",
+    "- Leave `patch` as an empty string.",
+    "- Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.",
+    "- If the previous response was prose, convert that intent into complete file replacements now.",
+)
+
+
+def build_file_replacement_retry_prompt(
+    original_prompt: str,
+    previous_feedback: str,
+    *,
+    attempt: int,
+    attempts: int,
+    correction_lines: Sequence[str] = DEFAULT_FILE_REPLACEMENT_RETRY_CORRECTIONS,
+) -> str:
+    """Build a retry prompt for JSON complete-file replacement proposal flows."""
+
+    lines = [str(line) for line in correction_lines if str(line)]
+    return f"""{original_prompt}
+
+Previous proposal attempt {attempt - 1} of {attempts} was rejected before any files could be used by the daemon.
+
+Rejection details:
+{previous_feedback}
+
+Critical correction for attempt {attempt}:
+{chr(10).join(lines)}
+"""
+
+
 def has_diagnostic_codes(text: str, codes: set[str] | frozenset[str]) -> bool:
     """Return whether ``text`` contains any daemon-specific diagnostic code."""
 

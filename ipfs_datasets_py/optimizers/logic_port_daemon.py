@@ -72,16 +72,15 @@ from ipfs_datasets_py.optimizers.todo_daemon.context import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
+    build_file_replacement_retry_prompt as _shared_build_file_replacement_retry_prompt,
     classify_artifact_failure_kind as _shared_classify_artifact_failure_kind,
     compact_status_artifact as _shared_compact_status_artifact,
     diagnostic_signatures as _shared_diagnostic_signatures,
-    file_edits_by_path as _shared_file_edits_by_path,
     format_task_result_failure_context as _shared_format_task_result_failure_context,
     has_diagnostic_codes as _shared_has_diagnostic_codes,
-    match_diagnostic_edit_path as _shared_match_diagnostic_edit_path,
     quality_failure_counts as _shared_quality_failure_counts,
     recent_rollback_failure_count as _shared_recent_rollback_failure_count,
-    render_typescript_diagnostic_context as _shared_render_typescript_diagnostic_context,
+    render_file_edit_diagnostic_context as _shared_render_file_edit_diagnostic_context,
     render_proposal_feedback as _shared_render_proposal_feedback,
     rollback_failure_counts as _shared_rollback_failure_counts,
 )
@@ -266,6 +265,20 @@ LOGIC_PORT_PREFLIGHT_POLICY = ProposalPreflightPolicy(
         "Rejected proposal because fixture/capture/parity work must update a src/lib/logic/*.test.ts file "
         "that loads or asserts the generated fixture."
     ),
+)
+
+LOGIC_PORT_RETRY_CORRECTIONS = (
+    "- Return ONLY one JSON object. No markdown fence, no explanation before or after it.",
+    "- Use the `files` array with complete replacement file contents.",
+    "- Leave `patch` as an empty string.",
+    "- The Codex subprocess may be read-only, but the daemon itself applies the returned `files` contents after validation. Do not refuse because of a read-only sandbox.",
+    "- Include at least one changed source/test file that will be used by `npm run validate:logic-port`.",
+    "- Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.",
+    "- For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.",
+    "- Before returning JSON, inspect the replacement contents for stripped operators or generic arguments such as `index  items.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`. If you find one, simplify that block into explicit guards or named interfaces before returning.",
+    "- Preserve public exports already present in the replaced module unless the selected task explicitly removes them.",
+    "- Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.",
+    "- If the previous response was prose, convert that intent into complete file replacements now.",
 )
 
 
@@ -1044,58 +1057,21 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
     def _typescript_diagnostic_context(self, artifact: LogicPortArtifact, *, radius: int = 2, limit: int = 6000) -> str:
         """Render failing replacement lines around TypeScript diagnostics for retry prompts."""
 
-        if not artifact.files or not artifact.errors:
-            return ""
-        edits_by_path = _shared_file_edits_by_path(artifact.files)
-        if not edits_by_path:
-            return ""
-        return self._render_typescript_diagnostic_context(
-            "\n".join(str(error) for error in artifact.errors),
-            edits_by_path,
+        return _shared_render_file_edit_diagnostic_context(
+            errors=artifact.errors,
+            files=artifact.files,
             radius=radius,
             limit=limit,
         )
-
-    def _render_typescript_diagnostic_context(
-        self,
-        text: str,
-        edits_by_path: Dict[str, str],
-        *,
-        radius: int = 2,
-        limit: int = 6000,
-    ) -> str:
-        return _shared_render_typescript_diagnostic_context(
-            text,
-            edits_by_path,
-            radius=radius,
-            limit=limit,
-        )
-
-    @staticmethod
-    def _match_diagnostic_edit_path(diagnostic_path: str, edits_by_path: Dict[str, str]) -> Optional[str]:
-        return _shared_match_diagnostic_edit_path(diagnostic_path, edits_by_path)
 
     def _build_retry_prompt(self, original_prompt: str, previous_feedback: str, *, attempt: int, attempts: int) -> str:
-        return f"""{original_prompt}
-
-Previous proposal attempt {attempt - 1} of {attempts} was rejected before any files could be used by the daemon.
-
-Rejection details:
-{previous_feedback}
-
-Critical correction for attempt {attempt}:
-- Return ONLY one JSON object. No markdown fence, no explanation before or after it.
-- Use the `files` array with complete replacement file contents.
-- Leave `patch` as an empty string.
-- The Codex subprocess may be read-only, but the daemon itself applies the returned `files` contents after validation. Do not refuse because of a read-only sandbox.
-- Include at least one changed source/test file that will be used by `npm run validate:logic-port`.
-- Do not use bare TypeScript generic aliases. Always spell `Record<string, unknown>`, `Promise<ResultType>`, `Omit<Type, Keys>`, `Map<Key, Value>`, and `Array<Item>` with every required type argument.
-- For loop and comparison expressions must use complete operators such as `<`, `<=`, `>`, `>=`, `===`, and `!==`; never omit the operator around bounds checks.
-- Before returning JSON, inspect the replacement contents for stripped operators or generic arguments such as `index  items.length`, `arity  'Entity'`, `Record =`, `Array =`, `Promise;`, or `Omit;`. If you find one, simplify that block into explicit guards or named interfaces before returning.
-- Preserve public exports already present in the replaced module unless the selected task explicitly removes them.
-- Do not describe a plan, mention inability to edit files, or return status text. The entire response must parse as JSON.
-- If the previous response was prose, convert that intent into complete file replacements now.
-"""
+        return _shared_build_file_replacement_retry_prompt(
+            original_prompt,
+            previous_feedback,
+            attempt=attempt,
+            attempts=attempts,
+            correction_lines=LOGIC_PORT_RETRY_CORRECTIONS,
+        )
 
     def optimize(
         self,
@@ -3108,8 +3084,10 @@ PLANNING CONTEXT:
         ]
 
     def _typescript_preflight_diagnostic_context(self, diagnostics: Sequence[str], edits: Sequence[Dict[str, str]]) -> str:
-        edits_by_path = _shared_file_edits_by_path(edits)
-        return self._render_typescript_diagnostic_context("\n".join(diagnostics), edits_by_path)
+        return _shared_render_file_edit_diagnostic_context(
+            errors="\n".join(diagnostics),
+            files=edits,
+        )
 
     def _recent_failure_context(self, selected_task: Optional[PlanTask], *, limit: int = 3) -> str:
         if selected_task is None or self.daemon_config.result_log_path is None:

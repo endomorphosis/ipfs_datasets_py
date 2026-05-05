@@ -62,6 +62,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_deterministic_progress_record,
     build_deterministic_replacement_proposal,
     build_file_replacement_apply_proposal,
+    build_file_replacement_retry_prompt,
+    build_file_replacement_validation_repair_prompt,
     build_lifecycle_arg_parser,
     build_active_status_payload,
     build_heartbeat_status_payload,
@@ -182,6 +184,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     repo_root_from_env,
     render_relevant_file_context,
     render_lifecycle_wrapper,
+    render_file_edit_diagnostic_context,
     render_proposal_feedback,
     render_typescript_diagnostic_context,
     rollback_failure_counts,
@@ -460,6 +463,26 @@ def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
     assert "src/lib/logic/feature.ts:2:22 TS1005: Expression expected." in rendered
     assert "> 2: export const value = ;" in rendered
     assert "  1: export const before = true;" in rendered
+    assert render_file_edit_diagnostic_context(errors=[diagnostic], files=edits, radius=1) == rendered
+
+
+def test_file_replacement_retry_prompt_helper_is_reusable() -> None:
+    prompt = build_file_replacement_retry_prompt(
+        "Original prompt",
+        "summary=bad\nerrors=no files",
+        attempt=2,
+        attempts=3,
+        correction_lines=(
+            "- Return JSON.",
+            "- Use files.",
+        ),
+    )
+
+    assert "Original prompt" in prompt
+    assert "Previous proposal attempt 1 of 3" in prompt
+    assert "summary=bad\nerrors=no files" in prompt
+    assert "Critical correction for attempt 2:" in prompt
+    assert "- Return JSON.\n- Use files." in prompt
 
 
 def test_artifact_failure_classifier_handles_provider_parse_and_quality_failures() -> None:
@@ -780,6 +803,34 @@ def test_parse_file_replacement_response_marks_empty_codex_event_stream() -> Non
 
     assert proposal.failure_kind == "codex_empty_event_stream"
     assert proposal.errors == ["Codex returned JSONL startup events without an assistant proposal."]
+
+
+def test_build_file_replacement_validation_repair_prompt_renders_failed_results_and_rules() -> None:
+    proposal = Proposal(
+        summary="Broken candidate",
+        target_task="Task checkbox-9: Repair the candidate.",
+        changed_files=["todo/source.py"],
+        validation_results=[
+            CommandResult(("python3", "-m", "py_compile", "todo/source.py"), 1, "", "SyntaxError: bad"),
+            CommandResult(("python3", "-m", "pytest", "todo"), 0, "ok", ""),
+        ],
+    )
+
+    prompt = build_file_replacement_validation_repair_prompt(
+        proposal,
+        subject="synthetic daemon candidate",
+        repair_rules=("Edit only files under todo/.", "Return complete-file replacements."),
+        response_shape='{"summary":"short","files":[{"path":"todo/...","content":"..."}]}',
+    )
+
+    assert "synthetic daemon candidate" in prompt
+    assert "Task checkbox-9: Repair the candidate." in prompt
+    assert "- todo/source.py" in prompt
+    assert "SyntaxError: bad" in prompt
+    assert "py_compile" in prompt
+    assert "pytest" not in prompt
+    assert "- Edit only files under todo/." in prompt
+    assert '{"summary":"short"' in prompt
 
 
 def test_normalize_file_edits_filters_invalid_entries() -> None:

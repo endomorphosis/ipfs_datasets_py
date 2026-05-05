@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
@@ -79,6 +80,51 @@ def parse_file_replacement_response(
         )
 
     return FileReplacementResponse(raw_response=text, errors=[parse_error_message])
+
+
+def build_file_replacement_validation_repair_prompt(
+    proposal: Proposal,
+    *,
+    subject: str = "todo daemon candidate",
+    repair_rules: Iterable[str] = (),
+    response_shape: str = (
+        '{"summary":"short repair summary","impact":"why this fixes validation",'
+        '"files":[{"path":"...","content":"complete replacement"}]}'
+    ),
+    command_output_limit: int = 1200,
+    no_failing_results_message: str = "No failing command output was captured.",
+) -> str:
+    """Render a reusable validation-repair prompt for complete-file proposals."""
+
+    failed_results = "\n".join(
+        json.dumps(result.compact(limit=command_output_limit), sort_keys=True)
+        for result in proposal.validation_results
+        if not result.ok
+    )
+    files = "\n".join(f"- {path}" for path in proposal.changed_files) or "- none"
+    rules = tuple(str(rule).strip() for rule in repair_rules if str(rule).strip())
+    rules_text = "\n".join(f"- {rule}" for rule in rules) or "- Keep the repair focused on the failed validation."
+    return f"""
+You are repairing a {subject} inside an isolated temporary validation worktree.
+
+Return exactly one JSON object with complete file replacements. Do not include markdown.
+
+Original task:
+{proposal.target_task}
+
+Current failed candidate:
+- summary: {proposal.summary}
+- changed files:
+{files}
+
+Failing validation results:
+{failed_results or no_failing_results_message}
+
+Repair rules:
+{rules_text}
+- Return JSON in this shape:
+{response_shape}
+"""
 
 
 def validation_worktree_for_spec(
