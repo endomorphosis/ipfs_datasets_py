@@ -69,6 +69,11 @@ from ipfs_datasets_py.optimizers.todo_daemon.artifacts import (
     accepted_work_markdown_entry as _shared_accepted_work_markdown_entry,
     append_accepted_work_markdown_log as _shared_append_accepted_work_markdown_log,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.context import (
+    rank_relevant_context_file as _shared_rank_relevant_context_file,
+    render_relevant_file_context as _shared_render_relevant_file_context,
+    task_title_tokens as _shared_task_title_tokens,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
     diagnostic_signatures as _shared_diagnostic_signatures,
@@ -708,48 +713,15 @@ def _task_is_explicit_failure(task: Optional[PlanTask]) -> bool:
 
 
 def _task_tokens(task: Optional[PlanTask]) -> List[str]:
-    if task is None:
-        return []
-    stopwords = {
-        "and",
-        "the",
-        "with",
-        "for",
-        "into",
-        "from",
-        "full",
-        "port",
-        "initial",
-        "browser",
-        "native",
-        "typescript",
-        "python",
-        "parity",
-    }
-    return [
-        token
-        for token in re.findall(r"[A-Za-z0-9]+", task.title.lower())
-        if len(token) >= 3 and token not in stopwords
-    ]
+    return _shared_task_title_tokens(task)
 
 
 def _rank_relevant_file(path: str, tokens: Sequence[str]) -> int:
-    normalized = path.lower()
-    score = 0
-    for token in tokens:
-        if token in normalized:
-            score += 5
-    basename = Path(path).stem.lower()
-    for token in tokens:
-        if token == basename:
-            score += 12
-        elif token in basename:
-            score += 8
-    if path.endswith(".test.ts"):
-        score += 2
-    if "/cec/" in normalized or "/tdfol/" in normalized or "/fol/" in normalized or "/deontic/" in normalized:
-        score += 1
-    return score
+    return _shared_rank_relevant_context_file(
+        path,
+        tokens,
+        preferred_path_fragments=("/cec/", "/tdfol/", "/fol/", "/deontic/"),
+    )
 
 
 def _compact_message(value: Any, *, limit: int = 600) -> str:
@@ -3418,31 +3390,17 @@ PLANNING CONTEXT:
         return _current_task_failure_counts(rows, selected_task.label)
 
     def _relevant_file_context(self, selected_task: Optional[PlanTask], tracked_files: str) -> str:
-        tokens = _task_tokens(selected_task)
-        if not tokens:
-            return "[No selected task tokens available.]"
-        candidates = []
-        for raw in tracked_files.splitlines():
-            path = raw.strip()
-            if not path.startswith("src/lib/logic/"):
-                continue
-            if not path.endswith((".ts", ".tsx", ".json")):
-                continue
-            score = _rank_relevant_file(path, tokens)
-            if score > 0:
-                candidates.append((score, path))
-        candidates.sort(key=lambda item: (-item[0], item[1]))
-        sections: List[str] = []
-        used = set()
-        for _, path_text in candidates[: self.daemon_config.max_context_files]:
-            if path_text in used:
-                continue
-            used.add(path_text)
-            path = self.daemon_config.resolve(Path(path_text))
-            if not path.exists() or not path.is_file():
-                continue
-            sections.append(f"### {path_text}\n```\n{_read_text(path, limit=self.daemon_config.max_context_file_chars)}\n```")
-        return "\n\n".join(sections) if sections else "[No relevant current file contents selected.]"
+        return _shared_render_relevant_file_context(
+            repo_root=self.daemon_config.repo_root,
+            tracked_files=tracked_files,
+            task_or_title=selected_task,
+            allowed_prefixes=(RUNTIME_LOGIC_PREFIX,),
+            suffixes=(".ts", ".tsx", ".json"),
+            max_files=self.daemon_config.max_context_files,
+            max_file_chars=self.daemon_config.max_context_file_chars,
+            preferred_path_fragments=("/cec/", "/tdfol/", "/fol/", "/deontic/"),
+            read_text_fn=lambda path: _read_text(path, limit=self.daemon_config.max_context_file_chars),
+        )
 
     def _current_plan_task(self) -> Optional[PlanTask]:
         tasks = self._current_plan_tasks()

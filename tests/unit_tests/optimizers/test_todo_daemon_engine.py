@@ -126,7 +126,9 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     recent_total_failure_count,
     replace_task_mark,
     resolve_daemon_module,
+    rank_relevant_context_file,
     repo_root_from_env,
+    render_relevant_file_context,
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
@@ -142,6 +144,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     select_task,
     select_blocked_plan_task,
     select_next_plan_task,
+    select_relevant_context_paths,
     should_skip_validation_for_empty_proposal,
     should_sleep_between_task_cycles,
     should_use_compact_prompt_for_failures,
@@ -154,6 +157,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     task_failure_summary,
     task_has_deterministic_fallback,
     task_status_counts,
+    task_title_tokens,
     temporary_validation_worktree,
     timestamped_artifact_base,
     todo_daemon_proposals_payload,
@@ -313,6 +317,56 @@ def test_task_board_focused_excerpt_helpers_are_reusable() -> None:
     assert "Task checkbox-1: Alpha task." not in excerpt
     assert truncate_text("abcdef", limit=3) == "abc\n\n[truncated]\n"
     assert truncate_text("abcdef", limit=10) == "abcdef"
+
+
+def test_relevant_file_context_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    logic_dir = repo / "src" / "lib" / "logic"
+    logic_dir.mkdir(parents=True)
+    (logic_dir / "runtime.ts").write_text("export const runtime = true;\n", encoding="utf-8")
+    (logic_dir / "runtime.test.ts").write_text("test('runtime', () => true);\n", encoding="utf-8")
+    (logic_dir / "unrelated.ts").write_text("export const unrelated = true;\n", encoding="utf-8")
+    docs = repo / "docs"
+    docs.mkdir()
+    (docs / "runtime.md").write_text("runtime docs\n", encoding="utf-8")
+    task = Task(index=1, title="Port runtime feature with TypeScript parity", status="needed")
+    tracked_files = "\n".join(
+        [
+            "src/lib/logic/unrelated.ts",
+            "src/lib/logic/runtime.test.ts",
+            "src/lib/logic/runtime.ts",
+            "docs/runtime.md",
+        ]
+    )
+
+    tokens = task_title_tokens(task)
+    selected = select_relevant_context_paths(
+        tracked_files,
+        tokens,
+        allowed_prefixes=("src/lib/logic/",),
+        suffixes=(".ts",),
+        max_files=2,
+    )
+    rendered = render_relevant_file_context(
+        repo_root=repo,
+        tracked_files=tracked_files,
+        task_or_title=task,
+        allowed_prefixes=("src/lib/logic/",),
+        suffixes=(".ts",),
+        max_files=2,
+    )
+
+    assert tokens == ["runtime", "feature"]
+    assert rank_relevant_context_file("src/lib/logic/runtime.test.ts", tokens) > rank_relevant_context_file(
+        "src/lib/logic/unrelated.ts",
+        tokens,
+    )
+    assert selected == ["src/lib/logic/runtime.ts", "src/lib/logic/runtime.test.ts"]
+    assert "### src/lib/logic/runtime.test.ts" in rendered
+    assert "docs/runtime.md" not in rendered
+    assert render_relevant_file_context(repo_root=repo, tracked_files=tracked_files, task_or_title=None) == (
+        "[No selected task tokens available.]"
+    )
 
 
 def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:
