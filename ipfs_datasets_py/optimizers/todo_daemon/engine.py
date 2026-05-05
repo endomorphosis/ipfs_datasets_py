@@ -661,6 +661,7 @@ def run_validation_commands(
     repo_root: Path,
     commands: Sequence[Sequence[str]],
     timeout_seconds: int,
+    stop_on_failure: bool = False,
     run_command_fn: Callable[..., CommandResult] = run_command,
 ) -> list[CommandResult]:
     """Run validation commands with the shared timeout-aware command runner."""
@@ -675,6 +676,8 @@ def run_validation_commands(
             if "timeout_seconds" not in str(exc):
                 raise
             results.append(run_command_fn(tuple(command), cwd=repo_root, timeout=timeout_seconds))
+        if stop_on_failure and not results[-1].ok:
+            break
     return results
 
 
@@ -685,6 +688,7 @@ def run_config_validation_commands(
     validation_commands_field: str = "validation_commands",
     repo_root_field: str = "repo_root",
     timeout_seconds_field: str = "command_timeout_seconds",
+    stop_on_failure: bool = False,
     run_command_fn: Callable[..., CommandResult] = run_command,
 ) -> list[CommandResult]:
     """Run validation commands using repository root, defaults, and timeout from config."""
@@ -702,6 +706,7 @@ def run_config_validation_commands(
         repo_root=config_repo_root(config, repo_root_field=repo_root_field),
         commands=commands,
         timeout_seconds=timeout_seconds,
+        stop_on_failure=stop_on_failure,
         run_command_fn=run_command_fn,
     )
 

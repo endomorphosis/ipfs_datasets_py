@@ -50,6 +50,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     atomic_write_json as _shared_atomic_write_json,
     compact_message as _shared_compact_message,
     read_text as _shared_read_text,
+    run_config_validation_commands as _shared_run_config_validation_commands,
     run_command as _shared_run_command,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.auto_commit import (
@@ -3669,18 +3670,10 @@ Documents:
         return prompt
 
     def _run_validation(self) -> List[CommandResult]:
-        results: List[CommandResult] = []
-        for command in self.daemon_config.validation_commands:
-            results.append(
-                run_command(
-                    command,
-                    cwd=self.daemon_config.repo_root,
-                    timeout_seconds=self.daemon_config.command_timeout_seconds,
-                )
-            )
-            if not results[-1].ok:
-                break
-        return results
+        return _shared_run_config_validation_commands(
+            self.daemon_config,
+            stop_on_failure=True,
+        )
 
 
 def build_arg_parser() -> argparse.ArgumentParser:

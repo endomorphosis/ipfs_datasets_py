@@ -1277,6 +1277,24 @@ def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
     assert config_results[0].ok
     assert default_results[0].ok
 
+    failure_calls: list[tuple[str, ...]] = []
+
+    def fake_failing_run_command(command, *, cwd, timeout_seconds):
+        failure_calls.append(tuple(command))
+        return CommandResult(tuple(command), 1 if len(failure_calls) == 1 else 0, "", "failed")
+
+    failure_results = run_config_validation_commands(
+        ValidationConfig(
+            repo_root=tmp_path,
+            validation_commands=(("first",), ("second",)),
+        ),
+        stop_on_failure=True,
+        run_command_fn=fake_failing_run_command,
+    )
+
+    assert [result.command for result in failure_results] == [("first",)]
+    assert failure_calls == [("first",)]
+
 
 def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
