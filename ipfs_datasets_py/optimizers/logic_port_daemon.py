@@ -54,6 +54,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
     looks_like_empty_codex_event_stream as _shared_looks_like_empty_codex_event_stream,
     normalize_file_edits as _shared_normalize_file_edits,
+    normalize_validation_commands as _shared_normalize_validation_commands,
     read_text as _shared_read_text,
     run_command as _shared_run_command,
 )
@@ -456,20 +457,13 @@ def parse_llm_patch_response(text: str) -> LogicPortArtifact:
 
     parsed = _extract_json_object(text)
     if parsed is not None:
-        validation_commands = parsed.get("validation_commands", [])
-        safe_commands: List[List[str]] = []
-        if isinstance(validation_commands, list):
-            for command in validation_commands:
-                if isinstance(command, list) and all(isinstance(part, str) for part in command):
-                    safe_commands.append(command)
-
         return LogicPortArtifact(
             summary=str(parsed.get("summary", "")),
             impact=str(parsed.get("impact", "")),
             patch=str(parsed.get("patch", "")),
             files=_parse_file_edits(parsed.get("files", [])),
             tasks=[str(item) for item in parsed.get("tasks", []) if isinstance(item, (str, int, float))],
-            validation_commands=safe_commands,
+            validation_commands=_shared_normalize_validation_commands(parsed.get("validation_commands", [])),
             raw_response=text,
         )
 

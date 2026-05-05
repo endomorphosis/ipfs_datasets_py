@@ -374,21 +374,27 @@ def normalize_file_edits(value: Any) -> list[dict[str, str]]:
     return edits
 
 
+def normalize_validation_commands(value: Any) -> list[list[str]]:
+    """Return valid validation commands from a JSON-like proposal value."""
+
+    commands: list[list[str]] = []
+    if not isinstance(value, list):
+        return commands
+    for command in value:
+        if isinstance(command, list) and all(isinstance(part, str) for part in command):
+            commands.append(command)
+    return commands
+
+
 def parse_json_proposal(text: str) -> Proposal:
     parsed = extract_json(text)
     if parsed is None:
         return Proposal(raw_response=text, errors=["LLM response did not contain a JSON object."], failure_kind="parse")
-    commands: list[list[str]] = []
-    raw_commands = parsed.get("validation_commands", [])
-    if isinstance(raw_commands, list):
-        for command in raw_commands:
-            if isinstance(command, list) and all(isinstance(part, str) for part in command):
-                commands.append(command)
     return Proposal(
         summary=str(parsed.get("summary", "")),
         impact=str(parsed.get("impact", "")),
         files=normalize_file_edits(parsed.get("files", [])),
-        validation_commands=commands,
+        validation_commands=normalize_validation_commands(parsed.get("validation_commands", [])),
         raw_response=text,
     )
 
