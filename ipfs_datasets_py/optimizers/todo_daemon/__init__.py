@@ -314,6 +314,9 @@ from .wrapper import (
     launch_restarting_wrapper,
     pid_matches_command_fragments,
     quoted_env_assignments,
+    restarting_wrapper_alive,
+    tmux_available,
+    tmux_has_session,
 )
 
 __all__ = [
@@ -512,6 +515,7 @@ __all__ = [
     "promote_worktree_files",
     "quality_failure_counts",
     "quoted_env_assignments",
+    "restarting_wrapper_alive",
     "read_text",
     "read_heartbeat_snapshot",
     "read_daemon_results",
@@ -580,6 +584,8 @@ __all__ = [
     "terminate_active_llm_process",
     "terminate_process_group",
     "terminate_supervised_child",
+    "tmux_available",
+    "tmux_has_session",
     "truncate_text",
     "tranche_number_from_title",
     "unified_diff_stats",

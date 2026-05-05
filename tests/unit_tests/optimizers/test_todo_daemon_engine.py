@@ -159,6 +159,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     recent_total_failure_count,
     replace_task_mark,
     resolve_daemon_module,
+    restarting_wrapper_alive,
     rank_relevant_context_file,
     repo_root_from_env,
     render_relevant_file_context,
@@ -2141,6 +2142,27 @@ def test_restart_wrapper_command_builder_is_reusable() -> None:
     assert "legal-parser supervisor exited with code" in command
     assert "wrapper restarting in %ss" in command
     assert "sleep 11; done" in command
+
+
+def test_restarting_wrapper_liveness_helper_supports_tmux_and_pid_modes(tmp_path, monkeypatch) -> None:
+    from ipfs_datasets_py.optimizers.todo_daemon import wrapper as wrapper_module
+
+    monkeypatch.setattr(wrapper_module, "tmux_available", lambda: True)
+    monkeypatch.setattr(wrapper_module, "tmux_has_session", lambda name: name == "todo-daemon")
+
+    missing_pid_path = tmp_path / "wrapper.pid"
+    assert restarting_wrapper_alive(
+        launch_mode="tmux",
+        tmux_session_name="todo-daemon",
+        pid_path=missing_pid_path,
+        command_fragments=("run_todo_daemon.sh",),
+    )
+    assert not restarting_wrapper_alive(
+        launch_mode="nohup_loop",
+        tmux_session_name="todo-daemon",
+        pid_path=missing_pid_path,
+        command_fragments=("run_todo_daemon.sh",),
+    )
 
 
 def test_lifecycle_wrapper_renderer_matches_legacy_shell_shape() -> None:
