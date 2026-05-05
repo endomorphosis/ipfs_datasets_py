@@ -11,6 +11,7 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserOptimizerDaemon,
     LegalParserParityOptimizer,
     _command_output_text,
+    _cycle_quality_gate_summary,
     _paths_from_git_status_porcelain,
     _quality_gate_summary,
     _repeated_rejection_family,
@@ -4729,6 +4730,27 @@ def test_quality_gate_summary_is_stable_for_recovery_records():
         "post_apply_validation_failed",
     ]
     assert summary["proposal_quality_reasons"] == ["missing focused failed pytest node"]
+    assert "quality_gate_summary" in summary["patch_failure_tail"]
+
+
+def test_cycle_quality_gate_summary_synthesizes_legacy_cycle_records():
+    summary = _cycle_quality_gate_summary(
+        {
+            "proposal_quality": {"valid": False, "reasons": ["missing focused failed pytest node"]},
+            "patch_check": {"valid": False, "stderr": "KeyError: 'quality_gate_summary'"},
+            "tests": {"valid": False},
+            "apply_result": {"rolled_back": True, "reason": "rolled_back_after_failed_tests"},
+        }
+    )
+
+    assert summary["valid"] is False
+    assert summary["source"] == "synthesized_from_legacy_cycle"
+    assert summary["failed_gates"] == [
+        "proposal_quality",
+        "patch_check",
+        "tests",
+        "rolled_back_after_failed_tests",
+    ]
     assert "quality_gate_summary" in summary["patch_failure_tail"]
 
 

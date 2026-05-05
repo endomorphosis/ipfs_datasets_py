@@ -1499,6 +1499,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                 or {}
             )
             proposal_quality = dict(summary.get("proposal_quality") or {})
+            quality_gate_summary = _cycle_quality_gate_summary(summary)
             summaries.append(
                 {
                     "cycle_index": summary.get("cycle_index"),
@@ -1510,6 +1511,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     "patch_failure_tail": str(patch_check.get("stderr") or "")[-4000:]
                     if not patch_check.get("valid")
                     else "",
+                    "quality_gate_summary": quality_gate_summary,
+                    "quality_gate_summary_source": quality_gate_summary.get("source"),
                     "proposal_quality_valid": proposal_quality.get("valid"),
                     "proposal_quality_reasons": proposal_quality.get("reasons", []),
                     "apply_reason": apply_result.get("reason"),
@@ -4062,6 +4065,7 @@ class LegalParserOptimizerDaemon:
                 "cycle_index": cycle.get("cycle_index"),
                 "reason": _cycle_rejection_reason(cycle),
                 "changed_files": cycle.get("changed_files", []),
+                "quality_gate_summary": _cycle_quality_gate_summary(cycle),
                 "patch_stderr_tail": str((cycle.get("patch_check") or {}).get("stderr") or "")[-1000:],
                 "proposal_quality_reasons": (cycle.get("proposal_quality") or {}).get("reasons", []),
                 "dirty_touched_files": (cycle.get("proposal_quality") or {}).get("dirty_touched_files", []),
@@ -4187,6 +4191,7 @@ class LegalParserOptimizerDaemon:
                 "changed_files": latest_cycle.get("changed_files", []),
                 "patch_valid": (latest_cycle.get("patch_check") or {}).get("valid"),
                 "proposal_quality": latest_cycle.get("proposal_quality", {}),
+                "quality_gate_summary": _cycle_quality_gate_summary(latest_cycle),
                 "retained_change": latest_cycle.get("retained_change", {}),
                 "commit_result": latest_cycle.get("commit_result", {}),
                 "applied": (latest_cycle.get("apply_result") or {}).get("applied"),
@@ -4979,6 +4984,35 @@ def _quality_gate_summary(
         "tests_valid": tests_result.get("valid"),
         "apply_reason": apply_result.get("reason"),
     }
+
+
+def _cycle_quality_gate_summary(cycle_payload: Mapping[str, Any]) -> Dict[str, Any]:
+    """Return a cycle quality summary even for legacy records missing the field."""
+
+    existing = cycle_payload.get("quality_gate_summary")
+    if isinstance(existing, Mapping):
+        summary = dict(existing)
+        summary.setdefault("source", "recorded")
+        return summary
+    summary = _quality_gate_summary(
+        proposal_quality=cycle_payload.get("proposal_quality")
+        if isinstance(cycle_payload.get("proposal_quality"), Mapping)
+        else {},
+        patch_check=cycle_payload.get("patch_check")
+        if isinstance(cycle_payload.get("patch_check"), Mapping)
+        else {},
+        post_apply_validation=cycle_payload.get("post_apply_validation")
+        if isinstance(cycle_payload.get("post_apply_validation"), Mapping)
+        else {},
+        tests_result=cycle_payload.get("tests")
+        if isinstance(cycle_payload.get("tests"), Mapping)
+        else {},
+        apply_result=cycle_payload.get("apply_result")
+        if isinstance(cycle_payload.get("apply_result"), Mapping)
+        else {},
+    )
+    summary["source"] = "synthesized_from_legacy_cycle"
+    return summary
 
 
 def _command_output_text(value: Any) -> str:
