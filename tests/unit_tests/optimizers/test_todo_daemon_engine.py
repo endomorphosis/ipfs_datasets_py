@@ -1234,6 +1234,51 @@ def test_deterministic_fallback_helpers_are_reusable(tmp_path: Path) -> None:
     assert "\"fallbackKind\": \"processor_suite\"" in proposal.files[1]["content"]
 
 
+def test_plan_selection_and_blocked_backlog_helpers_are_reusable() -> None:
+    tasks = [
+        PlanTask("checkbox-1", "Completed task", "complete"),
+        PlanTask("checkbox-2", "Blocked early", "blocked"),
+        PlanTask("checkbox-3", "Open later", "needed"),
+        PlanTask("checkbox-4", "Blocked later", "blocked"),
+    ]
+    rows = [({"artifact": {"target_task": tasks[1].label}}, {"failure_kind": "validation"})]
+
+    def failure_summary(_rows, label):
+        return {
+            "total_since_success": 2 if label == tasks[1].label else 1,
+            "by_kind_since_success": {"validation": 2},
+            "latest_failure": {"failure_kind": "validation", "summary": "failed", "errors": ["bad"]},
+        }
+
+    backlog = build_blocked_task_backlog(
+        tasks,
+        rows,
+        failure_summary_fn=failure_summary,
+        failure_budget_exhausted_fn=lambda task, _rows: task.task_id == "checkbox-2",
+        limit=3,
+    )
+    markdown = blocked_task_backlog_markdown(backlog)
+    selected_blocked = select_blocked_plan_task(
+        tasks,
+        rows,
+        strategy="fewest-failures",
+        failure_budget_exhausted_fn=lambda task, _rows: task.task_id == "checkbox-2",
+        recent_total_failure_count_fn=lambda _rows, label: 2 if "Blocked early" in label else 1,
+        last_task_attempt_index_fn=lambda _rows, label: 1 if "Blocked early" in label else 0,
+    )
+
+    assert markdown_task_label(tasks[1]) == tasks[1].label
+    assert plan_task_from_latest_result(tasks, {"artifact": {"target_task": tasks[1].label}}) == tasks[1]
+    assert plan_task_from_latest_result(tasks, {"artifact": {"target_task": "Task checkbox-4: old title"}}) == tasks[3]
+    assert first_open_plan_task(tasks) == tasks[2]
+    assert select_next_plan_task(tasks) == tasks[2]
+    assert select_next_plan_task(tasks[:2], revisit_blocked=True, blocked_selector=lambda _tasks: tasks[1]) == tasks[1]
+    assert selected_blocked == tasks[3]
+    assert backlog[0]["failure_budget_exhausted"] is True
+    assert "`Task checkbox-2: Blocked early`" in markdown
+    assert "failure kinds" in markdown
+
+
 def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     worktree_root = repo / ".daemon" / "worktrees"

@@ -124,7 +124,7 @@ def upsert_deterministic_progress_record(
         and _record_checkbox_id(item) != task.checkbox_id
     ]
     records.append(dict(record))
-    updated["records"] = sorted(records, key=lambda item: int(item.get("checkboxId", 0)))
+    updated["records"] = sorted(records, key=lambda item: _record_checkbox_id(item))
     updated["updatedAt"] = now()
     return updated
 
