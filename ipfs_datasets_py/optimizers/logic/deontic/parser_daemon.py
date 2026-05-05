@@ -71,6 +71,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     owner_pid_from_worktree as _shared_owner_pid_from_worktree,
     pid_is_alive as _shared_pid_is_alive,
     read_json_object as _shared_read_json_object,
+    unique_worktree_paths as _shared_unique_worktree_paths,
     write_worktree_owner_file as _shared_write_worktree_owner_file,
 )
 
@@ -788,16 +789,13 @@ class LegalParserParityOptimizer(BaseOptimizer):
         )
 
     def _worktree_diff_paths(self) -> List[str]:
-        paths: List[str] = []
-        for path in (
-            *self.daemon_config.target_files,
-            *self.daemon_config.docs,
-            "docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md",
-        ):
-            text = str(path).strip()
-            if text and text not in paths:
-                paths.append(text)
-        return paths
+        return _shared_unique_worktree_paths(
+            (
+                *self.daemon_config.target_files,
+                *self.daemon_config.docs,
+                "docs/logic/LEGAL_PARSER_DAEMON_SUPERVISOR_ARCHITECTURE.md",
+            )
+        )
 
     def _read_worktree_metadata(self, path: Path) -> Dict[str, Any]:
         try:
