@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
     LegalParserParityOptimizer,
     _command_output_text,
     _paths_from_git_status_porcelain,
+    _quality_gate_summary,
     _repeated_rejection_family,
     _repeated_validation_failure_family,
     _summarize_post_apply_validation_failure,
@@ -379,6 +380,7 @@ def test_supervisor_escalates_repeated_recovery_failures_into_agentic_maintenanc
     assert "confirmed_recovery_failure_escalation_reason()" in script
     assert "recent_recovery_failures" in script
     assert "repeated_recovery_failure:" in script
+    assert 're.match(r"^E\\s+(?:[A-Za-z_][A-Za-z0-9_]*Error' in script
     assert "supervisor escalating repeated recovery failure" in script
     assert repeated_recovery_pos < dirty_recovery_pos < maintenance_pos
 
@@ -4708,6 +4710,26 @@ def test_progress_summary_exposes_candidate_validation_rejection_signature(tmp_p
     assert "Latest candidate post-apply validation failure:" in report
     assert "test_bad_formula" in report
     assert "changed deontic tests failed focused pytest" in report
+
+
+def test_quality_gate_summary_is_stable_for_recovery_records():
+    summary = _quality_gate_summary(
+        proposal_quality={"valid": False, "reasons": ["missing focused failed pytest node"]},
+        patch_check={"valid": False, "stderr": "KeyError: 'quality_gate_summary'"},
+        post_apply_validation={"valid": True},
+        tests_result={"valid": False},
+        apply_result={"rolled_back": True, "reason": "post_apply_validation_failed"},
+    )
+
+    assert summary["valid"] is False
+    assert summary["failed_gates"] == [
+        "proposal_quality",
+        "patch_check",
+        "tests",
+        "post_apply_validation_failed",
+    ]
+    assert summary["proposal_quality_reasons"] == ["missing focused failed pytest node"]
+    assert "quality_gate_summary" in summary["patch_failure_tail"]
 
 
 def test_repeated_rejection_family_groups_exhausted_candidate_validation_failures():

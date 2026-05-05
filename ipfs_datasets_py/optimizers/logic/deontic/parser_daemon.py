@@ -2153,6 +2153,11 @@ class LegalParserOptimizerDaemon:
                         "patch_stderr_tail": str(candidate_patch_check.get("stderr") or "")[-2000:],
                         "proposal_quality_valid": candidate_quality.get("valid"),
                         "proposal_quality_reasons": candidate_quality.get("reasons", []),
+                        "quality_gate_summary": _quality_gate_summary(
+                            proposal_quality=candidate_quality,
+                            patch_check=candidate_patch_check,
+                            post_apply_validation=candidate_validation,
+                        ),
                         "slice_scale_contract": slice_scale_contract,
                         "patch_stats": candidate_patch_stats,
                         "candidate_validation_valid": candidate_validation.get("valid"),
@@ -2632,6 +2637,13 @@ class LegalParserOptimizerDaemon:
             "patch_stats": patch_stats,
             "proposal_attempts": proposal_attempts,
             "proposal_quality": proposal_quality,
+            "quality_gate_summary": _quality_gate_summary(
+                proposal_quality=proposal_quality,
+                patch_check=patch_check,
+                post_apply_validation=post_apply_validation,
+                tests_result=tests_result,
+                apply_result=apply_result,
+            ),
             "retained_change": retained_change,
             "commit_result": commit_result,
             "patch_check": patch_check,
@@ -4926,6 +4938,47 @@ def _failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
         or summary.get("exception_types")
         or str(summary.get("failure_head") or "").strip()
     )
+
+
+def _quality_gate_summary(
+    *,
+    proposal_quality: Mapping[str, Any] | None = None,
+    patch_check: Mapping[str, Any] | None = None,
+    post_apply_validation: Mapping[str, Any] | None = None,
+    tests_result: Mapping[str, Any] | None = None,
+    apply_result: Mapping[str, Any] | None = None,
+) -> Dict[str, Any]:
+    """Return a stable, non-throwing summary for supervisor recovery code."""
+
+    proposal_quality = proposal_quality or {}
+    patch_check = patch_check or {}
+    post_apply_validation = post_apply_validation or {}
+    tests_result = tests_result or {}
+    apply_result = apply_result or {}
+    failed_gates: List[str] = []
+    if proposal_quality.get("valid") is False:
+        failed_gates.append("proposal_quality")
+    if patch_check.get("valid") is False:
+        failed_gates.append("patch_check")
+    if post_apply_validation.get("valid") is False:
+        failed_gates.append("post_apply_validation")
+    if tests_result.get("valid") is False:
+        failed_gates.append("tests")
+    if apply_result.get("rolled_back"):
+        failed_gates.append(str(apply_result.get("reason") or "rolled_back"))
+    return {
+        "valid": not failed_gates,
+        "failed_gates": failed_gates,
+        "proposal_quality_valid": proposal_quality.get("valid"),
+        "proposal_quality_reasons": list(proposal_quality.get("reasons") or [])[:8],
+        "patch_valid": patch_check.get("valid"),
+        "patch_failure_tail": str(patch_check.get("stderr") or "")[-1200:]
+        if patch_check.get("valid") is False
+        else "",
+        "post_apply_validation_valid": post_apply_validation.get("valid"),
+        "tests_valid": tests_result.get("valid"),
+        "apply_reason": apply_result.get("reason"),
+    }
 
 
 def _command_output_text(value: Any) -> str:

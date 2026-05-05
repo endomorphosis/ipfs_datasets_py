@@ -1035,7 +1035,11 @@ except Exception:
 failed_lines = []
 for line in log_text.splitlines():
     stripped = line.strip()
-    if stripped.startswith("FAILED ") or stripped.startswith("E   "):
+    if (
+        stripped.startswith("FAILED ")
+        or stripped.startswith("E   ")
+        or re.match(r"^E\s+(?:[A-Za-z_][A-Za-z0-9_]*Error|[A-Za-z_][A-Za-z0-9_]*Exception)\b", stripped)
+    ):
         failed_lines.append(stripped)
 summary = " | ".join(failed_lines[:12]).strip()
 if not summary:
