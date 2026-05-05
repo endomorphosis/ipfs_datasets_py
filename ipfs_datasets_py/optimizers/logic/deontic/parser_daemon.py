@@ -54,6 +54,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     unified_diff_stats as _shared_unified_diff_stats,
     untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.status import (
+    build_status_phase_key as _shared_build_status_phase_key,
+    status_key_started_at as _shared_status_key_started_at,
+)
 
 
 DEFAULT_PROBE_CORPUS: List[Dict[str, str]] = [
@@ -2966,9 +2970,11 @@ class LegalParserOptimizerDaemon:
         now = _utc_now()
         phase_key = self._status_phase_key(phase=phase, cycle_index=cycle_index, details=details)
         previous_payload = dict(self._status_payload)
-        previous_phase_started_at = str(previous_payload.get("phase_started_at") or "")
-        previous_phase_key = str(previous_payload.get("phase_key") or "")
-        phase_started_at = previous_phase_started_at if previous_phase_key == phase_key else now
+        phase_started_at = _shared_status_key_started_at(
+            previous_payload,
+            current_key=phase_key,
+            now=now,
+        )
         dirty_target_status = self._dirty_legal_parser_target_status()
         payload = {
             "status": status,
@@ -3047,12 +3053,14 @@ class LegalParserOptimizerDaemon:
 
         attempt = details.get("proposal_attempt")
         retry_reason = details.get("retry_reason")
-        key_parts = [str(cycle_index), phase]
-        if attempt is not None:
-            key_parts.append(f"attempt={attempt}")
-        if retry_reason:
-            key_parts.append(f"retry={str(retry_reason)[:80]}")
-        return "|".join(key_parts)
+        return _shared_build_status_phase_key(
+            phase,
+            cycle_index=cycle_index,
+            details={
+                "proposal_attempt": attempt,
+                "retry_reason": retry_reason,
+            },
+        )
 
     def _write_status_file_atomic(self, payload: Mapping[str, Any]) -> None:
         """Write current status JSON without exposing a truncated file."""

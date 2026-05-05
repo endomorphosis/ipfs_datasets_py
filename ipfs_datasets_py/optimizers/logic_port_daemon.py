@@ -106,6 +106,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.history import (
     same_task_label as _shared_same_task_label,
     task_failure_summary as _shared_task_failure_summary,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.status import (
+    build_heartbeat_status_payload as _shared_build_heartbeat_status_payload,
+    status_started_at as _shared_status_started_at,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.task_board import (
     focused_task_board_excerpt as _shared_focused_task_board_excerpt,
     truncate_text as _shared_truncate_text,
@@ -2096,16 +2100,14 @@ Critical correction for attempt {attempt}:
                 if not base:
                     continue
                 now = datetime.now(timezone.utc).isoformat()
-                payload = {
-                    **base,
-                    "timestamp": now,
-                    "updated_at": now,
-                    "heartbeat_at": now,
-                    "state": "heartbeat",
-                    "active_state": base.get("state", ""),
-                    "active_state_started_at": base.get("state_started_at", ""),
-                    "heartbeat_interval_seconds": interval,
-                }
+                payload = _shared_build_heartbeat_status_payload(
+                    base,
+                    now=now,
+                    timestamp_key="timestamp",
+                    active_state_from_key="state",
+                    active_started_from_key="state_started_at",
+                    heartbeat_interval_seconds=interval,
+                )
                 self._write_status_payload(payload)
                 self._write_progress_summary(active_state=base.get("state", "heartbeat"))
 
@@ -2154,11 +2156,11 @@ Critical correction for attempt {attempt}:
         if state != "heartbeat":
             with self._status_lock:
                 previous = self._last_status_payload
-                previous_state = str(previous.get("state") or "")
-                if previous_state == state and previous.get("state_started_at"):
-                    payload["state_started_at"] = previous["state_started_at"]
-                else:
-                    payload["state_started_at"] = payload["timestamp"]
+                payload["state_started_at"] = _shared_status_started_at(
+                    previous,
+                    state=state,
+                    now=payload["timestamp"],
+                )
                 self._last_status_payload = dict(payload)
         self._write_status_payload(payload)
 

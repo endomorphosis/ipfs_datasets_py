@@ -4845,6 +4845,16 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
         return "registration_lifecycle_duty"
     if action_predicate.startswith((
+        "Annotate",
+        "Codify",
+        "Compile",
+        "Recodify",
+        "Renumber",
+        "Revise",
+        "Supplement",
+    )):
+        return "code_maintenance_duty"
+    if action_predicate.startswith((
         "Catalog",
         "Index",
         "Interpret",

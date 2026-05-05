@@ -441,3 +441,85 @@ def test_evidence_custody_inventory_and_transfer_duties_export_operative_predica
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_code_maintenance_revision_annotation_and_supplement_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Clerk shall prepare a revision of the charter.",
+            "prepare a revision of the charter",
+            "O(∀x (Clerk(x) → ReviseCharter(x)))",
+            "PrepareRevisionCharter",
+        ),
+        (
+            "The Commission shall publish annotations to the code.",
+            "publish annotations to the code",
+            "O(∀x (Commission(x) → AnnotateCode(x)))",
+            "PublishAnnotationsCode",
+        ),
+        (
+            "The Bureau shall issue a supplement to the ordinance.",
+            "issue a supplement to the ordinance",
+            "O(∀x (Bureau(x) → SupplementOrdinance(x)))",
+            "IssueSupplementOrdinance",
+        ),
+        (
+            "The Council shall adopt revisions for the rules.",
+            "adopt revisions for the rules",
+            "O(∀x (Council(x) → ReviseRules(x)))",
+            "AdoptRevisionsRules",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0] : action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "code_maintenance_duty",
+        "code_maintenance_duty",
+        "code_maintenance_duty",
+        "code_maintenance_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        expected_formula for _, _, expected_formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]

@@ -10,6 +10,7 @@ from pathlib import Path
 from ipfs_datasets_py.optimizers.todo_daemon import (
     ACCEPTED_WORK_LEDGER_SCHEMA_VERSION,
     AcceptedWorkEvidencePaths,
+    ActiveStatusSnapshot,
     AutoCommitConfig,
     CommandResult,
     DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
@@ -39,6 +40,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     accepted_work_manifest,
     accepted_work_markdown_entry,
     accepted_work_workspace_payload,
+    advance_active_status_snapshot,
     append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
     append_jsonl_ledger,
@@ -54,8 +56,11 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_deterministic_replacement_proposal,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
+    build_active_status_payload,
+    build_heartbeat_status_payload,
     build_python_module_command,
     build_restart_loop_command,
+    build_status_phase_key,
     build_supervisor_loop_arg_parser,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
@@ -166,6 +171,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     sidecar_paths,
     slugify,
     slugify_artifact_name,
+    status_key_started_at,
+    status_started_at,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
     supervisor_run_id,
@@ -1065,6 +1072,90 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
         "failure_kind": "validation",
         "validation_passed": True,
     }
+
+
+def test_status_payload_helpers_preserve_active_state_for_heartbeats() -> None:
+    snapshot = ActiveStatusSnapshot(state="initializing", started_at="t0")
+
+    selected = advance_active_status_snapshot(
+        snapshot,
+        state="selected_task",
+        now="t1",
+        target_task="Task checkbox-1: Port feature",
+    )
+    same = advance_active_status_snapshot(
+        selected,
+        state="selected_task",
+        now="t2",
+        target_task="Task checkbox-1: Port feature",
+    )
+    changed = advance_active_status_snapshot(
+        same,
+        state="applying_files",
+        now="t3",
+    )
+    heartbeat_snapshot = advance_active_status_snapshot(changed, state="heartbeat", now="t4")
+
+    assert selected.started_at == "t1"
+    assert same.started_at == "t1"
+    assert changed.started_at == "t3"
+    assert heartbeat_snapshot == changed
+    assert status_started_at(
+        {"state": "llm_call_started", "state_started_at": "old"},
+        state="llm_call_started",
+        now="new",
+    ) == "old"
+    assert status_started_at(
+        {"state": "llm_call_started", "state_started_at": "old"},
+        state="llm_call_completed",
+        now="new",
+    ) == "new"
+    assert status_key_started_at(
+        {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
+        current_key="3|requesting_worktree_edit",
+        now="p-new",
+    ) == "p-old"
+    assert status_key_started_at(
+        {"phase_key": "3|requesting_worktree_edit", "phase_started_at": "p-old"},
+        current_key="3|running_tests",
+        now="p-new",
+    ) == "p-new"
+    assert build_status_phase_key(
+        "retrying_worktree_edit",
+        cycle_index=7,
+        details={"proposal_attempt": 2, "retry_reason": "patch validation failed"},
+    ) == "7|retrying_worktree_edit|attempt=2|retry=patch validation failed"
+
+    payload = build_active_status_payload(
+        state="heartbeat",
+        snapshot=changed,
+        now="t5",
+        pid=123,
+        extra={"active_state": "custom-heartbeat"},
+    )
+
+    assert payload["pid"] == 123
+    assert payload["updated_at"] == "t5"
+    assert payload["state"] == "heartbeat"
+    assert payload["active_state"] == "custom-heartbeat"
+    assert payload["active_state_started_at"] == "t3"
+    assert payload["active_target_task"] == "Task checkbox-1: Port feature"
+
+    heartbeat = build_heartbeat_status_payload(
+        {"state": "llm_call_started", "state_started_at": "s1", "model_name": "gpt-5.5"},
+        now="h1",
+        timestamp_key="timestamp",
+        heartbeat_interval_seconds=15.0,
+    )
+
+    assert heartbeat["timestamp"] == "h1"
+    assert heartbeat["updated_at"] == "h1"
+    assert heartbeat["heartbeat_at"] == "h1"
+    assert heartbeat["state"] == "heartbeat"
+    assert heartbeat["active_state"] == "llm_call_started"
+    assert heartbeat["active_state_started_at"] == "s1"
+    assert heartbeat["heartbeat_interval_seconds"] == 15.0
+    assert heartbeat["model_name"] == "gpt-5.5"
 
 
 def test_failure_block_and_exception_diagnostics_are_reusable() -> None:

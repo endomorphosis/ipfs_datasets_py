@@ -6747,6 +6747,45 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
 
+    revision_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"(?:a\s+|the\s+)?revision\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"revisions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^revision\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in revision_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"revise {target}" if target else text
+
+    annotation_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"(?:an?\s+|the\s+)?annotation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"annotations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^annotation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in annotation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"annotate {target}" if target else text
+
+    supplement_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"(?:a\s+|the\s+)?supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
+        r"supplements\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+        r"^supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in supplement_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"supplement {target}" if target else text
+
     return text
 
 

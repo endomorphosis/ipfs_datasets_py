@@ -9,6 +9,11 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Optional
 
 from .engine import CommandResult, Proposal, Task, append_jsonl, atomic_write_json, read_text, utc_now
+from .status import (
+    ActiveStatusSnapshot,
+    advance_active_status_snapshot,
+    build_active_status_payload,
+)
 
 
 StatusWriter = Callable[..., None]
@@ -57,35 +62,32 @@ class TodoDaemonRunner:
         self.config = config
         self.hooks = hooks
         self._heartbeat_stop = threading.Event()
-        self._active_state = "initializing"
-        self._active_state_started_at = utc_now()
-        self._active_target_task = ""
+        self._active_status = ActiveStatusSnapshot(started_at=utc_now())
 
     def write_status(self, state: str, **extra: Any) -> None:
+        now = utc_now()
         if state != "heartbeat":
-            target_task = (
-                str(extra.get("target_task") or "")
-                if "target_task" in extra
-                else self._active_target_task
+            target_task = None
+            if "target_task" in extra:
+                target_task = str(extra.get("target_task") or "")
+            self._active_status = advance_active_status_snapshot(
+                self._active_status,
+                state=state,
+                now=now,
+                target_task=target_task,
             )
-            if state != self._active_state or target_task != self._active_target_task:
-                self._active_state_started_at = utc_now()
-            self._active_state = state
-            self._active_target_task = target_task
-        payload = {
-            "updated_at": utc_now(),
-            "pid": os.getpid(),
-            "state": state,
-            "active_state": self._active_state,
-            "active_state_started_at": self._active_state_started_at,
-            "active_target_task": self._active_target_task,
-            **extra,
-        }
+        payload = build_active_status_payload(
+            state=state,
+            snapshot=self._active_status,
+            now=now,
+            pid=os.getpid(),
+            extra=extra,
+        )
         atomic_write_json(self.config.resolve(self.config.status_file), payload)
 
     def heartbeat(self) -> None:
         while not self._heartbeat_stop.wait(self.config.heartbeat_seconds):
-            self.write_status("heartbeat", active_state=self._active_state)
+            self.write_status("heartbeat", active_state=self._active_status.state)
 
     def run_cycle(self) -> Proposal:
         board_path = self.config.resolve(self.config.task_board)
@@ -194,7 +196,7 @@ class TodoDaemonRunner:
             impact=self.hooks.exception_impact,
             errors=[self.hooks.exception_diagnostic(exc)],
             failure_kind="daemon_exception",
-            target_task=self._active_target_task,
+            target_task=self._active_status.target_task,
         )
         proposal.dry_run = not self.config.apply
         proposal.applied = False
