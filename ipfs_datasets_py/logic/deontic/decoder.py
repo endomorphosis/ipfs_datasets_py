@@ -117,26 +117,36 @@ def _decode_deontic_clause(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List
         phrases.append(_fixed_phrase("to", "recipient_connector"))
         phrases.append(_phrase(recipient, "recipient", norm))
 
+    rendered_conditions = 0
     for condition in norm.conditions:
-        condition_text = _slot_text(condition)
+        condition_text = _condition_phrase_text(condition)
         if condition_text:
-            phrases.append(_fixed_phrase("if", "condition_connector"))
+            phrases.append(_fixed_phrase(
+                _condition_connector(condition, rendered_conditions),
+                "condition_connector",
+            ))
             phrases.append(_detail_phrase(condition_text, "conditions", condition, norm))
+            rendered_conditions += 1
 
+    rendered_temporal = 0
     for temporal in norm.temporal_constraints:
         temporal_text = _temporal_phrase_text(temporal)
         if temporal_text and not _text_already_contains(action_phrase, temporal_text):
+            if rendered_conditions or rendered_temporal:
+                phrases.append(_fixed_phrase("and", "temporal_connector"))
             phrases.append(_detail_phrase(temporal_text, "temporal_constraints", temporal, norm))
+            rendered_temporal += 1
 
+    rendered_exceptions = 0
     for exception in norm.exceptions:
-        exception_text = _slot_text(exception)
+        exception_text = _exception_phrase_text(exception)
         if exception_text:
-            connector = "except" if exception_text.lower().startswith("as ") else "unless"
-            if exception_text.lower().startswith(("unless ", "except ")):
-                phrases.append(_detail_phrase(exception_text, "exceptions", exception, norm))
-            else:
-                phrases.append(_fixed_phrase(connector, "exception_connector"))
-                phrases.append(_detail_phrase(exception_text, "exceptions", exception, norm))
+            phrases.append(_fixed_phrase(
+                _exception_connector(exception, exception_text, rendered_exceptions),
+                "exception_connector",
+            ))
+            phrases.append(_detail_phrase(exception_text, "exceptions", exception, norm))
+            rendered_exceptions += 1
 
     _append_cross_reference_provenance(phrases, norm)
     return phrases, missing
@@ -372,6 +382,51 @@ def _modal_phrase(modality: str) -> str:
         "P": "may",
         "F": "shall not",
     }.get(str(modality or "").upper(), "")
+
+
+def _condition_phrase_text(record: Mapping[str, Any]) -> str:
+    value = _slot_text(record)
+    return _strip_prefix(
+        value,
+        ("if", "when", "where", "provided that", "provided"),
+    )
+
+
+def _condition_connector(record: Mapping[str, Any], rendered_count: int) -> str:
+    clause_type = str(
+        record.get("clause_type") or record.get("type") or ""
+    ).strip().lower()
+    connector = {
+        "if": "if",
+        "when": "when",
+        "where": "where",
+        "provided": "provided that",
+        "provided_that": "provided that",
+        "condition": "if",
+    }.get(clause_type, "if")
+    return connector if rendered_count == 0 else f"and {connector}"
+
+
+def _exception_phrase_text(record: Mapping[str, Any]) -> str:
+    value = _slot_text(record)
+    return _strip_prefix(value, ("unless", "except", "except that"))
+
+
+def _exception_connector(
+    record: Mapping[str, Any],
+    exception_text: str,
+    rendered_count: int,
+) -> str:
+    clause_type = str(
+        record.get("clause_type") or record.get("type") or ""
+    ).strip().lower()
+    lowered = str(exception_text or "").strip().lower()
+    connector = (
+        "except"
+        if lowered.startswith("as ") or clause_type in {"except", "exception"}
+        else "unless"
+    )
+    return connector if rendered_count == 0 else f"and {connector}"
 
 
 def _temporal_phrase_text(record: Mapping[str, Any]) -> str:

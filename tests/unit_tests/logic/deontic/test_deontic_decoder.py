@@ -318,3 +318,169 @@ def test_decoder_exposes_cross_reference_provenance_without_reconstruction_text_
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_decoder_renders_multiple_conditions_with_deterministic_connectors():
+    element, norm, decoded = _decode(
+        "The Director shall issue a permit if the application is complete, if fees are paid, "
+        "and within 10 days after application."
+    )
+
+    assert decoded.text == (
+        "Director shall issue a permit if the application is complete and if fees are paid "
+        "and within 10 days after application."
+    )
+    assert [phrase.slot for phrase in decoded.phrases] == [
+        "actor",
+        "modality",
+        "action",
+        "condition_connector",
+        "conditions",
+        "condition_connector",
+        "conditions",
+        "temporal_connector",
+        "temporal_constraints",
+    ]
+    assert [
+        phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"
+    ] == [
+        "if",
+        "and if",
+    ]
+    assert [phrase.spans for phrase in decoded.phrases if phrase.slot == "conditions"] == [
+        [element["condition_details"][0]["span"]],
+        [element["condition_details"][1]["span"]],
+    ]
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_connector"] == [
+        "and",
+    ]
+    assert decoded.phrases[-1].text == "within 10 days after application"
+    assert decoded.phrases[-1].spans == [
+        element["temporal_constraint_details"][0]["span"]
+    ]
+    assert norm.conditions[1]["clause_type"] == "if"
+
+
+def test_decoder_strips_duplicate_condition_and_exception_connectors_from_ir_details():
+    _, norm, _ = _decode("The Director shall issue a permit.")
+    detailed_norm = replace(
+        norm,
+        conditions=[
+            {
+                "clause_type": "provided_that",
+                "raw_text": "provided that the application is complete",
+                "span": [34, 77],
+            },
+            {
+                "clause_type": "when",
+                "raw_text": "when fees are paid",
+                "span": [82, 100],
+            },
+        ],
+        exceptions=[
+            {
+                "clause_type": "unless",
+                "raw_text": "unless approval is denied",
+                "span": [101, 126],
+            },
+            {
+                "clause_type": "except",
+                "raw_text": "except as provided in this section",
+                "span": [131, 165],
+            },
+        ],
+    )
+
+    decoded = decode_legal_norm_ir(detailed_norm)
+
+    assert decoded.text == (
+        "Director shall issue a permit provided that the application is complete "
+        "and when fees are paid unless approval is denied and except as provided in this section."
+    )
+    assert [
+        phrase.text for phrase in decoded.phrases if phrase.slot == "condition_connector"
+    ] == [
+        "provided that",
+        "and when",
+    ]
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "conditions"] == [
+        "the application is complete",
+        "fees are paid",
+    ]
+    assert [
+        phrase.text for phrase in decoded.phrases if phrase.slot == "exception_connector"
+    ] == [
+        "unless",
+        "and except",
+    ]
+    assert [phrase.text for phrase in decoded.phrases if phrase.slot == "exceptions"] == [
+        "approval is denied",
+        "as provided in this section",
+    ]
+    assert decoded.missing_slots == []
+
+
+def test_decoder_renders_temporal_chains_without_losing_each_span():
+    _, norm, _ = _decode("The Clerk shall file the order.")
+    temporal_norm = replace(
+        norm,
+        temporal_constraints=[
+            {
+                "type": "deadline",
+                "raw_text": "before approval",
+                "span": [32, 47],
+            },
+            {
+                "type": "deadline",
+                "raw_text": "after hearing",
+                "span": [52, 65],
+            },
+            {
+                "type": "deadline",
+                "value": "10 days after service",
+                "span": [70, 98],
+            },
+        ],
+    )
+
+    decoded = decode_legal_norm_ir(temporal_norm)
+
+    assert decoded.text == (
+        "Clerk shall file the order before approval and after hearing and "
+        "within 10 days after service."
+    )
+    assert [
+        phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_connector"
+    ] == [
+        "and",
+        "and",
+    ]
+    assert [
+        phrase.text for phrase in decoded.phrases if phrase.slot == "temporal_constraints"
+    ] == [
+        "before approval",
+        "after hearing",
+        "within 10 days after service",
+    ]
+    assert [
+        phrase.spans for phrase in decoded.phrases if phrase.slot == "temporal_constraints"
+    ] == [
+        [[32, 47]],
+        [[52, 65]],
+        [[70, 98]],
+    ]
+
+
+def test_decoder_connector_slice_preserves_unresolved_numbered_reference_repair_gate():
+    element, norm, decoded = _decode(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )
+
+    assert decoded.text == "Secretary shall publish the notice except as provided in section 552."
+    assert decoded.missing_slots == []
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert "cross_reference_requires_resolution" in norm.blockers
+    assert "exception_requires_scope_review" in norm.blockers

@@ -38,6 +38,16 @@ def test_batch_prover_target_coverage_records_preserve_ir_order_and_source_ids()
             LOCAL_PROVER_SYNTAX_TARGETS
         )
         assert record["formal_syntax_valid"] in {True, False}
+        assert record["quality_gate_summary"]["quality_gate_record_count"] == len(
+            LOCAL_PROVER_SYNTAX_TARGETS
+        )
+        assert record["quality_gate_summary"]["quality_gate_complete_targets"] == sorted(
+            LOCAL_PROVER_SYNTAX_TARGETS
+        )
+        assert record["quality_gate_summary"]["quality_gate_complete_rate"] == 1.0
+        assert record["coverage_summary"]["quality_gate_summary"] == record[
+            "quality_gate_summary"
+        ]
         if not record["formal_syntax_valid"]:
             assert record["requires_validation"] is True
             assert record["coverage_blockers"]
@@ -57,6 +67,13 @@ def test_batch_prover_target_coverage_keeps_unresolved_numbered_exception_blocke
     assert records[0]["source_id"] == norm.source_id
     assert records[0]["target_logic"] == "local_prover_syntax"
     assert records[0]["required_targets"] == list(LOCAL_PROVER_SYNTAX_TARGETS)
+    assert records[0]["quality_gate_summary"]["quality_gate_record_count"] == 5
+    assert records[0]["quality_gate_summary"]["quality_gate_complete_targets"] == []
+    assert records[0]["quality_gate_summary"]["quality_gate_complete_rate"] == 0.0
+    assert records[0]["quality_gate_summary"]["failed_quality_check_distribution"] == {
+        "formula_proof_ready": 5,
+        "formula_requires_validation": 5,
+    }
     assert norm.proof_ready is False
     assert "cross_reference_requires_resolution" in norm.blockers
     assert "exception_requires_scope_review" in norm.blockers

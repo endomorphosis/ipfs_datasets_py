@@ -229,3 +229,132 @@ def test_rulemaking_slice_preserves_unresolved_numbered_exception_repair_gate():
     assert blocked_record["deterministic_resolution"] == {}
     assert "cross_reference_requires_resolution" in blocked_record["blockers"]
     assert "exception_requires_scope_review" in blocked_record["blockers"]
+
+
+def test_health_compliance_light_verb_duties_export_operative_predicates():
+    examples = [
+        (
+            "The clinic shall conduct screening of applicants.",
+            "conduct screening of applicants",
+            "O(∀x (Clinic(x) → ScreenApplicants(x)))",
+            "ConductScreeningApplicants",
+        ),
+        (
+            "The health officer shall perform diagnosis of cases.",
+            "perform diagnosis of cases",
+            "O(∀x (HealthOfficer(x) → DiagnoseCases(x)))",
+            "PerformDiagnosisCases",
+        ),
+        (
+            "The provider shall administer vaccination to children.",
+            "administer vaccination to children",
+            "O(∀x (Provider(x) → VaccinateChildren(x)))",
+            "AdministerVaccinationChildren",
+        ),
+        (
+            "The department shall provide immunization of residents.",
+            "provide immunization of residents",
+            "O(∀x (Department(x) → ImmunizeResidents(x)))",
+            "ProvideImmunizationResidents",
+        ),
+        (
+            "The examiner shall conduct medical examination of drivers.",
+            "conduct medical examination of drivers",
+            "O(∀x (Examiner(x) → ExamineDrivers(x)))",
+            "ConductMedicalExaminationDrivers",
+        ),
+        (
+            "The laboratory shall perform laboratory analysis of samples.",
+            "perform laboratory analysis of samples",
+            "O(∀x (Laboratory(x) → AnalyzeSamples(x)))",
+            "PerformLaboratoryAnalysisSamples",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["text"][action_span[0] : action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "health_compliance_duty",
+        "health_compliance_duty",
+        "health_compliance_duty",
+        "health_compliance_duty",
+        "health_compliance_duty",
+        "health_compliance_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, _, formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+
+def test_health_compliance_prover_records_preserve_symbols_and_reference_blocker():
+    element = extract_normative_elements(
+        "The provider shall administer vaccination to children."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert len(records) == 5
+    assert all(
+        record["source_formula_symbols"] == ["Provider", "VaccinateChildren"]
+        for record in records
+    )
+    assert all(
+        record["target_symbol_alignment"]["missing_exported_formula_symbols"] == []
+        for record in records
+    )
+    assert all(
+        record["target_components"]["target_symbol_alignment_complete"] is True
+        for record in records
+    )
+    assert records[2]["target"] == "fol"
+    assert records[2]["exported_formula"] == (
+        "forall x. (Provider(x) -> VaccinateChildren(x))"
+    )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    blocked_norm = LegalNormIR.from_parser_element(blocked)
+    blocked_record = build_deontic_formula_record_from_ir(blocked_norm)
+
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+    assert blocked_record["proof_ready"] is False
+    assert blocked_record["requires_validation"] is True
+    assert blocked_record["repair_required"] is True

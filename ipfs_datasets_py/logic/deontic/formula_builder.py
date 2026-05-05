@@ -168,6 +168,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_sampling_light_verb_action(action_text)
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
+    action_text = _normalize_health_compliance_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
@@ -1412,6 +1413,53 @@ def _normalize_monitoring_light_verb_action(action_text: str) -> str:
         normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
         if normalized != text:
             return normalized
+    return text
+
+
+def _normalize_health_compliance_light_verb_action(action_text: str) -> str:
+    """Project public-health compliance nominalizations to operative acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    patterns = [
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|provide|provides|provided|providing|carry|carries|carried|carrying)\s+"
+            r"(?:out\s+)?(?:a\s+|an\s+|the\s+)?screening\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "screen",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|make|makes|made|making|provide|provides|provided|providing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?diagnosis\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "diagnose",
+        ),
+        (
+            r"^(?:administer|administers|administered|administering|provide|provides|provided|providing|perform|performs|performed|performing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?vaccination\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "vaccinate",
+        ),
+        (
+            r"^(?:administer|administers|administered|administering|provide|provides|provided|providing|perform|performs|performed|performing)\s+"
+            r"(?:an?\s+|the\s+)?immunization\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "immunize",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|provide|provides|provided|providing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?(?:medical\s+)?examination\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "examine",
+        ),
+        (
+            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|provide|provides|provided|providing|complete|completes|completed|completing)\s+"
+            r"(?:a\s+|an\s+|the\s+)?(?:laboratory\s+|lab\s+)?analysis\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "analyze",
+        ),
+    ]
+    for pattern, verb in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
     return text
 
 

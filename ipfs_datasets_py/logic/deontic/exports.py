@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections import Counter
 from dataclasses import replace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence, Union
 
@@ -169,6 +170,116 @@ def build_deterministic_parser_capability_profile_records(
     """Build parser capability profile rows while preserving norm order."""
 
     return [build_deterministic_parser_capability_profile_record(norm, slots) for norm in norms]
+
+
+def summarize_deterministic_parser_capability_profile_records(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    """Summarize deterministic parser capability-profile rows.
+
+    Capability rows are diagnostic Phase 8 records. This helper keeps the
+    parser metrics import surface stable while aggregating proof readiness,
+    source grounding, decoder grounding, and family coverage without changing
+    parser repair gates.
+    """
+
+    valid_records = [record for record in records or [] if isinstance(record, Mapping)]
+    record_count = len(valid_records)
+    family_distribution: Counter[str] = Counter()
+    blocker_distribution: Counter[str] = Counter()
+    formula_ready_count = 0
+    parser_ready_count = 0
+    requires_validation_count = 0
+    repair_required_count = 0
+    source_grounding_complete_count = 0
+    decoder_grounding_complete_count = 0
+    source_grounding_rate_sum = 0.0
+    decoder_grounding_rate_sum = 0.0
+
+    for record in valid_records:
+        family = str(record.get("capability_family") or "").strip()
+        if family:
+            family_distribution[family] += 1
+
+        if record.get("formula_proof_ready") is True:
+            formula_ready_count += 1
+        if record.get("parser_proof_ready") is True:
+            parser_ready_count += 1
+        if record.get("requires_validation") is True:
+            requires_validation_count += 1
+        if record.get("repair_required") is True:
+            repair_required_count += 1
+
+        missing_slots = _slot_names_from_record(record, "missing_slots")
+        ungrounded_slots = _slot_names_from_record(record, "ungrounded_slots")
+        source_rate = _float_record_value(record, "source_grounded_slot_rate")
+        decoder_rate = _float_record_value(record, "decoder_grounded_slot_rate")
+        source_grounding_rate_sum += source_rate
+        decoder_grounding_rate_sum += decoder_rate
+
+        if source_rate >= 1.0 and not missing_slots and not ungrounded_slots:
+            source_grounding_complete_count += 1
+        if record.get("decoder_slot_grounding_complete") is True:
+            decoder_grounding_complete_count += 1
+
+        for blocker in record.get("blockers") or []:
+            blocker_text = str(blocker or "").strip()
+            if blocker_text:
+                blocker_distribution[blocker_text] += 1
+
+    return {
+        "record_count": record_count,
+        "capability_family_distribution": dict(sorted(family_distribution.items())),
+        "formula_proof_ready_count": formula_ready_count,
+        "formula_proof_ready_rate": round(formula_ready_count / record_count, 6)
+        if record_count
+        else 0.0,
+        "parser_proof_ready_count": parser_ready_count,
+        "parser_proof_ready_rate": round(parser_ready_count / record_count, 6)
+        if record_count
+        else 0.0,
+        "requires_validation_count": requires_validation_count,
+        "requires_validation_rate": round(requires_validation_count / record_count, 6)
+        if record_count
+        else 0.0,
+        "repair_required_count": repair_required_count,
+        "repair_required_rate": round(repair_required_count / record_count, 6)
+        if record_count
+        else 0.0,
+        "source_grounding_complete_count": source_grounding_complete_count,
+        "source_grounding_complete_rate": round(
+            source_grounding_complete_count / record_count, 6
+        )
+        if record_count
+        else 0.0,
+        "decoder_slot_grounding_complete_count": decoder_grounding_complete_count,
+        "decoder_slot_grounding_complete_rate": round(
+            decoder_grounding_complete_count / record_count, 6
+        )
+        if record_count
+        else 0.0,
+        "mean_source_grounded_slot_rate": round(
+            source_grounding_rate_sum / record_count, 6
+        )
+        if record_count
+        else 0.0,
+        "mean_decoder_grounded_slot_rate": round(
+            decoder_grounding_rate_sum / record_count, 6
+        )
+        if record_count
+        else 0.0,
+        "all_profiles_formula_proof_ready": record_count > 0
+        and formula_ready_count == record_count,
+        "all_profiles_parser_proof_ready": record_count > 0
+        and parser_ready_count == record_count,
+        "all_profiles_source_grounded": record_count > 0
+        and source_grounding_complete_count == record_count,
+        "all_profiles_decoder_grounded": record_count > 0
+        and decoder_grounding_complete_count == record_count,
+        "requires_validation": bool(requires_validation_count),
+        "repair_required": bool(repair_required_count),
+        "coverage_blocker_distribution": dict(sorted(blocker_distribution.items())),
+    }
 
 
 def summarize_ir_slot_provenance_audit_records(
@@ -414,6 +525,7 @@ def summarize_prover_syntax_target_coverage(
 
     required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
     status_by_target: Dict[str, str] = {}
+    quality_gate_by_target: Dict[str, Mapping[str, Any]] = {}
 
     for record in records or []:
         if not isinstance(record, Mapping):
@@ -429,6 +541,9 @@ def summarize_prover_syntax_target_coverage(
             status_by_target[target] = status
         elif current == "skipped" and status == "passed":
             status_by_target[target] = status
+        gate = record.get("target_quality_gate")
+        if isinstance(gate, Mapping) and target not in quality_gate_by_target:
+            quality_gate_by_target[target] = gate
 
     passed_targets = sorted(
         target for target in required if status_by_target.get(target) == "passed"
@@ -441,6 +556,10 @@ def summarize_prover_syntax_target_coverage(
     )
     missing_targets = sorted(target for target in required if target not in status_by_target)
     present_required_count = len(required) - len(missing_targets)
+    quality_gate_summary = _summarize_prover_target_quality_gates(
+        quality_gate_by_target,
+        required,
+    )
 
     return {
         "required_targets": list(required),
@@ -456,6 +575,7 @@ def summarize_prover_syntax_target_coverage(
         and not skipped_targets
         and not missing_targets,
         "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
+        "quality_gate_summary": quality_gate_summary,
     }
 
 
@@ -503,6 +623,7 @@ def build_prover_syntax_target_coverage_record(
         "formal_syntax_valid": summary["all_required_passed"],
         "requires_validation": not summary["all_required_passed"],
         "coverage_blockers": blockers,
+        "quality_gate_summary": summary["quality_gate_summary"],
         "coverage_summary": summary,
     }
 
@@ -548,6 +669,56 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
+
+
+def _summarize_prover_target_quality_gates(
+    gate_by_target: Mapping[str, Mapping[str, Any]],
+    required_targets: Sequence[str],
+) -> Dict[str, Any]:
+    """Summarize per-target prover quality gates for coverage export rows."""
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    complete_targets: List[str] = []
+    failed_distribution: Counter[str] = Counter()
+
+    for target in required:
+        gate = gate_by_target.get(target)
+        if not isinstance(gate, Mapping):
+            failed_distribution["missing_target_quality_gate"] += 1
+            continue
+        if gate.get("formal_validation_complete") is True:
+            complete_targets.append(target)
+            continue
+        failed_checks = [
+            str(check or "").strip()
+            for check in gate.get("failed_quality_checks") or []
+            if str(check or "").strip()
+        ]
+        if failed_checks:
+            failed_distribution.update(failed_checks)
+        else:
+            failed_distribution["formal_validation_incomplete"] += 1
+
+    return {
+        "quality_gate_required_targets": list(required),
+        "quality_gate_record_count": len(
+            [
+                target
+                for target in required
+                if isinstance(gate_by_target.get(target), Mapping)
+            ]
+        ),
+        "quality_gate_complete_targets": sorted(complete_targets),
+        "quality_gate_incomplete_targets": sorted(
+            target for target in required if target not in set(complete_targets)
+        ),
+        "quality_gate_complete_rate": round(len(complete_targets) / len(required), 6)
+        if required
+        else 0.0,
+        "all_quality_gates_complete": bool(required)
+        and len(complete_targets) == len(required),
+        "failed_quality_check_distribution": dict(sorted(failed_distribution.items())),
+    }
 
 
 def build_ir_slot_provenance_audit_record(
@@ -3756,6 +3927,13 @@ def _slot_names_from_record(record: Mapping[str, Any], key: str) -> set[str]:
     return {str(value).strip() for value in values if str(value).strip()}
 
 
+def _float_record_value(record: Mapping[str, Any], key: str) -> float:
+    try:
+        return float(record.get(key) or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _slot_grounding_records(record: Mapping[str, Any]) -> List[Mapping[str, Any]]:
     for key in ("slot_grounding", "slot_grounding_records", "slot_audits"):
         values = record.get(key) or []
@@ -3866,6 +4044,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "enforcement_remedy_duty"
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
+    if action_predicate.startswith((
+        "Analyze",
+        "Diagnose",
+        "Examine",
+        "Immunize",
+        "Screen",
+        "Vaccinate",
+    )):
+        return "health_compliance_duty"
     if action_predicate.startswith((
         "Accession",
         "DocumentChainCustody",

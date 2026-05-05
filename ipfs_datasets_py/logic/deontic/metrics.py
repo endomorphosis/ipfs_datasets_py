@@ -7,11 +7,13 @@ from typing import Any, Dict, Iterable, List, Mapping
 
 from .exports import (
     build_decoder_records_from_irs,
+    build_deterministic_parser_capability_profile_records,
     build_ir_slot_provenance_audit_records,
     build_phase8_quality_summary_records,
     build_prover_syntax_records_from_ir,
     parser_elements_for_metrics,
     summarize_decoder_reconstruction_records,
+    summarize_deterministic_parser_capability_profile_records,
     summarize_ir_slot_provenance_audit_records,
     summarize_phase8_quality_records,
     summarize_prover_syntax_target_coverage,
@@ -137,6 +139,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
             build_errors[type(exc).__name__] += 1
 
     decoder_records = build_decoder_records_from_irs(norms)
+    capability_profile_records = build_deterministic_parser_capability_profile_records(norms)
     prover_syntax_records: List[Dict[str, Any]] = []
     for norm in norms:
         prover_syntax_records.extend(build_prover_syntax_records_from_ir(norm))
@@ -148,6 +151,9 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     )
 
     decoder_summary = summarize_decoder_reconstruction_records(decoder_records)
+    capability_summary = summarize_deterministic_parser_capability_profile_records(
+        capability_profile_records
+    )
     prover_summary = summarize_prover_syntax_target_coverage(prover_syntax_records)
     provenance_summary = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
     phase8_quality_summary = summarize_phase8_quality_records(
@@ -181,6 +187,25 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "phase8_decoder_records_with_missing_slots": decoder_summary[
             "records_with_missing_slots"
         ],
+        "phase8_parser_capability_profile_count": capability_summary["record_count"],
+        "phase8_parser_capability_family_distribution": capability_summary[
+            "capability_family_distribution"
+        ],
+        "phase8_parser_capability_formula_ready_rate": capability_summary[
+            "formula_proof_ready_rate"
+        ],
+        "phase8_parser_capability_source_grounding_rate": capability_summary[
+            "mean_source_grounded_slot_rate"
+        ],
+        "phase8_parser_capability_decoder_grounding_rate": capability_summary[
+            "mean_decoder_grounded_slot_rate"
+        ],
+        "phase8_parser_capability_requires_validation_count": capability_summary[
+            "requires_validation_count"
+        ],
+        "phase8_parser_capability_repair_required_count": capability_summary[
+            "repair_required_count"
+        ],
         "phase8_prover_required_target_count": len(prover_summary["required_targets"]),
         "phase8_prover_present_required_target_count": prover_summary[
             "present_required_target_count"
@@ -202,6 +227,7 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         else 0.0,
         "phase8_coverage_blocker_distribution": dict(sorted(coverage_blockers.items())),
         "decoder_reconstruction_metrics": decoder_summary,
+        "parser_capability_profile_metrics": capability_summary,
         "prover_syntax_target_coverage": prover_summary,
         "ir_slot_provenance": provenance_summary,
         "phase8_quality_summary": phase8_quality_summary,

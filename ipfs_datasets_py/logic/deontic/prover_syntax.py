@@ -81,6 +81,8 @@ class ProverTargetSyntaxRecord:
     reconstruction_token_profile: Dict[str, Any]
     reconstruction_token_profile_fingerprint: str
     target_components: Dict[str, Any]
+    target_quality_gate: Dict[str, Any]
+    target_quality_gate_fingerprint: str
     syntax_valid: bool
     skipped: bool
     diagnostics: List[Dict[str, Any]]
@@ -208,6 +210,17 @@ def _validate_target_formula(
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
+    target_quality_gate = _target_quality_gate(
+        norm,
+        target,
+        formula_record,
+        diagnostics,
+        alignment_summary,
+        symbol_alignment,
+        target_dialect_profile,
+        target_parse_profile,
+        reconstruction_token_profile,
+    )
 
     return ProverTargetSyntaxRecord(
         source_id=norm.source_id,
@@ -261,6 +274,10 @@ def _validate_target_formula(
             "reconstruction_token_profile_fingerprint"
         ],
         target_components=target_components,
+        target_quality_gate=target_quality_gate,
+        target_quality_gate_fingerprint=target_quality_gate[
+            "target_quality_gate_fingerprint"
+        ],
         syntax_valid=syntax_valid,
         skipped=False,
         diagnostics=diagnostics,
@@ -563,6 +580,120 @@ def _target_components(
         "parse_event_predicates": list(
             target_parse_profile.get("event_predicates") or []
         ),
+    }
+
+
+def _target_quality_gate(
+    norm: LegalNormIR,
+    target: str,
+    formula_record: Dict[str, Any],
+    diagnostics: Sequence[Dict[str, Any]],
+    alignment_summary: Dict[str, Any],
+    symbol_alignment: Dict[str, Any],
+    target_dialect_profile: Dict[str, Any],
+    target_parse_profile: Dict[str, Any],
+    reconstruction_token_profile: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return a compact Phase 8 quality gate for one target formula.
+
+    Syntax validity is necessary but not enough for a proof/export quality
+    report. This record joins syntax, formula readiness, target dialect shape,
+    symbol preservation, decoder alignment, and reconstruction token coverage
+    without changing parser proof-readiness or repair gates.
+    """
+
+    diagnostic_codes = [
+        str(item.get("code") or "").strip()
+        for item in diagnostics
+        if isinstance(item, dict) and str(item.get("code") or "").strip()
+    ]
+    syntax_valid = not diagnostic_codes
+    formula_proof_ready = bool(formula_record.get("proof_ready") is True)
+    formula_requires_validation = bool(
+        formula_record.get("requires_validation") is not False
+    )
+    slot_alignment_complete = bool(
+        alignment_summary.get("alignment_complete") is True
+    )
+    symbol_alignment_complete = bool(
+        symbol_alignment.get("target_symbol_alignment_complete") is True
+    )
+    dialect_complete = bool(
+        target_dialect_profile.get("target_dialect_profile_complete") is True
+    )
+    parse_complete = bool(
+        target_parse_profile.get("target_parse_profile_complete") is True
+    )
+    token_complete = bool(
+        reconstruction_token_profile.get("reconstruction_token_profile_complete")
+        is True
+    )
+    known_local_target = target in LOCAL_PROVER_TARGETS
+    structural_checks_complete = all(
+        (
+            symbol_alignment_complete,
+            dialect_complete,
+            parse_complete,
+            token_complete,
+            known_local_target,
+        )
+    )
+    formal_validation_complete = bool(
+        syntax_valid
+        and formula_proof_ready
+        and not formula_requires_validation
+        and structural_checks_complete
+    )
+    parser_theorem_promotable = bool(norm.proof_ready and formal_validation_complete)
+
+    failed_checks: List[str] = []
+    if not syntax_valid:
+        failed_checks.append("syntax")
+    if not formula_proof_ready:
+        failed_checks.append("formula_proof_ready")
+    if formula_requires_validation:
+        failed_checks.append("formula_requires_validation")
+    if not symbol_alignment_complete:
+        failed_checks.append("symbol_alignment")
+    if not dialect_complete:
+        failed_checks.append("target_dialect")
+    if not parse_complete:
+        failed_checks.append("target_parse")
+    if not token_complete:
+        failed_checks.append("reconstruction_tokens")
+    if not known_local_target:
+        failed_checks.append("known_local_target")
+
+    fingerprint = _stable_fingerprint(
+        norm.source_id,
+        target,
+        str(syntax_valid),
+        str(formula_proof_ready),
+        str(formula_requires_validation),
+        str(structural_checks_complete),
+        str(formal_validation_complete),
+        str(parser_theorem_promotable),
+        "|".join(failed_checks),
+        "|".join(diagnostic_codes),
+    )
+    return {
+        "target": target,
+        "known_local_target": known_local_target,
+        "syntax_valid": syntax_valid,
+        "diagnostic_codes": diagnostic_codes,
+        "formula_proof_ready": formula_proof_ready,
+        "formula_requires_validation": formula_requires_validation,
+        "parser_proof_ready": bool(norm.proof_ready),
+        "slot_alignment_complete": slot_alignment_complete,
+        "target_symbol_alignment_complete": symbol_alignment_complete,
+        "target_dialect_profile_complete": dialect_complete,
+        "target_parse_profile_complete": parse_complete,
+        "reconstruction_token_profile_complete": token_complete,
+        "structural_checks_complete": structural_checks_complete,
+        "formal_validation_complete": formal_validation_complete,
+        "parser_theorem_promotable": parser_theorem_promotable,
+        "failed_quality_checks": failed_checks,
+        "target_quality_gate_fingerprint": fingerprint,
     }
 
 

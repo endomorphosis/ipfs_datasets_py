@@ -605,6 +605,76 @@ def test_prover_syntax_target_components_cover_frame_applicability_and_blocked_r
     assert "exception_requires_scope_review" in blocked.blockers
 
 
+def test_prover_syntax_records_expose_phase8_target_quality_gates():
+    proof_ready = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+    formula_resolved = LegalNormIR.from_parser_element(
+        extract_normative_elements("This section applies to food carts.")[0]
+    )
+    blocked = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+    )
+
+    proof_ready_records = [
+        target.to_dict() for target in validate_ir_with_provers(proof_ready).targets
+    ]
+    resolved_records = [
+        target.to_dict() for target in validate_ir_with_provers(formula_resolved).targets
+    ]
+    blocked_records = [
+        target.to_dict() for target in validate_ir_with_provers(blocked).targets
+    ]
+
+    assert all(
+        record["target_quality_gate"]["formal_validation_complete"] is True
+        for record in proof_ready_records
+    )
+    assert all(
+        record["target_quality_gate"]["parser_theorem_promotable"] is True
+        for record in proof_ready_records
+    )
+    assert all(
+        record["target_quality_gate"]["failed_quality_checks"] == []
+        for record in proof_ready_records
+    )
+    assert len(
+        {
+            record["target_quality_gate_fingerprint"]
+            for record in proof_ready_records
+        }
+    ) == 5
+
+    assert all(
+        record["target_quality_gate"]["formal_validation_complete"] is True
+        for record in resolved_records
+    )
+    assert all(
+        record["target_quality_gate"]["parser_theorem_promotable"] is False
+        for record in resolved_records
+    )
+    assert all(
+        record["target_quality_gate"]["parser_proof_ready"] is False
+        for record in resolved_records
+    )
+
+    assert all(
+        record["target_quality_gate"]["formal_validation_complete"] is False
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["formula_proof_ready"] is False
+        for record in blocked_records
+    )
+    assert all(
+        record["target_quality_gate"]["failed_quality_checks"]
+        == ["formula_proof_ready", "formula_requires_validation"]
+        for record in blocked_records
+    )
+
+
 def test_prover_syntax_reports_target_shape_diagnostics():
     cases = [
         (
