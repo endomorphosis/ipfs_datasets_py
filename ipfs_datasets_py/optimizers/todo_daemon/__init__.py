@@ -259,6 +259,11 @@ from .task_board import (
     truncate_text,
     update_generated_status_block,
 )
+from .typescript import (
+    obvious_typescript_text_damage,
+    repair_common_typescript_file_edits,
+    repair_common_typescript_text_damage,
+)
 from .supervisor import (
     DEFAULT_WORKTREE_PHASES,
     HeartbeatSnapshot,
@@ -463,6 +468,7 @@ __all__ = [
     "missing_lifecycle_wrapper_core_lines",
     "normalized_relative_path",
     "normalize_task_label",
+    "obvious_typescript_text_damage",
     "open_task_has_deterministic_fallback",
     "parse_json_proposal",
     "parse_markdown_tasks",
@@ -495,6 +501,8 @@ __all__ = [
     "read_daemon_proposal_records",
     "read_json_object",
     "rank_relevant_context_file",
+    "repair_common_typescript_file_edits",
+    "repair_common_typescript_text_damage",
     "repo_relative_pathspec",
     "replace_checkbox_mark",
     "replace_task_mark",

@@ -120,6 +120,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     materialize_proposal_files,
     match_diagnostic_edit_path,
     missing_lifecycle_wrapper_core_lines,
+    obvious_typescript_text_damage,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
     parse_json_proposal,
@@ -142,6 +143,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     read_daemon_results,
     read_daemon_proposal_records,
     read_json_object,
+    repair_common_typescript_file_edits,
+    repair_common_typescript_text_damage,
     repo_relative_pathspec,
     recent_failure_count,
     recent_proposal_failures,
@@ -833,6 +836,34 @@ def test_thread_deadline_helper_reports_timeout() -> None:
     assert timeouts
     assert timeouts[0][1] == 0.01
     assert timeouts[0][2] == "test-deadline-timeout"
+
+
+def test_typescript_repair_helpers_are_reusable() -> None:
+    damaged = "\n".join(
+        [
+            "const tokens: Array = [];",
+            "for (let index = 0; index = tokens.length; index += 1) {",
+            "  console.log(tokens[index]);",
+            "}",
+        ]
+    )
+    repaired = repair_common_typescript_text_damage(damaged)
+
+    assert "const tokens: Array<string> = [];" in repaired
+    assert "index < tokens.length" in repaired
+    assert repair_common_typescript_file_edits(
+        [
+            {"path": "src/example.ts", "content": damaged},
+            {"path": "README.md", "content": "const values: Array = [];"},
+        ]
+    ) == [
+        {"path": "src/example.ts", "content": repaired},
+        {"path": "README.md", "content": "const values: Array = [];"},
+    ]
+    assert obvious_typescript_text_damage("if (index  values.length) {\nconst x: Promise = y;") == [
+        "line 1: missing comparison operator before .length: if (index  values.length) {",
+        "line 2: bare TypeScript generic alias: const x: Promise = y;",
+    ]
 
 
 def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
