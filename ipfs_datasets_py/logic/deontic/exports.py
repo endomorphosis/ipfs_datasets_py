@@ -662,6 +662,10 @@ def summarize_prover_syntax_target_corpus_coverage(
 
     source_status_by_source: Dict[str, Dict[str, str]] = {}
     source_missing_targets_by_source: Dict[str, List[str]] = {}
+    source_failed_targets_by_source: Dict[str, List[str]] = {}
+    source_skipped_targets_by_source: Dict[str, List[str]] = {}
+    source_duplicate_targets_by_source: Dict[str, List[str]] = {}
+    source_target_record_count_by_source: Dict[str, Dict[str, int]] = {}
     source_blockers_by_source: Dict[str, List[str]] = {}
     target_presence_distribution: Counter[str] = Counter()
     target_pass_distribution: Counter[str] = Counter()
@@ -684,10 +688,28 @@ def summarize_prover_syntax_target_corpus_coverage(
         missing_targets = [
             str(target) for target in list(summary.get("missing_targets") or [])
         ]
+        failed_targets = [
+            str(target) for target in list(summary.get("failed_targets") or [])
+        ]
+        skipped_targets = [
+            str(target) for target in list(summary.get("skipped_targets") or [])
+        ]
+        duplicate_targets = [
+            str(target) for target in list(summary.get("target_duplicate_targets") or [])
+        ]
+        record_counts_by_target = dict(summary.get("target_record_count_by_target") or {})
+        target_record_counts = {
+            target: int(record_counts_by_target.get(target) or 0)
+            for target in required
+        }
         blockers = _prover_coverage_blockers(summary)
         if source_id in sources_with_missing_source_id:
             blockers = [*blockers, "missing_prover_syntax_source_id"]
         source_missing_targets_by_source[source_id] = missing_targets
+        source_failed_targets_by_source[source_id] = failed_targets
+        source_skipped_targets_by_source[source_id] = skipped_targets
+        source_duplicate_targets_by_source[source_id] = duplicate_targets
+        source_target_record_count_by_source[source_id] = target_record_counts
         source_blockers_by_source[source_id] = blockers
         blocker_distribution.update(blockers)
 
@@ -722,7 +744,26 @@ def summarize_prover_syntax_target_corpus_coverage(
         "sources_requiring_validation": sources_requiring_validation,
         "source_status_by_source": source_status_by_source,
         "source_missing_targets_by_source": source_missing_targets_by_source,
+        "source_failed_targets_by_source": source_failed_targets_by_source,
+        "source_skipped_targets_by_source": source_skipped_targets_by_source,
+        "source_duplicate_targets_by_source": source_duplicate_targets_by_source,
+        "source_target_record_count_by_source": source_target_record_count_by_source,
         "source_blockers_by_source": source_blockers_by_source,
+        "sources_with_failed_targets": [
+            source_id
+            for source_id in sorted(source_failed_targets_by_source)
+            if source_failed_targets_by_source[source_id]
+        ],
+        "sources_with_skipped_targets": [
+            source_id
+            for source_id in sorted(source_skipped_targets_by_source)
+            if source_skipped_targets_by_source[source_id]
+        ],
+        "sources_with_duplicate_targets": [
+            source_id
+            for source_id in sorted(source_duplicate_targets_by_source)
+            if source_duplicate_targets_by_source[source_id]
+        ],
         "source_id_missing_record_count": source_id_missing_record_count,
         "sources_with_missing_source_id": sorted(sources_with_missing_source_id),
         "source_identity_complete": source_id_missing_record_count == 0,

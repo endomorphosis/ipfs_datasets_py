@@ -177,6 +177,21 @@ def test_prover_syntax_target_corpus_coverage_groups_raw_rows_by_source():
         "deontic_fol",
         "deontic_temporal_fol",
     ]
+    assert summary["source_failed_targets_by_source"]["deontic:partial"] == [
+        "deontic_cec"
+    ]
+    assert summary["source_skipped_targets_by_source"]["deontic:partial"] == ["fol"]
+    assert summary["source_duplicate_targets_by_source"]["deontic:partial"] == []
+    assert summary["source_target_record_count_by_source"]["deontic:partial"] == {
+        "frame_logic": 1,
+        "deontic_cec": 1,
+        "fol": 1,
+        "deontic_fol": 0,
+        "deontic_temporal_fol": 0,
+    }
+    assert summary["sources_with_failed_targets"] == ["deontic:partial"]
+    assert summary["sources_with_skipped_targets"] == ["deontic:partial"]
+    assert summary["sources_with_duplicate_targets"] == []
     assert summary["coverage_blocker_distribution"] == {
         "failed_prover_syntax_target:deontic_cec": 1,
         "missing_prover_syntax_target:deontic_fol": 1,
@@ -215,6 +230,21 @@ def test_prover_syntax_target_corpus_coverage_accepts_persisted_coverage_rows():
     assert summary["target_pass_distribution"] == {
         target: 2 for target in sorted(LOCAL_PROVER_SYNTAX_TARGETS)
     }
+    assert summary["source_duplicate_targets_by_source"]["deontic:duplicate"] == [
+        "fol"
+    ]
+    assert summary["source_failed_targets_by_source"]["deontic:duplicate"] == []
+    assert summary["source_skipped_targets_by_source"]["deontic:duplicate"] == []
+    assert summary["source_target_record_count_by_source"]["deontic:duplicate"] == {
+        "frame_logic": 1,
+        "deontic_cec": 1,
+        "fol": 2,
+        "deontic_fol": 1,
+        "deontic_temporal_fol": 1,
+    }
+    assert summary["sources_with_duplicate_targets"] == ["deontic:duplicate"]
+    assert summary["sources_with_failed_targets"] == []
+    assert summary["sources_with_skipped_targets"] == []
     assert summary["coverage_blocker_distribution"] == {
         "duplicate_prover_syntax_target_record:fol:2": 1
     }
