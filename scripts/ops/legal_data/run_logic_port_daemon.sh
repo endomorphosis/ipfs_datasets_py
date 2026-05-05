@@ -724,6 +724,10 @@ PROMPT
     rc=70
   fi
   if [[ "$rc" != "0" ]] && [[ "$rc" != "124" ]] && [[ "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" != "$SUPERVISOR_AGENTIC_SANDBOX" ]]; then
+    active_agentic_maintenance_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    active_agentic_maintenance_timeout_seconds="$maintenance_timeout"
+    last_agentic_maintenance_status="running"
+    write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" "$rc"
     {
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) primary agentic maintenance exited with code $rc; retrying with sandbox=$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX"
       run_agentic_codex_exec "$SUPERVISOR_AGENTIC_FALLBACK_SANDBOX" "$maintenance_timeout" <<PROMPT

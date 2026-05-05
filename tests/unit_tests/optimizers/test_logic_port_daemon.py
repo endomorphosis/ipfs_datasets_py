@@ -106,6 +106,7 @@ def test_supervisor_uses_worktree_transport_by_default():
     assert "startup_failure_maintenance_reason()" in script
     assert "startup_stale_failure:" in script
     assert "supervisor invoking startup failure maintenance" in script
+    assert 'write_supervisor_status "agentic_maintenance_started" "$maintenance_id" "$maintenance_log" "$rc"' in script
 
 
 def test_ensure_passes_startup_failure_maintenance_to_supervisor():
