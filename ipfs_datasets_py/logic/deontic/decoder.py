@@ -474,12 +474,8 @@ def _procedure_event_phrase_text(record: Mapping[str, Any]) -> str:
         return value
 
     relation = str(record.get("relation") or record.get("type") or "").strip().lower()
-    anchor = _clean_text(str(
-        record.get("anchor_event")
-        or record.get("anchor")
-        or record.get("event_anchor")
-        or ""
-    ))
+    anchor = _procedure_event_anchor_text(record)
+    trigger = _procedure_event_trigger_text(record)
     if not anchor:
         return ""
 
@@ -491,11 +487,91 @@ def _procedure_event_phrase_text(record: Mapping[str, Any]) -> str:
     )
     for prefix, connector in relation_prefixes:
         if relation.startswith(prefix):
-            trigger = relation[len(prefix) :].replace("_", " ")
-            trigger = _strip_prefix(trigger, ("of", "on", "with", "by", "to"))
-            trigger = re.sub(r"\s+(?:of|on|with|by|to)$", "", trigger).strip()
-            return _clean_text(f"{connector} {trigger} of {anchor}")
+            relation_trigger = _procedure_event_trigger_from_relation(relation, prefix)
+            if relation_trigger in {"event", "completion", "receipt", "approval"} and trigger:
+                relation_trigger = trigger
+            return _procedure_event_phrase(connector, relation_trigger or trigger, anchor)
+
+    connector_by_relation = {
+        "after": "after",
+        "after_event": "after",
+        "after_completion": "after",
+        "after_receipt": "after",
+        "deadline_after": "after",
+        "before": "before",
+        "before_event": "before",
+        "before_approval": "before",
+        "deadline_before": "before",
+        "upon": "upon",
+        "on": "upon",
+        "on_event": "upon",
+        "conditioned_on": "upon",
+        "conditioned_upon": "upon",
+        "prerequisite": "after",
+        "trigger": "upon",
+    }
+    connector = connector_by_relation.get(relation)
+    if connector:
+        return _procedure_event_phrase(connector, trigger, anchor)
     return ""
+
+
+def _procedure_event_anchor_text(record: Mapping[str, Any]) -> str:
+    for key in (
+        "anchor_event",
+        "anchor",
+        "event_anchor",
+        "anchor_object",
+        "object",
+        "target",
+        "instrument",
+        "document",
+    ):
+        value = _clean_text(str(record.get(key) or ""))
+        if value:
+            return value
+    return ""
+
+
+def _procedure_event_trigger_text(record: Mapping[str, Any]) -> str:
+    for key in (
+        "trigger_event",
+        "trigger",
+        "event_type",
+        "procedure_event",
+        "event",
+        "action",
+    ):
+        value = _clean_text(str(record.get(key) or ""))
+        if value:
+            return _strip_prefix(value.replace("_", " "), ("of", "on", "with", "by", "to"))
+    return ""
+
+
+def _procedure_event_trigger_from_relation(relation: str, prefix: str) -> str:
+    trigger = str(relation or "")[len(prefix) :].replace("_", " ")
+    trigger = _strip_prefix(trigger, ("of", "on", "with", "by", "to"))
+    return re.sub(r"\s+(?:of|on|with|by|to)$", "", trigger).strip()
+
+
+def _procedure_event_phrase(connector: str, trigger: str, anchor: str) -> str:
+    trigger_text = _clean_text(trigger)
+    anchor_text = _clean_text(anchor)
+    connector_text = _clean_text(connector)
+    if not connector_text or not trigger_text or not anchor_text:
+        return ""
+    if _procedure_trigger_takes_direct_object(trigger_text):
+        return _clean_text(f"{connector_text} {trigger_text} {anchor_text}")
+    return _clean_text(f"{connector_text} {trigger_text} of {anchor_text}")
+
+
+def _procedure_trigger_takes_direct_object(trigger: str) -> bool:
+    return bool(re.search(
+        r"\b(?:consultation with|service on|notice to|delivery to|transmission to|"
+        r"filing with|submission to|payment to)\b$",
+        str(trigger or "").strip(),
+        re.IGNORECASE,
+    ))
 
 
 def _procedure_event_connector(

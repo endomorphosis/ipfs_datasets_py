@@ -646,6 +646,92 @@ def test_decoder_derives_procedure_phrase_when_raw_text_is_absent():
     assert decoded.missing_slots == []
 
 
+def test_decoder_derives_structured_procedure_phrases_without_raw_text():
+    examples = [
+        (
+            "The Clerk shall docket the appeal.",
+            [
+                {
+                    "relation": "after",
+                    "event": "acceptance",
+                    "anchor_event": "filing",
+                    "span": [35, 61],
+                },
+                {
+                    "relation": "after_event",
+                    "trigger_event": "receipt confirmation",
+                    "anchor_event": "notice",
+                    "span": [66, 103],
+                },
+            ],
+            "Clerk shall docket the appeal after acceptance of filing and after receipt confirmation of notice.",
+            ["after acceptance of filing", "after receipt confirmation of notice"],
+            [[35, 61], [66, 103]],
+        ),
+        (
+            "The Director shall approve the permit.",
+            [
+                {
+                    "relation": "before",
+                    "event_type": "issuance",
+                    "anchor_object": "license",
+                    "span": [36, 61],
+                },
+                {
+                    "relation": "deadline_before",
+                    "procedure_event": "publication",
+                    "document": "notice",
+                    "span": [66, 95],
+                },
+            ],
+            "Director shall approve the permit before issuance of license and before publication of notice.",
+            ["before issuance of license", "before publication of notice"],
+            [[36, 61], [66, 95]],
+        ),
+        (
+            "The Bureau shall inspect the premises.",
+            [
+                {
+                    "relation": "conditioned_on",
+                    "trigger": "receipt",
+                    "object": "application",
+                    "span": [38, 62],
+                },
+                {
+                    "relation": "on_event",
+                    "event": "consultation with",
+                    "anchor_event": "the fire marshal",
+                    "span": [67, 106],
+                },
+            ],
+            "Bureau shall inspect the premises upon receipt of application and upon consultation with the fire marshal.",
+            ["upon receipt of application", "upon consultation with the fire marshal"],
+            [[38, 62], [67, 106]],
+        ),
+    ]
+
+    for text, event_relations, expected_text, expected_phrases, expected_spans in examples:
+        _, norm, _ = _decode(text)
+        procedure_norm = replace(norm, procedure={"event_relations": event_relations})
+
+        decoded = decode_legal_norm_ir(procedure_norm)
+
+        assert decoded.text == expected_text
+        assert decoded.missing_slots == []
+        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure"] == expected_phrases
+        assert [phrase.spans for phrase in decoded.phrases if phrase.slot == "procedure"] == [
+            [span] for span in expected_spans
+        ]
+        assert [phrase.text for phrase in decoded.phrases if phrase.slot == "procedure_connector"] == [
+            "and"
+        ]
+        assert all(
+            phrase.fixed is False
+            for phrase in decoded.phrases
+            if phrase.slot == "procedure"
+        )
+
+
 def test_decoder_procedure_event_slice_preserves_unresolved_numbered_reference_gate():
     element, norm, decoded = _decode(
         "The Secretary shall publish the notice except as provided in section 552."
