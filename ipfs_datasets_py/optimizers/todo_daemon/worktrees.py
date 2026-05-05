@@ -44,6 +44,106 @@ def git_worktree_paths_from_porcelain(stdout: str) -> list[Path]:
     return _shared_git_worktree_paths_from_porcelain(stdout)
 
 
+def normalize_worktree_path(path: str | Path) -> str:
+    """Return a slash-normalized worktree-relative path string."""
+
+    return str(path).replace("\\", "/").strip()
+
+
+def unique_worktree_paths(paths: Sequence[str | Path]) -> list[str]:
+    """Return non-empty worktree paths, slash-normalized and deduplicated in order."""
+
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for path in paths:
+        normalized = normalize_worktree_path(path)
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            ordered.append(normalized)
+    return ordered
+
+
+def repo_relative_worktree_path(path: str | Path, *, repo_root: Path) -> str:
+    """Return ``path`` relative to ``repo_root`` when possible, normalized for Git pathspecs."""
+
+    candidate = Path(path)
+    absolute_candidate = candidate if candidate.is_absolute() else repo_root / candidate
+    try:
+        return absolute_candidate.relative_to(repo_root).as_posix()
+    except ValueError:
+        return normalize_worktree_path(candidate.as_posix())
+
+
+def worktree_path_allowed(path: str | Path, *, allowed_prefixes: Sequence[str]) -> bool:
+    """Return whether a normalized worktree path is inside one of the allowed prefixes."""
+
+    normalized = normalize_worktree_path(path)
+    return any(normalized.startswith(prefix) for prefix in allowed_prefixes)
+
+
+def disallowed_worktree_paths(
+    paths: Sequence[str | Path],
+    *,
+    allowed_prefixes: Sequence[str],
+    ignored_paths: Sequence[str | Path] = (),
+) -> list[str]:
+    """Return changed worktree paths outside the daemon's write allowlist."""
+
+    ignored = set(unique_worktree_paths(ignored_paths))
+    disallowed: list[str] = []
+    for path in unique_worktree_paths(paths):
+        if path in ignored:
+            continue
+        if worktree_path_allowed(path, allowed_prefixes=allowed_prefixes):
+            continue
+        disallowed.append(path)
+    return disallowed
+
+
+def worktree_file_edits(
+    worktree_path: Path,
+    changed_files: Sequence[str | Path],
+    *,
+    allowed_prefixes: Sequence[str],
+) -> list[dict[str, str]]:
+    """Read complete UTF-8 file edits from an isolated worktree for allowed paths."""
+
+    edits: list[dict[str, str]] = []
+    for path_text in unique_worktree_paths(changed_files):
+        if not worktree_path_allowed(path_text, allowed_prefixes=allowed_prefixes):
+            continue
+        path = worktree_path / path_text
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        edits.append({"path": path_text, "content": content})
+    return edits
+
+
+def write_worktree_file_edits_to_root(
+    root: Path,
+    edits: Sequence[Mapping[str, Any]],
+    *,
+    allowed_prefixes: Sequence[str],
+    error_prefix: str = "Worktree edit",
+) -> None:
+    """Write complete file edits into ``root`` after allowlist and traversal checks."""
+
+    for edit in edits:
+        raw_path = str(edit.get("path", ""))
+        normalized = normalize_worktree_path(raw_path)
+        if not normalized or normalized.startswith("/") or ".." in Path(normalized).parts:
+            raise ValueError(f"{error_prefix} path is unsafe: {raw_path!r}")
+        if not worktree_path_allowed(normalized, allowed_prefixes=allowed_prefixes):
+            raise ValueError(f"{error_prefix} path is outside daemon allowlist: {raw_path!r}")
+        path = root / normalized
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(str(edit.get("content", "")), encoding="utf-8")
+
+
 def pid_is_alive(pid: int) -> bool:
     """Return whether ``pid`` appears live and signalable."""
 

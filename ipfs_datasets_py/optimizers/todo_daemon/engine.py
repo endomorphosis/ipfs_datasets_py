@@ -334,6 +334,16 @@ def dataclass_worktree_config(
         ) from exc
 
 
+def config_repo_root(config: Any, *, repo_root_field: str = "repo_root") -> Path:
+    """Return the repository root path from a daemon config object."""
+
+    try:
+        value = getattr(config, str(repo_root_field or "repo_root"))
+    except AttributeError as exc:
+        raise AttributeError(f"daemon config does not define {repo_root_field!r}") from exc
+    return Path(value)
+
+
 def parse_markdown_tasks(
     markdown: str,
     *,
@@ -631,6 +641,21 @@ def validation_commands_for_proposal(
     return tuple(tuple(command) for command in default_commands)
 
 
+def config_validation_commands_for_proposal(
+    proposal: Proposal,
+    config: Any,
+    *,
+    validation_commands_field: str = "validation_commands",
+) -> tuple[tuple[str, ...], ...]:
+    """Return proposal validation commands using defaults from a daemon config object."""
+
+    try:
+        default_commands = getattr(config, str(validation_commands_field or "validation_commands"))
+    except AttributeError as exc:
+        raise AttributeError(f"daemon config does not define {validation_commands_field!r}") from exc
+    return validation_commands_for_proposal(proposal, default_commands)
+
+
 def run_validation_commands(
     *,
     repo_root: Path,
@@ -651,6 +676,34 @@ def run_validation_commands(
                 raise
             results.append(run_command_fn(tuple(command), cwd=repo_root, timeout=timeout_seconds))
     return results
+
+
+def run_config_validation_commands(
+    config: Any,
+    *,
+    commands: Optional[Sequence[Sequence[str]]] = None,
+    validation_commands_field: str = "validation_commands",
+    repo_root_field: str = "repo_root",
+    timeout_seconds_field: str = "command_timeout_seconds",
+    run_command_fn: Callable[..., CommandResult] = run_command,
+) -> list[CommandResult]:
+    """Run validation commands using repository root, defaults, and timeout from config."""
+
+    if commands is None:
+        try:
+            commands = getattr(config, str(validation_commands_field or "validation_commands"))
+        except AttributeError as exc:
+            raise AttributeError(f"daemon config does not define {validation_commands_field!r}") from exc
+    try:
+        timeout_seconds = int(getattr(config, str(timeout_seconds_field or "command_timeout_seconds")))
+    except AttributeError as exc:
+        raise AttributeError(f"daemon config does not define {timeout_seconds_field!r}") from exc
+    return run_validation_commands(
+        repo_root=config_repo_root(config, repo_root_field=repo_root_field),
+        commands=commands,
+        timeout_seconds=timeout_seconds,
+        run_command_fn=run_command_fn,
+    )
 
 
 def diff_for_file(path: str, before: str, after: str) -> str:

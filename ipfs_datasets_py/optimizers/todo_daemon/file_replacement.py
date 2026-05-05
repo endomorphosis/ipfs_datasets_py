@@ -9,10 +9,16 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
+from .artifacts import (
+    DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
+    persist_proposal_accepted_work,
+    persist_proposal_failed_work,
+)
 from .engine import (
     CommandResult,
     Proposal,
     compact_message,
+    config_repo_root,
     dataclass_worktree_config,
     extract_json,
     looks_like_empty_codex_event_stream,
@@ -30,6 +36,8 @@ from .runner import TodoDaemonHooks, TodoDaemonRunner
 
 ApplyProposalHook = Callable[[Proposal, Any], Proposal]
 DIFF_BLOCK_RE = re.compile(r"```(?:diff|patch)\s*([\s\S]*?)\s*```", re.IGNORECASE)
+DEFAULT_FILE_REPLACEMENT_ACCEPTED_DIR = Path(".daemon/accepted-work")
+DEFAULT_FILE_REPLACEMENT_FAILED_DIR = Path(".daemon/failed-work")
 
 
 @dataclass(frozen=True)
@@ -152,16 +160,6 @@ def proposal_files_from_validation_worktree(worktree: Path, changed: Iterable[st
     return engine_proposal_files_from_worktree(worktree, changed)
 
 
-def config_repo_root(config: Any, *, repo_root_field: str = "repo_root") -> Path:
-    """Return the repository root path from a daemon config object."""
-
-    try:
-        value = getattr(config, str(repo_root_field or "repo_root"))
-    except AttributeError as exc:
-        raise AttributeError(f"daemon config does not define {repo_root_field!r}") from exc
-    return Path(value)
-
-
 def config_proposal_diff_from_worktree(
     config: Any,
     worktree: Path,
@@ -196,6 +194,88 @@ def config_verify_promoted_worktree_files(
     """Verify promoted files against the daemon config's repository root."""
 
     return verify_promoted_worktree_files(config_repo_root(config, repo_root_field=repo_root_field), worktree, changed)
+
+
+def config_artifact_directory(
+    config: Any,
+    *,
+    directory_field: str,
+    default: Path,
+) -> Path:
+    """Return an artifact directory from config, falling back to a reusable default."""
+
+    value = getattr(config, directory_field, default)
+    return Path(value if value is not None else default)
+
+
+def config_persist_failed_file_replacement_work(
+    proposal: Proposal,
+    config: Any,
+    diff_text: str,
+    reason: str,
+    transport: str,
+    *,
+    failed_dir_field: str = "failed_work_dir",
+    default_failed_dir: Path = DEFAULT_FILE_REPLACEMENT_FAILED_DIR,
+    repo_root_field: str = "repo_root",
+) -> None:
+    """Persist failed complete-file proposal sidecars using config paths."""
+
+    persist_proposal_failed_work(
+        failed_dir=config_artifact_directory(
+            config,
+            directory_field=failed_dir_field,
+            default=default_failed_dir,
+        ),
+        proposal=proposal,
+        diff_text=diff_text,
+        reason=reason,
+        transport=transport,
+        repo_root=config_repo_root(config, repo_root_field=repo_root_field),
+    )
+
+
+def config_persist_accepted_file_replacement_work(
+    proposal: Proposal,
+    config: Any,
+    diff_text: str,
+    transport: str,
+    *,
+    accepted_dir_field: str = "accepted_work_dir",
+    default_accepted_dir: Path = DEFAULT_FILE_REPLACEMENT_ACCEPTED_DIR,
+    sidecars_enabled_field: str = "accepted_work_sidecars",
+    ledger_filename_field: str = "accepted_work_ledger_filename",
+    repo_root_field: str = "repo_root",
+) -> None:
+    """Persist accepted complete-file proposal evidence and ledger rows using config paths."""
+
+    ledger_filename = str(
+        getattr(config, ledger_filename_field, DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME)
+        or DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
+    )
+    persist_proposal_accepted_work(
+        repo_root=config_repo_root(config, repo_root_field=repo_root_field),
+        accepted_dir=config_artifact_directory(
+            config,
+            directory_field=accepted_dir_field,
+            default=default_accepted_dir,
+        ),
+        proposal=proposal,
+        diff_text=diff_text,
+        transport=transport,
+        write_sidecars_enabled=bool(getattr(config, sidecars_enabled_field, False)),
+        ledger_filename=ledger_filename,
+    )
+
+
+def no_file_replacement_validation_repair(
+    proposal: Proposal,
+    _config: Any,
+    _worktree: Path,
+) -> tuple[bool, list[str], str]:
+    """Return the standard no-op validation repair result for file-replacement hooks."""
+
+    return False, proposal.changed_files, ""
 
 
 def attempt_file_replacement_validation_repair(
@@ -273,9 +353,12 @@ class FileReplacementHooks:
     run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]]
     syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]]
     has_visible_source_change: Callable[[Iterable[str]], bool]
-    attempt_validation_repair: Callable[[Proposal, Any, Path], tuple[bool, list[str], str]]
-    persist_failed_work: Callable[[Proposal, Any, str, str, str], None]
-    persist_accepted_work: Callable[[Proposal, Any, str, str], None]
+    attempt_validation_repair: Callable[
+        [Proposal, Any, Path],
+        tuple[bool, list[str], str],
+    ] = no_file_replacement_validation_repair
+    persist_failed_work: Callable[[Proposal, Any, str, str, str], None] = config_persist_failed_file_replacement_work
+    persist_accepted_work: Callable[[Proposal, Any, str, str], None] = config_persist_accepted_file_replacement_work
     materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree
     proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree
     proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree

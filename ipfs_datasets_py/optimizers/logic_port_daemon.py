@@ -125,6 +125,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.typescript import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
+    disallowed_worktree_paths as _shared_disallowed_worktree_paths,
     git_status_paths as _shared_git_status_paths,
     git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     managed_git_worktree as _shared_managed_git_worktree,
@@ -133,7 +134,11 @@ from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     pid_is_alive as _shared_pid_is_alive,
     pid_looks_like_worktree_owner as _shared_pid_looks_like_worktree_owner,
     read_json_object as _shared_read_json_object,
+    repo_relative_worktree_path as _shared_repo_relative_worktree_path,
+    unique_worktree_paths as _shared_unique_worktree_paths,
     untracked_paths_from_git_status as _shared_untracked_paths_from_git_status,
+    worktree_file_edits as _shared_worktree_file_edits,
+    write_worktree_file_edits_to_root as _shared_write_worktree_file_edits_to_root,
     write_worktree_owner_file as _shared_write_worktree_owner_file,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.plans import (
@@ -2639,70 +2644,38 @@ PLANNING CONTEXT:
         return prompt
 
     def _worktree_diff_paths(self) -> List[str]:
-        paths = [
-            self._repo_relative_path(self.daemon_config.typescript_logic_dir).rstrip("/"),
-            "docs",
-            "ipfs_datasets_py/docs/logic",
-        ]
-        ordered: List[str] = []
-        seen = set()
-        for path in paths:
-            normalized = path.replace("\\", "/").strip()
-            if normalized and normalized not in seen:
-                seen.add(normalized)
-                ordered.append(normalized)
-        return ordered
+        return _shared_unique_worktree_paths(
+            [
+                self._repo_relative_path(self.daemon_config.typescript_logic_dir).rstrip("/"),
+                "docs",
+                "ipfs_datasets_py/docs/logic",
+            ]
+        )
 
     def _repo_relative_path(self, path: Path) -> str:
-        candidate = path if path.is_absolute() else self.daemon_config.repo_root / path
-        try:
-            return candidate.relative_to(self.daemon_config.repo_root).as_posix()
-        except ValueError:
-            return path.as_posix().replace("\\", "/")
+        return _shared_repo_relative_worktree_path(path, repo_root=self.daemon_config.repo_root)
 
     def _disallowed_worktree_paths(self, paths: Sequence[str], *, metadata_rel: str, owner_rel: str) -> List[str]:
-        ignored = {metadata_rel, owner_rel}
-        disallowed: List[str] = []
-        for path in paths:
-            normalized = path.replace("\\", "/")
-            if normalized in ignored:
-                continue
-            if any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
-                continue
-            disallowed.append(normalized)
-        return disallowed
+        return _shared_disallowed_worktree_paths(
+            paths,
+            allowed_prefixes=ALLOWED_WRITE_PREFIXES,
+            ignored_paths=(metadata_rel, owner_rel),
+        )
 
     def _worktree_file_edits(self, worktree_path: Path, changed_files: Sequence[str]) -> List[Dict[str, str]]:
-        edits: List[Dict[str, str]] = []
-        seen = set()
-        for path_text in changed_files:
-            normalized = path_text.replace("\\", "/").strip()
-            if not normalized or normalized in seen:
-                continue
-            if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
-                continue
-            path = worktree_path / normalized
-            if not path.exists() or not path.is_file():
-                continue
-            try:
-                content = path.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-                continue
-            edits.append({"path": normalized, "content": content})
-            seen.add(normalized)
-        return edits
+        return _shared_worktree_file_edits(
+            worktree_path,
+            changed_files,
+            allowed_prefixes=ALLOWED_WRITE_PREFIXES,
+        )
 
     def _write_file_edits_to_root(self, root: Path, edits: Sequence[Dict[str, str]]) -> None:
-        for edit in edits:
-            raw_path = str(edit.get("path", ""))
-            if not raw_path or raw_path.startswith("/") or ".." in Path(raw_path).parts:
-                raise ValueError(f"Unsafe worktree repair edit path: {raw_path!r}")
-            normalized = raw_path.replace("\\", "/")
-            if not any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES):
-                raise ValueError(f"Worktree repair edit path is outside daemon allowlist: {raw_path!r}")
-            path = root / normalized
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(str(edit.get("content", "")), encoding="utf-8")
+        _shared_write_worktree_file_edits_to_root(
+            root,
+            edits,
+            allowed_prefixes=ALLOWED_WRITE_PREFIXES,
+            error_prefix="Worktree repair edit",
+        )
 
     def _format_file_edits_in_root(self, root: Path, paths: Sequence[str]) -> None:
         ts_paths = [

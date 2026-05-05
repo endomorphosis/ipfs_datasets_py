@@ -89,9 +89,13 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     compact_status_artifact,
     compact_validation_result,
     compact_validation_results,
+    config_artifact_directory,
+    config_persist_accepted_file_replacement_work,
+    config_persist_failed_file_replacement_work,
     config_promote_worktree_files,
     config_proposal_diff_from_worktree,
     config_repo_root,
+    config_validation_commands_for_proposal,
     config_verify_promoted_worktree_files,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
@@ -103,6 +107,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     daemon_spec_payload,
     default_lifecycle_wrapper_script_specs,
     diagnostic_signatures,
+    disallowed_worktree_paths,
     exception_diagnostic,
     dispatcher_choices,
     env_flag,
@@ -178,6 +183,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     repair_common_typescript_text_damage,
     repo_relative_copy_paths,
     repo_relative_pathspec,
+    repo_relative_worktree_path,
     recent_failure_count,
     recent_proposal_failures,
     recent_rollback_failure_count,
@@ -196,6 +202,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
+    run_config_validation_commands,
     run_validation_commands,
     run_lifecycle_args,
     run_lifecycle_cli,
@@ -233,6 +240,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     tranche_number_from_title,
     unified_diff_stats,
     unique_normalized_paths,
+    unique_worktree_paths,
     untracked_paths_from_git_status_porcelain,
     update_generated_status_block,
     upsert_deterministic_progress_record,
@@ -241,7 +249,10 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     validation_worktree_for_spec,
     verify_promoted_worktree_files,
     wait_for_child_exit,
+    worktree_file_edits,
+    worktree_path_allowed,
     worktree_phase_worker_status,
+    write_worktree_file_edits_to_root,
     write_json,
     write_accepted_work_evidence_artifacts,
     write_status_json,
@@ -1211,6 +1222,12 @@ def test_typescript_repair_helpers_are_reusable() -> None:
 
 
 def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class ValidationConfig:
+        repo_root: Path
+        validation_commands: tuple[tuple[str, ...], ...]
+        command_timeout_seconds: int = 11
+
     default_commands = (("python3", "-c", "print('default')"),)
     trusted = Proposal(
         validation_commands=[["python3", "-c", "print('trusted')"]],
@@ -1229,19 +1246,36 @@ def test_validation_command_helpers_are_reusable(tmp_path: Path) -> None:
         assert timeout_seconds == 11
         return CommandResult(tuple(command), 0, "ok", "")
 
+    config = ValidationConfig(repo_root=tmp_path, validation_commands=default_commands)
     results = run_validation_commands(
         repo_root=tmp_path,
         commands=validation_commands_for_proposal(trusted, default_commands),
         timeout_seconds=11,
         run_command_fn=fake_run_command,
     )
+    config_results = run_config_validation_commands(
+        config,
+        commands=config_validation_commands_for_proposal(trusted, config),
+        run_command_fn=fake_run_command,
+    )
+    default_results = run_config_validation_commands(config, run_command_fn=fake_run_command)
 
     assert validation_commands_for_proposal(trusted, default_commands) == (
         ("python3", "-c", "print('trusted')"),
     )
+    assert config_validation_commands_for_proposal(trusted, config) == (
+        ("python3", "-c", "print('trusted')"),
+    )
     assert validation_commands_for_proposal(untrusted, default_commands) == default_commands
-    assert calls == [("python3", "-c", "print('trusted')")]
+    assert config_validation_commands_for_proposal(untrusted, config) == default_commands
+    assert calls == [
+        ("python3", "-c", "print('trusted')"),
+        ("python3", "-c", "print('trusted')"),
+        ("python3", "-c", "print('default')"),
+    ]
     assert results[0].ok
+    assert config_results[0].ok
+    assert default_results[0].ok
 
 
 def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: Path, monkeypatch) -> None:
@@ -2342,6 +2376,67 @@ def test_managed_git_worktree_captures_lifecycle_trace(tmp_path: Path) -> None:
     assert session.raw_trace["worktree_remove"]["returncode"] == 0
 
 
+def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    worktree = tmp_path / "worktree"
+    root = tmp_path / "root"
+    outside = tmp_path / "outside.ts"
+    allowed = ("src/lib/logic/", "docs/")
+    (worktree / "src" / "lib" / "logic").mkdir(parents=True)
+    (worktree / "docs").mkdir()
+    (worktree / "package.json").write_text("{}\n", encoding="utf-8")
+    (worktree / "src" / "lib" / "logic" / "a.ts").write_text("export const a = 1;\n", encoding="utf-8")
+    (worktree / "src" / "lib" / "logic" / "binary.ts").write_bytes(b"\xff")
+    (worktree / "docs" / "PLAN.md").write_text("Plan\n", encoding="utf-8")
+
+    assert unique_worktree_paths(["docs", "docs", "src\\lib\\logic\\a.ts", "", Path("docs/PLAN.md")]) == [
+        "docs",
+        "src/lib/logic/a.ts",
+        "docs/PLAN.md",
+    ]
+    assert repo_relative_worktree_path(repo / "src/lib/logic", repo_root=repo) == "src/lib/logic"
+    assert repo_relative_worktree_path(Path("docs/PLAN.md"), repo_root=repo) == "docs/PLAN.md"
+    assert repo_relative_worktree_path(outside, repo_root=repo) == outside.as_posix()
+    assert worktree_path_allowed("src/lib/logic/a.ts", allowed_prefixes=allowed) is True
+    assert worktree_path_allowed("src/lib/logic.ts", allowed_prefixes=allowed) is False
+    assert disallowed_worktree_paths(
+        ["src/lib/logic/a.ts", "docs\\PLAN.md", ".metadata.json", "package.json", "package.json"],
+        allowed_prefixes=allowed,
+        ignored_paths=(".metadata.json",),
+    ) == ["package.json"]
+
+    edits = worktree_file_edits(
+        worktree,
+        [
+            "src/lib/logic/a.ts",
+            "src/lib/logic/a.ts",
+            "src/lib/logic/binary.ts",
+            "docs\\PLAN.md",
+            "package.json",
+            "missing.ts",
+        ],
+        allowed_prefixes=allowed,
+    )
+    assert edits == [
+        {"path": "src/lib/logic/a.ts", "content": "export const a = 1;\n"},
+        {"path": "docs/PLAN.md", "content": "Plan\n"},
+    ]
+
+    write_worktree_file_edits_to_root(root, edits, allowed_prefixes=allowed)
+    assert (root / "src" / "lib" / "logic" / "a.ts").read_text(encoding="utf-8") == "export const a = 1;\n"
+    assert (root / "docs" / "PLAN.md").read_text(encoding="utf-8") == "Plan\n"
+    for unsafe_edit in (
+        {"path": "../escape.ts", "content": ""},
+        {"path": "package.json", "content": "{}\n"},
+    ):
+        try:
+            write_worktree_file_edits_to_root(root, [unsafe_edit], allowed_prefixes=allowed)
+        except ValueError as exc:
+            assert "path" in str(exc)
+        else:
+            raise AssertionError("expected unsafe worktree edit path to be rejected")
+
+
 def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -2455,6 +2550,60 @@ def test_config_repo_root_file_replacement_helpers_use_daemon_config_root(tmp_pa
     config_promote_worktree_files(config, worktree, changed)
     assert config_verify_promoted_worktree_files(config, worktree, changed) == []
     assert (repo / "todo" / "source.py").read_text(encoding="utf-8") == "VALUE = 2\n"
+
+
+def test_config_file_replacement_persistence_helpers_use_config_artifact_dirs(tmp_path: Path) -> None:
+    @dataclass(frozen=True)
+    class ArtifactConfig:
+        repo_root: Path
+        accepted_dir: Path = Path("todo/accepted")
+        failed_dir: Path = Path("todo/failed")
+        write_accepted_work_sidecars: bool = True
+
+    repo = tmp_path / "repo"
+    config = ArtifactConfig(repo_root=repo)
+    proposal = Proposal(
+        summary="Config artifact work",
+        target_task="Task checkbox-22: Persist via config.",
+        changed_files=["todo/source.py"],
+        validation_results=[CommandResult(("pytest", "-q"), 0, "ok", "")],
+        promotion_verified=True,
+    )
+    failed = Proposal(
+        summary="Config failed work",
+        target_task=proposal.target_task,
+        changed_files=["todo/source.py"],
+        validation_results=[CommandResult(("pytest", "-q"), 1, "", "failed")],
+        errors=["validation failed"],
+    )
+
+    config_persist_accepted_file_replacement_work(
+        proposal,
+        config,
+        "diff\n",
+        "ephemeral_worktree",
+        accepted_dir_field="accepted_dir",
+        sidecars_enabled_field="write_accepted_work_sidecars",
+    )
+    config_persist_failed_file_replacement_work(
+        failed,
+        config,
+        "failed diff\n",
+        "validation",
+        "ephemeral_worktree",
+        failed_dir_field="failed_dir",
+    )
+
+    accepted_dir = repo / "todo" / "accepted"
+    failed_dir = repo / "todo" / "failed"
+    ledger_path = accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME
+    ledger_rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+
+    assert config_artifact_directory(config, directory_field="missing_dir", default=Path("fallback")) == Path("fallback")
+    assert ledger_rows[0]["target_task"] == proposal.target_task
+    assert ledger_rows[0]["artifacts"]["mode"] == "sidecars"
+    assert any(path.name.endswith(".workspace.json") for path in accepted_dir.iterdir())
+    assert any(path.name.endswith(".workspace.json") for path in failed_dir.iterdir())
 
 
 def test_supervisor_heartbeat_and_worker_watchdog_helpers_are_reusable() -> None:
@@ -2911,6 +3060,78 @@ def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Pa
     assert target.read_text(encoding="utf-8") == "VALUE = 2\n"
     assert accepted == [("Accepted reusable flow", "ephemeral_worktree")]
     assert failed == []
+
+
+def test_file_replacement_default_persistence_uses_config_artifact_dirs(tmp_path: Path) -> None:
+    @dataclass
+    class ArtifactConfig(SyntheticDaemonConfig):
+        accepted_work_dir: Path = Path(".daemon/file-replacement-accepted")
+        failed_work_dir: Path = Path(".daemon/file-replacement-failed")
+        accepted_work_sidecars: bool = True
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "todo").mkdir()
+    target = repo / "todo" / "source.py"
+    target.write_text("VALUE = 1\n", encoding="utf-8")
+    config = ArtifactConfig(repo_root=repo)
+    spec = ValidationWorkspaceSpec(
+        repo_root=repo,
+        worktree_dir=Path(".daemon/worktrees"),
+        marker_name="example-worktree.json",
+        copy_paths=(Path("todo"),),
+    )
+    hooks = FileReplacementHooks(
+        validate_write_path=lambda path: [] if path.startswith("todo/") else ["outside allowlist"],
+        temporary_validation_worktree=validation_worktree_for_spec(spec),
+        validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
+        run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
+        syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
+        has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
+    )
+
+    accepted_result = apply_file_replacement_proposal(
+        Proposal(
+            summary="Default persistence accepted",
+            target_task="Task checkbox-8: Persist accepted replacements",
+            files=[{"path": "todo/source.py", "content": "VALUE = 2\n"}],
+            requires_visible_source_change=True,
+        ),
+        config,
+        hooks,
+    )
+    failed_result = apply_file_replacement_proposal(
+        Proposal(
+            summary="Default persistence failed",
+            target_task="Task checkbox-9: Persist failed replacements",
+            files=[{"path": "elsewhere/source.py", "content": "bad\n"}],
+        ),
+        config,
+        hooks,
+    )
+    accepted_dir = repo / config.accepted_work_dir
+    failed_dir = repo / config.failed_work_dir
+    accepted_rows = [
+        json.loads(line)
+        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME).read_text(encoding="utf-8").splitlines()
+    ]
+    failed_manifests = [
+        path
+        for path in failed_dir.glob("*.json")
+        if not path.name.endswith(".workspace.json")
+    ]
+
+    assert accepted_result.valid
+    assert failed_result.failure_kind == "preflight"
+    assert target.read_text(encoding="utf-8") == "VALUE = 2\n"
+    assert accepted_rows[0]["summary"] == "Default persistence accepted"
+    assert accepted_rows[0]["transport"] == "ephemeral_worktree"
+    assert accepted_rows[0]["artifacts"]["mode"] == "sidecars"
+    assert accepted_rows[0]["artifacts"]["manifest"].startswith(".daemon/file-replacement-accepted/")
+    assert len(failed_manifests) == 1
+    failed_manifest = json.loads(failed_manifests[0].read_text(encoding="utf-8"))
+    assert failed_manifest["reason"] == "preflight"
+    assert failed_manifest["transport"] == "direct"
 
 
 def test_file_replacement_apply_flow_rejects_disallowed_paths(tmp_path: Path) -> None:
