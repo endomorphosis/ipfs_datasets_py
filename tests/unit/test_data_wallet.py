@@ -34,6 +34,7 @@ from ipfs_datasets_py.wallet.storage import (
     S3EncryptedBlobStore,
 )
 from ipfs_datasets_py.wallet.ucan import (
+    WALLET_UCAN_CONFORMANCE_FIXTURE_ID,
     WALLET_UCAN_TOKEN_PREFIX,
     invocation_from_token,
     invocation_to_token,
@@ -43,6 +44,9 @@ from ipfs_datasets_py.wallet.ucan import (
     resource_for_record,
     resource_for_wallet,
     sign_invocation,
+    validate_ucan_profile_payload,
+    validate_wallet_ucan_conformance_fixture,
+    wallet_ucan_conformance_fixture,
     wallet_ucan_profile,
 )
 
@@ -377,6 +381,15 @@ def test_redacted_graphrag_returns_safe_graph_without_entity_text(tmp_path):
     serialized = json.dumps(output)
     assert result["artifact"].artifact_type == "redacted_document_graphrag"
     assert output["output_policy"] == "redacted_graphrag"
+    assert output["backend_policy"] == {
+        "backend_id": "wallet-local-redacted-graphrag-v1",
+        "execution_boundary": "wallet-local",
+        "model_backed": False,
+        "extractor": "processors.graphrag_integrator.GraphRAGIntegrator",
+        "extractor_mode": "legacy-regex-compatibility",
+        "plaintext_scope": "wallet-service-only",
+        "returned_entity_scope": "entity_type_counts_only",
+    }
     assert output["source_record_count"] == 2
     assert output["graph"]["graph_type"] == "redacted_category_entity_graph"
     assert output["graph"]["node_count"] >= 4
@@ -389,6 +402,33 @@ def test_redacted_graphrag_returns_safe_graph_without_entity_text(tmp_path):
     assert "SNAP enrollment" not in serialized
     actions = [event.action for event in service.get_audit_log(wallet.wallet_id)]
     assert "record/graphrag_redacted" in actions
+
+
+def test_redacted_graphrag_rejects_model_backed_extractor(tmp_path, monkeypatch):
+    import ipfs_datasets_py.processors.graphrag_integrator as graphrag_integrator
+
+    class ModelBackedGraphRAGIntegrator:
+        use_real_models = True
+
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def extract_entities(self, text: str):
+            return []
+
+    monkeypatch.setattr(graphrag_integrator, "GraphRAGIntegrator", ModelBackedGraphRAGIntegrator)
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "housing.txt"
+    source.write_text("Jane Example needs rent assistance.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source)
+
+    with pytest.raises(RuntimeError, match="model-backed entity extraction"):
+        service.create_redacted_graphrag(
+            wallet.wallet_id,
+            [record.record_id],
+            actor_did=OWNER,
+        )
 
 
 def test_document_output_type_caveats_are_enforced_by_operation(tmp_path):
@@ -1273,6 +1313,51 @@ def test_location_distance_proof_hides_precise_point_and_target_coordinates(tmp_
         assert secret not in public_receipt
 
 
+def test_location_distance_proof_enforces_target_and_threshold_caveats(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    location = service.add_location(wallet.wallet_id, lat=45.515232, lon=-122.678385)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource_for_location(wallet.wallet_id, location.record_id)],
+        abilities=["location/prove_distance"],
+        caveats={
+            "purpose": "service_matching",
+            "proof_type": "location_distance",
+            "target_id": "shelter-west",
+            "max_distance_km": 1.0,
+        },
+    )
+
+    with pytest.raises(AccessDeniedError, match="target_id"):
+        service.create_location_distance_proof(
+            wallet.wallet_id,
+            location.record_id,
+            actor_did=ADVOCATE,
+            target_id="shelter-east",
+            target_lat=45.516,
+            target_lon=-122.679,
+            max_distance_km=1.0,
+            grant_id=grant.grant_id,
+        )
+
+    with pytest.raises(AccessDeniedError, match="max_distance_km"):
+        service.create_location_distance_proof(
+            wallet.wallet_id,
+            location.record_id,
+            actor_did=ADVOCATE,
+            target_id="shelter-west",
+            target_lat=45.516,
+            target_lon=-122.679,
+            max_distance_km=2.0,
+            grant_id=grant.grant_id,
+        )
+
+    assert service.proofs == {}
+
+
 def test_location_distance_proof_rejects_out_of_range_claim(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -1751,6 +1836,177 @@ def test_wallet_ucan_profile_payload_exports_capability_without_plaintext(tmp_pa
         }
     ]
     assert "confidential rental assistance" not in serialized
+
+
+def test_wallet_ucan_conformance_fixture_validates_profile_payload(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "interop-case-note.txt"
+    source.write_text("Interop fixture must not expose this document text.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+    )
+
+    fixture = wallet_ucan_conformance_fixture(invocation, grant=grant)
+    normalized = validate_ucan_profile_payload(fixture["profile_payload"])
+    fixture_normalized = validate_wallet_ucan_conformance_fixture(fixture)
+    serialized = json.dumps(fixture)
+
+    assert fixture["fixture"] == WALLET_UCAN_CONFORMANCE_FIXTURE_ID
+    assert fixture["token"].startswith(WALLET_UCAN_TOKEN_PREFIX)
+    assert fixture["expected"]["issuer"] == OWNER
+    assert fixture["expected"]["audience"] == ADVOCATE
+    assert fixture["expected"]["capability"] == {
+        "with": resource,
+        "can": "record/analyze",
+        "nb": {"purpose": "case_review", "output_types": ["summary"]},
+    }
+    assert normalized["issuer_did"] == OWNER
+    assert normalized["audience_did"] == ADVOCATE
+    assert normalized["resource"] == resource
+    assert normalized["ability"] == "record/analyze"
+    assert fixture_normalized["issuer_did"] == OWNER
+    assert fixture_normalized["resource"] == resource
+    assert fixture_normalized["signature_payload_sha256"] == fixture["signature_payload_sha256"]
+    assert "Interop fixture must not expose this document text" not in serialized
+
+    tampered = json.loads(json.dumps(fixture["profile_payload"]))
+    tampered["ucan"]["att"][0]["can"] = "record/decrypt"
+    with pytest.raises(ValueError, match="ability"):
+        validate_ucan_profile_payload(tampered)
+
+    tampered_fixture = json.loads(json.dumps(fixture))
+    tampered_fixture["expected"]["capability"]["can"] = "record/decrypt"
+    with pytest.raises(ValueError, match="capability.can"):
+        validate_wallet_ucan_conformance_fixture(tampered_fixture)
+
+    tampered_fixture = json.loads(json.dumps(fixture))
+    tampered_fixture["signature_payload_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="signature_payload_sha256"):
+        validate_wallet_ucan_conformance_fixture(tampered_fixture)
+
+    other_invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+    )
+    with pytest.raises(ValueError, match="token does not encode"):
+        wallet_ucan_conformance_fixture(
+            invocation,
+            grant=grant,
+            token=invocation_to_token(other_invocation),
+        )
+
+
+def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
+    from ipfs_datasets_py.wallet.cli import main as wallet_cli_main
+
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "cli-interop-case-note.txt"
+    source.write_text("CLI fixture must not expose this document text.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+    )
+    token = invocation_to_token(invocation)
+    grant_path = tmp_path / "grant.json"
+    fixture_path = tmp_path / "ucan-fixture.json"
+    profile_payload_path = tmp_path / "ucan-profile-payload.json"
+    grant_path.write_text(json.dumps(grant.to_dict(), sort_keys=True), encoding="utf-8")
+
+    assert wallet_cli_main(["--json", "ucan-profile"]) == 0
+    profile_output = json.loads(capsys.readouterr().out)
+    assert profile_output["profile"]["profile"] == "wallet-ucan-v1"
+    assert profile_output["profile"]["token_prefix"] == WALLET_UCAN_TOKEN_PREFIX.rstrip(".")
+
+    assert (
+        wallet_cli_main(
+            [
+                "--json",
+                "ucan-conformance-fixture",
+                "--invocation-token",
+                token,
+                "--grant-path",
+                str(grant_path),
+                "--out",
+                str(fixture_path),
+            ]
+        )
+        == 0
+    )
+    fixture_summary = json.loads(capsys.readouterr().out)
+    assert fixture_summary["fixture"] == WALLET_UCAN_CONFORMANCE_FIXTURE_ID
+    assert fixture_summary["resource"] == resource
+    assert fixture_summary["ability"] == "record/analyze"
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(fixture)
+    assert "CLI fixture must not expose this document text" not in serialized
+
+    assert wallet_cli_main(["--json", "ucan-validate-fixture", "--path", str(fixture_path)]) == 0
+    validation_output = json.loads(capsys.readouterr().out)
+    assert validation_output["valid"] is True
+    assert validation_output["resource"] == resource
+
+    profile_payload_path.write_text(
+        json.dumps(fixture["profile_payload"], sort_keys=True),
+        encoding="utf-8",
+    )
+    assert wallet_cli_main(["--json", "ucan-validate-profile", "--path", str(profile_payload_path)]) == 0
+    profile_validation = json.loads(capsys.readouterr().out)
+    assert profile_validation["valid"] is True
+    assert profile_validation["ability"] == "record/analyze"
+
+    tampered_fixture = json.loads(json.dumps(fixture))
+    tampered_fixture["expected"]["capability"]["can"] = "record/decrypt"
+    fixture_path.write_text(json.dumps(tampered_fixture, sort_keys=True), encoding="utf-8")
+    assert wallet_cli_main(["--json", "ucan-validate-fixture", "--path", str(fixture_path)]) == 1
+    error_output = json.loads(capsys.readouterr().out)
+    assert error_output["status"] == "error"
+    assert "capability.can" in error_output["error"]
 
 
 def test_legacy_invocation_token_without_issuer_remains_verifiable(tmp_path):

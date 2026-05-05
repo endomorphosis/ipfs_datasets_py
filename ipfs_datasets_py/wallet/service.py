@@ -90,6 +90,16 @@ class DataWalletService:
     """In-process service for encrypted wallet records and delegated access."""
 
     RECOVERY_APPROVAL_OPERATIONS = {"wallet/controller_recover"}
+    REDACTED_GRAPHRAG_BACKEND_ID = "wallet-local-redacted-graphrag-v1"
+    REDACTED_GRAPHRAG_BACKEND_POLICY = {
+        "backend_id": REDACTED_GRAPHRAG_BACKEND_ID,
+        "execution_boundary": "wallet-local",
+        "model_backed": False,
+        "extractor": "processors.graphrag_integrator.GraphRAGIntegrator",
+        "extractor_mode": "legacy-regex-compatibility",
+        "plaintext_scope": "wallet-service-only",
+        "returned_entity_scope": "entity_type_counts_only",
+    }
     REDACTION_PATTERNS = {
         "email": re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE),
         "phone": re.compile(r"\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b"),
@@ -1518,17 +1528,24 @@ class DataWalletService:
         record = self._record(wallet_id, record_id)
         if record.data_type != "location":
             raise ValueError("Record is not a location record")
-        if float(max_distance_km) <= 0:
+        requested_max_distance_km = float(max_distance_km)
+        if requested_max_distance_km <= 0:
             raise ValueError("max_distance_km must be positive")
         if actor_did != self._wallet(wallet_id).owner_did:
             if grant_id is None:
                 raise AccessDeniedError("Location distance proof requires a grant")
+            grant = self.grants[grant_id]
             self._assert_grant_allows(
-                self.grants[grant_id],
+                grant,
                 wallet_id=wallet_id,
                 audience_did=actor_did,
                 resource=resource_for_location(wallet_id, record_id),
                 ability="location/prove_distance",
+            )
+            self._assert_location_distance_caveats(
+                grant,
+                target_id=target_id,
+                max_distance_km=requested_max_distance_km,
             )
         raw = self.decrypt_record(wallet_id, record_id, actor_did=self._wallet(wallet_id).owner_did)
         payload = json.loads(raw.decode("utf-8"))
@@ -1538,7 +1555,7 @@ class DataWalletService:
             target_lat,
             target_lon,
         )
-        if distance_km > float(max_distance_km):
+        if distance_km > requested_max_distance_km:
             raise DataWalletError("Location is outside the requested distance threshold")
         statement = distance_membership_statement(
             payload["lat"],
@@ -1546,12 +1563,12 @@ class DataWalletService:
             target_id=target_id,
             target_lat=target_lat,
             target_lon=target_lon,
-            max_distance_km=max_distance_km,
+            max_distance_km=requested_max_distance_km,
         )
         public_inputs = {
             "target_id": target_id,
             "claim": "location_within_distance",
-            "max_distance_km": float(max_distance_km),
+            "max_distance_km": requested_max_distance_km,
             "target_policy_hash": statement["target_policy_hash"],
         }
         witness = {
@@ -1559,7 +1576,7 @@ class DataWalletService:
             "lon": payload["lon"],
             "target_lat": float(target_lat),
             "target_lon": float(target_lon),
-            "max_distance_km": float(max_distance_km),
+            "max_distance_km": requested_max_distance_km,
             "wallet_id": wallet_id,
             "record_id": record_id,
         }
@@ -1590,6 +1607,37 @@ class DataWalletService:
             grant_id=grant_id,
         )
         return receipt
+
+    @staticmethod
+    def _caveat_value_set(value: object) -> set[str]:
+        if value is None:
+            return set()
+        if isinstance(value, (list, tuple, set)):
+            return {str(item) for item in value}
+        return {str(value)}
+
+    def _assert_location_distance_caveats(
+        self,
+        grant: Grant,
+        *,
+        target_id: str,
+        max_distance_km: float,
+    ) -> None:
+        proof_type = grant.caveats.get("proof_type")
+        if proof_type is not None and str(proof_type) != "location_distance":
+            raise AccessDeniedError("Grant proof_type caveat does not allow location_distance")
+
+        target_caveat = grant.caveats.get("target_id")
+        if target_caveat is None:
+            target_caveat = grant.caveats.get("target_ids")
+        if target_caveat is not None and str(target_id) not in self._caveat_value_set(target_caveat):
+            raise AccessDeniedError("Grant target_id caveat does not cover requested target")
+
+        max_distance_caveat = grant.caveats.get("max_distance_km")
+        if max_distance_caveat is None:
+            max_distance_caveat = grant.caveats.get("distance_km")
+        if max_distance_caveat is not None and float(max_distance_km) > float(max_distance_caveat):
+            raise AccessDeniedError("Grant max_distance_km caveat does not cover requested threshold")
 
     def analyze_record_summary(
         self,
@@ -2291,6 +2339,7 @@ class DataWalletService:
         )
         output = {
             "output_policy": "redacted_graphrag",
+            "backend_policy": dict(self.REDACTED_GRAPHRAG_BACKEND_POLICY),
             "graph": graph,
             "per_record": per_record,
             "source_record_ids": ordered_record_ids,
@@ -2328,6 +2377,7 @@ class DataWalletService:
             details={
                 "artifact_id": artifact.artifact_id,
                 "artifact_type": artifact.artifact_type,
+                "backend_id": self.REDACTED_GRAPHRAG_BACKEND_ID,
                 "source_record_count": len(ordered_record_ids),
                 "node_count": graph["node_count"],
                 "edge_count": graph["edge_count"],
@@ -2678,8 +2728,16 @@ class DataWalletService:
     def _extract_graphrag_entity_type_counts(self, redacted_text: str) -> Dict[str, int]:
         try:
             from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator
-
-            entities = GraphRAGIntegrator().extract_entities(redacted_text)
+        except Exception:
+            return {}
+        try:
+            integrator = GraphRAGIntegrator(config={"use_real_models": False})
+        except Exception:
+            return {}
+        if getattr(integrator, "use_real_models", False):
+            raise RuntimeError("wallet redacted GraphRAG must not use model-backed entity extraction")
+        try:
+            entities = integrator.extract_entities(redacted_text)
         except Exception:
             entities = []
         counts: Dict[str, int] = {}

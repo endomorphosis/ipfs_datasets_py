@@ -55,9 +55,13 @@ from .storage import (
     create_encrypted_blob_store,
 )
 from .ucan import (
+    WALLET_UCAN_CONFORMANCE_FIXTURE_ID,
     WALLET_UCAN_PROFILE_ID,
     WALLET_UCAN_TOKEN_PREFIX,
     invocation_to_ucan_profile_payload,
+    validate_ucan_profile_payload,
+    validate_wallet_ucan_conformance_fixture,
+    wallet_ucan_conformance_fixture,
     wallet_ucan_profile,
 )
 
@@ -107,10 +111,14 @@ __all__ = [
     "WalletStorageHealthReport",
     "WalletStorageBackendConfig",
     "WalletStorageConfig",
+    "WALLET_UCAN_CONFORMANCE_FIXTURE_ID",
     "WALLET_UCAN_PROFILE_ID",
     "WALLET_UCAN_TOKEN_PREFIX",
     "create_encrypted_blob_store",
     "invocation_to_ucan_profile_payload",
     "operation_requires_approval",
+    "validate_ucan_profile_payload",
+    "validate_wallet_ucan_conformance_fixture",
+    "wallet_ucan_conformance_fixture",
     "wallet_ucan_profile",
 ]

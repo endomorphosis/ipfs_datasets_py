@@ -16,6 +16,10 @@ from ipfs_datasets_py.wallet.ucan import (
     invocation_to_token,
     resource_for_export,
     resource_for_record,
+    validate_ucan_profile_payload,
+    validate_wallet_ucan_conformance_fixture,
+    wallet_ucan_conformance_fixture,
+    wallet_ucan_profile,
 )
 
 
@@ -239,6 +243,19 @@ def build_parser() -> argparse.ArgumentParser:
     export_storage = subparsers.add_parser("export-bundle-storage", help="Verify encrypted blob availability for an export bundle")
     export_storage.add_argument("--path", type=Path, required=True)
 
+    subparsers.add_parser("ucan-profile", help="Show the wallet UCAN profile contract")
+
+    ucan_fixture = subparsers.add_parser("ucan-conformance-fixture", help="Create a wallet UCAN adapter conformance fixture")
+    ucan_fixture.add_argument("--invocation-token", required=True)
+    ucan_fixture.add_argument("--grant-path", type=Path, help="Optional grant JSON to include in the fixture")
+    ucan_fixture.add_argument("--out", type=Path, help="Optional path to write the fixture JSON")
+
+    validate_ucan_profile = subparsers.add_parser("ucan-validate-profile", help="Validate a wallet UCAN profile payload JSON file")
+    validate_ucan_profile.add_argument("--path", type=Path, required=True)
+
+    validate_ucan_fixture = subparsers.add_parser("ucan-validate-fixture", help="Validate a wallet UCAN conformance fixture JSON file")
+    validate_ucan_fixture.add_argument("--path", type=Path, required=True)
+
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
     access_requests.add_argument("--status", choices=["pending", "approved", "rejected", "revoked", "all"], default="pending")
@@ -403,6 +420,52 @@ def main(argv: Optional[list[str]] = None) -> int:
             bundle = json.loads(args.path.read_text(encoding="utf-8"))
             result = service.verify_export_bundle_storage(bundle)
             _emit({"status": "ok", **result}, json_output=args.json_output)
+            return 0
+
+        if args.command == "ucan-profile":
+            _emit({"status": "ok", "profile": wallet_ucan_profile()}, json_output=args.json_output)
+            return 0
+
+        if args.command == "ucan-conformance-fixture":
+            grant = None
+            if args.grant_path:
+                grant = json.loads(args.grant_path.read_text(encoding="utf-8"))
+            invocation = invocation_from_token(args.invocation_token)
+            fixture = wallet_ucan_conformance_fixture(
+                invocation,
+                grant=grant,
+                token=args.invocation_token,
+            )
+            if args.out:
+                args.out.parent.mkdir(parents=True, exist_ok=True)
+                args.out.write_text(json.dumps(fixture, sort_keys=True, indent=2), encoding="utf-8")
+                normalized = validate_wallet_ucan_conformance_fixture(fixture)
+                _emit(
+                    {
+                        "status": "ok",
+                        "out": str(args.out),
+                        "fixture": fixture["fixture"],
+                        "profile": fixture["profile"],
+                        "token_invocation_id": normalized["token_invocation_id"],
+                        "resource": normalized["resource"],
+                        "ability": normalized["ability"],
+                    },
+                    json_output=args.json_output,
+                )
+                return 0
+            _emit({"status": "ok", "fixture": fixture}, json_output=args.json_output)
+            return 0
+
+        if args.command == "ucan-validate-profile":
+            payload = json.loads(args.path.read_text(encoding="utf-8"))
+            normalized = validate_ucan_profile_payload(payload)
+            _emit({"status": "ok", "valid": True, **normalized}, json_output=args.json_output)
+            return 0
+
+        if args.command == "ucan-validate-fixture":
+            fixture = json.loads(args.path.read_text(encoding="utf-8"))
+            normalized = validate_wallet_ucan_conformance_fixture(fixture)
+            _emit({"status": "ok", "valid": True, **normalized}, json_output=args.json_output)
             return 0
 
         if args.command == "create":

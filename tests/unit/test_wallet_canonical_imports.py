@@ -43,6 +43,9 @@ def test_wallet_submodules_expose_generic_helpers() -> None:
         S3EncryptedBlobStore,
         WalletStorageConfig,
         create_encrypted_blob_store,
+        validate_ucan_profile_payload,
+        validate_wallet_ucan_conformance_fixture,
+        wallet_ucan_conformance_fixture,
     )
     from ipfs_datasets_py.wallet.storage import IPFSEncryptedBlobStore, LocalEncryptedBlobStore
     from ipfs_datasets_py.wallet.ucan import resource_for_location, resource_for_record
@@ -55,6 +58,9 @@ def test_wallet_submodules_expose_generic_helpers() -> None:
     assert S3EncryptedBlobStore.__name__ == "S3EncryptedBlobStore"
     assert WalletStorageConfig.__name__ == "WalletStorageConfig"
     assert callable(create_encrypted_blob_store)
+    assert callable(validate_ucan_profile_payload)
+    assert callable(validate_wallet_ucan_conformance_fixture)
+    assert callable(wallet_ucan_conformance_fixture)
     assert resource_for_record("wallet-1", "rec-1") == "wallet://wallet-1/records/rec-1"
     assert resource_for_location("wallet-1", "rec-1") == "wallet://wallet-1/location/rec-1"
 
