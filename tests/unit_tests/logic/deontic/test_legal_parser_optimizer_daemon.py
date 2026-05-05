@@ -298,6 +298,10 @@ def test_supervisor_recovers_dirty_targets_before_agentic_maintenance():
     assert '"automatic restore failed"' in recovery_body
     assert "dirty_legal_parser_targets_known_bad_restore_failure" in recovery_body
     assert "and not known_bad_restore_failure" in recovery_body
+    assert "failed_nodes_file" in recovery_body
+    assert "append_failed_nodes_from_text(recovery_reason, failed_nodes)" in recovery_body
+    assert "latest_candidate_validation_failure" in recovery_body
+    assert "Running focused pytest nodes from recovery failure history" in recovery_body
     assert "status_stall_age < dirty_target_grace_seconds" in script
     assert "progress_dirty_legal_parser_targets_diff_summary" in (
         repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh"

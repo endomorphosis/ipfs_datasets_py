@@ -1692,7 +1692,10 @@ recover_dirty_legal_parser_targets() {
   targets_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-targets.XXXXXX")"
   py_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-py.XXXXXX")"
   test_files_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-tests.XXXXXX")"
-  python3 - "$REPO_ROOT" "$targets_file" "$py_files_file" "$test_files_file" <<'PY'
+  failed_nodes_file="$(mktemp "$REPO_ROOT/$DAEMON_DIR/legal-parser-dirty-failed-nodes.XXXXXX")"
+  python3 - "$REPO_ROOT" "$targets_file" "$py_files_file" "$test_files_file" "$failed_nodes_file" "$REPO_ROOT/$PROGRESS_PATH" "$reason" <<'PY'
+import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -1701,6 +1704,9 @@ repo_root = Path(sys.argv[1])
 targets_path = Path(sys.argv[2])
 py_path = Path(sys.argv[3])
 tests_path = Path(sys.argv[4])
+failed_nodes_path = Path(sys.argv[5])
+progress_path = Path(sys.argv[6])
+recovery_reason = sys.argv[7]
 targets = [
     "ipfs_datasets_py/logic/deontic/analyzer.py",
     "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py",
@@ -1755,6 +1761,55 @@ py_files = [path for path in paths if path.endswith(".py") and (repo_root / path
 test_files = [path for path in paths if path.startswith("tests/unit_tests/logic/deontic/") and path.endswith(".py")]
 py_path.write_text("\n".join(py_files) + ("\n" if py_files else ""), encoding="utf-8")
 tests_path.write_text("\n".join(test_files) + ("\n" if test_files else ""), encoding="utf-8")
+
+
+def read_progress() -> dict:
+    try:
+        return json.loads(progress_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def append_failed_nodes_from_text(text: str, nodes: list[str]) -> None:
+    for match in re.finditer(r"(tests/unit_tests/logic/deontic/[^\s|:]+\.py::[A-Za-z0-9_:\[\].-]+)", text):
+        node = match.group(1).strip()
+        if node and node not in nodes:
+            nodes.append(node)
+
+
+def append_failed_nodes_from_summary(summary: dict, nodes: list[str]) -> None:
+    if not isinstance(summary, dict):
+        return
+    for node in summary.get("failed_tests") or []:
+        text = str(node).strip()
+        if text and text.startswith("tests/unit_tests/logic/deontic/") and text not in nodes:
+            nodes.append(text)
+    append_failed_nodes_from_text(str(summary.get("failure_head") or ""), nodes)
+
+
+progress = read_progress()
+failed_nodes: list[str] = []
+append_failed_nodes_from_text(recovery_reason, failed_nodes)
+last_recovery = progress.get("last_recovery_failure")
+if isinstance(last_recovery, dict):
+    append_failed_nodes_from_text(str(last_recovery.get("failure_signature") or ""), failed_nodes)
+for item in progress.get("recent_recovery_failures") or []:
+    if isinstance(item, dict):
+        append_failed_nodes_from_text(str(item.get("failure_signature") or ""), failed_nodes)
+for item in progress.get("recent_rejections") or []:
+    if not isinstance(item, dict):
+        continue
+    validation_failure = item.get("latest_candidate_validation_failure") or {}
+    if not isinstance(validation_failure, dict):
+        validation_failure = {}
+    append_failed_nodes_from_summary(
+        validation_failure.get("summary") or {},
+        failed_nodes,
+    )
+failed_nodes_path.write_text(
+    "\n".join(failed_nodes[:12]) + ("\n" if failed_nodes else ""),
+    encoding="utf-8",
+)
 PY
   if [[ ! -s "$targets_file" ]]; then
     last_agentic_maintenance_status="dirty_recovery_skipped_clean"
@@ -1762,7 +1817,7 @@ PY
     active_agentic_maintenance_timeout_seconds="null"
     echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) dirty target recovery skipped because targets are clean: $reason" >> "$REPO_ROOT/$recovery_log"
     write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" 0
-    rm -f "$targets_file" "$py_files_file" "$test_files_file"
+    rm -f "$targets_file" "$py_files_file" "$test_files_file" "$failed_nodes_file"
     return 0
   fi
   {
@@ -1776,6 +1831,10 @@ PY
     if [[ -s "$test_files_file" ]]; then
       echo "Running focused pytest for dirty deontic tests"
       xargs -r pytest -q < "$test_files_file"
+    fi
+    if [[ -s "$failed_nodes_file" ]]; then
+      echo "Running focused pytest nodes from recovery failure history"
+      xargs -r pytest -q < "$failed_nodes_file"
     fi
   } >> "$REPO_ROOT/$recovery_log" 2>&1
   rc=$?
@@ -1801,7 +1860,7 @@ PY
   active_agentic_maintenance_started_at=""
   active_agentic_maintenance_timeout_seconds="null"
   write_supervisor_status "dirty_target_recovery_finished" "$recovery_id" "$recovery_log" "$rc"
-  rm -f "$targets_file" "$py_files_file" "$test_files_file"
+  rm -f "$targets_file" "$py_files_file" "$test_files_file" "$failed_nodes_file"
   return "$rc"
 }
 
