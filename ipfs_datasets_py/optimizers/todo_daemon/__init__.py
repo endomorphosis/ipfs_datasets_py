@@ -5,9 +5,11 @@ from .core import (
     EnsureResult,
     ManagedDaemonSpec,
     StopResult,
+    SupervisorMaintenanceSnapshot,
     check_daemon_health,
     ensure_daemon_running,
     stop_daemon,
+    supervisor_maintenance_snapshot,
 )
 from .cli import (
     build_lifecycle_arg_parser,
@@ -352,6 +354,7 @@ __all__ = [
     "SupervisorLoopConfig",
     "SupervisorLoopDecision",
     "SupervisorLoopResult",
+    "SupervisorMaintenanceSnapshot",
     "SupervisorStatusContext",
     "Task",
     "TodoDaemonHooks",
@@ -558,6 +561,7 @@ __all__ = [
     "status_started_at",
     "strip_unmanaged_generated_status_sections",
     "supervised_log_path",
+    "supervisor_maintenance_snapshot",
     "supervisor_loop_config_from_args",
     "supervisor_loop_result_payload",
     "supervisor_run_id",

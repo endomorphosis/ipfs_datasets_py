@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
@@ -14,19 +13,19 @@ from .core import (
     iter_processes,
     now_iso,
     now_utc,
-    parse_timestamp,
     pid_alive,
     process_args,
     read_json,
     read_pid_file,
     stop_daemon,
+    supervisor_maintenance_snapshot,
     terminate_pid_tree,
     write_json,
 )
 from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
 from .specs import env_float, env_int, env_path, env_path_in_dir, env_value, repo_root_from_env
 from .supervisor import heartbeat_snapshot, worktree_phase_worker_status
-from .wrapper import launch_restarting_wrapper, pid_matches_command_fragments
+from .wrapper import launch_restarting_wrapper, pid_matches_command_fragments, restarting_wrapper_alive
 
 
 JsonDict = Dict[str, Any]
@@ -139,35 +138,16 @@ def pid_is_legal_parser_wrapper(pid: Any) -> bool:
     )
 
 
-def _tmux_available() -> bool:
-    return (
-        subprocess.run(
-            ("bash", "-lc", "command -v tmux >/dev/null 2>&1"),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        ).returncode
-        == 0
-    )
-
-
-def _tmux_has_session(name: str) -> bool:
-    return (
-        subprocess.run(
-            ("tmux", "has-session", "-t", name),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        ).returncode
-        == 0
-    )
-
-
 def _wrapper_alive(spec: ManagedDaemonSpec, launch_mode: str) -> bool:
-    if launch_mode == "tmux" and spec.tmux_session_name and _tmux_available():
-        if _tmux_has_session(spec.tmux_session_name):
-            return True
-    return pid_is_legal_parser_wrapper(read_pid_file(_wrapper_pid_path(spec)))
+    return restarting_wrapper_alive(
+        launch_mode=launch_mode,
+        tmux_session_name=spec.tmux_session_name,
+        pid_path=_wrapper_pid_path(spec),
+        command_fragments=(
+            "run_legal_parser_optimizer_daemon.sh",
+            "legal-parser supervisor exited with code",
+        ),
+    )
 
 
 def check_legal_parser_health(
@@ -193,29 +173,19 @@ def check_legal_parser_health(
     supervisor_alive = pid_alive(supervisor_pid) if supervisor_pid else False
     daemon_alive = heartbeat.pid_alive
 
-    supervisor_status = str(supervisor.get("status") or "")
-    maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
-    try:
-        maintenance_timeout = float(maintenance_timeout)
-    except Exception:
-        maintenance_timeout = float(supervisor.get("agentic_timeout_seconds") or 0.0)
-    maintenance_started_at = parse_timestamp(
-        supervisor.get("active_agentic_maintenance_started_at") or supervisor.get("updated_at")
+    maintenance = supervisor_maintenance_snapshot(
+        supervisor,
+        now=now,
+        supervisor_alive=supervisor_alive,
+        active_statuses=(),
+        active_status_suffixes=("_started",),
+        running_statuses=(),
+        running_status_suffixes=("running",),
+        stuck_reason_prefixes=(),
     )
-    maintenance_age = None
-    maintenance_fresh = False
-    if (
-        supervisor_alive
-        and supervisor_status.endswith("_started")
-        and str(supervisor.get("last_agentic_maintenance_status") or "").endswith("running")
-        and maintenance_started_at is not None
-        and maintenance_timeout > 0
-    ):
-        maintenance_age = max(0.0, (now - maintenance_started_at).total_seconds())
-        maintenance_fresh = maintenance_age <= maintenance_timeout + 60.0
     daemon_fresh = heartbeat.fresh
-    alive = bool(supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance_fresh))
-    status_label = "maintenance_running" if maintenance_fresh else "running" if alive else "stale_or_stopped"
+    alive = bool(supervisor_alive and ((daemon_alive and daemon_fresh) or maintenance.fresh))
+    status_label = "maintenance_running" if maintenance.fresh else "running" if alive else "stale_or_stopped"
 
     try:
         worktree_no_child_threshold = float(
@@ -276,10 +246,8 @@ def check_legal_parser_health(
         "active_agentic_maintenance_timeout_seconds": supervisor.get(
             "active_agentic_maintenance_timeout_seconds"
         ),
-        "active_agentic_maintenance_age_seconds": None
-        if maintenance_age is None
-        else round(maintenance_age, 3),
-        "active_agentic_maintenance_fresh": maintenance_fresh,
+        "active_agentic_maintenance_age_seconds": maintenance.rounded_age_seconds,
+        "active_agentic_maintenance_fresh": maintenance.fresh,
         "formal_logic_goal": supervisor.get("formal_logic_goal"),
         "restart_count": supervisor.get("restart_count"),
         "watchdog_stale_after_seconds": supervisor.get("watchdog_stale_after_seconds"),

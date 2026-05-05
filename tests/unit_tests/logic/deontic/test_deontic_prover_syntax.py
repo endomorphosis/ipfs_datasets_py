@@ -607,6 +607,57 @@ def test_prover_syntax_records_expose_mental_state_components():
     )
 
 
+def test_prover_syntax_records_expose_compound_mental_state_components():
+    examples = [
+        (
+            "The inspector shall knowingly and willfully approve the discharge.",
+            "knowingly and willfully",
+            "O(∀x (Inspector(x) ∧ KnowinglyAndWillfully(x) → ApproveDischarge(x)))",
+            "KnowinglyAndWillfully",
+        ),
+        (
+            "The applicant shall intentionally or recklessly file a false statement.",
+            "intentionally or recklessly",
+            "O(∀x (Applicant(x) ∧ IntentionallyOrRecklessly(x) → FileFalseStatement(x)))",
+            "IntentionallyOrRecklessly",
+        ),
+        (
+            "The officer shall deliberately and corruptly alter the record.",
+            "deliberately and corruptly",
+            "O(∀x (Officer(x) ∧ DeliberatelyAndCorruptly(x) → AlterRecord(x)))",
+            "DeliberatelyAndCorruptly",
+        ),
+    ]
+
+    for text, mental_state, expected_formula, expected_predicate in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        report = validate_ir_with_provers(norm)
+        records = [target.to_dict() for target in report.targets]
+
+        assert norm.mental_state == mental_state
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+        assert all(record["formula"] == expected_formula for record in records)
+        assert all(
+            record["decoded_slots"] == ["actor", "modality", "mental_state", "action"]
+            for record in records
+        )
+        assert all(
+            record["grounded_decoded_slots"]
+            == ["actor", "modality", "mental_state", "action"]
+            for record in records
+        )
+        assert all(record["ungrounded_decoded_slots"] == [] for record in records)
+        assert all(record["missing_decoded_slots"] == [] for record in records)
+        assert all("mental_state" in record["grounded_ir_slots"] for record in records)
+        assert all(
+            expected_predicate in record["exported_formula"]
+            for record in records
+            if record["target"] != "frame_logic"
+        )
+
+
 def test_prover_syntax_semantic_fingerprints_change_when_ir_slots_change():
     tenant = LegalNormIR.from_parser_element(
         extract_normative_elements("The tenant must pay rent monthly.")[0]

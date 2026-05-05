@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Optional, Sequence
 
-from .core import pid_alive, process_args
+from .core import pid_alive, process_args, read_pid_file
 
 
 @dataclass(frozen=True)
@@ -63,7 +63,9 @@ def build_restart_loop_command(
     )
 
 
-def _tmux_available() -> bool:
+def tmux_available() -> bool:
+    """Return whether ``tmux`` can be invoked on this host."""
+
     return (
         subprocess.run(
             ("bash", "-lc", "command -v tmux >/dev/null 2>&1"),
@@ -75,7 +77,9 @@ def _tmux_available() -> bool:
     )
 
 
-def _tmux_has_session(name: str) -> bool:
+def tmux_has_session(name: str) -> bool:
+    """Return whether a named ``tmux`` session is currently registered."""
+
     return (
         subprocess.run(
             ("tmux", "has-session", "-t", name),
@@ -85,6 +89,21 @@ def _tmux_has_session(name: str) -> bool:
         ).returncode
         == 0
     )
+
+
+def restarting_wrapper_alive(
+    *,
+    launch_mode: str,
+    tmux_session_name: str,
+    pid_path: Path,
+    command_fragments: Sequence[str],
+) -> bool:
+    """Return whether a restart wrapper is alive in tmux or by pid file."""
+
+    if launch_mode == "tmux" and tmux_session_name and tmux_available():
+        if tmux_has_session(tmux_session_name):
+            return True
+    return pid_matches_command_fragments(read_pid_file(pid_path), command_fragments)
 
 
 def launch_restarting_wrapper(
@@ -116,8 +135,8 @@ def launch_restarting_wrapper(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pid_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if launch_mode == "tmux" and tmux_session_name and _tmux_available():
-        if _tmux_has_session(tmux_session_name):
+    if launch_mode == "tmux" and tmux_session_name and tmux_available():
+        if tmux_has_session(tmux_session_name):
             subprocess.run(
                 ("tmux", "kill-session", "-t", tmux_session_name),
                 stdout=subprocess.DEVNULL,

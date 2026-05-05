@@ -92,6 +92,26 @@ class StopResult:
     exit_code: int
 
 
+@dataclass(frozen=True)
+class SupervisorMaintenanceSnapshot:
+    """Parsed supervisor maintenance state for daemon health payloads."""
+
+    active: bool
+    fresh: bool
+    timeout_seconds: float
+    started_at: Optional[datetime]
+    age_seconds: Optional[float]
+    status: str
+    running_status: str
+    reason: str
+
+    @property
+    def rounded_age_seconds(self) -> Optional[float]:
+        if self.age_seconds is None:
+            return None
+        return round(self.age_seconds, 3)
+
+
 def read_json(path: Optional[Path]) -> JsonDict:
     if path is None:
         return {}
@@ -126,6 +146,78 @@ def now_utc() -> datetime:
 
 def now_iso() -> str:
     return now_utc().isoformat()
+
+
+def _as_utc_datetime(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def supervisor_maintenance_snapshot(
+    supervisor: Mapping[str, Any],
+    *,
+    now: datetime,
+    supervisor_alive: bool,
+    active_statuses: Sequence[str] = ("agentic_maintenance_started",),
+    active_status_suffixes: Sequence[str] = (),
+    running_statuses: Sequence[str] = ("running",),
+    running_status_suffixes: Sequence[str] = (),
+    active_timeout_key: str = "active_agentic_maintenance_timeout_seconds",
+    default_timeout_key: str = "agentic_timeout_seconds",
+    stuck_timeout_key: str = "agentic_stuck_maintenance_timeout_seconds",
+    stuck_reason_prefixes: Sequence[str] = (
+        "stuck_phase:",
+        "stuck_llm_subprocess:",
+        "duplicate_llm_subprocesses:",
+    ),
+    grace_seconds: float = 60.0,
+) -> SupervisorMaintenanceSnapshot:
+    """Return whether supervisor-owned agentic maintenance is still fresh."""
+
+    status = str(supervisor.get("status") or "")
+    running_status = str(supervisor.get("last_agentic_maintenance_status") or "")
+    reason = str(supervisor.get("last_agentic_maintenance_reason") or "")
+    active = status in set(active_statuses) or any(
+        suffix and status.endswith(suffix) for suffix in active_status_suffixes
+    )
+    running = running_status in set(running_statuses) or any(
+        suffix and running_status.endswith(suffix) for suffix in running_status_suffixes
+    )
+
+    timeout = supervisor.get(active_timeout_key)
+    if not isinstance(timeout, (int, float)) or timeout <= 0:
+        if any(prefix and reason.startswith(prefix) for prefix in stuck_reason_prefixes):
+            timeout = supervisor.get(stuck_timeout_key)
+        else:
+            timeout = supervisor.get(default_timeout_key)
+    try:
+        timeout_seconds = float(timeout)
+    except Exception:
+        timeout_seconds = 0.0
+
+    now_at = _as_utc_datetime(now) or now_utc()
+    started_at = _as_utc_datetime(
+        parse_timestamp(supervisor.get("active_agentic_maintenance_started_at") or supervisor.get("updated_at"))
+    )
+    age_seconds = None
+    fresh = False
+    if supervisor_alive and active and running and started_at is not None and timeout_seconds > 0:
+        age_seconds = max(0.0, (now_at - started_at).total_seconds())
+        fresh = age_seconds <= timeout_seconds + max(0.0, float(grace_seconds))
+
+    return SupervisorMaintenanceSnapshot(
+        active=active,
+        fresh=fresh,
+        timeout_seconds=timeout_seconds,
+        started_at=started_at,
+        age_seconds=age_seconds,
+        status=status,
+        running_status=running_status,
+        reason=reason,
+    )
 
 
 def pid_alive(pid: Any) -> bool:
@@ -267,36 +359,14 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
     daemon_alive = bool(daemon_pid and pid_alive(daemon_pid))
     fresh = heartbeat_age is not None and heartbeat_age <= stale_after_seconds
 
-    supervisor_status = str(supervisor.get("status") or "")
-    maintenance_timeout = supervisor.get("active_agentic_maintenance_timeout_seconds")
-    if not isinstance(maintenance_timeout, (int, float)) or maintenance_timeout <= 0:
-        maintenance_reason = str(supervisor.get("last_agentic_maintenance_reason") or "")
-        if maintenance_reason.startswith(("stuck_phase:", "stuck_llm_subprocess:", "duplicate_llm_subprocesses:")):
-            maintenance_timeout = supervisor.get("agentic_stuck_maintenance_timeout_seconds")
-        else:
-            maintenance_timeout = supervisor.get("agentic_timeout_seconds")
-    try:
-        maintenance_timeout = float(maintenance_timeout)
-    except Exception:
-        maintenance_timeout = 0.0
-
-    maintenance_started_at = parse_timestamp(
-        supervisor.get("active_agentic_maintenance_started_at") or supervisor.get("updated_at")
+    maintenance = supervisor_maintenance_snapshot(
+        supervisor,
+        now=checked_at,
+        supervisor_alive=supervisor_alive,
     )
-    maintenance_age = None
-    maintenance_fresh = False
-    if (
-        supervisor_alive
-        and supervisor_status == "agentic_maintenance_started"
-        and str(supervisor.get("last_agentic_maintenance_status") or "") == "running"
-        and maintenance_started_at is not None
-        and maintenance_timeout > 0
-    ):
-        maintenance_age = max(0.0, (checked_at - maintenance_started_at).total_seconds())
-        maintenance_fresh = maintenance_age <= maintenance_timeout + 60.0
 
-    alive = bool(supervisor_alive and ((daemon_alive and fresh) or maintenance_fresh))
-    status_label = "maintenance_running" if maintenance_fresh else "running" if alive else "stale_or_stopped"
+    alive = bool(supervisor_alive and ((daemon_alive and fresh) or maintenance.fresh))
+    status_label = "maintenance_running" if maintenance.fresh else "running" if alive else "stale_or_stopped"
     active_state = status.get("active_state") or status.get("state") or progress.get("active_state")
 
     def first_present(*values: Any) -> Any:
@@ -398,8 +468,8 @@ def check_daemon_health(spec: ManagedDaemonSpec, *, stale_after_seconds: float =
         "task_board_path": supervisor.get("task_board_path") or spec.repo_relative(spec.task_board_path),
         "active_agentic_maintenance_started_at": supervisor.get("active_agentic_maintenance_started_at"),
         "active_agentic_maintenance_timeout_seconds": supervisor.get("active_agentic_maintenance_timeout_seconds"),
-        "active_agentic_maintenance_age_seconds": None if maintenance_age is None else round(maintenance_age, 3),
-        "active_agentic_maintenance_fresh": maintenance_fresh,
+        "active_agentic_maintenance_age_seconds": maintenance.rounded_age_seconds,
+        "active_agentic_maintenance_fresh": maintenance.fresh,
         "agentic_state_path": supervisor.get("agentic_state_path"),
         "last_agentic_maintenance_status": supervisor.get("last_agentic_maintenance_status"),
         "last_agentic_maintenance_reason": supervisor.get("last_agentic_maintenance_reason"),

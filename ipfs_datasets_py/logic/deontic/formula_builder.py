@@ -22,6 +22,15 @@ _MENTAL_STATE_TERMS = {
     "deliberately",
     "corruptly",
 }
+_MENTAL_STATE_TERM_PATTERN = "|".join(sorted(_MENTAL_STATE_TERMS, key=len, reverse=True))
+_LEADING_COMPOUND_MENTAL_STATE_RE = re.compile(
+    r"^\s*(?P<state>(?:"
+    + _MENTAL_STATE_TERM_PATTERN
+    + r")(?:\s*(?:,|and|or)\s*(?:"
+    + _MENTAL_STATE_TERM_PATTERN
+    + r")){1,4})\s+(?P<action>.+)$",
+    re.IGNORECASE,
+)
 _LEGAL_REFERENCE_TEXT_RE = re.compile(
     r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
     r"([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
@@ -3414,6 +3423,9 @@ def _temporal_anchor_relation(item: Dict[str, Any]) -> str:
 
 
 def _action_without_mental_state(action: str) -> str:
+    compound = _LEADING_COMPOUND_MENTAL_STATE_RE.match(str(action or "").strip())
+    if compound:
+        return compound.group("action").strip()
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
     if words and words[0].lower() in _MENTAL_STATE_TERMS:
         return " ".join(words[1:]).strip()

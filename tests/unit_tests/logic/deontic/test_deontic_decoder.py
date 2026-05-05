@@ -83,6 +83,55 @@ def test_decoder_splits_source_grounded_mental_state_from_action_phrase():
     assert element["field_spans"]["action"] == [20, 51]
 
 
+def test_decoder_reconstructs_compound_mental_state_slots_with_provenance():
+    examples = [
+        (
+            "The inspector shall knowingly and willfully approve the discharge.",
+            "knowingly and willfully",
+            "approve the discharge",
+            [20, 43],
+            [44, 65],
+            "Inspector shall knowingly and willfully approve the discharge.",
+        ),
+        (
+            "The applicant shall intentionally or recklessly file a false statement.",
+            "intentionally or recklessly",
+            "file a false statement",
+            [20, 47],
+            [48, 70],
+            "Applicant shall intentionally or recklessly file a false statement.",
+        ),
+        (
+            "The officer shall deliberately and corruptly alter the record.",
+            "deliberately and corruptly",
+            "alter the record",
+            [18, 44],
+            [45, 61],
+            "Officer shall deliberately and corruptly alter the record.",
+        ),
+    ]
+
+    for text, mental_state, action, mental_span, action_span, expected in examples:
+        element, norm, decoded = _decode(text)
+
+        assert norm.mental_state == mental_state
+        assert norm.action == action
+        assert element["field_spans"]["mental_state"] == mental_span
+        assert element["field_spans"]["action"] == action_span
+        assert decoded.text == expected
+        assert [phrase.slot for phrase in decoded.phrases] == [
+            "actor",
+            "modality",
+            "mental_state",
+            "action",
+        ]
+        assert decoded.phrases[2].text == mental_state
+        assert decoded.phrases[2].spans == [mental_span]
+        assert decoded.phrases[3].text == action
+        assert decoded.phrases[3].spans == [action_span]
+        assert decoded.missing_slots == []
+
+
 def test_decoder_reconstructs_separated_recipient_slot_with_provenance():
     _, norm, _ = _decode("The Director shall issue a permit.")
     recipient_norm = replace(

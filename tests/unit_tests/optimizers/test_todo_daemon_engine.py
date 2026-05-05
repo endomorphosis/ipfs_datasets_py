@@ -190,6 +190,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     status_started_at,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
+    supervisor_maintenance_snapshot,
     supervisor_run_id,
     task_failure_summary,
     task_has_deterministic_fallback,
@@ -2009,6 +2010,71 @@ def test_supervisor_heartbeat_and_worker_watchdog_helpers_are_reusable() -> None
     assert worker_status["phase_age_seconds"] == 45
     assert worker_status["active_worker_count"] == 0
     assert worker_status["stalled_without_active_worker"] is True
+
+
+def test_supervisor_maintenance_snapshot_tracks_fresh_agentic_repairs() -> None:
+    now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    supervisor = {
+        "status": "agentic_maintenance_started",
+        "updated_at": (now - timedelta(seconds=120)).isoformat(),
+        "last_agentic_maintenance_status": "running",
+        "last_agentic_maintenance_reason": "stuck_phase:calling_llm",
+        "agentic_timeout_seconds": 30,
+        "agentic_stuck_maintenance_timeout_seconds": 180,
+    }
+
+    snapshot = supervisor_maintenance_snapshot(
+        supervisor,
+        now=now,
+        supervisor_alive=True,
+    )
+    stale = supervisor_maintenance_snapshot(
+        {
+            **supervisor,
+            "updated_at": (now - timedelta(seconds=250)).isoformat(),
+        },
+        now=now,
+        supervisor_alive=True,
+    )
+    inactive = supervisor_maintenance_snapshot(
+        supervisor,
+        now=now,
+        supervisor_alive=False,
+    )
+
+    assert snapshot.active is True
+    assert snapshot.fresh is True
+    assert snapshot.timeout_seconds == 180
+    assert snapshot.age_seconds == 120
+    assert snapshot.rounded_age_seconds == 120
+    assert stale.fresh is False
+    assert stale.age_seconds == 250
+    assert inactive.active is True
+    assert inactive.fresh is False
+    assert inactive.age_seconds is None
+
+
+def test_supervisor_maintenance_snapshot_supports_legacy_suffix_statuses() -> None:
+    now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    snapshot = supervisor_maintenance_snapshot(
+        {
+            "status": "custom_repair_started",
+            "active_agentic_maintenance_started_at": (now - timedelta(seconds=50)).isoformat(),
+            "active_agentic_maintenance_timeout_seconds": 75,
+            "last_agentic_maintenance_status": "still_running",
+        },
+        now=now,
+        supervisor_alive=True,
+        active_statuses=(),
+        active_status_suffixes=("_started",),
+        running_statuses=(),
+        running_status_suffixes=("running",),
+    )
+
+    assert snapshot.active is True
+    assert snapshot.fresh is True
+    assert snapshot.timeout_seconds == 75
+    assert snapshot.rounded_age_seconds == 50
 
 
 def test_supervisor_status_payload_builder_is_reusable(tmp_path: Path) -> None:

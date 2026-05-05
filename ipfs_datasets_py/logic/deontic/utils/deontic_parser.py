@@ -350,12 +350,21 @@ _MENTAL_STATE_TERMS = {
     "deliberately",
     "corruptly",
 }
+_MENTAL_STATE_TERM_PATTERN = "|".join(sorted(_MENTAL_STATE_TERMS, key=len, reverse=True))
 _LEADING_COMPLEX_MENTAL_STATE_RE = re.compile(
     r"^\s*(?P<state>with\s+(?:the\s+)?(?:"
     r"intent\s+to\s+[^,;:]+|"
     r"knowledge\s+that\s+[^,;:]+|"
     r"reckless\s+disregard\s+for\s+[^,;:]+"
     r"))\s*,\s*(?P<action>.+)$",
+    re.IGNORECASE,
+)
+_LEADING_COMPOUND_MENTAL_STATE_RE = re.compile(
+    r"^\s*(?P<state>(?:"
+    + _MENTAL_STATE_TERM_PATTERN
+    + r")(?:\s*(?:,|and|or)\s*(?:"
+    + _MENTAL_STATE_TERM_PATTERN
+    + r")){1,4})\s+(?P<action>.+)$",
     re.IGNORECASE,
 )
 _RECIPIENT_RE = re.compile(
@@ -3310,7 +3319,10 @@ def _action_without_mental_state(action: str) -> str:
 
 
 def _split_leading_complex_mental_state(action: str) -> tuple[str, str]:
-    match = _LEADING_COMPLEX_MENTAL_STATE_RE.match(str(action or "").strip())
+    text = str(action or "").strip()
+    match = _LEADING_COMPLEX_MENTAL_STATE_RE.match(text)
+    if not match:
+        match = _LEADING_COMPOUND_MENTAL_STATE_RE.match(text)
     if not match:
         return ("", "")
     state = _clean_phrase(match.group("state")).lower()
