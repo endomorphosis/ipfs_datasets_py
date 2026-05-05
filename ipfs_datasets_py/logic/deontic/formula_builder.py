@@ -172,6 +172,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_classification_reclassification_light_verb_action(action_text)
     action_text = _normalize_data_quality_processing_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
+    action_text = _normalize_accessibility_accommodation_light_verb_action(action_text)
     action_text = _normalize_translation_interpretation_light_verb_action(action_text)
     action_text = _normalize_transcription_summarization_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
@@ -5739,6 +5740,82 @@ def _normalize_translation_interpretation_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"interpret {target}" if target else text
+
+    return text
+
+
+def _normalize_accessibility_accommodation_light_verb_action(action_text: str) -> str:
+    """Project accessibility and accommodation nominalizations to legal acts."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    accommodation_patterns = [
+        r"^(?:make|makes|made|making|provide|provides|provided|providing|grant|grants|granted|granting|approve|approves|approved|approving|offer|offers|offered|offering|arrange|arranges|arranged|arranging)\s+"
+        r"(?:a\s+|an\s+|the\s+)?(?:reasonable\s+)?accommodations?\s+(?:for|to)\s+(?:the\s+)?(.+)$",
+        r"^(?:reasonable\s+)?accommodations?\s+(?:for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in accommodation_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"accommodate {target}" if target else text
+
+    auxiliary_aid_patterns = [
+        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|arrange|arranges|arranged|arranging|make|makes|made|making|offer|offers|offered|offering)\s+"
+        r"(?:an?\s+|the\s+)?auxiliary\s+(?:aids?|services?|aids?\s+and\s+services?)\s+(?:for|to)\s+(?:the\s+)?(.+)$",
+        r"^auxiliary\s+(?:aids?|services?|aids?\s+and\s+services?)\s+(?:for|to)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in auxiliary_aid_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"provide auxiliary aid {target}" if target else text
+
+    accessibility_modification_patterns = [
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|provide|provides|provided|providing|install|installs|installed|installing|approve|approves|approved|approving)\s+"
+        r"(?:an?\s+|the\s+)?(?:accessibility|accessible)\s+modifications?\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+        r"^(?:accessibility|accessible)\s+modifications?\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in accessibility_modification_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"modify accessibility {target}" if target else text
+
+    language_access_plan_patterns = [
+        r"^(?:prepare|prepares|prepared|preparing|develop|develops|developed|developing|adopt|adopts|adopted|adopting|maintain|maintains|maintained|maintaining|implement|implements|implemented|implementing|submit|submits|submitted|submitting)\s+"
+        r"(?:a\s+|the\s+)?language\s+access\s+plans?\s+(?:for|of)\s+(?:the\s+)?(.+)$",
+        r"^language\s+access\s+plans?\s+(?:for|of)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in language_access_plan_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"plan language access {target}" if target else text
+
+    accessible_format_patterns = [
+        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|make|makes|made|making|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|publish|publishes|published|publishing)\s+"
+        r"(?:an?\s+|the\s+)?accessible\s+formats?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+        r"^accessible\s+formats?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in accessible_format_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"format accessibly {target}" if target else text
+
+    sign_language_patterns = [
+        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|arrange|arranges|arranged|arranging|offer|offers|offered|offering)\s+"
+        r"(?:a\s+|the\s+)?sign\s+language\s+interpretation\s+(?:for|of)\s+(?:the\s+)?(.+)$",
+        r"^sign\s+language\s+interpretation\s+(?:for|of)\s+(?:the\s+)?(.+)$",
+    ]
+    for pattern in sign_language_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"interpret sign language {target}" if target else text
 
     return text
 

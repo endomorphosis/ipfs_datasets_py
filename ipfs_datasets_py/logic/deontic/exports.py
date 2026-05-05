@@ -4661,6 +4661,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "public_access_records_duty"
     if action_predicate.startswith((
+        "Accommodate",
+        "FormatAccessibly",
+        "InterpretSignLanguage",
+        "ModifyAccessibility",
+        "PlanLanguageAccess",
+        "ProvideAuxiliaryAid",
+    )):
+        return "accessibility_accommodation_duty"
+    if action_predicate.startswith((
         "DepositSecurity",
         "EstablishEscrow",
         "MaintainLiabilityInsurance",

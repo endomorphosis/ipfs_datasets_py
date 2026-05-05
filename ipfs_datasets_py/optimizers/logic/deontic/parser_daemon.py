@@ -48,12 +48,12 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizerConfig,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
-    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
     unified_diff_stats as _shared_unified_diff_stats,
     untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.engine import CommandResult
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
     call_with_thread_deadline as _shared_call_with_thread_deadline,
 )
@@ -61,6 +61,14 @@ from ipfs_datasets_py.optimizers.todo_daemon.status import (
     build_status_phase_key as _shared_build_status_phase_key,
     status_key_started_at as _shared_status_key_started_at,
     write_status_json as _shared_write_status_json,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
+    cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
+    git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
+    owner_pid_from_worktree as _shared_owner_pid_from_worktree,
+    pid_is_alive as _shared_pid_is_alive,
+    read_json_object as _shared_read_json_object,
+    write_worktree_owner_file as _shared_write_worktree_owner_file,
 )
 
 
@@ -699,142 +707,31 @@ class LegalParserParityOptimizer(BaseOptimizer):
         """Remove daemon-created direct-edit worktrees left behind by crashes."""
 
         repo_root = self.daemon_config.repo_root
-        worktree_root = self.daemon_config.resolved_worktree_root()
-        stale_after = max(1, int(self.daemon_config.worktree_stale_after_seconds))
-        result: Dict[str, Any] = {
-            "valid": True,
-            "worktree_root": str(worktree_root),
-            "stale_after_seconds": stale_after,
-            "removed": [],
-            "skipped": [],
-            "errors": [],
-        }
-        prune_before = _run_command(
-            ["git", "worktree", "prune", "--expire", "now"],
-            cwd=repo_root,
-            timeout=60,
+        return _shared_cleanup_stale_daemon_worktrees(
+            repo_root=repo_root,
+            worktree_root=self.daemon_config.resolved_worktree_root(),
+            stale_after_seconds=max(1, int(self.daemon_config.worktree_stale_after_seconds)),
+            owner_filename=".legal_parser_worktree_owner.json",
+            patterns=("cycle_*",),
+            run_command_fn=_run_command_result,
+            owner_alive=lambda pid, _repo_root, _worktree_path: _shared_pid_is_alive(pid),
         )
-        result["prune_before"] = prune_before
-        if not worktree_root.exists():
-            return result
-        root_resolved = worktree_root.resolve()
-        list_result = _run_command(
-            ["git", "worktree", "list", "--porcelain"],
-            cwd=repo_root,
-            timeout=60,
-        )
-        result["worktree_list"] = list_result
-        registered_paths = {
-            str(path)
-            for path in _git_worktree_paths_from_porcelain(str(list_result.get("stdout") or ""))
-        }
-        now = time.time()
-        for candidate in sorted(worktree_root.glob("cycle_*")):
-            if not candidate.exists():
-                continue
-            try:
-                resolved = candidate.resolve()
-                if not resolved.is_relative_to(root_resolved):
-                    result["skipped"].append({"path": str(candidate), "reason": "outside_worktree_root"})
-                    continue
-                if not candidate.is_dir():
-                    result["skipped"].append({"path": str(candidate), "reason": "not_directory"})
-                    continue
-                owner = self._read_worktree_owner_file(candidate / ".legal_parser_worktree_owner.json")
-                owner_pid = _owner_pid_from_worktree(candidate, owner)
-                owner_alive = bool(owner_pid and _pid_is_alive(owner_pid))
-                try:
-                    created_at = float(owner.get("created_at_epoch") or candidate.stat().st_mtime)
-                except (OSError, TypeError, ValueError):
-                    created_at = candidate.stat().st_mtime
-                age_seconds = max(0.0, now - created_at)
-                if owner_alive:
-                    result["skipped"].append(
-                        {
-                            "path": str(candidate),
-                            "reason": "owner_pid_alive",
-                            "owner_pid": owner_pid,
-                            "age_seconds": round(age_seconds, 3),
-                        }
-                    )
-                    continue
-                if age_seconds < stale_after:
-                    result["skipped"].append(
-                        {
-                            "path": str(candidate),
-                            "reason": "not_stale_yet",
-                            "owner_pid": owner_pid,
-                            "age_seconds": round(age_seconds, 3),
-                        }
-                    )
-                    continue
-                registered = str(resolved) in registered_paths
-                remove_result: Dict[str, Any]
-                if registered:
-                    remove_result = _run_command(
-                        ["git", "worktree", "remove", "--force", str(resolved)],
-                        cwd=repo_root,
-                        timeout=60,
-                    )
-                    if not remove_result.get("valid") and candidate.exists():
-                        shutil.rmtree(candidate, ignore_errors=True)
-                else:
-                    shutil.rmtree(candidate, ignore_errors=True)
-                    remove_result = {
-                        "valid": not candidate.exists(),
-                        "returncode": 0 if not candidate.exists() else 1,
-                        "command": ["shutil.rmtree", str(resolved)],
-                        "stdout": "",
-                        "stderr": "" if not candidate.exists() else "directory still exists after rmtree",
-                    }
-                record = {
-                    "path": str(candidate),
-                    "registered": registered,
-                    "owner_pid": owner_pid,
-                    "age_seconds": round(age_seconds, 3),
-                    "remove": remove_result,
-                }
-                if remove_result.get("valid"):
-                    result["removed"].append(record)
-                else:
-                    result["valid"] = False
-                    result["errors"].append(record)
-            except Exception as exc:
-                result["valid"] = False
-                result["errors"].append(
-                    {
-                        "path": str(candidate),
-                        "exception": f"{type(exc).__name__}: {exc}",
-                    }
-                )
-        result["prune_after"] = _run_command(
-            ["git", "worktree", "prune", "--expire", "now"],
-            cwd=repo_root,
-            timeout=60,
-        )
-        if not result["prune_after"].get("valid"):
-            result["valid"] = False
-        return result
 
     def _write_worktree_owner_file(self, path: Path, *, cycle_index: int) -> None:
-        payload = {
-            "schema": "ipfs_datasets_py.legal_parser_worktree_owner",
-            "pid": os.getpid(),
-            "cycle_index": cycle_index,
-            "repo_root": str(self.daemon_config.repo_root),
-            "created_at": _utc_now(),
-            "created_at_epoch": time.time(),
-            "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
-            "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
-        }
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        _shared_write_worktree_owner_file(
+            path,
+            schema="ipfs_datasets_py.legal_parser_worktree_owner",
+            repo_root=self.daemon_config.repo_root,
+            attempt=cycle_index,
+            extra={
+                "cycle_index": cycle_index,
+                "worktree_edit_timeout_seconds": self.daemon_config.worktree_edit_timeout_seconds,
+                "worktree_codex_sandbox": self.daemon_config.worktree_codex_sandbox,
+            },
+        )
 
     def _read_worktree_owner_file(self, path: Path) -> Dict[str, Any]:
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return {}
-        return payload if isinstance(payload, dict) else {}
+        return _shared_read_json_object(path)
 
     def build_worktree_edit_prompt(
         self,
@@ -5146,6 +5043,35 @@ def _run_command(
         }
 
 
+def _run_command_result(
+    cmd: Sequence[str],
+    *,
+    cwd: Path,
+    timeout_seconds: int = 60,
+) -> CommandResult:
+    """Run the parser daemon command seam and adapt its dict payload to shared helpers."""
+
+    payload = _run_command(cmd, cwd=cwd, timeout=timeout_seconds)
+    command_value = payload.get("command")
+    if isinstance(command_value, (list, tuple)):
+        command = tuple(str(part) for part in command_value)
+    else:
+        command = tuple(str(part) for part in cmd)
+    returncode = payload.get("returncode")
+    if returncode is None:
+        returncode = 0 if payload.get("valid") else 1
+    try:
+        normalized_returncode = int(returncode)
+    except (TypeError, ValueError):
+        normalized_returncode = 1
+    return CommandResult(
+        command,
+        normalized_returncode,
+        str(payload.get("stdout") or ""),
+        str(payload.get("stderr") or ""),
+    )
+
+
 def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
     """Return unique paths from plain ``git status --porcelain`` output."""
 
@@ -5165,31 +5091,11 @@ def _git_worktree_paths_from_porcelain(stdout: str) -> List[Path]:
 
 
 def _pid_is_alive(pid: int) -> bool:
-    if pid <= 0:
-        return False
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    return True
+    return _shared_pid_is_alive(pid)
 
 
 def _owner_pid_from_worktree(path: Path, owner: Mapping[str, Any]) -> Optional[int]:
-    try:
-        pid = int(owner.get("pid") or 0)
-    except (TypeError, ValueError):
-        pid = 0
-    if pid > 0:
-        return pid
-    match = re.search(r"_(\d+)$", path.name)
-    if not match:
-        return None
-    try:
-        return int(match.group(1))
-    except ValueError:
-        return None
+    return _shared_owner_pid_from_worktree(path, owner)
 
 
 def _paths_from_unified_diff(unified_diff: str) -> List[str]:

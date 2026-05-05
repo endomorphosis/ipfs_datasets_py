@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Optional
 
-from .engine import Proposal, compact_message, run_command, utc_now, workspace_artifact_payload
+from .core import write_json
+from .engine import (
+    Proposal,
+    append_jsonl,
+    compact_message,
+    normalize_string_items,
+    run_command,
+    utc_now,
+    workspace_artifact_payload,
+)
 
 
 DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME = "accepted-work.jsonl"
@@ -74,11 +82,14 @@ def sidecar_paths(base: Path) -> WorkSidecarPaths:
     )
 
 
-def write_json(path: Path, payload: dict[str, Any]) -> None:
-    """Write pretty JSON with the todo-daemon standard formatting."""
+def artifact_string_items(values: Iterable[Any]) -> list[str]:
+    """Return non-empty string/Path artifact list items."""
 
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return [
+        item
+        for item in normalize_string_items(list(values), accepted_scalar_types=(str, Path))
+        if item
+    ]
 
 
 def write_work_sidecars(
@@ -216,12 +227,8 @@ def validation_command_summaries(validation_results: Iterable[Any]) -> list[str]
     """Return human-readable validation command summaries for markdown evidence."""
 
     summaries: list[str] = []
-    for item in validation_results:
-        if not isinstance(item, Mapping):
-            continue
-        command = item.get("command")
-        if not isinstance(command, (list, tuple)):
-            continue
+    for item in compact_validation_results(validation_results):
+        command = item.get("command", [])
         parts = [str(part) for part in command if str(part)]
         if not parts:
             continue
@@ -253,8 +260,8 @@ def accepted_work_markdown_entry(
 ) -> str:
     """Return one append-only accepted-work markdown entry."""
 
-    changed_file_list = [str(path) for path in changed_files if str(path)]
-    evidence_path_list = [str(path) for path in evidence_paths if str(path)]
+    changed_file_list = artifact_string_items(changed_files)
+    evidence_path_list = artifact_string_items(evidence_paths)
     validation_commands = validation_command_summaries(validation_results)
     entry = [
         f"## {timestamp}",
@@ -306,17 +313,13 @@ def accepted_work_evidence_manifest(
 ) -> dict[str, Any]:
     """Build the compact manifest for accepted-work evidence sidecars."""
 
-    validation = [
-        compact_validation_result(dict(item))
-        for item in validation_results
-        if isinstance(item, Mapping)
-    ]
+    validation = compact_validation_results(validation_results)
     return {
         "timestamp": timestamp,
         "target_task": target_task,
         "summary": summary,
         "impact": impact,
-        "changed_files": [str(path) for path in changed_files],
+        "changed_files": artifact_string_items(changed_files),
         "validation": validation,
         "diff_stat": diff_stat,
         "diff_available": bool(diff_available),
@@ -335,7 +338,7 @@ def write_accepted_work_evidence_artifacts(
 ) -> list[str]:
     """Write manifest, diff, and stat evidence for accepted daemon work."""
 
-    changed_file_list = [str(path) for path in changed_files if str(path)]
+    changed_file_list = artifact_string_items(changed_files)
     if not changed_file_list:
         return []
     root.mkdir(parents=True, exist_ok=True)
@@ -372,7 +375,7 @@ def write_accepted_work_evidence_artifacts(
         diff=Path(str(base) + ".diff"),
         stat=Path(str(base) + ".stat.txt"),
     )
-    paths.manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    write_json(paths.manifest, manifest)
     paths.diff.write_text(diff.stdout if diff.ok else "", encoding="utf-8")
     paths.stat.write_text(diff_stat.stdout if diff_stat.ok else "", encoding="utf-8")
     return [
@@ -391,7 +394,7 @@ def build_accepted_work_ledger_entry(
     changed_files: Iterable[str],
     transport: str,
     artifacts: Optional[WorkSidecarPaths],
-    validation_results: Iterable[dict[str, Any]],
+    validation_results: Iterable[Any],
     diff_text: str = "",
     promotion_verified: bool = False,
     promotion_errors: Optional[Iterable[str]] = None,
@@ -401,7 +404,7 @@ def build_accepted_work_ledger_entry(
 ) -> dict[str, Any]:
     """Build a stable accepted-work ledger entry."""
 
-    compact_results = [compact_validation_result(result) for result in validation_results]
+    compact_results = compact_validation_results(validation_results)
     if artifacts is None:
         artifact_payload = {
             "mode": "ledger_only",
@@ -450,7 +453,7 @@ def build_scoped_accepted_work_ledger_entry(
     changed_files: Iterable[str],
     transport: str,
     artifacts: Optional[WorkSidecarPaths],
-    validation_results: Iterable[dict[str, Any]],
+    validation_results: Iterable[Any],
     diff_text: str = "",
     promotion_verified: bool = False,
     promotion_errors: Optional[Iterable[str]] = None,
@@ -500,7 +503,7 @@ def build_proposal_accepted_work_ledger_entry(
         changed_files=proposal.changed_files,
         transport=transport,
         artifacts=artifacts,
-        validation_results=compact_validation_results(proposal.validation_results),
+        validation_results=proposal.validation_results,
         diff_text=diff_text,
         promotion_verified=proposal.promotion_verified,
         promotion_errors=proposal.promotion_errors,
@@ -523,8 +526,6 @@ def append_accepted_work_ledger(
 def append_jsonl_ledger(directory: Path, entry: dict[str, Any], *, filename: str) -> Path:
     """Append one JSON object to a daemon artifact ledger."""
 
-    directory.mkdir(parents=True, exist_ok=True)
     ledger_path = directory / filename
-    with ledger_path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(entry, sort_keys=True) + "\n")
+    append_jsonl(ledger_path, entry)
     return ledger_path

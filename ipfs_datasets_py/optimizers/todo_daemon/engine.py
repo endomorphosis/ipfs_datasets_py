@@ -15,7 +15,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Optional, Sequence
+from typing import Any, Callable, Iterable, Iterator, Mapping, Optional, Sequence
 
 
 DEFAULT_CHECKBOX_RE = re.compile(r"^(?P<prefix>\s*-\s+\[)(?P<mark>[ xX~!])(?P<suffix>\]\s+)(?P<title>.+)$")
@@ -98,6 +98,39 @@ class CommandResult:
             "stdout": compact_message(self.stdout, limit=limit),
             "stderr": compact_message(self.stderr, limit=limit),
         }
+
+
+def command_result_from_object(result: Any) -> CommandResult:
+    """Return a shared ``CommandResult`` from an object or mapping payload."""
+
+    if isinstance(result, Mapping):
+        command = result.get("command", ())
+        returncode = result.get("returncode", 1)
+        stdout = result.get("stdout", "")
+        stderr = result.get("stderr", "")
+    else:
+        command = getattr(result, "command", ())
+        returncode = getattr(result, "returncode", 1)
+        stdout = getattr(result, "stdout", "")
+        stderr = getattr(result, "stderr", "")
+    if not isinstance(command, (list, tuple)):
+        command = ()
+    try:
+        normalized_returncode = int(returncode)
+    except (TypeError, ValueError):
+        normalized_returncode = 1
+    return CommandResult(
+        command=tuple(str(part) for part in command),
+        returncode=normalized_returncode,
+        stdout=str(stdout or ""),
+        stderr=str(stderr or ""),
+    )
+
+
+def command_results_from_objects(results: Iterable[Any]) -> list[CommandResult]:
+    """Return shared ``CommandResult`` entries from command-result-like objects."""
+
+    return [command_result_from_object(result) for result in results]
 
 
 @dataclass
@@ -206,6 +239,51 @@ class ValidationWorkspaceSpec:
 
     def resolve(self, path: Path) -> Path:
         return path if path.is_absolute() else self.repo_root / path
+
+
+def repo_relative_copy_paths(repo_root: Path, paths: Iterable[Path]) -> tuple[Path, ...]:
+    """Return non-empty copy paths as repo-relative paths when possible."""
+
+    resolved_root = repo_root.resolve()
+    copy_paths: list[Path] = []
+    for raw_path in paths:
+        path = Path(raw_path)
+        if path.as_posix() in {"", "."}:
+            continue
+        if path.is_absolute():
+            try:
+                path = path.resolve().relative_to(resolved_root)
+            except ValueError:
+                continue
+        if path.as_posix() in {"", "."}:
+            continue
+        copy_paths.append(path)
+    return tuple(copy_paths)
+
+
+def build_validation_workspace_spec(
+    *,
+    repo_root: Path,
+    worktree_dir: Path,
+    marker_name: str = "todo-worktree.json",
+    copy_paths: Iterable[Path] = (),
+    root_files: Iterable[str] = (),
+    external_reference_paths: Iterable[Path] = (),
+    ignore: Optional[Callable[[str, list[str]], set[str]]] = None,
+    stale_seconds: int = 7200,
+) -> ValidationWorkspaceSpec:
+    """Build a validation-worktree spec with normalized daemon copy paths."""
+
+    return ValidationWorkspaceSpec(
+        repo_root=repo_root,
+        worktree_dir=worktree_dir,
+        marker_name=marker_name,
+        copy_paths=repo_relative_copy_paths(repo_root, copy_paths),
+        root_files=tuple(str(path) for path in root_files if str(path)),
+        external_reference_paths=tuple(Path(path) for path in external_reference_paths if Path(path).as_posix()),
+        ignore=ignore,
+        stale_seconds=int(stale_seconds),
+    )
 
 
 def parse_markdown_tasks(

@@ -47,6 +47,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
     append_jsonl_ledger,
+    artifact_string_items,
     artifact_validation_text,
     as_repo_path,
     auto_commit_paths,
@@ -70,12 +71,15 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_supervisor_loop_arg_parser,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
+    build_validation_workspace_spec,
     call_llm_router,
     call_with_thread_deadline,
     canonical_daemon_names,
     clear_child_pid_file,
     classify_artifact_failure_kind,
     cleanup_stale_daemon_worktrees,
+    command_result_from_object,
+    command_results_from_objects,
     compact_status_artifact,
     compact_validation_result,
     compact_validation_results,
@@ -157,6 +161,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     read_json_object,
     repair_common_typescript_file_edits,
     repair_common_typescript_text_damage,
+    repo_relative_copy_paths,
     repo_relative_pathspec,
     recent_failure_count,
     recent_proposal_failures,
@@ -1688,7 +1693,7 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         changed_files=proposal.changed_files,
         transport="ephemeral_worktree",
         artifacts=paths,
-        validation_results=[result.compact() for result in proposal.validation_results],
+        validation_results=proposal.validation_results,
         diff_text=diff_text,
         promotion_verified=proposal.promotion_verified,
         created_at="2026-05-05T01:02:03Z",
@@ -1707,7 +1712,7 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         changed_files=proposal.changed_files,
         transport="ephemeral_worktree",
         artifacts=None,
-        validation_results=[result.compact() for result in proposal.validation_results],
+        validation_results=proposal.validation_results,
         diff_text=diff_text,
         promotion_verified=proposal.promotion_verified,
         created_at="2026-05-05T01:02:04Z",
@@ -1728,7 +1733,7 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         summary=proposal.summary,
         impact=proposal.impact,
         changed_files=proposal.changed_files,
-        validation_results=[result.compact() for result in proposal.validation_results],
+        validation_results=proposal.validation_results,
         diff_stat="todo/source.py | 1 +",
         diff_available=True,
     )
@@ -1739,7 +1744,7 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
         impact=proposal.impact,
         changed_files=proposal.changed_files,
         evidence_paths=[as_repo_path(paths.manifest, repo)],
-        validation_results=[result.compact() for result in proposal.validation_results],
+        validation_results=proposal.validation_results,
     )
     markdown_log = artifact_dir / "accepted.md"
     append_accepted_work_markdown_log(
@@ -1798,6 +1803,10 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     assert base.name == "20260505T010203Z-accepted-runtime-feature-works"
     assert sidecar_paths(base) == paths
     assert slugify_artifact_name("Runtime Feature Works!", fallback="work") == "runtime-feature-works"
+    assert artifact_string_items(["todo/source.py", "", Path("docs/note.md"), 7]) == [
+        "todo/source.py",
+        "docs/note.md",
+    ]
     assert paths.manifest.exists()
     assert paths.workspace.exists()
     assert paths.diff.read_text(encoding="utf-8") == diff_text
@@ -1828,7 +1837,7 @@ def test_artifact_sidecar_and_ledger_helpers_are_reusable(tmp_path: Path) -> Non
     ]
     assert evidence_manifest["validation"] == [{"command": ["pytest", "-q"], "returncode": 0}]
     assert evidence_manifest["diff_available"] is True
-    assert validation_command_summaries([{"command": ["pytest", "-q"], "returncode": 0}, "ignored"]) == [
+    assert validation_command_summaries([proposal.validation_results[0], "ignored"]) == [
         "`pytest -q` -> `0`",
     ]
     assert "# Example Daemon Accepted Work" in markdown_log.read_text(encoding="utf-8")
@@ -2016,11 +2025,23 @@ def test_validation_worktree_materializes_promotes_and_cleans_up(tmp_path: Path)
     external = repo / "external" / "metadata"
     external.mkdir(parents=True)
     (external / "record.txt").write_text("metadata\n", encoding="utf-8")
-    spec = ValidationWorkspaceSpec(
+    outside = tmp_path / "outside.md"
+    outside.write_text("outside\n", encoding="utf-8")
+    assert repo_relative_copy_paths(
+        repo,
+        (
+            Path("todo"),
+            repo / "docs" / "PLAN.md",
+            outside,
+            Path(),
+        ),
+    ) == (Path("todo"), Path("docs/PLAN.md"))
+
+    spec = build_validation_workspace_spec(
         repo_root=repo,
         worktree_dir=Path(".daemon/worktrees"),
         marker_name="example-worktree.json",
-        copy_paths=(Path("todo"), Path("docs/PLAN.md")),
+        copy_paths=(Path("todo"), repo / "docs" / "PLAN.md", outside, Path()),
         root_files=("package.json",),
         external_reference_paths=(Path("external/metadata"),),
         stale_seconds=0,
