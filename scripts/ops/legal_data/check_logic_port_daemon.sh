@@ -19,4 +19,4 @@ export PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}"
 # "auto_commit_branch": status.get("auto_commit_branch")
 
 cd "$REPO_ROOT" || exit 2
-exec python3 -m ipfs_datasets_py.optimizers.todo_daemon.logic_port check "$@"
+exec python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port check "$@"

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import argparse
-import json
 import os
 import shlex
 import subprocess
@@ -27,6 +25,7 @@ from .core import (
     terminate_pid_tree,
     write_json,
 )
+from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
 
 
 JsonDict = Dict[str, Any]
@@ -643,83 +642,40 @@ def stop_legal_parser_daemon(
     return StopResult(payload=payload, exit_code=0)
 
 
-def _json_print(payload: Mapping[str, Any]) -> None:
-    print(json.dumps(dict(payload), indent=2, sort_keys=True))
-
-
-def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage the legal-parser optimizer daemon lifecycle.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    check = subparsers.add_parser("check", help="Print health JSON and exit 0 only when healthy.")
-    check.add_argument("--repo-root", default=None)
-    check.add_argument("--stale-after-seconds", type=float, default=float(_env("STALE_AFTER_SECONDS", "120")))
-
-    ensure = subparsers.add_parser("ensure", help="Start the wrapper/supervisor if unhealthy.")
-    ensure.add_argument("--repo-root", default=None)
-    ensure.add_argument("--stale-after-seconds", type=float, default=float(_env("STALE_AFTER_SECONDS", "120")))
-    ensure.add_argument("--startup-wait-seconds", type=float, default=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "30")))
-    ensure.add_argument("--launch-mode", default=_env("ENSURE_LAUNCH_MODE", "nohup_loop"), choices=("nohup_loop", "tmux"))
-    ensure.add_argument(
-        "--restart-delay-seconds",
-        type=int,
-        default=int(_env("ENSURE_RESTART_DELAY_SECONDS", "5")),
+def legal_parser_spec_payload(spec: ManagedDaemonSpec) -> Mapping[str, Any]:
+    return daemon_spec_payload(
+        spec,
+        extra={"wrapper_pid_path": spec.repo_relative(_wrapper_pid_path(spec))},
     )
 
-    stop = subparsers.add_parser("stop", help="Stop the wrapper, supervisor, daemon, and owned Codex calls.")
-    stop.add_argument("--repo-root", default=None)
-    stop.add_argument("--grace-seconds", type=float, default=float(_env("STOP_GRACE_SECONDS", "10")))
-    stop.add_argument("--json", action="store_true")
 
-    spec_parser = subparsers.add_parser("spec", help="Print the resolved reusable daemon spec.")
-    spec_parser.add_argument("--repo-root", default=None)
-    return parser
+def build_arg_parser():
+    return build_lifecycle_arg_parser(
+        description="Manage the legal-parser optimizer daemon lifecycle.",
+        default_stale_after_seconds=float(_env("STALE_AFTER_SECONDS", "120")),
+        default_startup_wait_seconds=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "30")),
+        default_launch_mode=_env("ENSURE_LAUNCH_MODE", "nohup_loop"),
+        launch_mode_choices=("nohup_loop", "tmux"),
+        restart_delay_flag="--restart-delay-seconds",
+        default_restart_delay_seconds=int(_env("ENSURE_RESTART_DELAY_SECONDS", "5")),
+        default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
+        ensure_description="Start the wrapper/supervisor if unhealthy.",
+        stop_description="Stop the wrapper, supervisor, daemon, and owned Codex calls.",
+    )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_arg_parser().parse_args(argv)
-    spec = build_legal_parser_spec(getattr(args, "repo_root", None))
-    if args.command == "check":
-        payload = check_legal_parser_health(spec, stale_after_seconds=args.stale_after_seconds)
-        _json_print(payload)
-        return 0 if payload.get("alive") else 1
-    if args.command == "ensure":
-        payload = ensure_legal_parser_daemon(
-            spec,
-            stale_after_seconds=args.stale_after_seconds,
-            startup_wait_seconds=args.startup_wait_seconds,
-            launch_mode=args.launch_mode,
-            restart_delay_seconds=args.restart_delay_seconds,
-        )
-        _json_print(payload.get("check") if isinstance(payload.get("check"), dict) else payload)
-        return 0 if payload.get("status") != "failed_to_start" else 1
-    if args.command == "stop":
-        result = stop_legal_parser_daemon(spec, grace_seconds=args.grace_seconds)
-        if args.json:
-            _json_print(result.payload)
-        elif result.payload.get("status") == "not_running":
-            print("legal-parser daemon supervisor is not running")
-        return result.exit_code
-    if args.command == "spec":
-        _json_print(
-            {
-                "name": spec.name,
-                "schema": spec.schema,
-                "repo_root": str(spec.repo_root),
-                "runner": list(spec.runner),
-                "status_path": spec.repo_relative(spec.status_path),
-                "progress_path": spec.repo_relative(spec.progress_path),
-                "supervisor_status_path": spec.repo_relative(spec.supervisor_status_path),
-                "supervisor_pid_path": spec.repo_relative(spec.supervisor_pid_path),
-                "child_pid_path": spec.repo_relative(spec.child_pid_path),
-                "wrapper_pid_path": str(_wrapper_pid_path(spec).relative_to(spec.repo_root)),
-                "worktree_root": spec.repo_relative(spec.worktree_root),
-                "tmux_session_name": spec.tmux_session_name,
-                "launch_env": dict(spec.launch_env),
-            }
-        )
-        return 0
-    return 2
+    return run_lifecycle_cli(
+        argv,
+        parser=build_arg_parser(),
+        build_spec=build_legal_parser_spec,
+        check_fn=check_legal_parser_health,
+        ensure_fn=ensure_legal_parser_daemon,
+        stop_fn=stop_legal_parser_daemon,
+        ensure_restart_kw="restart_delay_seconds",
+        spec_payload_builder=legal_parser_spec_payload,
+        stop_not_running_message="legal-parser daemon supervisor is not running",
+    )
 
 
 if __name__ == "__main__":

@@ -338,7 +338,7 @@ def test_capability_profiles_classify_dispute_resolution_duties_across_prover_ta
         )
         assert all(
             record["target_components"]["semantic_formula_family"]
-            == "dispute_resolution"
+            == "dispute_resolution_duty"
             for record in prover_records
         )
 
@@ -452,6 +452,117 @@ def test_capability_profiles_classify_financial_assurance_duties():
     ]
     assert [record["formula"] for record in capability_records] == [
         formula for _, _, formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["missing_slots"] == [] for record in capability_records)
+    assert all(record["ungrounded_slots"] == [] for record in capability_records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
+    assert all(record["formula_proof_ready"] is True for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_capability_profiles_classify_legal_recordkeeping_duties():
+    examples = [
+        (
+            "The Clerk shall make a recordation of the lien.",
+            "make a recordation of the lien",
+            "O(∀x (Clerk(x) → RecordLien(x)))",
+            "RecordLien",
+            "MakeRecordationLien",
+        ),
+        (
+            "The Board shall enter memorialization of the vote.",
+            "enter memorialization of the vote",
+            "O(∀x (Board(x) → MemorializeVote(x)))",
+            "MemorializeVote",
+            "EnterMemorializationVote",
+        ),
+        (
+            "The archivist shall perform archival of the file.",
+            "perform archival of the file",
+            "O(∀x (Archivist(x) → ArchiveFile(x)))",
+            "ArchiveFile",
+            "PerformArchivalFile",
+        ),
+        (
+            "The custodian shall conduct retention of the index.",
+            "conduct retention of the index",
+            "O(∀x (Custodian(x) → RetainIndex(x)))",
+            "RetainIndex",
+            "ConductRetentionIndex",
+        ),
+        (
+            "The agency shall complete preservation of the register.",
+            "complete preservation of the register",
+            "O(∀x (Agency(x) → PreserveRegister(x)))",
+            "PreserveRegister",
+            "CompletePreservationRegister",
+        ),
+        (
+            "The officer shall effectuate restoration of the record.",
+            "effectuate restoration of the record",
+            "O(∀x (Officer(x) → RestoreRecord(x)))",
+            "RestoreRecord",
+            "EffectuateRestorationRecord",
+        ),
+    ]
+
+    norms = []
+    for text, action, expected_formula, expected_symbol, rejected_symbol in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        formula_record = build_deontic_formula_record_from_ir(norm)
+        prover_records = [
+            target.to_dict() for target in validate_ir_with_provers(norm).targets
+        ]
+        action_span = element["field_spans"]["action"]
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert element["text"][action_span[0]:action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert formula_record["formula"] == expected_formula
+        assert rejected_symbol not in expected_formula
+        assert formula_record["proof_ready"] is True
+        assert formula_record["requires_validation"] is False
+        assert formula_record["repair_required"] is False
+        assert len(prover_records) == 5
+        assert all(record["syntax_valid"] is True for record in prover_records)
+        assert all(record["proof_ready"] is True for record in prover_records)
+        assert all(
+            expected_symbol in record["exported_formula_symbols"]
+            for record in prover_records
+        )
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "legal_recordkeeping_duty",
+        "legal_recordkeeping_duty",
+        "legal_recordkeeping_duty",
+        "legal_recordkeeping_duty",
+        "legal_recordkeeping_duty",
+        "legal_recordkeeping_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, _, formula, _, _ in examples
     ]
     assert all(
         record["checked_slots"] == ["actor", "modality", "action"]

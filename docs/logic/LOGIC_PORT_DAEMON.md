@@ -73,6 +73,14 @@ Stop only the logic-port supervisor and its child daemon with:
 bash ipfs_datasets_py/scripts/ops/legal_data/stop_logic_port_daemon.sh
 ```
 
+The lifecycle wrappers delegate to the reusable package dispatcher, so the same operations can also be run as module commands:
+
+```bash
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port check
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port ensure
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port stop
+```
+
 The supervisor writes:
 
 - `ipfs_datasets_py/.daemon/logic-port-daemon-supervisor.pid`

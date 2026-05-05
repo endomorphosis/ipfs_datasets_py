@@ -14,4 +14,4 @@ export PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}"
 # "agentic_startup_failure_maintenance": startup_failure_maintenance
 
 cd "$REPO_ROOT" || exit 2
-exec python3 -m ipfs_datasets_py.optimizers.todo_daemon.logic_port ensure "$@"
+exec python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port ensure "$@"

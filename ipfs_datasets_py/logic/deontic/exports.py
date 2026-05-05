@@ -4115,6 +4115,7 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Arbitrate",
         "Conciliate",
         "Mediate",
+        "Negotiate",
         "Settle",
     )):
         return "dispute_resolution_duty"
@@ -4161,6 +4162,15 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "PreserveEvidence",
     )):
         return "evidence_custody_duty"
+    if action_predicate.startswith((
+        "Archive",
+        "Memorialize",
+        "Preserve",
+        "Record",
+        "Restore",
+        "Retain",
+    )):
+        return "legal_recordkeeping_duty"
     if action_predicate.startswith((
         "Anonymize",
         "Decrypt",

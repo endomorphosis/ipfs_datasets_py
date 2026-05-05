@@ -9,6 +9,21 @@ from .core import (
     ensure_daemon_running,
     stop_daemon,
 )
+from .cli import (
+    build_lifecycle_arg_parser,
+    daemon_spec_payload,
+    json_print,
+    run_lifecycle_args,
+    run_lifecycle_cli,
+)
+from .app import (
+    TodoDaemonRuntimeConfig,
+    build_todo_runner_arg_parser,
+    config_from_todo_runner_args,
+    run_todo_daemon_cli,
+    todo_daemon_exit_code,
+    todo_daemon_run_summary,
+)
 from .engine import (
     CommandResult,
     PathPolicy,
@@ -39,6 +54,12 @@ from .engine import (
     workspace_artifact_payload,
     worktree_marker_payload,
 )
+from .file_replacement import (
+    FileReplacementHooks,
+    FileReplacementTodoDaemonRunner,
+    apply_file_replacement_proposal,
+    bind_file_replacement_apply_hook,
+)
 from .plans import PlanTask, extract_plan_tasks, replace_checkbox_mark, strip_daemon_task_board
 from .runner import PreTaskBlock, TodoDaemonHooks, TodoDaemonRunner
 
@@ -46,6 +67,8 @@ __all__ = [
     "CommandResult",
     "DaemonHealth",
     "EnsureResult",
+    "FileReplacementHooks",
+    "FileReplacementTodoDaemonRunner",
     "ManagedDaemonSpec",
     "PathPolicy",
     "PlanTask",
@@ -55,21 +78,30 @@ __all__ = [
     "Task",
     "TodoDaemonHooks",
     "TodoDaemonRunner",
+    "TodoDaemonRuntimeConfig",
     "ValidationWorkspaceSpec",
     "append_jsonl",
+    "apply_file_replacement_proposal",
     "atomic_write_json",
+    "bind_file_replacement_apply_hook",
     "build_legal_parser_spec",
+    "build_lifecycle_arg_parser",
+    "build_todo_runner_arg_parser",
     "check_daemon_health",
     "check_legal_parser_health",
     "cleanup_stale_validation_worktrees",
     "compact_message",
+    "config_from_todo_runner_args",
     "copy_if_exists",
+    "daemon_spec_payload",
     "diff_for_file",
     "extract_json",
     "extract_plan_tasks",
     "ensure_daemon_running",
     "ensure_legal_parser_daemon",
+    "json_print",
     "legal_parser_launch_env",
+    "legal_parser_spec_payload",
     "link_or_copy_if_exists",
     "materialize_proposal_files",
     "normalized_relative_path",
@@ -81,11 +113,16 @@ __all__ = [
     "read_text",
     "replace_checkbox_mark",
     "run_command",
+    "run_lifecycle_args",
+    "run_lifecycle_cli",
+    "run_todo_daemon_cli",
     "select_task",
     "stop_daemon",
     "stop_legal_parser_daemon",
     "strip_daemon_task_board",
     "temporary_validation_worktree",
+    "todo_daemon_exit_code",
+    "todo_daemon_run_summary",
     "utc_now",
     "verify_promoted_worktree_files",
     "workspace_artifact_payload",
@@ -98,6 +135,7 @@ _LEGAL_PARSER_EXPORTS = {
     "check_legal_parser_health",
     "ensure_legal_parser_daemon",
     "legal_parser_launch_env",
+    "legal_parser_spec_payload",
     "stop_legal_parser_daemon",
 }
 

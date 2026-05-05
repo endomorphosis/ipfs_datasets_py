@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 from pathlib import Path
 from typing import Dict, Optional, Sequence
@@ -14,6 +13,7 @@ from .core import (
     ensure_daemon_running,
     stop_daemon,
 )
+from .cli import build_lifecycle_arg_parser, run_lifecycle_cli
 
 
 def _env(name: str, default: str) -> str:
@@ -121,83 +121,32 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
     )
 
 
-def _json_print(payload) -> None:
-    print(json.dumps(payload, indent=2, sort_keys=True))
-
-
 def build_arg_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage the logic-port optimizer daemon lifecycle.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    check = subparsers.add_parser("check", help="Print health JSON and exit 0 only when healthy.")
-    check.add_argument("--repo-root", default=None)
-    check.add_argument("--stale-after-seconds", type=float, default=float(_env("STALE_AFTER_SECONDS", "180")))
-
-    ensure = subparsers.add_parser("ensure", help="Start the supervisor if the daemon is not healthy.")
-    ensure.add_argument("--repo-root", default=None)
-    ensure.add_argument("--stale-after-seconds", type=float, default=float(_env("STALE_AFTER_SECONDS", "180")))
-    ensure.add_argument("--startup-wait-seconds", type=float, default=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "20")))
-    ensure.add_argument("--launch-mode", default=_env("ENSURE_LAUNCH_MODE", "nohup"), choices=("nohup", "tmux"))
-    ensure.add_argument(
-        "--tmux-restart-delay-seconds",
-        type=int,
-        default=int(_env("ENSURE_TMUX_RESTART_DELAY_SECONDS", "5")),
+    return build_lifecycle_arg_parser(
+        description="Manage the logic-port optimizer daemon lifecycle.",
+        default_stale_after_seconds=float(_env("STALE_AFTER_SECONDS", "180")),
+        default_startup_wait_seconds=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "20")),
+        default_launch_mode=_env("ENSURE_LAUNCH_MODE", "nohup"),
+        launch_mode_choices=("nohup", "tmux"),
+        restart_delay_flag="--tmux-restart-delay-seconds",
+        restart_delay_dest="tmux_restart_delay_seconds",
+        default_restart_delay_seconds=int(_env("ENSURE_TMUX_RESTART_DELAY_SECONDS", "5")),
+        default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
+        stop_description="Stop the supervisor, daemon child, and owned worktree LLM calls.",
     )
-
-    stop = subparsers.add_parser("stop", help="Stop the supervisor, daemon child, and owned worktree LLM calls.")
-    stop.add_argument("--repo-root", default=None)
-    stop.add_argument("--grace-seconds", type=float, default=float(_env("STOP_GRACE_SECONDS", "10")))
-    stop.add_argument("--json", action="store_true", help="Print a machine-readable stop result.")
-
-    spec = subparsers.add_parser("spec", help="Print the resolved reusable daemon spec.")
-    spec.add_argument("--repo-root", default=None)
-    return parser
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_arg_parser().parse_args(argv)
-    spec = build_logic_port_spec(getattr(args, "repo_root", None))
-    if args.command == "check":
-        health = check_daemon_health(spec, stale_after_seconds=args.stale_after_seconds)
-        _json_print(health.payload)
-        return health.exit_code
-    if args.command == "ensure":
-        result = ensure_daemon_running(
-            spec,
-            stale_after_seconds=args.stale_after_seconds,
-            startup_wait_seconds=args.startup_wait_seconds,
-            launch_mode=args.launch_mode,
-            tmux_restart_delay_seconds=args.tmux_restart_delay_seconds,
-        )
-        _json_print(result.check)
-        return result.exit_code
-    if args.command == "stop":
-        result = stop_daemon(spec, grace_seconds=args.grace_seconds)
-        if args.json:
-            _json_print(result.payload)
-        elif result.payload.get("status") == "not_running":
-            print("logic-port daemon supervisor is not running")
-        return result.exit_code
-    if args.command == "spec":
-        _json_print(
-            {
-                "name": spec.name,
-                "schema": spec.schema,
-                "repo_root": str(spec.repo_root),
-                "runner": list(spec.runner),
-                "status_path": spec.repo_relative(spec.status_path),
-                "progress_path": spec.repo_relative(spec.progress_path),
-                "supervisor_status_path": spec.repo_relative(spec.supervisor_status_path),
-                "supervisor_pid_path": spec.repo_relative(spec.supervisor_pid_path),
-                "child_pid_path": spec.repo_relative(spec.child_pid_path),
-                "task_board_path": spec.repo_relative(spec.task_board_path),
-                "worktree_root": spec.repo_relative(spec.worktree_root),
-                "tmux_session_name": spec.tmux_session_name,
-                "launch_env": dict(spec.launch_env),
-            }
-        )
-        return 0
-    return 2
+    return run_lifecycle_cli(
+        argv,
+        parser=build_arg_parser(),
+        build_spec=build_logic_port_spec,
+        check_fn=check_daemon_health,
+        ensure_fn=ensure_daemon_running,
+        stop_fn=stop_daemon,
+        ensure_restart_kw="tmux_restart_delay_seconds",
+        stop_not_running_message="logic-port daemon supervisor is not running",
+    )
 
 
 if __name__ == "__main__":

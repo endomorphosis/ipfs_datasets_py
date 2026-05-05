@@ -1,0 +1,27 @@
+# Reusable Todo Daemon Module
+
+`ipfs_datasets_py.optimizers.todo_daemon` contains the shared runner, lifecycle, and temporary-worktree primitives used by optimizer daemons. New unattended todo daemons should live as small domain modules that provide configuration and hooks, then reuse this package instead of copying the logic-port shell/Python scaffolding.
+
+## Package Entry Point
+
+Built-in daemon lifecycle commands are available through one package dispatcher:
+
+```bash
+python3 -m ipfs_datasets_py.optimizers.todo_daemon list
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port check
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port ensure
+python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port stop
+python3 -m ipfs_datasets_py.optimizers.todo_daemon legal-parser check
+```
+
+The legacy shell wrappers remain stable, but the logic-port wrappers now delegate to the package dispatcher so future daemons can follow the same shape.
+
+## Reuse Pattern
+
+1. Define a `ManagedDaemonSpec` for lifecycle paths, process matching, launch environment, task board, and worktree root.
+2. Build a lifecycle CLI with `build_lifecycle_arg_parser()` and `run_lifecycle_cli()`.
+3. Implement `TodoDaemonHooks` for domain behavior: task parsing, task selection, proposal generation, validation, task-board status updates, retry policy, and exception diagnostics.
+4. Use `TodoDaemonRunner` for heartbeat, progress JSON, task-board marking, result logs, watch-loop handling, and crash capture.
+5. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner` or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
+
+This keeps future daemons deterministic at the control-flow layer: lifecycle management, task bookkeeping, repair-safe worktrees, and durable progress reporting stay shared, while each daemon owns only its task interpretation and proposal-production logic.

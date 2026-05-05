@@ -11,4 +11,4 @@ export PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}"
 # pid_has_non_logic_port_daemon_ancestor
 
 cd "$REPO_ROOT" || exit 2
-exec python3 -m ipfs_datasets_py.optimizers.todo_daemon.logic_port stop "$@"
+exec python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port stop "$@"
