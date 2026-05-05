@@ -10,31 +10,38 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     CommandResult,
     FileReplacementHooks,
     FileReplacementTodoDaemonRunner,
+    LlmRouterInvocation,
     ManagedDaemonSpec,
     PathPolicy,
     PreTaskBlock,
     Proposal,
     RestartPolicy,
     SupervisedChildSpec,
+    SupervisorLoop,
+    SupervisorLoopConfig,
     Task,
     TodoDaemonHooks,
     TodoDaemonRunner,
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
+    artifact_validation_text,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
     build_python_module_command,
     build_restart_loop_command,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
+    call_llm_router,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
     current_task_failure_counts,
     daemon_spec_payload,
+    diagnostic_signatures,
     extract_codex_event_text_candidates,
     extract_json,
     heartbeat_snapshot,
+    has_diagnostic_codes,
     launch_supervised_child,
     last_task_attempt_index,
     looks_like_empty_codex_event_stream,
@@ -46,11 +53,14 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     paths_from_unified_diff,
     proposal_diff_from_worktree,
     promote_worktree_files,
+    quality_failure_counts,
     quoted_env_assignments,
     read_daemon_results,
     read_json_object,
     recent_failure_count,
+    recent_rollback_failure_count,
     recent_total_failure_count,
+    rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
     run_lifecycle_cli,
@@ -224,6 +234,62 @@ def test_shared_run_command_supports_timeout_seconds_and_stdin(tmp_path: Path) -
     assert "Command timed out after 1s" in timed_out.stderr
 
 
+def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
+    package = tmp_path / "ipfs_datasets_py"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "llm_router.py").write_text(
+        "\n".join(
+            [
+                "import json",
+                "",
+                "def generate_text(prompt, model_name, provider, allow_local_fallback, timeout, max_new_tokens, temperature):",
+                "    return json.dumps({",
+                "        'prompt': prompt,",
+                "        'model_name': model_name,",
+                "        'provider': provider,",
+                "        'allow_local_fallback': allow_local_fallback,",
+                "        'timeout': timeout,",
+                "        'max_new_tokens': max_new_tokens,",
+                "        'temperature': temperature,",
+                "    })",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    payload = json.loads(
+        call_llm_router(
+            "hello",
+            LlmRouterInvocation(
+                repo_root=tmp_path,
+                model_name="example-model",
+                provider="example-provider",
+                allow_local_fallback=True,
+                timeout_seconds=7,
+                max_new_tokens=321,
+                max_prompt_chars=1000,
+                temperature=0.2,
+                backend_env_name="SYNTH_LLM_BACKEND",
+                env_prefix="SYNTH_LLM",
+                prompt_file_prefix="synthetic-llm-prompt-",
+            ),
+        )
+    )
+
+    assert payload == {
+        "prompt": "hello",
+        "model_name": "example-model",
+        "provider": "example-provider",
+        "allow_local_fallback": True,
+        "timeout": 7,
+        "max_new_tokens": 321,
+        "temperature": 0.2,
+    }
+
+
 def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
     log = tmp_path / "daemon.jsonl"
     rows = [
@@ -272,6 +338,71 @@ def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
     assert last_task_attempt_index(parsed, "Task A") == 2
     assert summary["latest_failure"]["failure_kind"] == "validation"
     assert summary["latest_failure"]["errors"] == ["bad type"]
+
+
+def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
+    rows = [
+        (
+            {"valid": True},
+            {"target_task": "Task A", "failure_kind": "", "errors": []},
+        ),
+        (
+            {"valid": False},
+            {
+                "target_task": "Task `A`",
+                "failure_kind": "quality",
+                "errors": ["src/example.ts(1,1): error TS2339: Property 'foo' does not exist."],
+                "validation_results": [{"stdout": "", "stderr": "error TS2339: Property 'bar' does not exist."}],
+            },
+        ),
+        (
+            {"valid": False},
+            {
+                "target_task": "Task `A`",
+                "failure_kind": "quality",
+                "errors": ["src/example.ts(2,1): error TS2339: Property 'baz' does not exist."],
+                "validation_results": [],
+            },
+        ),
+        (
+            {"valid": False},
+            {
+                "target_task": "Task B",
+                "failure_kind": "parse",
+                "errors": ["bad json"],
+                "changed_files": ["todo/output.py"],
+            },
+        ),
+    ]
+
+    quality_counts = quality_failure_counts(
+        rows,
+        classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
+        quality_failure_kind="quality",
+    )
+    rollback_counts = rollback_failure_counts(
+        rows,
+        classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
+        rollback_failure_kinds=frozenset({"quality", "parse"}),
+    )
+
+    assert has_diagnostic_codes(artifact_validation_text(rows[1][1]), frozenset({"TS2339"}))
+    assert diagnostic_signatures(artifact_validation_text(rows[1][1])) == [
+        "TS2339:Property '<symbol>' does not exist."
+    ]
+    assert quality_counts["total"] == 2
+    assert quality_counts["consecutive"] == 0
+    assert quality_counts["by_task"] == {"Task `A`": 2}
+    assert quality_counts["top_signature_count"] == 2
+    assert rollback_counts["total"] == 2
+    assert rollback_counts["consecutive"] == 0
+    assert rollback_counts["by_kind"] == {"quality": 2}
+    assert recent_rollback_failure_count(
+        rows[:-1],
+        "Task A",
+        classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
+        rollback_failure_kinds=frozenset({"quality"}),
+    ) == 2
 
 
 def test_git_parsing_helpers_are_reusable() -> None:
@@ -550,6 +681,49 @@ def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:
     assert child.latest_log_path.read_text(encoding="utf-8").strip() == "child-ok:todo"
     assert clear_child_pid_file(child) is True
     assert not child.child_pid_path.exists()
+
+
+def test_python_supervisor_loop_reuses_child_runtime_and_status(tmp_path: Path) -> None:
+    spec = ManagedDaemonSpec(
+        name="synthetic-loop",
+        schema="synthetic.todo_daemon",
+        repo_root=tmp_path,
+        daemon_dir=Path(".daemon"),
+        runner=("python3", "-m", "synthetic.daemon"),
+        status_path=Path(".daemon/child-status.json"),
+        progress_path=Path(".daemon/progress.json"),
+        supervisor_status_path=Path(".daemon/supervisor.json"),
+        supervisor_pid_path=Path(".daemon/supervisor.pid"),
+        child_pid_path=Path(".daemon/child.pid"),
+        supervisor_out_path=Path(".daemon/supervisor.out"),
+        ensure_status_path=Path(".daemon/ensure.json"),
+        ensure_check_path=Path(".daemon/ensure-check.json"),
+        supervisor_lock_path=Path(".daemon/supervisor.lock"),
+        latest_log_path=Path(".daemon/latest-child.log"),
+    )
+    loop = SupervisorLoop(
+        SupervisorLoopConfig(
+            spec=spec,
+            command=("python3", "-c", "print('loop-once')"),
+            log_prefix="synthetic_loop",
+            heartbeat_seconds=0.01,
+            watchdog_startup_grace_seconds=0.0,
+            max_restarts=1,
+            status_static_fields={"example_supervisor": True},
+        )
+    )
+
+    result = loop.run()
+    supervisor_status = json.loads((tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8"))
+
+    assert result.status == "child_exited"
+    assert result.restart_count == 1
+    assert result.last_exit_code == 0
+    assert not (tmp_path / ".daemon" / "child.pid").exists()
+    assert (tmp_path / ".daemon" / "latest-child.log").read_text(encoding="utf-8").strip() == "loop-once"
+    assert supervisor_status["status"] == "child_exited"
+    assert supervisor_status["restart_count"] == 1
+    assert supervisor_status["example_supervisor"] is True
 
 
 def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Path) -> None:

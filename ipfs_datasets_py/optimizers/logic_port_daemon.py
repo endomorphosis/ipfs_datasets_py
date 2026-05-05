@@ -55,6 +55,14 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     read_text as _shared_read_text,
     run_command as _shared_run_command,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
+    artifact_validation_text as _shared_artifact_validation_text,
+    diagnostic_signatures as _shared_diagnostic_signatures,
+    has_diagnostic_codes as _shared_has_diagnostic_codes,
+    quality_failure_counts as _shared_quality_failure_counts,
+    recent_rollback_failure_count as _shared_recent_rollback_failure_count,
+    rollback_failure_counts as _shared_rollback_failure_counts,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.history import (
     current_task_failure_counts as _shared_current_task_failure_counts,
     last_task_attempt_index as _shared_last_task_attempt_index,
@@ -612,18 +620,12 @@ def _recent_total_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, A
 
 
 def _recent_rollback_quality_failure_count(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]], task_label: str) -> int:
-    count = 0
-    for result, artifact in reversed(rows):
-        if not _same_task_label(str(artifact.get("target_task") or ""), task_label):
-            continue
-        if result.get("valid"):
-            break
-        if artifact.get("changed_files"):
-            break
-        if _classify_failure_kind(artifact) not in ROLLBACK_QUALITY_FAILURE_KINDS:
-            break
-        count += 1
-    return count
+    return _shared_recent_rollback_failure_count(
+        rows,
+        task_label,
+        classify_failure_kind=_classify_failure_kind,
+        rollback_failure_kinds=ROLLBACK_QUALITY_FAILURE_KINDS,
+    )
 
 
 def _current_task_failure_counts(
@@ -826,100 +828,35 @@ def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
 
 
 def _has_typescript_quality_diagnostics(text: str) -> bool:
-    if not text:
-        return False
-    return any(code in text for code in TYPESCRIPT_QUALITY_ERROR_CODES)
+    return _shared_has_diagnostic_codes(text, TYPESCRIPT_QUALITY_ERROR_CODES)
 
 
 def _typescript_diagnostic_signatures(text: str) -> List[str]:
     """Return stable diagnostic families for repeated TypeScript failure loops."""
 
-    signatures: List[str] = []
-    seen: set[str] = set()
-    for match in re.finditer(r"error\s+(TS\d+):\s*([^\n]+)", text):
-        code = match.group(1)
-        message = re.sub(r"'[^']+'", "'<symbol>'", match.group(2).strip())
-        message = re.sub(r"\s+", " ", message)
-        signature = f"{code}:{message[:120]}"
-        if signature not in seen:
-            seen.add(signature)
-            signatures.append(signature)
-    return signatures
+    return [signature for signature in _shared_diagnostic_signatures(text) if signature.startswith("TS")]
 
 
 def _artifact_validation_text(artifact: Dict[str, Any]) -> str:
-    parts: List[str] = []
-    parts.extend(str(error) for error in artifact.get("errors", []) if error)
-    validation = artifact.get("validation_results", [])
-    if isinstance(validation, list):
-        for item in validation:
-            if isinstance(item, dict):
-                parts.append(str(item.get("stdout") or ""))
-                parts.append(str(item.get("stderr") or ""))
-    return "\n".join(parts)
+    return _shared_artifact_validation_text(artifact)
 
 
 def _typescript_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[str, Any]:
-    total = 0
-    consecutive = 0
-    by_task: Dict[str, int] = {}
-    by_signature: Dict[str, int] = {}
-    for result, artifact in rows:
-        if result.get("valid") or artifact.get("changed_files"):
-            continue
-        if _classify_failure_kind(artifact) != "typescript_quality":
-            continue
-        total += 1
-        task = str(artifact.get("target_task") or "")
-        if task:
-            by_task[task] = by_task.get(task, 0) + 1
-        for signature in _typescript_diagnostic_signatures(_artifact_validation_text(artifact)):
-            key = f"{task} :: {signature}" if task else signature
-            by_signature[key] = by_signature.get(key, 0) + 1
-    for result, artifact in reversed(rows):
-        if result.get("valid"):
-            break
-        if artifact.get("changed_files") or _classify_failure_kind(artifact) != "typescript_quality":
-            break
-        consecutive += 1
-    return {
-        "total": total,
-        "consecutive": consecutive,
-        "by_task": by_task,
-        "by_signature": by_signature,
-        "top_signature": max(by_signature.items(), key=lambda item: item[1])[0] if by_signature else "",
-        "top_signature_count": max(by_signature.values()) if by_signature else 0,
-    }
+    return _shared_quality_failure_counts(
+        rows,
+        classify_failure_kind=_classify_failure_kind,
+        quality_failure_kind="typescript_quality",
+        signature_extractor=_typescript_diagnostic_signatures,
+        validation_text_extractor=_artifact_validation_text,
+    )
 
 
 def _rollback_quality_failure_counts(rows: Sequence[Tuple[Dict[str, Any], Dict[str, Any]]]) -> Dict[str, Any]:
-    total = 0
-    consecutive = 0
-    by_task: Dict[str, int] = {}
-    by_kind: Dict[str, int] = {}
-    for result, artifact in rows:
-        if result.get("valid") or artifact.get("changed_files"):
-            continue
-        kind = _classify_failure_kind(artifact)
-        if kind not in ROLLBACK_QUALITY_FAILURE_KINDS:
-            continue
-        total += 1
-        by_kind[kind] = by_kind.get(kind, 0) + 1
-        task = str(artifact.get("target_task") or "")
-        if task:
-            by_task[task] = by_task.get(task, 0) + 1
-    for result, artifact in reversed(rows):
-        if result.get("valid"):
-            break
-        if artifact.get("changed_files") or _classify_failure_kind(artifact) not in ROLLBACK_QUALITY_FAILURE_KINDS:
-            break
-        consecutive += 1
-    return {
-        "total": total,
-        "consecutive": consecutive,
-        "by_task": by_task,
-        "by_kind": by_kind,
-    }
+    return _shared_rollback_failure_counts(
+        rows,
+        classify_failure_kind=_classify_failure_kind,
+        rollback_failure_kinds=ROLLBACK_QUALITY_FAILURE_KINDS,
+    )
 
 
 def _has_runtime_logic_change(paths: Sequence[str]) -> bool:

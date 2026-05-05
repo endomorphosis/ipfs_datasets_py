@@ -1,6 +1,6 @@
 # Reusable Todo Daemon Module
 
-`ipfs_datasets_py.optimizers.todo_daemon` contains the shared runner, lifecycle, supervisor, process, result-history, JSONL parsing, and temporary-worktree primitives used by optimizer daemons. New unattended todo daemons should live as small domain modules that provide configuration and hooks, then reuse this package instead of copying the logic-port shell/Python scaffolding.
+`ipfs_datasets_py.optimizers.todo_daemon` contains the shared runner, lifecycle, supervisor, process, result-history, diagnostic-loop, JSONL parsing, and temporary-worktree primitives used by optimizer daemons. New unattended todo daemons should live as small domain modules that provide configuration and hooks, then reuse this package instead of copying the logic-port shell/Python scaffolding.
 
 ## Package Entry Point
 
@@ -26,8 +26,11 @@ The legacy shell wrappers remain stable, but the logic-port wrappers now delegat
 6. Use `run_command()` for validation and git commands so timeouts clean up the full process group and optional stdin is captured consistently.
 7. Use `extract_json()`, `extract_codex_event_text_candidates()`, and `looks_like_empty_codex_event_stream()` when proposal output may arrive as Codex JSONL events rather than plain JSON.
 8. Use `read_daemon_results()`, `recent_failure_count()`, `current_task_failure_counts()`, and `task_failure_summary()` for retry budgets, blocked-task decisions, and self-repair context.
-9. Use `cleanup_stale_daemon_worktrees()`, `write_worktree_owner_file()`, and `pid_looks_like_worktree_owner()` for temporary worktree ownership, stale-worktree garbage collection, and crash recovery.
-10. Use `SupervisedChildSpec`, `launch_supervised_child()`, `wait_for_child_exit()`, `clear_child_pid_file()`, `RestartPolicy`, and `supervised_log_path()` when a supervisor needs to launch a long-running module child with durable logs, PID markers, latest-log symlinks, and consistent restart delays.
-11. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner`, `build_file_replacement_apply_proposal()`, or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
+9. Use `artifact_validation_text()`, `diagnostic_signatures()`, `quality_failure_counts()`, `rollback_failure_counts()`, and `recent_rollback_failure_count()` when a daemon needs to detect repeated no-change validation loops and decide when to replenish, repair, or block tasks.
+10. Use `LlmRouterInvocation`, `call_llm_router()`, `install_active_llm_signal_handlers()`, and `terminate_process_group()` when a daemon needs an isolated `llm_router.generate_text` child with prompt-file handoff, timeout cleanup, and signal-safe process-group termination.
+11. Use `cleanup_stale_daemon_worktrees()`, `write_worktree_owner_file()`, and `pid_looks_like_worktree_owner()` for temporary worktree ownership, stale-worktree garbage collection, and crash recovery.
+12. Use `SupervisedChildSpec`, `launch_supervised_child()`, `wait_for_child_exit()`, `clear_child_pid_file()`, `RestartPolicy`, and `supervised_log_path()` when a supervisor needs to launch a long-running module child with durable logs, PID markers, latest-log symlinks, and consistent restart delays.
+13. Use `SupervisorLoop` and `SupervisorLoopConfig` for a full Python supervisor that launches module children, writes supervisor status JSON, monitors stale heartbeats and workerless worktree phases, recycles unhealthy children, and applies restart policy delays.
+14. For complete-file edits, bind `FileReplacementHooks` through `FileReplacementTodoDaemonRunner`, `build_file_replacement_apply_proposal()`, or `apply_file_replacement_proposal()` so candidate changes are written in a temporary validation worktree and promoted only after validation succeeds.
 
 This keeps future daemons deterministic at the control-flow layer: lifecycle management, task bookkeeping, repair-safe worktrees, and durable progress reporting stay shared, while each daemon owns only its task interpretation and proposal-production logic.
