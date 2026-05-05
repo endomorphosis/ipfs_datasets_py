@@ -43,7 +43,7 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
 def append_jsonl(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, sort_keys=True) + "\n")
+        handle.write(json.dumps(payload, default=str, sort_keys=True) + "\n")
 
 
 def compact_message(value: Any, limit: int = 700) -> str:
@@ -105,20 +105,22 @@ def command_result_from_object(result: Any) -> CommandResult:
 
     if isinstance(result, Mapping):
         command = result.get("command", ())
-        returncode = result.get("returncode", 1)
+        returncode = result.get("returncode")
         stdout = result.get("stdout", "")
         stderr = result.get("stderr", "")
+        valid = result.get("valid")
     else:
         command = getattr(result, "command", ())
-        returncode = getattr(result, "returncode", 1)
+        returncode = getattr(result, "returncode", None)
         stdout = getattr(result, "stdout", "")
         stderr = getattr(result, "stderr", "")
+        valid = getattr(result, "valid", None)
     if not isinstance(command, (list, tuple)):
         command = ()
     try:
         normalized_returncode = int(returncode)
     except (TypeError, ValueError):
-        normalized_returncode = 1
+        normalized_returncode = 0 if valid is True else 1
     return CommandResult(
         command=tuple(str(part) for part in command),
         returncode=normalized_returncode,
@@ -131,6 +133,31 @@ def command_results_from_objects(results: Iterable[Any]) -> list[CommandResult]:
     """Return shared ``CommandResult`` entries from command-result-like objects."""
 
     return [command_result_from_object(result) for result in results]
+
+
+def command_runner_from_legacy_function(
+    run_command_fn: Callable[..., Any],
+    *,
+    timeout_parameter: str = "timeout",
+    stdin_parameter: str = "input_text",
+) -> Callable[..., CommandResult]:
+    """Adapt a dict/object-returning command runner to the shared command-runner API."""
+
+    def run_command_adapter(
+        command: Sequence[str],
+        *,
+        cwd: Path,
+        timeout_seconds: int = 60,
+        stdin: str | None = None,
+        input_text: str | None = None,
+    ) -> CommandResult:
+        kwargs: dict[str, Any] = {"cwd": cwd, timeout_parameter: timeout_seconds}
+        stdin_value = input_text if input_text is not None else stdin
+        if stdin_parameter and stdin_value is not None:
+            kwargs[stdin_parameter] = stdin_value
+        return command_result_from_object(run_command_fn(command, **kwargs))
+
+    return run_command_adapter
 
 
 @dataclass

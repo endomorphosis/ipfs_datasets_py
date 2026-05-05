@@ -53,7 +53,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     unified_diff_stats as _shared_unified_diff_stats,
     untracked_paths_from_git_status_porcelain as _shared_untracked_paths_from_git_status_porcelain,
 )
-from ipfs_datasets_py.optimizers.todo_daemon.engine import CommandResult
+from ipfs_datasets_py.optimizers.todo_daemon.engine import (
+    append_jsonl as _shared_append_jsonl,
+    command_runner_from_legacy_function,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
     call_with_thread_deadline as _shared_call_with_thread_deadline,
 )
@@ -713,7 +716,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
             stale_after_seconds=max(1, int(self.daemon_config.worktree_stale_after_seconds)),
             owner_filename=".legal_parser_worktree_owner.json",
             patterns=("cycle_*",),
-            run_command_fn=_run_command_result,
+            run_command_fn=command_runner_from_legacy_function(_run_command),
             owner_alive=lambda pid, _repo_root, _worktree_path: _shared_pid_is_alive(pid),
         )
 
@@ -1894,7 +1897,7 @@ class LegalParserOptimizerDaemon:
                 "cycles_executed": cycles_executed,
                 "latest_cycle": summaries[-1] if summaries else None,
             }
-            self.latest_file.write_text(json.dumps(summary, indent=2, default=str), encoding="utf-8")
+            _shared_write_status_json(self.latest_file, summary)
             return summary
         finally:
             self._stop_heartbeat()
@@ -2209,7 +2212,7 @@ class LegalParserOptimizerDaemon:
             final_retry_reason = worktree_retry_reason
 
         proposal_path = cycle_dir / "proposal.json"
-        proposal_path.write_text(json.dumps(asdict(proposal), indent=2, default=str), encoding="utf-8")
+        _shared_write_status_json(proposal_path, asdict(proposal))
         patch_path = cycle_dir / "proposal.patch"
         patch_path.write_text(proposal.unified_diff, encoding="utf-8")
         self._write_current_status(
@@ -2578,10 +2581,7 @@ class LegalParserOptimizerDaemon:
             "tests": tests_result,
             "post_evaluation": post_evaluation,
         }
-        (cycle_dir / "cycle_summary.json").write_text(
-            json.dumps(cycle_payload, indent=2, default=str),
-            encoding="utf-8",
-        )
+        _shared_write_status_json(cycle_dir / "cycle_summary.json", cycle_payload)
         self._state.update(
             {
                 "cycle_index": cycle_index,
@@ -2590,8 +2590,8 @@ class LegalParserOptimizerDaemon:
                 "updated_at": finished,
             }
         )
-        self.state_file.write_text(json.dumps(self._state, indent=2, default=str), encoding="utf-8")
-        self.latest_file.write_text(json.dumps(cycle_payload, indent=2, default=str), encoding="utf-8")
+        _shared_write_status_json(self.state_file, self._state)
+        _shared_write_status_json(self.latest_file, cycle_payload)
         self._record_progress(cycle_payload)
         self._write_current_status(
             status="running",
@@ -3103,10 +3103,7 @@ class LegalParserOptimizerDaemon:
                 "traceback": traceback.format_exc(),
             },
         }
-        (cycle_dir / "cycle_summary.json").write_text(
-            json.dumps(cycle_payload, indent=2, default=str),
-            encoding="utf-8",
-        )
+        _shared_write_status_json(cycle_dir / "cycle_summary.json", cycle_payload)
         self._state.update(
             {
                 "cycle_index": cycle_index,
@@ -3115,8 +3112,8 @@ class LegalParserOptimizerDaemon:
                 "updated_at": finished,
             }
         )
-        self.state_file.write_text(json.dumps(self._state, indent=2, default=str), encoding="utf-8")
-        self.latest_file.write_text(json.dumps(cycle_payload, indent=2, default=str), encoding="utf-8")
+        _shared_write_status_json(self.state_file, self._state)
+        _shared_write_status_json(self.latest_file, cycle_payload)
         self._record_progress(cycle_payload)
         self._write_current_status(
             status="running",
@@ -3871,7 +3868,7 @@ class LegalParserOptimizerDaemon:
         self._write_progress_report(progress)
 
     def _append_accepted_change(self, cycle_payload: Dict[str, Any]) -> None:
-        _append_jsonl(self.output_dir / "accepted_changes.jsonl", self._accepted_change_record(cycle_payload))
+        _shared_append_jsonl(self.output_dir / "accepted_changes.jsonl", self._accepted_change_record(cycle_payload))
 
     def _accepted_change_record(self, cycle_payload: Dict[str, Any]) -> Dict[str, Any]:
         proposal = {}
@@ -5043,35 +5040,6 @@ def _run_command(
         }
 
 
-def _run_command_result(
-    cmd: Sequence[str],
-    *,
-    cwd: Path,
-    timeout_seconds: int = 60,
-) -> CommandResult:
-    """Run the parser daemon command seam and adapt its dict payload to shared helpers."""
-
-    payload = _run_command(cmd, cwd=cwd, timeout=timeout_seconds)
-    command_value = payload.get("command")
-    if isinstance(command_value, (list, tuple)):
-        command = tuple(str(part) for part in command_value)
-    else:
-        command = tuple(str(part) for part in cmd)
-    returncode = payload.get("returncode")
-    if returncode is None:
-        returncode = 0 if payload.get("valid") else 1
-    try:
-        normalized_returncode = int(returncode)
-    except (TypeError, ValueError):
-        normalized_returncode = 1
-    return CommandResult(
-        command,
-        normalized_returncode,
-        str(payload.get("stdout") or ""),
-        str(payload.get("stderr") or ""),
-    )
-
-
 def _paths_from_git_status_porcelain(stdout: str) -> List[str]:
     """Return unique paths from plain ``git status --porcelain`` output."""
 
@@ -5462,12 +5430,6 @@ def _dirty_files_from_rejections(rejections: Sequence[Mapping[str, Any]]) -> Lis
             if text and text not in files:
                 files.append(text)
     return files
-
-
-def _append_jsonl(path: Path, record: Dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record, default=str, sort_keys=True) + "\n")
 
 
 def _resolve_path(root: Path, value: Path) -> Path:

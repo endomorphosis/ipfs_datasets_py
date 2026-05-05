@@ -43,6 +43,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     accepted_work_markdown_entry,
     accepted_work_workspace_payload,
     advance_active_status_snapshot,
+    append_jsonl,
     append_accepted_work_ledger,
     append_accepted_work_markdown_log,
     apply_file_replacement_proposal,
@@ -78,6 +79,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     clear_child_pid_file,
     classify_artifact_failure_kind,
     cleanup_stale_daemon_worktrees,
+    command_runner_from_legacy_function,
     command_result_from_object,
     command_results_from_objects,
     compact_status_artifact,
@@ -874,6 +876,75 @@ def test_command_result_compaction_omits_html_and_provider_tokens() -> None:
 
     assert "challenge" not in compacted["stdout"]
     assert "__cf_chl_tk=secret" not in compacted["stderr"]
+
+
+def test_command_result_adapters_accept_objects_and_mappings() -> None:
+    @dataclass(frozen=True)
+    class ExternalResult:
+        command: tuple[str, ...]
+        returncode: int
+        stdout: str = ""
+        stderr: str = ""
+
+    object_result, mapping_result, valid_mapping_result, invalid_result = command_results_from_objects(
+        [
+            ExternalResult(("python3", "-m", "py_compile", "todo/source.py"), 0, "ok", ""),
+            {"command": ["pytest", "-q"], "returncode": "1", "stderr": "failed"},
+            {"command": ["git", "status"], "returncode": None, "valid": True, "stdout": "clean"},
+            {"command": "bad", "returncode": "not-int"},
+        ]
+    )
+
+    assert object_result == CommandResult(
+        ("python3", "-m", "py_compile", "todo/source.py"),
+        0,
+        "ok",
+        "",
+    )
+    assert mapping_result == CommandResult(("pytest", "-q"), 1, "", "failed")
+    assert valid_mapping_result == CommandResult(("git", "status"), 0, "clean", "")
+    assert invalid_result == CommandResult((), 1, "", "")
+    assert command_result_from_object(None) == CommandResult((), 1, "", "")
+
+
+def test_command_runner_from_legacy_function_adapts_timeout_and_stdin(tmp_path: Path) -> None:
+    calls: list[dict[str, object]] = []
+
+    def legacy_run_command(command, *, cwd, timeout=60, input_text=None):
+        calls.append(
+            {
+                "command": tuple(command),
+                "cwd": cwd,
+                "timeout": timeout,
+                "input_text": input_text,
+            }
+        )
+        return {
+            "valid": True,
+            "returncode": None,
+            "command": list(command),
+            "stdout": input_text or "",
+            "stderr": "",
+        }
+
+    run_legacy = command_runner_from_legacy_function(legacy_run_command)
+    result = run_legacy(("python3", "-m", "compileall"), cwd=tmp_path, timeout_seconds=17, stdin="ok")
+    ledger_path = tmp_path / "events.jsonl"
+    append_jsonl(ledger_path, {"path": Path("docs/plan.md"), "ok": True})
+
+    assert result == CommandResult(("python3", "-m", "compileall"), 0, "ok", "")
+    assert json.loads(ledger_path.read_text(encoding="utf-8")) == {
+        "ok": True,
+        "path": "docs/plan.md",
+    }
+    assert calls == [
+        {
+            "command": ("python3", "-m", "compileall"),
+            "cwd": tmp_path,
+            "timeout": 17,
+            "input_text": "ok",
+        }
+    ]
 
 
 def test_shared_run_command_supports_timeout_seconds_and_stdin(tmp_path: Path) -> None:
