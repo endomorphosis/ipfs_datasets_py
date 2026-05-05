@@ -4921,6 +4921,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "compliance_planning_duty"
     if action_predicate.startswith((
+        "Drill",
+        "Evacuate",
+        "Rescue",
+        "Shelter",
+    )):
+        return "emergency_operations_duty"
+    if action_predicate.startswith((
         "Analyze",
         "Diagnose",
         "Examine",

@@ -47,8 +47,13 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizerConfig,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
+    git_apply_command_for_strategy as _shared_git_apply_command_for_strategy,
+    git_apply_commands as _shared_git_apply_commands,
     paths_from_git_status_porcelain as _shared_paths_from_git_status_porcelain,
     paths_from_unified_diff as _shared_paths_from_unified_diff,
+    retained_change_summary as _shared_retained_change_summary,
+    restore_path_snapshots as _shared_restore_path_snapshots,
+    snapshot_patch_paths as _shared_snapshot_patch_paths,
     unified_diff_stats as _shared_unified_diff_stats,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.engine import (
@@ -1740,21 +1745,10 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def _git_apply_commands(self, *, check: bool) -> List[Tuple[str, List[str]]]:
         """Return increasingly tolerant Git apply strategies for model-generated diffs."""
 
-        check_flag = ["--check"] if check else []
-        return [
-            ("strict", ["git", "apply", *check_flag, "--recount", "-"]),
-            (
-                "whitespace_fix",
-                ["git", "apply", *check_flag, "--recount", "--whitespace=fix", "-"],
-            ),
-            ("three_way", ["git", "apply", *check_flag, "--recount", "--3way", "-"]),
-        ]
+        return _shared_git_apply_commands(check=check)
 
     def _git_apply_command_for_strategy(self, strategy: str, *, check: bool) -> List[str]:
-        for candidate_strategy, command in self._git_apply_commands(check=check):
-            if candidate_strategy == strategy:
-                return command
-        return self._git_apply_commands(check=check)[0][1]
+        return _shared_git_apply_command_for_strategy(strategy, check=check)
 
     def run_tests(self) -> Dict[str, Any]:
         if not self.daemon_config.run_tests:
@@ -4314,65 +4308,13 @@ class LegalParserOptimizerDaemon:
         return restore_result
 
     def _snapshot_patch_paths(self, unified_diff: str) -> Dict[str, Optional[str]]:
-        snapshots: Dict[str, Optional[str]] = {}
-        for rel_path in _paths_from_unified_diff(unified_diff):
-            path = self.config.repo_root / rel_path
-            try:
-                snapshots[rel_path] = path.read_text(encoding="utf-8")
-            except FileNotFoundError:
-                snapshots[rel_path] = None
-            except OSError as exc:
-                snapshots[rel_path] = f"__SNAPSHOT_ERROR__:{exc}"
-        return snapshots
+        return _shared_snapshot_patch_paths(self.config.repo_root, unified_diff)
 
     def _restore_patch_paths(self, snapshots: Dict[str, Optional[str]]) -> Dict[str, Any]:
-        errors: List[str] = []
-        restored: List[str] = []
-        for rel_path, content in snapshots.items():
-            path = self.config.repo_root / rel_path
-            try:
-                if isinstance(content, str) and content.startswith("__SNAPSHOT_ERROR__:"):
-                    errors.append(f"{rel_path}: {content}")
-                    continue
-                if content is None:
-                    if path.exists():
-                        path.unlink()
-                        restored.append(rel_path)
-                    continue
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(content, encoding="utf-8")
-                restored.append(rel_path)
-            except OSError as exc:
-                errors.append(f"{rel_path}: {exc}")
-        return {"valid": not errors, "restored": restored, "errors": errors}
+        return _shared_restore_path_snapshots(self.config.repo_root, snapshots)
 
     def _retained_change_summary(self, snapshots: Dict[str, Optional[str]]) -> Dict[str, Any]:
-        changed_files: List[str] = []
-        deleted_files: List[str] = []
-        created_files: List[str] = []
-        for rel_path, before in snapshots.items():
-            if isinstance(before, str) and before.startswith("__SNAPSHOT_ERROR__:"):
-                continue
-            path = self.config.repo_root / rel_path
-            try:
-                after: Optional[str] = path.read_text(encoding="utf-8")
-            except FileNotFoundError:
-                after = None
-            except OSError:
-                continue
-            if before != after:
-                changed_files.append(rel_path)
-                if before is None and after is not None:
-                    created_files.append(rel_path)
-                elif before is not None and after is None:
-                    deleted_files.append(rel_path)
-        return {
-            "has_retained_changes": bool(changed_files),
-            "changed_files": changed_files,
-            "created_files": created_files,
-            "deleted_files": deleted_files,
-            "reason": "content_changed" if changed_files else "no_file_content_changed_after_apply",
-        }
+        return _shared_retained_change_summary(self.config.repo_root, snapshots)
 
     def _retained_patch_for_paths(self, snapshots: Dict[str, Optional[str]]) -> str:
         paths = [path for path in snapshots if path]

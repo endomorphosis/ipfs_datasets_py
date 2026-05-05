@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping, Optional, Sequence
+
+
+SNAPSHOT_ERROR_PREFIX = "__SNAPSHOT_ERROR__:"
 
 
 def paths_from_git_status_porcelain(stdout: str) -> list[str]:
@@ -61,6 +64,110 @@ def paths_from_unified_diff(unified_diff: str) -> list[str]:
             if candidate not in paths:
                 paths.append(candidate)
     return paths
+
+
+def git_apply_commands(*, check: bool) -> list[tuple[str, list[str]]]:
+    """Return increasingly tolerant ``git apply`` strategies for daemon patches."""
+
+    check_flag = ["--check"] if check else []
+    return [
+        ("strict", ["git", "apply", *check_flag, "--recount", "-"]),
+        (
+            "whitespace_fix",
+            ["git", "apply", *check_flag, "--recount", "--whitespace=fix", "-"],
+        ),
+        ("three_way", ["git", "apply", *check_flag, "--recount", "--3way", "-"]),
+    ]
+
+
+def git_apply_command_for_strategy(strategy: str, *, check: bool) -> list[str]:
+    """Return the configured ``git apply`` command for ``strategy``."""
+
+    commands = git_apply_commands(check=check)
+    for candidate_strategy, command in commands:
+        if candidate_strategy == strategy:
+            return command
+    return commands[0][1]
+
+
+def snapshot_paths(repo_root: Path, paths: Iterable[str]) -> dict[str, Optional[str]]:
+    """Snapshot UTF-8 file contents for repo-relative paths before risky edits."""
+
+    snapshots: dict[str, Optional[str]] = {}
+    for rel_path in unique_normalized_paths(paths):
+        path = repo_root / rel_path
+        try:
+            snapshots[rel_path] = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            snapshots[rel_path] = None
+        except OSError as exc:
+            snapshots[rel_path] = f"{SNAPSHOT_ERROR_PREFIX}{exc}"
+    return snapshots
+
+
+def snapshot_patch_paths(repo_root: Path, unified_diff: str) -> dict[str, Optional[str]]:
+    """Snapshot the repo-relative paths touched by a unified diff."""
+
+    return snapshot_paths(repo_root, paths_from_unified_diff(unified_diff))
+
+
+def restore_path_snapshots(repo_root: Path, snapshots: Mapping[str, Optional[str]]) -> dict[str, Any]:
+    """Restore files captured by :func:`snapshot_paths`."""
+
+    errors: list[str] = []
+    restored: list[str] = []
+    for rel_path, content in snapshots.items():
+        normalized = str(rel_path or "").replace("\\", "/").strip()
+        if not normalized:
+            continue
+        path = repo_root / normalized
+        try:
+            if isinstance(content, str) and content.startswith(SNAPSHOT_ERROR_PREFIX):
+                errors.append(f"{normalized}: {content}")
+                continue
+            if content is None:
+                if path.exists():
+                    path.unlink()
+                    restored.append(normalized)
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+            restored.append(normalized)
+        except OSError as exc:
+            errors.append(f"{normalized}: {exc}")
+    return {"valid": not errors, "restored": restored, "errors": errors}
+
+
+def retained_change_summary(repo_root: Path, snapshots: Mapping[str, Optional[str]]) -> dict[str, Any]:
+    """Summarize whether snapshotted files still differ after apply/rollback work."""
+
+    changed_files: list[str] = []
+    deleted_files: list[str] = []
+    created_files: list[str] = []
+    for rel_path, before in snapshots.items():
+        normalized = str(rel_path or "").replace("\\", "/").strip()
+        if not normalized or (isinstance(before, str) and before.startswith(SNAPSHOT_ERROR_PREFIX)):
+            continue
+        path = repo_root / normalized
+        try:
+            after: Optional[str] = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            after = None
+        except OSError:
+            continue
+        if before != after:
+            changed_files.append(normalized)
+            if before is None and after is not None:
+                created_files.append(normalized)
+            elif before is not None and after is None:
+                deleted_files.append(normalized)
+    return {
+        "has_retained_changes": bool(changed_files),
+        "changed_files": changed_files,
+        "created_files": created_files,
+        "deleted_files": deleted_files,
+        "reason": "content_changed" if changed_files else "no_file_content_changed_after_apply",
+    }
 
 
 def unique_normalized_paths(paths: Iterable[str]) -> list[str]:

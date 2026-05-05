@@ -135,6 +135,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     focused_task_board_excerpt,
     format_typescript_paths,
     generated_status_block,
+    git_apply_command_for_strategy,
+    git_apply_commands,
     heartbeat_snapshot,
     has_diagnostic_codes,
     is_retryable_proposal_failure,
@@ -186,6 +188,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     read_json_object,
     repair_common_typescript_file_edits,
     repair_common_typescript_text_damage,
+    retained_change_summary,
     repo_relative_copy_paths,
     repo_relative_pathspec,
     repo_relative_worktree_path,
@@ -197,6 +200,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     replace_task_mark,
     resolve_artifact_directory,
     resolve_daemon_module,
+    restore_path_snapshots,
     restarting_wrapper_alive,
     rank_relevant_context_file,
     repo_root_from_env,
@@ -228,6 +232,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     sidecar_paths,
     slugify,
     slugify_artifact_name,
+    snapshot_patch_paths,
+    snapshot_paths,
     status_key_started_at,
     status_started_at,
     strip_unmanaged_generated_status_sections,
@@ -1885,6 +1891,77 @@ def test_git_parsing_helpers_are_reusable() -> None:
     assert stats["deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
     assert stats["production_deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
     assert stats["test_deletion_heavy_files"] == []
+
+
+def test_git_apply_strategy_helpers_are_reusable() -> None:
+    assert git_apply_commands(check=True) == [
+        ("strict", ["git", "apply", "--check", "--recount", "-"]),
+        (
+            "whitespace_fix",
+            ["git", "apply", "--check", "--recount", "--whitespace=fix", "-"],
+        ),
+        ("three_way", ["git", "apply", "--check", "--recount", "--3way", "-"]),
+    ]
+    assert git_apply_command_for_strategy("three_way", check=False) == [
+        "git",
+        "apply",
+        "--recount",
+        "--3way",
+        "-",
+    ]
+    assert git_apply_command_for_strategy("unknown", check=False) == [
+        "git",
+        "apply",
+        "--recount",
+        "-",
+    ]
+
+
+def test_path_snapshot_helpers_restore_and_summarize(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    original = repo / "tracked.txt"
+    created = repo / "nested" / "created.txt"
+    original.write_text("before\n", encoding="utf-8")
+    diff = "\n".join(
+        [
+            "diff --git a/tracked.txt b/tracked.txt",
+            "--- a/tracked.txt",
+            "+++ b/tracked.txt",
+            "@@ -1 +1 @@",
+            "-before",
+            "+after",
+            "diff --git a/nested/created.txt b/nested/created.txt",
+            "new file mode 100644",
+            "--- /dev/null",
+            "+++ b/nested/created.txt",
+            "@@ -0,0 +1 @@",
+            "+created",
+        ]
+    )
+
+    snapshots = snapshot_patch_paths(repo, diff)
+    duplicate_snapshots = snapshot_paths(repo, ["tracked.txt", "tracked.txt", "nested\\created.txt"])
+
+    original.write_text("after\n", encoding="utf-8")
+    created.parent.mkdir(parents=True)
+    created.write_text("created\n", encoding="utf-8")
+    summary = retained_change_summary(repo, snapshots)
+    restore_result = restore_path_snapshots(repo, snapshots)
+
+    assert snapshots == {"tracked.txt": "before\n", "nested/created.txt": None}
+    assert duplicate_snapshots == snapshots
+    assert summary == {
+        "has_retained_changes": True,
+        "changed_files": ["tracked.txt", "nested/created.txt"],
+        "created_files": ["nested/created.txt"],
+        "deleted_files": [],
+        "reason": "content_changed",
+    }
+    assert restore_result == {"valid": True, "restored": ["tracked.txt", "nested/created.txt"], "errors": []}
+    assert original.read_text(encoding="utf-8") == "before\n"
+    assert not created.exists()
+    assert retained_change_summary(repo, snapshots)["has_retained_changes"] is False
 
 
 def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:

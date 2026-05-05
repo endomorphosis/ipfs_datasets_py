@@ -182,6 +182,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_health_compliance_light_verb_action(action_text)
     action_text = _normalize_compliance_planning_light_verb_action(action_text)
+    action_text = _normalize_emergency_operations_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
@@ -513,6 +514,60 @@ def _normalize_compliance_planning_light_verb_action(action_text: str) -> str:
         ),
     ]
     for pattern, verb_phrase in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        target = _normalized_light_verb_target(match.group(1) or "")
+        return f"{verb_phrase} {target}".strip()
+
+    return text
+
+
+def _normalize_emergency_operations_light_verb_action(action_text: str) -> str:
+    """Project emergency-operation nominalizations to operative predicates."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return ""
+
+    light_verbs = (
+        r"make|makes|made|making|complete|completes|completed|completing|"
+        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
+        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
+        r"carry\s+out|carries\s+out|carried\s+out|carrying\s+out"
+    )
+    patterns = [
+        (
+            rf"^(?:{light_verbs})\s+(?:an?\s+|the\s+)?evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "evacuate",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?shelter(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "shelter",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "rescue",
+        ),
+        (
+            rf"^(?:{light_verbs})\s+(?:an?\s+|the\s+)?(?:emergency\s+)?drill\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "drill",
+        ),
+    ]
+    for pattern, verb_phrase in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        target = _normalized_light_verb_target(match.group(1) or "")
+        return f"{verb_phrase} {target}".strip()
+
+    bare_patterns = {
+        r"^evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$": "evacuate",
+        r"^shelter(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$": "shelter",
+        r"^rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$": "rescue",
+        r"^(?:emergency\s+)?drill\s+(?:of|for)\s+(?:the\s+)?(.+)$": "drill",
+    }
+    for pattern, verb_phrase in bare_patterns.items():
         match = re.match(pattern, text, re.IGNORECASE)
         if not match:
             continue
