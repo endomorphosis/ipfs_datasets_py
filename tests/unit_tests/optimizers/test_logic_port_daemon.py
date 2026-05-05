@@ -2470,7 +2470,10 @@ def test_progress_summary_records_acceptance_rate_and_current_task(tmp_path):
             "summary": "failed",
             "failure_kind": "",
             "changed_files": [],
-            "errors": ["403 Forbidden <html><body>very long cloudflare challenge</body></html>"],
+            "errors": [
+                "403 Forbidden <html><body>very long cloudflare challenge</body></html> "
+                "token __cf_chl_tk=secret",
+            ],
         },
     }
     config = LogicPortDaemonConfig(
@@ -2502,6 +2505,7 @@ def test_progress_summary_records_acceptance_rate_and_current_task(tmp_path):
     assert progress["latest_round"]["failure_kind"] == "provider_http_403"
     assert progress["failure_kind_counts"]["provider_http_403"] == 1
     assert "[html response omitted]" in progress["latest_round"]["errors"][0]
+    assert "__cf_chl_tk=secret" not in progress["latest_round"]["errors"][0]
     assert progress["recent_valid_rounds"][0]["changed_files"] == ["src/lib/logic/done.ts"]
 
 

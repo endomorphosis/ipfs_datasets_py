@@ -49,6 +49,7 @@ from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
 from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     CommandResult,
     atomic_write_json as _shared_atomic_write_json,
+    compact_message as _shared_compact_message,
     extract_codex_event_text_candidates as _shared_extract_codex_event_text_candidates,
     extract_json as _shared_extract_json_object,
     extract_text_from_codex_event_object as _shared_extract_text_from_codex_event_object,
@@ -637,13 +638,7 @@ def _rank_relevant_file(path: str, tokens: Sequence[str]) -> int:
 
 
 def _compact_message(value: Any, *, limit: int = 600) -> str:
-    text = str(value or "")
-    text = re.sub(r"<(?:html|head|body|script|style|svg|path|div|meta|noscript)[\s\S]*", "[html response omitted]", text, flags=re.IGNORECASE)
-    text = re.sub(r"__cf_chl_[A-Za-z0-9_=-]+", "__cf_chl_[omitted]", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    if len(text) > limit:
-        return text[:limit].rstrip() + "..."
-    return text
+    return _shared_compact_message(value, limit=limit)
 
 
 def _classify_failure_kind(artifact: Dict[str, Any]) -> str:
