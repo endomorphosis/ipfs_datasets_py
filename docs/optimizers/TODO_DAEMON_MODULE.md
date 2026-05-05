@@ -14,6 +14,7 @@ python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port stop
 python3 -m ipfs_datasets_py.optimizers.todo_daemon logic-port run -- --help
 python3 -m ipfs_datasets_py.optimizers.todo_daemon legal-parser check
 python3 -m ipfs_datasets_py.optimizers.todo_daemon legal-parser run -- --help
+python3 -m ipfs_datasets_py.optimizers.todo_daemon wrappers
 python3 -m ipfs_datasets_py.optimizers.todo_daemon supervise --help
 ```
 
@@ -24,7 +25,7 @@ For direct `python -m` invocation in environments without `ipfs_accelerate_py`, 
 
 1. Define a `ManagedDaemonSpec` for lifecycle paths, process matching, launch environment, task board, and worktree root. Use `env_value()`, `env_flag()`, `env_int()`, `env_float()`, `env_path()`, `env_path_in_dir()`, and `repo_root_from_env()` for env-backed daemon defaults instead of duplicating path plumbing.
 2. Register package-dispatched daemon families with `TodoDaemonRegistration` in the todo-daemon registry, including stable aliases for legacy command names.
-3. Build a lifecycle CLI with `build_lifecycle_arg_parser()` and `run_lifecycle_cli()`. Pass `run_description` and `run_fn` when the daemon should expose its foreground runtime through the same package dispatcher. Use `LifecycleWrapperSpec`, `render_lifecycle_wrapper()`, and `lifecycle_wrapper_core_lines()` for thin legacy shell wrappers that need clean import flags, repo-root resolution, and stable package dispatch.
+3. Build a lifecycle CLI with `build_lifecycle_arg_parser()` and `run_lifecycle_cli()`. Pass `run_description` and `run_fn` when the daemon should expose its foreground runtime through the same package dispatcher. Use `LifecycleWrapperSpec`, `LifecycleWrapperScriptSpec`, `render_lifecycle_wrapper()`, `lifecycle_wrapper_core_lines()`, `missing_lifecycle_wrapper_core_lines()`, `lifecycle_wrapper_matches_rendered()`, and `default_lifecycle_wrapper_script_specs()` for thin legacy shell wrappers that need clean import flags, repo-root resolution, stable package dispatch, and generated-script drift checks.
 4. Implement `TodoDaemonHooks` for domain behavior: task parsing, task selection, proposal generation, validation, task-board status updates, retry policy, and exception diagnostics.
 5. Use `run_todo_daemon()` or `run_todo_daemon_cli()` as the daemon entry point. Pass `hooks_factory` for a plain `TodoDaemonRunner`, or `runner_factory` when the daemon needs a specialized runner such as `FileReplacementTodoDaemonRunner`.
 6. Use `TodoDaemonRunner` for heartbeat, progress JSON, task-board marking, result logs, watch-loop handling, and crash capture. Use `task_status_counts()`, `replace_task_mark()`, `should_sleep_between_task_cycles()`, `update_generated_status_block()`, `strip_unmanaged_generated_status_sections()`, `focused_task_board_excerpt()`, and `truncate_text()` when a daemon needs reusable markdown generated-status blocks, checkbox transitions, immediate/no-sleep watch-loop decisions, or compact task-board prompt excerpts.

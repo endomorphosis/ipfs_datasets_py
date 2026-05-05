@@ -4730,7 +4730,10 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Accession",
         "DocumentChainCustody",
         "InventoryEvidence",
+        "InventoryExhibit",
+        "LogCustody",
         "PreserveEvidence",
+        "RecordEvidenceTransfer",
     )):
         return "evidence_custody_duty"
     if action_predicate.startswith((

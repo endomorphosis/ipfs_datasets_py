@@ -6585,6 +6585,11 @@ def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
 
     evidence_patterns = [
         (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|keep|keeps|kept|keeping)\s+"
+            r"(?:a\s+|the\s+)?custody\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "log custody",
+        ),
+        (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|ensure|ensures|ensured|ensuring)\s+"
             r"(?:an?\s+|the\s+)?evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "preserve evidence",
@@ -6595,18 +6600,31 @@ def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
             "inventory evidence",
         ),
         (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining)\s+"
+            r"(?:an?\s+|the\s+)?exhibit\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "inventory exhibit",
+        ),
+        (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|record|records|recorded|recording)\s+"
             r"(?:a\s+|the\s+)?sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "accession",
         ),
         (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording)\s+"
+            r"(?:an?\s+|the\s+)?evidence\s+transfer\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
+            "record evidence transfer",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording)\s+"
             r"(?:a\s+|the\s+)?chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "document chain of custody for",
         ),
+        (r"^custody\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "log custody"),
         (r"^evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "preserve evidence"),
         (r"^evidence\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "inventory evidence"),
+        (r"^exhibit\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "inventory exhibit"),
         (r"^sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "accession"),
+        (r"^evidence\s+transfer\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "record evidence transfer"),
         (
             r"^chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "document chain of custody for",

@@ -6,6 +6,10 @@ import argparse
 import json
 from typing import Optional, Sequence
 
+from .lifecycle_wrapper import (
+    default_lifecycle_wrapper_script_specs,
+    lifecycle_wrapper_script_payload,
+)
 from .registry import canonical_daemon_names, dispatcher_choices, load_daemon_main
 
 
@@ -25,8 +29,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "daemon",
         nargs="?",
-        choices=dispatcher_choices(),
-        help="Daemon family to manage, 'supervise' for the generic supervisor, or 'list'.",
+        choices=dispatcher_choices(extra_commands=("list", "supervise", "wrappers")),
+        help="Daemon family to manage, 'supervise' for the generic supervisor, 'wrappers', or 'list'.",
     )
     parser.add_argument("daemon_args", nargs=argparse.REMAINDER)
     return parser
@@ -40,6 +44,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 2
     if args.daemon == "list":
         print(json.dumps({"daemons": list(daemon_names())}, indent=2, sort_keys=True))
+        return 0
+    if args.daemon == "wrappers":
+        print(
+            json.dumps(
+                {
+                    "wrappers": [
+                        lifecycle_wrapper_script_payload(spec)
+                        for spec in default_lifecycle_wrapper_script_specs()
+                    ]
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
         return 0
     if args.daemon == "supervise":
         from .supervisor_loop import run_supervisor_loop_cli

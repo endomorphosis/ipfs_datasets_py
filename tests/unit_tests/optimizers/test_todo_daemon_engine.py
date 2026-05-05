@@ -18,6 +18,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     FileReplacementTodoDaemonRunner,
     LifecycleWrapperSpec,
     LlmRouterInvocation,
+    LifecycleWrapperScriptSpec,
     ManagedDaemonSpec,
     PathPolicy,
     PlanTask,
@@ -71,6 +72,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     daemon_alias_map,
     daemon_registry_payload,
     daemon_spec_payload,
+    default_lifecycle_wrapper_script_specs,
     diagnostic_signatures,
     exception_diagnostic,
     dispatcher_choices,
@@ -99,7 +101,9 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     launch_supervised_child,
     last_task_attempt_index,
     lifecycle_wrapper_core_lines,
+    lifecycle_wrapper_matches_rendered,
     lifecycle_wrapper_payload,
+    lifecycle_wrapper_script_payload,
     load_deterministic_progress_manifest,
     load_daemon_main,
     looks_like_empty_codex_event_stream,
@@ -107,6 +111,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     markdown_task_label,
     materialize_proposal_files,
     match_diagnostic_edit_path,
+    missing_lifecycle_wrapper_core_lines,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
     parse_json_proposal,
@@ -1709,70 +1714,25 @@ def test_restart_wrapper_command_builder_is_reusable() -> None:
 
 def test_lifecycle_wrapper_renderer_matches_legacy_shell_shape() -> None:
     repo_root = Path(__file__).resolve().parents[3]
-    cases = [
-        (
-            LifecycleWrapperSpec(
-                daemon="logic-port",
-                command="check",
-                repo_root_ancestor="../../../..",
-                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/check_logic_port_daemon.sh",
-        ),
-        (
-            LifecycleWrapperSpec(
-                daemon="logic-port",
-                command="ensure",
-                repo_root_ancestor="../../../..",
-                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/ensure_logic_port_daemon.sh",
-        ),
-        (
-            LifecycleWrapperSpec(
-                daemon="logic-port",
-                command="stop",
-                repo_root_ancestor="../../../..",
-                pythonpath_expr="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/stop_logic_port_daemon.sh",
-        ),
-        (
-            LifecycleWrapperSpec(
-                daemon="legal-parser",
-                command="check",
-                repo_root_ancestor="../../..",
-                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/check_legal_parser_optimizer_daemon.sh",
-        ),
-        (
-            LifecycleWrapperSpec(
-                daemon="legal-parser",
-                command="ensure",
-                repo_root_ancestor="../../..",
-                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh",
-        ),
-        (
-            LifecycleWrapperSpec(
-                daemon="legal-parser",
-                command="stop",
-                repo_root_ancestor="../../..",
-                pythonpath_expr="$REPO_ROOT${PYTHONPATH:+:$PYTHONPATH}",
-            ),
-            repo_root / "scripts/ops/legal_data/stop_legal_parser_optimizer_daemon.sh",
-        ),
-    ]
+    cases = default_lifecycle_wrapper_script_specs()
 
-    for spec, script_path in cases:
+    assert all(isinstance(item, LifecycleWrapperScriptSpec) for item in cases)
+    assert len(cases) == 6
+
+    for file_spec in cases:
+        spec = file_spec.wrapper
+        script_path = repo_root / file_spec.path
         script = script_path.read_text(encoding="utf-8")
         payload = lifecycle_wrapper_payload(spec)
+        script_payload = lifecycle_wrapper_script_payload(file_spec)
         for line in lifecycle_wrapper_core_lines(spec):
             assert line in script
+        assert missing_lifecycle_wrapper_core_lines(script, spec) == ()
+        assert lifecycle_wrapper_matches_rendered(script, spec)
         assert payload["daemon"] == spec.daemon
         assert payload["command"] == spec.command
+        assert script_payload["path"] == file_spec.path
+        assert script_payload["daemon"] == spec.daemon
 
     rendered = render_lifecycle_wrapper(
         LifecycleWrapperSpec(
@@ -2278,6 +2238,18 @@ def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, cap
 
     assert rc == 0
     assert listed["daemons"] == ["legal-parser", "logic-port"]
+
+    rc = todo_daemon_package_main(["wrappers"])
+    wrappers = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert {item["daemon"] for item in wrappers["wrappers"]} == {"legal-parser", "logic-port"}
+    assert {
+        item["path"] for item in wrappers["wrappers"]
+    } >= {
+        "scripts/ops/legal_data/check_logic_port_daemon.sh",
+        "scripts/ops/legal_data/ensure_legal_parser_optimizer_daemon.sh",
+    }
 
     import ipfs_datasets_py.optimizers.todo_daemon.legal_parser as legal_parser_lifecycle
     import ipfs_datasets_py.optimizers.todo_daemon.logic_port as logic_port_lifecycle
