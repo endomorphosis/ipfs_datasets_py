@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Union
 
 
 EnvMapping = Mapping[str, str]
+NumberDefault = Union[int, float, str]
 
 
 def env_value(
@@ -33,6 +34,42 @@ def env_flag(
 
     value = env_value(name, default, env=env).strip().lower()
     return "1" if value in {"1", "true", "yes", "on"} else "0"
+
+
+def env_int(
+    name: str,
+    default: Union[int, str],
+    *,
+    env: Optional[EnvMapping] = None,
+    minimum: Optional[int] = None,
+) -> int:
+    """Return an integer environment value, falling back on invalid input."""
+
+    try:
+        value = int(env_value(name, str(default), env=env))
+    except (TypeError, ValueError):
+        value = int(default)
+    if minimum is not None:
+        value = max(minimum, value)
+    return value
+
+
+def env_float(
+    name: str,
+    default: NumberDefault,
+    *,
+    env: Optional[EnvMapping] = None,
+    minimum: Optional[float] = None,
+) -> float:
+    """Return a float environment value, falling back on invalid input."""
+
+    try:
+        value = float(env_value(name, str(default), env=env))
+    except (TypeError, ValueError):
+        value = float(default)
+    if minimum is not None:
+        value = max(minimum, value)
+    return value
 
 
 def repo_root_from_env(

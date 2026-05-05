@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Optional, Sequence
 
 from .core import ManagedDaemonSpec, read_json
+from .specs import env_float, env_int, env_value
 from .supervisor import SupervisorStatusContext, heartbeat_snapshot, worktree_phase_worker_status
 from .supervisor_runtime import (
     RestartPolicy,
@@ -84,8 +85,7 @@ SupervisorLoopConfigFactory = Callable[[argparse.Namespace], SupervisorLoopConfi
 
 
 def _env(name: str, default: str) -> str:
-    value = os.environ.get(name)
-    return default if value is None or value == "" else value
+    return env_value(name, default)
 
 
 def _poll_child_exit(child: SupervisedChild) -> Optional[int]:
@@ -315,14 +315,46 @@ def build_supervisor_loop_arg_parser(
     parser.add_argument("--supervisor-lock-path", default=_env("TODO_SUPERVISOR_LOCK_PATH", ".daemon/todo.supervisor.lock"))
     parser.add_argument("--latest-log-path", default=_env("TODO_SUPERVISOR_LATEST_LOG_PATH", ".daemon/todo.latest.log"))
     parser.add_argument("--log-prefix", default=_env("TODO_SUPERVISOR_LOG_PREFIX", "todo_supervised"))
-    parser.add_argument("--heartbeat-seconds", type=float, default=float(_env("TODO_SUPERVISOR_HEARTBEAT_SECONDS", "30")))
-    parser.add_argument("--poll-seconds", type=float, default=float(_env("TODO_SUPERVISOR_POLL_SECONDS", "1")))
-    parser.add_argument("--watchdog-stale-after-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STALE_AFTER_SECONDS", "180")))
-    parser.add_argument("--watchdog-startup-grace-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STARTUP_GRACE_SECONDS", "30")))
-    parser.add_argument("--stop-grace-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STOP_GRACE_SECONDS", "10")))
-    parser.add_argument("--restart-backoff-seconds", type=float, default=float(_env("TODO_SUPERVISOR_RESTART_BACKOFF_SECONDS", "30")))
-    parser.add_argument("--fast-restart-backoff-seconds", type=float, default=float(_env("TODO_SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS", "2")))
-    parser.add_argument("--max-restarts", type=int, default=int(_env("TODO_SUPERVISOR_MAX_RESTARTS", "0")))
+    parser.add_argument(
+        "--heartbeat-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_HEARTBEAT_SECONDS", 30.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--poll-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_POLL_SECONDS", 1.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--watchdog-stale-after-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_STALE_AFTER_SECONDS", 180.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--watchdog-startup-grace-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_STARTUP_GRACE_SECONDS", 30.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--stop-grace-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_STOP_GRACE_SECONDS", 10.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--restart-backoff-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_RESTART_BACKOFF_SECONDS", 30.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--fast-restart-backoff-seconds",
+        type=float,
+        default=env_float("TODO_SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS", 2.0, minimum=0.0),
+    )
+    parser.add_argument(
+        "--max-restarts",
+        type=int,
+        default=env_int("TODO_SUPERVISOR_MAX_RESTARTS", 0, minimum=0),
+    )
     parser.add_argument(
         "--env",
         action="append",

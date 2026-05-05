@@ -8,8 +8,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.todo_daemon import (
+    ACCEPTED_WORK_LEDGER_SCHEMA_VERSION,
     AutoCommitConfig,
     CommandResult,
+    DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME,
     FailureBlockRule,
     FileReplacementHooks,
     FileReplacementTodoDaemonRunner,
@@ -28,11 +30,17 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     TodoDaemonRegistration,
     TodoDaemonRuntimeConfig,
     ValidationWorkspaceSpec,
+    WorkSidecarPaths,
+    accepted_work_manifest,
+    accepted_work_workspace_payload,
     apply_file_replacement_proposal,
+    append_jsonl_ledger,
     artifact_validation_text,
+    as_repo_path,
     auto_commit_paths,
     block_threshold_for_failure_kind,
     build_auto_commit_subject,
+    build_accepted_work_ledger_entry,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
     build_python_module_command,
@@ -44,6 +52,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     canonical_daemon_names,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
+    compact_validation_result,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
     count_unmanaged_generated_status_sections,
@@ -55,11 +64,15 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     exception_diagnostic,
     dispatcher_choices,
     env_flag,
+    env_float,
+    env_int,
     env_path,
     env_path_in_dir,
     env_value,
     extract_codex_event_text_candidates,
     extract_json,
+    failed_work_manifest,
+    failed_work_workspace_payload,
     format_recent_failure_context,
     first_failure_block_decision,
     focused_task_board_excerpt,
@@ -115,13 +128,16 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     should_skip_validation_for_empty_proposal,
     should_sleep_between_task_cycles,
     should_use_compact_prompt_for_failures,
+    sidecar_paths,
     slugify,
+    slugify_artifact_name,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
     supervisor_run_id,
     task_failure_summary,
     task_status_counts,
     temporary_validation_worktree,
+    timestamped_artifact_base,
     todo_daemon_proposals_payload,
     truncate_text,
     unified_diff_stats,
@@ -132,6 +148,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     verify_promoted_worktree_files,
     wait_for_child_exit,
     worktree_phase_worker_status,
+    write_json,
+    write_work_sidecars,
     write_worktree_owner_file,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.__main__ import (
@@ -1586,6 +1604,10 @@ def test_todo_daemon_spec_env_helpers_are_reusable(tmp_path: Path) -> None:
         "EMPTY": "",
         "FLAG_TRUE": "yes",
         "FLAG_FALSE": "off",
+        "INT_VALUE": "8",
+        "BAD_INT": "eight",
+        "FLOAT_VALUE": "2.5",
+        "BAD_FLOAT": "many",
         "DAEMON_DIR": "state/.daemon",
         "STATUS_PATH": "custom/status.json",
     }
@@ -1596,6 +1618,12 @@ def test_todo_daemon_spec_env_helpers_are_reusable(tmp_path: Path) -> None:
     assert env_value("DAEMON_DIR", ".daemon", env=env) == "state/.daemon"
     assert env_flag("FLAG_TRUE", "0", env=env) == "1"
     assert env_flag("FLAG_FALSE", "1", env=env) == "0"
+    assert env_int("INT_VALUE", 1, env=env) == 8
+    assert env_int("BAD_INT", 3, env=env) == 3
+    assert env_int("NEGATIVE", -4, env=env, minimum=0) == 0
+    assert env_float("FLOAT_VALUE", 1.0, env=env) == 2.5
+    assert env_float("BAD_FLOAT", 1.5, env=env) == 1.5
+    assert env_float("NEGATIVE_FLOAT", -4.0, env=env, minimum=0.0) == 0.0
     assert repo_root_from_env(env=env) == repo.resolve()
     assert repo_root_from_env(str(tmp_path / "explicit"), env=env) == (tmp_path / "explicit").resolve()
     assert daemon_dir == Path("state/.daemon")

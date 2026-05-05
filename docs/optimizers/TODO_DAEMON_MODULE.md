@@ -17,11 +17,11 @@ python3 -m ipfs_datasets_py.optimizers.todo_daemon legal-parser run -- --help
 python3 -m ipfs_datasets_py.optimizers.todo_daemon supervise --help
 ```
 
-The legacy shell wrappers remain stable, but the logic-port wrappers now delegate to the package dispatcher so future daemons can follow the same shape.
+The legacy shell wrappers remain stable, but they delegate to the package dispatcher so future daemons can follow the same shape.
 
 ## Reuse Pattern
 
-1. Define a `ManagedDaemonSpec` for lifecycle paths, process matching, launch environment, task board, and worktree root. Use `env_value()`, `env_flag()`, `env_path()`, `env_path_in_dir()`, and `repo_root_from_env()` for env-backed daemon defaults instead of duplicating path plumbing.
+1. Define a `ManagedDaemonSpec` for lifecycle paths, process matching, launch environment, task board, and worktree root. Use `env_value()`, `env_flag()`, `env_int()`, `env_float()`, `env_path()`, `env_path_in_dir()`, and `repo_root_from_env()` for env-backed daemon defaults instead of duplicating path plumbing.
 2. Register package-dispatched daemon families with `TodoDaemonRegistration` in the todo-daemon registry, including stable aliases for legacy command names.
 3. Build a lifecycle CLI with `build_lifecycle_arg_parser()` and `run_lifecycle_cli()`. Pass `run_description` and `run_fn` when the daemon should expose its foreground runtime through the same package dispatcher.
 4. Implement `TodoDaemonHooks` for domain behavior: task parsing, task selection, proposal generation, validation, task-board status updates, retry policy, and exception diagnostics.

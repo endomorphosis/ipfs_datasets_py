@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
 from .engine import Proposal
 from .runner import TodoDaemonHooks, TodoDaemonRunner
+from .specs import env_float, env_int, env_value
 
 
 HooksFactory = Callable[[Any], TodoDaemonHooks]
@@ -44,11 +44,6 @@ class TodoDaemonRuntimeConfig:
         return path if path.is_absolute() else self.repo_root / path
 
 
-def _env(name: str, default: str) -> str:
-    value = os.environ.get(name)
-    return default if value is None or value == "" else value
-
-
 def build_todo_runner_arg_parser(
     *,
     description: str = "Run a reusable optimizer todo daemon.",
@@ -56,30 +51,33 @@ def build_todo_runner_arg_parser(
     """Build the standard module-level runner parser for todo daemons."""
 
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--repo-root", default=_env("REPO_ROOT", "."))
-    parser.add_argument("--task-board", default=_env("TODO_DAEMON_TASK_BOARD", "TODO.md"))
-    parser.add_argument("--status-file", default=_env("TODO_DAEMON_STATUS_FILE", ".daemon/todo-daemon.status.json"))
+    parser.add_argument("--repo-root", default=env_value("REPO_ROOT", "."))
+    parser.add_argument("--task-board", default=env_value("TODO_DAEMON_TASK_BOARD", "TODO.md"))
+    parser.add_argument(
+        "--status-file",
+        default=env_value("TODO_DAEMON_STATUS_FILE", ".daemon/todo-daemon.status.json"),
+    )
     parser.add_argument(
         "--progress-file",
-        default=_env("TODO_DAEMON_PROGRESS_FILE", ".daemon/todo-daemon.progress.json"),
+        default=env_value("TODO_DAEMON_PROGRESS_FILE", ".daemon/todo-daemon.progress.json"),
     )
     parser.add_argument(
         "--result-log",
-        default=_env("TODO_DAEMON_RESULT_LOG", ".daemon/todo-daemon.results.jsonl"),
+        default=env_value("TODO_DAEMON_RESULT_LOG", ".daemon/todo-daemon.results.jsonl"),
     )
     parser.add_argument("--dry-run", action="store_true", help="Do not apply accepted task output.")
     parser.add_argument("--watch", action="store_true", help="Run repeatedly without user input.")
-    parser.add_argument("--iterations", type=int, default=int(_env("TODO_DAEMON_ITERATIONS", "1")))
-    parser.add_argument("--interval", type=float, default=float(_env("TODO_DAEMON_INTERVAL_SECONDS", "0")))
+    parser.add_argument("--iterations", type=int, default=env_int("TODO_DAEMON_ITERATIONS", 1, minimum=0))
+    parser.add_argument("--interval", type=float, default=env_float("TODO_DAEMON_INTERVAL_SECONDS", 0.0, minimum=0.0))
     parser.add_argument(
         "--heartbeat-seconds",
         type=float,
-        default=float(_env("TODO_DAEMON_HEARTBEAT_SECONDS", "30")),
+        default=env_float("TODO_DAEMON_HEARTBEAT_SECONDS", 30.0, minimum=0.0),
     )
     parser.add_argument(
         "--crash-backoff-seconds",
         type=float,
-        default=float(_env("TODO_DAEMON_CRASH_BACKOFF_SECONDS", "0")),
+        default=env_float("TODO_DAEMON_CRASH_BACKOFF_SECONDS", 0.0, minimum=0.0),
     )
     parser.add_argument("--revisit-blocked", action="store_true")
     return parser

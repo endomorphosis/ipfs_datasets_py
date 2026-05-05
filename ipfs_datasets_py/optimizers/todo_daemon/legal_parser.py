@@ -24,7 +24,7 @@ from .core import (
     write_json,
 )
 from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
-from .specs import env_path, env_path_in_dir, env_value, repo_root_from_env
+from .specs import env_float, env_int, env_path, env_path_in_dir, env_value, repo_root_from_env
 from .supervisor import heartbeat_snapshot, worktree_phase_worker_status
 from .wrapper import launch_restarting_wrapper, pid_matches_command_fragments
 
@@ -577,13 +577,13 @@ def run_legal_parser_daemon_runtime(argv: Optional[Sequence[str]] = None) -> int
 def build_arg_parser():
     return build_lifecycle_arg_parser(
         description="Manage the legal-parser optimizer daemon lifecycle.",
-        default_stale_after_seconds=float(_env("STALE_AFTER_SECONDS", "120")),
-        default_startup_wait_seconds=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "30")),
+        default_stale_after_seconds=env_float("STALE_AFTER_SECONDS", 120.0, minimum=0.0),
+        default_startup_wait_seconds=env_float("ENSURE_STARTUP_WAIT_SECONDS", 30.0, minimum=0.0),
         default_launch_mode=_env("ENSURE_LAUNCH_MODE", "nohup_loop"),
         launch_mode_choices=("nohup_loop", "tmux"),
         restart_delay_flag="--restart-delay-seconds",
-        default_restart_delay_seconds=int(_env("ENSURE_RESTART_DELAY_SECONDS", "5")),
-        default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
+        default_restart_delay_seconds=env_int("ENSURE_RESTART_DELAY_SECONDS", 5, minimum=0),
+        default_stop_grace_seconds=env_float("STOP_GRACE_SECONDS", 10.0, minimum=0.0),
         ensure_description="Start the wrapper/supervisor if unhealthy.",
         stop_description="Stop the wrapper, supervisor, daemon, and owned Codex calls.",
         run_description="Run the legal-parser optimizer daemon runtime in the foreground.",

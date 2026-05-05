@@ -98,6 +98,15 @@ def test_prover_target_role_matrix_covers_local_dialect_roles():
 
     assert coverage["target_role_matrix_complete"] is True
     assert role_summary["target_role_record_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_required_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_present_required_count"] == len(
+        LOCAL_PROVER_TARGETS
+    )
+    assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_incomplete_count"] == 0
+    assert role_summary["target_role_matrix_coverage_rate"] == 1.0
+    assert role_summary["target_role_complete_targets"] == list(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_incomplete_targets"] == []
     assert role_summary["missing_role_targets"] == []
     assert role_summary["unknown_role_targets"] == []
     assert role_summary["unknown_dialect_targets"] == []
@@ -142,6 +151,10 @@ def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
     assert coverage["formal_syntax_valid"] is False
     assert coverage["requires_validation"] is True
     assert coverage["target_role_matrix_complete"] is True
+    assert role_summary["target_role_required_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_complete_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["target_role_matrix_coverage_rate"] == 1.0
+    assert role_summary["target_role_incomplete_targets"] == []
     assert matrix["frame_logic"]["formula_role"] == "frame_record"
     assert matrix["frame_logic"]["dialect_family"] == "frame_logic"
     assert matrix["fol"]["formula_role"] == "first_order_formula"

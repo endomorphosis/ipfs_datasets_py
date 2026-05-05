@@ -881,6 +881,17 @@ def _summarize_prover_target_role_matrix(
         for target, dialect in dialects_by_target.items()
         if dialect in {"", "unknown"}
     ]
+    complete_targets = [
+        target
+        for target in required
+        if target in roles_by_target
+        and target not in unknown_role_targets
+        and target not in unknown_dialect_targets
+    ]
+    incomplete_targets = [
+        target for target in required if target not in complete_targets
+    ]
+    required_count = len(required)
     complete = bool(
         required
         and not missing_targets
@@ -890,6 +901,18 @@ def _summarize_prover_target_role_matrix(
 
     return {
         "target_role_record_count": len(matrix),
+        "target_role_required_count": required_count,
+        "target_role_present_required_count": len(required) - len(missing_targets),
+        "target_role_complete_count": len(complete_targets),
+        "target_role_incomplete_count": len(incomplete_targets),
+        "target_role_complete_targets": complete_targets,
+        "target_role_incomplete_targets": incomplete_targets,
+        "target_role_matrix_coverage_rate": round(
+            len(complete_targets) / required_count,
+            6,
+        )
+        if required_count
+        else 0.0,
         "required_targets": list(required),
         "target_role_matrix": matrix,
         "target_roles_by_target": dict(sorted(roles_by_target.items())),

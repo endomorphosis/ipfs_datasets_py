@@ -14,7 +14,7 @@ from .core import (
     stop_daemon,
 )
 from .cli import build_lifecycle_arg_parser, run_lifecycle_cli
-from .specs import env_flag, env_path, env_path_in_dir, env_value, repo_root_from_env
+from .specs import env_flag, env_float, env_int, env_path, env_path_in_dir, env_value, repo_root_from_env
 
 
 def _env(name: str, default: str) -> str:
@@ -144,14 +144,14 @@ def run_logic_port_daemon_runtime(argv: Optional[Sequence[str]] = None) -> int:
 def build_arg_parser() -> argparse.ArgumentParser:
     return build_lifecycle_arg_parser(
         description="Manage the logic-port optimizer daemon lifecycle.",
-        default_stale_after_seconds=float(_env("STALE_AFTER_SECONDS", "180")),
-        default_startup_wait_seconds=float(_env("ENSURE_STARTUP_WAIT_SECONDS", "20")),
+        default_stale_after_seconds=env_float("STALE_AFTER_SECONDS", 180.0, minimum=0.0),
+        default_startup_wait_seconds=env_float("ENSURE_STARTUP_WAIT_SECONDS", 20.0, minimum=0.0),
         default_launch_mode=_env("ENSURE_LAUNCH_MODE", "nohup"),
         launch_mode_choices=("nohup", "tmux"),
         restart_delay_flag="--tmux-restart-delay-seconds",
         restart_delay_dest="tmux_restart_delay_seconds",
-        default_restart_delay_seconds=int(_env("ENSURE_TMUX_RESTART_DELAY_SECONDS", "5")),
-        default_stop_grace_seconds=float(_env("STOP_GRACE_SECONDS", "10")),
+        default_restart_delay_seconds=env_int("ENSURE_TMUX_RESTART_DELAY_SECONDS", 5, minimum=0),
+        default_stop_grace_seconds=env_float("STOP_GRACE_SECONDS", 10.0, minimum=0.0),
         stop_description="Stop the supervisor, daemon child, and owned worktree LLM calls.",
         run_description="Run the logic-port daemon runtime in the foreground.",
     )
