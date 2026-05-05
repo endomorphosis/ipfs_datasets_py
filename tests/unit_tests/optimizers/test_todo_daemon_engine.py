@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ipfs_datasets_py.optimizers.todo_daemon import (
+    AutoCommitConfig,
     CommandResult,
+    FailureBlockRule,
     FileReplacementHooks,
     FileReplacementTodoDaemonRunner,
     LlmRouterInvocation,
@@ -27,7 +30,9 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     ValidationWorkspaceSpec,
     apply_file_replacement_proposal,
     artifact_validation_text,
+    auto_commit_paths,
     block_threshold_for_failure_kind,
+    build_auto_commit_subject,
     build_file_replacement_apply_proposal,
     build_lifecycle_arg_parser,
     build_python_module_command,
@@ -47,10 +52,16 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     daemon_registry_payload,
     daemon_spec_payload,
     diagnostic_signatures,
+    exception_diagnostic,
     dispatcher_choices,
+    env_flag,
+    env_path,
+    env_path_in_dir,
+    env_value,
     extract_codex_event_text_candidates,
     extract_json,
     format_recent_failure_context,
+    first_failure_block_decision,
     focused_task_board_excerpt,
     generated_status_block,
     heartbeat_snapshot,
@@ -80,12 +91,14 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     read_daemon_results,
     read_daemon_proposal_records,
     read_json_object,
+    repo_relative_pathspec,
     recent_failure_count,
     recent_proposal_failures,
     recent_rollback_failure_count,
     recent_total_failure_count,
     replace_task_mark,
     resolve_daemon_module,
+    repo_root_from_env,
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
@@ -97,10 +110,12 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     supervisor_loop_result_payload,
     run_todo_daemon,
     run_todo_daemon_cli,
+    safe_auto_commit_pathspecs,
     select_task,
     should_skip_validation_for_empty_proposal,
     should_sleep_between_task_cycles,
     should_use_compact_prompt_for_failures,
+    slugify,
     strip_unmanaged_generated_status_sections,
     supervised_log_path,
     supervisor_run_id,
@@ -774,6 +789,38 @@ def test_proposal_retry_policy_helpers_are_reusable() -> None:
     assert "retry guidance" in context
 
 
+def test_failure_block_and_exception_diagnostics_are_reusable() -> None:
+    decision = first_failure_block_decision(
+        (
+            FailureBlockRule(
+                failure_kind="syntax_preflight",
+                count=1,
+                threshold=2,
+                summary="not yet",
+                result="keep_retrying",
+            ),
+            FailureBlockRule(
+                failure_kind="llm_termination",
+                count=2,
+                threshold=2,
+                summary="stop before LLM",
+                result="llm_blocked",
+            ),
+        )
+    )
+
+    try:
+        raise RuntimeError("boom")
+    except RuntimeError as exc:
+        diagnostic = exception_diagnostic(exc, limit=2000)
+
+    assert decision is not None
+    assert decision.failure_kind == "llm_termination"
+    assert decision.summary == "stop before LLM"
+    assert decision.result == "llm_blocked"
+    assert "RuntimeError: boom" in diagnostic
+
+
 def test_git_parsing_helpers_are_reusable() -> None:
     status = "\n".join(
         [
@@ -843,6 +890,91 @@ def test_git_parsing_helpers_are_reusable() -> None:
     assert stats["deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
     assert stats["production_deletion_heavy_files"] == ["ipfs_datasets_py/logic/deontic/parser.py"]
     assert stats["test_deletion_heavy_files"] == []
+
+
+def test_auto_commit_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    logic_file = repo / "src" / "lib" / "logic" / "feature.ts"
+    notes_file = repo / "notes.txt"
+    logic_file.parent.mkdir(parents=True)
+    logic_file.write_text("export const feature = 'old';\n", encoding="utf-8")
+    notes_file.write_text("old notes\n", encoding="utf-8")
+
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "checkout", "-b", "main"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "add", "."], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-m", "init"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    logic_file.write_text("export const feature = 'new';\n", encoding="utf-8")
+    notes_file.write_text("dirty notes\n", encoding="utf-8")
+    statuses: list[tuple[str, dict[str, object]]] = []
+    config = AutoCommitConfig(
+        repo_root=repo,
+        enabled=True,
+        dry_run=False,
+        required_branch="main",
+        allowed_prefixes=("src/lib/logic/",),
+        command_timeout_seconds=30,
+        subject_prefix="chore(todo-test):",
+        user_name="Todo Test",
+        user_email="todo-test@example.invalid",
+    )
+
+    result = auto_commit_paths(
+        config,
+        ["src/lib/logic/feature.ts", "notes.txt", "../outside.ts"],
+        reason="validated daemon round",
+        target_task="Task checkbox-1: Port feature",
+        summary="Runtime feature works",
+        write_status_fn=lambda state, **details: statuses.append((state, details)),
+    )
+
+    assert slugify("Runtime feature works!") == "runtime-feature-works"
+    assert repo_relative_pathspec(logic_file, repo_root=repo) == "src/lib/logic/feature.ts"
+    assert safe_auto_commit_pathspecs(
+        ["./src/lib/logic/feature.ts", "notes.txt", "../outside.ts", "src/lib/logic/feature.ts"],
+        allowed_prefixes=("src/lib/logic/",),
+    ) == ["src/lib/logic/feature.ts"]
+    assert build_auto_commit_subject(
+        summary="Runtime feature works",
+        subject_prefix="chore(todo-test):",
+    ) == "chore(todo-test): runtime feature works"
+    assert result["committed"] is True
+    assert result["changed_files"] == ["src/lib/logic/feature.ts"]
+    assert [state for state, _details in statuses] == ["auto_commit_started", "auto_commit_completed"]
+    assert statuses[0][1]["auto_commit_paths"] == ["src/lib/logic/feature.ts"]
+
+    logic_status = subprocess.run(
+        ["git", "status", "--porcelain", "--", "src/lib/logic"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    notes_status = subprocess.run(
+        ["git", "status", "--porcelain", "--", "notes.txt"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    subject = subprocess.run(
+        ["git", "log", "-1", "--pretty=%s"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert logic_status.stdout == ""
+    assert notes_status.stdout.startswith(" M notes.txt")
+    assert subject.stdout.strip() == "chore(todo-test): runtime feature works"
 
 
 def test_worktree_owner_and_cleanup_helpers_are_reusable(tmp_path: Path) -> None:
@@ -1445,6 +1577,32 @@ def test_todo_daemon_registry_helpers_are_reusable() -> None:
         ]
     }
     assert callable(load_daemon_main("logic_port"))
+
+
+def test_todo_daemon_spec_env_helpers_are_reusable(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    env = {
+        "REPO_ROOT": str(repo),
+        "EMPTY": "",
+        "FLAG_TRUE": "yes",
+        "FLAG_FALSE": "off",
+        "DAEMON_DIR": "state/.daemon",
+        "STATUS_PATH": "custom/status.json",
+    }
+    daemon_dir = env_path("DAEMON_DIR", ".daemon", env=env)
+
+    assert env_value("MISSING", "fallback", env=env) == "fallback"
+    assert env_value("EMPTY", "fallback", env=env) == "fallback"
+    assert env_value("DAEMON_DIR", ".daemon", env=env) == "state/.daemon"
+    assert env_flag("FLAG_TRUE", "0", env=env) == "1"
+    assert env_flag("FLAG_FALSE", "1", env=env) == "0"
+    assert repo_root_from_env(env=env) == repo.resolve()
+    assert repo_root_from_env(str(tmp_path / "explicit"), env=env) == (tmp_path / "explicit").resolve()
+    assert daemon_dir == Path("state/.daemon")
+    assert env_path_in_dir("STATUS_PATH", daemon_dir, "status.json", env=env) == Path("custom/status.json")
+    assert env_path_in_dir("PROGRESS_PATH", daemon_dir, "progress.json", env=env) == Path(
+        "state/.daemon/progress.json"
+    )
 
 
 def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, capsys, monkeypatch) -> None:

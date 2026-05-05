@@ -24,6 +24,7 @@ from .core import (
     write_json,
 )
 from .cli import build_lifecycle_arg_parser, daemon_spec_payload, run_lifecycle_cli
+from .specs import env_path, env_path_in_dir, env_value, repo_root_from_env
 from .supervisor import heartbeat_snapshot, worktree_phase_worker_status
 from .wrapper import launch_restarting_wrapper, pid_matches_command_fragments
 
@@ -32,16 +33,15 @@ JsonDict = Dict[str, Any]
 
 
 def _env(name: str, default: str) -> str:
-    value = os.environ.get(name)
-    return default if value is None or value == "" else value
+    return env_value(name, default)
 
 
 def _repo_root(explicit: Optional[str] = None) -> Path:
-    return Path(explicit or os.environ.get("REPO_ROOT") or Path.cwd()).resolve()
+    return repo_root_from_env(explicit)
 
 
 def _daemon_dir() -> Path:
-    return Path(_env("DAEMON_DIR", ".daemon"))
+    return env_path("DAEMON_DIR", ".daemon")
 
 
 def legal_parser_launch_env() -> Dict[str, str]:
@@ -57,9 +57,9 @@ def legal_parser_launch_env() -> Dict[str, str]:
 def build_legal_parser_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
     root = _repo_root(repo_root)
     daemon_dir = _daemon_dir()
-    output_dir = Path(_env("OUTPUT_DIR", "artifacts/legal_parser_optimizer_daemon"))
-    run_script = Path(_env("RUN_SCRIPT", "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh"))
-    worktree_root = Path(_env("LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees"))
+    output_dir = env_path("OUTPUT_DIR", "artifacts/legal_parser_optimizer_daemon")
+    run_script = env_path("RUN_SCRIPT", "scripts/ops/legal_data/run_legal_parser_optimizer_daemon.sh")
+    worktree_root = env_path("LEGAL_PARSER_DAEMON_WORKTREE_ROOT", ".daemon/legal-parser-worktrees")
     return ManagedDaemonSpec(
         name="legal-parser",
         schema="ipfs_datasets_py.legal_parser_daemon",
@@ -68,26 +68,30 @@ def build_legal_parser_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpe
         runner=("bash", run_script.as_posix()),
         status_path=output_dir / "current_status.json",
         progress_path=output_dir / "progress_summary.json",
-        supervisor_status_path=Path(
-            _env("SUPERVISOR_STATUS_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_supervisor.json")
+        supervisor_status_path=env_path_in_dir(
+            "SUPERVISOR_STATUS_PATH",
+            daemon_dir,
+            "legal_parser_daemon_supervisor.json",
         ),
-        supervisor_pid_path=Path(
-            _env("SUPERVISOR_PID_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_supervisor.pid")
+        supervisor_pid_path=env_path_in_dir(
+            "SUPERVISOR_PID_PATH",
+            daemon_dir,
+            "legal_parser_daemon_supervisor.pid",
         ),
-        child_pid_path=Path(_env("CHILD_PID_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon.pid")),
-        supervisor_out_path=Path(
-            _env("SUPERVISOR_OUT_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_supervisor.out")
+        child_pid_path=env_path_in_dir("CHILD_PID_PATH", daemon_dir, "legal_parser_daemon.pid"),
+        supervisor_out_path=env_path_in_dir(
+            "SUPERVISOR_OUT_PATH",
+            daemon_dir,
+            "legal_parser_daemon_supervisor.out",
         ),
-        ensure_status_path=Path(
-            _env("ENSURE_STATUS_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_ensure.status.json")
+        ensure_status_path=env_path_in_dir("ENSURE_STATUS_PATH", daemon_dir, "legal_parser_daemon_ensure.status.json"),
+        ensure_check_path=env_path_in_dir("CHECK_LOG_PATH", daemon_dir, "legal_parser_daemon_ensure_check.json"),
+        supervisor_lock_path=env_path_in_dir(
+            "SUPERVISOR_LOCK_PATH",
+            daemon_dir,
+            "legal_parser_daemon_supervisor.lock",
         ),
-        ensure_check_path=Path(
-            _env("CHECK_LOG_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_ensure_check.json")
-        ),
-        supervisor_lock_path=Path(
-            _env("SUPERVISOR_LOCK_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_supervisor.lock")
-        ),
-        latest_log_path=Path(_env("LATEST_LOG_PATH", f"{daemon_dir.as_posix()}/legal_parser_daemon_overnight.log")),
+        latest_log_path=env_path_in_dir("LATEST_LOG_PATH", daemon_dir, "legal_parser_daemon_overnight.log"),
         tmux_session_name=_env("TMUX_SESSION_NAME", "legal-parser-daemon"),
         worktree_root=worktree_root,
         daemon_process_match_all=("ipfs_datasets_py.optimizers.logic.deontic.parser_daemon",),

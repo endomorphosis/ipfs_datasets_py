@@ -56,6 +56,14 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
     read_text as _shared_read_text,
     run_command as _shared_run_command,
 )
+from ipfs_datasets_py.optimizers.todo_daemon.auto_commit import (
+    AutoCommitConfig,
+    auto_commit_paths as _shared_auto_commit_paths,
+    build_auto_commit_subject as _shared_build_auto_commit_subject,
+    repo_relative_pathspec as _shared_repo_relative_pathspec,
+    safe_auto_commit_pathspecs as _shared_safe_auto_commit_pathspecs,
+    slugify as _shared_slugify,
+)
 from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
     diagnostic_signatures as _shared_diagnostic_signatures,
@@ -619,8 +627,7 @@ def _task_failure_summary(
 
 
 def _slugify(value: str, *, limit: int = 80) -> str:
-    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-").lower()
-    return (slug or "accepted-work")[:limit]
+    return _shared_slugify(value or "accepted-work", limit=limit)
 
 
 def _patch_changed_files(patch: str) -> List[str]:
@@ -2308,13 +2315,28 @@ Critical correction for attempt {attempt}:
         )
 
     def _repo_relative_pathspec(self, path: Path) -> str:
-        path = Path(path)
-        if path.is_absolute():
-            try:
-                return path.relative_to(self.daemon_config.repo_root).as_posix()
-            except ValueError:
-                return path.as_posix()
-        return path.as_posix()
+        return _shared_repo_relative_pathspec(path, repo_root=self.daemon_config.repo_root)
+
+    def _auto_commit_config(self) -> AutoCommitConfig:
+        logic_dir = self._repo_relative_pathspec(self.daemon_config.typescript_logic_dir).rstrip("/")
+        task_board = self._repo_relative_pathspec(self.daemon_config.task_board_doc) if self.daemon_config.task_board_doc else ""
+        accepted_log = (
+            self._repo_relative_pathspec(self.daemon_config.accepted_work_log_path)
+            if self.daemon_config.accepted_work_log_path
+            else ""
+        )
+        return AutoCommitConfig(
+            repo_root=self.daemon_config.repo_root,
+            enabled=self.daemon_config.auto_commit,
+            dry_run=self.daemon_config.dry_run,
+            required_branch=self.daemon_config.auto_commit_branch,
+            allowed_prefixes=tuple(path for path in (*ALLOWED_WRITE_PREFIXES, logic_dir + "/") if path),
+            allowed_exact_paths=tuple(path for path in (logic_dir, task_board, accepted_log) if path),
+            command_timeout_seconds=self.daemon_config.command_timeout_seconds,
+            subject_prefix="chore(logic-port):",
+            user_name="Logic Port Daemon",
+            user_email="logic-port-daemon@local",
+        )
 
     def _auto_commit_paths(
         self,
@@ -2324,158 +2346,31 @@ Critical correction for attempt {attempt}:
         target_task: str = "",
         summary: str = "",
     ) -> Dict[str, Any]:
-        if self.daemon_config.dry_run or not self.daemon_config.auto_commit:
-            return {"attempted": False, "committed": False, "skipped_reason": "auto_commit_disabled"}
-
-        pathspecs = self._safe_auto_commit_pathspecs(paths)
-        if not pathspecs:
-            return {"attempted": False, "committed": False, "skipped_reason": "no_safe_pathspecs"}
-
-        branch = run_command(
-            ("git", "branch", "--show-current"),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
+        return _shared_auto_commit_paths(
+            self._auto_commit_config(),
+            paths,
+            reason=reason,
+            target_task=target_task,
+            summary=summary,
+            run_command_fn=run_command,
+            write_status_fn=self._write_status,
         )
-        branch_name = branch.stdout.strip() if branch.ok else ""
-        required_branch = str(self.daemon_config.auto_commit_branch or "").strip()
-        if required_branch and branch_name != required_branch:
-            return {
-                "attempted": True,
-                "committed": False,
-                "skipped_reason": "wrong_branch",
-                "branch": branch_name,
-                "required_branch": required_branch,
-            }
-
-        status = run_command(
-            ("git", "status", "--porcelain", "--", *pathspecs),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
-        )
-        if not status.ok:
-            return {
-                "attempted": True,
-                "committed": False,
-                "skipped_reason": "status_failed",
-                "branch": branch_name,
-                "stderr": status.stderr[-1000:],
-            }
-
-        dirty_paths = self._safe_auto_commit_pathspecs(_git_status_paths(status.stdout))
-        if not dirty_paths:
-            return {"attempted": True, "committed": False, "skipped_reason": "clean", "branch": branch_name}
-
-        self._write_status(
-            "auto_commit_started",
-            auto_commit_reason=reason,
-            auto_commit_paths=dirty_paths,
-            selected_task=target_task,
-        )
-
-        add = run_command(
-            ("git", "add", "--", *dirty_paths),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=min(120, max(1, self.daemon_config.command_timeout_seconds)),
-        )
-        if not add.ok:
-            return {
-                "attempted": True,
-                "committed": False,
-                "skipped_reason": "add_failed",
-                "branch": branch_name,
-                "changed_files": dirty_paths,
-                "stderr": add.stderr[-1000:],
-            }
-
-        staged = run_command(
-            ("git", "diff", "--cached", "--name-only", "--", *dirty_paths),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
-        )
-        staged_paths = self._safe_auto_commit_pathspecs(staged.stdout.splitlines()) if staged.ok else []
-        if not staged_paths:
-            return {
-                "attempted": True,
-                "committed": False,
-                "skipped_reason": "nothing_staged",
-                "branch": branch_name,
-                "changed_files": dirty_paths,
-            }
-
-        subject = self._auto_commit_subject(target_task=target_task, summary=summary, reason=reason)
-        body_lines = [
-            f"Reason: {reason}",
-            f"Target task: {target_task or 'unknown'}",
-            "",
-            "Committed by the logic-port daemon after validation so unattended work can continue.",
-            "",
-            "Files:",
-            *[f"- {path}" for path in staged_paths],
-        ]
-        commit = run_command(
-            (
-                "git",
-                "-c",
-                "user.name=Logic Port Daemon",
-                "-c",
-                "user.email=logic-port-daemon@local",
-                "commit",
-                "-m",
-                subject,
-                "-m",
-                "\n".join(body_lines),
-                "--",
-                *staged_paths,
-            ),
-            cwd=self.daemon_config.repo_root,
-            timeout_seconds=min(180, max(1, self.daemon_config.command_timeout_seconds)),
-        )
-        record = {
-            "attempted": True,
-            "committed": commit.ok,
-            "branch": branch_name,
-            "changed_files": staged_paths,
-            "subject": subject,
-            "stdout": commit.stdout[-1000:],
-            "stderr": commit.stderr[-1000:],
-        }
-        if not commit.ok:
-            record["skipped_reason"] = "commit_failed"
-        self._write_status("auto_commit_completed", auto_commit=record, selected_task=target_task)
-        return record
 
     def _safe_auto_commit_pathspecs(self, paths: Sequence[str]) -> List[str]:
-        safe: List[str] = []
-        seen = set()
-        logic_dir = self._repo_relative_pathspec(self.daemon_config.typescript_logic_dir).rstrip("/")
-        task_board = self._repo_relative_pathspec(self.daemon_config.task_board_doc) if self.daemon_config.task_board_doc else ""
-        accepted_log = (
-            self._repo_relative_pathspec(self.daemon_config.accepted_work_log_path)
-            if self.daemon_config.accepted_work_log_path
-            else ""
+        config = self._auto_commit_config()
+        return _shared_safe_auto_commit_pathspecs(
+            paths,
+            allowed_prefixes=config.allowed_prefixes,
+            allowed_exact_paths=config.allowed_exact_paths,
         )
-        for raw in paths:
-            normalized = str(raw or "").replace("\\", "/").strip()
-            if not normalized:
-                continue
-            normalized = normalized[2:] if normalized.startswith("./") else normalized
-            if normalized.startswith("/") or ".." in Path(normalized).parts:
-                continue
-            allowed = (
-                normalized == logic_dir
-                or normalized.startswith(logic_dir + "/")
-                or normalized in {task_board, accepted_log}
-                or any(normalized.startswith(prefix) for prefix in ALLOWED_WRITE_PREFIXES)
-            )
-            if allowed and normalized not in seen:
-                seen.add(normalized)
-                safe.append(normalized)
-        return safe
 
     def _auto_commit_subject(self, *, target_task: str, summary: str, reason: str) -> str:
-        source = summary or target_task or reason or "logic port daemon work"
-        slug = _slugify(source, limit=54).replace("-", " ")
-        return f"chore(logic-port): {slug}".strip()
+        return _shared_build_auto_commit_subject(
+            target_task=target_task,
+            summary=summary,
+            reason=reason,
+            subject_prefix="chore(logic-port):",
+        )
 
     def _write_accepted_work_artifacts(self, artifact: Dict[str, Any], changed_files: List[str]) -> List[str]:
         if self.daemon_config.accepted_work_artifact_dir is None:

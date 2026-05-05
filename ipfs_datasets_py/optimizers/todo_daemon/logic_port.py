@@ -14,20 +14,19 @@ from .core import (
     stop_daemon,
 )
 from .cli import build_lifecycle_arg_parser, run_lifecycle_cli
+from .specs import env_flag, env_path, env_path_in_dir, env_value, repo_root_from_env
 
 
 def _env(name: str, default: str) -> str:
-    value = os.environ.get(name)
-    return default if value is None or value == "" else value
+    return env_value(name, default)
 
 
 def _boolish_env(name: str, default: str) -> str:
-    value = _env(name, default).strip().lower()
-    return "1" if value in {"1", "true", "yes", "on"} else "0"
+    return env_flag(name, default)
 
 
 def _repo_root(explicit: Optional[str] = None) -> Path:
-    return Path(explicit or os.environ.get("REPO_ROOT") or Path.cwd()).resolve()
+    return repo_root_from_env(explicit)
 
 
 def logic_port_launch_env() -> Dict[str, str]:
@@ -67,9 +66,9 @@ def logic_port_launch_env() -> Dict[str, str]:
 
 def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
     root = _repo_root(repo_root)
-    daemon_dir = Path(_env("DAEMON_DIR", "ipfs_datasets_py/.daemon"))
-    status_path = Path(_env("STATUS_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon.status.json"))
-    worktree_root = Path(_env("WORKTREE_ROOT", "ipfs_datasets_py/.daemon/logic-port-worktrees"))
+    daemon_dir = env_path("DAEMON_DIR", "ipfs_datasets_py/.daemon")
+    status_path = env_path_in_dir("STATUS_PATH", daemon_dir, "logic-port-daemon.status.json")
+    worktree_root = env_path("WORKTREE_ROOT", "ipfs_datasets_py/.daemon/logic-port-worktrees")
     return ManagedDaemonSpec(
         name="logic-port",
         schema="ipfs_datasets_py.logic_port_daemon",
@@ -77,29 +76,37 @@ def build_logic_port_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpec:
         daemon_dir=daemon_dir,
         runner=("bash", "ipfs_datasets_py/scripts/ops/legal_data/run_logic_port_daemon.sh"),
         status_path=status_path,
-        progress_path=Path(_env("PROGRESS_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon.progress.json")),
-        result_log_path=Path(_env("RESULT_LOG_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon.jsonl")),
-        supervisor_status_path=Path(
-            _env("SUPERVISOR_STATUS_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-supervisor.status.json")
+        progress_path=env_path_in_dir("PROGRESS_PATH", daemon_dir, "logic-port-daemon.progress.json"),
+        result_log_path=env_path_in_dir("RESULT_LOG_PATH", daemon_dir, "logic-port-daemon.jsonl"),
+        supervisor_status_path=env_path_in_dir(
+            "SUPERVISOR_STATUS_PATH",
+            daemon_dir,
+            "logic-port-daemon-supervisor.status.json",
         ),
-        supervisor_pid_path=Path(
-            _env("SUPERVISOR_PID_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-supervisor.pid")
+        supervisor_pid_path=env_path_in_dir(
+            "SUPERVISOR_PID_PATH",
+            daemon_dir,
+            "logic-port-daemon-supervisor.pid",
         ),
-        child_pid_path=Path(_env("CHILD_PID_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon.pid")),
-        supervisor_out_path=Path(
-            _env("SUPERVISOR_OUT_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-supervisor.out")
+        child_pid_path=env_path_in_dir("CHILD_PID_PATH", daemon_dir, "logic-port-daemon.pid"),
+        supervisor_out_path=env_path_in_dir(
+            "SUPERVISOR_OUT_PATH",
+            daemon_dir,
+            "logic-port-daemon-supervisor.out",
         ),
-        ensure_status_path=Path(
-            _env("ENSURE_STATUS_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-ensure.status.json")
+        ensure_status_path=env_path_in_dir("ENSURE_STATUS_PATH", daemon_dir, "logic-port-daemon-ensure.status.json"),
+        ensure_check_path=env_path_in_dir("CHECK_LOG_PATH", daemon_dir, "logic-port-daemon-ensure-check.json"),
+        supervisor_lock_path=env_path_in_dir(
+            "SUPERVISOR_LOCK_PATH",
+            daemon_dir,
+            "logic-port-daemon-supervisor.lock",
         ),
-        ensure_check_path=Path(
-            _env("CHECK_LOG_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-ensure-check.json")
+        latest_log_path=env_path_in_dir(
+            "LATEST_LOG_PATH",
+            daemon_dir,
+            "logic-port-daemon-supervisor.latest.log",
         ),
-        supervisor_lock_path=Path(
-            _env("SUPERVISOR_LOCK_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-supervisor.lock")
-        ),
-        latest_log_path=Path(_env("LATEST_LOG_PATH", f"{daemon_dir.as_posix()}/logic-port-daemon-supervisor.latest.log")),
-        task_board_path=Path(_env("TASK_BOARD_PATH", "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md")),
+        task_board_path=env_path("TASK_BOARD_PATH", "docs/IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"),
         tmux_session_name=_env("TMUX_SESSION_NAME", "logic-port-daemon"),
         worktree_root=worktree_root,
         daemon_process_match_all=(

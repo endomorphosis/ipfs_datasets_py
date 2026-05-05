@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+import traceback
 from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .engine import Proposal, compact_message
@@ -25,6 +27,50 @@ DEFAULT_RETRY_ERROR_MARKERS = frozenset(
     }
 )
 DEFAULT_SKIP_VALIDATION_FAILURE_KINDS = frozenset({"llm", "parse", "empty_proposal"})
+
+
+@dataclass(frozen=True)
+class FailureBlockDecision:
+    """Reusable pre-work block decision for repeated stuck task failures."""
+
+    summary: str
+    failure_kind: str
+    result: str
+
+
+@dataclass(frozen=True)
+class FailureBlockRule:
+    """One repeated-failure circuit-breaker rule."""
+
+    failure_kind: str
+    count: int
+    threshold: int
+    summary: str
+    result: str
+
+
+def exception_diagnostic(exc: BaseException, *, limit: int = 5000) -> str:
+    """Return a compact traceback suitable for durable daemon diagnostics."""
+
+    return compact_message(
+        "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+        limit=limit,
+    )
+
+
+def first_failure_block_decision(
+    rules: Sequence[FailureBlockRule],
+) -> FailureBlockDecision | None:
+    """Return the first block decision whose count reaches its threshold."""
+
+    for rule in rules:
+        if int(rule.count) >= max(1, int(rule.threshold)):
+            return FailureBlockDecision(
+                summary=rule.summary,
+                failure_kind=rule.failure_kind,
+                result=rule.result,
+            )
+    return None
 
 
 def artifact_validation_text(artifact: Mapping[str, Any]) -> str:
