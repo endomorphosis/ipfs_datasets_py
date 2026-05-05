@@ -66,6 +66,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.status import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
+    dirty_worktree_paths as _shared_dirty_worktree_paths,
     git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     managed_git_worktree as _shared_managed_git_worktree,
     owner_pid_from_worktree as _shared_owner_pid_from_worktree,
@@ -4415,19 +4416,12 @@ class LegalParserOptimizerDaemon:
         return str(result.get("stdout") or "")
 
     def _dirty_touched_files(self, changed_files: Sequence[str]) -> List[str]:
-        dirty: List[str] = []
-        for rel_path in changed_files:
-            result = _run_command(
-                ["git", "status", "--porcelain", "--", rel_path],
-                cwd=self.config.repo_root,
-                timeout=30,
-            )
-            status_paths = _paths_from_git_status_porcelain(str(result.get("stdout") or ""))
-            if status_paths:
-                dirty_path = status_paths[-1] if len(status_paths) == 1 else rel_path
-                if dirty_path not in dirty:
-                    dirty.append(dirty_path)
-        return dirty
+        return _shared_dirty_worktree_paths(
+            repo_root=self.config.repo_root,
+            paths=changed_files,
+            timeout_seconds=30,
+            run_command_fn=command_runner_from_legacy_function(_run_command),
+        )
 
     def _dirty_legal_parser_targets(self) -> List[str]:
         """Return dirty files in the legal-parser target set tracked by recovery."""

@@ -68,6 +68,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_file_replacement_validation_repair_prompt,
     build_lifecycle_arg_parser,
     build_active_status_payload,
+    build_config_file_replacement_hooks,
     build_heartbeat_status_payload,
     build_ready_after_supervisor_repair_status,
     build_python_module_command,
@@ -3258,6 +3259,79 @@ def test_file_replacement_default_persistence_uses_config_artifact_dirs(tmp_path
     failed_manifest = json.loads(failed_manifests[0].read_text(encoding="utf-8"))
     assert failed_manifest["reason"] == "preflight"
     assert failed_manifest["transport"] == "direct"
+
+
+def test_config_file_replacement_hook_factory_wires_config_persistence(tmp_path: Path) -> None:
+    @dataclass
+    class ArtifactConfig(SyntheticDaemonConfig):
+        accepted_dir: Path = Path("todo/accepted")
+        failed_dir: Path = Path("todo/failed")
+        write_accepted_work_sidecars: bool = True
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "todo").mkdir()
+    target = repo / "todo" / "source.py"
+    target.write_text("VALUE = 1\n", encoding="utf-8")
+    config = ArtifactConfig(repo_root=repo)
+    spec = ValidationWorkspaceSpec(
+        repo_root=repo,
+        worktree_dir=Path(".daemon/worktrees"),
+        marker_name="example-worktree.json",
+        copy_paths=(Path("todo"),),
+    )
+    hooks = build_config_file_replacement_hooks(
+        validate_write_path=lambda path: [] if path.startswith("todo/") else ["outside allowlist"],
+        temporary_validation_worktree=validation_worktree_for_spec(spec),
+        validation_commands_for_proposal=lambda _proposal, _config: (("synthetic-validation",),),
+        run_validation=lambda _config, commands: [CommandResult(commands[0], 0, "ok", "")],
+        syntax_preflight=lambda _worktree, _changed, _config: ([], [], ""),
+        has_visible_source_change=lambda changed: any(path.endswith(".py") for path in changed),
+        accepted_dir_field="accepted_dir",
+        failed_dir_field="failed_dir",
+        sidecars_enabled_field="write_accepted_work_sidecars",
+        no_visible_source_change_message="synthetic visible source required",
+    )
+
+    accepted_result = apply_file_replacement_proposal(
+        Proposal(
+            summary="Factory accepted",
+            target_task="Task checkbox-10: Persist accepted via factory",
+            files=[{"path": "todo/source.py", "content": "VALUE = 2\n"}],
+            requires_visible_source_change=True,
+        ),
+        config,
+        hooks,
+    )
+    failed_result = apply_file_replacement_proposal(
+        Proposal(
+            summary="Factory failed",
+            target_task="Task checkbox-11: Persist failed via factory",
+            files=[{"path": "elsewhere/source.py", "content": "bad\n"}],
+        ),
+        config,
+        hooks,
+    )
+    accepted_dir = repo / config.accepted_dir
+    failed_dir = repo / config.failed_dir
+    accepted_rows = [
+        json.loads(line)
+        for line in (accepted_dir / DEFAULT_ACCEPTED_WORK_LEDGER_FILENAME).read_text(encoding="utf-8").splitlines()
+    ]
+    failed_manifests = [
+        path
+        for path in failed_dir.glob("*.json")
+        if not path.name.endswith(".workspace.json")
+    ]
+
+    assert isinstance(hooks, FileReplacementHooks)
+    assert hooks.no_visible_source_change_message == "synthetic visible source required"
+    assert accepted_result.valid
+    assert failed_result.failure_kind == "preflight"
+    assert accepted_rows[0]["summary"] == "Factory accepted"
+    assert accepted_rows[0]["artifacts"]["manifest"].startswith("todo/accepted/")
+    assert len(failed_manifests) == 1
+    assert json.loads(failed_manifests[0].read_text(encoding="utf-8"))["reason"] == "preflight"
 
 
 def test_file_replacement_apply_flow_rejects_disallowed_paths(tmp_path: Path) -> None:

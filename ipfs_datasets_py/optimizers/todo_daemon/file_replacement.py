@@ -371,6 +371,91 @@ class FileReplacementHooks:
     )
 
 
+def build_config_file_replacement_hooks(
+    *,
+    validate_write_path: Callable[[str], list[str]],
+    temporary_validation_worktree: Callable[[Any], AbstractContextManager[Path]],
+    validation_commands_for_proposal: Callable[[Proposal, Any], tuple[tuple[str, ...], ...]],
+    run_validation: Callable[[Any, tuple[tuple[str, ...], ...]], list[CommandResult]],
+    syntax_preflight: Callable[[Path, list[str], Any], tuple[list[CommandResult], list[str], str]],
+    has_visible_source_change: Callable[[Iterable[str]], bool],
+    attempt_validation_repair: Callable[
+        [Proposal, Any, Path],
+        tuple[bool, list[str], str],
+    ] = no_file_replacement_validation_repair,
+    accepted_dir_field: str = "accepted_work_dir",
+    failed_dir_field: str = "failed_work_dir",
+    sidecars_enabled_field: str = "accepted_work_sidecars",
+    ledger_filename_field: str = "accepted_work_ledger_filename",
+    default_accepted_dir: Path = DEFAULT_FILE_REPLACEMENT_ACCEPTED_DIR,
+    default_failed_dir: Path = DEFAULT_FILE_REPLACEMENT_FAILED_DIR,
+    no_visible_source_change_message: str = (
+        "Accepted work must promote at least one visible source or fixture file; "
+        "runtime-only progress records are not sufficient."
+    ),
+    materialize_proposal_in_worktree: Callable[[Proposal, Any, Path], list[str]] = materialize_proposal_files_in_worktree,
+    proposal_diff_from_worktree: Callable[[Any, Path, Iterable[str]], str] = config_proposal_diff_from_worktree,
+    proposal_files_from_worktree: Callable[[Path, Iterable[str]], list[dict[str, str]]] = proposal_files_from_validation_worktree,
+    promote_worktree_files: Callable[[Any, Path, Iterable[str]], None] = config_promote_worktree_files,
+    verify_promoted_worktree_files: Callable[[Any, Path, Iterable[str]], list[str]] = config_verify_promoted_worktree_files,
+    worktree_config: Callable[[Any, Path], Any] = dataclass_worktree_config,
+) -> FileReplacementHooks:
+    """Build file-replacement hooks with reusable config-backed artifact persistence."""
+
+    def persist_failed_work(
+        proposal: Proposal,
+        config: Any,
+        diff_text: str,
+        reason: str,
+        transport: str,
+    ) -> None:
+        config_persist_failed_file_replacement_work(
+            proposal,
+            config,
+            diff_text,
+            reason,
+            transport,
+            failed_dir_field=failed_dir_field,
+            default_failed_dir=default_failed_dir,
+        )
+
+    def persist_accepted_work(
+        proposal: Proposal,
+        config: Any,
+        diff_text: str,
+        transport: str,
+    ) -> None:
+        config_persist_accepted_file_replacement_work(
+            proposal,
+            config,
+            diff_text,
+            transport,
+            accepted_dir_field=accepted_dir_field,
+            default_accepted_dir=default_accepted_dir,
+            sidecars_enabled_field=sidecars_enabled_field,
+            ledger_filename_field=ledger_filename_field,
+        )
+
+    return FileReplacementHooks(
+        validate_write_path=validate_write_path,
+        temporary_validation_worktree=temporary_validation_worktree,
+        validation_commands_for_proposal=validation_commands_for_proposal,
+        run_validation=run_validation,
+        syntax_preflight=syntax_preflight,
+        has_visible_source_change=has_visible_source_change,
+        attempt_validation_repair=attempt_validation_repair,
+        persist_failed_work=persist_failed_work,
+        persist_accepted_work=persist_accepted_work,
+        materialize_proposal_in_worktree=materialize_proposal_in_worktree,
+        proposal_diff_from_worktree=proposal_diff_from_worktree,
+        proposal_files_from_worktree=proposal_files_from_worktree,
+        promote_worktree_files=promote_worktree_files,
+        verify_promoted_worktree_files=verify_promoted_worktree_files,
+        worktree_config=worktree_config,
+        no_visible_source_change_message=no_visible_source_change_message,
+    )
+
+
 @dataclass(frozen=True)
 class ProposalPreflightPolicy:
     """Configurable preflight guardrails for proposal patch/file payloads."""
