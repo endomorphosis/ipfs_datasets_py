@@ -220,6 +220,78 @@ def test_prover_syntax_records_carry_target_parse_profiles():
     ) == 5
 
 
+def test_prover_syntax_records_carry_quantifier_and_deontic_scope_profiles():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            "O",
+            ["Tenant", "PeriodMonthly"],
+            ["PayRentMonthly"],
+        ),
+        (
+            "No person may discharge pollutants into the sewer.",
+            "F",
+            ["Person"],
+            ["DischargePollutantsIntoSewer"],
+        ),
+        (
+            "The permittee may appeal the decision.",
+            "P",
+            ["Permittee"],
+            ["AppealDecision"],
+        ),
+    ]
+
+    for text, operator, antecedent_symbols, consequent_symbols in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = {
+            target.target: target.to_dict()
+            for target in validate_ir_with_provers(norm).targets
+        }
+        matrix_symbols = antecedent_symbols + consequent_symbols
+
+        fol_scope = records["fol"]["target_parse_profile"]["quantifier_scopes"][0]
+        assert fol_scope["variable"] == "x"
+        assert fol_scope["antecedent_symbols"] == antecedent_symbols
+        assert fol_scope["consequent_symbols"] == consequent_symbols
+        assert fol_scope["matrix_symbols"] == matrix_symbols
+        assert fol_scope["has_implication"] is True
+
+        deontic_profile = records["deontic_fol"]["target_parse_profile"]
+        temporal_profile = records["deontic_temporal_fol"]["target_parse_profile"]
+        assert deontic_profile["deontic_operator_sequence"] == [operator]
+        assert temporal_profile["deontic_operator_sequence"] == [operator]
+        assert deontic_profile["deontic_scopes"][0]["formula_symbols"] == matrix_symbols
+        assert temporal_profile["deontic_scopes"][0]["formula_symbols"] == matrix_symbols
+        assert deontic_profile["deontic_scopes"][0]["contains_quantifier"] is True
+        assert temporal_profile["deontic_scopes"][0]["quantifier_variables"] == ["x"]
+
+        assert records["fol"]["target_components"]["parse_quantifier_scope_count"] == 1
+        assert records["fol"]["target_components"]["parse_deontic_scope_count"] == 0
+        assert records["deontic_fol"]["target_components"]["parse_deontic_scope_count"] == 1
+        assert records["deontic_temporal_fol"]["target_components"][
+            "parse_deontic_scope_symbols"
+        ] == matrix_symbols
+        assert records["frame_logic"]["target_components"]["parse_quantifier_scope_count"] == 0
+
+    applicability = LegalNormIR.from_parser_element(
+        extract_normative_elements("This section applies to food carts.")[0]
+    )
+    applicability_records = {
+        target.target: target.to_dict()
+        for target in validate_ir_with_provers(applicability).targets
+    }
+
+    assert applicability_records["fol"]["target_parse_profile"]["quantifier_scopes"] == []
+    assert applicability_records["fol"]["target_parse_profile"]["deontic_scopes"] == []
+    assert applicability_records["deontic_temporal_fol"]["target_parse_profile"][
+        "wrapper_sequence"
+    ] == ["always"]
+    assert applicability_records["deontic_temporal_fol"]["target_components"][
+        "parse_deontic_operator_sequence"
+    ] == []
+
+
 def test_prover_syntax_records_carry_reconstruction_token_profiles():
     examples = [
         (

@@ -586,6 +586,24 @@ def _target_components(
         "parse_quantifier_variables": list(
             target_parse_profile.get("quantifier_variables") or []
         ),
+        "parse_quantifier_scope_count": len(
+            target_parse_profile.get("quantifier_scopes") or []
+        ),
+        "parse_quantifier_scopes": list(
+            target_parse_profile.get("quantifier_scopes") or []
+        ),
+        "parse_deontic_scope_count": len(
+            target_parse_profile.get("deontic_scopes") or []
+        ),
+        "parse_deontic_scopes": list(
+            target_parse_profile.get("deontic_scopes") or []
+        ),
+        "parse_deontic_operator_sequence": list(
+            target_parse_profile.get("deontic_operator_sequence") or []
+        ),
+        "parse_deontic_scope_symbols": list(
+            target_parse_profile.get("deontic_scope_symbols") or []
+        ),
         "parse_frame_slots": list(target_parse_profile.get("frame_slots") or []),
         "parse_event_predicates": list(
             target_parse_profile.get("event_predicates") or []
@@ -1131,6 +1149,8 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
     atom_symbols = _formula_symbols(text)
     connectives = _target_connectives(text)
     quantifier_variables = _quantifier_variables(text)
+    quantifier_scopes = _quantifier_scope_profiles(text)
+    deontic_scopes = _deontic_scope_profiles(text)
     frame_slots = _frame_slots(text) if target == "frame_logic" else []
     event_predicates = _event_predicates(text) if target == "deontic_cec" else []
     complete = bool(
@@ -1151,6 +1171,8 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
         "|".join(atom_symbols),
         "|".join(connectives),
         "|".join(quantifier_variables),
+        _scope_profiles_fingerprint_part(quantifier_scopes),
+        _scope_profiles_fingerprint_part(deontic_scopes),
         "|".join(frame_slots),
         "|".join(event_predicates),
         str(complete),
@@ -1162,6 +1184,18 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
         "atom_symbols": atom_symbols,
         "connectives": connectives,
         "quantifier_variables": quantifier_variables,
+        "quantifier_scopes": quantifier_scopes,
+        "quantifier_scope_count": len(quantifier_scopes),
+        "deontic_scopes": deontic_scopes,
+        "deontic_scope_count": len(deontic_scopes),
+        "deontic_operator_sequence": [
+            scope["operator"] for scope in deontic_scopes
+        ],
+        "deontic_scope_symbols": _ordered_unique(
+            symbol
+            for scope in deontic_scopes
+            for symbol in scope.get("formula_symbols", [])
+        ),
         "frame_slots": frame_slots,
         "event_predicates": event_predicates,
         "contains_quantifier": bool(quantifier_variables),
@@ -1208,6 +1242,101 @@ def _quantifier_variables(text: str) -> List[str]:
         if variable not in variables:
             variables.append(variable)
     return variables
+
+
+def _quantifier_scope_profiles(text: str) -> List[Dict[str, Any]]:
+    profiles: List[Dict[str, Any]] = []
+    for match in re.finditer(r"\bforall\s+([A-Za-z][A-Za-z0-9_]*)\.\s*", text):
+        variable = match.group(1)
+        scope_text = _balanced_scope_after(text, match.end())
+        if not scope_text:
+            continue
+        antecedent, consequent = _split_implication_scope(scope_text)
+        profile = {
+            "variable": variable,
+            "scope_text": scope_text,
+            "matrix_symbols": _formula_symbols(scope_text),
+            "antecedent_symbols": _formula_symbols(antecedent),
+            "consequent_symbols": _formula_symbols(consequent),
+            "has_implication": bool(consequent),
+        }
+        profiles.append(profile)
+    return profiles
+
+
+def _deontic_scope_profiles(text: str) -> List[Dict[str, Any]]:
+    profiles: List[Dict[str, Any]] = []
+    for match in re.finditer(r"\b([OPF])\s*\(", text):
+        operator = match.group(1)
+        scope_text = _balanced_scope_after(text, match.end() - 1)
+        if not scope_text:
+            continue
+        profiles.append(
+            {
+                "operator": operator,
+                "scope_text": scope_text,
+                "formula_symbols": _formula_symbols(scope_text),
+                "quantifier_variables": _quantifier_variables(scope_text),
+                "contains_quantifier": bool(_quantifier_variables(scope_text)),
+            }
+        )
+    return profiles
+
+
+def _balanced_scope_after(text: str, start_index: int) -> str:
+    value = str(text or "")
+    index = start_index
+    while index < len(value) and value[index].isspace():
+        index += 1
+    if index >= len(value):
+        return ""
+    if value[index] != "(":
+        return value[index:].strip()
+
+    depth = 0
+    for cursor in range(index, len(value)):
+        char = value[cursor]
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return value[index + 1 : cursor].strip()
+    return ""
+
+
+def _split_implication_scope(scope_text: str) -> tuple[str, str]:
+    text = str(scope_text or "").strip()
+    match = re.search(r"(?:->|=>)", text)
+    if not match:
+        return text, ""
+    return text[: match.start()].strip(), text[match.end() :].strip()
+
+
+def _scope_profiles_fingerprint_part(profiles: Sequence[Mapping[str, Any]]) -> str:
+    parts: List[str] = []
+    for profile in profiles:
+        if "variable" in profile:
+            parts.append(
+                "forall:"
+                + str(profile.get("variable") or "")
+                + ":"
+                + "|".join(profile.get("matrix_symbols") or [])
+                + ":"
+                + "|".join(profile.get("antecedent_symbols") or [])
+                + ":"
+                + "|".join(profile.get("consequent_symbols") or [])
+            )
+        elif "operator" in profile:
+            parts.append(
+                "deontic:"
+                + str(profile.get("operator") or "")
+                + ":"
+                + "|".join(profile.get("formula_symbols") or [])
+                + ":"
+                + "|".join(profile.get("quantifier_variables") or [])
+            )
+    return ";".join(parts)
 
 
 def _frame_slots(text: str) -> List[str]:
