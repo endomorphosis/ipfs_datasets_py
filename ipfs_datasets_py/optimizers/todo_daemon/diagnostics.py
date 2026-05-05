@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 import traceback
 from collections.abc import Callable, Sequence
@@ -67,6 +68,271 @@ def exception_diagnostic(exc: BaseException, *, limit: int = 5000) -> str:
         "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
         limit=limit,
     )
+
+
+def command_output_text(value: Any) -> str:
+    """Return subprocess output as text, including timeout byte reprs."""
+
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    text = str(value or "")
+    stripped = text.strip()
+    if len(stripped) >= 3 and stripped[:1].lower() == "b" and stripped[1:2] in {"'", '"'}:
+        try:
+            parsed = ast.literal_eval(stripped)
+        except (SyntaxError, ValueError):
+            return text
+        if isinstance(parsed, bytes):
+            return parsed.decode("utf-8", errors="replace")
+    return text
+
+
+def is_pytest_session_noise(text: str) -> bool:
+    """Return whether a pytest output line is boilerplate rather than failure signal."""
+
+    return (
+        text.startswith("=")
+        or text.startswith("platform ")
+        or text.startswith("plugins:")
+        or text.startswith("rootdir:")
+        or text.startswith("configfile:")
+        or text.startswith("collected ")
+    )
+
+
+def summarize_test_failure(stdout: Any) -> dict[str, Any]:
+    """Summarize failed pytest node ids, exception types, and useful output head."""
+
+    output = command_output_text(stdout)
+    failed_tests: list[str] = []
+    for match in re.finditer(r"FAILED\s+([^\s]+)", output):
+        name = match.group(1).strip()
+        if name == "[" or "::" not in name:
+            continue
+        if name and name not in failed_tests:
+            failed_tests.append(name)
+
+    exception_types: list[str] = []
+    for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", output):
+        name = match.group(1)
+        if name and name not in exception_types:
+            exception_types.append(name)
+
+    interesting_lines: list[str] = []
+    for line in output.splitlines():
+        text = line.strip()
+        if not text:
+            continue
+        if (
+            text.startswith("FAILED ")
+            or text.startswith("E   ")
+            or "Recursion detected" in text
+            or "short test summary info" in text
+        ):
+            interesting_lines.append(text)
+        if len(interesting_lines) >= 10:
+            break
+
+    return {
+        "failed_tests": failed_tests,
+        "exception_types": exception_types,
+        "failure_head": "\n".join(interesting_lines)[:2000],
+    }
+
+
+def failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
+    """Return whether a failure summary contains useful recovery signal."""
+
+    return bool(
+        summary.get("failed_tests")
+        or summary.get("exception_types")
+        or str(summary.get("failure_head") or "").strip()
+    )
+
+
+def summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> dict[str, Any]:
+    """Summarize compile/collection/focused-test validation failures."""
+
+    if not validation or validation.get("valid") is not False:
+        return {}
+
+    failed_tests: list[str] = []
+    exception_types: list[str] = []
+    interesting_lines: list[str] = []
+    failure_command: list[str] = []
+    for check_name in ("compile", "collect", "focused_tests"):
+        check = dict(validation.get(check_name) or {})
+        if check.get("valid") is not False:
+            continue
+        if not failure_command:
+            failure_command = [str(part) for part in check.get("command") or []]
+        stderr = command_output_text(check.get("stderr") or "")
+        stdout = command_output_text(check.get("stdout") or "")
+        output_text = stderr + "\n" + stdout
+        if check_name == "compile" and "py_compile" not in exception_types:
+            exception_types.append("py_compile")
+        if "timeout after" in output_text and "TimeoutExpired" not in exception_types:
+            exception_types.append("TimeoutExpired")
+        for match in re.finditer(r"FAILED\s+([^\s]+)", output_text):
+            name = match.group(1).strip()
+            if name == "[" or "::" not in name:
+                continue
+            if name and name not in failed_tests:
+                failed_tests.append(name)
+        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", output_text):
+            name = match.group(1)
+            if name and name not in exception_types:
+                exception_types.append(name)
+        for line in output_text.splitlines():
+            text = line.strip()
+            if not text or is_pytest_session_noise(text):
+                continue
+            if (
+                text.startswith("File ")
+                or text.startswith("E   ")
+                or "SyntaxError" in text
+                or "IndentationError" in text
+                or "timeout after" in text
+                or "pytest" in text
+                or "FAILED " in text
+            ):
+                interesting_lines.append(f"{check_name}: {text}")
+            if len(interesting_lines) >= 12:
+                break
+
+    if not interesting_lines:
+        interesting_lines = [str(reason) for reason in validation.get("reasons") or []]
+
+    return {
+        "failed_tests": failed_tests[:12],
+        "exception_types": exception_types[:8],
+        "failure_head": "\n".join(interesting_lines)[:2000],
+        "failure_command": failure_command,
+    }
+
+
+def latest_candidate_validation_failure(attempts: Sequence[Any]) -> dict[str, Any]:
+    """Return the newest failed candidate preflight from proposal attempts."""
+
+    for item in reversed(list(attempts)):
+        if not isinstance(item, Mapping):
+            continue
+        if item.get("candidate_validation_valid") is not False:
+            continue
+        summary = dict(item.get("candidate_validation_summary") or {})
+        if not failure_summary_has_content(summary):
+            retry_reason = str(item.get("retry_reason") or "")
+            reasons = [str(reason) for reason in item.get("candidate_validation_reasons") or []]
+            summary = {
+                "failed_tests": [],
+                "exception_types": [
+                    match.group(1)
+                    for match in re.finditer(
+                        r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b",
+                        retry_reason + "\n" + "\n".join(reasons),
+                    )
+                ][:8],
+                "failure_head": retry_reason or "; ".join(reasons),
+                "failure_command": [],
+            }
+        return {
+            "valid": False,
+            "attempt": item.get("attempt"),
+            "changed_files": item.get("changed_files", []),
+            "reasons": item.get("candidate_validation_reasons", []),
+            "summary": summary,
+        }
+    return {"valid": True, "skipped": True, "reason": "no_failed_candidate_validation"}
+
+
+def quality_gate_summary(
+    *,
+    proposal_quality: Mapping[str, Any] | None = None,
+    patch_check: Mapping[str, Any] | None = None,
+    post_apply_validation: Mapping[str, Any] | None = None,
+    tests_result: Mapping[str, Any] | None = None,
+    apply_result: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return a stable, non-throwing summary for supervisor recovery code."""
+
+    proposal_quality = proposal_quality or {}
+    patch_check = patch_check or {}
+    post_apply_validation = post_apply_validation or {}
+    tests_result = tests_result or {}
+    apply_result = apply_result or {}
+    failed_gates: list[str] = []
+    if proposal_quality.get("valid") is False:
+        failed_gates.append("proposal_quality")
+    if patch_check.get("valid") is False:
+        failed_gates.append("patch_check")
+    if post_apply_validation.get("valid") is False:
+        failed_gates.append("post_apply_validation")
+    if tests_result.get("valid") is False:
+        failed_gates.append("tests")
+    if apply_result.get("rolled_back"):
+        failed_gates.append(str(apply_result.get("reason") or "rolled_back"))
+    return {
+        "valid": not failed_gates,
+        "failed_gates": failed_gates,
+        "proposal_quality_valid": proposal_quality.get("valid"),
+        "proposal_quality_reasons": list(proposal_quality.get("reasons") or [])[:8],
+        "patch_valid": patch_check.get("valid"),
+        "patch_failure_tail": str(patch_check.get("stderr") or "")[-1200:]
+        if patch_check.get("valid") is False
+        else "",
+        "post_apply_validation_valid": post_apply_validation.get("valid"),
+        "tests_valid": tests_result.get("valid"),
+        "apply_reason": apply_result.get("reason"),
+    }
+
+
+def cycle_quality_gate_summary(cycle_payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a cycle quality summary even for legacy records missing the field."""
+
+    synthesized = quality_gate_summary(
+        proposal_quality=cycle_payload.get("proposal_quality")
+        if isinstance(cycle_payload.get("proposal_quality"), Mapping)
+        else {},
+        patch_check=cycle_payload.get("patch_check")
+        if isinstance(cycle_payload.get("patch_check"), Mapping)
+        else {},
+        post_apply_validation=cycle_payload.get("post_apply_validation")
+        if isinstance(cycle_payload.get("post_apply_validation"), Mapping)
+        else {},
+        tests_result=cycle_payload.get("tests")
+        if isinstance(cycle_payload.get("tests"), Mapping)
+        else {},
+        apply_result=cycle_payload.get("apply_result")
+        if isinstance(cycle_payload.get("apply_result"), Mapping)
+        else {},
+    )
+    existing = cycle_payload.get("quality_gate_summary")
+    if isinstance(existing, Mapping):
+        summary = {**synthesized, **dict(existing)}
+        expected_keys = set(synthesized)
+        source = (
+            "recorded"
+            if expected_keys <= set(existing)
+            else "recorded_partial_with_synthesized_defaults"
+        )
+        summary.setdefault("source", source)
+        return summary
+    synthesized["source"] = "synthesized_from_legacy_cycle"
+    return synthesized
+
+
+def normalized_failure_head_lines(value: Any, *, limit: int) -> list[str]:
+    """Return compact non-boilerplate failure-head lines."""
+
+    lines: list[str] = []
+    for line in command_output_text(value).splitlines():
+        text = line.strip()
+        if not text or is_pytest_session_noise(text):
+            continue
+        lines.append(text)
+        if len(lines) >= limit:
+            break
+    return lines
 
 
 def first_failure_block_decision(

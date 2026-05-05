@@ -88,6 +88,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     command_runner_from_legacy_function,
     command_result_from_object,
     command_results_from_objects,
+    command_output_text,
     compact_status_artifact,
     compact_validation_result,
     compact_validation_results,
@@ -102,6 +103,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     config_verify_promoted_worktree_files,
     count_proposal_records_with_failure_markers,
     count_recent_proposal_failures,
+    cycle_quality_gate_summary,
     count_unmanaged_generated_status_sections,
     current_task_failure_counts,
     dataclass_worktree_config,
@@ -128,6 +130,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     failed_work_workspace_payload,
     file_edits_by_path,
     first_present,
+    failure_summary_has_content,
     format_recent_failure_context,
     format_task_result_failure_context,
     first_failure_block_decision,
@@ -142,8 +145,10 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     heartbeat_snapshot,
     has_diagnostic_codes,
     is_retryable_proposal_failure,
+    is_pytest_session_noise,
     launch_supervised_child,
     last_task_attempt_index,
+    latest_candidate_validation_failure,
     lifecycle_wrapper_core_lines,
     lifecycle_wrapper_matches_rendered,
     lifecycle_wrapper_payload,
@@ -162,6 +167,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     normalize_string_items,
     normalize_task_references,
     normalize_validation_commands,
+    normalized_failure_head_lines,
     obvious_typescript_text_damage,
     owner_pid_from_worktree,
     open_task_has_deterministic_fallback,
@@ -184,6 +190,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     promote_worktree_files,
     proposal_record_has_failure_markers,
     quality_failure_counts,
+    quality_gate_summary,
     quoted_env_assignments,
     read_daemon_results,
     read_daemon_proposal_records,
@@ -242,6 +249,8 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     supervised_log_path,
     supervisor_maintenance_snapshot,
     supervisor_run_id,
+    summarize_post_apply_validation_failure,
+    summarize_test_failure,
     task_failure_summary,
     task_has_deterministic_fallback,
     task_title_contains_any,
@@ -1579,6 +1588,72 @@ def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
         classify_failure_kind=lambda artifact: str(artifact.get("failure_kind") or ""),
         rollback_failure_kinds=frozenset({"quality"}),
     ) == 2
+
+
+def test_daemon_validation_failure_summary_helpers_are_reusable() -> None:
+    pytest_output = "\n".join(
+        [
+            "============================= test session starts ==============================",
+            "platform linux -- Python 3.12",
+            "FAILED tests/test_demo.py::test_demo - RecursionError: maximum recursion depth exceeded",
+            "E   RecursionError: maximum recursion depth exceeded",
+            "short test summary info",
+        ]
+    )
+    validation = {
+        "valid": False,
+        "compile": {"valid": True},
+        "collect": {"valid": True},
+        "focused_tests": {
+            "valid": False,
+            "command": ["pytest", "-q", "tests/test_demo.py"],
+            "stdout": repr(pytest_output.encode("utf-8")),
+            "stderr": "",
+        },
+        "reasons": ["focused failed"],
+    }
+    attempts = [
+        {"attempt": 1, "candidate_validation_valid": True},
+        {
+            "attempt": 2,
+            "candidate_validation_valid": False,
+            "changed_files": ["tests/test_demo.py"],
+            "candidate_validation_reasons": ["SyntaxError: bad generated test"],
+        },
+    ]
+    recorded_cycle = {
+        "quality_gate_summary": {"patch_valid": False},
+        "patch_check": {"valid": False, "stderr": "KeyError: 'quality_gate_summary'"},
+    }
+
+    test_summary = summarize_test_failure(pytest_output)
+    validation_summary = summarize_post_apply_validation_failure(validation)
+    candidate = latest_candidate_validation_failure(attempts)
+    gate = quality_gate_summary(
+        proposal_quality={"valid": False, "reasons": ["bad proposal"]},
+        patch_check={"valid": False, "stderr": "patch failed"},
+        post_apply_validation=validation,
+        tests_result={"valid": False},
+        apply_result={"rolled_back": True, "reason": "validation"},
+    )
+    cycle_gate = cycle_quality_gate_summary(recorded_cycle)
+
+    assert command_output_text(repr(b"hello")).startswith("hello")
+    assert is_pytest_session_noise("platform linux -- Python 3.12")
+    assert test_summary["failed_tests"] == ["tests/test_demo.py::test_demo"]
+    assert test_summary["exception_types"] == ["RecursionError"]
+    assert validation_summary["failed_tests"] == ["tests/test_demo.py::test_demo"]
+    assert validation_summary["failure_command"] == ["pytest", "-q", "tests/test_demo.py"]
+    assert failure_summary_has_content(validation_summary)
+    assert candidate["attempt"] == 2
+    assert candidate["summary"]["exception_types"] == ["SyntaxError"]
+    assert gate["failed_gates"] == ["proposal_quality", "patch_check", "post_apply_validation", "tests", "validation"]
+    assert cycle_gate["source"] == "recorded_partial_with_synthesized_defaults"
+    assert "quality_gate_summary" in cycle_gate["patch_failure_tail"]
+    assert normalized_failure_head_lines(pytest_output, limit=2) == [
+        "FAILED tests/test_demo.py::test_demo - RecursionError: maximum recursion depth exceeded",
+        "E   RecursionError: maximum recursion depth exceeded",
+    ]
 
 
 def test_proposal_retry_policy_helpers_are_reusable() -> None:

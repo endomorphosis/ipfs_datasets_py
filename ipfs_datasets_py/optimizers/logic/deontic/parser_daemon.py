@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import ast
 import hashlib
 import json
 import traceback
@@ -64,6 +63,17 @@ from ipfs_datasets_py.optimizers.todo_daemon.engine import (
 )
 from ipfs_datasets_py.optimizers.todo_daemon.llm import (
     call_with_thread_deadline as _shared_call_with_thread_deadline,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
+    command_output_text as _shared_command_output_text,
+    cycle_quality_gate_summary as _shared_cycle_quality_gate_summary,
+    failure_summary_has_content as _shared_failure_summary_has_content,
+    is_pytest_session_noise as _shared_is_pytest_session_noise,
+    latest_candidate_validation_failure as _shared_latest_candidate_validation_failure,
+    normalized_failure_head_lines as _shared_normalized_failure_head_lines,
+    quality_gate_summary as _shared_quality_gate_summary,
+    summarize_post_apply_validation_failure as _shared_summarize_post_apply_validation_failure,
+    summarize_test_failure as _shared_summarize_test_failure,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.status import (
     build_status_phase_key as _shared_build_status_phase_key,
@@ -4587,144 +4597,21 @@ def _read_text(path: Path, *, limit: int) -> str:
 
 
 def _summarize_test_failure(stdout: str) -> Dict[str, Any]:
-    stdout = _command_output_text(stdout)
-    failed_tests: List[str] = []
-    for match in re.finditer(r"FAILED\s+([^\s]+)", stdout):
-        name = match.group(1).strip()
-        if name == "[" or "::" not in name:
-            continue
-        if name and name not in failed_tests:
-            failed_tests.append(name)
-
-    exception_types: List[str] = []
-    for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", stdout):
-        name = match.group(1)
-        if name and name not in exception_types:
-            exception_types.append(name)
-
-    interesting_lines: List[str] = []
-    for line in stdout.splitlines():
-        text = line.strip()
-        if not text:
-            continue
-        if (
-            text.startswith("FAILED ")
-            or text.startswith("E   ")
-            or "Recursion detected" in text
-            or "short test summary info" in text
-        ):
-            interesting_lines.append(text)
-        if len(interesting_lines) >= 10:
-            break
-
-    return {
-        "failed_tests": failed_tests,
-        "exception_types": exception_types,
-        "failure_head": "\n".join(interesting_lines)[:2000],
-    }
+    return _shared_summarize_test_failure(stdout)
 
 
 def _summarize_post_apply_validation_failure(validation: Mapping[str, Any]) -> Dict[str, Any]:
-    if not validation or validation.get("valid") is not False:
-        return {}
-
-    failed_tests: List[str] = []
-    exception_types: List[str] = []
-    interesting_lines: List[str] = []
-    failure_command: List[str] = []
-    for check_name in ("compile", "collect", "focused_tests"):
-        check = dict(validation.get(check_name) or {})
-        if check.get("valid") is not False:
-            continue
-        if not failure_command:
-            failure_command = [str(part) for part in check.get("command") or []]
-        stderr = _command_output_text(check.get("stderr") or "")
-        stdout = _command_output_text(check.get("stdout") or "")
-        output_text = stderr + "\n" + stdout
-        if check_name == "compile" and "py_compile" not in exception_types:
-            exception_types.append("py_compile")
-        if "timeout after" in output_text and "TimeoutExpired" not in exception_types:
-            exception_types.append("TimeoutExpired")
-        for match in re.finditer(r"FAILED\s+([^\s]+)", output_text):
-            name = match.group(1).strip()
-            if name == "[" or "::" not in name:
-                continue
-            if name and name not in failed_tests:
-                failed_tests.append(name)
-        for match in re.finditer(r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b", output_text):
-            name = match.group(1)
-            if name and name not in exception_types:
-                exception_types.append(name)
-        for line in output_text.splitlines():
-            text = line.strip()
-            if not text:
-                continue
-            if _is_pytest_session_noise(text):
-                continue
-            if (
-                text.startswith("File ")
-                or text.startswith("E   ")
-                or "SyntaxError" in text
-                or "IndentationError" in text
-                or "timeout after" in text
-                or "pytest" in text
-                or "FAILED " in text
-            ):
-                interesting_lines.append(f"{check_name}: {text}")
-            if len(interesting_lines) >= 12:
-                break
-
-    if not interesting_lines:
-        interesting_lines = [str(reason) for reason in validation.get("reasons") or []]
-
-    return {
-        "failed_tests": failed_tests[:12],
-        "exception_types": exception_types[:8],
-        "failure_head": "\n".join(interesting_lines)[:2000],
-        "failure_command": failure_command,
-    }
+    return _shared_summarize_post_apply_validation_failure(validation)
 
 
 def _latest_candidate_validation_failure(attempts: Sequence[Any]) -> Dict[str, Any]:
     """Return the newest failed candidate preflight from proposal attempts."""
 
-    for item in reversed(list(attempts)):
-        if not isinstance(item, Mapping):
-            continue
-        if item.get("candidate_validation_valid") is not False:
-            continue
-        summary = dict(item.get("candidate_validation_summary") or {})
-        if not _failure_summary_has_content(summary):
-            retry_reason = str(item.get("retry_reason") or "")
-            reasons = [str(reason) for reason in item.get("candidate_validation_reasons") or []]
-            summary = {
-                "failed_tests": [],
-                "exception_types": [
-                    match.group(1)
-                    for match in re.finditer(
-                        r"\b([A-Za-z_][A-Za-z0-9_]*(?:Error|Exception))\b",
-                        retry_reason + "\n" + "\n".join(reasons),
-                    )
-                ][:8],
-                "failure_head": retry_reason or "; ".join(reasons),
-                "failure_command": [],
-            }
-        return {
-            "valid": False,
-            "attempt": item.get("attempt"),
-            "changed_files": item.get("changed_files", []),
-            "reasons": item.get("candidate_validation_reasons", []),
-            "summary": summary,
-        }
-    return {"valid": True, "skipped": True, "reason": "no_failed_candidate_validation"}
+    return _shared_latest_candidate_validation_failure(attempts)
 
 
 def _failure_summary_has_content(summary: Mapping[str, Any]) -> bool:
-    return bool(
-        summary.get("failed_tests")
-        or summary.get("exception_types")
-        or str(summary.get("failure_head") or "").strip()
-    )
+    return _shared_failure_summary_has_content(summary)
 
 
 def _quality_gate_summary(
@@ -4737,98 +4624,29 @@ def _quality_gate_summary(
 ) -> Dict[str, Any]:
     """Return a stable, non-throwing summary for supervisor recovery code."""
 
-    proposal_quality = proposal_quality or {}
-    patch_check = patch_check or {}
-    post_apply_validation = post_apply_validation or {}
-    tests_result = tests_result or {}
-    apply_result = apply_result or {}
-    failed_gates: List[str] = []
-    if proposal_quality.get("valid") is False:
-        failed_gates.append("proposal_quality")
-    if patch_check.get("valid") is False:
-        failed_gates.append("patch_check")
-    if post_apply_validation.get("valid") is False:
-        failed_gates.append("post_apply_validation")
-    if tests_result.get("valid") is False:
-        failed_gates.append("tests")
-    if apply_result.get("rolled_back"):
-        failed_gates.append(str(apply_result.get("reason") or "rolled_back"))
-    return {
-        "valid": not failed_gates,
-        "failed_gates": failed_gates,
-        "proposal_quality_valid": proposal_quality.get("valid"),
-        "proposal_quality_reasons": list(proposal_quality.get("reasons") or [])[:8],
-        "patch_valid": patch_check.get("valid"),
-        "patch_failure_tail": str(patch_check.get("stderr") or "")[-1200:]
-        if patch_check.get("valid") is False
-        else "",
-        "post_apply_validation_valid": post_apply_validation.get("valid"),
-        "tests_valid": tests_result.get("valid"),
-        "apply_reason": apply_result.get("reason"),
-    }
+    return _shared_quality_gate_summary(
+        proposal_quality=proposal_quality,
+        patch_check=patch_check,
+        post_apply_validation=post_apply_validation,
+        tests_result=tests_result,
+        apply_result=apply_result,
+    )
 
 
 def _cycle_quality_gate_summary(cycle_payload: Mapping[str, Any]) -> Dict[str, Any]:
     """Return a cycle quality summary even for legacy records missing the field."""
 
-    synthesized = _quality_gate_summary(
-        proposal_quality=cycle_payload.get("proposal_quality")
-        if isinstance(cycle_payload.get("proposal_quality"), Mapping)
-        else {},
-        patch_check=cycle_payload.get("patch_check")
-        if isinstance(cycle_payload.get("patch_check"), Mapping)
-        else {},
-        post_apply_validation=cycle_payload.get("post_apply_validation")
-        if isinstance(cycle_payload.get("post_apply_validation"), Mapping)
-        else {},
-        tests_result=cycle_payload.get("tests")
-        if isinstance(cycle_payload.get("tests"), Mapping)
-        else {},
-        apply_result=cycle_payload.get("apply_result")
-        if isinstance(cycle_payload.get("apply_result"), Mapping)
-        else {},
-    )
-    existing = cycle_payload.get("quality_gate_summary")
-    if isinstance(existing, Mapping):
-        summary = {**synthesized, **dict(existing)}
-        expected_keys = set(synthesized)
-        source = (
-            "recorded"
-            if expected_keys <= set(existing)
-            else "recorded_partial_with_synthesized_defaults"
-        )
-        summary.setdefault("source", source)
-        return summary
-    synthesized["source"] = "synthesized_from_legacy_cycle"
-    return synthesized
+    return _shared_cycle_quality_gate_summary(cycle_payload)
 
 
 def _command_output_text(value: Any) -> str:
     """Return subprocess output as text, including timeout byte reprs."""
 
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    text = str(value or "")
-    stripped = text.strip()
-    if len(stripped) >= 3 and stripped[:1].lower() == "b" and stripped[1:2] in {"'", '"'}:
-        try:
-            parsed = ast.literal_eval(stripped)
-        except (SyntaxError, ValueError):
-            return text
-        if isinstance(parsed, bytes):
-            return parsed.decode("utf-8", errors="replace")
-    return text
+    return _shared_command_output_text(value)
 
 
 def _is_pytest_session_noise(text: str) -> bool:
-    return (
-        text.startswith("=")
-        or text.startswith("platform ")
-        or text.startswith("plugins:")
-        or text.startswith("rootdir:")
-        or text.startswith("configfile:")
-        or text.startswith("collected ")
-    )
+    return _shared_is_pytest_session_noise(text)
 
 
 def _json_safe(value: Any) -> Any:
@@ -5221,17 +5039,7 @@ def _validation_failure_family_signature(
 
 
 def _normalized_failure_head_lines(value: Any, *, limit: int) -> List[str]:
-    lines: List[str] = []
-    for line in _command_output_text(value).splitlines():
-        text = line.strip()
-        if not text:
-            continue
-        if _is_pytest_session_noise(text):
-            continue
-        lines.append(text)
-        if len(lines) >= limit:
-            break
-    return lines
+    return _shared_normalized_failure_head_lines(value, limit=limit)
 
 
 def _repeated_validation_failure_family(rejections: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
