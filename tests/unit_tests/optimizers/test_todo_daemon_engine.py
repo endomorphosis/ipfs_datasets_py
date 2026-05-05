@@ -110,6 +110,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     default_lifecycle_wrapper_script_specs,
     diagnostic_signatures,
     disallowed_worktree_paths,
+    dirty_worktree_paths,
     exception_diagnostic,
     dispatcher_choices,
     env_flag,
@@ -2462,6 +2463,23 @@ def test_worktree_path_and_file_edit_helpers_are_reusable(tmp_path: Path) -> Non
         allowed_prefixes=allowed,
         ignored_paths=(".metadata.json",),
     ) == ["package.json"]
+    dirty_calls: list[tuple[str, ...]] = []
+
+    def fake_status_run_command(command, *, cwd, timeout_seconds):
+        dirty_calls.append(tuple(command))
+        assert cwd == repo
+        assert timeout_seconds == 7
+        return CommandResult(tuple(command), 0, " M src/lib/logic/a.ts\n?? docs/PLAN.md\n", "")
+
+    assert dirty_worktree_paths(
+        repo_root=repo,
+        paths=["src/lib/logic/a.ts", "src\\lib\\logic\\a.ts", "docs/PLAN.md", ""],
+        timeout_seconds=7,
+        run_command_fn=fake_status_run_command,
+    ) == ["src/lib/logic/a.ts", "docs/PLAN.md"]
+    assert dirty_calls == [
+        ("git", "status", "--porcelain", "--", "src/lib/logic/a.ts", "docs/PLAN.md")
+    ]
 
     edits = worktree_file_edits(
         worktree,

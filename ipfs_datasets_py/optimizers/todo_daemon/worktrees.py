@@ -118,6 +118,37 @@ def disallowed_worktree_paths(
     return disallowed
 
 
+def dirty_worktree_paths(
+    *,
+    repo_root: Path,
+    paths: Sequence[str | Path],
+    timeout_seconds: int = 60,
+    run_command_fn: CommandRunner = run_command,
+) -> list[str]:
+    """Return dirty Git status paths for a normalized path subset."""
+
+    normalized_paths = unique_worktree_paths(paths)
+    if not normalized_paths:
+        return []
+    try:
+        status = run_command_fn(
+            ("git", "status", "--porcelain", "--", *normalized_paths),
+            cwd=repo_root,
+            timeout_seconds=max(1, int(timeout_seconds)),
+        )
+    except TypeError as exc:
+        if "timeout_seconds" not in str(exc):
+            raise
+        status = run_command_fn(
+            ("git", "status", "--porcelain", "--", *normalized_paths),
+            cwd=repo_root,
+            timeout=max(1, int(timeout_seconds)),
+        )
+    if not status.ok:
+        return []
+    return git_status_paths(status.stdout)
+
+
 def worktree_file_edits(
     worktree_path: Path,
     changed_files: Sequence[str | Path],

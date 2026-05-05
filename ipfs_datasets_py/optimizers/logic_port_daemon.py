@@ -128,6 +128,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.typescript import (
 from ipfs_datasets_py.optimizers.todo_daemon.worktrees import (
     cleanup_stale_daemon_worktrees as _shared_cleanup_stale_daemon_worktrees,
     disallowed_worktree_paths as _shared_disallowed_worktree_paths,
+    dirty_worktree_paths as _shared_dirty_worktree_paths,
     git_status_paths as _shared_git_status_paths,
     git_worktree_paths_from_porcelain as _shared_git_worktree_paths_from_porcelain,
     managed_git_worktree as _shared_managed_git_worktree,
@@ -2789,23 +2790,11 @@ PLANNING CONTEXT:
         )
 
     def _dirty_touched_file_errors(self, paths: Sequence[str]) -> List[str]:
-        normalized_paths = []
-        seen = set()
-        for path in paths:
-            normalized = str(path or "").replace("\\", "/").strip()
-            if normalized and normalized not in seen:
-                seen.add(normalized)
-                normalized_paths.append(normalized)
-        if not normalized_paths:
-            return []
-        status = run_command(
-            ("git", "status", "--porcelain", "--", *normalized_paths),
-            cwd=self.daemon_config.repo_root,
+        dirty = _shared_dirty_worktree_paths(
+            repo_root=self.daemon_config.repo_root,
+            paths=paths,
             timeout_seconds=min(60, max(1, self.daemon_config.command_timeout_seconds)),
         )
-        if not status.ok:
-            return []
-        dirty = _git_status_paths(status.stdout)
         if not dirty:
             return []
         return [
