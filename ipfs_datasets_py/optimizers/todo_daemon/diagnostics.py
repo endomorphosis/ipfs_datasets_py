@@ -360,6 +360,51 @@ def format_recent_failure_context(
     return "\n\n".join(parts)
 
 
+def format_task_result_failure_context(
+    rows: Sequence[ResultRow],
+    task_label: str,
+    *,
+    limit: int = 3,
+    empty_message: str = "[No recent failures for selected task.]",
+    validation_tail_chars: int = 2000,
+) -> str:
+    """Format recent failed result rows for one task until the last success."""
+
+    snippets: list[str] = []
+    for result, artifact in reversed(rows):
+        if not same_task_label(str(artifact.get("target_task") or ""), task_label):
+            continue
+        if result.get("valid"):
+            break
+        validation = artifact.get("validation_results", [])
+        failures: list[str] = []
+        for item in validation if isinstance(validation, list) else []:
+            if not isinstance(item, Mapping) or item.get("returncode") in (0, None):
+                continue
+            command = " ".join(str(part) for part in item.get("command", []))
+            stdout = str(item.get("stdout", ""))[-validation_tail_chars:]
+            stderr = str(item.get("stderr", ""))[-validation_tail_chars:]
+            failures.append(f"{command}\nstdout:\n{stdout}\nstderr:\n{stderr}".strip())
+        errors = artifact.get("errors", [])
+        if not isinstance(errors, list):
+            errors = [errors]
+        snippets.append(
+            "\n".join(
+                part
+                for part in [
+                    f"Summary: {artifact.get('summary') or '<empty>'}",
+                    f"Failure kind: {artifact.get('failure_kind') or 'invalid_no_change'}",
+                    f"Errors: {'; '.join(str(error) for error in errors[:3]) or '<none>'}",
+                    "Validation failures:\n" + "\n\n".join(failures) if failures else "",
+                ]
+                if part
+            )
+        )
+        if len(snippets) >= limit:
+            break
+    return "\n\n---\n\n".join(reversed(snippets)) if snippets else empty_message
+
+
 def diagnostic_signatures(text: str, *, max_message_chars: int = 120) -> list[str]:
     """Return stable ``CODE:message`` signatures for repeated compiler failures."""
 

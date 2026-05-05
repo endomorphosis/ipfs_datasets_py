@@ -85,6 +85,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     failed_work_workspace_payload,
     file_edits_by_path,
     format_recent_failure_context,
+    format_task_result_failure_context,
     first_failure_block_decision,
     first_open_plan_task,
     focused_task_board_excerpt,
@@ -401,6 +402,53 @@ def test_typescript_diagnostic_context_helpers_are_reusable() -> None:
     assert "src/lib/logic/feature.ts:2:22 TS1005: Expression expected." in rendered
     assert "> 2: export const value = ;" in rendered
     assert "  1: export const before = true;" in rendered
+
+
+def test_task_result_failure_context_helper_is_reusable() -> None:
+    rows = [
+        (
+            {"valid": False},
+            {
+                "target_task": "Task checkbox-1: Port runtime feature",
+                "summary": "old failure",
+                "failure_kind": "validation",
+                "errors": ["old"],
+            },
+        ),
+        (
+            {"valid": False},
+            {
+                "target_task": "Task checkbox-2: Other task",
+                "summary": "ignored",
+                "failure_kind": "validation",
+            },
+        ),
+        (
+            {"valid": False},
+            {
+                "target_task": "Task checkbox-1: Port runtime feature",
+                "summary": "new failure",
+                "failure_kind": "typescript_quality",
+                "errors": ["bad syntax", "bad type"],
+                "validation_results": [
+                    {
+                        "command": ["npx", "tsc", "--noEmit"],
+                        "returncode": 2,
+                        "stdout": "compiler stdout",
+                        "stderr": "compiler stderr",
+                    }
+                ],
+            },
+        ),
+    ]
+
+    context = format_task_result_failure_context(rows, "Task checkbox-1: Port runtime feature", limit=2)
+
+    assert "Summary: old failure" in context
+    assert "Summary: new failure" in context
+    assert "Other task" not in context
+    assert "npx tsc --noEmit" in context
+    assert "compiler stderr" in context
 
 
 def test_plan_task_selection_and_backlog_helpers_are_reusable() -> None:

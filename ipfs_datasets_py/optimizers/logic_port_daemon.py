@@ -78,6 +78,7 @@ from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     artifact_validation_text as _shared_artifact_validation_text,
     diagnostic_signatures as _shared_diagnostic_signatures,
     file_edits_by_path as _shared_file_edits_by_path,
+    format_task_result_failure_context as _shared_format_task_result_failure_context,
     has_diagnostic_codes as _shared_has_diagnostic_codes,
     match_diagnostic_edit_path as _shared_match_diagnostic_edit_path,
     quality_failure_counts as _shared_quality_failure_counts,
@@ -3326,36 +3327,7 @@ PLANNING CONTEXT:
         if selected_task is None or self.daemon_config.result_log_path is None:
             return "[No recent daemon failure context available.]"
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
-        snippets: List[str] = []
-        for result, artifact in reversed(rows):
-            if not _same_task_label(str(artifact.get("target_task") or ""), selected_task.label):
-                continue
-            if result.get("valid"):
-                break
-            validation = artifact.get("validation_results", [])
-            failures = []
-            for item in validation if isinstance(validation, list) else []:
-                if isinstance(item, dict) and item.get("returncode") not in (0, None):
-                    command = " ".join(str(part) for part in item.get("command", []))
-                    stdout = str(item.get("stdout", ""))[-2000:]
-                    stderr = str(item.get("stderr", ""))[-2000:]
-                    failures.append(f"{command}\nstdout:\n{stdout}\nstderr:\n{stderr}".strip())
-            errors = "; ".join(str(error) for error in artifact.get("errors", [])[:3])
-            snippets.append(
-                "\n".join(
-                    part
-                    for part in [
-                        f"Summary: {artifact.get('summary') or '<empty>'}",
-                        f"Failure kind: {artifact.get('failure_kind') or 'invalid_no_change'}",
-                        f"Errors: {errors or '<none>'}",
-                        "Validation failures:\n" + "\n\n".join(failures) if failures else "",
-                    ]
-                    if part
-                )
-            )
-            if len(snippets) >= limit:
-                break
-        return "\n\n---\n\n".join(reversed(snippets)) if snippets else "[No recent failures for selected task.]"
+        return _shared_format_task_result_failure_context(rows, selected_task.label, limit=limit)
 
     def _selected_task_failure_counts(self, selected_task: Optional[PlanTask]) -> Dict[str, Any]:
         if selected_task is None or self.daemon_config.result_log_path is None:
