@@ -154,12 +154,10 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_service_light_verb_action(action_text)
     action_text = _action_without_temporal_duration_tail(norm, action_text)
     action_text = _normalize_payment_light_verb_action(action_text)
-    action_text = _normalize_financial_assurance_light_verb_action(action_text)
     action_text = _normalize_assessment_imposition_light_verb_action(action_text)
     action_text = _normalize_allocation_apportionment_light_verb_action(action_text)
     action_text = _normalize_referral_remand_light_verb_action(action_text)
     action_text = _normalize_waiver_extension_light_verb_action(action_text)
-    action_text = _normalize_stay_continuance_deferral_light_verb_action(action_text)
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
     action_text = _normalize_classification_reclassification_light_verb_action(action_text)
@@ -175,7 +173,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
     action_text = _normalize_determination_light_verb_action(action_text)
-    action_text = _normalize_public_access_copy_light_verb_action(action_text)
     action_text = _normalize_calculation_computation_light_verb_action(action_text)
     action_text = _normalize_audit_examination_light_verb_action(action_text)
     action_text = _normalize_adjudication_hearing_light_verb_action(action_text)
@@ -470,34 +467,6 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
-
-    return text
-
-
-def _normalize_public_access_copy_light_verb_action(action_text: str) -> str:
-    """Collapse public-access copy nominalizations into operative copy acts."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return ""
-
-    copy_patterns = [
-        (
-            r"^(?:furnish|furnishes|furnished|furnishing|provide|provides|provided|providing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing|supply|supplies|supplied|supplying)\s+"
-            r"(?:a\s+|an\s+|the\s+)?cop(?:y|ies)\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "provide copy of",
-        ),
-        (
-            r"^(?:make|makes|made|making|prepare|prepares|prepared|preparing|produce|produces|produced|producing|create|creates|created|creating)\s+"
-            r"(?:a\s+|an\s+|the\s+)?cop(?:y|ies)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "provide copy of",
-        ),
-    ]
-    for pattern, replacement in copy_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{replacement} {target}" if target else text
 
     return text
 
@@ -1515,54 +1484,6 @@ def _normalize_payment_light_verb_action(action_text: str) -> str:
         normalized = re.sub(pattern, replacement, text, flags=re.IGNORECASE).strip()
         if normalized != text:
             return normalized
-    return text
-
-
-def _normalize_financial_assurance_light_verb_action(action_text: str) -> str:
-    """Collapse bond, deposit, escrow, and insurance nominalizations."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return ""
-
-    patterns = [
-        (
-            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
-            r"(?:a\s+|an\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "deposit",
-        ),
-        (
-            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
-            r"deposits\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "deposit",
-        ),
-        (
-            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
-            r"(?:a\s+|an\s+|the\s+)?proof\s+of\s+(?:the\s+)?(.+)$",
-            "provide proof of",
-        ),
-        (
-            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
-            r"proofs\s+of\s+(?:the\s+)?(.+)$",
-            "provide proof of",
-        ),
-        (
-            r"^(?:make|makes|made|making|provide|provides|provided|providing|submit|submits|submitted|submitting|post|posts|posted|posting|file|files|filed|filing|furnish|furnishes|furnished|furnishing)\s+"
-            r"(?:a\s+|an\s+|the\s+)?bond\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "post bond for",
-        ),
-        (
-            r"^(?:establish|establishes|established|establishing|maintain|maintains|maintained|maintaining|create|creates|created|creating|fund|funds|funded|funding)\s+"
-            r"(?:an?\s+|the\s+)?escrow\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "establish escrow for",
-        ),
-    ]
-    for pattern, replacement in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{replacement} {target}" if target else text
-
     return text
 
 
@@ -5395,56 +5316,6 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"extend {target}" if target else text
-
-    return text
-
-
-def _normalize_stay_continuance_deferral_light_verb_action(action_text: str) -> str:
-    """Project timing-relief nominalizations to operative administrative acts."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    relief_patterns = [
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
-            r"(?:an?\s+|the\s+)?stay\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
-            "stay",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
-            r"(?:an?\s+|the\s+)?continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "continue",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
-            r"(?:an?\s+|the\s+)?postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "postpone",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting|enter|enters|entered|entering)\s+"
-            r"(?:an?\s+|the\s+)?deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "defer",
-        ),
-    ]
-    for pattern, verb in relief_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    direct_patterns = [
-        (r"^stay\s+(?:of|for|from)\s+(?:the\s+)?(.+)$", "stay"),
-        (r"^continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "continue"),
-        (r"^postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "postpone"),
-        (r"^deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "defer"),
-    ]
-    for pattern, verb in direct_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
 
     return text
 

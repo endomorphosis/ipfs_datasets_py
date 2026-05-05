@@ -30,29 +30,6 @@ LOCAL_PROVER_TARGETS = (
     "deontic_temporal_fol",
 )
 
-LOCAL_PROVER_TARGET_ALIASES = {
-    "frame": "frame_logic",
-    "frame_logic": "frame_logic",
-    "frame_logic_target": "frame_logic",
-    "flogic": "frame_logic",
-    "deontic_cec": "deontic_cec",
-    "deontic_event_calculus": "deontic_cec",
-    "dcec": "deontic_cec",
-    "event_calculus": "deontic_cec",
-    "first_order": "fol",
-    "first_order_logic": "fol",
-    "fol": "fol",
-    "deontic_first_order": "deontic_fol",
-    "deontic_first_order_logic": "deontic_fol",
-    "deontic_fol": "deontic_fol",
-    "dfol": "deontic_fol",
-    "deontic_temporal_first_order": "deontic_temporal_fol",
-    "deontic_temporal_first_order_logic": "deontic_temporal_fol",
-    "deontic_temporal_fol": "deontic_temporal_fol",
-    "tdfol": "deontic_temporal_fol",
-    "temporal_deontic_fol": "deontic_temporal_fol",
-}
-
 PROVER_IR_AUDIT_SLOTS = (
     "actor",
     "modality",
@@ -183,7 +160,6 @@ def _normalize_targets(targets: Iterable[str] | None) -> List[str]:
     normalized: List[str] = []
     for target in targets:
         value = str(target or "").strip().lower().replace("-", "_")
-        value = LOCAL_PROVER_TARGET_ALIASES.get(value, value)
         if not value or value in normalized:
             continue
         normalized.append(value)
@@ -516,11 +492,9 @@ def _target_components(
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
-    semantic_formula_family = _target_semantic_formula_family(source_symbols)
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
-        "semantic_formula_family": semantic_formula_family,
         "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
         "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
         "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
@@ -607,31 +581,6 @@ def _target_components(
             target_parse_profile.get("event_predicates") or []
         ),
     }
-
-
-def _target_semantic_formula_family(source_symbols: Sequence[str]) -> str:
-    """Return a compact semantic family from preserved source formula symbols."""
-
-    for symbol in source_symbols:
-        text = str(symbol or "").strip()
-        if text.startswith((
-            "Arbitrate",
-            "Conciliate",
-            "Mediate",
-            "Negotiate",
-            "Settle",
-        )):
-            return "dispute_resolution"
-        if text.startswith((
-            "Adjudicate",
-            "Decide",
-            "Dismiss",
-            "Dispose",
-            "Find",
-            "Hear",
-        )):
-            return "adjudicatory_process"
-    return "general"
 
 
 def _target_quality_gate(

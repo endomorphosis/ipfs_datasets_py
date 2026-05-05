@@ -525,7 +525,6 @@ def summarize_prover_syntax_target_coverage(
 
     required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
     status_by_target: Dict[str, str] = {}
-    quality_gate_by_target: Dict[str, Mapping[str, Any]] = {}
 
     for record in records or []:
         if not isinstance(record, Mapping):
@@ -541,9 +540,6 @@ def summarize_prover_syntax_target_coverage(
             status_by_target[target] = status
         elif current == "skipped" and status == "passed":
             status_by_target[target] = status
-        gate = record.get("target_quality_gate")
-        if isinstance(gate, Mapping) and target not in quality_gate_by_target:
-            quality_gate_by_target[target] = gate
 
     passed_targets = sorted(
         target for target in required if status_by_target.get(target) == "passed"
@@ -556,10 +552,6 @@ def summarize_prover_syntax_target_coverage(
     )
     missing_targets = sorted(target for target in required if target not in status_by_target)
     present_required_count = len(required) - len(missing_targets)
-    quality_gate_summary = _summarize_prover_target_quality_gates(
-        quality_gate_by_target,
-        required,
-    )
 
     return {
         "required_targets": list(required),
@@ -575,7 +567,6 @@ def summarize_prover_syntax_target_coverage(
         and not skipped_targets
         and not missing_targets,
         "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
-        "quality_gate_summary": quality_gate_summary,
     }
 
 
@@ -623,7 +614,6 @@ def build_prover_syntax_target_coverage_record(
         "formal_syntax_valid": summary["all_required_passed"],
         "requires_validation": not summary["all_required_passed"],
         "coverage_blockers": blockers,
-        "quality_gate_summary": summary["quality_gate_summary"],
         "coverage_summary": summary,
     }
 
@@ -669,56 +659,6 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
-
-
-def _summarize_prover_target_quality_gates(
-    gate_by_target: Mapping[str, Mapping[str, Any]],
-    required_targets: Sequence[str],
-) -> Dict[str, Any]:
-    """Summarize per-target prover quality gates for coverage export rows."""
-
-    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
-    complete_targets: List[str] = []
-    failed_distribution: Counter[str] = Counter()
-
-    for target in required:
-        gate = gate_by_target.get(target)
-        if not isinstance(gate, Mapping):
-            failed_distribution["missing_target_quality_gate"] += 1
-            continue
-        if gate.get("formal_validation_complete") is True:
-            complete_targets.append(target)
-            continue
-        failed_checks = [
-            str(check or "").strip()
-            for check in gate.get("failed_quality_checks") or []
-            if str(check or "").strip()
-        ]
-        if failed_checks:
-            failed_distribution.update(failed_checks)
-        else:
-            failed_distribution["formal_validation_incomplete"] += 1
-
-    return {
-        "quality_gate_required_targets": list(required),
-        "quality_gate_record_count": len(
-            [
-                target
-                for target in required
-                if isinstance(gate_by_target.get(target), Mapping)
-            ]
-        ),
-        "quality_gate_complete_targets": sorted(complete_targets),
-        "quality_gate_incomplete_targets": sorted(
-            target for target in required if target not in set(complete_targets)
-        ),
-        "quality_gate_complete_rate": round(len(complete_targets) / len(required), 6)
-        if required
-        else 0.0,
-        "all_quality_gates_complete": bool(required)
-        and len(complete_targets) == len(required),
-        "failed_quality_check_distribution": dict(sorted(failed_distribution.items())),
-    }
 
 
 def build_ir_slot_provenance_audit_record(
@@ -4081,29 +4021,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
     if action_predicate.startswith((
-        "Continue",
-        "Defer",
-        "Extend",
-        "Postpone",
-        "Stay",
-        "Waive",
-    )):
-        return "administrative_relief_duty"
-    if action_predicate.startswith((
-        "DepositSecurity",
-        "EstablishEscrow",
-        "FileBond",
-        "FurnishBond",
-        "MaintainInsurance",
-        "MaintainLiabilityInsurance",
-        "PostBond",
-        "ProvideBond",
-        "ProvideProofInsurance",
-        "ReleaseBond",
-        "SubmitBond",
-    )):
-        return "financial_assurance_duty"
-    if action_predicate.startswith((
         "Announce",
         "Circulate",
         "Disseminate",
@@ -4115,14 +4032,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "public_information_duty"
     if action_predicate.startswith(("Comment", "Object", "Respond")):
         return "review_participation_duty"
-    if action_predicate.startswith((
-        "PermitInspection",
-        "ProvideAccess",
-        "ProvideCopy",
-        "ProvidePublicAccess",
-        "ProvideRecordsInspection",
-    )):
-        return "public_access_records_duty"
     if action_predicate.startswith((
         "FileAppeal",
         "FileApplication",
@@ -4167,14 +4076,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Refer", "Remand")):
         return "case_routing_duty"
     if action_predicate.startswith((
-        "Arbitrate",
-        "Conciliate",
-        "Mediate",
-        "Negotiate",
-        "Settle",
-    )):
-        return "dispute_resolution_duty"
-    if action_predicate.startswith((
         "Adjudicate",
         "Decide",
         "Dismiss",
@@ -4182,6 +4083,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Find",
     )):
         return "judicial_disposition_duty"
+    if action_predicate.startswith(("Waive", "Extend")):
+        return "administrative_relief_duty"
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
         return "registration_lifecycle_duty"
     if action_predicate.startswith((
@@ -4193,15 +4096,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Translate",
     )):
         return "records_information_processing_duty"
-    if action_predicate.startswith((
-        "Acknowledge",
-        "Authenticate",
-        "Attest",
-        "Confirm",
-        "Notarize",
-        "Ratify",
-    )):
-        return "document_authentication_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
