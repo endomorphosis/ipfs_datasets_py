@@ -1282,6 +1282,50 @@ def test_daemon_can_pin_explicit_llm_router_provider(tmp_path):
     assert router.calls[0]["kwargs"]["provider"] == "codex_cli"
 
 
+def test_daemon_default_llm_call_uses_shared_router_invocation(tmp_path, monkeypatch):
+    status_path = tmp_path / "daemon" / "status.json"
+    captured = {}
+
+    def fake_call_llm_router(prompt, invocation):
+        captured["prompt"] = prompt
+        captured["invocation"] = invocation
+        return json.dumps({"summary": "Shared call", "patch": ""})
+
+    monkeypatch.setattr(logic_port_daemon, "call_llm_router", fake_call_llm_router)
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        status_path=status_path,
+        provider="codex_cli",
+        model_name="gpt-5.5",
+        allow_local_fallback=False,
+        llm_timeout_seconds=123,
+        max_prompt_chars=4096,
+        max_new_tokens=777,
+        temperature=0.3,
+        codex_trace_dir=Path(".daemon/codex-runs"),
+    )
+
+    response = LogicPortDaemonOptimizer(config)._call_llm("return json")
+    status = json.loads(status_path.read_text(encoding="utf-8"))
+    invocation = captured["invocation"]
+
+    assert response == json.dumps({"summary": "Shared call", "patch": ""})
+    assert captured["prompt"] == "return json"
+    assert invocation.repo_root == tmp_path
+    assert invocation.provider == "codex_cli"
+    assert invocation.model_name == "gpt-5.5"
+    assert invocation.allow_local_fallback is False
+    assert invocation.timeout_seconds == 123
+    assert invocation.max_prompt_chars == 4096
+    assert invocation.max_new_tokens == 777
+    assert invocation.temperature == 0.3
+    assert invocation.env_prefix == "LOGIC_PORT_DAEMON_LLM"
+    assert invocation.trace is True
+    assert invocation.trace_dir == tmp_path / ".daemon" / "codex-runs"
+    assert status["state"] == "llm_call_completed"
+    assert status["provider"] == "codex_cli"
+
+
 def test_build_prompt_uses_focused_task_board_excerpt(tmp_path):
     plan = tmp_path / "docs" / "IPFS_DATASETS_LOGIC_TYPESCRIPT_PORT_PLAN.md"
     status = tmp_path / "status.md"

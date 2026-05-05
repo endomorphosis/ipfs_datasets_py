@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Sequence
 
-from .core import ManagedDaemonSpec, pid_alive, read_json
+from .core import ManagedDaemonSpec, read_json
 from .supervisor import SupervisorStatusContext, heartbeat_snapshot, worktree_phase_worker_status
 from .supervisor_runtime import (
     RestartPolicy,
@@ -54,6 +56,7 @@ class SupervisorLoopConfig:
     log_prefix: str
     restart_policy: RestartPolicy = field(default_factory=RestartPolicy)
     heartbeat_seconds: float = 30.0
+    poll_seconds: float = 1.0
     watchdog_stale_after_seconds: float = 180.0
     watchdog_startup_grace_seconds: float = 30.0
     stop_grace_seconds: float = 10.0
@@ -77,6 +80,12 @@ class SupervisorLoopResult:
 
 
 WatchdogHook = Callable[["SupervisorLoop", SupervisedChild, Mapping[str, Any]], SupervisorLoopDecision]
+SupervisorLoopConfigFactory = Callable[[argparse.Namespace], SupervisorLoopConfig]
+
+
+def _env(name: str, default: str) -> str:
+    value = os.environ.get(name)
+    return default if value is None or value == "" else value
 
 
 def _poll_child_exit(child: SupervisedChild) -> Optional[int]:
@@ -119,6 +128,7 @@ class SupervisorLoop:
                 "restart_backoff_seconds": config.restart_policy.restart_backoff_seconds,
                 "fast_restart_backoff_seconds": config.restart_policy.fast_restart_backoff_seconds,
                 "supervisor_heartbeat_seconds": config.heartbeat_seconds,
+                "supervisor_poll_seconds": config.poll_seconds,
                 "watchdog_stale_after_seconds": config.watchdog_stale_after_seconds,
                 "watchdog_startup_grace_seconds": config.watchdog_startup_grace_seconds,
                 "stop_grace_seconds": config.stop_grace_seconds,
@@ -247,7 +257,7 @@ class SupervisorLoop:
                         self.last_exit_code = wait_for_child_exit(child)
                         recycled = True
                         break
-                self.sleep(max(0.01, float(self.config.heartbeat_seconds)))
+                self.sleep(max(0.01, min(float(self.config.heartbeat_seconds), float(self.config.poll_seconds))))
 
             clear_child_pid_file(child)
             self.restart_count += 1
@@ -278,3 +288,143 @@ class SupervisorLoop:
             last_run_id=self.last_run_id,
             last_log_path=self.last_log_path,
         )
+
+
+def build_supervisor_loop_arg_parser(
+    *,
+    description: str = "Run a reusable todo-daemon Python supervisor loop.",
+) -> argparse.ArgumentParser:
+    """Build a generic CLI parser for ``SupervisorLoop`` based supervisors."""
+
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("--repo-root", default=_env("REPO_ROOT", "."))
+    parser.add_argument("--name", default=_env("TODO_SUPERVISOR_NAME", "todo-daemon"))
+    parser.add_argument("--schema", default=_env("TODO_SUPERVISOR_SCHEMA", "ipfs_datasets_py.todo_daemon"))
+    parser.add_argument("--daemon-dir", default=_env("TODO_SUPERVISOR_DAEMON_DIR", ".daemon"))
+    parser.add_argument("--status-path", default=_env("TODO_SUPERVISOR_STATUS_PATH", ".daemon/todo.status.json"))
+    parser.add_argument("--progress-path", default=_env("TODO_SUPERVISOR_PROGRESS_PATH", ".daemon/todo.progress.json"))
+    parser.add_argument(
+        "--supervisor-status-path",
+        default=_env("TODO_SUPERVISOR_STATUS_FILE", ".daemon/todo.supervisor.json"),
+    )
+    parser.add_argument("--supervisor-pid-path", default=_env("TODO_SUPERVISOR_PID_PATH", ".daemon/todo.supervisor.pid"))
+    parser.add_argument("--child-pid-path", default=_env("TODO_SUPERVISOR_CHILD_PID_PATH", ".daemon/todo.child.pid"))
+    parser.add_argument("--supervisor-out-path", default=_env("TODO_SUPERVISOR_OUT_PATH", ".daemon/todo.supervisor.out"))
+    parser.add_argument("--ensure-status-path", default=_env("TODO_SUPERVISOR_ENSURE_STATUS_PATH", ".daemon/todo.ensure.json"))
+    parser.add_argument("--ensure-check-path", default=_env("TODO_SUPERVISOR_ENSURE_CHECK_PATH", ".daemon/todo.ensure-check.json"))
+    parser.add_argument("--supervisor-lock-path", default=_env("TODO_SUPERVISOR_LOCK_PATH", ".daemon/todo.supervisor.lock"))
+    parser.add_argument("--latest-log-path", default=_env("TODO_SUPERVISOR_LATEST_LOG_PATH", ".daemon/todo.latest.log"))
+    parser.add_argument("--log-prefix", default=_env("TODO_SUPERVISOR_LOG_PREFIX", "todo_supervised"))
+    parser.add_argument("--heartbeat-seconds", type=float, default=float(_env("TODO_SUPERVISOR_HEARTBEAT_SECONDS", "30")))
+    parser.add_argument("--poll-seconds", type=float, default=float(_env("TODO_SUPERVISOR_POLL_SECONDS", "1")))
+    parser.add_argument("--watchdog-stale-after-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STALE_AFTER_SECONDS", "180")))
+    parser.add_argument("--watchdog-startup-grace-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STARTUP_GRACE_SECONDS", "30")))
+    parser.add_argument("--stop-grace-seconds", type=float, default=float(_env("TODO_SUPERVISOR_STOP_GRACE_SECONDS", "10")))
+    parser.add_argument("--restart-backoff-seconds", type=float, default=float(_env("TODO_SUPERVISOR_RESTART_BACKOFF_SECONDS", "30")))
+    parser.add_argument("--fast-restart-backoff-seconds", type=float, default=float(_env("TODO_SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS", "2")))
+    parser.add_argument("--max-restarts", type=int, default=int(_env("TODO_SUPERVISOR_MAX_RESTARTS", "0")))
+    parser.add_argument(
+        "--env",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="Environment variable to set for the supervised child. Can be repeated.",
+    )
+    parser.add_argument("command", nargs=argparse.REMAINDER, help="Command to supervise.")
+    return parser
+
+
+def _env_pairs(items: Sequence[str]) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for item in items:
+        key, sep, value = str(item).partition("=")
+        if not sep or not key:
+            raise ValueError(f"invalid --env item {item!r}; expected KEY=VALUE")
+        env[key] = value
+    return env
+
+
+def supervisor_loop_config_from_args(args: argparse.Namespace) -> SupervisorLoopConfig:
+    """Build ``SupervisorLoopConfig`` from generic parsed CLI args."""
+
+    command_parts = [str(part) for part in getattr(args, "command", ()) if str(part)]
+    if command_parts and command_parts[0] == "--":
+        command_parts = command_parts[1:]
+    command = tuple(command_parts)
+    if not command:
+        raise ValueError("supervisor loop command is required")
+    repo_root = Path(args.repo_root).resolve()
+    spec = ManagedDaemonSpec(
+        name=str(args.name),
+        schema=str(args.schema),
+        repo_root=repo_root,
+        daemon_dir=Path(args.daemon_dir),
+        runner=command,
+        status_path=Path(args.status_path),
+        progress_path=Path(args.progress_path),
+        supervisor_status_path=Path(args.supervisor_status_path),
+        supervisor_pid_path=Path(args.supervisor_pid_path),
+        child_pid_path=Path(args.child_pid_path),
+        supervisor_out_path=Path(args.supervisor_out_path),
+        ensure_status_path=Path(args.ensure_status_path),
+        ensure_check_path=Path(args.ensure_check_path),
+        supervisor_lock_path=Path(args.supervisor_lock_path),
+        latest_log_path=Path(args.latest_log_path),
+    )
+    return SupervisorLoopConfig(
+        spec=spec,
+        command=command,
+        log_prefix=str(args.log_prefix),
+        restart_policy=RestartPolicy(
+            restart_backoff_seconds=float(args.restart_backoff_seconds),
+            fast_restart_backoff_seconds=float(args.fast_restart_backoff_seconds),
+        ),
+        heartbeat_seconds=float(args.heartbeat_seconds),
+        poll_seconds=max(0.01, float(args.poll_seconds)),
+        watchdog_stale_after_seconds=float(args.watchdog_stale_after_seconds),
+        watchdog_startup_grace_seconds=float(args.watchdog_startup_grace_seconds),
+        stop_grace_seconds=float(args.stop_grace_seconds),
+        max_restarts=max(0, int(args.max_restarts)),
+        child_env=_env_pairs(list(args.env or [])),
+    )
+
+
+def supervisor_loop_result_payload(result: SupervisorLoopResult) -> dict[str, Any]:
+    """Return a JSON-serializable supervisor loop summary."""
+
+    return {
+        "status": result.status,
+        "restart_count": result.restart_count,
+        "last_exit_code": result.last_exit_code,
+        "last_recycle_reason": result.last_recycle_reason,
+        "last_run_id": result.last_run_id,
+        "last_log_path": result.last_log_path,
+    }
+
+
+def run_supervisor_loop_cli(
+    argv: Optional[Sequence[str]] = None,
+    *,
+    parser: Optional[argparse.ArgumentParser] = None,
+    config_factory: SupervisorLoopConfigFactory = supervisor_loop_config_from_args,
+) -> int:
+    """Run the generic Python supervisor loop CLI."""
+
+    parser = parser or build_supervisor_loop_arg_parser()
+    try:
+        config = config_factory(parser.parse_args(list(argv) if argv is not None else None))
+    except ValueError as exc:
+        parser.error(str(exc))
+    result = SupervisorLoop(config).run()
+    print(json.dumps(supervisor_loop_result_payload(result), indent=2, sort_keys=True))
+    return 0 if result.last_exit_code in (None, 0) else int(result.last_exit_code)
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Entry point for ``python -m ipfs_datasets_py.optimizers.todo_daemon.supervisor_loop``."""
+
+    return run_supervisor_loop_cli(argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

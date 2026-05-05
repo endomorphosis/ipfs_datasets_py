@@ -33,6 +33,9 @@ class LlmRouterInvocation:
     python_executable: str = "python3"
     timeout_grace_seconds: int = 30
     prompt_overage_allowance: str = "\n\n[truncated]\n"
+    trace: bool = False
+    trace_dir: Optional[Path] = None
+    reject_effective_provider_name: Optional[str] = "local_hf"
 
 
 _ACTIVE_LLM_PROCESS: Optional[subprocess.Popen[Any]] = None
@@ -127,7 +130,11 @@ def _llm_router_child_code(config: LlmRouterInvocation) -> str:
     timeout_env = _env_name(config, "TIMEOUT")
     max_tokens_env = _env_name(config, "MAX_NEW_TOKENS")
     temperature_env = _env_name(config, "TEMPERATURE")
+    trace_env = _env_name(config, "TRACE")
+    trace_dir_env = _env_name(config, "TRACE_DIR")
+    reject_provider_env = _env_name(config, "REJECT_EFFECTIVE_PROVIDER")
     return f"""
+import inspect
 import os
 import pathlib
 import sys
@@ -136,8 +143,7 @@ from ipfs_datasets_py import llm_router
 
 prompt = pathlib.Path(os.environ[{prompt_file_env!r}]).read_text(encoding="utf-8")
 provider = os.environ.get({provider_env!r}) or None
-text = llm_router.generate_text(
-    prompt,
+kwargs = dict(
     model_name=os.environ[{model_env!r}],
     provider=provider,
     allow_local_fallback=os.environ.get({fallback_env!r}) == "1",
@@ -145,6 +151,25 @@ text = llm_router.generate_text(
     max_new_tokens=int(os.environ[{max_tokens_env!r}]),
     temperature=float(os.environ[{temperature_env!r}]),
 )
+try:
+    parameters = inspect.signature(llm_router.generate_text).parameters
+except (TypeError, ValueError):
+    parameters = {{}}
+if "trace" in parameters:
+    kwargs["trace"] = os.environ.get({trace_env!r}) == "1"
+if "trace_dir" in parameters:
+    trace_dir = os.environ.get({trace_dir_env!r}) or None
+    kwargs["trace_dir"] = trace_dir
+text = llm_router.generate_text(prompt, **kwargs)
+reject_provider = os.environ.get({reject_provider_env!r}) or ""
+trace_getter = getattr(llm_router, "get_last_generation_trace", None)
+if reject_provider and callable(trace_getter):
+    trace = trace_getter()
+    if isinstance(trace, dict) and trace.get("effective_provider_name") == reject_provider:
+        sys.stderr.write(
+            f"llm_router resolved to {{reject_provider}} fallback; configure a real provider.\\n"
+        )
+        raise SystemExit(2)
 sys.stdout.write("" if text is None else str(text))
 """
 
@@ -184,6 +209,9 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
                 _env_name(config, "TIMEOUT"): str(config.timeout_seconds),
                 _env_name(config, "MAX_NEW_TOKENS"): str(config.max_new_tokens),
                 _env_name(config, "TEMPERATURE"): str(config.temperature),
+                _env_name(config, "TRACE"): "1" if config.trace else "0",
+                _env_name(config, "TRACE_DIR"): str(config.trace_dir or ""),
+                _env_name(config, "REJECT_EFFECTIVE_PROVIDER"): config.reject_effective_provider_name or "",
             }
         )
         command = [config.python_executable, "-c", _llm_router_child_code(config)]

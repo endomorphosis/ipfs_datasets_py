@@ -25,6 +25,7 @@ import os
 import queue
 import re
 import shutil
+import sys
 import tempfile
 import threading
 import time
@@ -62,6 +63,10 @@ from ipfs_datasets_py.optimizers.todo_daemon.diagnostics import (
     quality_failure_counts as _shared_quality_failure_counts,
     recent_rollback_failure_count as _shared_recent_rollback_failure_count,
     rollback_failure_counts as _shared_rollback_failure_counts,
+)
+from ipfs_datasets_py.optimizers.todo_daemon.llm import (
+    LlmRouterInvocation,
+    call_llm_router,
 )
 from ipfs_datasets_py.optimizers.todo_daemon.history import (
     current_task_failure_counts as _shared_current_task_failure_counts,
@@ -4129,21 +4134,26 @@ Current repository file contents after rollback:
                 self._write_status("llm_call_completed", response_chars=len(text))
                 return text
 
-        from ipfs_datasets_py import llm_router
-
         try:
-            text = self._call_generator_with_deadline(
-                llm_router.generate_text,
+            text = call_llm_router(
                 prompt,
-                status_provider=provider,
-                provider=provider,
-                model_name=self.daemon_config.model_name,
-                allow_local_fallback=self.daemon_config.allow_local_fallback,
-                max_new_tokens=self.daemon_config.max_new_tokens,
-                temperature=self.daemon_config.temperature,
-                timeout=self.daemon_config.llm_timeout_seconds,
-                trace=bool(self.daemon_config.codex_trace_dir),
-                trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
+                LlmRouterInvocation(
+                    repo_root=self.daemon_config.repo_root,
+                    model_name=self.daemon_config.model_name,
+                    provider=provider,
+                    allow_local_fallback=self.daemon_config.allow_local_fallback,
+                    timeout_seconds=int(self.daemon_config.llm_timeout_seconds),
+                    max_new_tokens=self.daemon_config.max_new_tokens,
+                    max_prompt_chars=self.daemon_config.max_prompt_chars,
+                    temperature=self.daemon_config.temperature,
+                    env_prefix="LOGIC_PORT_DAEMON_LLM",
+                    prompt_file_prefix="logic-port-llm-prompt-",
+                    python_executable=sys.executable,
+                    trace=bool(self.daemon_config.codex_trace_dir),
+                    trace_dir=self.daemon_config.resolve(self.daemon_config.codex_trace_dir)
+                    if self.daemon_config.codex_trace_dir
+                    else None,
+                ),
             )
         except Exception as exc:
             self._write_status("llm_call_failed", error=str(exc), provider=provider or "auto")
@@ -4152,13 +4162,6 @@ Current repository file contents after rollback:
                 f"provider={provider or 'auto'!r}. Configure the provider credentials or pass --provider. "
                 f"Original error: {exc}"
             ) from exc
-        trace_getter = getattr(llm_router, "get_last_generation_trace", None)
-        if callable(trace_getter):
-            trace = trace_getter()
-            if isinstance(trace, dict) and trace.get("effective_provider_name") == "local_hf":
-                raise RuntimeError(
-                    "llm_router resolved to local_hf fallback; configure a real gpt-5.5 provider or pass an explicit provider."
-                )
         self._write_status("llm_call_completed", response_chars=len(text), provider=provider or "auto")
         return text
 

@@ -13,6 +13,7 @@ from .engine import compact_message
 ResultRow = tuple[dict[str, Any], dict[str, Any]]
 FailureClassifier = Callable[[Mapping[str, Any]], str]
 Compactor = Callable[[Any, int], str]
+SuccessPredicate = Callable[[Mapping[str, Any]], bool]
 
 
 def read_daemon_results(
@@ -43,6 +44,90 @@ def read_daemon_results(
             if isinstance(artifact, dict):
                 rows.append((result, artifact))
     return rows
+
+
+def read_daemon_proposal_records(
+    path: Path,
+    *,
+    proposal_key: str = "proposal",
+    diagnostic_key: str = "diagnostic",
+    include_diagnostics: bool = False,
+    stage_key: str = "stage",
+    diagnostic_stage_key: str = "_diagnostic_stage",
+) -> list[dict[str, Any]]:
+    """Read JSONL runner rows that store proposal and optional diagnostic objects."""
+
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(record, dict):
+            continue
+        proposal = record.get(proposal_key)
+        diagnostic = record.get(diagnostic_key)
+        if isinstance(proposal, dict):
+            rows.append(proposal)
+        elif include_diagnostics and isinstance(diagnostic, dict):
+            row = dict(diagnostic)
+            row[diagnostic_stage_key] = record.get(stage_key, "")
+            rows.append(row)
+    return rows
+
+
+def proposal_record_succeeded(record: Mapping[str, Any]) -> bool:
+    """Return whether a proposal-style record represents a successful applied change."""
+
+    return bool(record.get("applied") and record.get("validation_passed") and not record.get("errors"))
+
+
+def recent_proposal_failures(
+    records: Sequence[Mapping[str, Any]],
+    task_label: str,
+    *,
+    limit: int = 3,
+    task_key: str = "target_task",
+    succeeded: SuccessPredicate = proposal_record_succeeded,
+    normalize_task_labels: bool = True,
+) -> list[dict[str, Any]]:
+    """Return recent same-task proposal records since the last successful record."""
+
+    failures: list[dict[str, Any]] = []
+    for record in reversed(records):
+        record_task = str(record.get(task_key) or "")
+        matches = (
+            same_task_label(record_task, task_label)
+            if normalize_task_labels
+            else record_task == task_label
+        )
+        if not matches:
+            continue
+        if succeeded(record):
+            break
+        failures.append(dict(record))
+        if len(failures) >= limit:
+            break
+    return failures
+
+
+def should_use_compact_prompt_for_failures(
+    failures: Sequence[Mapping[str, Any]],
+    *,
+    retry_failure_kinds: set[str] | frozenset[str] = frozenset({"parse", "llm"}),
+    threshold: int = 2,
+) -> bool:
+    """Return whether repeated proposal failures should switch to compact prompts."""
+
+    count = 0
+    for failure in failures:
+        if str(failure.get("failure_kind") or "") in retry_failure_kinds:
+            count += 1
+    return count >= threshold
 
 
 def normalize_task_label(value: str) -> str:

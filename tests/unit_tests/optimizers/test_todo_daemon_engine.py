@@ -30,21 +30,25 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     build_lifecycle_arg_parser,
     build_python_module_command,
     build_restart_loop_command,
+    build_supervisor_loop_arg_parser,
     build_supervisor_status_payload,
     build_todo_runner_arg_parser,
     call_llm_router,
     clear_child_pid_file,
     cleanup_stale_daemon_worktrees,
+    count_unmanaged_generated_status_sections,
     current_task_failure_counts,
     daemon_spec_payload,
     diagnostic_signatures,
     extract_codex_event_text_candidates,
     extract_json,
+    generated_status_block,
     heartbeat_snapshot,
     has_diagnostic_codes,
     launch_supervised_child,
     last_task_attempt_index,
     looks_like_empty_codex_event_stream,
+    managed_status_block_pattern,
     materialize_proposal_files,
     owner_pid_from_worktree,
     parse_json_proposal,
@@ -56,24 +60,33 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     quality_failure_counts,
     quoted_env_assignments,
     read_daemon_results,
+    read_daemon_proposal_records,
     read_json_object,
     recent_failure_count,
+    recent_proposal_failures,
     recent_rollback_failure_count,
     recent_total_failure_count,
     rollback_failure_counts,
     rounds_since_last_valid,
     run_command,
     run_lifecycle_cli,
+    run_supervisor_loop_cli,
+    supervisor_loop_config_from_args,
+    supervisor_loop_result_payload,
     run_todo_daemon,
     run_todo_daemon_cli,
     select_task,
+    should_use_compact_prompt_for_failures,
+    strip_unmanaged_generated_status_sections,
     supervised_log_path,
     supervisor_run_id,
     task_failure_summary,
+    task_status_counts,
     temporary_validation_worktree,
     todo_daemon_proposals_payload,
     unified_diff_stats,
     untracked_paths_from_git_status_porcelain,
+    update_generated_status_block,
     verify_promoted_worktree_files,
     wait_for_child_exit,
     worktree_phase_worker_status,
@@ -120,6 +133,54 @@ def test_parse_markdown_tasks_and_select_reuses_checkbox_ids() -> None:
     assert selected is not None
     assert selected.checkbox_id == 9
     assert selected.label == "Task checkbox-9: Next reusable task."
+
+
+def test_task_board_generated_status_helpers_are_reusable() -> None:
+    tasks = parse_markdown_tasks(
+        "\n".join(
+            [
+                "- [ ] Task checkbox-1: Needed.",
+                "- [~] Task checkbox-2: Active.",
+                "- [x] Task checkbox-3: Done.",
+                "- [!] Task checkbox-4: Blocked.",
+            ]
+        )
+    )
+    markdown = "\n".join(
+        [
+            "# Board",
+            "",
+            "## Generated Status",
+            "",
+            "stale",
+            "",
+            "- [ ] Task checkbox-1: Needed.",
+        ]
+    )
+
+    updated = update_generated_status_block(
+        markdown,
+        latest={"target_task": tasks[0].label, "result": "valid", "summary": "accepted"},
+        tasks=tasks,
+        start_marker="<!-- daemon:start -->",
+        end_marker="<!-- daemon:end -->",
+        now=lambda: "2026-01-01T00:00:00Z",
+    )
+
+    assert task_status_counts(tasks) == {
+        "needed": 1,
+        "in_progress": 1,
+        "complete": 1,
+        "blocked": 1,
+    }
+    assert count_unmanaged_generated_status_sections(
+        updated,
+        start_marker="<!-- daemon:start -->",
+        end_marker="<!-- daemon:end -->",
+    ) == 0
+    assert "<!-- daemon:start -->" in updated
+    assert "Latest result: `valid`" in updated
+    assert "stale" not in updated
 
 
 def test_path_policy_validates_allowlist_and_private_artifacts() -> None:
@@ -171,6 +232,60 @@ def test_parse_json_proposal_accepts_plain_json_and_filters_invalid_files() -> N
     assert proposal.summary == "Reusable proposal"
     assert proposal.files == [{"path": "todo/source.py", "content": "VALUE = 1\n"}]
     assert proposal.validation_commands == [["python3", "-m", "compileall", "todo"]]
+
+
+def test_task_board_status_helpers_are_reusable() -> None:
+    start = "<!-- synthetic-daemon-task-board:start -->"
+    end = "<!-- synthetic-daemon-task-board:end -->"
+    board = "\n".join(
+        [
+            "- [x] Task checkbox-1: Done.",
+            "- [ ] Task checkbox-2: Needed.",
+            "",
+            "## Generated Status",
+            "",
+            "Last updated: stale",
+            "",
+            "- Latest target: `stale`",
+            "",
+            start,
+            "## Generated Status",
+            "",
+            "Last updated: managed",
+            end,
+        ]
+    )
+    tasks = parse_markdown_tasks(board)
+
+    cleaned = strip_unmanaged_generated_status_sections(
+        board,
+        start_marker=start,
+        end_marker=end,
+    )
+    block = generated_status_block(
+        latest={"target_task": "Task checkbox-2: Needed.", "result": "accepted", "summary": "ok"},
+        tasks=tasks,
+        start_marker=start,
+        end_marker=end,
+        now=lambda: "2026-01-01T00:00:00Z",
+    )
+    updated = update_generated_status_block(
+        board,
+        latest={"target_task": "Task checkbox-2: Needed.", "result": "accepted", "summary": "ok"},
+        tasks=tasks,
+        start_marker=start,
+        end_marker=end,
+        now=lambda: "2026-01-01T00:00:00Z",
+    )
+
+    assert count_unmanaged_generated_status_sections(board, start_marker=start, end_marker=end) == 1
+    assert count_unmanaged_generated_status_sections(cleaned, start_marker=start, end_marker=end) == 0
+    assert "Latest target: `stale`" not in cleaned
+    assert task_status_counts(tasks) == {"needed": 1, "in_progress": 0, "complete": 1, "blocked": 0}
+    assert "- Counts: `{\"blocked\": 0, \"complete\": 1, \"in_progress\": 0, \"needed\": 1}`" in block
+    assert managed_status_block_pattern(start, end).search(updated)
+    assert updated.count("## Generated Status") == 1
+    assert "2026-01-01T00:00:00Z" in updated
 
 
 def test_codex_jsonl_helpers_parse_assistant_proposals() -> None:
@@ -290,6 +405,45 @@ def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: P
     }
 
 
+def test_llm_router_invocation_passes_optional_trace_kwargs(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
+    package = tmp_path / "ipfs_datasets_py"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "llm_router.py").write_text(
+        "\n".join(
+            [
+                "import json",
+                "",
+                "def generate_text(prompt, model_name, provider, allow_local_fallback, timeout, max_new_tokens, temperature, trace=False, trace_dir=None):",
+                "    return json.dumps({'trace': trace, 'trace_dir': trace_dir})",
+                "",
+                "def get_last_generation_trace():",
+                "    return {'effective_provider_name': 'codex_cli'}",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    payload = json.loads(
+        call_llm_router(
+            "hello",
+            LlmRouterInvocation(
+                repo_root=tmp_path,
+                timeout_seconds=7,
+                max_prompt_chars=1000,
+                backend_env_name="SYNTH_LLM_BACKEND",
+                env_prefix="SYNTH_LLM",
+                trace=True,
+                trace_dir=tmp_path / "traces",
+            ),
+        )
+    )
+
+    assert payload == {"trace": True, "trace_dir": str(tmp_path / "traces")}
+
+
 def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
     log = tmp_path / "daemon.jsonl"
     rows = [
@@ -338,6 +492,35 @@ def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:
     assert last_task_attempt_index(parsed, "Task A") == 2
     assert summary["latest_failure"]["failure_kind"] == "validation"
     assert summary["latest_failure"]["errors"] == ["bad type"]
+
+
+def test_proposal_record_history_helpers_read_runner_jsonl_shapes(tmp_path: Path) -> None:
+    log = tmp_path / "runner.jsonl"
+    rows = [
+        {"proposal": {"target_task": "Task A", "failure_kind": "llm", "errors": ["first"]}},
+        {"stage": "before_validation", "diagnostic": {"target_task": "Task A", "failure_kind": "parse"}},
+        {
+            "proposal": {
+                "target_task": "Task B",
+                "applied": True,
+                "validation_passed": True,
+                "errors": [],
+            }
+        },
+        {"proposal": {"target_task": "Task A", "failure_kind": "llm", "errors": ["second"]}},
+    ]
+    log.write_text("\n".join(json.dumps(row) for row in rows) + "\nnot-json\n", encoding="utf-8")
+
+    proposals = read_daemon_proposal_records(log)
+    with_diagnostics = read_daemon_proposal_records(log, include_diagnostics=True)
+    failures = recent_proposal_failures(with_diagnostics, "Task A", limit=3)
+
+    assert [row.get("failure_kind") for row in proposals] == ["llm", None, "llm"]
+    assert [row.get("failure_kind") for row in with_diagnostics] == ["llm", "parse", None, "llm"]
+    assert with_diagnostics[1]["_diagnostic_stage"] == "before_validation"
+    assert [row["failure_kind"] for row in failures] == ["llm", "parse", "llm"]
+    assert should_use_compact_prompt_for_failures(failures)
+    assert not should_use_compact_prompt_for_failures([{"failure_kind": "validation"}])
 
 
 def test_daemon_diagnostic_failure_loop_helpers_are_reusable() -> None:
@@ -683,6 +866,95 @@ def test_supervisor_child_runtime_helpers_are_reusable(tmp_path: Path) -> None:
     assert not child.child_pid_path.exists()
 
 
+def test_supervisor_loop_cli_config_helpers_are_reusable(tmp_path: Path) -> None:
+    parser = build_supervisor_loop_arg_parser(description="Synthetic supervisor.")
+    args = parser.parse_args(
+        [
+            "--repo-root",
+            str(tmp_path),
+            "--name",
+            "synthetic-loop",
+            "--env",
+            "EXAMPLE=1",
+            "--max-restarts",
+            "1",
+            "--poll-seconds",
+            "0.01",
+            "--",
+            "python3",
+            "-c",
+            "print('ok')",
+        ]
+    )
+
+    config = supervisor_loop_config_from_args(args)
+    payload = supervisor_loop_result_payload(
+        SupervisorLoop(config).run()
+    )
+
+    assert config.spec.name == "synthetic-loop"
+    assert config.command == ("python3", "-c", "print('ok')")
+    assert config.poll_seconds == 0.01
+    assert config.child_env == {"EXAMPLE": "1"}
+    assert payload["status"] == "child_exited"
+    assert payload["restart_count"] == 1
+    assert payload["last_exit_code"] == 0
+
+
+def test_supervisor_loop_cli_runs_supervised_child(tmp_path: Path, capsys) -> None:
+    rc = run_supervisor_loop_cli(
+        [
+            "--repo-root",
+            str(tmp_path),
+            "--name",
+            "synthetic-cli-loop",
+            "--daemon-dir",
+            ".daemon",
+            "--status-path",
+            ".daemon/status.json",
+            "--progress-path",
+            ".daemon/progress.json",
+            "--supervisor-status-path",
+            ".daemon/supervisor.json",
+            "--supervisor-pid-path",
+            ".daemon/supervisor.pid",
+            "--child-pid-path",
+            ".daemon/child.pid",
+            "--supervisor-out-path",
+            ".daemon/supervisor.out",
+            "--ensure-status-path",
+            ".daemon/ensure.json",
+            "--ensure-check-path",
+            ".daemon/ensure-check.json",
+            "--supervisor-lock-path",
+            ".daemon/supervisor.lock",
+            "--latest-log-path",
+            ".daemon/latest.log",
+            "--log-prefix",
+            "synthetic_cli",
+            "--heartbeat-seconds",
+            "0.01",
+            "--watchdog-startup-grace-seconds",
+            "0",
+            "--max-restarts",
+            "1",
+            "--env",
+            "EXAMPLE_DAEMON=cli",
+            "--",
+            "python3",
+            "-c",
+            "import os; print('cli:' + os.environ['EXAMPLE_DAEMON'])",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert payload["status"] == "child_exited"
+    assert payload["restart_count"] == 1
+    assert payload["last_exit_code"] == 0
+    assert (tmp_path / ".daemon" / "latest.log").read_text(encoding="utf-8").strip() == "cli:cli"
+
+
 def test_python_supervisor_loop_reuses_child_runtime_and_status(tmp_path: Path) -> None:
     spec = ManagedDaemonSpec(
         name="synthetic-loop",
@@ -960,6 +1232,48 @@ def test_package_lifecycle_dispatcher_routes_builtin_daemons(tmp_path: Path, cap
 
     assert rc == 0
     assert listed["daemons"] == ["legal-parser", "logic-port"]
+
+    rc = todo_daemon_package_main(
+        [
+            "supervise",
+            "--repo-root",
+            str(tmp_path),
+            "--daemon-dir",
+            ".daemon/package-supervise",
+            "--status-path",
+            ".daemon/package-supervise/child-status.json",
+            "--progress-path",
+            ".daemon/package-supervise/progress.json",
+            "--supervisor-status-path",
+            ".daemon/package-supervise/supervisor.json",
+            "--supervisor-pid-path",
+            ".daemon/package-supervise/supervisor.pid",
+            "--child-pid-path",
+            ".daemon/package-supervise/child.pid",
+            "--supervisor-out-path",
+            ".daemon/package-supervise/supervisor.out",
+            "--ensure-status-path",
+            ".daemon/package-supervise/ensure.json",
+            "--ensure-check-path",
+            ".daemon/package-supervise/ensure-check.json",
+            "--supervisor-lock-path",
+            ".daemon/package-supervise/supervisor.lock",
+            "--latest-log-path",
+            ".daemon/package-supervise/latest.log",
+            "--heartbeat-seconds",
+            "0.01",
+            "--max-restarts",
+            "1",
+            "python3",
+            "-c",
+            "print('package-supervise')",
+        ]
+    )
+    supervisor_payload = json.loads(capsys.readouterr().out)
+
+    assert rc == 0
+    assert supervisor_payload["status"] == "child_exited"
+    assert supervisor_payload["last_exit_code"] == 0
 
 
 def test_reusable_todo_daemon_module_cli_runs_hooked_daemon(tmp_path: Path, capsys) -> None:
