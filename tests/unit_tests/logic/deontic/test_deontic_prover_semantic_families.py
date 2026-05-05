@@ -74,6 +74,87 @@ def test_prover_semantic_families_match_export_capability_families():
         assert coverage["semantic_family_summary"]["semantic_formula_family"] == (
             expected_family
         )
+        assert coverage["target_role_matrix_complete"] is True
+        assert coverage["target_role_matrix_summary"]["target_roles_by_target"] == {
+            "deontic_cec": "event_calculus_state",
+            "deontic_fol": "deontic_first_order_formula",
+            "deontic_temporal_fol": "temporal_deontic_first_order_formula",
+            "fol": "first_order_formula",
+            "frame_logic": "frame_record",
+        }
+        assert coverage["coverage_summary"]["target_role_matrix_complete"] is True
+        assert coverage["coverage_summary"]["target_role_matrix_summary"] == coverage[
+            "target_role_matrix_summary"
+        ]
+
+
+def test_prover_target_role_matrix_covers_local_dialect_roles():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements("The tenant must pay rent monthly.")[0]
+    )
+
+    coverage = build_prover_syntax_target_coverage_records_from_irs([norm])[0]
+    role_summary = coverage["target_role_matrix_summary"]
+
+    assert coverage["target_role_matrix_complete"] is True
+    assert role_summary["target_role_record_count"] == len(LOCAL_PROVER_TARGETS)
+    assert role_summary["missing_role_targets"] == []
+    assert role_summary["unknown_role_targets"] == []
+    assert role_summary["unknown_dialect_targets"] == []
+    assert role_summary["target_formula_roles"] == [
+        "deontic_first_order_formula",
+        "event_calculus_state",
+        "first_order_formula",
+        "frame_record",
+        "temporal_deontic_first_order_formula",
+    ]
+    assert role_summary["target_dialect_families_by_target"] == {
+        "deontic_cec": "event_calculus",
+        "deontic_fol": "deontic_first_order",
+        "deontic_temporal_fol": "deontic_temporal_first_order",
+        "fol": "first_order",
+        "frame_logic": "frame_logic",
+    }
+    assert [row["target"] for row in role_summary["target_role_matrix"]] == list(
+        LOCAL_PROVER_TARGETS
+    )
+    assert all(
+        row["formal_validation_complete"] is True
+        for row in role_summary["target_role_matrix"]
+    )
+    assert all(
+        row["failed_quality_checks"] == []
+        for row in role_summary["target_role_matrix"]
+    )
+
+
+def test_prover_target_role_matrix_covers_frame_formula_and_blocked_clause():
+    norm = LegalNormIR.from_parser_element(
+        extract_normative_elements(
+            "The Secretary shall publish the notice except as provided in section 552."
+        )[0]
+    )
+
+    coverage = build_prover_syntax_target_coverage_records_from_irs([norm])[0]
+    role_summary = coverage["target_role_matrix_summary"]
+    matrix = {row["target"]: row for row in role_summary["target_role_matrix"]}
+
+    assert coverage["formal_syntax_valid"] is False
+    assert coverage["requires_validation"] is True
+    assert coverage["target_role_matrix_complete"] is True
+    assert matrix["frame_logic"]["formula_role"] == "frame_record"
+    assert matrix["frame_logic"]["dialect_family"] == "frame_logic"
+    assert matrix["fol"]["formula_role"] == "first_order_formula"
+    assert all(row["syntax_valid"] is True for row in matrix.values())
+    assert all(row["formal_validation_complete"] is False for row in matrix.values())
+    assert all(
+        row["failed_quality_checks"]
+        == ["formula_proof_ready", "formula_requires_validation"]
+        for row in matrix.values()
+    )
+    assert "failed_prover_quality_check:formula_proof_ready" in coverage[
+        "coverage_blockers"
+    ]
 
 
 def test_prover_semantic_family_slice_preserves_numbered_reference_repair_gate():
@@ -91,6 +172,7 @@ def test_prover_semantic_family_slice_preserves_numbered_reference_repair_gate()
     assert coverage["requires_validation"] is True
     assert coverage["semantic_formula_families"] == ["ordinary_duty"]
     assert coverage["target_semantic_family_consistent"] is True
+    assert coverage["target_role_matrix_complete"] is True
     assert "failed_prover_quality_check:formula_proof_ready" in coverage[
         "coverage_blockers"
     ]

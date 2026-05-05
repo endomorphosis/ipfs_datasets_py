@@ -586,10 +586,18 @@ def build_prover_syntax_target_coverage_record(
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
     quality_gate_summary = _summarize_prover_target_quality_gates(records)
     semantic_family_summary = _summarize_prover_target_semantic_families(records)
+    target_role_matrix_summary = _summarize_prover_target_role_matrix(
+        records,
+        required_targets,
+    )
     summary = {
         **summary,
         "quality_gate_summary": quality_gate_summary,
         "semantic_family_summary": semantic_family_summary,
+        "target_role_matrix_summary": target_role_matrix_summary,
+        "target_role_matrix_complete": target_role_matrix_summary[
+            "target_role_matrix_complete"
+        ],
     }
     blockers: List[str] = []
     blockers.extend(
@@ -633,6 +641,10 @@ def build_prover_syntax_target_coverage_record(
         "coverage_blockers": blockers,
         "quality_gate_summary": quality_gate_summary,
         "semantic_family_summary": semantic_family_summary,
+        "target_role_matrix_summary": target_role_matrix_summary,
+        "target_role_matrix_complete": target_role_matrix_summary[
+            "target_role_matrix_complete"
+        ],
         "semantic_formula_families": semantic_family_summary["semantic_formula_families"],
         "semantic_formula_family_distribution": semantic_family_summary[
             "semantic_formula_family_distribution"
@@ -768,6 +780,126 @@ def _summarize_prover_target_semantic_families(
         "semantic_formula_family": known_families[0]
         if len(known_families) == 1 and "unknown" not in family_counts
         else "",
+    }
+
+
+def _summarize_prover_target_role_matrix(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize local prover target roles across dialect records.
+
+    Coverage rows already report whether syntax passed and whether semantic
+    families agree. This matrix persists the target-specific formula role and
+    dialect family so Phase 8 reports can audit that the same IR was rendered
+    through every required local prover surface, even when a clause remains
+    blocked by parser quality gates.
+    """
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    matrix: List[Dict[str, Any]] = []
+    seen_targets: set[str] = set()
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        if not target or target in seen_targets:
+            continue
+        seen_targets.add(target)
+
+        components = record.get("target_components")
+        components = components if isinstance(components, Mapping) else {}
+        dialect_profile = record.get("target_dialect_profile")
+        dialect_profile = dialect_profile if isinstance(dialect_profile, Mapping) else {}
+        quality_gate = record.get("target_quality_gate")
+        quality_gate = quality_gate if isinstance(quality_gate, Mapping) else {}
+
+        formula_role = str(
+            record.get("target_formula_role")
+            or components.get("formula_role")
+            or dialect_profile.get("formula_role")
+            or ""
+        ).strip()
+        dialect_family = str(
+            dialect_profile.get("dialect_family")
+            or components.get("dialect_family")
+            or ""
+        ).strip()
+        semantic_family = str(
+            components.get("semantic_formula_family")
+            or record.get("semantic_formula_family")
+            or ""
+        ).strip()
+
+        matrix.append(
+            {
+                "target": target,
+                "formula_role": formula_role or "unknown",
+                "dialect_family": dialect_family or "unknown",
+                "semantic_formula_family": semantic_family or "unknown",
+                "syntax_status": _prover_syntax_record_status(record),
+                "syntax_valid": bool(record.get("syntax_valid") is True),
+                "proof_ready": bool(record.get("proof_ready") is True),
+                "requires_validation": bool(record.get("requires_validation") is True),
+                "formal_validation_complete": bool(
+                    quality_gate.get("formal_validation_complete") is True
+                ),
+                "failed_quality_checks": [
+                    str(check)
+                    for check in quality_gate.get("failed_quality_checks") or []
+                    if str(check).strip()
+                ],
+            }
+        )
+
+    matrix.sort(
+        key=lambda row: (
+            required.index(row["target"])
+            if row["target"] in required
+            else len(required)
+        )
+    )
+    roles_by_target = {
+        row["target"]: row["formula_role"]
+        for row in matrix
+        if row["target"] in required
+    }
+    dialects_by_target = {
+        row["target"]: row["dialect_family"]
+        for row in matrix
+        if row["target"] in required
+    }
+    missing_targets = [target for target in required if target not in roles_by_target]
+    unknown_role_targets = [
+        target
+        for target, role in roles_by_target.items()
+        if role in {"", "unknown"}
+    ]
+    unknown_dialect_targets = [
+        target
+        for target, dialect in dialects_by_target.items()
+        if dialect in {"", "unknown"}
+    ]
+    complete = bool(
+        required
+        and not missing_targets
+        and not unknown_role_targets
+        and not unknown_dialect_targets
+    )
+
+    return {
+        "target_role_record_count": len(matrix),
+        "required_targets": list(required),
+        "target_role_matrix": matrix,
+        "target_roles_by_target": dict(sorted(roles_by_target.items())),
+        "target_dialect_families_by_target": dict(sorted(dialects_by_target.items())),
+        "target_formula_roles": sorted(dict.fromkeys(roles_by_target.values())),
+        "target_dialect_families": sorted(dict.fromkeys(dialects_by_target.values())),
+        "missing_role_targets": missing_targets,
+        "unknown_role_targets": sorted(unknown_role_targets),
+        "unknown_dialect_targets": sorted(unknown_dialect_targets),
+        "target_role_matrix_complete": complete,
     }
 
 
