@@ -192,7 +192,6 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     render_lifecycle_wrapper,
     render_file_edit_diagnostic_context,
     render_proposal_feedback,
-    resolve_artifact_directory,
     render_typescript_diagnostic_context,
     rollback_failure_counts,
     rounds_since_last_valid,
