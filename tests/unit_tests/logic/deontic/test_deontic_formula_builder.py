@@ -10184,11 +10184,14 @@ def test_training_orientation_instruction_light_verb_duties_export_operative_pre
         ),
     ]
 
+    norms = []
     for text, action, expected_formula, rejected_predicate in examples:
         element = extract_normative_elements(text)[0]
         norm = LegalNormIR.from_parser_element(element)
         record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
         action_span = element["field_spans"]["action"]
+        norms.append(norm)
 
         assert norm.modality == "O"
         assert norm.action == action
@@ -10200,6 +10203,32 @@ def test_training_orientation_instruction_light_verb_duties_export_operative_pre
         assert record["proof_ready"] is True
         assert record["requires_validation"] is False
         assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "training_orientation_duty",
+        "training_orientation_duty",
+        "training_orientation_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        expected_formula for _, _, expected_formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["decoder_slot_grounding_complete"] is True for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
 
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

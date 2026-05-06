@@ -134,6 +134,88 @@ def test_procurement_slice_preserves_unresolved_numbered_exception_repair_gate()
     assert "exception_requires_scope_review" in blocked_record["blockers"]
 
 
+def test_digital_records_processing_duties_export_operative_predicates():
+    examples = [
+        (
+            "The Clerk shall perform digitization of the records.",
+            "perform digitization of the records",
+            [16, 51],
+            "O(∀x (Clerk(x) → DigitizeRecords(x)))",
+            "PerformDigitizationRecords",
+        ),
+        (
+            "The Agency shall conduct scanning of the applications.",
+            "conduct scanning of the applications",
+            [17, 53],
+            "O(∀x (Agency(x) → ScanApplications(x)))",
+            "ConductScanningApplications",
+        ),
+        (
+            "The Bureau shall complete migration of the database.",
+            "complete migration of the database",
+            [17, 51],
+            "O(∀x (Bureau(x) → MigrateDatabase(x)))",
+            "CompleteMigrationDatabase",
+        ),
+        (
+            "The Registrar shall make an upload of the filings.",
+            "make an upload of the filings",
+            [20, 49],
+            "O(∀x (Registrar(x) → UploadFilings(x)))",
+            "MakeUploadFilings",
+        ),
+        (
+            "The Officer shall provide a download of the forms.",
+            "provide a download of the forms",
+            [18, 49],
+            "O(∀x (Officer(x) → DownloadForms(x)))",
+            "ProvideDownloadForms",
+        ),
+        (
+            "The Department shall execute an import of the registry.",
+            "execute an import of the registry",
+            [21, 54],
+            "O(∀x (Department(x) → ImportRegistry(x)))",
+            "ExecuteImportRegistry",
+        ),
+        (
+            "The Archivist shall perform an export of the index.",
+            "perform an export of the index",
+            [20, 50],
+            "O(∀x (Archivist(x) → ExportIndex(x)))",
+            "PerformExportIndex",
+        ),
+    ]
+
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert element["text"][action_span[0] : action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_geospatial_record_duties_export_operative_predicates():
     examples = [
         (
@@ -941,3 +1023,114 @@ def test_derivative_records_processing_duties_export_operative_predicates():
     assert blocked["llm_repair"]["required"] is True
     assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
+def test_incident_and_risk_reporting_duties_export_operative_predicates():
+    examples = [
+        (
+            "The officer shall file an incident report for the breach.",
+            "file an incident report for the breach",
+            [18, 56],
+            "O(∀x (Officer(x) → ReportIncidentBreach(x)))",
+            "FileIncidentReportBreach",
+        ),
+        (
+            "The administrator shall create an incident log for the outage.",
+            "create an incident log for the outage",
+            [24, 61],
+            "O(∀x (Administrator(x) → LogIncidentOutage(x)))",
+            "CreateIncidentLogOutage",
+        ),
+        (
+            "The agency shall maintain a breach register for the system.",
+            "maintain a breach register for the system",
+            [17, 58],
+            "O(∀x (Agency(x) → RegisterBreachSystem(x)))",
+            "MaintainBreachRegisterSystem",
+        ),
+        (
+            "The coordinator shall prepare a risk register for the facility.",
+            "prepare a risk register for the facility",
+            [22, 62],
+            "O(∀x (Coordinator(x) → RegisterRiskFacility(x)))",
+            "PrepareRiskRegisterFacility",
+        ),
+        (
+            "The custodian shall update an incident register for the records.",
+            "update an incident register for the records",
+            [20, 63],
+            "O(∀x (Custodian(x) → RegisterIncidentRecords(x)))",
+            "UpdateIncidentRegisterRecords",
+        ),
+        (
+            "The officer shall conduct incident logging for the breach.",
+            "conduct incident logging for the breach",
+            [18, 57],
+            "O(∀x (Officer(x) → LogIncidentBreach(x)))",
+            "ConductIncidentLoggingBreach",
+        ),
+    ]
+
+    norms = []
+    for text, action, action_span, expected_formula, rejected_predicate in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        record = build_deontic_formula_record_from_ir(norm)
+        report = validate_ir_with_provers(norm)
+        norms.append(norm)
+
+        assert norm.modality == "O"
+        assert norm.action == action
+        assert norm.support_span == norm.source_span
+        assert element["field_spans"]["action"] == action_span
+        assert element["text"][action_span[0] : action_span[1]] == action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+        assert record["formula"] == expected_formula
+        assert rejected_predicate not in expected_formula
+        assert record["proof_ready"] is True
+        assert record["requires_validation"] is False
+        assert record["repair_required"] is False
+        assert report.syntax_valid is True
+        assert report.proof_ready is True
+        assert report.valid_target_count == 5
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["capability_family"] for record in capability_records] == [
+        "incident_risk_reporting_duty",
+        "incident_risk_reporting_duty",
+        "incident_risk_reporting_duty",
+        "incident_risk_reporting_duty",
+        "incident_risk_reporting_duty",
+        "incident_risk_reporting_duty",
+    ]
+    assert [record["formula"] for record in capability_records] == [
+        expected_formula for _, _, _, expected_formula, _ in examples
+    ]
+    assert all(
+        record["checked_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(
+        record["grounded_slots"] == ["actor", "modality", "action"]
+        for record in capability_records
+    )
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+
+def test_incident_reporting_slice_preserves_unresolved_numbered_exception_gate():
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    blocked_norm = LegalNormIR.from_parser_element(blocked)
+    blocked_record = build_deontic_formula_record_from_ir(blocked_norm)
+
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+    assert blocked_record["formula"] == "O(∀x (Secretary(x) → PublishNotice(x)))"
+    assert blocked_record["proof_ready"] is False
+    assert blocked_record["requires_validation"] is True
+    assert blocked_record["repair_required"] is True

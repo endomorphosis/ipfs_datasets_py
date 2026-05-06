@@ -211,6 +211,7 @@ def _validate_target_formula(
         target,
         norm,
         decoded.text,
+        decoded_phrase_profile,
     )
     target_components = _target_components(
         target,
@@ -728,6 +729,24 @@ def _target_components(
         ),
         "decoded_provenance_phrase_texts_by_slot": dict(
             decoded_phrase_profile.get("provenance_phrase_texts_by_slot") or {}
+        ),
+        "decoded_salient_tokens_by_slot": dict(
+            reconstruction_token_profile.get("decoded_salient_tokens_by_slot") or {}
+        ),
+        "decoded_legal_salient_tokens_by_slot": dict(
+            reconstruction_token_profile.get("decoded_legal_salient_tokens_by_slot") or {}
+        ),
+        "decoded_provenance_salient_tokens_by_slot": dict(
+            reconstruction_token_profile.get("decoded_provenance_salient_tokens_by_slot") or {}
+        ),
+        "decoded_salient_token_slots": list(
+            reconstruction_token_profile.get("decoded_salient_token_slots") or []
+        ),
+        "decoded_legal_salient_token_slots": list(
+            reconstruction_token_profile.get("decoded_legal_salient_token_slots") or []
+        ),
+        "decoded_provenance_salient_token_slots": list(
+            reconstruction_token_profile.get("decoded_provenance_salient_token_slots") or []
         ),
         "source_salient_token_count": int(
             reconstruction_token_profile.get("source_salient_token_count") or 0
@@ -1303,12 +1322,23 @@ def _reconstruction_token_profile(
     target: str,
     norm: LegalNormIR,
     decoded_text: str,
+    decoded_phrase_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Compare source and decoded salient legal tokens for Phase 8 audits."""
 
+    decoded_phrase_profile = decoded_phrase_profile or {}
     source_text = str(norm.source_text or norm.support_text or "").strip()
     source_tokens = _salient_reconstruction_tokens(source_text)
     decoded_tokens = _salient_reconstruction_tokens(decoded_text)
+    decoded_tokens_by_slot = _salient_tokens_by_slot(
+        decoded_phrase_profile.get("phrase_texts_by_slot") or {}
+    )
+    legal_tokens_by_slot = _salient_tokens_by_slot(
+        decoded_phrase_profile.get("legal_phrase_texts_by_slot") or {}
+    )
+    provenance_tokens_by_slot = _salient_tokens_by_slot(
+        decoded_phrase_profile.get("provenance_phrase_texts_by_slot") or {}
+    )
     source_set = set(source_tokens)
     decoded_set = set(decoded_tokens)
     matched_tokens = [token for token in source_tokens if token in decoded_set]
@@ -1327,6 +1357,9 @@ def _reconstruction_token_profile(
         "|".join(decoded_tokens),
         "|".join(unreconstructed_tokens),
         "|".join(added_tokens),
+        _slot_token_fingerprint_part(decoded_tokens_by_slot),
+        _slot_token_fingerprint_part(legal_tokens_by_slot),
+        _slot_token_fingerprint_part(provenance_tokens_by_slot),
         str(complete),
     )
     return {
@@ -1334,6 +1367,12 @@ def _reconstruction_token_profile(
         "source_text_basis": "source_text" if norm.source_text else "support_text",
         "source_salient_tokens": source_tokens,
         "decoded_salient_tokens": decoded_tokens,
+        "decoded_salient_tokens_by_slot": decoded_tokens_by_slot,
+        "decoded_legal_salient_tokens_by_slot": legal_tokens_by_slot,
+        "decoded_provenance_salient_tokens_by_slot": provenance_tokens_by_slot,
+        "decoded_salient_token_slots": list(decoded_tokens_by_slot),
+        "decoded_legal_salient_token_slots": list(legal_tokens_by_slot),
+        "decoded_provenance_salient_token_slots": list(provenance_tokens_by_slot),
         "matched_salient_tokens": matched_tokens,
         "unreconstructed_source_tokens": unreconstructed_tokens,
         "added_decoded_tokens": added_tokens,
@@ -1345,6 +1384,29 @@ def _reconstruction_token_profile(
         "reconstruction_token_profile_complete": complete,
         "reconstruction_token_profile_fingerprint": fingerprint,
     }
+
+
+def _salient_tokens_by_slot(slot_texts: Dict[str, Any]) -> Dict[str, List[str]]:
+    token_map: Dict[str, List[str]] = {}
+    for slot, values in slot_texts.items():
+        slot_name = str(slot or "").strip()
+        if not slot_name:
+            continue
+        if isinstance(values, (list, tuple)):
+            text = " ".join(str(value or "") for value in values)
+        else:
+            text = str(values or "")
+        tokens = _salient_reconstruction_tokens(text)
+        if tokens:
+            token_map[slot_name] = tokens
+    return token_map
+
+
+def _slot_token_fingerprint_part(slot_tokens: Dict[str, List[str]]) -> str:
+    return "|".join(
+        f"{slot}:{','.join(tokens)}"
+        for slot, tokens in sorted(slot_tokens.items())
+    )
 
 
 def _salient_reconstruction_tokens(text: str) -> List[str]:

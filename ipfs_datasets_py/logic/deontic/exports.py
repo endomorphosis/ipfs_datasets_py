@@ -4906,6 +4906,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "dispute_resolution_duty"
     if action_predicate.startswith((
+        "Educate",
+        "Instruct",
+        "Orient",
+        "Train",
+    )):
+        return "training_orientation_duty"
+    if action_predicate.startswith((
         "Continue",
         "Defer",
         "Postpone",
@@ -4995,6 +5002,21 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "ScanVulnerab",
     )):
         return "cybersecurity_access_control_duty"
+    if action_predicate.startswith((
+        "LogBreach",
+        "LogHazard",
+        "LogIncident",
+        "LogRisk",
+        "RegisterBreach",
+        "RegisterHazard",
+        "RegisterIncident",
+        "RegisterRisk",
+        "ReportBreach",
+        "ReportHazard",
+        "ReportIncident",
+        "ReportRisk",
+    )):
+        return "incident_risk_reporting_duty"
     if action_predicate.startswith((
         "Anonymize",
         "Decrypt",

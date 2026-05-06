@@ -359,6 +359,124 @@ def test_prover_syntax_records_carry_reconstruction_token_profiles():
         ) == 5
 
 
+def test_prover_reconstruction_token_profiles_group_tokens_by_decoded_slot():
+    examples = [
+        (
+            "The tenant must pay rent monthly.",
+            {
+                "actor": ["tenant"],
+                "action": ["pay", "rent", "monthly"],
+            },
+            {
+                "actor": ["tenant"],
+                "action": ["pay", "rent", "monthly"],
+            },
+            {},
+        ),
+        (
+            "The inspector shall knowingly approve the discharge.",
+            {
+                "actor": ["inspector"],
+                "mental_state": ["knowingly"],
+                "action": ["approve", "discharge"],
+            },
+            {
+                "actor": ["inspector"],
+                "mental_state": ["knowingly"],
+                "action": ["approve", "discharge"],
+            },
+            {},
+        ),
+        (
+            "The Director shall issue a permit within 10 days after application.",
+            {
+                "actor": ["director"],
+                "action": ["issue", "permit"],
+                "temporal_constraints": ["within", "10", "days", "after", "application"],
+            },
+            {
+                "actor": ["director"],
+                "action": ["issue", "permit"],
+                "temporal_constraints": ["within", "10", "days", "after", "application"],
+            },
+            {},
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            {
+                "actor": ["secretary"],
+                "action": ["publish", "notice"],
+                "exceptions": ["section", "552"],
+                "cross_references": ["section", "552"],
+            },
+            {
+                "actor": ["secretary"],
+                "action": ["publish", "notice"],
+                "exceptions": ["section", "552"],
+            },
+            {"cross_references": ["section", "552"]},
+        ),
+    ]
+
+    for text, tokens_by_slot, legal_tokens_by_slot, provenance_tokens_by_slot in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert all(
+            record["reconstruction_token_profile"]["decoded_salient_tokens_by_slot"]
+            == tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["reconstruction_token_profile"][
+                "decoded_legal_salient_tokens_by_slot"
+            ]
+            == legal_tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["reconstruction_token_profile"][
+                "decoded_provenance_salient_tokens_by_slot"
+            ]
+            == provenance_tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_salient_tokens_by_slot"]
+            == tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_legal_salient_tokens_by_slot"]
+            == legal_tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_provenance_salient_tokens_by_slot"]
+            == provenance_tokens_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_salient_token_slots"]
+            == list(tokens_by_slot)
+            for record in records
+        )
+        assert len(
+            {
+                record["reconstruction_token_profile_fingerprint"]
+                for record in records
+            }
+        ) == 5
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prover_reconstruction_profile_preserves_blocked_reference_tokens_without_repair_clearance():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
@@ -507,6 +625,27 @@ def test_prover_decoded_phrase_profiles_carry_slot_text_maps():
                 "cross_references": ["section 552"],
             },
             {"cross_references": ["section 552"]},
+        ),
+        (
+            "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation.",
+            {
+                "actor": ["violation"],
+                "action": [
+                    "a civil fine of not less than $100 and not more than $500 per violation"
+                ],
+                "penalty_classification": ["civil"],
+                "penalty_kind": ["fine"],
+                "penalty_minimum_amount": ["$100"],
+                "penalty_maximum_amount": ["$500"],
+                "penalty_recurrence": ["per violation"],
+            },
+            {
+                "penalty_classification": ["civil"],
+                "penalty_kind": ["fine"],
+                "penalty_minimum_amount": ["$100"],
+                "penalty_maximum_amount": ["$500"],
+                "penalty_recurrence": ["per violation"],
+            },
         ),
     ]
 

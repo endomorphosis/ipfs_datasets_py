@@ -318,20 +318,34 @@ def test_decoder_renders_penalty_clauses_without_duplicate_condition_or_deadline
             "A violation is punishable by a civil fine of not less than $100 and not more than $500 per violation.",
             "civil",
             "Violation is subject to a civil fine of not less than $100 and not more than $500 per violation.",
+            {
+                "penalty_classification": ["civil"],
+                "penalty_kind": ["fine"],
+                "penalty_minimum_amount": ["$100"],
+                "penalty_maximum_amount": ["$500"],
+                "penalty_recurrence": ["per violation"],
+            },
         ),
         (
             "A violation is punishable by imprisonment for not more than 30 days.",
             "criminal",
             "Violation is subject to imprisonment for not more than 30 days.",
+            {
+                "penalty_kind": ["imprisonment"],
+                "penalty_imprisonment": ["imprisonment for not more than 30 days"],
+            },
         ),
         (
             "A violation is subject to an administrative penalty of $250 per day.",
             "administrative",
             "Violation is subject to an administrative penalty of $250 per day.",
+            {
+                "penalty_classification": ["administrative"],
+            },
         ),
     ]
 
-    for text, classification, expected_decoded in examples:
+    for text, classification, expected_decoded, expected_provenance in examples:
         element, norm, decoded = _decode(text)
 
         assert element["norm_type"] == "penalty"
@@ -339,13 +353,28 @@ def test_decoder_renders_penalty_clauses_without_duplicate_condition_or_deadline
         assert norm.penalty["classification"] == classification
         assert decoded.text == expected_decoded
         assert decoded.missing_slots == []
-        assert [phrase.slot for phrase in decoded.phrases] == [
+        assert [phrase.slot for phrase in decoded.phrases[:3]] == [
             "actor",
             "penalty_connector",
             "action",
         ]
         assert decoded.phrases[1].fixed is True
         assert decoded.phrases[2].spans == [element["field_spans"]["action"]]
+        assert all(
+            phrase.provenance_only is True
+            for phrase in decoded.phrases[3:]
+        )
+        assert decoded_phrase_slot_text_map(decoded) == {
+            "actor": ["violation"],
+            "action": [
+                expected_decoded.removeprefix(
+                    "Violation is subject to "
+                ).removesuffix(".")
+            ],
+            **expected_provenance,
+        }
+        for phrase in decoded.phrases[3:]:
+            assert phrase.spans
         assert " within " not in decoded.text.lower()
         assert decoded.text.lower().count(" if ") == 0
 

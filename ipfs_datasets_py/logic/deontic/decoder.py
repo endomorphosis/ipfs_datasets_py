@@ -296,6 +296,7 @@ def _decode_penalty(norm: LegalNormIR) -> tuple[List[DecodedPhrase], List[str]]:
     else:
         missing.append("penalty")
 
+    _append_penalty_component_provenance(phrases, norm)
     return phrases, missing
 
 
@@ -335,6 +336,98 @@ def _penalty_sanction_text(norm: LegalNormIR) -> str:
     noun = "fine" if penalty.get("has_fine") else "penalty"
     parts = [part for part in (classification, noun, amount_text, recurrence_text) if part]
     return _clean_text(" ".join(parts))
+
+
+def _append_penalty_component_provenance(
+    phrases: List[DecodedPhrase],
+    norm: LegalNormIR,
+) -> None:
+    """Expose structured sanction components as grounded provenance slots."""
+
+    penalty = norm.penalty if isinstance(norm.penalty, Mapping) else {}
+    if not penalty:
+        return
+
+    seen = {
+        (
+            phrase.slot,
+            phrase.text,
+            tuple(tuple(span) for span in phrase.spans),
+        )
+        for phrase in phrases
+    }
+
+    def append(slot: str, text: str, detail: Mapping[str, Any] | None = None) -> None:
+        clean = _clean_text(text)
+        if not clean:
+            return
+        spans = _penalty_component_spans(norm, clean, detail or {})
+        if not spans:
+            return
+        key = (slot, clean, tuple(tuple(span) for span in spans))
+        if key in seen:
+            return
+        seen.add(key)
+        phrases.append(_provenance_phrase(clean, slot, spans))
+
+    classification = _clean_text(
+        str(penalty.get("classification") or penalty.get("sanction_class") or "")
+    )
+    append("penalty_classification", classification)
+
+    if penalty.get("has_fine"):
+        append("penalty_kind", "fine")
+    if penalty.get("has_imprisonment"):
+        append("penalty_kind", "imprisonment")
+
+    minimum = penalty.get("minimum_amount")
+    if isinstance(minimum, Mapping):
+        append("penalty_minimum_amount", _slot_text(minimum), minimum)
+
+    maximum = penalty.get("maximum_amount")
+    if isinstance(maximum, Mapping):
+        append("penalty_maximum_amount", _slot_text(maximum), maximum)
+
+    recurrence = penalty.get("recurrence")
+    if isinstance(recurrence, Mapping):
+        append("penalty_recurrence", _slot_text(recurrence), recurrence)
+
+    imprisonment = penalty.get("imprisonment_duration")
+    if isinstance(imprisonment, Mapping):
+        append("penalty_imprisonment", _slot_text(imprisonment), imprisonment)
+
+
+def _penalty_component_spans(
+    norm: LegalNormIR,
+    text: str,
+    detail: Mapping[str, Any],
+) -> List[List[int]]:
+    spans = _coerce_spans(detail.get("span"))
+    if spans:
+        return spans
+
+    source_text = str(norm.source_text or "").strip()
+    if not source_text:
+        return []
+
+    candidates = _coerce_spans(
+        (norm.field_spans if isinstance(norm.field_spans, Mapping) else {}).get("action")
+    )
+    candidates.extend(_coerce_spans(norm.support_span.to_list()))
+    search_text = _clean_text(text)
+    if not search_text:
+        return []
+
+    for span in candidates:
+        if len(span) != 2:
+            continue
+        start, end = int(span[0]), int(span[1])
+        if start < 0 or end > len(source_text) or start >= end:
+            continue
+        offset = source_text[start:end].lower().find(search_text.lower())
+        if offset >= 0:
+            return [[start + offset, start + offset + len(search_text)]]
+    return []
 
 
 def _phrase(text: str, slot: str, norm: LegalNormIR) -> DecodedPhrase:

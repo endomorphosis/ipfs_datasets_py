@@ -256,6 +256,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_deletion_erasure_light_verb_action(action_text)
     action_text = _normalize_preservation_restoration_light_verb_action(action_text)
     action_text = _normalize_archival_retention_light_verb_action(action_text)
+    action_text = _normalize_incident_risk_reporting_light_verb_action(action_text)
     action_text = _normalize_cybersecurity_access_control_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
@@ -4368,6 +4369,70 @@ def _normalize_cybersecurity_access_control_light_verb_action(action_text: str) 
     return text
 
 
+def _normalize_incident_risk_reporting_light_verb_action(action_text: str) -> str:
+    """Project incident, breach, and risk-reporting nominalizations."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    report_patterns = [
+        (
+            r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|prepare|prepares|prepared|preparing|make|makes|made|making)\s+"
+            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+reports?\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+        (
+            r"^(?P<kind>incident|breach|risk|hazard)\s+reports?\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+    ]
+    for pattern in report_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            kind = _normalized_light_verb_target(match.group("kind"))
+            target = _normalized_light_verb_target(match.group("target"))
+            return f"report {kind} {target}" if kind and target else text
+
+    log_patterns = [
+        (
+            r"^(?:create|creates|created|creating|maintain|maintains|maintained|maintaining|update|updates|updated|updating|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
+            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+(?:log|logging)\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+        (
+            r"^(?P<kind>incident|breach|risk|hazard)\s+(?:log|logging)\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+    ]
+    for pattern in log_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            kind = _normalized_light_verb_target(match.group("kind"))
+            target = _normalized_light_verb_target(match.group("target"))
+            return f"log {kind} {target}" if kind and target else text
+
+    register_patterns = [
+        (
+            r"^(?:create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing|update|updates|updated|updating)\s+"
+            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+register\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+        (
+            r"^(?P<kind>incident|breach|risk|hazard)\s+register\s+"
+            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
+        ),
+    ]
+    for pattern in register_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            kind = _normalized_light_verb_target(match.group("kind"))
+            target = _normalized_light_verb_target(match.group("target"))
+            return f"register {kind} {target}" if kind and target else text
+
+    return text
+
+
 def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> str:
     """Project redaction and anonymization nominalizations to operative predicates."""
 
@@ -5443,6 +5508,49 @@ def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str
     text = str(action_text or "").strip()
     if not text:
         return text
+
+    digital_record_patterns = [
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?(?:digitization|digitalization)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "digitize",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$",
+            "scan",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?migration\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "migrate",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:an?\s+|the\s+)?upload\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "upload",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:a\s+|the\s+)?download\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "download",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:an?\s+|the\s+)?import\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "import",
+        ),
+        (
+            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
+            r"(?:an?\s+|the\s+)?export\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
+            "export",
+        ),
+    ]
+    for pattern, verb in digital_record_patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if match:
+            target = _normalized_light_verb_target(match.group(1))
+            return f"{verb} {target}" if target else text
 
     conversion_patterns = [
         r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
