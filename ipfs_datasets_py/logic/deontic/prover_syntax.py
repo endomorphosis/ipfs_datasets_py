@@ -19,7 +19,7 @@ from .formula_builder import (
     build_deontic_formula_record_from_ir,
 )
 from .ir import LegalNormIR, legal_norm_ir_slot_provenance
-from .decoder import decode_legal_norm_ir
+from .decoder import decode_legal_norm_ir, decoded_phrase_slot_text_map
 
 
 LOCAL_PROVER_TARGETS = (
@@ -396,6 +396,9 @@ def _decoded_phrase_profile(
     fixed_slots: List[str] = []
     provenance_only_slots: List[str] = []
     phrase_texts: List[str] = []
+    phrase_texts_by_slot: Dict[str, List[str]] = {}
+    legal_phrase_texts_by_slot: Dict[str, List[str]] = {}
+    provenance_phrase_texts_by_slot: Dict[str, List[str]] = {}
     phrase_count = 0
     legal_phrase_count = 0
     fixed_phrase_count = 0
@@ -411,6 +414,8 @@ def _decoded_phrase_profile(
         spans = list(getattr(phrase, "spans", []) or [])
         if text:
             phrase_texts.append(text)
+            if slot and not fixed:
+                _append_slot_text(phrase_texts_by_slot, slot, text)
         if fixed:
             fixed_phrase_count += 1
             if slot and slot not in fixed_slots:
@@ -420,8 +425,12 @@ def _decoded_phrase_profile(
             provenance_only_phrase_count += 1
             if slot and slot not in provenance_only_slots:
                 provenance_only_slots.append(slot)
+            if slot and text:
+                _append_slot_text(provenance_phrase_texts_by_slot, slot, text)
         else:
             legal_phrase_count += 1
+            if slot and text:
+                _append_slot_text(legal_phrase_texts_by_slot, slot, text)
         if slot and slot not in phrase_slots:
             phrase_slots.append(slot)
         if spans:
@@ -461,6 +470,9 @@ def _decoded_phrase_profile(
         "ungrounded_phrase_slots": ungrounded_phrase_slots,
         "fixed_slots": fixed_slots,
         "provenance_only_slots": provenance_only_slots,
+        "phrase_texts_by_slot": decoded_phrase_slot_text_map(decoded),
+        "legal_phrase_texts_by_slot": legal_phrase_texts_by_slot,
+        "provenance_phrase_texts_by_slot": provenance_phrase_texts_by_slot,
         "missing_slots": missing_slots,
         "phrase_texts": phrase_texts,
         "all_decoded_phrases_grounded": not ungrounded_phrase_slots,
@@ -477,6 +489,12 @@ def _target_formula_role(target: str) -> str:
         "deontic_fol": "deontic_first_order_formula",
         "deontic_temporal_fol": "temporal_deontic_first_order_formula",
     }.get(target, "unknown")
+
+
+def _append_slot_text(target: Dict[str, List[str]], slot: str, text: str) -> None:
+    values = target.setdefault(slot, [])
+    if text not in values:
+        values.append(text)
 
 
 def _ir_slot_grounding_summary(norm: LegalNormIR) -> Dict[str, Any]:
@@ -701,6 +719,15 @@ def _target_components(
         "decoded_fixed_slots": list(decoded_phrase_profile.get("fixed_slots") or []),
         "decoded_provenance_only_slots": list(
             decoded_phrase_profile.get("provenance_only_slots") or []
+        ),
+        "decoded_phrase_texts_by_slot": dict(
+            decoded_phrase_profile.get("phrase_texts_by_slot") or {}
+        ),
+        "decoded_legal_phrase_texts_by_slot": dict(
+            decoded_phrase_profile.get("legal_phrase_texts_by_slot") or {}
+        ),
+        "decoded_provenance_phrase_texts_by_slot": dict(
+            decoded_phrase_profile.get("provenance_phrase_texts_by_slot") or {}
         ),
         "source_salient_token_count": int(
             reconstruction_token_profile.get("source_salient_token_count") or 0

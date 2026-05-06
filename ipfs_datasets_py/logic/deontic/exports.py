@@ -5015,6 +5015,8 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "data_protection_duty"
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
+    if _is_administrative_relief_waiver(norm, action_predicate):
+        return "administrative_relief_duty"
     if action_predicate.startswith((
         "ObtainAuthorization",
         "ObtainConsent",
@@ -5159,6 +5161,24 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _is_administrative_relief_waiver(norm: LegalNormIR, action_predicate: str) -> bool:
+    """Return whether a Waive* predicate came from administrative relief text."""
+
+    if not str(action_predicate or "").startswith("Waive"):
+        return False
+
+    action = re.sub(r"\s+", " ", str(norm.action or "").strip()).lower()
+    if not action:
+        return False
+
+    return bool(re.match(
+        r"^(?:grant|grants|granted|granting|approve|approves|approved|approving|"
+        r"order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing)\s+"
+        r"(?:an?\s+|the\s+)?waiver\b",
+        action,
+    ))
 
 
 def _predicate_mentions_regulated_instrument(action_predicate: str) -> bool:

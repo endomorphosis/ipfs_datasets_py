@@ -658,6 +658,58 @@ def test_capability_profiles_include_decoder_reconstruction_slot_coverage():
     assert all(record["decoder_legal_phrase_count"] == 3 for record in capability_records)
 
 
+def test_capability_profiles_disambiguate_waiver_families_from_ir_action():
+    examples = [
+        (
+            "The Director shall grant a waiver of the fee.",
+            "O(∀x (Director(x) → WaiveFee(x)))",
+            "administrative_relief_duty",
+            "grant a waiver of the fee",
+        ),
+        (
+            "The Clerk shall approve a waiver of the deadline.",
+            "O(∀x (Clerk(x) → WaiveDeadline(x)))",
+            "administrative_relief_duty",
+            "approve a waiver of the deadline",
+        ),
+        (
+            "The Director shall file a waiver of the fee.",
+            "O(∀x (Director(x) → WaiveFee(x)))",
+            "consent_release_instrument_duty",
+            "file a waiver of the fee",
+        ),
+        (
+            "The Agency shall obtain consent of the owner.",
+            "O(∀x (Agency(x) → ObtainConsentOwner(x)))",
+            "consent_release_instrument_duty",
+            "obtain consent of the owner",
+        ),
+    ]
+    norms = []
+
+    for text, expected_formula, _, expected_action in examples:
+        element = extract_normative_elements(text)[0]
+        norm = LegalNormIR.from_parser_element(element)
+        norms.append(norm)
+
+        assert norm.action == expected_action
+        assert build_deontic_formula_from_ir(norm) == expected_formula
+
+    capability_records = build_deterministic_parser_capability_profile_records(norms)
+
+    assert [record["formula"] for record in capability_records] == [
+        formula for _, formula, _, _ in examples
+    ]
+    assert [record["capability_family"] for record in capability_records] == [
+        family for _, _, family, _ in examples
+    ]
+    assert all(record["checked_slots"] == ["actor", "modality", "action"] for record in capability_records)
+    assert all(record["grounded_slots"] == ["actor", "modality", "action"] for record in capability_records)
+    assert all(record["source_grounded_slot_rate"] == 1.0 for record in capability_records)
+    assert all(record["requires_validation"] is False for record in capability_records)
+    assert all(record["repair_required"] is False for record in capability_records)
+
+
 def test_capability_profile_slice_preserves_unresolved_numbered_exception_gate():
     blocked = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."

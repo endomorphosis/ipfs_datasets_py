@@ -46,6 +46,36 @@ class DecodedLegalText:
         return data
 
 
+def decoded_phrase_slot_text_map(
+    decoded: DecodedLegalText,
+    *,
+    include_fixed: bool = False,
+    include_provenance_only: bool = True,
+) -> Dict[str, List[str]]:
+    """Return decoded phrase texts grouped by source slot.
+
+    Phase 8 prover reports need to audit not only which slots were decoded, but
+    which normalized phrase text each slot contributed. This helper stays on the
+    decoder side so downstream reports do not have to reconstruct phrase
+    semantics from raw legal text.
+    """
+
+    slot_texts: Dict[str, List[str]] = {}
+    for phrase in decoded.phrases:
+        if phrase.fixed and not include_fixed:
+            continue
+        if phrase.provenance_only and not include_provenance_only:
+            continue
+        slot = str(phrase.slot or "").strip()
+        text = _clean_text(phrase.text)
+        if not slot or not text:
+            continue
+        values = slot_texts.setdefault(slot, [])
+        if text not in values:
+            values.append(text)
+    return slot_texts
+
+
 def decode_legal_norm_ir(norm: LegalNormIR) -> DecodedLegalText:
     """Render normalized legal text from a deterministic legal norm IR."""
 

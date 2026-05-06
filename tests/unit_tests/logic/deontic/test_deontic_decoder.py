@@ -2,7 +2,10 @@
 
 from dataclasses import replace
 
-from ipfs_datasets_py.logic.deontic.decoder import decode_legal_norm_ir
+from ipfs_datasets_py.logic.deontic.decoder import (
+    decode_legal_norm_ir,
+    decoded_phrase_slot_text_map,
+)
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import extract_normative_elements
 
@@ -158,6 +161,26 @@ def test_decoder_reconstructs_separated_recipient_slot_with_provenance():
     recipient_phrase = decoded.phrases[-1]
     assert recipient_phrase.text == "the applicant"
     assert recipient_phrase.spans == [[37, 50]]
+
+
+def test_decoder_groups_decoded_phrase_text_by_source_slot():
+    element, norm, decoded = _decode(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )
+
+    grouped = decoded_phrase_slot_text_map(decoded)
+    legal_only = decoded_phrase_slot_text_map(decoded, include_provenance_only=False)
+    with_fixed = decoded_phrase_slot_text_map(decoded, include_fixed=True)
+
+    assert grouped["actor"] == ["Secretary"]
+    assert grouped["modality"] == ["shall"]
+    assert grouped["action"] == ["publish the notice"]
+    assert grouped["exceptions"] == ["as provided in section 552"]
+    assert grouped["cross_references"] == ["section 552"]
+    assert "cross_references" not in legal_only
+    assert with_fixed["exception_connector"] == ["except"]
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in norm.blockers
 
 
 def test_decoder_reconstructs_separate_temporal_deadline_once():

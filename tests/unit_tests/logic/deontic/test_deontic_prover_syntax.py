@@ -476,6 +476,83 @@ def test_prover_syntax_records_carry_decoded_phrase_profiles():
         ) == 5
 
 
+def test_prover_decoded_phrase_profiles_carry_slot_text_maps():
+    examples = [
+        (
+            "The Director shall provide notice to the applicant.",
+            {
+                "actor": ["Director"],
+                "modality": ["shall"],
+                "action": ["provide notice to the applicant"],
+            },
+            {},
+        ),
+        (
+            "The Director shall issue a permit within 10 days after application.",
+            {
+                "actor": ["Director"],
+                "modality": ["shall"],
+                "action": ["issue a permit"],
+                "temporal_constraints": ["within 10 days after application"],
+            },
+            {},
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            {
+                "actor": ["Secretary"],
+                "modality": ["shall"],
+                "action": ["publish the notice"],
+                "exceptions": ["as provided in section 552"],
+                "cross_references": ["section 552"],
+            },
+            {"cross_references": ["section 552"]},
+        ),
+    ]
+
+    for text, phrase_texts_by_slot, provenance_texts_by_slot in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert all(
+            record["decoded_phrase_profile"]["phrase_texts_by_slot"]
+            == phrase_texts_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_phrase_texts_by_slot"]
+            == phrase_texts_by_slot
+            for record in records
+        )
+        assert all(
+            record["decoded_phrase_profile"]["provenance_phrase_texts_by_slot"]
+            == provenance_texts_by_slot
+            for record in records
+        )
+        assert all(
+            record["target_components"]["decoded_provenance_phrase_texts_by_slot"]
+            == provenance_texts_by_slot
+            for record in records
+        )
+        assert all(
+            record["decoded_phrase_profile"]["legal_phrase_texts_by_slot"]
+            == {
+                slot: values
+                for slot, values in phrase_texts_by_slot.items()
+                if slot not in provenance_texts_by_slot
+            }
+            for record in records
+        )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
+
+
 def test_prover_decoded_phrase_profile_preserves_protected_reference_blocker():
     element = extract_normative_elements(
         "The Secretary shall publish the notice except as provided in section 552."
