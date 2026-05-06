@@ -228,6 +228,7 @@ class SupervisorLoop:
             child_started_at = self.monotonic()
             self._write_status("starting", child=child, run_id=run_id, log_path=log_path)
             recycled = False
+            stop_requested = False
 
             while True:
                 exit_code = _poll_child_exit(child)
@@ -242,7 +243,7 @@ class SupervisorLoop:
                         self.last_recycle_reason = decision.reason
                         terminate_supervised_child(child, grace_seconds=self.config.stop_grace_seconds)
                         self.last_exit_code = wait_for_child_exit(child)
-                        recycled = True
+                        stop_requested = True
                         break
                     if decision.action == "recycle":
                         self.last_recycle_reason = decision.reason
@@ -260,6 +261,8 @@ class SupervisorLoop:
                 self.sleep(max(0.01, min(float(self.config.heartbeat_seconds), float(self.config.poll_seconds))))
 
             clear_child_pid_file(child)
+            if stop_requested:
+                break
             self.restart_count += 1
             if self.config.max_restarts > 0 and self.restart_count >= self.config.max_restarts:
                 final_status = "max_restarts_reached" if recycled else "child_exited"
