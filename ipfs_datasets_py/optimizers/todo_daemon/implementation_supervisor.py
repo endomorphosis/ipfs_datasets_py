@@ -21,6 +21,7 @@ from .implementation_daemon import (
     TASK_HEADER_PREFIX,
     PortalTaskState,
     load_json_dict,
+    parse_timestamp,
     process_command_line,
     process_is_running,
     utc_now,
@@ -209,6 +210,21 @@ class PortalImplementationSupervisor:
         self.rewrite_strategy(state, reason)
         return SupervisorLoopDecision.recycle(reason, detail={"active_task_id": state.active_task_id})
 
+    def _implementation_attempt_is_active(self, state: PortalTaskState, *, now_ts: float) -> bool:
+        if not state.active_task_id or not state.implementation_in_progress:
+            return False
+        if state.last_implementation_task_id and state.last_implementation_task_id != state.active_task_id:
+            return False
+        started_at = parse_timestamp(state.last_implementation_started_at or state.active_phase_started_at)
+        if started_at is None:
+            return False
+        finished_at = parse_timestamp(state.last_implementation_finished_at)
+        if finished_at is not None and finished_at >= started_at:
+            return False
+        grace_seconds = max(30.0, float(self.config.check_interval) * 2.0)
+        max_age_seconds = max(float(self.config.stale_seconds), float(self.config.implementation_timeout))
+        return max(0.0, now_ts - started_at.timestamp()) <= max_age_seconds + grace_seconds
+
     def is_stuck(
         self,
         state: PortalTaskState,
@@ -216,6 +232,8 @@ class PortalImplementationSupervisor:
         now_ts: float,
         ignore_progress_until_ts: float | None = None,
     ) -> tuple[bool, str]:
+        if self._implementation_attempt_is_active(state, now_ts=now_ts):
+            return False, ""
         heartbeat_age = self._age_seconds(state.heartbeat_at, now_ts)
         progress_age = self._age_seconds(state.last_progress_at, now_ts)
         stale = self.config.stale_seconds

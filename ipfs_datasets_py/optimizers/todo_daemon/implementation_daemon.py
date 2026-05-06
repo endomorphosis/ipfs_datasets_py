@@ -25,7 +25,21 @@ REPO_ROOT = Path.cwd()
 logger = logging.getLogger("ipfs_datasets_py.optimizers.todo_daemon.implementation_daemon")
 
 TASK_HEADER_PREFIX = "## PORTAL-"
-DEFAULT_TRACKS = ["platform", "data", "ui", "mobile", "wallet", "collab", "pwa", "ops"]
+DEFAULT_TRACKS = [
+    "platform",
+    "agent",
+    "graphrag",
+    "data",
+    "ui",
+    "mobile",
+    "wallet",
+    "privacy",
+    "runtime",
+    "quality",
+    "collab",
+    "pwa",
+    "ops",
+]
 PRIORITY_ORDER = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 DEFAULT_IMPLEMENTATION_TIMEOUT_SECONDS = 1800.0
 RECENT_NO_CHANGE_COOLDOWN_SECONDS = 1800.0
@@ -44,6 +58,13 @@ EPHEMERAL_WORKTREE_PATHS = (
     "wallet_interface/ui/test-results",
     "wallet_interface/ui/artifacts/ui-iterations/latest",
     "wallet_interface/ui/artifacts/ui-screenshots/latest",
+)
+UNTRACKED_WORKTREE_CONTEXT_PREFIXES = (
+    "docs/",
+    "scripts/",
+    "scraper/",
+    "tests/",
+    "wallet_interface/",
 )
 
 
@@ -160,6 +181,14 @@ class PortalTaskState:
     active_task_title: str = ""
     active_task_track: str = ""
     active_task_started_at: str = ""
+    active_attempt: int = 0
+    active_phase: str = ""
+    active_phase_started_at: str = ""
+    active_phase_detail: str = ""
+    active_log_path: str = ""
+    active_worktree_path: str = ""
+    active_branch: str = ""
+    implementation_in_progress: bool = False
     recommended_task_id: str = ""
     recommended_actions: list[str] = field(default_factory=list)
     completed_task_ids: list[str] = field(default_factory=list)
@@ -214,6 +243,14 @@ class PortalTaskState:
             active_task_title=str(payload.get("active_task_title") or ""),
             active_task_track=str(payload.get("active_task_track") or ""),
             active_task_started_at=str(payload.get("active_task_started_at") or ""),
+            active_attempt=int(payload.get("active_attempt") or 0),
+            active_phase=str(payload.get("active_phase") or ""),
+            active_phase_started_at=str(payload.get("active_phase_started_at") or ""),
+            active_phase_detail=str(payload.get("active_phase_detail") or ""),
+            active_log_path=str(payload.get("active_log_path") or ""),
+            active_worktree_path=str(payload.get("active_worktree_path") or ""),
+            active_branch=str(payload.get("active_branch") or ""),
+            implementation_in_progress=bool(payload.get("implementation_in_progress")),
             recommended_task_id=str(payload.get("recommended_task_id") or ""),
             recommended_actions=[str(item) for item in payload.get("recommended_actions", []) or []],
             completed_task_ids=[str(item) for item in payload.get("completed_task_ids", []) or []],
@@ -413,8 +450,11 @@ class PortalImplementationDaemon:
                 and not unresolved_merge_failure
             )
             if task.status == "completed" or artifact_complete:
-                resolved_statuses[task.task_id] = "completed"
                 completed_set.add(task.task_id)
+
+        for task in tasks:
+            if task.task_id in completed_set:
+                resolved_statuses[task.task_id] = "completed"
                 if task.task_id not in previous_completed:
                     newly_completed.append(task.task_id)
                 continue
@@ -446,6 +486,14 @@ class PortalImplementationDaemon:
         state.task_validation = {task.task_id: task.validation for task in tasks if task.validation}
         state.strategy_generation = int(strategy.get("generation", 0))
         state.implementation_attempts = previous.implementation_attempts
+        state.active_attempt = previous.active_attempt
+        state.active_phase = previous.active_phase
+        state.active_phase_started_at = previous.active_phase_started_at
+        state.active_phase_detail = previous.active_phase_detail
+        state.active_log_path = previous.active_log_path
+        state.active_worktree_path = previous.active_worktree_path
+        state.active_branch = previous.active_branch
+        state.implementation_in_progress = previous.implementation_in_progress
         state.last_implementation_task_id = previous.last_implementation_task_id
         state.last_implementation_started_at = previous.last_implementation_started_at
         state.last_implementation_finished_at = previous.last_implementation_finished_at
@@ -465,6 +513,7 @@ class PortalImplementationDaemon:
             if state.active_task_id != selected.task_id:
                 state.active_task_started_at = now
                 state.last_progress_at = now
+                self._clear_active_execution_state(state)
                 self._record_event(
                     "task_selected",
                     {
@@ -483,6 +532,7 @@ class PortalImplementationDaemon:
             state.active_task_title = ""
             state.active_task_track = ""
             state.active_task_started_at = ""
+            self._clear_active_execution_state(state)
             state.recommended_task_id = ""
             state.recommended_actions = []
 
@@ -596,6 +646,13 @@ class PortalImplementationDaemon:
                     prompt=prompt,
                 )
             self.implementation_log_dir.mkdir(parents=True, exist_ok=True)
+            self._mark_implementation_started(
+                state,
+                task=task,
+                attempt=attempt,
+                started_at=started_at,
+                log_path=log_path,
+            )
             self._record_event(
                 "implementation_started",
                 {
@@ -622,6 +679,11 @@ class PortalImplementationDaemon:
                 )
             effective_returncode = completed.returncode
             if completed.returncode == 0:
+                self._mark_active_phase(
+                    state,
+                    phase="validating",
+                    phase_detail="; ".join(task.validation) if task.validation else "",
+                )
                 validation_result = self._run_validation_commands(workspace_path, task, log_path)
                 if not validation_result.get("passed", False):
                     effective_returncode = int(validation_result.get("returncode") or 1)
@@ -632,7 +694,7 @@ class PortalImplementationDaemon:
             state.last_implementation_finished_at = finished_at
             state.last_implementation_returncode = effective_returncode
             state.last_implementation_log_path = str(log_path)
-            state.last_progress_at = finished_at
+            self._mark_implementation_finished(state, finished_at=finished_at)
             state.save(self.state_path)
             result = {
                 "task_id": task.task_id,
@@ -651,6 +713,7 @@ class PortalImplementationDaemon:
             state.last_implementation_finished_at = finished_at
             state.last_implementation_returncode = 124
             state.last_implementation_log_path = str(log_path)
+            self._mark_implementation_finished(state, finished_at=finished_at)
             state.save(self.state_path)
             result = {
                 "task_id": task.task_id,
@@ -700,8 +763,17 @@ class PortalImplementationDaemon:
         commit_result: dict[str, Any] = {"committed": False}
 
         try:
-            baseline_ref = self._create_seeded_worktree(worktree_path, branch_name)
+            baseline_ref = self._create_seeded_worktree(worktree_path, branch_name, task=task)
             command = self._build_implementation_command(worktree_path)
+            self._mark_implementation_started(
+                state,
+                task=task,
+                attempt=attempt,
+                started_at=started_at,
+                log_path=log_path,
+                worktree_path=worktree_path,
+                branch_name=branch_name,
+            )
             self._record_event(
                 "implementation_started",
                 {
@@ -734,12 +806,26 @@ class PortalImplementationDaemon:
             )
             returncode = completed.returncode
             if returncode == 0:
-                self._prepare_worktree_for_validation(worktree_path)
+                self._mark_active_phase(
+                    state,
+                    phase="validating",
+                    phase_detail="; ".join(task.validation) if task.validation else "",
+                    worktree_path=worktree_path,
+                    branch_name=branch_name,
+                )
+                self._prepare_worktree_for_validation(worktree_path, task=task)
                 validation_result = self._run_validation_commands(worktree_path, task, log_path)
                 if validation_result.get("passed", False):
                     commit_result = self._commit_worktree_changes(worktree_path, task, attempt)
                     implementation_commit = str(commit_result.get("commit", ""))
                     if implementation_commit:
+                        self._mark_active_phase(
+                            state,
+                            phase="merging",
+                            phase_detail=branch_name,
+                            worktree_path=worktree_path,
+                            branch_name=branch_name,
+                        )
                         merge_result = self._merge_branch_to_main(branch_name, task, attempt)
                         if merge_result.get("merged"):
                             cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
@@ -773,7 +859,7 @@ class PortalImplementationDaemon:
             int(merge_result["returncode"]) if merge_result.get("returncode") is not None else None
         )
         state.last_merge_error = str(merge_result.get("stderr") or merge_result.get("reason") or "")
-        state.last_progress_at = finished_at
+        self._mark_implementation_finished(state, finished_at=finished_at)
         state.save(self.state_path)
         result = {
             "task_id": task.task_id,
@@ -792,11 +878,96 @@ class PortalImplementationDaemon:
         self._record_event("implementation_finished", result)
         return result
 
-    def _create_seeded_worktree(self, worktree_path: Path, branch_name: str) -> str:
+    def _clear_active_execution_state(self, state: PortalTaskState) -> None:
+        state.active_attempt = 0
+        state.active_phase = ""
+        state.active_phase_started_at = ""
+        state.active_phase_detail = ""
+        state.active_log_path = ""
+        state.active_worktree_path = ""
+        state.active_branch = ""
+        state.implementation_in_progress = False
+
+    def _mark_implementation_started(
+        self,
+        state: PortalTaskState,
+        *,
+        task: PortalTask,
+        attempt: int,
+        started_at: str,
+        log_path: Path,
+        worktree_path: Path | None = None,
+        branch_name: str = "",
+    ) -> None:
+        state.active_task_id = task.task_id
+        state.active_task_title = task.title
+        state.active_task_track = task.track
+        if not state.active_task_started_at:
+            state.active_task_started_at = started_at
+        state.active_attempt = attempt
+        state.active_phase = "implementing"
+        state.active_phase_started_at = started_at
+        state.active_phase_detail = ""
+        state.active_log_path = str(log_path)
+        state.active_worktree_path = str(worktree_path) if worktree_path is not None else ""
+        state.active_branch = branch_name
+        state.implementation_in_progress = True
+        state.last_implementation_task_id = task.task_id
+        state.last_implementation_started_at = started_at
+        state.last_implementation_finished_at = ""
+        state.last_implementation_returncode = None
+        state.last_implementation_log_path = str(log_path)
+        state.last_implementation_worktree_path = str(worktree_path) if worktree_path is not None else ""
+        state.last_implementation_branch = branch_name
+        state.last_implementation_commit = ""
+        state.heartbeat_at = started_at
+        state.last_progress_at = started_at
+        state.save(self.state_path)
+
+    def _mark_active_phase(
+        self,
+        state: PortalTaskState,
+        *,
+        phase: str,
+        phase_detail: str = "",
+        worktree_path: Path | None = None,
+        branch_name: str | None = None,
+        at: str | None = None,
+    ) -> None:
+        timestamp = at or utc_now()
+        if state.active_phase != phase:
+            state.active_phase_started_at = timestamp
+        elif not state.active_phase_started_at:
+            state.active_phase_started_at = timestamp
+        state.active_phase = phase
+        state.active_phase_detail = phase_detail
+        if worktree_path is not None:
+            state.active_worktree_path = str(worktree_path)
+        if branch_name is not None:
+            state.active_branch = branch_name
+        state.implementation_in_progress = True
+        state.heartbeat_at = timestamp
+        state.last_progress_at = timestamp
+        state.save(self.state_path)
+
+    def _mark_implementation_finished(self, state: PortalTaskState, *, finished_at: str) -> None:
+        state.implementation_in_progress = False
+        state.heartbeat_at = finished_at
+        state.last_progress_at = finished_at
+        self._clear_active_execution_state(state)
+
+    def _create_seeded_worktree(
+        self,
+        worktree_path: Path,
+        branch_name: str,
+        *,
+        task: PortalTask | None = None,
+    ) -> str:
         self._run_git(["worktree", "add", "-b", branch_name, str(worktree_path), "HEAD"], cwd=self.repo_root)
         baseline_ref = self._run_git(["rev-parse", "HEAD"], cwd=worktree_path).stdout.strip()
         self._initialize_worktree_submodules(worktree_path)
         self._link_shared_worktree_paths(worktree_path)
+        self._seed_untracked_worktree_context(worktree_path, task=task)
         return baseline_ref
 
     def _initialize_worktree_submodules(self, worktree_path: Path) -> None:
@@ -857,9 +1028,74 @@ class PortalImplementationDaemon:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.symlink_to(source, target_is_directory=source.is_dir())
 
-    def _prepare_worktree_for_validation(self, worktree_path: Path) -> None:
+    def _prepare_worktree_for_validation(self, worktree_path: Path, *, task: PortalTask | None = None) -> None:
         self._initialize_worktree_submodules(worktree_path)
         self._link_shared_worktree_paths(worktree_path)
+        self._seed_untracked_worktree_context(worktree_path, task=task)
+
+    def _seed_untracked_worktree_context(
+        self,
+        worktree_path: Path,
+        *,
+        task: PortalTask | None = None,
+    ) -> list[str]:
+        """Copy relevant untracked source context into an ephemeral worktree."""
+
+        seeded: list[str] = []
+        for relative in self._untracked_worktree_context_paths():
+            if not self._untracked_context_path_allowed(relative):
+                continue
+            source = self.repo_root / relative
+            if not source.exists() or source.is_dir():
+                continue
+            target = worktree_path / relative
+            if target.exists() or target.is_symlink():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if source.is_symlink():
+                target.symlink_to(os.readlink(source))
+            else:
+                shutil.copy2(source, target)
+            seeded.append(relative)
+
+        if seeded:
+            payload: dict[str, Any] = {
+                "worktree_path": str(worktree_path),
+                "seeded_paths": seeded,
+                "seeded_count": len(seeded),
+            }
+            if task is not None:
+                payload["task_id"] = task.task_id
+            self._record_event("worktree_context_seeded", payload)
+        return seeded
+
+    def _untracked_worktree_context_paths(self) -> list[str]:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+            cwd=self.repo_root,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+        paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+        return sorted(path for path in paths if path)
+
+    def _untracked_context_path_allowed(self, relative: str) -> bool:
+        if not relative or relative.startswith("/") or "\0" in relative:
+            return False
+        if ".." in Path(relative).parts:
+            return False
+        if any(self._path_matches_prefix(relative, prefix) for prefix in EPHEMERAL_WORKTREE_PATHS):
+            return False
+        if any(self._path_matches_prefix(relative, prefix) for prefix in WORKTREE_SUBMODULE_PATHS):
+            return False
+        return any(self._path_matches_prefix(relative, prefix) for prefix in UNTRACKED_WORKTREE_CONTEXT_PREFIXES)
+
+    @staticmethod
+    def _path_matches_prefix(relative: str, prefix: str) -> bool:
+        normalized = prefix.rstrip("/")
+        return relative == normalized or relative.startswith(f"{normalized}/")
 
     def _commit_worktree_changes(self, worktree_path: Path, task: PortalTask, attempt: int) -> dict[str, Any]:
         self._restore_ephemeral_worktree_paths_for_commit(worktree_path)
@@ -983,7 +1219,8 @@ class PortalImplementationDaemon:
 
     def _merge_branch_to_main(self, branch_name: str, task: PortalTask, attempt: int) -> dict[str, Any]:
         started_at = utc_now()
-        dirty_overlap = self._dirty_merge_conflict_paths(branch_name)
+        identical_untracked_paths = self._identical_untracked_merge_paths(branch_name)
+        dirty_overlap = self._dirty_merge_conflict_paths(branch_name, ignore_paths=set(identical_untracked_paths))
         if dirty_overlap:
             result = {
                 "attempted": True,
@@ -1000,6 +1237,7 @@ class PortalImplementationDaemon:
             }
             self._record_event("merge_finished", result)
             return result
+        removed_untracked = self._remove_untracked_paths_for_merge(identical_untracked_paths)
         merge_lock = self._repo_merge_lock_path()
         lock_metadata = self._build_merge_lock_metadata(branch_name, task, attempt, started_at)
         lock_fd, lock_reason, existing_lock = self._try_acquire_lock(
@@ -1014,10 +1252,12 @@ class PortalImplementationDaemon:
                 "reason": lock_reason,
                 "branch": branch_name,
                 "started_at": started_at,
+                "identical_untracked_paths": identical_untracked_paths,
             }
             if existing_lock:
                 result["lock_owner_pid"] = int(existing_lock.get("pid") or 0)
                 result["lock_owner_branch"] = str(existing_lock.get("branch") or "")
+            self._restore_removed_untracked_paths(removed_untracked)
             return result
 
         try:
@@ -1055,7 +1295,10 @@ class PortalImplementationDaemon:
                 "merge_commit": merge_commit,
                 "stdout": merge.stdout[-4000:],
                 "stderr": merge.stderr[-4000:],
+                "identical_untracked_paths": identical_untracked_paths,
             }
+            if merge.returncode != 0:
+                self._restore_removed_untracked_paths(removed_untracked)
             self._record_event("merge_finished", result)
             return result
         finally:
@@ -1106,12 +1349,77 @@ class PortalImplementationDaemon:
         self._record_event("cleanup_finished", result)
         return result
 
-    def _dirty_merge_conflict_paths(self, branch_name: str) -> list[str]:
+    def _dirty_merge_conflict_paths(self, branch_name: str, *, ignore_paths: set[str] | None = None) -> list[str]:
         dirty_paths = self._dirty_worktree_paths(self.repo_root)
         if not dirty_paths:
             return []
         branch_paths = self._branch_changed_paths(branch_name)
-        return sorted(dirty_paths & branch_paths)
+        overlap = dirty_paths & branch_paths
+        if ignore_paths:
+            overlap -= ignore_paths
+        return sorted(overlap)
+
+    def _identical_untracked_merge_paths(self, branch_name: str) -> list[str]:
+        branch_paths = self._branch_changed_paths(branch_name)
+        if not branch_paths:
+            return []
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+            cwd=self.repo_root,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+        untracked_paths = {
+            path
+            for path in result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+            if path and path in branch_paths
+        }
+        identical: list[str] = []
+        for relative in sorted(untracked_paths):
+            if not self._repo_relative_path_safe(relative):
+                continue
+            source = self.repo_root / relative
+            if not source.is_file() or source.is_symlink():
+                continue
+            branch_blob = subprocess.run(
+                ["git", "show", f"{branch_name}:{relative}"],
+                cwd=self.repo_root,
+                capture_output=True,
+                check=False,
+            )
+            if branch_blob.returncode == 0 and source.read_bytes() == branch_blob.stdout:
+                identical.append(relative)
+        return identical
+
+    def _remove_untracked_paths_for_merge(self, paths: list[str]) -> dict[str, bytes]:
+        removed: dict[str, bytes] = {}
+        for relative in paths:
+            if not self._repo_relative_path_safe(relative):
+                continue
+            source = self.repo_root / relative
+            if not source.is_file() or source.is_symlink():
+                continue
+            removed[relative] = source.read_bytes()
+            source.unlink()
+        return removed
+
+    def _restore_removed_untracked_paths(self, removed: dict[str, bytes]) -> None:
+        for relative, content in removed.items():
+            if not self._repo_relative_path_safe(relative):
+                continue
+            target = self.repo_root / relative
+            if target.exists():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+
+    @staticmethod
+    def _repo_relative_path_safe(relative: str) -> bool:
+        if not relative or relative.startswith("/") or "\0" in relative:
+            return False
+        return ".." not in Path(relative).parts
 
     def _dirty_worktree_paths(self, cwd: Path) -> set[str]:
         result = subprocess.run(
