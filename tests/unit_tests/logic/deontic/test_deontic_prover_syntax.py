@@ -505,6 +505,111 @@ def test_prover_decoded_phrase_profile_preserves_protected_reference_blocker():
     )
 
 
+def test_prover_syntax_records_carry_target_semantic_bridge_profiles():
+    examples = [
+        (
+            "The tenant must pay rent.",
+            "ordinary_duty",
+            "PayRent",
+            ["actor", "modality", "action"],
+        ),
+        (
+            "The inspector shall knowingly approve the discharge.",
+            "ordinary_duty",
+            "ApproveDischarge",
+            ["actor", "modality", "mental_state", "action"],
+        ),
+        (
+            "The permittee may appeal the decision.",
+            "ordinary_duty",
+            "AppealDecision",
+            ["actor", "modality", "action"],
+        ),
+    ]
+
+    for text, family, predicate, formula_slots in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = {
+            target.target: target.to_dict()
+            for target in validate_ir_with_provers(norm).targets
+        }
+
+        assert len(records) == 5
+        assert all(
+            record["target_semantic_bridge_profile"]["semantic_formula_family"]
+            == family
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["semantic_formula_predicate"]
+            == predicate
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["formula_slots"] == formula_slots
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["decoded_formula_overlap"]
+            == formula_slots
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["grounded_formula_overlap"]
+            == formula_slots
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["semantic_bridge_complete"]
+            is True
+            for record in records.values()
+        )
+        assert all(
+            record["target_semantic_bridge_profile"]["semantic_bridge_blockers"] == []
+            for record in records.values()
+        )
+        assert len(
+            {
+                record["target_semantic_bridge_fingerprint"]
+                for record in records.values()
+            }
+        ) == 5
+
+
+def test_prover_semantic_bridge_profile_keeps_blocked_reference_visible():
+    element = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+    assert element["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in element["llm_repair"]["reasons"]
+    assert norm.proof_ready is False
+    assert all(
+        record["target_semantic_bridge_profile"]["semantic_formula_predicate"]
+        == "PublishNotice"
+        for record in records
+    )
+    assert all(
+        record["target_semantic_bridge_profile"]["formula_slots"]
+        == ["actor", "modality", "action", "exceptions"]
+        for record in records
+    )
+    assert all(
+        record["target_semantic_bridge_profile"]["semantic_bridge_complete"] is False
+        for record in records
+    )
+    assert all(
+        record["target_semantic_bridge_profile"]["semantic_bridge_blockers"]
+        == ["formula_requires_validation"]
+        for record in records
+    )
+    assert all(record["requires_validation"] is True for record in records)
+
+
 def test_prover_syntax_records_audit_grounded_ir_slots_across_targets():
     examples = [
         (
@@ -1041,6 +1146,136 @@ def test_prover_syntax_records_expose_phase8_target_quality_gates():
         ]
         for record in blocked_records
     )
+
+
+def test_prover_quality_gate_exposes_formula_slot_coverage_profiles():
+    examples = [
+        (
+            "The inspector shall knowingly approve the discharge.",
+            True,
+            ["actor", "modality", "mental_state", "action"],
+            ["actor", "modality", "mental_state", "action"],
+            ["actor", "modality", "mental_state", "action"],
+            [],
+            [],
+            1.0,
+            1.0,
+        ),
+        (
+            "The tenant must pay rent monthly.",
+            False,
+            ["actor", "modality", "temporal_constraints", "action"],
+            ["actor", "modality", "action"],
+            ["actor", "modality", "temporal_constraints", "action"],
+            ["temporal_constraints"],
+            [],
+            0.75,
+            1.0,
+        ),
+        (
+            "The Secretary shall publish the notice except as provided in section 552.",
+            True,
+            ["actor", "modality", "action", "exceptions"],
+            ["actor", "modality", "action", "exceptions"],
+            ["actor", "modality", "action", "exceptions"],
+            [],
+            ["exceptions"],
+            1.0,
+            1.0,
+        ),
+    ]
+
+    for (
+        text,
+        complete,
+        formula_slots,
+        decoded_slots,
+        grounded_slots,
+        missing_decoded_slots,
+        omitted_slots,
+        decoder_rate,
+        grounding_rate,
+    ) in examples:
+        norm = LegalNormIR.from_parser_element(extract_normative_elements(text)[0])
+        records = [target.to_dict() for target in validate_ir_with_provers(norm).targets]
+
+        assert len(records) == 5
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "formula_slot_coverage_complete"
+            ]
+            is complete
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"]["formula_slots"]
+            == formula_slots
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "decoded_formula_slots"
+            ]
+            == decoded_slots
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "grounded_formula_slots"
+            ]
+            == grounded_slots
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "missing_decoded_formula_slots"
+            ]
+            == missing_decoded_slots
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "omitted_formula_slot_names"
+            ]
+            == omitted_slots
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "formula_slot_decoder_rate"
+            ]
+            == decoder_rate
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["formula_slot_coverage"][
+                "formula_slot_grounding_rate"
+            ]
+            == grounding_rate
+            for record in records
+        )
+        assert all(
+            record["target_components"]["formula_slot_coverage_complete"] is complete
+            for record in records
+        )
+        assert all(
+            record["target_components"]["formula_slot_decoder_rate"] == decoder_rate
+            for record in records
+        )
+        assert all(
+            record["target_quality_gate"]["source_grounding_diagnostics"][
+                "formula_slot_coverage"
+            ]
+            == record["target_quality_gate"]["formula_slot_coverage"]
+            for record in records
+        )
+
+    blocked = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+    assert blocked["llm_repair"]["required"] is True
+    assert "cross_reference_requires_resolution" in blocked["llm_repair"]["reasons"]
+    assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
 def test_prover_syntax_reports_target_shape_diagnostics():

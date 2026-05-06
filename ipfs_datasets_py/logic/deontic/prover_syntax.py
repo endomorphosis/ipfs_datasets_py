@@ -76,6 +76,8 @@ class ProverTargetSyntaxRecord:
     exported_formula_symbols: List[str]
     target_symbol_alignment: Dict[str, Any]
     target_symbol_alignment_fingerprint: str
+    target_semantic_bridge_profile: Dict[str, Any]
+    target_semantic_bridge_fingerprint: str
     target_dialect_profile: Dict[str, Any]
     target_dialect_profile_fingerprint: str
     target_parse_profile: Dict[str, Any]
@@ -189,6 +191,15 @@ def _validate_target_formula(
         formula,
         exported_formula,
     )
+    semantic_bridge_profile = _target_semantic_bridge_profile(
+        target,
+        norm,
+        formula_record,
+        decoded_slot_summary,
+        ir_slot_summary,
+        alignment_summary,
+        symbol_alignment,
+    )
     target_dialect_profile = _target_dialect_profile(
         target,
         formula,
@@ -268,6 +279,10 @@ def _validate_target_formula(
         target_symbol_alignment=symbol_alignment,
         target_symbol_alignment_fingerprint=symbol_alignment[
             "target_symbol_alignment_fingerprint"
+        ],
+        target_semantic_bridge_profile=semantic_bridge_profile,
+        target_semantic_bridge_fingerprint=semantic_bridge_profile[
+            "target_semantic_bridge_fingerprint"
         ],
         target_dialect_profile=target_dialect_profile,
         target_dialect_profile_fingerprint=target_dialect_profile[
@@ -585,6 +600,7 @@ def _target_components(
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
+    formula_slot_coverage = _formula_slot_coverage_profile(alignment_summary)
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
@@ -615,6 +631,20 @@ def _target_components(
         "missing_ir_slot_count": len(missing_ir_slots),
         "formula_slots": formula_slots,
         "formula_slot_count": len(formula_slots),
+        "formula_slot_coverage_complete": formula_slot_coverage[
+            "formula_slot_coverage_complete"
+        ],
+        "formula_slot_decoder_rate": formula_slot_coverage[
+            "formula_slot_decoder_rate"
+        ],
+        "formula_slot_grounding_rate": formula_slot_coverage[
+            "formula_slot_grounding_rate"
+        ],
+        "decoded_formula_slots": formula_slot_coverage["decoded_formula_slots"],
+        "grounded_formula_slots": formula_slot_coverage["grounded_formula_slots"],
+        "omitted_formula_slot_names": formula_slot_coverage[
+            "omitted_formula_slot_names"
+        ],
         "slot_alignment_complete": bool(
             alignment_summary.get("alignment_complete") is True
         ),
@@ -980,6 +1010,7 @@ def _target_quality_gate(
         reconstruction_token_profile.get("reconstruction_token_profile_complete")
         is True
     )
+    formula_slot_coverage = _formula_slot_coverage_profile(alignment_summary)
     known_local_target = target in LOCAL_PROVER_TARGETS
     structural_checks_complete = all(
         (
@@ -1041,6 +1072,7 @@ def _target_quality_gate(
             alignment_summary.get("formula_missing_decoded_slots") or []
         ),
         "formula_ungrounded_slots": list(alignment_summary.get("formula_ungrounded_slots") or []),
+        "formula_slot_coverage": formula_slot_coverage,
         "omitted_formula_slot_names": list(
             alignment_summary.get("omitted_formula_slot_names") or []
         ),
@@ -1077,6 +1109,7 @@ def _target_quality_gate(
         "formula_requires_validation": formula_requires_validation,
         "parser_proof_ready": bool(norm.proof_ready),
         "slot_alignment_complete": slot_alignment_complete,
+        "formula_slot_coverage": formula_slot_coverage,
         "target_symbol_alignment_complete": symbol_alignment_complete,
         "target_dialect_profile_complete": dialect_complete,
         "target_parse_profile_complete": parse_complete,
@@ -1089,6 +1122,54 @@ def _target_quality_gate(
         "quality_gate_blockers": quality_blockers,
         "source_grounding_diagnostics": source_grounding_diagnostics,
         "target_quality_gate_fingerprint": fingerprint,
+    }
+
+
+def _formula_slot_coverage_profile(alignment_summary: Dict[str, Any]) -> Dict[str, Any]:
+    """Return target-independent coverage diagnostics for formula slots.
+
+    Formula slots are the IR slots that materially contributed to the exported
+    theorem text. The quality gate keeps this profile separate from the broader
+    decoder/IR alignment so lossy reconstruction of a formula antecedent is
+    visible even when target syntax and symbol checks pass.
+    """
+
+    formula_slots = _ordered_unique(alignment_summary.get("formula_slots") or [])
+    decoded_overlap = set(
+        _ordered_unique(alignment_summary.get("decoded_formula_overlap") or [])
+    )
+    grounded_overlap = set(
+        _ordered_unique(alignment_summary.get("grounded_formula_overlap") or [])
+    )
+    decoded_formula_slots = [slot for slot in formula_slots if slot in decoded_overlap]
+    grounded_formula_slots = [slot for slot in formula_slots if slot in grounded_overlap]
+    missing_decoded = _ordered_unique(
+        alignment_summary.get("formula_missing_decoded_slots") or []
+    )
+    ungrounded = _ordered_unique(alignment_summary.get("formula_ungrounded_slots") or [])
+    omitted = _ordered_unique(alignment_summary.get("omitted_formula_slot_names") or [])
+    formula_slot_count = len(formula_slots)
+    decoded_count = len(decoded_formula_slots)
+    grounded_count = len(grounded_formula_slots)
+    complete = not missing_decoded and not ungrounded
+    return {
+        "formula_slots": formula_slots,
+        "decoded_formula_slots": decoded_formula_slots,
+        "grounded_formula_slots": grounded_formula_slots,
+        "missing_decoded_formula_slots": missing_decoded,
+        "ungrounded_formula_slots": ungrounded,
+        "omitted_formula_slot_names": omitted,
+        "formula_slot_count": formula_slot_count,
+        "decoded_formula_slot_count": decoded_count,
+        "grounded_formula_slot_count": grounded_count,
+        "omitted_formula_slot_count": len(omitted),
+        "formula_slot_decoder_rate": round(decoded_count / formula_slot_count, 6)
+        if formula_slot_count
+        else 1.0,
+        "formula_slot_grounding_rate": round(grounded_count / formula_slot_count, 6)
+        if formula_slot_count
+        else 1.0,
+        "formula_slot_coverage_complete": complete,
     }
 
 
@@ -1687,6 +1768,88 @@ def _target_symbol_alignment(
         "exported_formula_symbol_count": len(exported_symbols),
         "target_symbol_alignment_complete": complete,
         "target_symbol_alignment_fingerprint": fingerprint,
+    }
+
+
+def _target_semantic_bridge_profile(
+    target: str,
+    norm: LegalNormIR,
+    formula_record: Dict[str, Any],
+    decoded_slot_summary: Dict[str, List[str]],
+    ir_slot_summary: Dict[str, Any],
+    alignment_summary: Dict[str, Any],
+    symbol_alignment: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Join formula, decoder, IR, and target-symbol audits for one target."""
+
+    decoded_slots = _ordered_unique(decoded_slot_summary.get("decoded_slots") or [])
+    grounded_ir_slots = _ordered_unique(ir_slot_summary.get("grounded_ir_slots") or [])
+    formula_slots = _ordered_unique(alignment_summary.get("formula_slots") or [])
+    decoded_formula_overlap = [slot for slot in formula_slots if slot in decoded_slots]
+    grounded_formula_overlap = [
+        slot for slot in formula_slots if slot in grounded_ir_slots
+    ]
+    formula_missing_decoded = _ordered_unique(
+        alignment_summary.get("formula_missing_decoded_slots") or []
+    )
+    formula_ungrounded = _ordered_unique(
+        alignment_summary.get("formula_ungrounded_slots") or []
+    )
+    omitted_formula_slots = _ordered_unique(
+        alignment_summary.get("omitted_formula_slot_names") or []
+    )
+    missing_symbols = _ordered_unique(
+        symbol_alignment.get("missing_exported_formula_symbols") or []
+    )
+    semantic_profile = _semantic_formula_profile(
+        symbol_alignment.get("source_formula_symbols") or [],
+        symbol_alignment.get("exported_formula_symbols") or [],
+        formula_slots,
+    )
+
+    blockers: List[str] = []
+    blockers.extend(
+        f"formula_slot_missing_from_decoder:{slot}"
+        for slot in formula_missing_decoded
+    )
+    blockers.extend(f"formula_slot_ungrounded:{slot}" for slot in formula_ungrounded)
+    blockers.extend(f"target_symbol_missing:{symbol}" for symbol in missing_symbols)
+    if semantic_profile["semantic_formula_family"] == "unknown":
+        blockers.append("unknown_semantic_formula_family")
+    if formula_record.get("requires_validation") is not False:
+        blockers.append("formula_requires_validation")
+
+    complete = not blockers
+    fingerprint = _stable_fingerprint(
+        target,
+        norm.source_id,
+        semantic_profile["semantic_formula_family"],
+        semantic_profile["semantic_formula_predicate"],
+        "|".join(formula_slots),
+        "|".join(decoded_formula_overlap),
+        "|".join(grounded_formula_overlap),
+        "|".join(blockers),
+        str(complete),
+    )
+    return {
+        "target": target,
+        "source_id": norm.source_id,
+        "semantic_formula_family": semantic_profile["semantic_formula_family"],
+        "semantic_formula_predicate": semantic_profile["semantic_formula_predicate"],
+        "semantic_formula_symbols": semantic_profile["semantic_formula_symbols"],
+        "formula_slots": formula_slots,
+        "decoded_slots": decoded_slots,
+        "grounded_ir_slots": grounded_ir_slots,
+        "decoded_formula_overlap": decoded_formula_overlap,
+        "grounded_formula_overlap": grounded_formula_overlap,
+        "formula_missing_decoded_slots": formula_missing_decoded,
+        "formula_ungrounded_slots": formula_ungrounded,
+        "omitted_formula_slot_names": omitted_formula_slots,
+        "missing_exported_formula_symbols": missing_symbols,
+        "semantic_bridge_complete": complete,
+        "semantic_bridge_requires_validation": not complete,
+        "semantic_bridge_blockers": blockers,
+        "target_semantic_bridge_fingerprint": fingerprint,
     }
 
 

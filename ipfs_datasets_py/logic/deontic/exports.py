@@ -4988,6 +4988,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     )):
         return "legal_recordkeeping_duty"
     if action_predicate.startswith((
+        "MonitorIntrusion",
+        "ResetPassword",
+        "ReviewAccess",
+        "RotateCredential",
+        "ScanVulnerab",
+    )):
+        return "cybersecurity_access_control_duty"
+    if action_predicate.startswith((
         "Anonymize",
         "Decrypt",
         "Deidentify",
@@ -5007,6 +5015,13 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "data_protection_duty"
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
+    if action_predicate.startswith((
+        "ObtainAuthorization",
+        "ObtainConsent",
+        "Release",
+        "Waive",
+    )):
+        return "consent_release_instrument_duty"
     if action_predicate.startswith((
         "Continue",
         "Defer",
@@ -5118,6 +5133,12 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Validate",
     )):
         return "data_quality_processing_duty"
+    if action_predicate.startswith((
+        "Declare",
+        "FileReturn",
+        "Report",
+    )):
+        return "regulatory_reporting_duty"
     if action_predicate.startswith((
         "Geocode",
         "Georeference",
