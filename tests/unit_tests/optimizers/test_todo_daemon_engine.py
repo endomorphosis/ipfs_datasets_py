@@ -31,6 +31,7 @@ from ipfs_datasets_py.optimizers.todo_daemon import (
     SupervisedChildSpec,
     SupervisorLoop,
     SupervisorLoopConfig,
+    SupervisorLoopDecision,
     Task,
     TodoDaemonHooks,
     TodoDaemonRunner,
@@ -3636,6 +3637,71 @@ def test_python_supervisor_loop_reuses_child_runtime_and_status(tmp_path: Path) 
     assert supervisor_status["status"] == "child_exited"
     assert supervisor_status["restart_count"] == 1
     assert supervisor_status["example_supervisor"] is True
+
+
+def test_python_supervisor_loop_stop_decision_exits_without_restart(tmp_path: Path) -> None:
+    spec = ManagedDaemonSpec(
+        name="synthetic-stop-loop",
+        schema="synthetic.todo_daemon",
+        repo_root=tmp_path,
+        daemon_dir=Path(".daemon"),
+        runner=("python3", "-m", "synthetic.daemon"),
+        status_path=Path(".daemon/child-status.json"),
+        progress_path=Path(".daemon/progress.json"),
+        supervisor_status_path=Path(".daemon/supervisor.json"),
+        supervisor_pid_path=Path(".daemon/supervisor.pid"),
+        child_pid_path=Path(".daemon/child.pid"),
+        supervisor_out_path=Path(".daemon/supervisor.out"),
+        ensure_status_path=Path(".daemon/ensure.json"),
+        ensure_check_path=Path(".daemon/ensure-check.json"),
+        supervisor_lock_path=Path(".daemon/supervisor.lock"),
+        latest_log_path=Path(".daemon/latest-child.log"),
+    )
+    loop = SupervisorLoop(
+        SupervisorLoopConfig(
+            spec=spec,
+            command=("python3", "-c", "import time; time.sleep(30)"),
+            log_prefix="synthetic_stop_loop",
+            heartbeat_seconds=0.01,
+            poll_seconds=0.01,
+            watchdog_startup_grace_seconds=0.0,
+            stop_grace_seconds=0.1,
+            max_restarts=3,
+        ),
+        watchdog_hook=lambda _loop, _child, _status: SupervisorLoopDecision.stop(
+            "test_requested_stop",
+            status="completed",
+        ),
+    )
+
+    result = loop.run()
+    supervisor_status = json.loads((tmp_path / ".daemon" / "supervisor.json").read_text(encoding="utf-8"))
+
+    assert result.status == "completed"
+    assert result.restart_count == 0
+    assert result.last_recycle_reason == "test_requested_stop"
+    assert not (tmp_path / ".daemon" / "child.pid").exists()
+    assert supervisor_status["status"] == "completed"
+    assert supervisor_status["restart_count"] == 0
+
+
+def test_todo_implementation_supervisor_defaults_to_monitor_only(tmp_path: Path) -> None:
+    from ipfs_datasets_py.optimizers.todo_daemon.implementation_supervisor import (
+        TodoSupervisorConfig,
+        parse_args,
+    )
+
+    assert parse_args(["--once"]).implement is False
+    assert parse_args(["--once", "--implement"]).implement is True
+
+    config = TodoSupervisorConfig(
+        todo_path=tmp_path / "todo.md",
+        state_path=tmp_path / "state.json",
+        strategy_path=tmp_path / "strategy.json",
+        events_path=tmp_path / "events.jsonl",
+        state_dir=tmp_path,
+    )
+    assert config.implement is False
 
 
 def test_file_replacement_apply_flow_promotes_only_after_validation(tmp_path: Path) -> None:

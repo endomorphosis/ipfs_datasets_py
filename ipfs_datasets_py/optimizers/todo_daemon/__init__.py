@@ -313,6 +313,14 @@ from .plans import (
     select_next_plan_task,
     strip_daemon_task_board,
 )
+from .implementation_daemon import (
+    TodoImplementationDaemon,
+    TodoTask,
+    TodoTaskState,
+    WORKTREE_SUBMODULE_PATHS,
+    parse_task_file,
+)
+from .implementation_supervisor import TodoImplementationSupervisor, TodoSupervisorConfig
 from .runner import PreTaskBlock, TodoDaemonHooks, TodoDaemonRunner
 from .status import (
     ActiveStatusSnapshot,
@@ -450,6 +458,12 @@ __all__ = [
     "Task",
     "TodoDaemonHooks",
     "TodoDaemonRunner",
+    "TodoImplementationDaemon",
+    "TodoImplementationSupervisor",
+    "TodoSupervisorConfig",
+    "TodoTask",
+    "TodoTaskState",
+    "WORKTREE_SUBMODULE_PATHS",
     "TodoDaemonRegistration",
     "TodoDaemonRuntimeConfig",
     "ValidationWorkspaceSpec",
@@ -625,6 +639,7 @@ __all__ = [
     "obvious_typescript_text_damage",
     "open_task_has_deterministic_fallback",
     "parse_file_replacement_response",
+    "parse_task_file",
     "parse_json_proposal",
     "parse_markdown_tasks",
     "plan_task_from_latest_result",
