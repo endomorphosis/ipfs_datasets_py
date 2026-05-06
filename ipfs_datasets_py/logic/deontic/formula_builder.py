@@ -22,15 +22,6 @@ _MENTAL_STATE_TERMS = {
     "deliberately",
     "corruptly",
 }
-_MENTAL_STATE_TERM_PATTERN = "|".join(sorted(_MENTAL_STATE_TERMS, key=len, reverse=True))
-_LEADING_COMPOUND_MENTAL_STATE_RE = re.compile(
-    r"^\s*(?P<state>(?:"
-    + _MENTAL_STATE_TERM_PATTERN
-    + r")(?:\s*(?:,|and|or)\s*(?:"
-    + _MENTAL_STATE_TERM_PATTERN
-    + r")){1,4})\s+(?P<action>.+)$",
-    re.IGNORECASE,
-)
 _LEGAL_REFERENCE_TEXT_RE = re.compile(
     r"(?:\b(?:section|subsection|chapter|title|article|part)\s+|§\s*)"
     r"([0-9][0-9A-Za-z.\-]*(?:\([a-z0-9]+\))*)\b",
@@ -170,11 +161,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_registration_enrollment_light_verb_action(action_text)
     action_text = _normalize_indexing_cataloging_light_verb_action(action_text)
     action_text = _normalize_classification_reclassification_light_verb_action(action_text)
-    action_text = _normalize_data_quality_processing_light_verb_action(action_text)
-    action_text = _normalize_regulatory_reporting_light_verb_action(action_text)
-    action_text = _normalize_geospatial_records_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
-    action_text = _normalize_accessibility_accommodation_light_verb_action(action_text)
     action_text = _normalize_translation_interpretation_light_verb_action(action_text)
     action_text = _normalize_transcription_summarization_light_verb_action(action_text)
     action_text = _normalize_inspection_light_verb_action(action_text)
@@ -182,8 +169,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_testing_light_verb_action(action_text)
     action_text = _normalize_monitoring_light_verb_action(action_text)
     action_text = _normalize_health_compliance_light_verb_action(action_text)
-    action_text = _normalize_compliance_planning_light_verb_action(action_text)
-    action_text = _normalize_emergency_operations_light_verb_action(action_text)
     action_text = _normalize_measurement_light_verb_action(action_text)
     action_text = _normalize_investigation_light_verb_action(action_text)
     action_text = _normalize_evaluation_light_verb_action(action_text)
@@ -199,7 +184,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_evidence_custody_light_verb_action(action_text)
     action_text = _normalize_rulemaking_enactment_light_verb_action(action_text)
     action_text = _normalize_codification_compilation_light_verb_action(action_text)
-    action_text = _normalize_meeting_governance_light_verb_action(action_text)
     action_text = _normalize_delegation_assignment_light_verb_action(action_text)
     action_text = _normalize_recordation_memorialization_light_verb_action(action_text)
     action_text = _normalize_aggregation_consolidation_light_verb_action(action_text)
@@ -222,9 +206,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_docketing_calendaring_light_verb_action(action_text)
     action_text = _normalize_certification_light_verb_action(action_text)
     action_text = _normalize_verification_light_verb_action(action_text)
-    action_text = _normalize_public_records_copy_light_verb_action(action_text)
-    action_text = _normalize_financial_assurance_light_verb_action(action_text)
-    action_text = _normalize_procedural_relief_light_verb_action(action_text)
     action_text = _normalize_approval_light_verb_action(action_text)
     action_text = _normalize_authorization_accreditation_light_verb_action(action_text)
     action_text = _normalize_procurement_award_light_verb_action(action_text)
@@ -256,8 +237,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_deletion_erasure_light_verb_action(action_text)
     action_text = _normalize_preservation_restoration_light_verb_action(action_text)
     action_text = _normalize_archival_retention_light_verb_action(action_text)
-    action_text = _normalize_incident_risk_reporting_light_verb_action(action_text)
-    action_text = _normalize_cybersecurity_access_control_light_verb_action(action_text)
     action_text = _normalize_redaction_anonymization_light_verb_action(action_text)
     action_text = _normalize_masking_pseudonymization_light_verb_action(action_text)
     action_text = _normalize_encryption_decryption_light_verb_action(action_text)
@@ -270,8 +249,6 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_acknowledgment_authentication_light_verb_action(action_text)
     action_text = _normalize_summarization_indexing_light_verb_action(action_text)
     action_text = _normalize_transcription_translation_light_verb_action(action_text)
-    action_text = _normalize_derivative_records_processing_light_verb_action(action_text)
-    action_text = _normalize_consent_release_instrument_light_verb_action(action_text)
     action_text = _normalize_codification_recodification_light_verb_action(action_text)
     action_text = _normalize_consolidation_reconciliation_light_verb_action(action_text)
     action_text = _normalize_aggregation_tabulation_light_verb_action(action_text)
@@ -425,12 +402,12 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
     patterns = [
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|send|sends|sent|sending|issue|issues|issued|issuing|deliver|delivers|delivered|delivering)[ ]+"
-            r"(?:a[ ]+|an[ ]+|the[ ]+)?notification[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
+            r"(?:a[ ]+|an[ ]+|the[ ]+)?notification[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
             "notify",
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|send|sends|sent|sending|issue|issues|issued|issuing|deliver|delivers|delivered|delivering)[ ]+"
-            r"notifications[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
+            r"notifications[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
             "notify",
         ),
         (
@@ -440,12 +417,12 @@ def _normalize_notification_disclosure_light_verb_action(action_text: str) -> st
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering)[ ]+"
-            r"(?:a[ ]+|the[ ]+)?disclosure[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
+            r"(?:a[ ]+|the[ ]+)?disclosure[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
             "disclose",
         ),
         (
             r"^(?:make|makes|made|making|provide|provides|provided|providing|give|gives|gave|given|giving|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering)[ ]+"
-            r"disclosures[ ]+(?:of|to|about|regarding|concerning)[ ]+(?:the[ ]+)?(.+)$",
+            r"disclosures[ ]+(?:of|to)[ ]+(?:the[ ]+)?(.+)$",
             "disclose",
         ),
     ]
@@ -490,94 +467,6 @@ def _normalize_recommendation_referral_light_verb_action(action_text: str) -> st
         match = re.match(pattern, text, re.IGNORECASE)
         if match and match.group(1).strip():
             return f"{verb} {match.group(1).strip()}"
-
-    return text
-
-
-def _normalize_compliance_planning_light_verb_action(action_text: str) -> str:
-    """Project compliance planning and risk-review nominalizations to acts."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return ""
-
-    patterns = [
-        (
-            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|make|makes|made|making|prepare|prepares|prepared|preparing)\s+"
-            r"(?:a\s+|an\s+|the\s+)?risk\s+assessment\s*(?:(?:of|for|on)\s+(?:the\s+)?(.+))?$",
-            "assess risk",
-        ),
-        (
-            r"^(?:conduct|conducts|conducted|conducting|perform|performs|performed|performing|complete|completes|completed|completing|make|makes|made|making|prepare|prepares|prepared|preparing)\s+"
-            r"(?:a\s+|an\s+|the\s+)?safety\s+analysis\s*(?:(?:of|for|on)\s+(?:the\s+)?(.+))?$",
-            "analyze safety",
-        ),
-        (
-            r"^(?:prepare|prepares|prepared|preparing|develop|develops|developed|developing|adopt|adopts|adopted|adopting|maintain|maintains|maintained|maintaining|implement|implements|implemented|implementing|submit|submits|submitted|submitting)\s+"
-            r"(?:a\s+|an\s+|the\s+)?emergency\s+response\s+plan\s*(?:(?:for|of)\s+(?:the\s+)?(.+))?$",
-            "plan emergency response",
-        ),
-    ]
-    for pattern, verb_phrase in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if not match:
-            continue
-        target = _normalized_light_verb_target(match.group(1) or "")
-        return f"{verb_phrase} {target}".strip()
-
-    return text
-
-
-def _normalize_emergency_operations_light_verb_action(action_text: str) -> str:
-    """Project emergency-operation nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return ""
-
-    light_verbs = (
-        r"make|makes|made|making|complete|completes|completed|completing|"
-        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
-        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
-        r"carry\s+out|carries\s+out|carried\s+out|carrying\s+out"
-    )
-    patterns = [
-        (
-            rf"^(?:{light_verbs})\s+(?:an?\s+|the\s+)?evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "evacuate",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?shelter(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "shelter",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "rescue",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:an?\s+|the\s+)?(?:emergency\s+)?drill\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "drill",
-        ),
-    ]
-    for pattern, verb_phrase in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if not match:
-            continue
-        target = _normalized_light_verb_target(match.group(1) or "")
-        return f"{verb_phrase} {target}".strip()
-
-    bare_patterns = {
-        r"^evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$": "evacuate",
-        r"^shelter(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$": "shelter",
-        r"^rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$": "rescue",
-        r"^(?:emergency\s+)?drill\s+(?:of|for)\s+(?:the\s+)?(.+)$": "drill",
-    }
-    for pattern, verb_phrase in bare_patterns.items():
-        match = re.match(pattern, text, re.IGNORECASE)
-        if not match:
-            continue
-        target = _normalized_light_verb_target(match.group(1) or "")
-        return f"{verb_phrase} {target}".strip()
 
     return text
 
@@ -1093,90 +982,6 @@ def _normalize_verification_light_verb_action(action_text: str) -> str:
     return text
 
 
-def _normalize_public_records_copy_light_verb_action(action_text: str) -> str:
-    """Project records-copy nominalizations to public-access predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    copy_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
-        r"(?:a\s+|the\s+)?copy\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|issue|issues|issued|issuing)\s+"
-        r"copies\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^copy\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in copy_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"provide copy {target}" if target else text
-
-    return text
-
-
-def _normalize_financial_assurance_light_verb_action(action_text: str) -> str:
-    """Project financial-assurance deposit nominalizations."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    deposit_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|post|posts|posted|posting|submit|submits|submitted|submitting)\s+"
-        r"(?:a\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|post|posts|posted|posting|submit|submits|submitted|submitting)\s+"
-        r"deposits\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in deposit_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"deposit {target}" if target else text
-
-    return text
-
-
-def _normalize_procedural_relief_light_verb_action(action_text: str) -> str:
-    """Project stay, continuance, postponement, and deferral nominalizations."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    relief_patterns = [
-        (
-            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?stay\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "stay",
-        ),
-        (
-            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?continuance\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "continue",
-        ),
-        (
-            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?postponement\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "postpone",
-        ),
-        (
-            r"^(?:grant|grants|granted|granting|order|orders|ordered|ordering|approve|approves|approved|approving|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?deferral\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "defer",
-        ),
-    ]
-    for pattern, verb in relief_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    return text
-
-
 def _normalize_approval_light_verb_action(action_text: str) -> str:
     """Collapse approval nominalizations into operative approval acts."""
 
@@ -1420,7 +1225,7 @@ def _normalize_notice_service_light_verb_action(action_text: str) -> str:
 
     patterns = [
         r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
-        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:of|about|regarding|concerning)\s+(.+)$",
+        r"(?:a\s+|an\s+|the\s+)?notice\s+(?:of|about|regarding)\s+(.+)$",
         r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|deliver|delivers|delivered|delivering|serve|serves|served|serving)\s+"
         r"(?:a\s+|an\s+|the\s+)?notice\s+(?:to|upon|on)\s+(.+)$",
     ]
@@ -3485,9 +3290,6 @@ def _temporal_anchor_relation(item: Dict[str, Any]) -> str:
 
 
 def _action_without_mental_state(action: str) -> str:
-    compound = _LEADING_COMPOUND_MENTAL_STATE_RE.match(str(action or "").strip())
-    if compound:
-        return compound.group("action").strip()
     words = re.findall(r"[A-Za-z][A-Za-z0-9'’\-]*", action or "")
     if words and words[0].lower() in _MENTAL_STATE_TERMS:
         return " ".join(words[1:]).strip()
@@ -4309,130 +4111,6 @@ def _normalize_archival_retention_light_verb_action(action_text: str) -> str:
     return text
 
 
-def _normalize_cybersecurity_access_control_light_verb_action(action_text: str) -> str:
-    """Project cybersecurity and access-control nominalizations to predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    access_review_patterns = [
-        r"^(?:make|perform|conduct|complete|carry\s+out|document)\s+(?:an?\s+|the\s+)?access\s+review\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^access\s+review\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in access_review_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"review access {target}" if target else text
-
-    credential_rotation_patterns = [
-        r"^(?:make|perform|conduct|complete|carry\s+out|document)\s+(?:an?\s+|the\s+)?credential\s+rotation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^credential\s+rotation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in credential_rotation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"rotate credentials {target}" if target else text
-
-    password_reset_patterns = [
-        r"^(?:make|perform|conduct|complete|carry\s+out|document)\s+(?:a\s+|the\s+)?password\s+reset\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^password\s+reset\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in password_reset_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"reset password {target}" if target else text
-
-    vulnerability_scan_patterns = [
-        r"^(?:make|perform|conduct|complete|carry\s+out|document)\s+(?:a\s+|the\s+)?vulnerability\s+(?:scan|scanning)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^vulnerability\s+(?:scan|scanning)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in vulnerability_scan_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"scan vulnerabilities {target}" if target else text
-
-    intrusion_monitoring_patterns = [
-        r"^(?:make|perform|conduct|complete|carry\s+out|document)\s+(?:an?\s+|the\s+)?intrusion\s+monitoring\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^intrusion\s+monitoring\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in intrusion_monitoring_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"monitor intrusions {target}" if target else text
-
-    return text
-
-
-def _normalize_incident_risk_reporting_light_verb_action(action_text: str) -> str:
-    """Project incident, breach, and risk-reporting nominalizations."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    report_patterns = [
-        (
-            r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|prepare|prepares|prepared|preparing|make|makes|made|making)\s+"
-            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+reports?\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-        (
-            r"^(?P<kind>incident|breach|risk|hazard)\s+reports?\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-    ]
-    for pattern in report_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            kind = _normalized_light_verb_target(match.group("kind"))
-            target = _normalized_light_verb_target(match.group("target"))
-            return f"report {kind} {target}" if kind and target else text
-
-    log_patterns = [
-        (
-            r"^(?:create|creates|created|creating|maintain|maintains|maintained|maintaining|update|updates|updated|updating|conduct|conducts|conducted|conducting|perform|performs|performed|performing)\s+"
-            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+(?:log|logging)\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-        (
-            r"^(?P<kind>incident|breach|risk|hazard)\s+(?:log|logging)\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-    ]
-    for pattern in log_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            kind = _normalized_light_verb_target(match.group("kind"))
-            target = _normalized_light_verb_target(match.group("target"))
-            return f"log {kind} {target}" if kind and target else text
-
-    register_patterns = [
-        (
-            r"^(?:create|creates|created|creating|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing|update|updates|updated|updating)\s+"
-            r"(?:an?\s+|the\s+)?(?P<kind>incident|breach|risk|hazard)\s+register\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-        (
-            r"^(?P<kind>incident|breach|risk|hazard)\s+register\s+"
-            r"(?P<link>of|for|on|about|concerning|regarding)\s+(?:the\s+)?(?P<target>.+)$"
-        ),
-    ]
-    for pattern in register_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            kind = _normalized_light_verb_target(match.group("kind"))
-            target = _normalized_light_verb_target(match.group("target"))
-            return f"register {kind} {target}" if kind and target else text
-
-    return text
-
-
 def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> str:
     """Project redaction and anonymization nominalizations to operative predicates."""
 
@@ -4882,82 +4560,6 @@ def _normalize_transcription_translation_light_verb_action(action_text: str) -> 
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"translate {target}" if target else text
-
-    return text
-
-
-def _normalize_derivative_records_processing_light_verb_action(action_text: str) -> str:
-    """Project derivative-record nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    nominalizations = {
-        "abstracts?": "abstract",
-        "excerpts?": "excerpt",
-        "captions?|captioning": "caption",
-        "tags?|tagging": "tag",
-    }
-    leading_verbs = (
-        r"make|makes|made|making|complete|completes|completed|completing|"
-        r"perform|performs|performed|performing|execute|executes|executed|executing|"
-        r"provide|provides|provided|providing|record|records|recorded|recording|"
-        r"require|requires|required|requiring|order|orders|ordered|ordering|"
-        r"authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|"
-        r"create|creates|created|creating|maintain|maintains|maintained|maintaining|"
-        r"prepare|prepares|prepared|preparing|publish|publishes|published|publishing|"
-        r"assign|assigns|assigned|assigning"
-    )
-
-    for nominalization, verb in nominalizations.items():
-        patterns = [
-            rf"^(?:{leading_verbs})\s+(?:an?\s+|the\s+)?(?:{nominalization})\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            rf"^(?:{nominalization})\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        ]
-        for pattern in patterns:
-            match = re.match(pattern, text, re.IGNORECASE)
-            if match:
-                target = _normalized_light_verb_target(match.group(1))
-                return f"{verb} {target}" if target else text
-
-    return text
-
-
-def _normalize_consent_release_instrument_light_verb_action(action_text: str) -> str:
-    """Project consent, authorization, waiver, and release instruments."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    patterns = [
-        (
-            r"^(?:obtain|obtains|obtained|obtaining|secure|secures|secured|securing|procure|procures|procured|procuring|receive|receives|received|receiving)\s+"
-            r"(?:a\s+|an\s+|the\s+)?consent\s+(?:of|for|from|by|to)\s+(?:the\s+)?(.+)$",
-            "obtain consent",
-        ),
-        (
-            r"^(?:obtain|obtains|obtained|obtaining|secure|secures|secured|securing|procure|procures|procured|procuring|receive|receives|received|receiving)\s+"
-            r"(?:an?\s+|the\s+)?authorization\s+(?:of|for|from|by|to)\s+(?:the\s+)?(.+)$",
-            "obtain authorization",
-        ),
-        (
-            r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|grant|grants|granted|granting|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
-            r"(?:a\s+|the\s+)?waiver\s+(?:of|for|from|by|to)\s+(?:the\s+)?(.+)$",
-            "waive",
-        ),
-        (
-            r"^(?:file|files|filed|filing|submit|submits|submitted|submitting|execute|executes|executed|executing|issue|issues|issued|issuing|record|records|recorded|recording)\s+"
-            r"(?:a\s+|the\s+)?release\s+(?:of|for|from|by|to)\s+(?:the\s+)?(.+)$",
-            "release",
-        ),
-    ]
-    for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
 
     return text
 
@@ -5509,49 +5111,6 @@ def _normalize_conversion_transmittal_light_verb_action(action_text: str) -> str
     if not text:
         return text
 
-    digital_record_patterns = [
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?(?:digitization|digitalization)\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "digitize",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "scan",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?migration\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "migrate",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:an?\s+|the\s+)?upload\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "upload",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:a\s+|the\s+)?download\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "download",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:an?\s+|the\s+)?import\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "import",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|execute|executes|executed|executing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
-            r"(?:an?\s+|the\s+)?export\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "export",
-        ),
-    ]
-    for pattern, verb in digital_record_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
     conversion_patterns = [
         r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|effect|effects|effected|effecting|execute|executes|executed|executing|approve|approves|approved|approving|issue|issues|issued|issuing|order|orders|ordered|ordering|record|records|recorded|recording|provide|provides|provided|providing|require|requires|required|requiring|authorize|authorizes|authorized|authorizing)\s+"
         r"(?:a\s+|the\s+)?conversion\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
@@ -5732,34 +5291,6 @@ def _normalize_waiver_extension_light_verb_action(action_text: str) -> str:
     if not text:
         return text
 
-    relief_patterns = [
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
-            r"(?:an?\s+|the\s+)?stay\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "stay",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
-            r"(?:an?\s+|the\s+)?continuance\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "continue",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
-            r"(?:an?\s+|the\s+)?postponement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "postpone",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
-            r"(?:an?\s+|the\s+)?deferral\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-            "defer",
-        ),
-    ]
-    for pattern, verb in relief_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
     waiver_patterns = [
         r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|issue|issues|issued|issuing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|grant|grants|granted|granting)\s+"
         r"(?:an?\s+|the\s+)?waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$",
@@ -5901,183 +5432,6 @@ def _normalize_classification_reclassification_light_verb_action(action_text: st
     return text
 
 
-def _normalize_data_quality_processing_light_verb_action(action_text: str) -> str:
-    """Project data-quality processing nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    light_verbs = (
-        r"make|makes|made|making|complete|completes|completed|completing|"
-        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
-        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
-        r"carry\s+out|carries\s+out|carried\s+out"
-    )
-    patterns = [
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?matching\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "match",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "compare",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?validation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "validate",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "normalize",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "deduplicate",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|the\s+)?cross-?check(?:ing)?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "cross check",
-        ),
-    ]
-    for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    bare_patterns = {
-        r"^matching\s+(?:of|for)\s+(?:the\s+)?(.+)$": "match",
-        r"^comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$": "compare",
-        r"^validation\s+(?:of|for)\s+(?:the\s+)?(.+)$": "validate",
-        r"^normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$": "normalize",
-        r"^deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$": "deduplicate",
-        r"^cross-?checking\s+(?:of|for)\s+(?:the\s+)?(.+)$": "cross check",
-    }
-    for pattern, verb in bare_patterns.items():
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    return text
-
-
-def _normalize_regulatory_reporting_light_verb_action(action_text: str) -> str:
-    """Project reporting, return, and declaration nominalizations to acts."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    light_verbs = (
-        r"make|makes|made|making|complete|completes|completed|completing|"
-        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
-        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
-        r"submit|submits|submitted|submitting|file|files|filed|filing|"
-        r"lodge|lodges|lodged|lodging|furnish|furnishes|furnished|furnishing"
-    )
-    patterns = [
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?report(?:ing)?\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "report",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+reports\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "report",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?return\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "file return",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+returns\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "file return",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?(?:statement|declaration)\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "declare",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:statements|declarations)\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$",
-            "declare",
-        ),
-    ]
-    for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    bare_patterns = {
-        r"^report(?:ing)?\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "report",
-        r"^reports\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "report",
-        r"^return\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "file return",
-        r"^returns\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "file return",
-        r"^(?:statement|declaration)\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "declare",
-        r"^(?:statements|declarations)\s+(?:of|on|for|concerning|regarding)\s+(?:the\s+)?(.+)$": "declare",
-    }
-    for pattern, verb in bare_patterns.items():
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    return text
-
-
-def _normalize_geospatial_records_light_verb_action(action_text: str) -> str:
-    """Project geospatial record nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    light_verbs = (
-        r"make|makes|made|making|complete|completes|completed|completing|"
-        r"perform|performs|performed|performing|conduct|conducts|conducted|conducting|"
-        r"provide|provides|provided|providing|prepare|prepares|prepared|preparing|"
-        r"maintain|maintains|maintained|maintaining|carry\s+out|carries\s+out|carried\s+out"
-    )
-    patterns = [
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?mapping\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "map",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?geocoding\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "geocode",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?georeferencing\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "georeference",
-        ),
-        (
-            rf"^(?:{light_verbs})\s+(?:a\s+|an\s+|the\s+)?survey\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "survey",
-        ),
-    ]
-    for pattern, verb in patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    bare_patterns = {
-        r"^mapping\s+(?:of|for)\s+(?:the\s+)?(.+)$": "map",
-        r"^geocoding\s+(?:of|for)\s+(?:the\s+)?(.+)$": "geocode",
-        r"^georeferencing\s+(?:of|for)\s+(?:the\s+)?(.+)$": "georeference",
-        r"^survey\s+(?:of|for)\s+(?:the\s+)?(.+)$": "survey",
-    }
-    for pattern, verb in bare_patterns.items():
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
-
-    return text
-
-
 def _normalize_redaction_anonymization_light_verb_action(action_text: str) -> str:
     """Project privacy and disclosure-control nominalizations."""
 
@@ -6159,82 +5513,6 @@ def _normalize_translation_interpretation_light_verb_action(action_text: str) ->
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"interpret {target}" if target else text
-
-    return text
-
-
-def _normalize_accessibility_accommodation_light_verb_action(action_text: str) -> str:
-    """Project accessibility and accommodation nominalizations to legal acts."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    accommodation_patterns = [
-        r"^(?:make|makes|made|making|provide|provides|provided|providing|grant|grants|granted|granting|approve|approves|approved|approving|offer|offers|offered|offering|arrange|arranges|arranged|arranging)\s+"
-        r"(?:a\s+|an\s+|the\s+)?(?:reasonable\s+)?accommodations?\s+(?:for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:reasonable\s+)?accommodations?\s+(?:for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in accommodation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"accommodate {target}" if target else text
-
-    auxiliary_aid_patterns = [
-        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|arrange|arranges|arranged|arranging|make|makes|made|making|offer|offers|offered|offering)\s+"
-        r"(?:an?\s+|the\s+)?auxiliary\s+(?:aids?|services?|aids?\s+and\s+services?)\s+(?:for|to)\s+(?:the\s+)?(.+)$",
-        r"^auxiliary\s+(?:aids?|services?|aids?\s+and\s+services?)\s+(?:for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in auxiliary_aid_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"provide auxiliary aid {target}" if target else text
-
-    accessibility_modification_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|provide|provides|provided|providing|install|installs|installed|installing|approve|approves|approved|approving)\s+"
-        r"(?:an?\s+|the\s+)?(?:accessibility|accessible)\s+modifications?\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:accessibility|accessible)\s+modifications?\s+(?:of|to|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in accessibility_modification_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"modify accessibility {target}" if target else text
-
-    language_access_plan_patterns = [
-        r"^(?:prepare|prepares|prepared|preparing|develop|develops|developed|developing|adopt|adopts|adopted|adopting|maintain|maintains|maintained|maintaining|implement|implements|implemented|implementing|submit|submits|submitted|submitting)\s+"
-        r"(?:a\s+|the\s+)?language\s+access\s+plans?\s+(?:for|of)\s+(?:the\s+)?(.+)$",
-        r"^language\s+access\s+plans?\s+(?:for|of)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in language_access_plan_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"plan language access {target}" if target else text
-
-    accessible_format_patterns = [
-        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|make|makes|made|making|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|publish|publishes|published|publishing)\s+"
-        r"(?:an?\s+|the\s+)?accessible\s+formats?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^accessible\s+formats?\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in accessible_format_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"format accessibly {target}" if target else text
-
-    sign_language_patterns = [
-        r"^(?:provide|provides|provided|providing|furnish|furnishes|furnished|furnishing|arrange|arranges|arranged|arranging|offer|offers|offered|offering)\s+"
-        r"(?:a\s+|the\s+)?sign\s+language\s+interpretation\s+(?:for|of)\s+(?:the\s+)?(.+)$",
-        r"^sign\s+language\s+interpretation\s+(?:for|of)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in sign_language_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"interpret sign language {target}" if target else text
 
     return text
 
@@ -6394,9 +5672,9 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
         return text
 
     recordation_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|enter|enters|entered|entering|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
         r"(?:an?\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|enter|enters|entered|entering|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
         r"recordations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
         r"^recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
@@ -6407,9 +5685,9 @@ def _normalize_recordation_memorialization_light_verb_action(action_text: str) -
             return f"record {target}" if target else text
 
     memorialization_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|enter|enters|entered|entering|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
         r"(?:an?\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|enter|enters|entered|entering|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
+        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|execute|executes|executed|executing|provide|provides|provided|providing|record|records|recorded|recording|require|requires|required|requiring|order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing|approve|approves|approved|approving|create|creates|created|creating|maintain|maintains|maintained|maintaining|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing)\s+"
         r"memorializations\s+(?:of|for)\s+(?:the\s+)?(.+)$",
         r"^memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$",
     ]
@@ -7094,11 +6372,6 @@ def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
 
     evidence_patterns = [
         (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|keep|keeps|kept|keeping)\s+"
-            r"(?:a\s+|the\s+)?custody\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "log custody",
-        ),
-        (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|ensure|ensures|ensured|ensuring)\s+"
             r"(?:an?\s+|the\s+)?evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "preserve evidence",
@@ -7109,65 +6382,20 @@ def _normalize_evidence_custody_light_verb_action(action_text: str) -> str:
             "inventory evidence",
         ),
         (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining)\s+"
-            r"(?:an?\s+|the\s+)?exhibit\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "inventory exhibit",
-        ),
-        (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|record|records|recorded|recording)\s+"
             r"(?:a\s+|the\s+)?sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "accession",
         ),
         (
             r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording)\s+"
-            r"(?:an?\s+|the\s+)?evidence\s+transfer\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "record evidence transfer",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording)\s+"
             r"(?:a\s+|the\s+)?chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "document chain of custody for",
         ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|document|documents|documented|documenting|record|records|recorded|recording)\s+"
-            r"(?:a\s+|the\s+)?chain[-\s]+of[-\s]+custody\s+(?:documentation|record|records)\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "document chain of custody for",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|record|records|recorded|recording)\s+"
-            r"(?:a\s+|the\s+)?(?:specimen|sample)\s+accession\s+(?:record|records)?\s*(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "accession",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|provide|provides|provided|providing|ensure|ensures|ensured|ensuring|maintain|maintains|maintained|maintaining|prepare|prepares|prepared|preparing)\s+"
-            r"(?:an?\s+|the\s+)?evidence\s+preservation\s+(?:record|records|documentation)\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "preserve evidence",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|document|documents|documented|documenting|record|records|recorded|recording|maintain|maintains|maintained|maintaining|keep|keeps|kept|keeping)\s+"
-            r"(?:a\s+|the\s+)?(?:evidence\s+)?transfer\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "record evidence transfer",
-        ),
-        (r"^custody\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "log custody"),
         (r"^evidence\s+preservation\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "preserve evidence"),
         (r"^evidence\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "inventory evidence"),
-        (r"^exhibit\s+inventory\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "inventory exhibit"),
         (r"^sample\s+accessioning\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "accession"),
         (
-            r"^(?:specimen|sample)\s+accession\s+(?:record|records)?\s*(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "accession",
-        ),
-        (r"^evidence\s+transfer\s+(?:of|for|on)\s+(?:the\s+)?(.+)$", "record evidence transfer"),
-        (
-            r"^(?:evidence\s+)?transfer\s+log\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "record evidence transfer",
-        ),
-        (
             r"^chain\s+of\s+custody\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
-            "document chain of custody for",
-        ),
-        (
-            r"^chain[-\s]+of[-\s]+custody\s+(?:documentation|record|records)\s+(?:of|for|on)\s+(?:the\s+)?(.+)$",
             "document chain of custody for",
         ),
     ]
@@ -7287,93 +6515,6 @@ def _normalize_codification_compilation_light_verb_action(action_text: str) -> s
         if match:
             target = _normalized_light_verb_target(match.group(1))
             return f"compile {target}" if target else text
-
-    revision_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"(?:a\s+|the\s+)?revision\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"revisions\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^revision\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in revision_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"revise {target}" if target else text
-
-    annotation_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"(?:an?\s+|the\s+)?annotation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"annotations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^annotation\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in annotation_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"annotate {target}" if target else text
-
-    supplement_patterns = [
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"(?:a\s+|the\s+)?supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|publish|publishes|published|publishing|maintain|maintains|maintained|maintaining|issue|issues|issued|issuing|adopt|adopts|adopted|adopting)\s+"
-        r"supplements\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-        r"^supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$",
-    ]
-    for pattern in supplement_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"supplement {target}" if target else text
-
-    return text
-
-
-def _normalize_meeting_governance_light_verb_action(action_text: str) -> str:
-    """Project public-meeting governance nominalizations to operative predicates."""
-
-    text = str(action_text or "").strip()
-    if not text:
-        return text
-
-    meeting_patterns = [
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|maintain|maintains|maintained|maintaining|keep|keeps|kept|keeping|publish|publishes|published|publishing)\s+"
-            r"(?:the\s+)?minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "record minutes",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|prepare|prepares|prepared|preparing|approve|approves|approved|approving|adopt|adopts|adopted|adopting|set|sets|setting)\s+"
-            r"(?:an?\s+|the\s+)?agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "set agenda",
-        ),
-        (
-            r"^(?:make|makes|made|making|complete|completes|completed|completing|perform|performs|performed|performing|conduct|conducts|conducted|conducting|take|takes|took|taken|taking|call|calls|called|calling)\s+"
-            r"(?:a\s+|the\s+)?roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$",
-            "call roll",
-        ),
-        (
-            r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|publish|publishes|published|publishing|post|posts|posted|posting|issue|issues|issued|issuing)\s+"
-            r"(?:a\s+|the\s+)?meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$",
-            "notice meeting",
-        ),
-        (
-            r"^(?:give|gives|gave|given|giving|provide|provides|provided|providing|publish|publishes|published|publishing|post|posts|posted|posting|issue|issues|issued|issuing)\s+"
-            r"(?:a\s+|the\s+)?notice\s+of\s+(?:the\s+)?meeting\s+(?:to|for)\s+(?:the\s+)?(.+)$",
-            "notice meeting",
-        ),
-        (r"^minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record minutes"),
-        (r"^agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$", "set agenda"),
-        (r"^roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$", "call roll"),
-        (r"^meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
-        (r"^notice\s+of\s+(?:the\s+)?meeting\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
-    ]
-    for pattern, verb in meeting_patterns:
-        match = re.match(pattern, text, re.IGNORECASE)
-        if match:
-            target = _normalized_light_verb_target(match.group(1))
-            return f"{verb} {target}" if target else text
 
     return text
 

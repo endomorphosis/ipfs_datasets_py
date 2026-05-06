@@ -1,6 +1,7 @@
 """Tests for the deterministic legal parser optimizer daemon."""
 
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -1538,6 +1539,63 @@ def test_optimizer_scales_test_timeout_from_recent_suite_duration(tmp_path):
     optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
 
     assert optimizer.effective_test_timeout_seconds() == 403
+
+
+def test_optimizer_defers_full_suite_between_checkpoint_cycles(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        test_command=(sys.executable, "-c", "raise SystemExit(7)"),
+        full_suite_interval_cycles=10,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    result = optimizer.run_tests(
+        cycle_index=3,
+        changed_files=["ipfs_datasets_py/logic/deontic/decoder.py"],
+    )
+
+    assert result["valid"] is True
+    assert result["skipped"] is True
+    assert result["reason"] == "full_suite_deferred_to_checkpoint"
+
+
+def test_optimizer_runs_full_suite_on_checkpoint_cycle(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        test_command=(sys.executable, "-c", "print('checkpoint ok')"),
+        full_suite_interval_cycles=5,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    result = optimizer.run_tests(
+        cycle_index=10,
+        changed_files=["ipfs_datasets_py/logic/deontic/decoder.py"],
+    )
+
+    assert result["valid"] is True
+    assert not result.get("skipped")
+    assert "checkpoint ok" in result["stdout"]
+
+
+def test_optimizer_runs_full_suite_for_daemon_infrastructure_changes(tmp_path):
+    config = LegalParserDaemonConfig(
+        repo_root=tmp_path,
+        output_dir=tmp_path / "out",
+        test_command=(sys.executable, "-c", "print('daemon ok')"),
+        full_suite_interval_cycles=10,
+    )
+    optimizer = LegalParserParityOptimizer(daemon_config=config, llm_backend=_FakeRouter("{}"))
+
+    result = optimizer.run_tests(
+        cycle_index=3,
+        changed_files=["ipfs_datasets_py/optimizers/logic/deontic/parser_daemon.py"],
+    )
+
+    assert result["valid"] is True
+    assert not result.get("skipped")
+    assert "daemon ok" in result["stdout"]
 
 
 def test_daemon_cycle_writes_artifacts_in_patch_only_mode(tmp_path):

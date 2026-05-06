@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import inspect
 import json
 import traceback
 import os
@@ -152,6 +153,16 @@ LEGAL_PARSER_RECOVERY_TARGETS: Tuple[str, ...] = (
     "tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py",
 )
 
+FULL_SUITE_REQUIRED_PATH_PREFIXES: Tuple[str, ...] = (
+    "ipfs_datasets_py/optimizers/",
+    "tests/unit_tests/optimizers/",
+    "scripts/ops/",
+)
+
+FULL_SUITE_REQUIRED_PATHS: Tuple[str, ...] = (
+    "tests/unit_tests/logic/deontic/test_legal_parser_optimizer_daemon.py",
+)
+
 
 @dataclass
 class LegalParserDaemonConfig:
@@ -171,6 +182,7 @@ class LegalParserDaemonConfig:
     require_clean_touched_files: bool = True
     run_tests: bool = True
     test_command: Tuple[str, ...] = ("pytest", "tests/unit_tests/logic/deontic")
+    full_suite_interval_cycles: int = 10
     llm_max_tokens: int = 6000
     llm_temperature: float = 0.1
     llm_timeout_seconds: int = 900
@@ -1719,9 +1731,30 @@ class LegalParserParityOptimizer(BaseOptimizer):
     def _git_apply_command_for_strategy(self, strategy: str, *, check: bool) -> List[str]:
         return _shared_git_apply_command_for_strategy(strategy, check=check)
 
-    def run_tests(self) -> Dict[str, Any]:
+    def run_tests(
+        self,
+        *,
+        cycle_index: Optional[int] = None,
+        changed_files: Sequence[str] = (),
+        force_full_suite: bool = False,
+    ) -> Dict[str, Any]:
         if not self.daemon_config.run_tests:
             return {"valid": True, "skipped": True, "command": list(self.daemon_config.test_command)}
+        full_suite_decision = self._full_suite_validation_decision(
+            cycle_index=cycle_index,
+            changed_files=changed_files,
+            force_full_suite=force_full_suite,
+        )
+        if not full_suite_decision["run"]:
+            return {
+                "valid": True,
+                "skipped": True,
+                "reason": full_suite_decision["reason"],
+                "command": list(self.daemon_config.test_command),
+                "cycle_index": cycle_index,
+                "changed_files": list(changed_files),
+                "full_suite_interval_cycles": self.daemon_config.full_suite_interval_cycles,
+            }
         timeout = self.effective_test_timeout_seconds()
         result = _run_command(
             list(self.daemon_config.test_command),
@@ -1730,6 +1763,39 @@ class LegalParserParityOptimizer(BaseOptimizer):
         )
         result["timeout_seconds"] = timeout
         return result
+
+    def _full_suite_validation_decision(
+        self,
+        *,
+        cycle_index: Optional[int],
+        changed_files: Sequence[str],
+        force_full_suite: bool,
+    ) -> Dict[str, Any]:
+        if force_full_suite:
+            return {"run": True, "reason": "forced_full_suite"}
+        interval = int(self.daemon_config.full_suite_interval_cycles)
+        if interval <= 0:
+            return {"run": False, "reason": "full_suite_checkpoints_disabled"}
+        if interval == 1:
+            return {"run": True, "reason": "full_suite_every_cycle"}
+        normalized_changed_files = [str(path) for path in changed_files if str(path)]
+        required_paths = [
+            path
+            for path in normalized_changed_files
+            if path in FULL_SUITE_REQUIRED_PATHS
+            or any(path.startswith(prefix) for prefix in FULL_SUITE_REQUIRED_PATH_PREFIXES)
+        ]
+        if required_paths:
+            return {
+                "run": True,
+                "reason": "changed_daemon_or_optimizer_infrastructure",
+                "required_paths": required_paths,
+            }
+        if cycle_index is None:
+            return {"run": True, "reason": "manual_full_suite_without_cycle_context"}
+        if int(cycle_index) % interval == 0:
+            return {"run": True, "reason": "periodic_full_suite_checkpoint"}
+        return {"run": False, "reason": "full_suite_deferred_to_checkpoint"}
 
     def effective_test_timeout_seconds(self) -> int:
         """Scale full-suite validation timeout as the daemon adds tests."""
@@ -2293,7 +2359,10 @@ class LegalParserOptimizerDaemon:
                         started_at=started,
                         changed_files=changed_files,
                     )
-                    tests_result = self.optimizer.run_tests()
+                    tests_result = self._run_tests_for_cycle(
+                        cycle_index=cycle_index,
+                        changed_files=changed_files,
+                    )
                     if tests_result.get("valid"):
                         self._write_current_status(
                             status="running",
@@ -2459,7 +2528,7 @@ class LegalParserOptimizerDaemon:
                 cycle_dir=cycle_dir,
                 started_at=started,
             )
-            tests_result = self.optimizer.run_tests()
+            tests_result = self._run_tests_for_cycle(cycle_index=cycle_index)
 
         finished = _utc_now()
         cycle_payload = {
@@ -2475,6 +2544,7 @@ class LegalParserOptimizerDaemon:
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
+            "full_suite_interval_cycles": self.config.full_suite_interval_cycles,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
@@ -2714,7 +2784,11 @@ class LegalParserOptimizerDaemon:
                 changed_files=repair_changed_files,
                 failed_test_repair_attempt=attempt_index,
             )
-            repair_tests_result = self.optimizer.run_tests()
+            repair_tests_result = self._run_tests_for_cycle(
+                cycle_index=cycle_index,
+                changed_files=repair_changed_files,
+                force_full_suite=True,
+            )
             attempt_record["tests_result"] = repair_tests_result
             if repair_tests_result.get("valid"):
                 attempt_record["retry_reason"] = ""
@@ -2783,6 +2857,7 @@ class LegalParserOptimizerDaemon:
             "worktree_edit_timeout_seconds": self.config.worktree_edit_timeout_seconds,
             "worktree_stale_after_seconds": self.config.worktree_stale_after_seconds,
             "worktree_codex_sandbox": self.config.worktree_codex_sandbox,
+            "full_suite_interval_cycles": self.config.full_suite_interval_cycles,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
@@ -2831,6 +2906,7 @@ class LegalParserOptimizerDaemon:
             "proposal_transport": self.config.proposal_transport_mode(),
             "apply_patches": self.config.apply_patches,
             "commit_accepted_patches": self.config.commit_accepted_patches,
+            "full_suite_interval_cycles": self.config.full_suite_interval_cycles,
             "repair_failed_tests_before_rollback": self.config.repair_failed_tests_before_rollback,
             "failed_test_repair_attempts": self.config.failed_test_repair_attempts,
             "worktree_no_child_stall_seconds": self.config.worktree_no_child_stall_seconds,
@@ -4342,6 +4418,39 @@ class LegalParserOptimizerDaemon:
             paths=paths,
         )
 
+    def _run_tests_for_cycle(
+        self,
+        *,
+        cycle_index: int,
+        changed_files: Sequence[str] = (),
+        force_full_suite: bool = False,
+    ) -> Dict[str, Any]:
+        """Run validation with cycle context when the optimizer supports it."""
+
+        run_tests = self.optimizer.run_tests
+        kwargs: Dict[str, Any] = {}
+        try:
+            signature = inspect.signature(run_tests)
+        except (TypeError, ValueError):
+            signature = None
+        if signature is not None:
+            parameters = signature.parameters
+            accepts_kwargs = any(
+                parameter.kind == inspect.Parameter.VAR_KEYWORD
+                for parameter in parameters.values()
+            )
+            candidate_kwargs = {
+                "cycle_index": cycle_index,
+                "changed_files": changed_files,
+                "force_full_suite": force_full_suite,
+            }
+            kwargs = {
+                name: value
+                for name, value in candidate_kwargs.items()
+                if accepts_kwargs or name in parameters
+            }
+        return run_tests(**kwargs)
+
     def _post_apply_validation(self, changed_files: Sequence[str]) -> Dict[str, Any]:
         """Run fast structural checks before expensive tests or retention."""
 
@@ -5100,6 +5209,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--heartbeat-interval-seconds", type=float, default=15.0)
     parser.add_argument("--test-timeout-seconds", type=int, default=600)
     parser.add_argument(
+        "--full-suite-interval-cycles",
+        type=int,
+        default=int(os.environ.get("LEGAL_PARSER_DAEMON_FULL_SUITE_INTERVAL_CYCLES", "10")),
+        help=(
+            "Run the full deontic pytest command every N cycles. "
+            "Use 1 for every cycle or 0 to rely on compile/collect/focused validation only."
+        ),
+    )
+    parser.add_argument(
         "--disable-failed-test-repair",
         action="store_true",
         default=os.environ.get("LEGAL_PARSER_DAEMON_DISABLE_FAILED_TEST_REPAIR") == "1",
@@ -5170,6 +5288,7 @@ def config_from_args(args: argparse.Namespace) -> LegalParserDaemonConfig:
         worktree_no_child_stall_seconds=max(0, int(args.worktree_no_child_stall_seconds)),
         heartbeat_interval_seconds=float(args.heartbeat_interval_seconds),
         test_timeout_seconds=int(args.test_timeout_seconds),
+        full_suite_interval_cycles=int(args.full_suite_interval_cycles),
         require_production_and_tests=not bool(args.allow_patches_without_tests),
         target_score=float(args.target_score),
         apply_patches=bool(args.apply_patches),

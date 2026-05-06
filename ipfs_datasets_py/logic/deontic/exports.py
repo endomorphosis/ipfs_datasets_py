@@ -60,29 +60,6 @@ LOCAL_PROVER_SYNTAX_TARGETS = (
     "deontic_temporal_fol",
 )
 
-LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS: Dict[str, Dict[str, str]] = {
-    "frame_logic": {
-        "formula_role": "frame_record",
-        "dialect_family": "frame_logic",
-    },
-    "deontic_cec": {
-        "formula_role": "event_calculus_state",
-        "dialect_family": "event_calculus",
-    },
-    "fol": {
-        "formula_role": "first_order_formula",
-        "dialect_family": "first_order",
-    },
-    "deontic_fol": {
-        "formula_role": "deontic_first_order_formula",
-        "dialect_family": "deontic_first_order",
-    },
-    "deontic_temporal_fol": {
-        "formula_role": "temporal_deontic_first_order_formula",
-        "dialect_family": "deontic_temporal_first_order",
-    },
-}
-
 DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
     "actor",
     "modality",
@@ -400,11 +377,6 @@ def summarize_phase8_quality_records(
 
     reconstruction = summarize_reconstruction_slot_loss(decoder_records, required_slots)
     prover = summarize_prover_syntax_target_coverage(prover_syntax_records, required_targets)
-    prover_corpus = summarize_prover_syntax_target_corpus_coverage(
-        prover_syntax_records,
-        required_targets,
-    )
-    has_source_grounded_prover_records = _records_have_source_id(prover_syntax_records)
     provenance = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
 
     blockers = set(reconstruction.get("coverage_blockers") or [])
@@ -420,23 +392,11 @@ def summarize_phase8_quality_records(
         f"skipped_prover_syntax_target:{target}"
         for target in prover.get("skipped_targets", [])
     )
-    for blocker, count in (prover_corpus.get("coverage_blocker_distribution") or {}).items():
-        if count and has_source_grounded_prover_records:
-            blockers.add(str(blocker))
     blockers.update(provenance.get("coverage_blockers") or [])
-
-    prover_complete = False
-    if has_source_grounded_prover_records:
-        prover_complete = (
-            prover_corpus.get("all_sources_complete") is True
-            and prover_corpus.get("all_sources_required_targets_passed") is True
-        )
-    else:
-        prover_complete = prover.get("all_required_passed") is True
 
     complete = (
         reconstruction.get("slot_reconstruction_complete") is True
-        and prover_complete
+        and prover.get("all_required_passed") is True
         and provenance.get("all_checked_slots_grounded") is True
     )
 
@@ -446,16 +406,8 @@ def summarize_phase8_quality_records(
         "coverage_blockers": sorted(blockers),
         "reconstruction_slot_loss": reconstruction,
         "prover_syntax_target_coverage": prover,
-        "prover_syntax_corpus_coverage": prover_corpus,
         "ir_slot_provenance": provenance,
     }
-
-
-def _records_have_source_id(records: Sequence[Mapping[str, Any]]) -> bool:
-    return any(
-        isinstance(record, Mapping) and bool(str(record.get("source_id") or "").strip())
-        for record in records or []
-    )
 
 
 def build_phase8_quality_summary_records(
@@ -589,11 +541,6 @@ def summarize_prover_syntax_target_coverage(
         elif current == "skipped" and status == "passed":
             status_by_target[target] = status
 
-    target_status_matrix_summary = _summarize_prover_required_target_status_matrix(
-        records,
-        required,
-    )
-
     passed_targets = sorted(
         target for target in required if status_by_target.get(target) == "passed"
     )
@@ -614,297 +561,12 @@ def summarize_prover_syntax_target_coverage(
         "failed_targets": failed_targets,
         "skipped_targets": skipped_targets,
         "missing_targets": missing_targets,
-        "target_status_matrix": target_status_matrix_summary["target_status_matrix"],
-        "target_status_by_target": target_status_matrix_summary[
-            "target_status_by_target"
-        ],
-        "target_record_count_by_target": target_status_matrix_summary[
-            "target_record_count_by_target"
-        ],
-        "target_duplicate_record_count": target_status_matrix_summary[
-            "target_duplicate_record_count"
-        ],
-        "target_duplicate_targets": target_status_matrix_summary[
-            "target_duplicate_targets"
-        ],
-        "target_status_matrix_complete": target_status_matrix_summary[
-            "target_status_matrix_complete"
-        ],
-        "target_status_matrix_requires_validation": target_status_matrix_summary[
-            "requires_validation"
-        ],
-        "target_status_matrix_blockers": target_status_matrix_summary[
-            "coverage_blockers"
-        ],
         "all_required_passed": bool(required)
         and len(passed_targets) == len(required)
         and not failed_targets
         and not skipped_targets
         and not missing_targets,
         "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
-    }
-
-
-def summarize_prover_syntax_target_corpus_coverage(
-    records: Sequence[Mapping[str, Any]],
-    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
-) -> Dict[str, Any]:
-    """Summarize prover-target coverage across a corpus of source norms.
-
-    Callers may pass raw target syntax rows or the persisted rows produced by
-    ``build_prover_syntax_target_coverage_record``. The corpus summary keeps
-    per-source completeness separate from syntax validity so duplicate,
-    missing, skipped, and failed target records remain visible in Phase 8
-    reports without changing parser repair gates.
-    """
-
-    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
-    raw_records_by_source: Dict[str, List[Mapping[str, Any]]] = {}
-    source_summaries: Dict[str, Dict[str, Any]] = {}
-    record_count = 0
-    source_id_missing_record_count = 0
-    sources_with_missing_source_id: set[str] = set()
-
-    for record in records or []:
-        if not isinstance(record, Mapping):
-            continue
-        record_count += 1
-        source_id = _prover_syntax_record_source_id(record)
-        if not _prover_syntax_record_has_source_id(record):
-            source_id_missing_record_count += 1
-            sources_with_missing_source_id.add(source_id)
-        coverage_summary = record.get("coverage_summary")
-        if isinstance(coverage_summary, Mapping):
-            source_summaries[source_id] = dict(coverage_summary)
-            continue
-        raw_records_by_source.setdefault(source_id, []).append(record)
-
-    for source_id, source_records in raw_records_by_source.items():
-        source_summaries[source_id] = summarize_prover_syntax_target_coverage(
-            source_records,
-            required,
-        )
-
-    source_status_by_source: Dict[str, Dict[str, str]] = {}
-    source_missing_targets_by_source: Dict[str, List[str]] = {}
-    source_failed_targets_by_source: Dict[str, List[str]] = {}
-    source_skipped_targets_by_source: Dict[str, List[str]] = {}
-    source_duplicate_targets_by_source: Dict[str, List[str]] = {}
-    source_target_record_count_by_source: Dict[str, Dict[str, int]] = {}
-    source_blockers_by_source: Dict[str, List[str]] = {}
-    target_presence_distribution: Counter[str] = Counter()
-    target_pass_distribution: Counter[str] = Counter()
-    blocker_distribution: Counter[str] = Counter()
-    duplicate_record_count = 0
-    complete_source_count = 0
-    formal_syntax_valid_count = 0
-    sources_with_complete_required_targets: List[str] = []
-    sources_requiring_validation: List[str] = []
-
-    for source_id in sorted(source_summaries):
-        summary = source_summaries[source_id]
-        status_by_target = {
-            target: str(status)
-            for target, status in dict(summary.get("target_status_by_target") or {}).items()
-        }
-        source_status_by_source[source_id] = {
-            target: status_by_target.get(target, "missing") for target in required
-        }
-        missing_targets = [
-            str(target) for target in list(summary.get("missing_targets") or [])
-        ]
-        failed_targets = [
-            str(target) for target in list(summary.get("failed_targets") or [])
-        ]
-        skipped_targets = [
-            str(target) for target in list(summary.get("skipped_targets") or [])
-        ]
-        duplicate_targets = [
-            str(target) for target in list(summary.get("target_duplicate_targets") or [])
-        ]
-        record_counts_by_target = dict(summary.get("target_record_count_by_target") or {})
-        target_record_counts = {
-            target: int(record_counts_by_target.get(target) or 0)
-            for target in required
-        }
-        blockers = _prover_coverage_blockers(summary)
-        if source_id in sources_with_missing_source_id:
-            blockers = [*blockers, "missing_prover_syntax_source_id"]
-        source_missing_targets_by_source[source_id] = missing_targets
-        source_failed_targets_by_source[source_id] = failed_targets
-        source_skipped_targets_by_source[source_id] = skipped_targets
-        source_duplicate_targets_by_source[source_id] = duplicate_targets
-        source_target_record_count_by_source[source_id] = target_record_counts
-        source_blockers_by_source[source_id] = blockers
-        blocker_distribution.update(blockers)
-
-        for target, status in source_status_by_source[source_id].items():
-            if status != "missing":
-                target_presence_distribution[target] += 1
-            if status == "passed":
-                target_pass_distribution[target] += 1
-
-        duplicate_record_count += int(summary.get("target_duplicate_record_count") or 0)
-        source_complete = bool(
-            summary.get("target_status_matrix_complete") is True
-            and source_id not in sources_with_missing_source_id
-        )
-        if source_complete:
-            complete_source_count += 1
-            sources_with_complete_required_targets.append(source_id)
-        else:
-            sources_requiring_validation.append(source_id)
-        if summary.get("all_required_passed") is True:
-            formal_syntax_valid_count += 1
-
-    source_count = len(source_summaries)
-    incomplete_source_count = source_count - complete_source_count
-    return {
-        "required_targets": list(required),
-        "record_count": record_count,
-        "source_count": source_count,
-        "complete_source_count": complete_source_count,
-        "incomplete_source_count": incomplete_source_count,
-        "sources_with_complete_required_targets": sources_with_complete_required_targets,
-        "sources_requiring_validation": sources_requiring_validation,
-        "source_status_by_source": source_status_by_source,
-        "source_missing_targets_by_source": source_missing_targets_by_source,
-        "source_failed_targets_by_source": source_failed_targets_by_source,
-        "source_skipped_targets_by_source": source_skipped_targets_by_source,
-        "source_duplicate_targets_by_source": source_duplicate_targets_by_source,
-        "source_target_record_count_by_source": source_target_record_count_by_source,
-        "source_blockers_by_source": source_blockers_by_source,
-        "sources_with_failed_targets": [
-            source_id
-            for source_id in sorted(source_failed_targets_by_source)
-            if source_failed_targets_by_source[source_id]
-        ],
-        "sources_with_skipped_targets": [
-            source_id
-            for source_id in sorted(source_skipped_targets_by_source)
-            if source_skipped_targets_by_source[source_id]
-        ],
-        "sources_with_duplicate_targets": [
-            source_id
-            for source_id in sorted(source_duplicate_targets_by_source)
-            if source_duplicate_targets_by_source[source_id]
-        ],
-        "source_id_missing_record_count": source_id_missing_record_count,
-        "sources_with_missing_source_id": sorted(sources_with_missing_source_id),
-        "source_identity_complete": source_id_missing_record_count == 0,
-        "target_presence_distribution": dict(sorted(target_presence_distribution.items())),
-        "target_pass_distribution": dict(sorted(target_pass_distribution.items())),
-        "target_duplicate_record_count": duplicate_record_count,
-        "coverage_blocker_distribution": dict(sorted(blocker_distribution.items())),
-        "all_sources_complete": bool(source_count and complete_source_count == source_count),
-        "all_sources_required_targets_passed": bool(
-            source_count and formal_syntax_valid_count == source_count
-        ),
-        "source_complete_rate": round(complete_source_count / source_count, 6)
-        if source_count
-        else 0.0,
-        "formal_syntax_valid_source_rate": round(
-            formal_syntax_valid_count / source_count,
-            6,
-        )
-        if source_count
-        else 0.0,
-    }
-
-
-def _summarize_prover_required_target_status_matrix(
-    records: Sequence[Mapping[str, Any]],
-    required_targets: Sequence[str],
-) -> Dict[str, Any]:
-    """Return per-required-target syntax coverage diagnostics.
-
-    The aggregate pass rate is intentionally preserved for backward
-    compatibility. This matrix adds the missing operational detail: which
-    required target was absent, duplicated, skipped, or failed, and which
-    blockers explain the status.
-    """
-
-    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
-    statuses_by_target: Dict[str, List[str]] = {target: [] for target in required}
-    record_counts: Counter[str] = Counter()
-
-    for record in records or []:
-        if not isinstance(record, Mapping):
-            continue
-        target = _prover_syntax_record_target(record)
-        if target not in statuses_by_target:
-            continue
-        statuses_by_target[target].append(_prover_syntax_record_status(record))
-        record_counts[target] += 1
-
-    matrix: List[Dict[str, Any]] = []
-    blockers: List[str] = []
-    duplicate_targets: List[str] = []
-    for target in required:
-        statuses = statuses_by_target[target]
-        record_count = record_counts.get(target, 0)
-        duplicate = record_count > 1
-        if duplicate:
-            duplicate_targets.append(target)
-
-        if not statuses:
-            status = "missing"
-        elif "failed" in statuses:
-            status = "failed"
-        elif all(item == "skipped" for item in statuses):
-            status = "skipped"
-        elif "passed" in statuses:
-            status = "passed"
-        else:
-            status = "failed"
-
-        target_blockers: List[str] = []
-        if status == "missing":
-            target_blockers.append(f"missing_prover_syntax_target:{target}")
-        elif status == "failed":
-            target_blockers.append(f"failed_prover_syntax_target:{target}")
-        elif status == "skipped":
-            target_blockers.append(f"skipped_prover_syntax_target:{target}")
-        if duplicate:
-            target_blockers.append(
-                f"duplicate_prover_syntax_target_record:{target}:{record_count}"
-            )
-        blockers.extend(target_blockers)
-
-        matrix.append(
-            {
-                "target": target,
-                "status": status,
-                "present": bool(statuses),
-                "passed": status == "passed",
-                "failed": status == "failed",
-                "skipped": status == "skipped",
-                "missing": status == "missing",
-                "duplicate": duplicate,
-                "record_count": record_count,
-                "statuses": list(statuses),
-                "blockers": target_blockers,
-            }
-        )
-
-    complete = bool(
-        required
-        and all(row["status"] == "passed" for row in matrix)
-        and not duplicate_targets
-    )
-    return {
-        "target_status_matrix": matrix,
-        "target_status_by_target": {row["target"]: row["status"] for row in matrix},
-        "target_record_count_by_target": {
-            row["target"]: row["record_count"] for row in matrix
-        },
-        "target_duplicate_record_count": sum(
-            max(0, row["record_count"] - 1) for row in matrix
-        ),
-        "target_duplicate_targets": duplicate_targets,
-        "requires_validation": not complete,
-        "coverage_blockers": blockers,
-        "target_status_matrix_complete": complete,
     }
 
 
@@ -922,27 +584,6 @@ def build_prover_syntax_target_coverage_record(
     """
 
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
-    quality_gate_summary = _summarize_prover_target_quality_gates(records)
-    semantic_family_summary = _summarize_prover_target_semantic_families(records)
-    target_role_matrix_summary = _summarize_prover_target_role_matrix(
-        records,
-        required_targets,
-    )
-    summary = {
-        **summary,
-        "quality_gate_summary": quality_gate_summary,
-        "semantic_family_summary": semantic_family_summary,
-        "target_role_matrix_summary": target_role_matrix_summary,
-        "target_role_matrix_complete": target_role_matrix_summary[
-            "target_role_matrix_complete"
-        ],
-        "target_role_matrix_requires_validation": target_role_matrix_summary[
-            "requires_validation"
-        ],
-        "target_role_matrix_blockers": target_role_matrix_summary[
-            "coverage_blockers"
-        ],
-    }
     blockers: List[str] = []
     blockers.extend(
         f"missing_prover_syntax_target:{target}"
@@ -956,18 +597,8 @@ def build_prover_syntax_target_coverage_record(
         f"skipped_prover_syntax_target:{target}"
         for target in summary["skipped_targets"]
     )
-    if quality_gate_summary["quality_gate_record_count"]:
-        blockers.extend(
-            f"failed_prover_quality_check:{check}"
-            for check in quality_gate_summary["failed_quality_check_distribution"]
-        )
 
     normalized_source_id = str(source_id or "").strip()
-    quality_gates_complete = (
-        quality_gate_summary["quality_gate_record_count"] == 0
-        or quality_gate_summary["quality_gate_complete_rate"] == 1.0
-    )
-    formal_syntax_valid = bool(summary["all_required_passed"] and quality_gates_complete)
     return {
         "prover_syntax_summary_id": _stable_id(
             "prover-syntax-coverage",
@@ -980,28 +611,9 @@ def build_prover_syntax_target_coverage_record(
         "present_required_target_count": summary["present_required_target_count"],
         "record_count": summary["record_count"],
         "syntax_valid_rate": summary["syntax_valid_rate"],
-        "formal_syntax_valid": formal_syntax_valid,
-        "requires_validation": not formal_syntax_valid,
+        "formal_syntax_valid": summary["all_required_passed"],
+        "requires_validation": not summary["all_required_passed"],
         "coverage_blockers": blockers,
-        "quality_gate_summary": quality_gate_summary,
-        "semantic_family_summary": semantic_family_summary,
-        "target_role_matrix_summary": target_role_matrix_summary,
-        "target_role_matrix_complete": target_role_matrix_summary[
-            "target_role_matrix_complete"
-        ],
-        "target_role_matrix_requires_validation": target_role_matrix_summary[
-            "requires_validation"
-        ],
-        "target_role_matrix_blockers": target_role_matrix_summary[
-            "coverage_blockers"
-        ],
-        "semantic_formula_families": semantic_family_summary["semantic_formula_families"],
-        "semantic_formula_family_distribution": semantic_family_summary[
-            "semantic_formula_family_distribution"
-        ],
-        "target_semantic_family_consistent": semantic_family_summary[
-            "target_semantic_family_consistent"
-        ],
         "coverage_summary": summary,
     }
 
@@ -1036,33 +648,6 @@ def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:
     return ""
 
 
-def _prover_syntax_record_source_id(record: Mapping[str, Any]) -> str:
-    for key in ("source_id", "norm_source_id", "legal_source_id"):
-        value = str(record.get(key) or "").strip()
-        if value:
-            return value
-    return "unknown"
-
-
-def _prover_syntax_record_has_source_id(record: Mapping[str, Any]) -> bool:
-    for key in ("source_id", "norm_source_id", "legal_source_id"):
-        if str(record.get(key) or "").strip():
-            return True
-    return False
-
-
-def _prover_coverage_blockers(summary: Mapping[str, Any]) -> List[str]:
-    for key in (
-        "target_status_matrix_blockers",
-        "coverage_blockers",
-        "blockers",
-    ):
-        value = summary.get(key)
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
-            return [str(item) for item in value if item]
-    return []
-
-
 def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     status = str(record.get("status") or record.get("parse_status") or "").strip().lower()
     if status in {"skipped", "skip", "unavailable"} or record.get("skipped") is True:
@@ -1074,425 +659,6 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
-
-
-def _summarize_prover_target_quality_gates(
-    records: Sequence[Mapping[str, Any]],
-) -> Dict[str, Any]:
-    """Summarize per-target Phase 8 quality gates for coverage rows."""
-
-    gate_records: List[tuple[str, Mapping[str, Any]]] = []
-    failed_checks: Counter[str] = Counter()
-    complete_targets: List[str] = []
-    incomplete_targets: List[str] = []
-
-    for record in records or []:
-        if not isinstance(record, Mapping):
-            continue
-        gate = record.get("target_quality_gate")
-        if not isinstance(gate, Mapping):
-            continue
-        target = _prover_syntax_record_target(record)
-        gate_records.append((target, gate))
-        if gate.get("formal_validation_complete") is True:
-            if target:
-                complete_targets.append(target)
-        elif target:
-            incomplete_targets.append(target)
-        for check in gate.get("failed_quality_checks") or []:
-            check_text = str(check or "").strip()
-            if check_text:
-                failed_checks[check_text] += 1
-
-    record_count = len(gate_records)
-    complete_targets = sorted(dict.fromkeys(complete_targets))
-    incomplete_targets = sorted(dict.fromkeys(incomplete_targets))
-    return {
-        "quality_gate_record_count": record_count,
-        "quality_gate_complete_targets": complete_targets,
-        "quality_gate_incomplete_targets": incomplete_targets,
-        "quality_gate_complete_count": len(complete_targets),
-        "quality_gate_incomplete_count": len(incomplete_targets),
-        "quality_gate_complete_rate": round(len(complete_targets) / record_count, 6)
-        if record_count
-        else 0.0,
-        "failed_quality_check_distribution": dict(sorted(failed_checks.items())),
-    }
-
-
-def _summarize_prover_target_semantic_families(
-    records: Sequence[Mapping[str, Any]],
-) -> Dict[str, Any]:
-    """Summarize target-visible formula families across prover dialect rows."""
-
-    family_counts: Counter[str] = Counter()
-    target_families: Dict[str, str] = {}
-
-    for record in records or []:
-        if not isinstance(record, Mapping):
-            continue
-        target = _prover_syntax_record_target(record)
-        components = record.get("target_components")
-        family = ""
-        if isinstance(components, Mapping):
-            family = str(components.get("semantic_formula_family") or "").strip()
-        if not family:
-            family = str(record.get("semantic_formula_family") or "").strip()
-        if not family:
-            family = "unknown"
-        family_counts[family] += 1
-        if target:
-            target_families[target] = family
-
-    families = sorted(family_counts)
-    known_families = [family for family in families if family != "unknown"]
-    return {
-        "semantic_family_record_count": sum(family_counts.values()),
-        "semantic_formula_families": families,
-        "semantic_formula_family_distribution": dict(sorted(family_counts.items())),
-        "target_semantic_families": dict(sorted(target_families.items())),
-        "target_semantic_family_consistent": bool(
-            family_counts and len(known_families) == 1 and "unknown" not in family_counts
-        ),
-        "semantic_formula_family": known_families[0]
-        if len(known_families) == 1 and "unknown" not in family_counts
-        else "",
-    }
-
-
-def _summarize_prover_target_role_matrix(
-    records: Sequence[Mapping[str, Any]],
-    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
-) -> Dict[str, Any]:
-    """Summarize local prover target roles across dialect records.
-
-    Coverage rows already report whether syntax passed and whether semantic
-    families agree. This matrix persists the target-specific formula role and
-    dialect family so Phase 8 reports can audit that the same IR was rendered
-    through every required local prover surface, even when a clause remains
-    blocked by parser quality gates.
-    """
-
-    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
-    matrix: List[Dict[str, Any]] = []
-    seen_targets: set[str] = set()
-    target_record_counts: Counter[str] = Counter()
-    target_statuses: Dict[str, List[str]] = {}
-
-    for record in records or []:
-        if not isinstance(record, Mapping):
-            continue
-        target = _prover_syntax_record_target(record)
-        if not target:
-            continue
-        target_record_counts[target] += 1
-        target_statuses.setdefault(target, []).append(_prover_syntax_record_status(record))
-        if target in seen_targets:
-            continue
-        seen_targets.add(target)
-
-        components = record.get("target_components")
-        components = components if isinstance(components, Mapping) else {}
-        dialect_profile = record.get("target_dialect_profile")
-        dialect_profile = dialect_profile if isinstance(dialect_profile, Mapping) else {}
-        quality_gate = record.get("target_quality_gate")
-        quality_gate = quality_gate if isinstance(quality_gate, Mapping) else {}
-
-        formula_role = str(
-            record.get("target_formula_role")
-            or components.get("formula_role")
-            or dialect_profile.get("formula_role")
-            or ""
-        ).strip()
-        dialect_family = str(
-            dialect_profile.get("dialect_family")
-            or components.get("dialect_family")
-            or ""
-        ).strip()
-        semantic_family = str(
-            components.get("semantic_formula_family")
-            or record.get("semantic_formula_family")
-            or ""
-        ).strip()
-
-        matrix.append(
-            {
-                "target": target,
-                "formula_role": formula_role or "unknown",
-                "dialect_family": dialect_family or "unknown",
-                "semantic_formula_family": semantic_family or "unknown",
-                "syntax_status": _prover_syntax_record_status(record),
-                "syntax_valid": bool(record.get("syntax_valid") is True),
-                "proof_ready": bool(record.get("proof_ready") is True),
-                "requires_validation": bool(record.get("requires_validation") is True),
-                "formal_validation_complete": bool(
-                    quality_gate.get("formal_validation_complete") is True
-                ),
-                "failed_quality_checks": [
-                    str(check)
-                    for check in quality_gate.get("failed_quality_checks") or []
-                    if str(check).strip()
-                ],
-            }
-        )
-
-    matrix.sort(
-        key=lambda row: (
-            required.index(row["target"])
-            if row["target"] in required
-            else len(required)
-        )
-    )
-    roles_by_target = {
-        row["target"]: row["formula_role"]
-        for row in matrix
-        if row["target"] in required
-    }
-    dialects_by_target = {
-        row["target"]: row["dialect_family"]
-        for row in matrix
-        if row["target"] in required
-    }
-    missing_targets = [target for target in required if target not in roles_by_target]
-    unknown_role_targets = [
-        target
-        for target, role in roles_by_target.items()
-        if role in {"", "unknown"}
-    ]
-    unknown_dialect_targets = [
-        target
-        for target, dialect in dialects_by_target.items()
-        if dialect in {"", "unknown"}
-    ]
-    duplicate_targets = sorted(
-        target
-        for target in required
-        if target_record_counts.get(target, 0) > 1
-    )
-    expected_roles_by_target = {
-        target: LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS[target]["formula_role"]
-        for target in required
-        if target in LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS
-    }
-    expected_dialects_by_target = {
-        target: LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS[target]["dialect_family"]
-        for target in required
-        if target in LOCAL_PROVER_TARGET_ROLE_EXPECTATIONS
-    }
-    mismatched_role_targets = [
-        target
-        for target, role in roles_by_target.items()
-        if target in expected_roles_by_target
-        and role not in {"", "unknown"}
-        and role != expected_roles_by_target[target]
-    ]
-    mismatched_dialect_targets = [
-        target
-        for target, dialect in dialects_by_target.items()
-        if target in expected_dialects_by_target
-        and dialect not in {"", "unknown"}
-        and dialect != expected_dialects_by_target[target]
-    ]
-    complete_targets = [
-        target
-        for target in required
-        if target in roles_by_target
-        and target not in unknown_role_targets
-        and target not in unknown_dialect_targets
-        and target not in mismatched_role_targets
-        and target not in mismatched_dialect_targets
-        and target not in duplicate_targets
-    ]
-    incomplete_targets = [
-        target for target in required if target not in complete_targets
-    ]
-    status_by_target = {
-        target: _target_role_matrix_status(
-            target,
-            roles_by_target,
-            dialects_by_target,
-            missing_targets,
-            unknown_role_targets,
-            unknown_dialect_targets,
-            mismatched_role_targets,
-            mismatched_dialect_targets,
-            duplicate_targets,
-        )
-        for target in required
-    }
-    status_distribution = Counter(status_by_target.values())
-    semantic_family_by_target = {
-        row["target"]: row["semantic_formula_family"]
-        for row in matrix
-        if row["target"] in required
-    }
-    syntax_status_by_target = {
-        row["target"]: row["syntax_status"]
-        for row in matrix
-        if row["target"] in required
-    }
-    formal_validation_by_target = {
-        row["target"]: row["formal_validation_complete"]
-        for row in matrix
-        if row["target"] in required
-    }
-    failed_quality_checks_by_target = {
-        row["target"]: list(row["failed_quality_checks"])
-        for row in matrix
-        if row["target"] in required
-    }
-    semantic_family_distribution = Counter(
-        family for family in semantic_family_by_target.values() if family
-    )
-    syntax_status_distribution = Counter(
-        status for status in syntax_status_by_target.values() if status
-    )
-    formal_validation_complete_count = sum(
-        1
-        for complete_value in formal_validation_by_target.values()
-        if complete_value is True
-    )
-    required_count = len(required)
-    complete = bool(
-        required
-        and not missing_targets
-        and not unknown_role_targets
-        and not unknown_dialect_targets
-        and not mismatched_role_targets
-        and not mismatched_dialect_targets
-        and not duplicate_targets
-    )
-    blockers: List[str] = []
-    blockers.extend(f"missing_target_role:{target}" for target in missing_targets)
-    blockers.extend(
-        f"unknown_target_formula_role:{target}"
-        for target in sorted(unknown_role_targets)
-    )
-    blockers.extend(
-        f"unknown_target_dialect_family:{target}"
-        for target in sorted(unknown_dialect_targets)
-    )
-    blockers.extend(
-        "mismatched_target_formula_role:"
-        f"{target}:{roles_by_target[target]}!={expected_roles_by_target[target]}"
-        for target in sorted(mismatched_role_targets)
-    )
-    blockers.extend(
-        "mismatched_target_dialect_family:"
-        f"{target}:{dialects_by_target[target]}!={expected_dialects_by_target[target]}"
-        for target in sorted(mismatched_dialect_targets)
-    )
-    blockers.extend(
-        f"duplicate_target_role_records:{target}:{target_record_counts[target]}"
-        for target in duplicate_targets
-    )
-
-    return {
-        "target_role_record_count": len(matrix),
-        "target_role_input_record_count": sum(target_record_counts.values()),
-        "target_role_duplicate_record_count": sum(
-            target_record_counts[target] - 1 for target in duplicate_targets
-        ),
-        "target_role_unique_target_count": len(seen_targets),
-        "target_role_required_count": required_count,
-        "target_role_present_required_count": len(required) - len(missing_targets),
-        "target_role_complete_count": len(complete_targets),
-        "target_role_incomplete_count": len(incomplete_targets),
-        "target_role_complete_targets": complete_targets,
-        "target_role_incomplete_targets": incomplete_targets,
-        "target_role_matrix_coverage_rate": round(
-            len(complete_targets) / required_count,
-            6,
-        )
-        if required_count
-        else 0.0,
-        "required_targets": list(required),
-        "target_role_matrix": matrix,
-        "target_role_record_count_by_target": dict(
-            sorted(
-                (target, target_record_counts.get(target, 0))
-                for target in required
-            )
-        ),
-        "target_role_duplicate_targets": duplicate_targets,
-        "target_role_duplicate_statuses_by_target": {
-            target: target_statuses.get(target, [])
-            for target in duplicate_targets
-        },
-        "target_roles_by_target": dict(sorted(roles_by_target.items())),
-        "target_dialect_families_by_target": dict(sorted(dialects_by_target.items())),
-        "expected_target_roles_by_target": dict(sorted(expected_roles_by_target.items())),
-        "expected_target_dialect_families_by_target": dict(
-            sorted(expected_dialects_by_target.items())
-        ),
-        "target_formula_roles": sorted(dict.fromkeys(roles_by_target.values())),
-        "target_dialect_families": sorted(dict.fromkeys(dialects_by_target.values())),
-        "target_role_matrix_status_by_target": status_by_target,
-        "target_role_matrix_status_distribution": dict(
-            sorted(status_distribution.items())
-        ),
-        "target_semantic_family_by_target": dict(
-            sorted(semantic_family_by_target.items())
-        ),
-        "target_semantic_family_distribution": dict(
-            sorted(semantic_family_distribution.items())
-        ),
-        "target_syntax_status_by_target": dict(sorted(syntax_status_by_target.items())),
-        "target_syntax_status_distribution": dict(
-            sorted(syntax_status_distribution.items())
-        ),
-        "target_formal_validation_complete_by_target": dict(
-            sorted(formal_validation_by_target.items())
-        ),
-        "target_formal_validation_complete_count": formal_validation_complete_count,
-        "target_formal_validation_incomplete_count": (
-            len(formal_validation_by_target) - formal_validation_complete_count
-        ),
-        "target_failed_quality_checks_by_target": dict(
-            sorted(failed_quality_checks_by_target.items())
-        ),
-        "missing_role_targets": missing_targets,
-        "unknown_role_targets": sorted(unknown_role_targets),
-        "unknown_dialect_targets": sorted(unknown_dialect_targets),
-        "mismatched_role_targets": sorted(mismatched_role_targets),
-        "mismatched_dialect_targets": sorted(mismatched_dialect_targets),
-        "duplicate_role_targets": duplicate_targets,
-        "requires_validation": not complete,
-        "coverage_blockers": blockers,
-        "target_role_matrix_complete": complete,
-    }
-
-
-def _target_role_matrix_status(
-    target: str,
-    roles_by_target: Mapping[str, str],
-    dialects_by_target: Mapping[str, str],
-    missing_targets: Sequence[str],
-    unknown_role_targets: Sequence[str],
-    unknown_dialect_targets: Sequence[str],
-    mismatched_role_targets: Sequence[str],
-    mismatched_dialect_targets: Sequence[str],
-    duplicate_targets: Sequence[str],
-) -> str:
-    if target in missing_targets:
-        return "missing"
-    if target in unknown_role_targets and target in unknown_dialect_targets:
-        return "unknown_role_and_dialect"
-    if target in unknown_role_targets:
-        return "unknown_role"
-    if target in unknown_dialect_targets:
-        return "unknown_dialect"
-    if target in mismatched_role_targets and target in mismatched_dialect_targets:
-        return "mismatched_role_and_dialect"
-    if target in mismatched_role_targets:
-        return "mismatched_role"
-    if target in mismatched_dialect_targets:
-        return "mismatched_dialect"
-    if target in duplicate_targets:
-        return "duplicate_records"
-    if target in roles_by_target and target in dialects_by_target:
-        return "complete"
-    return "missing"
 
 
 def build_ir_slot_provenance_audit_record(
@@ -4544,9 +3710,6 @@ def summarize_reconstruction_slot_loss(
     missing_slots: set[str] = set()
     ungrounded_slots: set[str] = set()
     source_ids: set[str] = set()
-    per_source_grounded: Dict[str, set[str]] = {}
-    per_source_missing: Dict[str, set[str]] = {}
-    per_source_ungrounded: Dict[str, set[str]] = {}
 
     for record in records or []:
         if not isinstance(record, Mapping):
@@ -4556,12 +3719,9 @@ def summarize_reconstruction_slot_loss(
         if source_id:
             source_ids.add(source_id)
 
-        record_grounded = set(_slot_names_from_record(record, "grounded_slots"))
-        record_missing = set(_slot_names_from_record(record, "missing_slots"))
-        record_ungrounded = set(_slot_names_from_record(record, "ungrounded_slots"))
-        grounded_slots.update(record_grounded)
-        missing_slots.update(record_missing)
-        ungrounded_slots.update(record_ungrounded)
+        grounded_slots.update(_slot_names_from_record(record, "grounded_slots"))
+        missing_slots.update(_slot_names_from_record(record, "missing_slots"))
+        ungrounded_slots.update(_slot_names_from_record(record, "ungrounded_slots"))
 
         for slot_record in _slot_grounding_records(record):
             slot_name = str(
@@ -4579,13 +3739,10 @@ def summarize_reconstruction_slot_loss(
             ).strip().lower()
             if slot_record.get("grounded") is True or status in {"grounded", "present"}:
                 grounded_slots.add(slot_name)
-                record_grounded.add(slot_name)
             elif slot_record.get("ungrounded") is True or status in {"ungrounded", "unprovenanced"}:
                 ungrounded_slots.add(slot_name)
-                record_ungrounded.add(slot_name)
             elif slot_record.get("missing") is True or status in {"missing", "omitted"}:
                 missing_slots.add(slot_name)
-                record_missing.add(slot_name)
 
         provenance = record.get("decoded_phrase_provenance") or record.get("phrase_provenance")
         if isinstance(provenance, Sequence) and not isinstance(provenance, (str, bytes)):
@@ -4598,27 +3755,13 @@ def summarize_reconstruction_slot_loss(
                 spans = phrase.get("spans") or phrase.get("source_spans") or phrase.get("field_spans")
                 if spans:
                     grounded_slots.add(slot_name)
-                    record_grounded.add(slot_name)
-                elif phrase.get("fixed_connective") is not True and phrase.get("fixed") is not True:
+                elif phrase.get("fixed_connective") is not True:
                     ungrounded_slots.add(slot_name)
-                    record_ungrounded.add(slot_name)
-
-        if source_id:
-            per_source_grounded.setdefault(source_id, set()).update(record_grounded)
-            per_source_missing.setdefault(source_id, set()).update(record_missing)
-            per_source_ungrounded.setdefault(source_id, set()).update(record_ungrounded)
 
     grounded_required = sorted(slot for slot in required if slot in grounded_slots)
     missing_required = sorted(slot for slot in required if slot not in grounded_slots or slot in missing_slots)
     extra_ungrounded = sorted(slot for slot in ungrounded_slots if slot not in required)
     ungrounded_required = sorted(slot for slot in required if slot in ungrounded_slots)
-    slot_source_status = _reconstruction_slot_source_status(
-        required,
-        source_ids,
-        per_source_grounded,
-        per_source_missing,
-        per_source_ungrounded,
-    )
     blockers = [f"missing_reconstruction_slot:{slot}" for slot in missing_required]
     blockers.extend(f"ungrounded_reconstruction_slot:{slot}" for slot in ungrounded_required)
     blockers.extend(f"ungrounded_decoded_slot:{slot}" for slot in extra_ungrounded)
@@ -4635,7 +3778,6 @@ def summarize_reconstruction_slot_loss(
         "missing_required_slots": missing_required,
         "ungrounded_required_slots": ungrounded_required,
         "extra_ungrounded_slots": extra_ungrounded,
-        "slot_source_status": slot_source_status,
         "required_slot_count": required_count,
         "grounded_required_slot_count": grounded_count,
         "missing_required_slot_count": len(missing_required),
@@ -4680,7 +3822,6 @@ def build_reconstruction_slot_loss_record(
         "grounded_required_slot_rate": summary["grounded_required_slot_rate"],
         "ungrounded_decoded_slot_rate": summary["ungrounded_decoded_slot_rate"],
         "slot_reconstruction_complete": summary["slot_reconstruction_complete"],
-        "slot_source_status": summary["slot_source_status"],
         "requires_validation": not summary["slot_reconstruction_complete"],
         "coverage_blockers": summary["coverage_blockers"],
         "coverage_summary": summary,
@@ -4713,45 +3854,6 @@ def build_reconstruction_slot_loss_records(
         build_reconstruction_slot_loss_record(source_id, grouped[source_id], required_slots)
         for source_id in sorted(grouped)
     ]
-
-
-def _reconstruction_slot_source_status(
-    required_slots: Sequence[str],
-    source_ids: set[str],
-    per_source_grounded: Mapping[str, set[str]],
-    per_source_missing: Mapping[str, set[str]],
-    per_source_ungrounded: Mapping[str, set[str]],
-) -> Dict[str, Dict[str, List[str]]]:
-    """Return source-indexed reconstruction status for each required slot."""
-
-    status: Dict[str, Dict[str, List[str]]] = {}
-    ordered_sources = sorted(source_ids)
-    for slot in required_slots:
-        slot_name = str(slot or "").strip()
-        if not slot_name:
-            continue
-        grounded_source_ids = [
-            source_id
-            for source_id in ordered_sources
-            if slot_name in per_source_grounded.get(source_id, set())
-        ]
-        ungrounded_source_ids = [
-            source_id
-            for source_id in ordered_sources
-            if slot_name in per_source_ungrounded.get(source_id, set())
-        ]
-        missing_source_ids = [
-            source_id
-            for source_id in ordered_sources
-            if slot_name not in per_source_grounded.get(source_id, set())
-            or slot_name in per_source_missing.get(source_id, set())
-        ]
-        status[slot_name] = {
-            "grounded_source_ids": grounded_source_ids,
-            "missing_source_ids": missing_source_ids,
-            "ungrounded_source_ids": ungrounded_source_ids,
-        }
-    return status
 
 
 def _slot_names_from_record(record: Mapping[str, Any], key: str) -> set[str]:
@@ -4863,63 +3965,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     action_predicate = _deterministic_formula_action_predicate(formula)
 
     if action_predicate.startswith((
-        "Acknowledge",
-        "Authenticate",
-        "Attest",
-        "Confirm",
-        "Notarize",
-        "Ratify",
-    )):
-        return "document_authentication_duty"
-    if action_predicate.startswith((
-        "PermitInspection",
-        "ProvideAccess",
-        "ProvideCopy",
-        "ProvidePublicAccess",
-        "ProvideRecordsInspection",
-    )):
-        return "public_access_records_duty"
-    if action_predicate.startswith((
-        "Accommodate",
-        "FormatAccessibly",
-        "InterpretSignLanguage",
-        "ModifyAccessibility",
-        "PlanLanguageAccess",
-        "ProvideAuxiliaryAid",
-    )):
-        return "accessibility_accommodation_duty"
-    if action_predicate.startswith((
-        "DepositSecurity",
-        "EstablishEscrow",
-        "MaintainLiabilityInsurance",
-        "PostBond",
-        "ProvideProofInsurance",
-        "ReleaseBond",
-    )):
-        return "financial_assurance_duty"
-    if action_predicate.startswith((
-        "Arbitrate",
-        "Conciliate",
-        "Mediate",
-        "Negotiate",
-        "Settle",
-    )):
-        return "dispute_resolution_duty"
-    if action_predicate.startswith((
-        "Educate",
-        "Instruct",
-        "Orient",
-        "Train",
-    )):
-        return "training_orientation_duty"
-    if action_predicate.startswith((
-        "Continue",
-        "Defer",
-        "Postpone",
-        "Stay",
-    )):
-        return "administrative_relief_duty"
-    if action_predicate.startswith((
         "AdministerAgreement",
         "AdministerContract",
         "AdministerProcurement",
@@ -4940,26 +3985,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
         return "regulatory_control_duty"
     if action_predicate.startswith((
-        "AnalyzeSafety",
-        "AssessRisk",
-        "DevelopCompliancePlan",
-        "ImplementCompliancePlan",
-        "ImplementCorrectiveActionPlan",
-        "MaintainComplianceProgram",
-        "PlanEmergencyResponse",
-        "PrepareCompliancePlan",
-        "PrepareCorrectiveActionPlan",
-        "SubmitCompliancePlan",
-    )):
-        return "compliance_planning_duty"
-    if action_predicate.startswith((
-        "Drill",
-        "Evacuate",
-        "Rescue",
-        "Shelter",
-    )):
-        return "emergency_operations_duty"
-    if action_predicate.startswith((
         "Analyze",
         "Diagnose",
         "Examine",
@@ -4972,51 +3997,9 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         "Accession",
         "DocumentChainCustody",
         "InventoryEvidence",
-        "InventoryExhibit",
-        "LogCustody",
         "PreserveEvidence",
-        "RecordEvidenceTransfer",
     )):
         return "evidence_custody_duty"
-    if action_predicate.startswith((
-        "CallRoll",
-        "NoticeMeeting",
-        "RecordMinutes",
-        "SetAgenda",
-    )):
-        return "meeting_governance_duty"
-    if action_predicate.startswith((
-        "Archive",
-        "Memorialize",
-        "Preserve",
-        "Record",
-        "Restore",
-        "Retain",
-    )):
-        return "legal_recordkeeping_duty"
-    if action_predicate.startswith((
-        "MonitorIntrusion",
-        "ResetPassword",
-        "ReviewAccess",
-        "RotateCredential",
-        "ScanVulnerab",
-    )):
-        return "cybersecurity_access_control_duty"
-    if action_predicate.startswith((
-        "LogBreach",
-        "LogHazard",
-        "LogIncident",
-        "LogRisk",
-        "RegisterBreach",
-        "RegisterHazard",
-        "RegisterIncident",
-        "RegisterRisk",
-        "ReportBreach",
-        "ReportHazard",
-        "ReportIncident",
-        "ReportRisk",
-    )):
-        return "incident_risk_reporting_duty"
     if action_predicate.startswith((
         "Anonymize",
         "Decrypt",
@@ -5037,33 +4020,12 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
         return "data_protection_duty"
     if action_predicate.startswith(("Amend", "Enact", "MakeRule", "Repeal")):
         return "rulemaking_legislative_duty"
-    if _is_administrative_relief_waiver(norm, action_predicate):
-        return "administrative_relief_duty"
-    if action_predicate.startswith((
-        "ObtainAuthorization",
-        "ObtainConsent",
-        "Release",
-        "Waive",
-    )):
-        return "consent_release_instrument_duty"
-    if action_predicate.startswith((
-        "Continue",
-        "Defer",
-        "Extend",
-        "Postpone",
-        "Stay",
-        "Waive",
-    )):
-        return "administrative_relief_duty"
     if action_predicate.startswith((
         "Announce",
         "Circulate",
-        "Disclose",
         "Disseminate",
         "Display",
         "Distribute",
-        "Notice",
-        "Notify",
         "Post",
         "Transmit",
     )):
@@ -5126,50 +4088,14 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if action_predicate.startswith(("Register", "Enroll", "Renew")):
         return "registration_lifecycle_duty"
     if action_predicate.startswith((
-        "Annotate",
-        "Codify",
-        "Compile",
-        "Recodify",
-        "Renumber",
-        "Revise",
-        "Supplement",
-    )):
-        return "code_maintenance_duty"
-    if action_predicate.startswith((
-        "Abstract",
-        "Caption",
         "Catalog",
-        "Excerpt",
         "Index",
         "Interpret",
         "Summarize",
-        "Tag",
         "Transcribe",
         "Translate",
     )):
         return "records_information_processing_duty"
-    if action_predicate.startswith((
-        "Compare",
-        "CrossCheck",
-        "Deduplicate",
-        "Match",
-        "Normalize",
-        "Validate",
-    )):
-        return "data_quality_processing_duty"
-    if action_predicate.startswith((
-        "Declare",
-        "FileReturn",
-        "Report",
-    )):
-        return "regulatory_reporting_duty"
-    if action_predicate.startswith((
-        "Geocode",
-        "Georeference",
-        "Map",
-        "Survey",
-    )):
-        return "geospatial_records_duty"
     if norm.modality == "P" and category == "authority":
         return "authority_grant"
     if norm.norm_type == "penalty" or norm.penalty:
@@ -5183,24 +4109,6 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
     return norm.norm_type or norm.modality or "unknown"
-
-
-def _is_administrative_relief_waiver(norm: LegalNormIR, action_predicate: str) -> bool:
-    """Return whether a Waive* predicate came from administrative relief text."""
-
-    if not str(action_predicate or "").startswith("Waive"):
-        return False
-
-    action = re.sub(r"\s+", " ", str(norm.action or "").strip()).lower()
-    if not action:
-        return False
-
-    return bool(re.match(
-        r"^(?:grant|grants|granted|granting|approve|approves|approved|approving|"
-        r"order|orders|ordered|ordering|authorize|authorizes|authorized|authorizing)\s+"
-        r"(?:an?\s+|the\s+)?waiver\b",
-        action,
-    ))
 
 
 def _predicate_mentions_regulated_instrument(action_predicate: str) -> bool:

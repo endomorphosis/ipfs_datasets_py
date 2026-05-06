@@ -19,7 +19,7 @@ from .formula_builder import (
     build_deontic_formula_record_from_ir,
 )
 from .ir import LegalNormIR, legal_norm_ir_slot_provenance
-from .decoder import decode_legal_norm_ir, decoded_phrase_slot_text_map
+from .decoder import decode_legal_norm_ir
 
 
 LOCAL_PROVER_TARGETS = (
@@ -58,8 +58,6 @@ class ProverTargetSyntaxRecord:
     decoded_text: str
     decoded_slots: List[str]
     decoded_slot_fingerprint: str
-    decoded_phrase_profile: Dict[str, Any]
-    decoded_phrase_profile_fingerprint: str
     grounded_decoded_slots: List[str]
     ungrounded_decoded_slots: List[str]
     missing_decoded_slots: List[str]
@@ -76,8 +74,6 @@ class ProverTargetSyntaxRecord:
     exported_formula_symbols: List[str]
     target_symbol_alignment: Dict[str, Any]
     target_symbol_alignment_fingerprint: str
-    target_semantic_bridge_profile: Dict[str, Any]
-    target_semantic_bridge_fingerprint: str
     target_dialect_profile: Dict[str, Any]
     target_dialect_profile_fingerprint: str
     target_parse_profile: Dict[str, Any]
@@ -179,7 +175,6 @@ def _validate_target_formula(
     exported_formula = _render_target_formula(norm, target, formula)
     decoded = decode_legal_norm_ir(norm)
     decoded_slot_summary = _decoded_slot_summary(decoded)
-    decoded_phrase_profile = _decoded_phrase_profile(target, norm, decoded)
     ir_slot_summary = _ir_slot_grounding_summary(norm)
     alignment_summary = _decoded_ir_slot_alignment(
         decoded_slot_summary,
@@ -190,15 +185,6 @@ def _validate_target_formula(
         target,
         formula,
         exported_formula,
-    )
-    semantic_bridge_profile = _target_semantic_bridge_profile(
-        target,
-        norm,
-        formula_record,
-        decoded_slot_summary,
-        ir_slot_summary,
-        alignment_summary,
-        symbol_alignment,
     )
     target_dialect_profile = _target_dialect_profile(
         target,
@@ -211,7 +197,6 @@ def _validate_target_formula(
         target,
         norm,
         decoded.text,
-        decoded_phrase_profile,
     )
     target_components = _target_components(
         target,
@@ -222,7 +207,6 @@ def _validate_target_formula(
         target_dialect_profile,
         target_parse_profile,
         reconstruction_token_profile,
-        decoded_phrase_profile,
     )
     diagnostics = _syntax_diagnostics(target, exported_formula)
     syntax_valid = not diagnostics
@@ -259,10 +243,6 @@ def _validate_target_formula(
             "|".join(decoded_slot_summary["decoded_slots"]),
             decoded.text,
         ),
-        decoded_phrase_profile=decoded_phrase_profile,
-        decoded_phrase_profile_fingerprint=decoded_phrase_profile[
-            "decoded_phrase_profile_fingerprint"
-        ],
         grounded_decoded_slots=decoded_slot_summary["grounded_decoded_slots"],
         ungrounded_decoded_slots=decoded_slot_summary["ungrounded_decoded_slots"],
         missing_decoded_slots=decoded_slot_summary["missing_decoded_slots"],
@@ -280,10 +260,6 @@ def _validate_target_formula(
         target_symbol_alignment=symbol_alignment,
         target_symbol_alignment_fingerprint=symbol_alignment[
             "target_symbol_alignment_fingerprint"
-        ],
-        target_semantic_bridge_profile=semantic_bridge_profile,
-        target_semantic_bridge_fingerprint=semantic_bridge_profile[
-            "target_semantic_bridge_fingerprint"
         ],
         target_dialect_profile=target_dialect_profile,
         target_dialect_profile_fingerprint=target_dialect_profile[
@@ -384,104 +360,6 @@ def _decoded_slot_summary(decoded: Any) -> Dict[str, List[str]]:
     }
 
 
-def _decoded_phrase_profile(
-    target: str,
-    norm: LegalNormIR,
-    decoded: Any,
-) -> Dict[str, Any]:
-    """Audit the decoded phrase stream consumed by prover target records."""
-
-    phrase_slots: List[str] = []
-    grounded_phrase_slots: List[str] = []
-    ungrounded_phrase_slots: List[str] = []
-    fixed_slots: List[str] = []
-    provenance_only_slots: List[str] = []
-    phrase_texts: List[str] = []
-    phrase_texts_by_slot: Dict[str, List[str]] = {}
-    legal_phrase_texts_by_slot: Dict[str, List[str]] = {}
-    provenance_phrase_texts_by_slot: Dict[str, List[str]] = {}
-    phrase_count = 0
-    legal_phrase_count = 0
-    fixed_phrase_count = 0
-    provenance_only_phrase_count = 0
-    grounded_phrase_count = 0
-
-    for phrase in getattr(decoded, "phrases", []) or []:
-        phrase_count += 1
-        slot = str(getattr(phrase, "slot", "") or "").strip()
-        text = str(getattr(phrase, "text", "") or "").strip()
-        fixed = bool(getattr(phrase, "fixed", False))
-        provenance_only = bool(getattr(phrase, "provenance_only", False))
-        spans = list(getattr(phrase, "spans", []) or [])
-        if text:
-            phrase_texts.append(text)
-            if slot and not fixed:
-                _append_slot_text(phrase_texts_by_slot, slot, text)
-        if fixed:
-            fixed_phrase_count += 1
-            if slot and slot not in fixed_slots:
-                fixed_slots.append(slot)
-            continue
-        if provenance_only:
-            provenance_only_phrase_count += 1
-            if slot and slot not in provenance_only_slots:
-                provenance_only_slots.append(slot)
-            if slot and text:
-                _append_slot_text(provenance_phrase_texts_by_slot, slot, text)
-        else:
-            legal_phrase_count += 1
-            if slot and text:
-                _append_slot_text(legal_phrase_texts_by_slot, slot, text)
-        if slot and slot not in phrase_slots:
-            phrase_slots.append(slot)
-        if spans:
-            grounded_phrase_count += 1
-            if slot and slot not in grounded_phrase_slots:
-                grounded_phrase_slots.append(slot)
-        elif slot and slot not in ungrounded_phrase_slots:
-            ungrounded_phrase_slots.append(slot)
-
-    missing_slots = [
-        str(slot)
-        for slot in getattr(decoded, "missing_slots", []) or []
-        if str(slot).strip()
-    ]
-    complete = not missing_slots and not ungrounded_phrase_slots
-    fingerprint = _stable_fingerprint(
-        target,
-        norm.source_id,
-        "|".join(phrase_slots),
-        "|".join(fixed_slots),
-        "|".join(provenance_only_slots),
-        "|".join(missing_slots),
-        "|".join(phrase_texts),
-        str(complete),
-    )
-    return {
-        "target": target,
-        "source_id": norm.source_id,
-        "decoded_text": getattr(decoded, "text", ""),
-        "phrase_count": phrase_count,
-        "legal_phrase_count": legal_phrase_count,
-        "fixed_phrase_count": fixed_phrase_count,
-        "provenance_only_phrase_count": provenance_only_phrase_count,
-        "grounded_phrase_count": grounded_phrase_count,
-        "phrase_slots": phrase_slots,
-        "grounded_phrase_slots": grounded_phrase_slots,
-        "ungrounded_phrase_slots": ungrounded_phrase_slots,
-        "fixed_slots": fixed_slots,
-        "provenance_only_slots": provenance_only_slots,
-        "phrase_texts_by_slot": decoded_phrase_slot_text_map(decoded),
-        "legal_phrase_texts_by_slot": legal_phrase_texts_by_slot,
-        "provenance_phrase_texts_by_slot": provenance_phrase_texts_by_slot,
-        "missing_slots": missing_slots,
-        "phrase_texts": phrase_texts,
-        "all_decoded_phrases_grounded": not ungrounded_phrase_slots,
-        "decoded_phrase_profile_complete": complete,
-        "decoded_phrase_profile_fingerprint": fingerprint,
-    }
-
-
 def _target_formula_role(target: str) -> str:
     return {
         "frame_logic": "frame_record",
@@ -490,12 +368,6 @@ def _target_formula_role(target: str) -> str:
         "deontic_fol": "deontic_first_order_formula",
         "deontic_temporal_fol": "temporal_deontic_first_order_formula",
     }.get(target, "unknown")
-
-
-def _append_slot_text(target: Dict[str, List[str]], slot: str, text: str) -> None:
-    values = target.setdefault(slot, [])
-    if text not in values:
-        values.append(text)
 
 
 def _ir_slot_grounding_summary(norm: LegalNormIR) -> Dict[str, Any]:
@@ -605,7 +477,6 @@ def _target_components(
     target_dialect_profile: Dict[str, Any] | None = None,
     target_parse_profile: Dict[str, Any] | None = None,
     reconstruction_token_profile: Dict[str, Any] | None = None,
-    decoded_phrase_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     text = str(exported_formula or "").strip()
     ir_slot_summary = ir_slot_summary or {}
@@ -614,28 +485,16 @@ def _target_components(
     target_dialect_profile = target_dialect_profile or {}
     target_parse_profile = target_parse_profile or {}
     reconstruction_token_profile = reconstruction_token_profile or {}
-    decoded_phrase_profile = decoded_phrase_profile or {}
     grounded_ir_slots = list(ir_slot_summary.get("grounded_ir_slots") or [])
     ungrounded_ir_slots = list(ir_slot_summary.get("ungrounded_ir_slots") or [])
     missing_ir_slots = list(ir_slot_summary.get("missing_ir_slots") or [])
     formula_slots = list(alignment_summary.get("formula_slots") or [])
-    formula_slot_coverage = _formula_slot_coverage_profile(alignment_summary)
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
-    semantic_profile = _semantic_formula_profile(
-        source_symbols,
-        exported_symbols,
-        formula_slots,
-    )
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
-        "semantic_formula_family": semantic_profile["semantic_formula_family"],
-        "semantic_formula_predicate": semantic_profile["semantic_formula_predicate"],
-        "semantic_formula_symbols": semantic_profile["semantic_formula_symbols"],
-        "semantic_formula_source": semantic_profile["semantic_formula_source"],
-        "semantic_formula_slot_count": semantic_profile["semantic_formula_slot_count"],
         "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
         "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
         "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
@@ -650,20 +509,6 @@ def _target_components(
         "missing_ir_slot_count": len(missing_ir_slots),
         "formula_slots": formula_slots,
         "formula_slot_count": len(formula_slots),
-        "formula_slot_coverage_complete": formula_slot_coverage[
-            "formula_slot_coverage_complete"
-        ],
-        "formula_slot_decoder_rate": formula_slot_coverage[
-            "formula_slot_decoder_rate"
-        ],
-        "formula_slot_grounding_rate": formula_slot_coverage[
-            "formula_slot_grounding_rate"
-        ],
-        "decoded_formula_slots": formula_slot_coverage["decoded_formula_slots"],
-        "grounded_formula_slots": formula_slot_coverage["grounded_formula_slots"],
-        "omitted_formula_slot_names": formula_slot_coverage[
-            "omitted_formula_slot_names"
-        ],
         "slot_alignment_complete": bool(
             alignment_summary.get("alignment_complete") is True
         ),
@@ -703,51 +548,6 @@ def _target_components(
             reconstruction_token_profile.get("reconstruction_token_profile_complete")
             is True
         ),
-        "decoded_phrase_profile_complete": bool(
-            decoded_phrase_profile.get("decoded_phrase_profile_complete") is True
-        ),
-        "decoded_phrase_count": int(decoded_phrase_profile.get("phrase_count") or 0),
-        "decoded_legal_phrase_count": int(
-            decoded_phrase_profile.get("legal_phrase_count") or 0
-        ),
-        "decoded_fixed_phrase_count": int(
-            decoded_phrase_profile.get("fixed_phrase_count") or 0
-        ),
-        "decoded_provenance_only_phrase_count": int(
-            decoded_phrase_profile.get("provenance_only_phrase_count") or 0
-        ),
-        "decoded_phrase_slots": list(decoded_phrase_profile.get("phrase_slots") or []),
-        "decoded_fixed_slots": list(decoded_phrase_profile.get("fixed_slots") or []),
-        "decoded_provenance_only_slots": list(
-            decoded_phrase_profile.get("provenance_only_slots") or []
-        ),
-        "decoded_phrase_texts_by_slot": dict(
-            decoded_phrase_profile.get("phrase_texts_by_slot") or {}
-        ),
-        "decoded_legal_phrase_texts_by_slot": dict(
-            decoded_phrase_profile.get("legal_phrase_texts_by_slot") or {}
-        ),
-        "decoded_provenance_phrase_texts_by_slot": dict(
-            decoded_phrase_profile.get("provenance_phrase_texts_by_slot") or {}
-        ),
-        "decoded_salient_tokens_by_slot": dict(
-            reconstruction_token_profile.get("decoded_salient_tokens_by_slot") or {}
-        ),
-        "decoded_legal_salient_tokens_by_slot": dict(
-            reconstruction_token_profile.get("decoded_legal_salient_tokens_by_slot") or {}
-        ),
-        "decoded_provenance_salient_tokens_by_slot": dict(
-            reconstruction_token_profile.get("decoded_provenance_salient_tokens_by_slot") or {}
-        ),
-        "decoded_salient_token_slots": list(
-            reconstruction_token_profile.get("decoded_salient_token_slots") or []
-        ),
-        "decoded_legal_salient_token_slots": list(
-            reconstruction_token_profile.get("decoded_legal_salient_token_slots") or []
-        ),
-        "decoded_provenance_salient_token_slots": list(
-            reconstruction_token_profile.get("decoded_provenance_salient_token_slots") or []
-        ),
         "source_salient_token_count": int(
             reconstruction_token_profile.get("source_salient_token_count") or 0
         ),
@@ -776,239 +576,11 @@ def _target_components(
         "parse_quantifier_variables": list(
             target_parse_profile.get("quantifier_variables") or []
         ),
-        "parse_quantifier_scope_count": len(
-            target_parse_profile.get("quantifier_scopes") or []
-        ),
-        "parse_quantifier_scopes": list(
-            target_parse_profile.get("quantifier_scopes") or []
-        ),
-        "parse_deontic_scope_count": len(
-            target_parse_profile.get("deontic_scopes") or []
-        ),
-        "parse_deontic_scopes": list(
-            target_parse_profile.get("deontic_scopes") or []
-        ),
-        "parse_deontic_operator_sequence": list(
-            target_parse_profile.get("deontic_operator_sequence") or []
-        ),
-        "parse_deontic_scope_symbols": list(
-            target_parse_profile.get("deontic_scope_symbols") or []
-        ),
         "parse_frame_slots": list(target_parse_profile.get("frame_slots") or []),
         "parse_event_predicates": list(
             target_parse_profile.get("event_predicates") or []
         ),
     }
-
-
-def _semantic_formula_profile(
-    source_symbols: Sequence[str],
-    exported_symbols: Sequence[str],
-    formula_slots: Sequence[str],
-) -> Dict[str, Any]:
-    """Classify the target-visible formula semantics for Phase 8 reports."""
-
-    symbols = _ordered_unique(source_symbols)
-    symbol_source = "source_formula_symbols"
-    if not symbols:
-        symbols = _ordered_unique(exported_symbols)
-        symbol_source = "exported_formula_symbols"
-
-    predicate = _semantic_formula_predicate(symbols)
-    family = _semantic_formula_family(predicate)
-    return {
-        "semantic_formula_family": family,
-        "semantic_formula_predicate": predicate,
-        "semantic_formula_symbols": symbols,
-        "semantic_formula_source": symbol_source,
-        "semantic_formula_slot_count": len(_ordered_unique(formula_slots)),
-    }
-
-
-def _semantic_formula_predicate(symbols: Sequence[str]) -> str:
-    ordered_symbols = _ordered_unique(symbols)
-    if not ordered_symbols:
-        return ""
-
-    frame_predicates = {
-        "AppliesTo",
-        "Definition",
-        "ExemptFrom",
-        "ExpiresAfter",
-        "Lifecycle",
-        "ValidFor",
-    }
-    for symbol in ordered_symbols:
-        if symbol in frame_predicates:
-            return symbol
-    return ordered_symbols[-1]
-
-
-def _semantic_formula_family(predicate: str) -> str:
-    value = str(predicate or "").strip()
-    if not value:
-        return "unknown"
-    if value == "Definition":
-        return "definition"
-    if value == "AppliesTo":
-        return "applicability_rule"
-    if value == "ExemptFrom":
-        return "exemption_rule"
-    if value == "ValidFor":
-        return "instrument_lifecycle_validity"
-    if value == "ExpiresAfter":
-        return "instrument_lifecycle_expiration"
-    if value == "Lifecycle":
-        return "instrument_lifecycle"
-    if value.startswith((
-        "Arbitrate",
-        "Conciliate",
-        "Mediate",
-        "Negotiate",
-        "Settle",
-    )):
-        return "dispute_resolution_duty"
-    if value.startswith((
-        "DepositSecurity",
-        "EstablishEscrow",
-        "MaintainLiabilityInsurance",
-        "PostBond",
-        "ProvideProofInsurance",
-        "ReleaseBond",
-    )):
-        return "financial_assurance_duty"
-    if value.startswith((
-        "Continue",
-        "Defer",
-        "Extend",
-        "Postpone",
-        "Stay",
-        "Waive",
-    )):
-        return "administrative_relief_duty"
-    if value.startswith((
-        "AdministerAgreement",
-        "AdministerContract",
-        "AdministerProcurement",
-        "Award",
-        "OpenBid",
-        "OpenBids",
-        "OpenProposal",
-        "OpenProposals",
-        "Procure",
-        "SelectBidder",
-        "SelectContractor",
-        "SelectVendor",
-        "Solicit",
-    )):
-        return "procurement_contracting_duty"
-    if value.startswith((
-        "Acknowledge",
-        "Authenticate",
-        "Attest",
-        "Confirm",
-        "Notarize",
-        "Ratify",
-    )):
-        return "document_authentication_duty"
-    if value.startswith((
-        "PermitInspection",
-        "ProvideAccess",
-        "ProvideCopy",
-        "ProvidePublicAccess",
-        "ProvideRecordsInspection",
-    )):
-        return "public_access_records_duty"
-    if value.startswith((
-        "Announce",
-        "Circulate",
-        "Disseminate",
-        "Display",
-        "Distribute",
-        "Post",
-        "Transmit",
-    )):
-        return "public_information_duty"
-    if value.startswith(("Comment", "Object", "Respond")):
-        return "review_participation_duty"
-    if value.startswith(("Abate", "Enforce", "Mitigate", "Remediate", "Remedy")):
-        return "enforcement_remedy_duty"
-    if value.startswith(("Condemn", "Embargo", "Quarantine", "Recall")):
-        return "regulatory_control_duty"
-    if value.startswith((
-        "Analyze",
-        "Diagnose",
-        "Examine",
-        "Immunize",
-        "Screen",
-        "Vaccinate",
-    )):
-        return "health_compliance_duty"
-    if value.startswith((
-        "Adjudicate",
-        "Decide",
-        "Dismiss",
-        "Dispose",
-        "Find",
-    )):
-        return "judicial_disposition_duty"
-    if value.startswith(("FileAppeal", "MakeAppeal", "SubmitAppeal")):
-        return "administrative_review_request_duty"
-    if value.startswith((
-        "Accession",
-        "DocumentChainCustody",
-        "InventoryEvidence",
-        "PreserveEvidence",
-    )):
-        return "evidence_custody_duty"
-    if value.startswith((
-        "Anonymize",
-        "Decrypt",
-        "Deidentify",
-        "Destroy",
-        "Detokenize",
-        "Encrypt",
-        "Erase",
-        "Expunge",
-        "Hash",
-        "Mask",
-        "Pseudonymize",
-        "Redact",
-        "Seal",
-        "Tokenize",
-        "Unseal",
-    )):
-        return "data_protection_duty"
-    if value.startswith((
-        "Archive",
-        "Memorialize",
-        "Preserve",
-        "Record",
-        "Restore",
-        "Retain",
-    )):
-        return "legal_recordkeeping_duty"
-    if value.startswith((
-        "Catalog",
-        "Index",
-        "Interpret",
-        "Summarize",
-        "Transcribe",
-        "Translate",
-    )):
-        return "records_information_processing_duty"
-    if value.startswith((
-        "Compare",
-        "CrossCheck",
-        "Deduplicate",
-        "Match",
-        "Normalize",
-        "Validate",
-    )):
-        return "data_quality_processing_duty"
-    if value.startswith(("Cancel", "Revoke", "Suspend")):
-        return "instrument_status_duty"
-    return "ordinary_duty"
 
 
 def _target_quality_gate(
@@ -1056,7 +628,6 @@ def _target_quality_gate(
         reconstruction_token_profile.get("reconstruction_token_profile_complete")
         is True
     )
-    formula_slot_coverage = _formula_slot_coverage_profile(alignment_summary)
     known_local_target = target in LOCAL_PROVER_TARGETS
     structural_checks_complete = all(
         (
@@ -1093,46 +664,6 @@ def _target_quality_gate(
     if not known_local_target:
         failed_checks.append("known_local_target")
 
-    quality_checks = _target_quality_gate_checks(
-        syntax_valid=syntax_valid,
-        formula_proof_ready=formula_proof_ready,
-        formula_requires_validation=formula_requires_validation,
-        symbol_alignment_complete=symbol_alignment_complete,
-        dialect_complete=dialect_complete,
-        parse_complete=parse_complete,
-        token_complete=token_complete,
-        known_local_target=known_local_target,
-        diagnostic_codes=diagnostic_codes,
-    )
-    quality_blockers = [
-        record["blocker"]
-        for record in quality_checks
-        if record.get("passed") is False and record.get("blocking") is True
-    ]
-    source_grounding_diagnostics = {
-        "parser_warnings": list(norm.quality.parser_warnings),
-        "blockers": list(norm.blockers),
-        "missing_ir_slots": list(alignment_summary.get("decoded_missing_grounded_ir_slots") or []),
-        "ungrounded_decoded_slots": list(alignment_summary.get("ungrounded_decoded_slots") or []),
-        "formula_missing_decoded_slots": list(
-            alignment_summary.get("formula_missing_decoded_slots") or []
-        ),
-        "formula_ungrounded_slots": list(alignment_summary.get("formula_ungrounded_slots") or []),
-        "formula_slot_coverage": formula_slot_coverage,
-        "omitted_formula_slot_names": list(
-            alignment_summary.get("omitted_formula_slot_names") or []
-        ),
-        "missing_exported_formula_symbols": list(
-            symbol_alignment.get("missing_exported_formula_symbols") or []
-        ),
-        "unreconstructed_source_tokens": list(
-            reconstruction_token_profile.get("unreconstructed_source_tokens") or []
-        ),
-        "added_decoded_tokens": list(
-            reconstruction_token_profile.get("added_decoded_tokens") or []
-        ),
-    }
-
     fingerprint = _stable_fingerprint(
         norm.source_id,
         target,
@@ -1143,7 +674,6 @@ def _target_quality_gate(
         str(formal_validation_complete),
         str(parser_theorem_promotable),
         "|".join(failed_checks),
-        "|".join(quality_blockers),
         "|".join(diagnostic_codes),
     )
     return {
@@ -1155,7 +685,6 @@ def _target_quality_gate(
         "formula_requires_validation": formula_requires_validation,
         "parser_proof_ready": bool(norm.proof_ready),
         "slot_alignment_complete": slot_alignment_complete,
-        "formula_slot_coverage": formula_slot_coverage,
         "target_symbol_alignment_complete": symbol_alignment_complete,
         "target_dialect_profile_complete": dialect_complete,
         "target_parse_profile_complete": parse_complete,
@@ -1164,134 +693,8 @@ def _target_quality_gate(
         "formal_validation_complete": formal_validation_complete,
         "parser_theorem_promotable": parser_theorem_promotable,
         "failed_quality_checks": failed_checks,
-        "quality_gate_checks": quality_checks,
-        "quality_gate_blockers": quality_blockers,
-        "source_grounding_diagnostics": source_grounding_diagnostics,
         "target_quality_gate_fingerprint": fingerprint,
     }
-
-
-def _formula_slot_coverage_profile(alignment_summary: Dict[str, Any]) -> Dict[str, Any]:
-    """Return target-independent coverage diagnostics for formula slots.
-
-    Formula slots are the IR slots that materially contributed to the exported
-    theorem text. The quality gate keeps this profile separate from the broader
-    decoder/IR alignment so lossy reconstruction of a formula antecedent is
-    visible even when target syntax and symbol checks pass.
-    """
-
-    formula_slots = _ordered_unique(alignment_summary.get("formula_slots") or [])
-    decoded_overlap = set(
-        _ordered_unique(alignment_summary.get("decoded_formula_overlap") or [])
-    )
-    grounded_overlap = set(
-        _ordered_unique(alignment_summary.get("grounded_formula_overlap") or [])
-    )
-    decoded_formula_slots = [slot for slot in formula_slots if slot in decoded_overlap]
-    grounded_formula_slots = [slot for slot in formula_slots if slot in grounded_overlap]
-    missing_decoded = _ordered_unique(
-        alignment_summary.get("formula_missing_decoded_slots") or []
-    )
-    ungrounded = _ordered_unique(alignment_summary.get("formula_ungrounded_slots") or [])
-    omitted = _ordered_unique(alignment_summary.get("omitted_formula_slot_names") or [])
-    formula_slot_count = len(formula_slots)
-    decoded_count = len(decoded_formula_slots)
-    grounded_count = len(grounded_formula_slots)
-    complete = not missing_decoded and not ungrounded
-    return {
-        "formula_slots": formula_slots,
-        "decoded_formula_slots": decoded_formula_slots,
-        "grounded_formula_slots": grounded_formula_slots,
-        "missing_decoded_formula_slots": missing_decoded,
-        "ungrounded_formula_slots": ungrounded,
-        "omitted_formula_slot_names": omitted,
-        "formula_slot_count": formula_slot_count,
-        "decoded_formula_slot_count": decoded_count,
-        "grounded_formula_slot_count": grounded_count,
-        "omitted_formula_slot_count": len(omitted),
-        "formula_slot_decoder_rate": round(decoded_count / formula_slot_count, 6)
-        if formula_slot_count
-        else 1.0,
-        "formula_slot_grounding_rate": round(grounded_count / formula_slot_count, 6)
-        if formula_slot_count
-        else 1.0,
-        "formula_slot_coverage_complete": complete,
-    }
-
-
-def _target_quality_gate_checks(
-    *,
-    syntax_valid: bool,
-    formula_proof_ready: bool,
-    formula_requires_validation: bool,
-    symbol_alignment_complete: bool,
-    dialect_complete: bool,
-    parse_complete: bool,
-    token_complete: bool,
-    known_local_target: bool,
-    diagnostic_codes: Sequence[str],
-) -> List[Dict[str, Any]]:
-    checks = [
-        (
-            "syntax",
-            syntax_valid,
-            "syntax diagnostics must be empty",
-            list(diagnostic_codes),
-        ),
-        (
-            "formula_proof_ready",
-            formula_proof_ready,
-            "formula record must be proof-ready",
-            [],
-        ),
-        (
-            "formula_requires_validation",
-            not formula_requires_validation,
-            "formula record must not require validation",
-            [],
-        ),
-        (
-            "symbol_alignment",
-            symbol_alignment_complete,
-            "target formula must preserve source formula symbols",
-            [],
-        ),
-        (
-            "target_dialect",
-            dialect_complete,
-            "target dialect profile must be complete",
-            [],
-        ),
-        (
-            "target_parse",
-            parse_complete,
-            "target parse profile must be complete",
-            [],
-        ),
-        (
-            "reconstruction_tokens",
-            token_complete,
-            "decoder reconstruction token profile must be complete",
-            [],
-        ),
-        (
-            "known_local_target",
-            known_local_target,
-            "target must be one of the local prover dialects",
-            [],
-        ),
-    ]
-    return [
-        {
-            "check": name,
-            "passed": bool(passed),
-            "blocking": True,
-            "blocker": "" if passed else f"failed_prover_quality_check:{name}",
-            "description": description,
-            "diagnostic_codes": codes,
-        }
-        for name, passed, description, codes in checks
-    ]
 
 
 _RECONSTRUCTION_TOKEN_STOPWORDS = {
@@ -1322,23 +725,12 @@ def _reconstruction_token_profile(
     target: str,
     norm: LegalNormIR,
     decoded_text: str,
-    decoded_phrase_profile: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Compare source and decoded salient legal tokens for Phase 8 audits."""
 
-    decoded_phrase_profile = decoded_phrase_profile or {}
     source_text = str(norm.source_text or norm.support_text or "").strip()
     source_tokens = _salient_reconstruction_tokens(source_text)
     decoded_tokens = _salient_reconstruction_tokens(decoded_text)
-    decoded_tokens_by_slot = _salient_tokens_by_slot(
-        decoded_phrase_profile.get("phrase_texts_by_slot") or {}
-    )
-    legal_tokens_by_slot = _salient_tokens_by_slot(
-        decoded_phrase_profile.get("legal_phrase_texts_by_slot") or {}
-    )
-    provenance_tokens_by_slot = _salient_tokens_by_slot(
-        decoded_phrase_profile.get("provenance_phrase_texts_by_slot") or {}
-    )
     source_set = set(source_tokens)
     decoded_set = set(decoded_tokens)
     matched_tokens = [token for token in source_tokens if token in decoded_set]
@@ -1357,9 +749,6 @@ def _reconstruction_token_profile(
         "|".join(decoded_tokens),
         "|".join(unreconstructed_tokens),
         "|".join(added_tokens),
-        _slot_token_fingerprint_part(decoded_tokens_by_slot),
-        _slot_token_fingerprint_part(legal_tokens_by_slot),
-        _slot_token_fingerprint_part(provenance_tokens_by_slot),
         str(complete),
     )
     return {
@@ -1367,12 +756,6 @@ def _reconstruction_token_profile(
         "source_text_basis": "source_text" if norm.source_text else "support_text",
         "source_salient_tokens": source_tokens,
         "decoded_salient_tokens": decoded_tokens,
-        "decoded_salient_tokens_by_slot": decoded_tokens_by_slot,
-        "decoded_legal_salient_tokens_by_slot": legal_tokens_by_slot,
-        "decoded_provenance_salient_tokens_by_slot": provenance_tokens_by_slot,
-        "decoded_salient_token_slots": list(decoded_tokens_by_slot),
-        "decoded_legal_salient_token_slots": list(legal_tokens_by_slot),
-        "decoded_provenance_salient_token_slots": list(provenance_tokens_by_slot),
         "matched_salient_tokens": matched_tokens,
         "unreconstructed_source_tokens": unreconstructed_tokens,
         "added_decoded_tokens": added_tokens,
@@ -1384,29 +767,6 @@ def _reconstruction_token_profile(
         "reconstruction_token_profile_complete": complete,
         "reconstruction_token_profile_fingerprint": fingerprint,
     }
-
-
-def _salient_tokens_by_slot(slot_texts: Dict[str, Any]) -> Dict[str, List[str]]:
-    token_map: Dict[str, List[str]] = {}
-    for slot, values in slot_texts.items():
-        slot_name = str(slot or "").strip()
-        if not slot_name:
-            continue
-        if isinstance(values, (list, tuple)):
-            text = " ".join(str(value or "") for value in values)
-        else:
-            text = str(values or "")
-        tokens = _salient_reconstruction_tokens(text)
-        if tokens:
-            token_map[slot_name] = tokens
-    return token_map
-
-
-def _slot_token_fingerprint_part(slot_tokens: Dict[str, List[str]]) -> str:
-    return "|".join(
-        f"{slot}:{','.join(tokens)}"
-        for slot, tokens in sorted(slot_tokens.items())
-    )
 
 
 def _salient_reconstruction_tokens(text: str) -> List[str]:
@@ -1433,8 +793,6 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
     atom_symbols = _formula_symbols(text)
     connectives = _target_connectives(text)
     quantifier_variables = _quantifier_variables(text)
-    quantifier_scopes = _quantifier_scope_profiles(text)
-    deontic_scopes = _deontic_scope_profiles(text)
     frame_slots = _frame_slots(text) if target == "frame_logic" else []
     event_predicates = _event_predicates(text) if target == "deontic_cec" else []
     complete = bool(
@@ -1455,8 +813,6 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
         "|".join(atom_symbols),
         "|".join(connectives),
         "|".join(quantifier_variables),
-        _scope_profiles_fingerprint_part(quantifier_scopes),
-        _scope_profiles_fingerprint_part(deontic_scopes),
         "|".join(frame_slots),
         "|".join(event_predicates),
         str(complete),
@@ -1468,18 +824,6 @@ def _target_parse_profile(target: str, exported_formula: str) -> Dict[str, Any]:
         "atom_symbols": atom_symbols,
         "connectives": connectives,
         "quantifier_variables": quantifier_variables,
-        "quantifier_scopes": quantifier_scopes,
-        "quantifier_scope_count": len(quantifier_scopes),
-        "deontic_scopes": deontic_scopes,
-        "deontic_scope_count": len(deontic_scopes),
-        "deontic_operator_sequence": [
-            scope["operator"] for scope in deontic_scopes
-        ],
-        "deontic_scope_symbols": _ordered_unique(
-            symbol
-            for scope in deontic_scopes
-            for symbol in scope.get("formula_symbols", [])
-        ),
         "frame_slots": frame_slots,
         "event_predicates": event_predicates,
         "contains_quantifier": bool(quantifier_variables),
@@ -1526,101 +870,6 @@ def _quantifier_variables(text: str) -> List[str]:
         if variable not in variables:
             variables.append(variable)
     return variables
-
-
-def _quantifier_scope_profiles(text: str) -> List[Dict[str, Any]]:
-    profiles: List[Dict[str, Any]] = []
-    for match in re.finditer(r"\bforall\s+([A-Za-z][A-Za-z0-9_]*)\.\s*", text):
-        variable = match.group(1)
-        scope_text = _balanced_scope_after(text, match.end())
-        if not scope_text:
-            continue
-        antecedent, consequent = _split_implication_scope(scope_text)
-        profile = {
-            "variable": variable,
-            "scope_text": scope_text,
-            "matrix_symbols": _formula_symbols(scope_text),
-            "antecedent_symbols": _formula_symbols(antecedent),
-            "consequent_symbols": _formula_symbols(consequent),
-            "has_implication": bool(consequent),
-        }
-        profiles.append(profile)
-    return profiles
-
-
-def _deontic_scope_profiles(text: str) -> List[Dict[str, Any]]:
-    profiles: List[Dict[str, Any]] = []
-    for match in re.finditer(r"\b([OPF])\s*\(", text):
-        operator = match.group(1)
-        scope_text = _balanced_scope_after(text, match.end() - 1)
-        if not scope_text:
-            continue
-        profiles.append(
-            {
-                "operator": operator,
-                "scope_text": scope_text,
-                "formula_symbols": _formula_symbols(scope_text),
-                "quantifier_variables": _quantifier_variables(scope_text),
-                "contains_quantifier": bool(_quantifier_variables(scope_text)),
-            }
-        )
-    return profiles
-
-
-def _balanced_scope_after(text: str, start_index: int) -> str:
-    value = str(text or "")
-    index = start_index
-    while index < len(value) and value[index].isspace():
-        index += 1
-    if index >= len(value):
-        return ""
-    if value[index] != "(":
-        return value[index:].strip()
-
-    depth = 0
-    for cursor in range(index, len(value)):
-        char = value[cursor]
-        if char == "(":
-            depth += 1
-        elif char == ")":
-            depth -= 1
-            if depth == 0:
-                return value[index + 1 : cursor].strip()
-    return ""
-
-
-def _split_implication_scope(scope_text: str) -> tuple[str, str]:
-    text = str(scope_text or "").strip()
-    match = re.search(r"(?:->|=>)", text)
-    if not match:
-        return text, ""
-    return text[: match.start()].strip(), text[match.end() :].strip()
-
-
-def _scope_profiles_fingerprint_part(profiles: Sequence[Mapping[str, Any]]) -> str:
-    parts: List[str] = []
-    for profile in profiles:
-        if "variable" in profile:
-            parts.append(
-                "forall:"
-                + str(profile.get("variable") or "")
-                + ":"
-                + "|".join(profile.get("matrix_symbols") or [])
-                + ":"
-                + "|".join(profile.get("antecedent_symbols") or [])
-                + ":"
-                + "|".join(profile.get("consequent_symbols") or [])
-            )
-        elif "operator" in profile:
-            parts.append(
-                "deontic:"
-                + str(profile.get("operator") or "")
-                + ":"
-                + "|".join(profile.get("formula_symbols") or [])
-                + ":"
-                + "|".join(profile.get("quantifier_variables") or [])
-            )
-    return ";".join(parts)
 
 
 def _frame_slots(text: str) -> List[str]:
@@ -1857,88 +1106,6 @@ def _target_symbol_alignment(
         "exported_formula_symbol_count": len(exported_symbols),
         "target_symbol_alignment_complete": complete,
         "target_symbol_alignment_fingerprint": fingerprint,
-    }
-
-
-def _target_semantic_bridge_profile(
-    target: str,
-    norm: LegalNormIR,
-    formula_record: Dict[str, Any],
-    decoded_slot_summary: Dict[str, List[str]],
-    ir_slot_summary: Dict[str, Any],
-    alignment_summary: Dict[str, Any],
-    symbol_alignment: Dict[str, Any],
-) -> Dict[str, Any]:
-    """Join formula, decoder, IR, and target-symbol audits for one target."""
-
-    decoded_slots = _ordered_unique(decoded_slot_summary.get("decoded_slots") or [])
-    grounded_ir_slots = _ordered_unique(ir_slot_summary.get("grounded_ir_slots") or [])
-    formula_slots = _ordered_unique(alignment_summary.get("formula_slots") or [])
-    decoded_formula_overlap = [slot for slot in formula_slots if slot in decoded_slots]
-    grounded_formula_overlap = [
-        slot for slot in formula_slots if slot in grounded_ir_slots
-    ]
-    formula_missing_decoded = _ordered_unique(
-        alignment_summary.get("formula_missing_decoded_slots") or []
-    )
-    formula_ungrounded = _ordered_unique(
-        alignment_summary.get("formula_ungrounded_slots") or []
-    )
-    omitted_formula_slots = _ordered_unique(
-        alignment_summary.get("omitted_formula_slot_names") or []
-    )
-    missing_symbols = _ordered_unique(
-        symbol_alignment.get("missing_exported_formula_symbols") or []
-    )
-    semantic_profile = _semantic_formula_profile(
-        symbol_alignment.get("source_formula_symbols") or [],
-        symbol_alignment.get("exported_formula_symbols") or [],
-        formula_slots,
-    )
-
-    blockers: List[str] = []
-    blockers.extend(
-        f"formula_slot_missing_from_decoder:{slot}"
-        for slot in formula_missing_decoded
-    )
-    blockers.extend(f"formula_slot_ungrounded:{slot}" for slot in formula_ungrounded)
-    blockers.extend(f"target_symbol_missing:{symbol}" for symbol in missing_symbols)
-    if semantic_profile["semantic_formula_family"] == "unknown":
-        blockers.append("unknown_semantic_formula_family")
-    if formula_record.get("requires_validation") is not False:
-        blockers.append("formula_requires_validation")
-
-    complete = not blockers
-    fingerprint = _stable_fingerprint(
-        target,
-        norm.source_id,
-        semantic_profile["semantic_formula_family"],
-        semantic_profile["semantic_formula_predicate"],
-        "|".join(formula_slots),
-        "|".join(decoded_formula_overlap),
-        "|".join(grounded_formula_overlap),
-        "|".join(blockers),
-        str(complete),
-    )
-    return {
-        "target": target,
-        "source_id": norm.source_id,
-        "semantic_formula_family": semantic_profile["semantic_formula_family"],
-        "semantic_formula_predicate": semantic_profile["semantic_formula_predicate"],
-        "semantic_formula_symbols": semantic_profile["semantic_formula_symbols"],
-        "formula_slots": formula_slots,
-        "decoded_slots": decoded_slots,
-        "grounded_ir_slots": grounded_ir_slots,
-        "decoded_formula_overlap": decoded_formula_overlap,
-        "grounded_formula_overlap": grounded_formula_overlap,
-        "formula_missing_decoded_slots": formula_missing_decoded,
-        "formula_ungrounded_slots": formula_ungrounded,
-        "omitted_formula_slot_names": omitted_formula_slots,
-        "missing_exported_formula_symbols": missing_symbols,
-        "semantic_bridge_complete": complete,
-        "semantic_bridge_requires_validation": not complete,
-        "semantic_bridge_blockers": blockers,
-        "target_semantic_bridge_fingerprint": fingerprint,
     }
 
 
