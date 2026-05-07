@@ -57,8 +57,18 @@ EPHEMERAL_WORKTREE_PATHS = (
     "wallet_interface/ui/playwright-report",
     "wallet_interface/ui/test-results",
     "wallet_interface/ui/artifacts/ui-iterations/latest",
+    "wallet_interface/ui/artifacts/ui-review",
+    "wallet_interface/ui/artifacts/ui-screenshots",
     "wallet_interface/ui/artifacts/ui-screenshots/latest",
 )
+GENERATED_WORKTREE_DIR_NAMES = {
+    "__pycache__",
+    ".pytest_cache",
+    "node_modules",
+    "playwright-report",
+    "test-results",
+}
+GENERATED_WORKTREE_SUFFIXES = (".pyc", ".pyo")
 UNTRACKED_WORKTREE_CONTEXT_PREFIXES = (
     "docs/",
     "scripts/",
@@ -457,6 +467,8 @@ class PortalImplementationDaemon:
         merge_reconciliation = self._reconcile_failed_merges()
         unresolved_merge_failures = self._unresolved_merge_failures_by_task()
         recent_outcomes = self._latest_implementation_finished_by_task()
+        successfully_merged_task_ids = self._successfully_merged_task_ids()
+        live_inflight_implementation = self._find_live_inflight_implementation()
 
         previous_completed = set(previous.completed_task_ids)
         completed_set: set[str] = set()
@@ -477,7 +489,8 @@ class PortalImplementationDaemon:
                 and len(existing_outputs) == len(task.outputs)
                 and not unresolved_merge_failure
             )
-            if task.status == "completed" or artifact_complete:
+            merged_complete = task.task_id in successfully_merged_task_ids and not unresolved_merge_failure
+            if task.status == "completed" or artifact_complete or merged_complete:
                 completed_set.add(task.task_id)
 
         for task in tasks:
@@ -536,6 +549,18 @@ class PortalImplementationDaemon:
         state.last_merge_commit = previous.last_merge_commit
         state.last_merge_returncode = previous.last_merge_returncode
         state.last_merge_error = previous.last_merge_error
+        if previous.implementation_in_progress and live_inflight_implementation is None:
+            self._clear_active_execution_state(state)
+            self._record_event(
+                "implementation_state_recovered",
+                {
+                    "task_id": previous.active_task_id or previous.last_implementation_task_id,
+                    "attempt": previous.active_attempt,
+                    "reason": "inflight_process_missing",
+                    "worktree_path": previous.active_worktree_path,
+                    "branch": previous.active_branch,
+                },
+            )
 
         if selected is not None:
             if state.active_task_id != selected.task_id:
@@ -1128,6 +1153,7 @@ class PortalImplementationDaemon:
     def _commit_worktree_changes(self, worktree_path: Path, task: PortalTask, attempt: int) -> dict[str, Any]:
         self._restore_ephemeral_worktree_paths_for_commit(worktree_path)
         self._run_git(["add", "-A"], cwd=worktree_path)
+        self._remove_generated_paths_from_index(worktree_path)
         status = self._run_git(["status", "--porcelain"], cwd=worktree_path).stdout.strip()
         if not status:
             return {"committed": False, "reason": "no_changes"}
@@ -1150,16 +1176,66 @@ class PortalImplementationDaemon:
 
     def _restore_ephemeral_worktree_paths_for_commit(self, worktree_path: Path) -> None:
         for relative in EPHEMERAL_WORKTREE_PATHS:
-            target = worktree_path / relative
-            if relative in WORKTREE_SUBMODULE_PATHS and target.is_symlink():
-                target.unlink()
-            if self._path_tracked_in_repo(worktree_path, relative):
-                self._run_git(["restore", "--source=HEAD", "--staged", "--worktree", "--", relative], cwd=worktree_path)
-                continue
-            if target.is_symlink() or target.is_file():
-                target.unlink()
-            elif target.is_dir():
-                shutil.rmtree(target)
+            self._restore_or_remove_generated_path_for_commit(worktree_path, relative)
+        for relative in sorted(self._dirty_worktree_paths(worktree_path)):
+            if self._path_is_generated_worktree_artifact(relative):
+                self._restore_or_remove_generated_path_for_commit(worktree_path, relative)
+
+    def _remove_generated_paths_from_index(self, worktree_path: Path) -> None:
+        for relative in self._staged_worktree_paths(worktree_path):
+            if self._path_is_generated_worktree_artifact(relative):
+                self._restore_or_remove_generated_path_for_commit(worktree_path, relative)
+
+    def _restore_or_remove_generated_path_for_commit(self, worktree_path: Path, relative: str) -> None:
+        if not self._repo_relative_path_safe(relative):
+            return
+        target = worktree_path / relative
+        if relative in WORKTREE_SUBMODULE_PATHS and target.is_symlink():
+            target.unlink()
+        if self._path_tracked_in_head(worktree_path, relative) or self._path_tracked_in_repo(worktree_path, relative):
+            restore = subprocess.run(
+                ["git", "restore", "--source=HEAD", "--staged", "--worktree", "--", relative],
+                cwd=worktree_path,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            if restore.returncode == 0:
+                return
+        subprocess.run(
+            ["git", "restore", "--staged", "--", relative],
+            cwd=worktree_path,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if target.is_symlink() or target.is_file():
+            target.unlink()
+        elif target.is_dir():
+            shutil.rmtree(target)
+
+    def _path_is_generated_worktree_artifact(self, relative: str) -> bool:
+        if not self._repo_relative_path_safe(relative):
+            return False
+        normalized = relative.strip("/")
+        parts = Path(normalized).parts
+        if any(part in GENERATED_WORKTREE_DIR_NAMES for part in parts):
+            return True
+        if normalized.endswith(GENERATED_WORKTREE_SUFFIXES):
+            return True
+        return any(self._path_matches_prefix(normalized, prefix) for prefix in EPHEMERAL_WORKTREE_PATHS)
+
+    def _staged_worktree_paths(self, cwd: Path) -> list[str]:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "-z"],
+            cwd=cwd,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+        paths = result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+        return [path for path in paths if path]
 
     def _path_tracked_in_repo(self, cwd: Path, relative: str) -> bool:
         result = subprocess.run(
@@ -1170,6 +1246,18 @@ class PortalImplementationDaemon:
             check=False,
         )
         return result.returncode == 0
+
+    def _path_tracked_in_head(self, cwd: Path, relative: str) -> bool:
+        result = subprocess.run(
+            ["git", "ls-tree", "-r", "--name-only", "HEAD", "--", relative],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return False
+        return any(line == relative or line.startswith(f"{relative.rstrip('/')}/") for line in result.stdout.splitlines())
 
     def _run_validation_commands(self, workspace_path: Path, task: PortalTask, log_path: Path) -> dict[str, Any]:
         if not task.validation:
@@ -1771,6 +1859,28 @@ class PortalImplementationDaemon:
             if task_id:
                 latest[task_id] = event
         return latest
+
+    def _successfully_merged_task_ids(self) -> set[str]:
+        task_ids: set[str] = set()
+        for event in self._iter_events():
+            event_type = str(event.get("type") or "")
+            task_id = str(event.get("task_id") or "")
+            if not task_id:
+                continue
+            implementation_commit = str(event.get("implementation_commit") or "")
+            if event_type == "implementation_finished":
+                merge_result = event.get("merge_result") or {}
+                if not isinstance(merge_result, dict) or not merge_result.get("merged"):
+                    continue
+            elif event_type == "merge_reconciled":
+                if not event.get("resolved"):
+                    continue
+            else:
+                continue
+            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, "HEAD"):
+                continue
+            task_ids.add(task_id)
+        return task_ids
 
     def _task_has_recent_no_change_outcome(
         self,
