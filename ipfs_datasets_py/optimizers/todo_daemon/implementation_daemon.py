@@ -2215,17 +2215,26 @@ class PortalImplementationDaemon:
     def _failed_merge_candidates(self) -> list[dict[str, Any]]:
         candidates: dict[tuple[str, str], dict[str, Any]] = {}
         reconciled_commits: set[str] = set()
+        abandoned_commits: set[str] = set()
         target_branch = self._main_branch_name()
         for event in self._iter_events():
-            if str(event.get("type") or "") == "merge_reconciled" and event.get("resolved"):
+            if str(event.get("type") or "") == "merge_reconciled":
                 implementation_commit = str(event.get("implementation_commit") or "")
-                if implementation_commit:
+                merge_result = event.get("merge_result") or {}
+                merge_reason = merge_result.get("reason") if isinstance(merge_result, dict) else ""
+                if implementation_commit and event.get("resolved"):
                     reconciled_commits.add(implementation_commit)
+                elif implementation_commit and merge_reason == "baseline_not_ancestor_of_target":
+                    abandoned_commits.add(implementation_commit)
                 continue
             if str(event.get("type") or "") != "implementation_finished":
                 continue
             implementation_commit = str(event.get("implementation_commit") or "")
-            if not implementation_commit or implementation_commit in reconciled_commits:
+            if (
+                not implementation_commit
+                or implementation_commit in reconciled_commits
+                or implementation_commit in abandoned_commits
+            ):
                 continue
             validation = event.get("validation_result") or {}
             if isinstance(validation, dict) and validation.get("attempted") and not validation.get("passed", False):
@@ -2242,7 +2251,7 @@ class PortalImplementationDaemon:
         unresolved: list[dict[str, Any]] = []
         for event in candidates.values():
             implementation_commit = str(event.get("implementation_commit") or "")
-            if implementation_commit in reconciled_commits:
+            if implementation_commit in reconciled_commits or implementation_commit in abandoned_commits:
                 continue
             if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
                 unresolved.append(event)
