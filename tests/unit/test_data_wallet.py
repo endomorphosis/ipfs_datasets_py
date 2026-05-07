@@ -35,6 +35,10 @@ from ipfs_datasets_py.wallet.storage import (
 )
 from ipfs_datasets_py.wallet.ucan import (
     WALLET_UCAN_CONFORMANCE_FIXTURE_ID,
+    WALLET_UCAN_EXTERNAL_ADAPTER_ID,
+    WALLET_UCAN_EXTERNAL_ADAPTER_KEY,
+    WALLET_UCAN_EXTERNAL_BLOCK_CODEC,
+    WALLET_UCAN_EXTERNAL_STACK_ID,
     WALLET_UCAN_TOKEN_PREFIX,
     invocation_from_token,
     invocation_to_token,
@@ -46,8 +50,11 @@ from ipfs_datasets_py.wallet.ucan import (
     sign_invocation,
     validate_ucan_profile_payload,
     validate_wallet_ucan_conformance_fixture,
+    validate_wallet_ucan_external_adapter_fixture,
     wallet_ucan_conformance_fixture,
+    wallet_ucan_external_adapter_fixture,
     wallet_ucan_profile,
+    wallet_ucan_reference_conformance_fixture,
 )
 
 
@@ -1927,6 +1934,76 @@ def test_wallet_ucan_conformance_fixture_validates_profile_payload(tmp_path):
         )
 
 
+def test_wallet_ucan_external_adapter_fixture_preserves_dag_cbor_bytes(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "adapter-interop-case-note.txt"
+    source.write_text("External adapter fixture must not expose this document text.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+    )
+    profile_payload = invocation_to_ucan_profile_payload(invocation, grant=grant)
+    adapter_fixture = wallet_ucan_external_adapter_fixture(profile_payload=profile_payload)
+    normalized = validate_wallet_ucan_external_adapter_fixture(
+        adapter_fixture,
+        profile_payload=profile_payload,
+    )
+    block_bytes = base64.urlsafe_b64decode(adapter_fixture["bytes_base64url"].encode("ascii"))
+
+    assert adapter_fixture["adapter"] == WALLET_UCAN_EXTERNAL_ADAPTER_ID
+    assert adapter_fixture["target_stack"] == WALLET_UCAN_EXTERNAL_STACK_ID
+    assert adapter_fixture["source_profile"] == "wallet-ucan-v1"
+    assert adapter_fixture["codec"] == WALLET_UCAN_EXTERNAL_BLOCK_CODEC
+    assert adapter_fixture["cid"].startswith("bafy")
+    assert adapter_fixture["bytes_sha256"] == hashlib.sha256(block_bytes).hexdigest()
+    assert adapter_fixture["decoded"]["att"] == [
+        {
+            "with": resource,
+            "can": "record/analyze",
+            "nb": {"purpose": "case_review", "output_types": ["summary"]},
+        }
+    ]
+    assert normalized["resource"] == resource
+    assert normalized["ability"] == "record/analyze"
+    assert "External adapter fixture must not expose this document text" not in json.dumps(adapter_fixture)
+
+    tampered_adapter = json.loads(json.dumps(adapter_fixture))
+    tampered_adapter["decoded"]["att"][0]["can"] = "record/decrypt"
+    with pytest.raises(ValueError, match="decoded block"):
+        validate_wallet_ucan_external_adapter_fixture(tampered_adapter, profile_payload=profile_payload)
+
+    tampered_profile = json.loads(json.dumps(profile_payload))
+    tampered_profile["ucan"]["att"].append({"with": resource, "can": "record/decrypt", "nb": {}})
+    with pytest.raises(ValueError, match="exactly one capability"):
+        validate_ucan_profile_payload(tampered_profile)
+
+    fixture = wallet_ucan_conformance_fixture(invocation, grant=grant)
+    fixture_normalized = validate_wallet_ucan_conformance_fixture(fixture)
+    assert WALLET_UCAN_EXTERNAL_ADAPTER_KEY in fixture["external_adapters"]
+    assert fixture_normalized["external_adapter"] == WALLET_UCAN_EXTERNAL_ADAPTER_ID
+    assert fixture_normalized["external_cid"] == fixture["external_adapters"][WALLET_UCAN_EXTERNAL_ADAPTER_KEY]["cid"]
+
+
 def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
     from ipfs_datasets_py.wallet.cli import main as wallet_cli_main
 
@@ -1995,6 +2072,7 @@ def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
     validation_output = json.loads(capsys.readouterr().out)
     assert validation_output["valid"] is True
     assert validation_output["resource"] == resource
+    assert validation_output["external_target_stack"] == WALLET_UCAN_EXTERNAL_STACK_ID
 
     profile_payload_path.write_text(
         json.dumps(fixture["profile_payload"], sort_keys=True),
@@ -2012,6 +2090,22 @@ def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
     error_output = json.loads(capsys.readouterr().out)
     assert error_output["status"] == "error"
     assert "capability.can" in error_output["error"]
+
+    assert wallet_cli_main(["--json", "ucan-validate-fixture"]) == 0
+    reference_output = json.loads(capsys.readouterr().out)
+    assert reference_output["valid"] is True
+    assert reference_output["resource"] == "wallet://wallet-reference/records/record-reference"
+    assert reference_output["external_target_stack"] == WALLET_UCAN_EXTERNAL_STACK_ID
+
+
+def test_wallet_ucan_reference_conformance_fixture_validates():
+    fixture = wallet_ucan_reference_conformance_fixture()
+    normalized = validate_wallet_ucan_conformance_fixture(fixture)
+
+    assert normalized["fixture"] == WALLET_UCAN_CONFORMANCE_FIXTURE_ID
+    assert normalized["issuer_did"] == "did:key:wallet-owner-reference"
+    assert normalized["ability"] == "record/analyze"
+    assert normalized["external_target_stack"] == WALLET_UCAN_EXTERNAL_STACK_ID
 
 
 def test_legacy_invocation_token_without_issuer_remains_verifiable(tmp_path):

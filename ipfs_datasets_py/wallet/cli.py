@@ -20,6 +20,7 @@ from ipfs_datasets_py.wallet.ucan import (
     validate_wallet_ucan_conformance_fixture,
     wallet_ucan_conformance_fixture,
     wallet_ucan_profile,
+    wallet_ucan_reference_conformance_fixture,
 )
 
 
@@ -254,7 +255,7 @@ def build_parser() -> argparse.ArgumentParser:
     validate_ucan_profile.add_argument("--path", type=Path, required=True)
 
     validate_ucan_fixture = subparsers.add_parser("ucan-validate-fixture", help="Validate a wallet UCAN conformance fixture JSON file")
-    validate_ucan_fixture.add_argument("--path", type=Path, required=True)
+    validate_ucan_fixture.add_argument("--path", type=Path, help="Fixture JSON path; omitted validates the built-in reference fixture")
 
     access_requests = subparsers.add_parser("access-requests", help="List access requests")
     access_requests.add_argument("--wallet-id", required=True)
@@ -476,7 +477,11 @@ def main(argv: Optional[list[str]] = None) -> int:
             return 0
 
         if args.command == "ucan-validate-fixture":
-            fixture = json.loads(args.path.read_text(encoding="utf-8"))
+            fixture = (
+                json.loads(args.path.read_text(encoding="utf-8"))
+                if args.path
+                else wallet_ucan_reference_conformance_fixture()
+            )
             normalized = validate_wallet_ucan_conformance_fixture(fixture)
             _emit({"status": "ok", "valid": True, **normalized}, json_output=args.json_output)
             return 0

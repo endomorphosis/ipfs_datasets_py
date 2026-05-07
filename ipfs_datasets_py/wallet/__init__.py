@@ -56,13 +56,21 @@ from .storage import (
 )
 from .ucan import (
     WALLET_UCAN_CONFORMANCE_FIXTURE_ID,
+    WALLET_UCAN_EXTERNAL_ADAPTER_ID,
+    WALLET_UCAN_EXTERNAL_ADAPTER_KEY,
+    WALLET_UCAN_EXTERNAL_BLOCK_CODEC,
+    WALLET_UCAN_EXTERNAL_STACK_ID,
     WALLET_UCAN_PROFILE_ID,
     WALLET_UCAN_TOKEN_PREFIX,
+    validate_wallet_ucan_external_adapter_fixture,
+    wallet_ucan_external_adapter_fixture,
+    wallet_ucan_external_adapter_profile,
     invocation_to_ucan_profile_payload,
     validate_ucan_profile_payload,
     validate_wallet_ucan_conformance_fixture,
     wallet_ucan_conformance_fixture,
     wallet_ucan_profile,
+    wallet_ucan_reference_conformance_fixture,
 )
 
 WalletService = DataWalletService
@@ -112,6 +120,10 @@ __all__ = [
     "WalletStorageBackendConfig",
     "WalletStorageConfig",
     "WALLET_UCAN_CONFORMANCE_FIXTURE_ID",
+    "WALLET_UCAN_EXTERNAL_ADAPTER_ID",
+    "WALLET_UCAN_EXTERNAL_ADAPTER_KEY",
+    "WALLET_UCAN_EXTERNAL_BLOCK_CODEC",
+    "WALLET_UCAN_EXTERNAL_STACK_ID",
     "WALLET_UCAN_PROFILE_ID",
     "WALLET_UCAN_TOKEN_PREFIX",
     "create_encrypted_blob_store",
@@ -119,6 +131,10 @@ __all__ = [
     "operation_requires_approval",
     "validate_ucan_profile_payload",
     "validate_wallet_ucan_conformance_fixture",
+    "validate_wallet_ucan_external_adapter_fixture",
     "wallet_ucan_conformance_fixture",
+    "wallet_ucan_external_adapter_fixture",
+    "wallet_ucan_external_adapter_profile",
     "wallet_ucan_profile",
+    "wallet_ucan_reference_conformance_fixture",
 ]
