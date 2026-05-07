@@ -4,10 +4,11 @@
 
 This script is DEPRECATED and should NOT be used.
 
-Reason: Uses `gh agent-task create` which DOES NOT EXIST
+Reason: Targets `gh agent-task create`, which is not available in this environment
+and is not the maintained existing-PR workflow for this repo
 
-The gh agent-task command has NEVER existed in GitHub CLI.
-This script tries to work around it but the workaround doesn't work either.
+This script targets a hosted task surface that is not the maintained path for
+existing PR automation in this repo.
 
 The correct method for EXISTING PRs is the DUAL METHOD:
 1. Create draft PR (or work with existing PR)
@@ -33,7 +34,7 @@ print("=" * 80)
 print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
 print("=" * 80)
 print()
-print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+print("This script targets 'gh agent-task create', which is not available here.")
 print("The fallback workaround also doesn't work reliably.")
 print()
 print("✅ Use instead: scripts/invoke_copilot_on_pr.py")

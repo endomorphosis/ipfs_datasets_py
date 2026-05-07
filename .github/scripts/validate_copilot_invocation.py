@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Validate GitHub Actions Workflows for Proper Copilot Invocation
+Validate GitHub Actions workflows for consistent Copilot invocation guidance.
 
-This script checks all workflow files to ensure they use the correct method
-for invoking GitHub Copilot Coding Agent (gh agent-task create) instead of
-deprecated @copilot mentions.
+This script checks workflow files for stale or conflicting Copilot automation
+patterns. In this repository, hosted ``gh agent-task`` creation and PR-comment
+automation are treated as separate surfaces rather than one universal rule.
 
 Usage:
     python .github/scripts/validate_copilot_invocation.py [--fix]
@@ -221,23 +221,24 @@ def print_report(results: List[Dict[str, Any]], suggest_fixes: bool = False):
             if suggest_fixes:
                 print(f"   {Colors.OKBLUE}Suggested fix:{Colors.ENDC}")
                 if result['has_copilot_mentions']:
-                    print(f"     Replace @copilot comments with: gh agent-task create")
-                    print(f"     See: .github/workflows/COPILOT-CLI-INTEGRATION.md")
+                    print(f"     Confirm whether this workflow targets an existing PR or a new hosted task.")
+                    print(f"     Existing PRs in this repo usually keep the PR-comment flow; new hosted tasks may use gh agent-task when available.")
+                    print(f"     See: .github/workflows/COPILOT_INVOCATION_GUIDE.md")
         
         print()
     
     # Recommendations
     print(f"{Colors.BOLD}Recommendations:{Colors.ENDC}")
     if workflows_with_copilot_mentions > 0:
-        print(f"  {Colors.WARNING}•{Colors.ENDC} {workflows_with_copilot_mentions} workflow(s) use @copilot mentions (deprecated)")
-        print(f"    {Colors.OKBLUE}→{Colors.ENDC} Migrate to gh agent-task create for better automation")
+        print(f"  {Colors.WARNING}•{Colors.ENDC} {workflows_with_copilot_mentions} workflow(s) use PR comments to invoke Copilot")
+        print(f"    {Colors.OKBLUE}→{Colors.ENDC} Verify those are existing-PR workflows and not accidental new-task replacements")
     
     if workflows_using_agent_task < workflows_with_copilot_mentions:
-        print(f"  {Colors.WARNING}•{Colors.ENDC} Consider updating workflows to use gh agent-task create")
-        print(f"    {Colors.OKBLUE}→{Colors.ENDC} See: .github/workflows/COPILOT-CLI-INTEGRATION.md")
+        print(f"  {Colors.WARNING}•{Colors.ENDC} Review mixed invocation styles for consistency")
+        print(f"    {Colors.OKBLUE}→{Colors.ENDC} See: .github/workflows/COPILOT_INVOCATION_GUIDE.md")
     
     if workflows_using_agent_task > 0:
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {workflows_using_agent_task} workflow(s) correctly use gh agent-task create")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {workflows_using_agent_task} workflow(s) use gh agent-task create for hosted task creation")
     
     print()
 

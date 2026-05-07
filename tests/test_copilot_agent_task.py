@@ -26,17 +26,18 @@ def test_backward_compatible_copilot_wrapper_supports_structured_methods():
     assert result["shell"] == "bash"
 
 
-def test_gh_copilot_status_reports_extension_state():
-    """Status should describe both gh availability and the extension state."""
+def test_gh_copilot_status_reports_extension_and_agent_task_state():
+    """Status should describe gh availability, extension state, and agent-task support."""
 
     from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
     with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
         CopilotCLI, "_check_copilot_extension", return_value=True
     ), patch("ipfs_datasets_py.utils.cli_tools.copilot.subprocess.run") as mock_run:
-        mock_run.return_value.returncode = 0
-        mock_run.return_value.stdout = "gh version 2.0.0\n"
-        mock_run.return_value.stderr = ""
+        mock_run.side_effect = [
+            type("Result", (), {"returncode": 0, "stdout": "gh version 2.0.0\n", "stderr": ""})(),
+            type("Result", (), {"returncode": 1, "stdout": "", "stderr": "unknown command 'agent-task' for 'gh'"})(),
+        ]
 
         cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
         status = cli.get_status()
@@ -46,6 +47,46 @@ def test_gh_copilot_status_reports_extension_state():
     assert status["copilot_extension_installed"] is True
     assert status["github_cli_path"] == "/usr/bin/gh"
     assert status["version_info"] == "gh version 2.0.0"
+    assert status["agent_task_available"] is False
+
+
+def test_create_agent_task_returns_structured_unavailable_error():
+    """Legacy callers should get a structured failure instead of AttributeError."""
+
+    from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+
+    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
+        CopilotCLI, "_check_copilot_extension", return_value=True
+    ):
+        cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
+
+    with patch.object(cli, "has_agent_task_support", return_value=False):
+        result = cli.create_agent_task(task_description="Fix issue 123", base_branch="main")
+
+    assert result["success"] is False
+    assert "agent-task" in result["error"]
+
+
+def test_create_agent_task_uses_gh_when_available():
+    """Compatibility helper should call gh agent-task create when supported."""
+
+    from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+
+    with patch.object(CopilotCLI, "_verify_installation", return_value=True), patch.object(
+        CopilotCLI, "_check_copilot_extension", return_value=True
+    ):
+        cli = CopilotCLI(github_cli_path="/usr/bin/gh", enable_cache=False)
+
+    with patch.object(cli, "has_agent_task_support", return_value=True), patch.object(
+        cli,
+        "_run_command",
+        return_value={"success": True, "stdout": "created\n", "stderr": "", "returncode": 0},
+    ) as mock_run:
+        result = cli.create_agent_task(task_description="Fix issue 123", base_branch="main", follow=True)
+
+    assert result["success"] is True
+    args = mock_run.call_args.args[0]
+    assert args == ["agent-task", "create", "Fix issue 123", "--base", "main", "--follow"]
 
 
 def test_standalone_copilot_command_template_prefers_resolved_binary():
@@ -59,7 +100,7 @@ def test_standalone_copilot_command_template_prefers_resolved_binary():
     assert "--allow-all-tools" in template
     assert "--no-ask-user" in template
     assert "--model {model}" in template
-    assert "-p {prompt}" in template
+    assert "--prompt {prompt}" in template
 
 
 def test_standalone_copilot_prompt_returns_structured_result():
@@ -82,65 +123,4 @@ def test_standalone_copilot_prompt_returns_structured_result():
     args = mock_run.call_args.args[0]
     assert args[:5] == ["--silent", "--stream", "off", "--allow-all-tools", "--no-ask-user"]
     assert "--autopilot" in args
-    assert args[-2:] == ["-p", "Summarize this repo"]
-        content = f.read()
-    
-    # Check for key updates
-    assert 'gh agent-task' in content, \
-        "Workflow should mention gh agent-task"
-    assert 'agent-task create' in content or 'gh agent-task create' in content, \
-        "Workflow should document gh agent-task create"
-    
-    # Check that documentation was updated
-    assert 'proper' in content.lower() or 'correctly' in content.lower(), \
-        "Workflow should indicate proper method"
-    
-    print("✅ Workflow file properly updated")
-    return True
-
-
-def main():
-    """Run all tests."""
-    print("🧪 Testing GitHub Copilot agent-task functionality\n")
-    
-    tests = [
-        test_copilot_cli_has_agent_methods,
-        test_create_agent_task_signature,
-        test_create_agent_task_returns_dict,
-        test_invoke_copilot_uses_agent_task,
-        test_batch_assign_uses_agent_task,
-        test_gh_agent_task_available,
-        test_workflow_updated,
-    ]
-    
-    passed = 0
-    failed = 0
-    
-    for test in tests:
-        try:
-            print(f"\n▶️  Running: {test.__name__}")
-            if test():
-                passed += 1
-            else:
-                print(f"❌ FAILED: {test.__name__}")
-                failed += 1
-        except AssertionError as e:
-            print(f"❌ FAILED: {e}")
-            failed += 1
-        except Exception as e:
-            print(f"❌ ERROR: {e}")
-            failed += 1
-    
-    print(f"\n{'='*60}")
-    print(f"Tests: {passed}/{len(tests)} passed")
-    
-    if failed > 0:
-        print(f"❌ {failed} test(s) failed")
-        sys.exit(1)
-    else:
-        print("✅ All tests passed!")
-        sys.exit(0)
-
-
-if __name__ == "__main__":
-    main()
+    assert args[-2:] == ["--prompt", "Summarize this repo"]

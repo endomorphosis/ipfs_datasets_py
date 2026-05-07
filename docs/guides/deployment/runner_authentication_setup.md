@@ -4,9 +4,9 @@ This guide explains how to configure persistent GitHub CLI and Copilot CLI authe
 
 ## Problem Statement
 
-GitHub Actions workflows that use `gh` CLI commands (including `gh agent-task` for Copilot Coding Agent) need proper authentication. When running on self-hosted runners, the `GITHUB_TOKEN` provided by GitHub Actions workflows has limited scope and duration, which can cause failures in:
+GitHub Actions workflows that use `gh` CLI commands, hosted Copilot task creation, or PR-comment automation need proper authentication. When running on self-hosted runners, the `GITHUB_TOKEN` provided by GitHub Actions workflows has limited scope and duration, which can cause failures in:
 
-- `gh agent-task create` commands (Copilot Coding Agent)
+- `gh agent-task create` commands when the runner's `gh` build supports them
 - `gh pr create` / `gh issue create` commands
 - `gh api` calls
 - Copilot CLI extension usage
@@ -17,7 +17,7 @@ Configure persistent, long-term GitHub CLI authentication on the self-hosted run
 
 ✅ **Persistent Authentication** - Survives across workflow runs and system reboots
 ✅ **Full API Access** - Uses a Personal Access Token with complete scopes
-✅ **Copilot CLI Support** - Enables Copilot CLI extension and agent-task commands
+✅ **Copilot Support** - Enables GitHub CLI operations used by both hosted task creation and PR-comment automation
 ✅ **Multiple User Support** - Configures auth for both runner user and root
 ✅ **Automatic Credential Helper** - Git operations use gh authentication automatically
 
@@ -130,7 +130,7 @@ git config --system credential.helper "!gh auth git-credential"
 
 With authentication configured, workflows can use gh CLI commands without additional setup:
 
-### Example: Using gh agent-task
+### Example: Using gh agent-task When Supported
 
 ```yaml
 jobs:
@@ -141,6 +141,18 @@ jobs:
         run: |
           # No GH_TOKEN needed - uses persistent auth!
           gh agent-task create --repo ${{ github.repository }}
+```
+
+### Example: Existing PR Automation
+
+```yaml
+jobs:
+  assign-copilot:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Trigger Copilot on an existing PR
+        run: |
+          python3 scripts/invoke_copilot_on_pr.py --pr "$PR_NUMBER" --repo ${{ github.repository }}
 ```
 
 ### Example: Creating PRs

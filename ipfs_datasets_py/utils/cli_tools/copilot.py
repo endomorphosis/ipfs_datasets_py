@@ -41,7 +41,7 @@ def build_standalone_copilot_command_template(cli_path: Optional[str] = None) ->
     executable = cli_path or find_standalone_copilot_cli() or "copilot"
     return (
         f"{shlex.quote(executable)} --silent --stream off --allow-all-tools "
-        f"--no-ask-user --model {{model}} -p {{prompt}}"
+        f"--no-ask-user --model {{model}} --prompt {{prompt}}"
     )
 
 
@@ -57,13 +57,26 @@ class Copilot(BaseCLITool):
         cache_maxsize: int = 100,
         cache_ttl: int = 600,
     ):
+        resolved_path = github_cli_path or self._find_gh_cli()
         super().__init__(
-            cli_path=github_cli_path,
+            cli_path=resolved_path,
             enable_cache=enable_cache,
             cache_maxsize=cache_maxsize,
             cache_ttl=cache_ttl,
         )
         self.copilot_installed = self._check_copilot_extension()
+
+    @staticmethod
+    def _find_gh_cli() -> Optional[str]:
+        """Backward-compatible path resolver for tests and older callers."""
+
+        resolved = shutil.which("gh")
+        return resolved or None
+
+    def _check_installed(self) -> bool:
+        """Backward-compatible installation probe."""
+
+        return self._verify_installation()
 
     def _verify_installation(self) -> bool:
         if not self.cli_path or not self.cli_path.exists():
@@ -119,8 +132,30 @@ class Copilot(BaseCLITool):
             "github_cli_available": bool(self.installed),
             "github_cli_path": str(self.cli_path) if self.cli_path else None,
             "copilot_extension_installed": bool(self.copilot_installed),
+            "agent_task_available": self.has_agent_task_support(),
             "version_info": version_info,
         }
+
+    def has_agent_task_support(self) -> bool:
+        """Return whether the installed gh binary exposes ``agent-task``."""
+
+        if not self.installed or not self.cli_path:
+            return False
+        try:
+            result = subprocess.run(
+                [str(self.cli_path), "agent-task", "--help"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except Exception as exc:
+            logger.debug("Failed to probe gh agent-task support: %s", exc)
+            return False
+
+        combined_output = f"{result.stdout}\n{result.stderr}".lower()
+        if "unknown command" in combined_output or "agent-task" not in combined_output:
+            return False
+        return result.returncode == 0
 
     def install(self, force: bool = False) -> Dict[str, Any]:
         """Install the ``gh-copilot`` extension."""
@@ -256,6 +291,62 @@ class Copilot(BaseCLITool):
 
         return self.suggest_command(f"git: {description}", use_cache=use_cache)
 
+    def create_agent_task(
+        self,
+        *,
+        task_description: str,
+        base_branch: Optional[str] = None,
+        follow: bool = False,
+        timeout: int = 60,
+    ) -> Dict[str, Any]:
+        """Create a GitHub-hosted Copilot agent task when supported by ``gh``.
+
+        This is intentionally separate from ``gh copilot``. The wrapper keeps the
+        method for backward compatibility because several repo scripts call it
+        through ``CopilotCLI``.
+        """
+
+        if not self.installed or not self.cli_path:
+            return {
+                "success": False,
+                "error": "gh CLI not installed",
+                "message": "GitHub CLI is not installed",
+            }
+        if not self.has_agent_task_support():
+            return {
+                "success": False,
+                "error": "gh agent-task is not available in the installed GitHub CLI",
+                "message": "The installed gh binary does not support agent-task",
+            }
+
+        args = ["agent-task", "create", task_description]
+        if base_branch:
+            args.extend(["--base", base_branch])
+        if follow:
+            args.append("--follow")
+
+        try:
+            result = self._run_command(args, timeout=timeout)
+        except Exception as exc:
+            return {
+                "success": False,
+                "error": str(exc),
+                "message": "Failed to create GitHub Copilot agent task",
+            }
+
+        response = {
+            "success": result["success"],
+            "stdout": result["stdout"],
+            "stderr": result["stderr"],
+            "returncode": result["returncode"],
+            "task_description": task_description,
+            "base_branch": base_branch,
+            "follow": follow,
+        }
+        if not result["success"]:
+            response["error"] = (result.get("stderr") or result.get("stdout") or "gh agent-task create failed").strip()
+        return response
+
 
 class StandaloneCopilot(BaseCLITool):
     """Wrapper around the standalone local ``copilot`` CLI."""
@@ -348,6 +439,7 @@ class StandaloneCopilot(BaseCLITool):
         if model:
             args.extend(["--model", model])
         args.extend(["-p", prompt])
+        args[-2:] = ["--prompt", prompt]
 
         try:
             result = self._run_command(args, timeout=timeout, cache_key=cache_key)

@@ -54,6 +54,9 @@ Additional optional providers (opt-in by selecting provider):
     - `IPFS_DATASETS_PY_CODEX_CLI_MODEL` / `IPFS_DATASETS_PY_CODEX_MODEL`
 - `copilot_cli`: GitHub Copilot CLI via command template
     - `IPFS_DATASETS_PY_COPILOT_CLI_CMD` (supports `{prompt}` placeholder)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_MODEL` (default model for local Copilot CLI calls)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_ALLOW_ALL_PATHS` (optional; pass `--allow-all-paths`)
+    - `IPFS_DATASETS_PY_COPILOT_CLI_ADD_DIRS` (optional os.pathsep-separated list for repeated `--add-dir`)
 - `copilot_sdk`: Python `copilot` SDK (if installed)
     - `IPFS_DATASETS_PY_COPILOT_SDK_MODEL`, `IPFS_DATASETS_PY_COPILOT_SDK_TIMEOUT`
 - `gemini_cli`: Gemini CLI via `npx @google/gemini-cli`
@@ -1938,6 +1941,43 @@ def _run_cli_command(
     return (proc.stdout or "").strip()
 
 
+def _normalize_copilot_add_dirs(raw: object) -> list[str]:
+    if raw is None:
+        return []
+
+    candidates: list[object]
+    if isinstance(raw, str):
+        candidates = [part.strip() for part in raw.split(os.pathsep)]
+    elif isinstance(raw, Sequence) and not isinstance(raw, (bytes, bytearray, str)):
+        candidates = list(raw)
+    else:
+        candidates = [raw]
+
+    resolved: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        text = str(candidate or "").strip()
+        if not text:
+            continue
+        normalized = os.path.abspath(os.path.expanduser(text))
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        resolved.append(normalized)
+    return resolved
+
+
+def _copilot_cli_add_dirs_from_env() -> list[str]:
+    raw = os.getenv("IPFS_DATASETS_PY_COPILOT_CLI_ADD_DIRS", "").strip()
+    if not raw:
+        return []
+    return _normalize_copilot_add_dirs(raw)
+
+
+def _copilot_allow_all_paths_default() -> bool:
+    return _truthy_env("IPFS_DATASETS_PY_COPILOT_CLI_ALLOW_ALL_PATHS", default=False)
+
+
 def _get_p2p_task_queue_provider() -> LLMProvider:
     def _queue_options(call_options: dict[str, object]) -> tuple[str, float]:
         queue_path = str(
@@ -2761,6 +2801,14 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
             copilot_log_dir = kwargs.pop("copilot_log_dir", None)
             resume_session_id = kwargs.pop("resume_session_id", None)
             continue_session = bool(kwargs.pop("continue_session", False))
+            copilot_add_dirs = _normalize_copilot_add_dirs(kwargs.pop("copilot_add_dirs", None))
+            if not copilot_add_dirs:
+                copilot_add_dirs = _copilot_cli_add_dirs_from_env()
+            copilot_allow_all_paths_raw = kwargs.pop("copilot_allow_all_paths", None)
+            if copilot_allow_all_paths_raw is None:
+                copilot_allow_all_paths = _copilot_allow_all_paths_default()
+            else:
+                copilot_allow_all_paths = bool(copilot_allow_all_paths_raw)
 
             needs_native = bool(
                 trace_enabled
@@ -2768,6 +2816,8 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 or copilot_log_dir
                 or resume_session_id
                 or continue_session
+                or copilot_add_dirs
+                or copilot_allow_all_paths
             )
 
             if not needs_native:
@@ -2813,9 +2863,15 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 "--no-ask-user",
                 "--model",
                 model,
-                "-p",
+                "--prompt",
                 str(prompt),
             ]
+
+            if copilot_allow_all_paths:
+                cmd.insert(5, "--allow-all-paths")
+
+            for add_dir in copilot_add_dirs:
+                cmd.extend(["--add-dir", add_dir])
 
             if isinstance(copilot_config_dir, str) and copilot_config_dir.strip():
                 cmd.extend(["--config-dir", copilot_config_dir.strip()])
@@ -2917,6 +2973,14 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 or "gpt-5-mini"
             )
             timeout = float(kwargs.get("timeout", 180))
+            copilot_add_dirs = _normalize_copilot_add_dirs(kwargs.pop("copilot_add_dirs", None))
+            if not copilot_add_dirs:
+                copilot_add_dirs = _copilot_cli_add_dirs_from_env()
+            copilot_allow_all_paths_raw = kwargs.pop("copilot_allow_all_paths", None)
+            if copilot_allow_all_paths_raw is None:
+                copilot_allow_all_paths = _copilot_allow_all_paths_default()
+            else:
+                copilot_allow_all_paths = bool(copilot_allow_all_paths_raw)
 
             prompt_sections: list[str] = []
             if system_prompt and str(system_prompt).strip():
@@ -2961,12 +3025,24 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                 "--no-ask-user",
                 "--model",
                 model,
-                "-p",
+                "--prompt",
             ]
+
+            if copilot_allow_all_paths:
+                cmd.insert(5, "--allow-all-paths")
+
+            image_dirs: list[str] = []
             for image_path in image_paths or ():
                 candidate = str(image_path or "").strip()
                 if candidate:
+                    image_dir = os.path.abspath(os.path.dirname(candidate) or ".")
+                    if image_dir not in image_dirs:
+                        image_dirs.append(image_dir)
                     cmd.extend(["--image", candidate])
+
+            for add_dir in [*copilot_add_dirs, *image_dirs]:
+                if add_dir:
+                    cmd.extend(["--add-dir", add_dir])
             cmd.append("\n\n".join(section for section in prompt_sections if section).strip())
 
             try:

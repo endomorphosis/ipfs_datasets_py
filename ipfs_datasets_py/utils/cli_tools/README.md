@@ -13,7 +13,7 @@ All CLI tools extend `BaseCLITool`, which provides:
 
 ## Quick Start
 
-### GitHub Copilot
+### GitHub Copilot (`gh copilot`)
 
 ```python
 from ipfs_datasets_py.utils.cli_tools import Copilot
@@ -21,7 +21,7 @@ from ipfs_datasets_py.utils.cli_tools import Copilot
 # Create wrapper
 copilot = Copilot(enable_cache=True)
 
-# Check installation
+# Check GitHub CLI extension installation
 if not copilot.is_installed():
     # Install Copilot extension
     copilot.install()
@@ -34,9 +34,30 @@ print(suggestion)
 explanation = copilot.explain("def hello(): print('world')")
 print(explanation)
 
+# Check whether GitHub-hosted agent tasks are supported by this gh build
+status = copilot.get_status()
+print(status["agent_task_available"])
+
 # Cache statistics
 stats = copilot.get_cache_stats()
 print(f"Hit rate: {stats['hit_rate']:.2%}")
+```
+
+### Standalone Copilot (`copilot`)
+
+```python
+from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
+
+copilot = StandaloneCopilot(enable_cache=True)
+status = copilot.get_status()
+print(status["copilot_cli_path"])
+
+result = copilot.prompt(
+    "Summarize the failing tests in this repo",
+    model="gpt-5.4",
+    autopilot=True,
+)
+print(result["response"])
 ```
 
 ### Other Tools (Stubs)
@@ -165,6 +186,7 @@ from ipfs_datasets_py.utils.cli_tools import Claude
 - ✅ BaseCLITool: Abstract base class
 - ✅ Copilot: `gh copilot` extension wrapper
 - ✅ StandaloneCopilot: local `copilot` prompt wrapper
+- ✅ Compatibility methods for legacy `CopilotCLI` consumers, including structured `create_agent_task()` failure/success results
 - ✅ Caching integration with utils.cache
 - ✅ Error handling and logging
 

@@ -2,10 +2,11 @@
 """
 Enhanced Workflow Copilot Integration Script - Thin Wrapper
 
-This is a thin wrapper that provides workflow analysis and Copilot integration
-checking. Core Copilot CLI functionality delegated to utils.cli_tools.Copilot.
+This is a thin wrapper that provides workflow analysis and gh copilot
+integration checking. Core wrapper functionality is delegated to
+utils.cli_tools.Copilot.
 
-For core Copilot CLI operations, see: ipfs_datasets_py/utils/cli_tools/copilot.py
+For core gh copilot wrapper operations, see: ipfs_datasets_py/utils/cli_tools/copilot.py
 
 Usage:
     python enhance_workflow_copilot_integration_refactored.py
@@ -22,13 +23,13 @@ from typing import Dict, List, Optional, Any
 REPO_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-# Import from utils - this is the single source of truth for Copilot CLI
+# Import from utils - this is the single source of truth for gh copilot wrappers
 from ipfs_datasets_py.utils.cli_tools import Copilot
 
 
 class WorkflowCopilotIntegration:
     """
-    Manages integration of GitHub Copilot CLI with GitHub Actions workflows.
+    Manages integration of gh copilot workflows with GitHub Actions.
     
     Uses utils.cli_tools.Copilot for all CLI operations, keeping only
     workflow-specific analysis logic.
@@ -40,7 +41,7 @@ class WorkflowCopilotIntegration:
             workflows_dir = REPO_ROOT / '.github' / 'workflows'
         self.workflows_dir = Path(workflows_dir)
         
-        # Use utils.cli_tools.Copilot for all Copilot operations
+        # Use utils.cli_tools.Copilot for all gh copilot operations
         self.copilot = Copilot()
     
     def check_gh_cli_available(self) -> bool:
@@ -48,11 +49,11 @@ class WorkflowCopilotIntegration:
         return self.copilot.is_installed()
     
     def check_copilot_extension_installed(self) -> bool:
-        """Check if gh-copilot extension is installed."""
+        """Check if the gh copilot extension is installed."""
         return self.copilot.copilot_installed
     
-    def install_copilot_extension(self) -> bool:
-        """Install gh-copilot extension."""
+    def install_copilot_extension(self) -> Dict[str, Any]:
+        """Install the gh copilot extension."""
         return self.copilot.install()
     
     def get_workflow_files(self, include_disabled: bool = False) -> List[Path]:
@@ -200,7 +201,7 @@ class WorkflowCopilotIntegration:
             print("✅ Installed and available")
         else:
             print("❌ Not installed or not accessible")
-            print("   Install with: gh extension install github/gh-copilot")
+            print("   Install the gh copilot extension with: gh extension install github/gh-copilot")
         print()
         
         # Workflow summary
@@ -236,7 +237,7 @@ class WorkflowCopilotIntegration:
             suggestions.append("Install GitHub CLI (gh) for enhanced workflow automation")
         
         if not report['copilot_extension']['installed']:
-            suggestions.append("Install gh-copilot extension: gh extension install github/gh-copilot")
+            suggestions.append("Install the gh copilot extension for gh copilot suggest/explain flows: gh extension install github/gh-copilot")
         
         if report['workflows']['using_gh_cli'] > 0:
             suggestions.append(
@@ -246,7 +247,7 @@ class WorkflowCopilotIntegration:
         
         if report['workflows']['using_copilot'] == 0:
             suggestions.append(
-                "Consider integrating Copilot CLI for automated code suggestions in workflows"
+                "Consider integrating gh copilot suggest/explain flows for automated assistance in workflows"
             )
         
         if report['workflows']['with_issues'] > 0:
@@ -260,7 +261,7 @@ class WorkflowCopilotIntegration:
 def main():
     """Main entry point."""
     print("🚀 GitHub Actions Workflow Copilot Integration Tool")
-    print("   (Core Copilot CLI operations via ipfs_datasets_py.utils.cli_tools.Copilot)")
+    print("   (Core gh copilot wrapper operations via ipfs_datasets_py.utils.cli_tools.Copilot)")
     print()
     
     # Initialize integration manager

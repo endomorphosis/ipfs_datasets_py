@@ -2,6 +2,11 @@
 
 This keeps the same overall routing model as ``ipfs_datasets_py.llm_router``
 but adds first-class support for image inputs such as Playwright screenshots.
+
+Copilot-specific trusted-directory controls such as ``copilot_add_dirs`` and
+``copilot_allow_all_paths`` are forwarded to ``llm_router`` providers so the
+standalone ``copilot`` CLI can follow the documented programmatic-mode rules for
+file access.
 """
 
 from __future__ import annotations
@@ -137,12 +142,20 @@ def generate_multimodal_text(
     image_detail: str | None = DEFAULT_IMAGE_DETAIL,
     **kwargs: object,
 ) -> str:
-    """Generate text from prompt + images using the shared provider router."""
+    """Generate text from prompt + images using the shared provider router.
+
+    Provider-specific kwargs are forwarded unchanged. For ``copilot_cli`` this
+    includes trusted-directory controls such as ``copilot_add_dirs`` and
+    ``copilot_allow_all_paths``.
+    """
+
+    normalized_image_paths = [str(Path(path).expanduser()) for path in image_paths or ()]
+    normalized_image_urls = [str(url) for url in image_urls or ()]
 
     resolved_messages = list(messages) if messages is not None else build_multimodal_messages(
         prompt=prompt,
-        image_paths=image_paths,
-        image_urls=image_urls,
+        image_paths=normalized_image_paths,
+        image_urls=normalized_image_urls,
         system_prompt=system_prompt,
         additional_text_blocks=additional_text_blocks,
         image_detail=image_detail,
@@ -164,8 +177,8 @@ def generate_multimodal_text(
         return backend.generate_multimodal(
             prompt,
             model_name=model_name,
-            image_paths=[str(path) for path in image_paths or ()],
-            image_urls=[str(url) for url in image_urls or ()],
+            image_paths=normalized_image_paths,
+            image_urls=normalized_image_urls,
             system_prompt=system_prompt,
             additional_text_blocks=[str(block) for block in additional_text_blocks or ()],
             messages=resolved_messages,

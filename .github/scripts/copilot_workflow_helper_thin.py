@@ -29,7 +29,7 @@ from typing import Dict, List, Optional, Any
 
 class CopilotWorkflowHelper:
     """
-    Helper for using GitHub Copilot CLI with workflows.
+    Helper for using the gh copilot extension with workflows.
     
     Uses unified GitHub API cache from optimizers module.
     """
@@ -56,7 +56,7 @@ class CopilotWorkflowHelper:
         return None
     
     def _check_copilot_available(self) -> bool:
-        """Check if Copilot CLI extension is available"""
+        """Check if the gh copilot extension is available."""
         if not self.gh_cli:
             return False
         
@@ -121,7 +121,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='GitHub Copilot CLI Workflow Helper'
+        description='gh copilot workflow helper'
     )
     parser.add_argument(
         'action',
@@ -135,10 +135,10 @@ def main():
     
     if args.action == 'check':
         if helper.copilot_available:
-            print("✅ GitHub Copilot CLI is available")
+            print("✅ gh copilot extension is available")
         else:
-            print("❌ GitHub Copilot CLI is not available")
-            print("Run with 'install' to install it")
+            print("❌ gh copilot extension is not available")
+            print("Run with 'install' to install the extension")
     
     elif args.action == 'install':
         helper.install_copilot()

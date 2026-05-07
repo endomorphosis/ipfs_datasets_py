@@ -4,13 +4,14 @@
 
 This script is DEPRECATED and should NOT be used.
 
-Reason: Uses `gh agent-task create` which DOES NOT EXIST
+Reason: Targets `gh agent-task create`, which is not available in this environment
+and is not the maintained existing-PR workflow for this repo
 
 IRONY ALERT: Despite being named "proper_copilot_invoker", this script
-uses an IMPROPER method that has NEVER worked!
+uses a deprecated method for this repo's existing-PR automation.
 
-The gh agent-task command has NEVER existed in GitHub CLI.
-All workflows using this had 0% success rate.
+The maintained repo path is the draft-PR/comment flow via
+`invoke_copilot_on_pr.py`.
 
 The correct method is the DUAL METHOD:
 1. Create draft PR
@@ -34,7 +35,7 @@ print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
 print("=" * 80)
 print()
 print("IRONY ALERT: Despite the name 'proper_copilot_invoker', this script")
-print("uses an IMPROPER method (gh agent-task) that has NEVER existed!")
+print("uses an older agent-task-based method that is not available here.")
 print()
 print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
 print("   (The ACTUAL proper method - 100% verified)")
@@ -51,8 +52,8 @@ sys.exit(1)
 Proper Copilot Agent Invocation Script
 
 This script properly invokes GitHub Copilot agents on draft PRs by using
-the GitHub CLI's agent-task command (gh agent-task create) which is the
-official method for invoking GitHub Copilot Coding Agent.
+the GitHub CLI's agent-task command (gh agent-task create) when the local
+environment supports that hosted task surface.
 
 Based on GitHub's official documentation:
 - https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
@@ -258,7 +259,7 @@ class ProperCopilotInvoker:
             # Check if gh agent-task is not available
             if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
                 print(f"   ⚠️  gh agent-task command not available on this system")
-                print(f"   💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
+                print(f"   💡 Use scripts/invoke_copilot_on_pr.py for existing PRs in this repo")
             
             return False
     

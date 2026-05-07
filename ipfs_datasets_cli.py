@@ -1819,8 +1819,94 @@ def execute_heavy_command(args):
                         print(f"  GitHub CLI Available: {status['github_cli_available']}")
                         print(f"  GitHub CLI Path: {status['github_cli_path'] or 'Not found'}")
                         print(f"  Copilot Extension Installed: {status.get('copilot_extension_installed', False)}")
+                        print(f"  Agent Task Available: {status.get('agent_task_available', False)}")
                         if status.get('version_info'):
                             print(f"  Version: {status['version_info']}")
+                    return
+
+                elif subcommand == "local-status":
+                    extra = args[2:]
+                    copilot_cli_path = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--copilot-cli-path", "-c") and i + 1 < len(extra):
+                            copilot_cli_path = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+
+                    from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
+
+                    cli = StandaloneCopilot(copilot_cli_path=copilot_cli_path)
+                    status = cli.get_status()
+
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("Standalone Copilot CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  Copilot CLI Path: {status['copilot_cli_path'] or 'Not found'}")
+                        if status.get('version_info'):
+                            print(f"  Version: {status['version_info']}")
+                        if status.get('command_template'):
+                            print(f"  Default Command Template: {status['command_template']}")
+                    return
+
+                elif subcommand == "prompt":
+                    extra = args[2:]
+                    copilot_cli_path = None
+                    model = None
+                    prompt = None
+                    timeout = 180
+                    allow_all_paths = False
+                    autopilot = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--copilot-cli-path", "-c") and i + 1 < len(extra):
+                            copilot_cli_path = extra[i + 1]
+                            i += 2
+                        elif token in ("--model", "-m") and i + 1 < len(extra):
+                            model = extra[i + 1]
+                            i += 2
+                        elif token == "--timeout" and i + 1 < len(extra):
+                            timeout = int(extra[i + 1])
+                            i += 2
+                        elif token == "--allow-all-paths":
+                            allow_all_paths = True
+                            i += 1
+                        elif token == "--autopilot":
+                            autopilot = True
+                            i += 1
+                        else:
+                            if prompt is None:
+                                prompt = ' '.join(extra[i:])
+                                break
+                            i += 1
+
+                    if not prompt:
+                        print("Usage: ipfs-datasets copilot prompt <prompt> [--model MODEL] [--timeout SECONDS] [--allow-all-paths] [--autopilot] [--copilot-cli-path PATH]")
+                        return
+
+                    from ipfs_datasets_py.utils.cli_tools import StandaloneCopilot
+
+                    cli = StandaloneCopilot(copilot_cli_path=copilot_cli_path)
+                    result = cli.prompt(
+                        prompt,
+                        model=model,
+                        allow_all_paths=allow_all_paths,
+                        autopilot=autopilot,
+                        timeout=timeout,
+                    )
+
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['response'])
+                        else:
+                            print(f"Failed to execute standalone Copilot prompt: {result.get('error')}")
                     return
                 
                 elif subcommand == "install":
@@ -1985,7 +2071,7 @@ def execute_heavy_command(args):
                 
                 else:
                     print(f"Unknown copilot subcommand: {subcommand}")
-                    print("Available subcommands: status, install, explain, suggest, git")
+                    print("Available subcommands: status, local-status, install, explain, suggest, git, prompt")
                     return
                     
             except ImportError as e:

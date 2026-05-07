@@ -25,10 +25,21 @@ class _FakeChatProvider:
 class _FakeTextProvider:
     def __init__(self) -> None:
         self.prompt = None
+        self.kwargs = None
 
     def generate(self, prompt: str, *, model_name=None, **kwargs):
         self.prompt = prompt
+        self.kwargs = dict(kwargs)
         return "text-ok"
+
+
+class _FakeNativeProvider:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def generate_multimodal(self, prompt: str, **kwargs):
+        self.calls.append({"prompt": prompt, **kwargs})
+        return "native-ok"
 
 
 def test_build_multimodal_messages_embeds_image_paths_as_data_urls(tmp_path: Path) -> None:
@@ -93,6 +104,50 @@ def test_generate_multimodal_text_falls_back_to_flattened_prompt_for_text_only_p
     assert "Review this dashboard" in provider.prompt
     assert "Focus on evidence upload clarity." in provider.prompt
     assert "[image attachment included]" in provider.prompt
+
+
+def test_generate_multimodal_text_forwards_copilot_trusted_dir_kwargs_to_native_provider(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    image_path = tmp_path / "workspace.png"
+    image_path.write_bytes(b"\x89PNG\r\n\x1a\nfake")
+    provider = _FakeNativeProvider()
+
+    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+
+    result = multimodal_router.generate_multimodal_text(
+        "Review this dashboard",
+        provider_instance=provider,
+        image_paths=[image_path],
+        copilot_add_dirs=["/tmp/worktrees"],
+        copilot_allow_all_paths=True,
+    )
+
+    assert result == "native-ok"
+    assert provider.calls
+    call = provider.calls[0]
+    assert call["image_paths"] == [str(image_path)]
+    assert call["copilot_add_dirs"] == ["/tmp/worktrees"]
+    assert call["copilot_allow_all_paths"] is True
+
+
+def test_generate_multimodal_text_fallback_forwards_copilot_kwargs_to_text_provider(monkeypatch) -> None:
+    provider = _FakeTextProvider()
+
+    monkeypatch.setattr(multimodal_router.llm_router, "get_llm_provider", lambda provider=None, deps=None: provider)
+
+    result = multimodal_router.generate_multimodal_text(
+        "Review this dashboard",
+        provider_instance=provider,
+        copilot_add_dirs=["/tmp/worktrees"],
+        copilot_allow_all_paths=True,
+    )
+
+    assert result == "text-ok"
+    assert provider.kwargs is not None
+    assert provider.kwargs["copilot_add_dirs"] == ["/tmp/worktrees"]
+    assert provider.kwargs["copilot_allow_all_paths"] is True
 
 
 def test_generate_text_alias_points_to_multimodal_generation() -> None:

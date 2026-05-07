@@ -16,6 +16,7 @@ These are separate GitHub product flows, not the local CLI wrapper used by this 
 The codebase now follows that split explicitly:
 
 - `ipfs-datasets copilot ...` wraps the `gh copilot` extension.
+- `ipfs-datasets copilot prompt ...` and `ipfs-datasets copilot local-status` wrap the standalone `copilot` binary.
 - `llm_router` and related fallback paths use the standalone `copilot` binary.
 - Docs should not describe `gh copilot` as an autonomous file-editing agent.
 
@@ -30,6 +31,7 @@ Supported operations in this repo:
 - status and installation checks
 - command suggestions
 - code explanations
+- compatibility reporting for `gh agent-task` availability
 - MCP development-tool wrappers around those same operations
 
 Typical commands:
@@ -46,7 +48,7 @@ This is the surface used by `llm_router`, SyMAI fallback generation, and impleme
 The default non-interactive template is now:
 
 ```bash
-copilot --silent --stream off --allow-all-tools --no-ask-user --model <model> -p "<prompt>"
+copilot --silent --stream off --allow-all-tools --no-ask-user --model <model> --prompt "<prompt>"
 ```
 
 That matches the installed CLI help more closely than the old `npx --yes @github/copilot` assumption.
@@ -86,6 +88,8 @@ The repo recognizes these Copilot-related settings:
 - `COPILOT_CLI_PATH`: explicit standalone `copilot` binary path
 - `IPFS_DATASETS_PY_COPILOT_CLI_CMD`: override the standalone command template used by router-style generation
 - `IPFS_DATASETS_PY_COPILOT_CLI_MODEL`: preferred standalone Copilot model for router calls
+- `IPFS_DATASETS_PY_COPILOT_CLI_ALLOW_ALL_PATHS`: tell `llm_router` to pass `--allow-all-paths` in native Copilot CLI mode
+- `IPFS_DATASETS_PY_COPILOT_CLI_ADD_DIRS`: os.pathsep-separated directories that `llm_router` should add with repeated `--add-dir`
 
 If `IPFS_DATASETS_PY_COPILOT_CLI_CMD` is unset, the repo now defaults to the local `copilot` binary instead of `npx`.
 
@@ -97,9 +101,11 @@ These commands talk to `gh copilot` and are intended for command suggestions or 
 
 ```bash
 ipfs-datasets copilot status
+ipfs-datasets copilot local-status
 ipfs-datasets copilot suggest "list files modified today"
 ipfs-datasets copilot git "undo the last commit but keep the changes"
 ipfs-datasets copilot explain "pytest -k wallet_release --maxfail=1"
+ipfs-datasets copilot prompt "Summarize the failing tests in this repository" --model gpt-5.4 --autopilot
 ```
 
 ### Use standalone `copilot` for autonomous local work
@@ -107,7 +113,7 @@ ipfs-datasets copilot explain "pytest -k wallet_release --maxfail=1"
 For local agentic work, call the standalone binary directly:
 
 ```bash
-copilot --silent --stream off --allow-all-tools --no-ask-user -p "Summarize the failing tests in this repository"
+copilot --silent --stream off --allow-all-tools --no-ask-user --prompt "Summarize the failing tests in this repository"
 ```
 
 Add `--allow-all-paths` only when the task genuinely needs filesystem access outside the current working tree.
@@ -117,6 +123,26 @@ Add `--allow-all-paths` only when the task genuinely needs filesystem access out
 ### Local automation
 
 Use the standalone `copilot` binary for local scripted prompting and repo-aware agentic work.
+
+When `llm_router` needs Copilot to work outside the current working tree, use the documented trusted-directory knobs instead of relying on implicit access:
+
+```python
+from ipfs_datasets_py import llm_router
+
+llm_router.generate_text(
+   "Summarize the files in the implementation worktree and propose the next fix.",
+   provider="copilot_cli",
+   copilot_add_dirs=["/tmp/211-ai-implementation-worktrees"],
+)
+
+llm_router.generate_text(
+   "Review the files under this alternate checkout.",
+   provider="copilot_cli",
+   copilot_allow_all_paths=True,
+)
+```
+
+The router now switches to the native standalone `copilot` invocation whenever those trusted-directory flags are needed.
 
 ### In-process Python integrations
 
@@ -131,7 +157,7 @@ Do not assume that `@copilot` comments, draft-PR workflows, or other GitHub-host
 
 ## Known Non-Goals
 
-This guide does not treat `gh agent-task` as a canonical or verified repo workflow. Historical docs in the repository mention it, but the maintained local integration points are `gh copilot` and standalone `copilot`.
+This guide does not treat `gh agent-task` as a canonical or guaranteed repo workflow. Historical docs in the repository mention it, but support depends on the installed `gh` build. The compatibility wrapper reports availability explicitly instead of assuming it exists.
 
 ## Troubleshooting
 

@@ -32,7 +32,7 @@ Use standalone `copilot` when you want local agentic execution in the working tr
 Example:
 
 ```bash
-copilot --silent --stream off --allow-all-tools --no-ask-user -p "Inspect this repo and summarize failing tests"
+copilot --silent --stream off --allow-all-tools --no-ask-user --prompt "Inspect this repo and summarize failing tests"
 ```
 
 The package wrapper for this path is `ipfs_datasets_py.utils.cli_tools.StandaloneCopilot`.
@@ -67,6 +67,13 @@ gh copilot --help
 ipfs-datasets copilot status
 ```
 
+If your automation needs the standalone binary instead of the GitHub CLI
+extension, verify it with:
+
+```bash
+ipfs-datasets copilot local-status
+```
+
 Install it if needed:
 
 ```bash
@@ -99,4 +106,4 @@ The `ipfs-datasets copilot` wrapper targets `gh copilot`, so install the GitHub 
 
 ### Historical docs mention `gh agent-task`
 
-Treat that as legacy documentation until it is re-verified against the current GitHub tooling surface.
+Treat that as legacy documentation until it is re-verified against the current GitHub tooling surface. The maintained wrapper now reports whether the installed `gh` binary actually supports `agent-task`.
