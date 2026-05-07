@@ -879,7 +879,12 @@ class PortalImplementationDaemon:
                             worktree_path=worktree_path,
                             branch_name=branch_name,
                         )
-                        merge_result = self._merge_branch_to_main(branch_name, task, attempt)
+                        merge_result = self._merge_branch_to_main(
+                            branch_name,
+                            task,
+                            attempt,
+                            baseline_ref=baseline_ref,
+                        )
                         if merge_result.get("merged"):
                             cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
                         else:
@@ -1627,9 +1632,35 @@ class PortalImplementationDaemon:
             "stderr": remove.stderr[-4000:],
         }
 
-    def _merge_branch_to_main(self, branch_name: str, task: PortalTask, attempt: int) -> dict[str, Any]:
+    def _merge_branch_to_main(
+        self,
+        branch_name: str,
+        task: PortalTask,
+        attempt: int,
+        *,
+        baseline_ref: str = "",
+    ) -> dict[str, Any]:
         started_at = utc_now()
         target_branch = self._main_branch_name()
+        if baseline_ref and not self._git_ref_is_ancestor(baseline_ref, target_branch):
+            result = {
+                "attempted": False,
+                "merged": False,
+                "returncode": 2,
+                "branch": branch_name,
+                "target_branch": target_branch,
+                "baseline_ref": baseline_ref,
+                "started_at": started_at,
+                "finished_at": utc_now(),
+                "merge_commit": "",
+                "stdout": "",
+                "stderr": "",
+                "reason": "baseline_not_ancestor_of_target",
+                "identical_untracked_paths": [],
+                "submodule_merge_results": [],
+            }
+            self._record_event("merge_finished", result)
+            return result
         merge_lock = self._repo_merge_lock_path()
         lock_metadata = self._build_merge_lock_metadata(branch_name, task, attempt, started_at)
         lock_fd, lock_reason, existing_lock = self._try_acquire_lock(
@@ -2158,7 +2189,12 @@ class PortalImplementationDaemon:
                 priority="P2",
                 track="ops",
             )
-            merge_result = self._merge_branch_to_main(branch, task, attempt)
+            merge_result = self._merge_branch_to_main(
+                branch,
+                task,
+                attempt,
+                baseline_ref=str(event.get("baseline_ref") or ""),
+            )
             cleanup_result = {}
             if merge_result.get("merged"):
                 cleanup_result = self._cleanup_merged_worktree(worktree_path, branch)
