@@ -1027,7 +1027,10 @@ class PortalImplementationDaemon:
         *,
         task: PortalTask | None = None,
     ) -> str:
-        self._run_git(["worktree", "add", "-b", branch_name, str(worktree_path), "HEAD"], cwd=self.repo_root)
+        self._run_git(
+            ["worktree", "add", "-b", branch_name, str(worktree_path), self._main_branch_name()],
+            cwd=self.repo_root,
+        )
         baseline_ref = self._run_git(["rev-parse", "HEAD"], cwd=worktree_path).stdout.strip()
         self._initialize_worktree_submodules(worktree_path, branch_name=branch_name)
         self._link_shared_worktree_paths(worktree_path)
@@ -1496,27 +1499,137 @@ class PortalImplementationDaemon:
             "results": results,
         }
 
+    def _main_branch_name(self) -> str:
+        for candidate in ("main", "master"):
+            if self._git_ref_exists(candidate):
+                return candidate
+        current_branch = self._git_current_branch(self.repo_root)
+        return current_branch or "HEAD"
+
+    def _main_merge_worktree_root(self) -> Path:
+        return self.worktree_root / ".main-merge-worktrees"
+
+    @staticmethod
+    def _safe_ref_path_fragment(ref: str) -> str:
+        safe = "".join(character if character.isalnum() or character in "-._" else "-" for character in ref)
+        return safe.strip("-") or "main"
+
+    def _git_worktree_entries(self) -> list[dict[str, str]]:
+        result = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=self.repo_root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return []
+        entries: list[dict[str, str]] = []
+        current: dict[str, str] = {}
+        for line in result.stdout.splitlines():
+            if line.startswith("worktree "):
+                if current:
+                    entries.append(current)
+                current = {"worktree": line.split(" ", 1)[1]}
+            elif line.startswith("branch "):
+                branch = line.split(" ", 1)[1]
+                current["branch"] = branch.removeprefix("refs/heads/")
+        if current:
+            entries.append(current)
+        return entries
+
+    def _branch_checked_out_worktree_paths(self, branch_name: str) -> list[Path]:
+        paths: list[Path] = []
+        for entry in self._git_worktree_entries():
+            if entry.get("branch") != branch_name:
+                continue
+            worktree = entry.get("worktree")
+            if worktree:
+                paths.append(Path(worktree))
+        return paths
+
+    @staticmethod
+    def _path_is_under(path: Path, root: Path) -> bool:
+        try:
+            path.resolve().relative_to(root.resolve())
+        except (OSError, ValueError):
+            return False
+        return True
+
+    def _prepare_main_merge_workspace(self, target_branch: str, branch_name: str) -> dict[str, Any]:
+        if self._git_current_branch(self.repo_root) == target_branch:
+            return {
+                "available": True,
+                "path": str(self.repo_root),
+                "ephemeral": False,
+                "target_branch": target_branch,
+            }
+
+        merge_root = self._main_merge_worktree_root()
+        checked_out_paths = self._branch_checked_out_worktree_paths(target_branch)
+        for checked_out_path in checked_out_paths:
+            if checked_out_path.resolve() == self.repo_root.resolve():
+                return {
+                    "available": True,
+                    "path": str(self.repo_root),
+                    "ephemeral": False,
+                    "target_branch": target_branch,
+                }
+            if self._path_is_under(checked_out_path, merge_root):
+                dirty_paths = sorted(self._dirty_worktree_paths(checked_out_path))
+                if dirty_paths:
+                    return {
+                        "available": False,
+                        "reason": "main_merge_worktree_dirty",
+                        "target_branch": target_branch,
+                        "worktree_path": str(checked_out_path),
+                        "dirty_paths": dirty_paths,
+                    }
+                self._run_git(["worktree", "remove", "--force", str(checked_out_path)], cwd=self.repo_root)
+                continue
+            return {
+                "available": False,
+                "reason": "main_branch_checked_out_elsewhere",
+                "target_branch": target_branch,
+                "worktree_path": str(checked_out_path),
+            }
+
+        merge_root.mkdir(parents=True, exist_ok=True)
+        safe_target = self._safe_ref_path_fragment(target_branch)
+        safe_branch = self._safe_ref_path_fragment(branch_name)
+        workspace = merge_root / f"{safe_target}-{safe_branch}-{os.getpid()}-{int(time.time())}"
+        self._run_git(["worktree", "add", str(workspace), target_branch], cwd=self.repo_root)
+        return {
+            "available": True,
+            "path": str(workspace),
+            "ephemeral": True,
+            "target_branch": target_branch,
+        }
+
+    def _cleanup_main_merge_workspace(self, workspace_path: Path, *, ephemeral: bool) -> dict[str, Any]:
+        if not ephemeral:
+            return {"cleaned": True, "removed": False, "worktree_path": str(workspace_path)}
+        if not workspace_path.exists():
+            return {"cleaned": True, "removed": False, "worktree_path": str(workspace_path)}
+        remove = subprocess.run(
+            ["git", "worktree", "remove", "--force", str(workspace_path)],
+            cwd=self.repo_root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        return {
+            "cleaned": remove.returncode == 0,
+            "removed": remove.returncode == 0,
+            "worktree_path": str(workspace_path),
+            "returncode": remove.returncode,
+            "stdout": remove.stdout[-4000:],
+            "stderr": remove.stderr[-4000:],
+        }
+
     def _merge_branch_to_main(self, branch_name: str, task: PortalTask, attempt: int) -> dict[str, Any]:
         started_at = utc_now()
-        identical_untracked_paths = self._identical_untracked_merge_paths(branch_name)
-        dirty_overlap = self._dirty_merge_conflict_paths(branch_name, ignore_paths=set(identical_untracked_paths))
-        if dirty_overlap:
-            result = {
-                "attempted": True,
-                "merged": False,
-                "returncode": 2,
-                "branch": branch_name,
-                "started_at": started_at,
-                "finished_at": utc_now(),
-                "merge_commit": "",
-                "stdout": "",
-                "stderr": "",
-                "reason": "main_checkout_dirty_conflict",
-                "dirty_paths": dirty_overlap,
-            }
-            self._record_event("merge_finished", result)
-            return result
-        removed_untracked = self._remove_untracked_paths_for_merge(identical_untracked_paths)
+        target_branch = self._main_branch_name()
         merge_lock = self._repo_merge_lock_path()
         lock_metadata = self._build_merge_lock_metadata(branch_name, task, attempt, started_at)
         lock_fd, lock_reason, existing_lock = self._try_acquire_lock(
@@ -1530,20 +1643,84 @@ class PortalImplementationDaemon:
                 "merged": False,
                 "reason": lock_reason,
                 "branch": branch_name,
+                "target_branch": target_branch,
                 "started_at": started_at,
-                "identical_untracked_paths": identical_untracked_paths,
+                "identical_untracked_paths": [],
             }
             if existing_lock:
                 result["lock_owner_pid"] = int(existing_lock.get("pid") or 0)
                 result["lock_owner_branch"] = str(existing_lock.get("branch") or "")
-            self._restore_removed_untracked_paths(removed_untracked)
             return result
 
+        merge_workspace: Path | None = None
+        merge_workspace_ephemeral = False
+        removed_untracked: dict[str, bytes] = {}
         try:
             self._write_lock_metadata(lock_fd, lock_metadata)
+            workspace_result = self._prepare_main_merge_workspace(target_branch, branch_name)
+            if not workspace_result.get("available", False):
+                result = {
+                    "attempted": True,
+                    "merged": False,
+                    "returncode": 2,
+                    "branch": branch_name,
+                    "target_branch": target_branch,
+                    "started_at": started_at,
+                    "finished_at": utc_now(),
+                    "merge_commit": "",
+                    "stdout": "",
+                    "stderr": "",
+                    "reason": str(workspace_result.get("reason") or "main_merge_workspace_unavailable"),
+                    "dirty_paths": workspace_result.get("dirty_paths", []),
+                    "main_worktree_path": str(workspace_result.get("worktree_path") or ""),
+                    "identical_untracked_paths": [],
+                    "submodule_merge_results": [],
+                }
+                self._record_event("merge_finished", result)
+                return result
+
+            merge_workspace = Path(str(workspace_result["path"]))
+            merge_workspace_ephemeral = bool(workspace_result.get("ephemeral", False))
+            identical_untracked_paths = self._identical_untracked_merge_paths(branch_name, cwd=merge_workspace)
+            dirty_overlap = self._dirty_merge_conflict_paths(
+                branch_name,
+                cwd=merge_workspace,
+                ignore_paths=set(identical_untracked_paths),
+            )
+            if dirty_overlap:
+                result = {
+                    "attempted": True,
+                    "merged": False,
+                    "returncode": 2,
+                    "branch": branch_name,
+                    "target_branch": target_branch,
+                    "started_at": started_at,
+                    "finished_at": utc_now(),
+                    "merge_commit": "",
+                    "stdout": "",
+                    "stderr": "",
+                    "reason": "main_checkout_dirty_conflict",
+                    "dirty_paths": dirty_overlap,
+                    "main_worktree_path": str(merge_workspace),
+                    "used_ephemeral_main_worktree": merge_workspace_ephemeral,
+                    "identical_untracked_paths": identical_untracked_paths,
+                    "submodule_merge_results": [],
+                }
+                self._record_event("merge_finished", result)
+                return result
+
+            removed_untracked = self._remove_untracked_paths_for_merge(identical_untracked_paths, cwd=merge_workspace)
             self._record_event(
                 "merge_started",
-                {"task_id": task.task_id, "attempt": attempt, "branch": branch_name, "started_at": started_at},
+                {
+                    "task_id": task.task_id,
+                    "attempt": attempt,
+                    "branch": branch_name,
+                    "target_branch": target_branch,
+                    "main_worktree_path": str(merge_workspace),
+                    "used_ephemeral_main_worktree": merge_workspace_ephemeral,
+                    "started_at": started_at,
+                },
             )
             command = [
                 "git",
@@ -1554,7 +1731,7 @@ class PortalImplementationDaemon:
             ]
             merge = subprocess.run(
                 command,
-                cwd=self.repo_root,
+                cwd=merge_workspace,
                 text=True,
                 capture_output=True,
                 check=False,
@@ -1563,30 +1740,40 @@ class PortalImplementationDaemon:
             merge_commit = ""
             submodule_merge_results: list[dict[str, Any]] = []
             if merge.returncode == 0:
-                merge_commit = self._run_git(["rev-parse", "HEAD"], cwd=self.repo_root).stdout.strip()
+                merge_commit = self._run_git(["rev-parse", "HEAD"], cwd=merge_workspace).stdout.strip()
                 submodule_merge_results = self._merge_submodule_branches_to_main(branch_name)
+            elif removed_untracked:
+                self._restore_removed_untracked_paths(removed_untracked, cwd=merge_workspace)
             result = {
                 "attempted": True,
                 "merged": merge.returncode == 0,
                 "returncode": merge.returncode,
                 "branch": branch_name,
+                "target_branch": target_branch,
                 "command": command,
                 "started_at": started_at,
                 "finished_at": finished_at,
                 "merge_commit": merge_commit,
                 "stdout": merge.stdout[-4000:],
                 "stderr": merge.stderr[-4000:],
+                "main_worktree_path": str(merge_workspace),
+                "used_ephemeral_main_worktree": merge_workspace_ephemeral,
                 "identical_untracked_paths": identical_untracked_paths,
                 "submodule_merge_results": submodule_merge_results,
             }
             failed_submodules = [item for item in submodule_merge_results if not item.get("merged", False)]
             if failed_submodules:
                 result["submodule_merge_failed"] = True
-            if merge.returncode != 0:
-                self._restore_removed_untracked_paths(removed_untracked)
             self._record_event("merge_finished", result)
             return result
         finally:
+            if merge_workspace is not None:
+                merge_workspace_cleanup = self._cleanup_main_merge_workspace(
+                    merge_workspace,
+                    ephemeral=merge_workspace_ephemeral,
+                )
+                if not merge_workspace_cleanup.get("cleaned", False):
+                    self._record_event("main_merge_worktree_cleanup_failed", merge_workspace_cleanup)
             try:
                 if merge_lock.exists():
                     merge_lock.unlink()
@@ -1803,8 +1990,15 @@ class PortalImplementationDaemon:
             )
         return results
 
-    def _dirty_merge_conflict_paths(self, branch_name: str, *, ignore_paths: set[str] | None = None) -> list[str]:
-        dirty_paths = self._dirty_worktree_paths(self.repo_root)
+    def _dirty_merge_conflict_paths(
+        self,
+        branch_name: str,
+        *,
+        cwd: Path | None = None,
+        ignore_paths: set[str] | None = None,
+    ) -> list[str]:
+        workspace = cwd or self.repo_root
+        dirty_paths = self._dirty_worktree_paths(workspace)
         if not dirty_paths:
             return []
         branch_paths = self._branch_changed_paths(branch_name)
@@ -1813,13 +2007,14 @@ class PortalImplementationDaemon:
             overlap -= ignore_paths
         return sorted(overlap)
 
-    def _identical_untracked_merge_paths(self, branch_name: str) -> list[str]:
+    def _identical_untracked_merge_paths(self, branch_name: str, *, cwd: Path | None = None) -> list[str]:
+        workspace = cwd or self.repo_root
         branch_paths = self._branch_changed_paths(branch_name)
         if not branch_paths:
             return []
         result = subprocess.run(
             ["git", "ls-files", "--others", "--exclude-standard", "-z"],
-            cwd=self.repo_root,
+            cwd=workspace,
             capture_output=True,
             check=False,
         )
@@ -1834,7 +2029,7 @@ class PortalImplementationDaemon:
         for relative in sorted(untracked_paths):
             if not self._repo_relative_path_safe(relative):
                 continue
-            source = self.repo_root / relative
+            source = workspace / relative
             if not source.is_file() or source.is_symlink():
                 continue
             branch_blob = subprocess.run(
@@ -1847,23 +2042,25 @@ class PortalImplementationDaemon:
                 identical.append(relative)
         return identical
 
-    def _remove_untracked_paths_for_merge(self, paths: list[str]) -> dict[str, bytes]:
+    def _remove_untracked_paths_for_merge(self, paths: list[str], *, cwd: Path | None = None) -> dict[str, bytes]:
+        workspace = cwd or self.repo_root
         removed: dict[str, bytes] = {}
         for relative in paths:
             if not self._repo_relative_path_safe(relative):
                 continue
-            source = self.repo_root / relative
+            source = workspace / relative
             if not source.is_file() or source.is_symlink():
                 continue
             removed[relative] = source.read_bytes()
             source.unlink()
         return removed
 
-    def _restore_removed_untracked_paths(self, removed: dict[str, bytes]) -> None:
+    def _restore_removed_untracked_paths(self, removed: dict[str, bytes], *, cwd: Path | None = None) -> None:
+        workspace = cwd or self.repo_root
         for relative, content in removed.items():
             if not self._repo_relative_path_safe(relative):
                 continue
-            target = self.repo_root / relative
+            target = workspace / relative
             if target.exists():
                 continue
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -1901,9 +2098,10 @@ class PortalImplementationDaemon:
                 paths.add(path_text)
         return paths
 
-    def _branch_changed_paths(self, branch_name: str) -> set[str]:
+    def _branch_changed_paths(self, branch_name: str, *, base_ref: str | None = None) -> set[str]:
+        base = base_ref or self._main_branch_name()
         result = subprocess.run(
-            ["git", "diff", "--name-only", f"HEAD..{branch_name}"],
+            ["git", "diff", "--name-only", f"{base}..{branch_name}"],
             cwd=self.repo_root,
             text=True,
             capture_output=True,
@@ -1915,6 +2113,7 @@ class PortalImplementationDaemon:
 
     def _reconcile_failed_merges(self) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
+        target_branch = self._main_branch_name()
         for event in self._failed_merge_candidates():
             task_id = str(event.get("task_id") or "")
             attempt = int(event.get("attempt") or 0)
@@ -1924,7 +2123,7 @@ class PortalImplementationDaemon:
             implementation_commit = str(event.get("implementation_commit") or "")
             if not task_id or not implementation_commit:
                 continue
-            if self._git_ref_is_ancestor(implementation_commit, "HEAD"):
+            if self._git_ref_is_ancestor(implementation_commit, target_branch):
                 cleanup_result = self._cleanup_merged_worktree(worktree_path, branch) if branch else {}
                 result = {
                     "task_id": task_id,
@@ -1980,6 +2179,7 @@ class PortalImplementationDaemon:
     def _failed_merge_candidates(self) -> list[dict[str, Any]]:
         candidates: dict[tuple[str, str], dict[str, Any]] = {}
         reconciled_commits: set[str] = set()
+        target_branch = self._main_branch_name()
         for event in self._iter_events():
             if str(event.get("type") or "") == "merge_reconciled" and event.get("resolved"):
                 implementation_commit = str(event.get("implementation_commit") or "")
@@ -2008,7 +2208,7 @@ class PortalImplementationDaemon:
             implementation_commit = str(event.get("implementation_commit") or "")
             if implementation_commit in reconciled_commits:
                 continue
-            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, "HEAD"):
+            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
                 unresolved.append(event)
                 continue
             cleanup = event.get("cleanup_result") or {}
@@ -2018,10 +2218,11 @@ class PortalImplementationDaemon:
 
     def _unresolved_merge_failures_by_task(self) -> dict[str, dict[str, Any]]:
         failures: dict[str, dict[str, Any]] = {}
+        target_branch = self._main_branch_name()
         for event in self._failed_merge_candidates():
             task_id = str(event.get("task_id") or "")
             implementation_commit = str(event.get("implementation_commit") or "")
-            if task_id and implementation_commit and not self._git_ref_is_ancestor(implementation_commit, "HEAD"):
+            if task_id and implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
                 failures[task_id] = event
         return failures
 
@@ -2034,7 +2235,7 @@ class PortalImplementationDaemon:
             return False
         if previous.last_merge_commit:
             return False
-        return not self._git_ref_is_ancestor(previous.last_implementation_commit, "HEAD")
+        return not self._git_ref_is_ancestor(previous.last_implementation_commit, self._main_branch_name())
 
     def _git_ref_is_ancestor(self, ancestor: str, descendant: str) -> bool:
         result = subprocess.run(
@@ -2200,6 +2401,7 @@ class PortalImplementationDaemon:
 
     def _successfully_merged_task_ids(self) -> set[str]:
         task_ids: set[str] = set()
+        target_branch = self._main_branch_name()
         for event in self._iter_events():
             event_type = str(event.get("type") or "")
             task_id = str(event.get("task_id") or "")
@@ -2215,7 +2417,7 @@ class PortalImplementationDaemon:
                     continue
             else:
                 continue
-            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, "HEAD"):
+            if implementation_commit and not self._git_ref_is_ancestor(implementation_commit, target_branch):
                 continue
             task_ids.add(task_id)
         return task_ids
