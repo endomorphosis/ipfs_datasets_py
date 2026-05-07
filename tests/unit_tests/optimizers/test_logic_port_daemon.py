@@ -186,7 +186,7 @@ def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, mo
     assert "ipfs_datasets_py.optimizers.logic.deontic.parser_daemon" in spec.daemon_process_match_all
     assert launch_env["MODEL_NAME"] == "gpt-5.5"
     assert launch_env["PROVIDER"] == "llm_router"
-    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
+    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == ""
 
 
 def test_reusable_todo_daemon_health_reports_legal_parser_legacy_fields(tmp_path, monkeypatch):

@@ -72,6 +72,34 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _copilot_fallback_command(*, codex: str | None, copilot: str, workspace_path: Path) -> list[str]:
+        return [
+                "bash",
+                "-lc",
+                """
+prompt_file=$(mktemp)
+trap 'rm -f "$prompt_file"' EXIT
+cat > "$prompt_file"
+codex_bin="$1"
+copilot_bin="$2"
+workspace="$3"
+if [[ -n "$codex_bin" ]]; then
+    if "$codex_bin" exec --full-auto -C "$workspace" - < "$prompt_file"; then
+        exit 0
+    else
+        rc=$?
+        printf 'codex exec failed with exit %s; falling back to copilot\n' "$rc" >&2
+    fi
+fi
+exec "$copilot_bin" --silent --allow-all-tools --allow-all-paths --no-ask-user --autopilot --prompt "$(cat "$prompt_file")"
+""",
+                "bash",
+                codex or "",
+                copilot,
+                str(workspace_path),
+        ]
+
+
 def split_csv(value: str) -> list[str]:
     raw = [item.strip() for item in value.split(",")]
     return [item for item in raw if item and item.lower() not in {"none", "n/a"}]
@@ -1826,10 +1854,13 @@ class PortalImplementationDaemon:
         if env_command:
             return shlex.split(env_command)
         codex = shutil.which("codex")
+        copilot = shutil.which("copilot")
+        if copilot:
+            return _copilot_fallback_command(codex=codex, copilot=copilot, workspace_path=workspace_path)
         if codex:
             return [codex, "exec", "--full-auto", "-C", str(workspace_path), "-"]
         raise RuntimeError(
-            "No implementation command configured. Install codex or set IMPLEMENTATION_DAEMON_COMMAND."
+            "No implementation command configured. Install codex or copilot, or set IMPLEMENTATION_DAEMON_COMMAND."
         )
 
     def _build_implementation_prompt(self, task: PortalTask, attempt: int) -> str:
@@ -1948,7 +1979,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--implementation-command",
         default="",
-        help="Command used for implementation. Defaults to codex exec --full-auto.",
+        help="Command used for implementation. Defaults to codex exec with local Copilot CLI fallback when available.",
     )
     parser.add_argument("--implementation-timeout", type=float, default=DEFAULT_IMPLEMENTATION_TIMEOUT_SECONDS)
     parser.add_argument(

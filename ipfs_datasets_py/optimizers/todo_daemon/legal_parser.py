@@ -50,7 +50,7 @@ def legal_parser_launch_env() -> Dict[str, str]:
     return {
         "MODEL_NAME": _env("MODEL_NAME", "gpt-5.5"),
         "PROVIDER": _env("PROVIDER", "llm_router"),
-        "IPFS_DATASETS_PY_LLM_PROVIDER": _env("IPFS_DATASETS_PY_LLM_PROVIDER", "codex_cli"),
+        "IPFS_DATASETS_PY_LLM_PROVIDER": _env("IPFS_DATASETS_PY_LLM_PROVIDER", ""),
     }
 
 
