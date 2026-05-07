@@ -813,6 +813,7 @@ class PortalImplementationDaemon:
         command: list[str] = []
         returncode = 1
         commit_result: dict[str, Any] = {"committed": False}
+        failed_preservation_result: dict[str, Any] = {}
 
         try:
             baseline_ref = self._create_seeded_worktree(worktree_path, branch_name, task=task)
@@ -887,6 +888,16 @@ class PortalImplementationDaemon:
                         cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
                 else:
                     returncode = int(validation_result.get("returncode") or 1)
+                    failed_preservation_result = self._preserve_failed_validation_worktree(
+                        worktree_path,
+                        branch_name,
+                        task,
+                        attempt,
+                        validation_result,
+                    )
+                    commit_result = dict(failed_preservation_result.get("commit_result") or commit_result)
+                    implementation_commit = str(commit_result.get("commit", ""))
+                    cleanup_result = dict(failed_preservation_result.get("cleanup_result") or cleanup_result)
         except subprocess.TimeoutExpired:
             returncode = 124
             self._record_event(
@@ -926,6 +937,7 @@ class PortalImplementationDaemon:
             "merge_result": merge_result,
             "validation_result": validation_result,
             "cleanup_result": cleanup_result,
+            "failed_preservation_result": failed_preservation_result,
         }
         self._record_event("implementation_finished", result)
         return result
@@ -1286,6 +1298,44 @@ class PortalImplementationDaemon:
             commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
             results.append({"path": relative, "committed": True, "commit": commit_ref, "status": status})
         return results
+
+    def _preserve_failed_validation_worktree(
+        self,
+        worktree_path: Path,
+        branch_name: str,
+        task: PortalTask,
+        attempt: int,
+        validation_result: dict[str, Any],
+    ) -> dict[str, Any]:
+        started_at = utc_now()
+        commit_result = self._commit_worktree_changes(worktree_path, task, attempt)
+        rescue_branch = ""
+        implementation_commit = str(commit_result.get("commit", ""))
+        if implementation_commit:
+            rescue_branch = self._failed_validation_rescue_branch_name(branch_name)
+            self._run_git(["branch", "-f", rescue_branch, implementation_commit], cwd=self.repo_root)
+        cleanup_result = self._cleanup_merged_worktree(worktree_path, branch_name)
+        result = {
+            "task_id": task.task_id,
+            "attempt": attempt,
+            "branch": branch_name,
+            "worktree_path": str(worktree_path),
+            "started_at": started_at,
+            "finished_at": utc_now(),
+            "preserved": bool(implementation_commit),
+            "rescue_branch": rescue_branch,
+            "implementation_commit": implementation_commit,
+            "commit_result": commit_result,
+            "cleanup_result": cleanup_result,
+            "validation_result": validation_result,
+        }
+        self._record_event("failed_validation_worktree_preserved", result)
+        return result
+
+    @staticmethod
+    def _failed_validation_rescue_branch_name(branch_name: str) -> str:
+        safe_name = branch_name.removeprefix("implementation/").strip("/").replace(" ", "-")
+        return f"rescue/{safe_name or 'implementation-attempt'}-failed-validation"
 
     def _restore_ephemeral_worktree_paths_for_commit(self, worktree_path: Path) -> None:
         for relative in EPHEMERAL_WORKTREE_PATHS:
