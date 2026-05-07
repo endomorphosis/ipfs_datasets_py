@@ -49,7 +49,6 @@ SHARED_WORKTREE_PATHS = ("wallet_interface/ui/node_modules",)
 WORKTREE_SUBMODULE_PATHS = ("ipfs_datasets_py",)
 EPHEMERAL_WORKTREE_PATHS = (
     *SHARED_WORKTREE_PATHS,
-    *WORKTREE_SUBMODULE_PATHS,
     ".pytest_cache",
     "test-results",
     "wallet_interface/__pycache__",
@@ -866,7 +865,7 @@ class PortalImplementationDaemon:
                     worktree_path=worktree_path,
                     branch_name=branch_name,
                 )
-                self._prepare_worktree_for_validation(worktree_path, task=task)
+                self._prepare_worktree_for_validation(worktree_path, task=task, branch_name=branch_name)
                 validation_result = self._run_validation_commands(worktree_path, task, log_path)
                 if validation_result.get("passed", False):
                     commit_result = self._commit_worktree_changes(worktree_path, task, attempt)
@@ -1018,35 +1017,94 @@ class PortalImplementationDaemon:
     ) -> str:
         self._run_git(["worktree", "add", "-b", branch_name, str(worktree_path), "HEAD"], cwd=self.repo_root)
         baseline_ref = self._run_git(["rev-parse", "HEAD"], cwd=worktree_path).stdout.strip()
-        self._initialize_worktree_submodules(worktree_path)
+        self._initialize_worktree_submodules(worktree_path, branch_name=branch_name)
         self._link_shared_worktree_paths(worktree_path)
         self._seed_untracked_worktree_context(worktree_path, task=task)
         return baseline_ref
 
-    def _initialize_worktree_submodules(self, worktree_path: Path) -> None:
+    def _initialize_worktree_submodules(self, worktree_path: Path, *, branch_name: str = "") -> None:
         for relative in WORKTREE_SUBMODULE_PATHS:
             if not self._worktree_declares_submodule(worktree_path, relative):
                 continue
-            if self._link_local_worktree_submodule(worktree_path, relative):
+            if self._create_local_submodule_worktree(worktree_path, relative, branch_name=branch_name):
                 continue
             self._run_git(["submodule", "update", "--init", "--recursive", "--", relative], cwd=worktree_path)
 
-    def _link_local_worktree_submodule(self, worktree_path: Path, relative: str) -> bool:
+    def _create_local_submodule_worktree(self, worktree_path: Path, relative: str, *, branch_name: str = "") -> bool:
         source = (self.repo_root / relative).resolve()
-        if not source.exists():
+        if not source.exists() or not self._is_git_worktree(source):
             return False
         target = worktree_path / relative
-        if target.is_symlink():
-            if target.resolve() == source:
-                return True
-            target.unlink()
-        elif target.exists():
-            if target.is_dir():
+        if self._is_git_worktree(target) and not target.is_symlink():
+            if branch_name:
+                expected_branch = self._submodule_worktree_branch_name(branch_name, relative)
+                current_branch = self._git_current_branch(target)
+                if current_branch and current_branch != expected_branch:
+                    return False
+            return True
+        if target.exists() or target.is_symlink():
+            if target.is_symlink() or target.is_file():
+                target.unlink()
+            elif target.is_dir():
                 shutil.rmtree(target)
             else:
                 target.unlink()
-        target.symlink_to(source, target_is_directory=source.is_dir())
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if branch_name:
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+            if self._git_ref_exists_in_repo(source, submodule_branch):
+                self._run_git(["worktree", "add", str(target), submodule_branch], cwd=source)
+                return True
+            self._run_git(["worktree", "add", "-b", submodule_branch, str(target), "HEAD"], cwd=source)
+            return True
+        self._run_git(["worktree", "add", "--detach", str(target), "HEAD"], cwd=source)
         return True
+
+    @staticmethod
+    def _submodule_worktree_branch_name(branch_name: str, relative: str) -> str:
+        safe_relative = relative.strip("/").replace("/", "-")
+        return f"{branch_name}-submodule-{safe_relative}"
+
+    def _is_git_worktree(self, path: Path) -> bool:
+        if not path.exists() or path.is_symlink():
+            return False
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=path,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return False
+        try:
+            return Path(result.stdout.strip()).resolve() == path.resolve()
+        except OSError:
+            return False
+
+    def _git_current_branch(self, cwd: Path) -> str:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return ""
+        return result.stdout.strip()
+
+    def _git_ref_exists_in_repo(self, cwd: Path, ref: str) -> bool:
+        if not ref:
+            return False
+        result = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", ref],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        return result.returncode == 0
 
     def _worktree_declares_submodule(self, worktree_path: Path, relative: str) -> bool:
         gitmodules = worktree_path / ".gitmodules"
@@ -1081,8 +1139,14 @@ class PortalImplementationDaemon:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.symlink_to(source, target_is_directory=source.is_dir())
 
-    def _prepare_worktree_for_validation(self, worktree_path: Path, *, task: PortalTask | None = None) -> None:
-        self._initialize_worktree_submodules(worktree_path)
+    def _prepare_worktree_for_validation(
+        self,
+        worktree_path: Path,
+        *,
+        task: PortalTask | None = None,
+        branch_name: str = "",
+    ) -> None:
+        self._initialize_worktree_submodules(worktree_path, branch_name=branch_name)
         self._link_shared_worktree_paths(worktree_path)
         self._seed_untracked_worktree_context(worktree_path, task=task)
 
@@ -1151,12 +1215,16 @@ class PortalImplementationDaemon:
         return relative == normalized or relative.startswith(f"{normalized}/")
 
     def _commit_worktree_changes(self, worktree_path: Path, task: PortalTask, attempt: int) -> dict[str, Any]:
+        submodule_results = self._commit_worktree_submodule_changes(worktree_path, task, attempt)
         self._restore_ephemeral_worktree_paths_for_commit(worktree_path)
         self._run_git(["add", "-A"], cwd=worktree_path)
         self._remove_generated_paths_from_index(worktree_path)
         status = self._run_git(["status", "--porcelain"], cwd=worktree_path).stdout.strip()
         if not status:
-            return {"committed": False, "reason": "no_changes"}
+            result: dict[str, Any] = {"committed": False, "reason": "no_changes"}
+            if submodule_results:
+                result["submodule_results"] = submodule_results
+            return result
         self._run_git(
             [
                 "-c",
@@ -1172,7 +1240,52 @@ class PortalImplementationDaemon:
             cwd=worktree_path,
         )
         commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=worktree_path).stdout.strip()
-        return {"committed": True, "commit": commit_ref, "status": status}
+        result = {
+            "committed": True,
+            "commit": commit_ref,
+            "status": status,
+        }
+        if submodule_results:
+            result["submodule_results"] = submodule_results
+        return result
+
+    def _commit_worktree_submodule_changes(
+        self,
+        worktree_path: Path,
+        task: PortalTask,
+        attempt: int,
+    ) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for relative in WORKTREE_SUBMODULE_PATHS:
+            target = worktree_path / relative
+            if not self._is_git_worktree(target):
+                continue
+            self._restore_ephemeral_worktree_paths_for_commit(target)
+            self._run_git(["add", "-A"], cwd=target)
+            self._remove_generated_paths_from_index(target)
+            status = self._run_git(["status", "--porcelain"], cwd=target).stdout.strip()
+            if not status:
+                results.append({"path": relative, "committed": False, "reason": "no_changes"})
+                continue
+            self._run_git(
+                [
+                    "-c",
+                    "user.name=Implementation Daemon",
+                    "-c",
+                    "user.email=implementation-daemon@example.invalid",
+                    "commit",
+                    "-m",
+                    f"{task.task_id}: {task.title or 'implementation attempt'}",
+                    "-m",
+                    f"Attempt: {attempt}",
+                    "-m",
+                    f"Submodule: {relative}",
+                ],
+                cwd=target,
+            )
+            commit_ref = self._run_git(["rev-parse", "HEAD"], cwd=target).stdout.strip()
+            results.append({"path": relative, "committed": True, "commit": commit_ref, "status": status})
+        return results
 
     def _restore_ephemeral_worktree_paths_for_commit(self, worktree_path: Path) -> None:
         for relative in EPHEMERAL_WORKTREE_PATHS:
@@ -1398,8 +1511,10 @@ class PortalImplementationDaemon:
             )
             finished_at = utc_now()
             merge_commit = ""
+            submodule_merge_results: list[dict[str, Any]] = []
             if merge.returncode == 0:
                 merge_commit = self._run_git(["rev-parse", "HEAD"], cwd=self.repo_root).stdout.strip()
+                submodule_merge_results = self._merge_submodule_branches_to_main(branch_name)
             result = {
                 "attempted": True,
                 "merged": merge.returncode == 0,
@@ -1412,7 +1527,11 @@ class PortalImplementationDaemon:
                 "stdout": merge.stdout[-4000:],
                 "stderr": merge.stderr[-4000:],
                 "identical_untracked_paths": identical_untracked_paths,
+                "submodule_merge_results": submodule_merge_results,
             }
+            failed_submodules = [item for item in submodule_merge_results if not item.get("merged", False)]
+            if failed_submodules:
+                result["submodule_merge_failed"] = True
             if merge.returncode != 0:
                 self._restore_removed_untracked_paths(removed_untracked)
             self._record_event("merge_finished", result)
@@ -1424,12 +1543,129 @@ class PortalImplementationDaemon:
             except OSError:
                 logger.warning("Failed to remove merge lock %s", merge_lock)
 
+    def _merge_submodule_branches_to_main(self, branch_name: str) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for relative in WORKTREE_SUBMODULE_PATHS:
+            source = (self.repo_root / relative).resolve()
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+            if not self._is_git_worktree(source):
+                continue
+            if not self._git_ref_exists_in_repo(source, submodule_branch):
+                continue
+            default_branch = self._submodule_default_branch(relative, source)
+            dirty = self._run_git(["status", "--porcelain"], cwd=source).stdout.strip()
+            if dirty:
+                results.append(
+                    {
+                        "path": relative,
+                        "branch": submodule_branch,
+                        "default_branch": default_branch,
+                        "merged": False,
+                        "reason": "submodule_checkout_dirty",
+                        "status": dirty,
+                    }
+                )
+                continue
+            if self._git_ref_is_ancestor_in_repo(source, submodule_branch, default_branch):
+                results.append(
+                    {
+                        "path": relative,
+                        "branch": submodule_branch,
+                        "default_branch": default_branch,
+                        "merged": True,
+                        "reason": "already_merged",
+                    }
+                )
+                continue
+            if self._git_current_branch(source) != default_branch:
+                checkout = subprocess.run(
+                    ["git", "checkout", default_branch],
+                    cwd=source,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                if checkout.returncode != 0:
+                    results.append(
+                        {
+                            "path": relative,
+                            "branch": submodule_branch,
+                            "default_branch": default_branch,
+                            "merged": False,
+                            "returncode": checkout.returncode,
+                            "reason": "default_branch_checkout_failed",
+                            "stdout": checkout.stdout[-4000:],
+                            "stderr": checkout.stderr[-4000:],
+                        }
+                    )
+                    continue
+            merge = subprocess.run(
+                ["git", "merge", "--ff-only", submodule_branch],
+                cwd=source,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            result = {
+                "path": relative,
+                "branch": submodule_branch,
+                "default_branch": default_branch,
+                "merged": merge.returncode == 0,
+                "returncode": merge.returncode,
+                "stdout": merge.stdout[-4000:],
+                "stderr": merge.stderr[-4000:],
+                "commit": "",
+            }
+            if merge.returncode == 0:
+                result["commit"] = self._run_git(["rev-parse", "HEAD"], cwd=source).stdout.strip()
+            results.append(result)
+        return results
+
+    def _submodule_default_branch(self, relative: str, source: Path) -> str:
+        result = subprocess.run(
+            ["git", "config", "--file", str(self.repo_root / ".gitmodules"), "--get-regexp", r"^submodule\..*\.path$"],
+            cwd=self.repo_root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                key, _, path_value = line.partition(" ")
+                if path_value.strip() != relative:
+                    continue
+                module_key = key.rsplit(".", 1)[0]
+                branch = subprocess.run(
+                    ["git", "config", "--file", str(self.repo_root / ".gitmodules"), "--get", f"{module_key}.branch"],
+                    cwd=self.repo_root,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                if branch.returncode == 0 and branch.stdout.strip():
+                    return branch.stdout.strip()
+        current = self._git_current_branch(source)
+        return current or "main"
+
+    def _git_ref_is_ancestor_in_repo(self, cwd: Path, ancestor: str, descendant: str) -> bool:
+        result = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        return result.returncode == 0
+
     def _cleanup_merged_worktree(self, worktree_path: Path | None, branch_name: str) -> dict[str, Any]:
         started_at = utc_now()
         removed_worktree = False
         deleted_branch = False
+        submodule_cleanup: list[dict[str, Any]] = []
         errors: list[str] = []
         try:
+            if worktree_path is not None:
+                submodule_cleanup = self._cleanup_worktree_submodules(worktree_path, branch_name)
             if worktree_path is not None and worktree_path.exists():
                 self._run_git(["worktree", "remove", "--force", str(worktree_path)], cwd=self.repo_root)
                 removed_worktree = True
@@ -1448,6 +1684,7 @@ class PortalImplementationDaemon:
                 "finished_at": utc_now(),
                 "removed_worktree": removed_worktree,
                 "deleted_branch": deleted_branch,
+                "submodule_cleanup": submodule_cleanup,
                 "error": "\n".join(errors),
             }
             self._record_event("cleanup_finished", result)
@@ -1461,9 +1698,60 @@ class PortalImplementationDaemon:
             "finished_at": utc_now(),
             "removed_worktree": removed_worktree,
             "deleted_branch": deleted_branch,
+            "submodule_cleanup": submodule_cleanup,
         }
         self._record_event("cleanup_finished", result)
         return result
+
+    def _cleanup_worktree_submodules(self, worktree_path: Path, branch_name: str) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
+        for relative in WORKTREE_SUBMODULE_PATHS:
+            source = (self.repo_root / relative).resolve()
+            target = worktree_path / relative
+            submodule_branch = self._submodule_worktree_branch_name(branch_name, relative)
+            if not self._is_git_worktree(source):
+                continue
+            removed_worktree = False
+            deleted_branch = False
+            errors: list[str] = []
+            if self._is_git_worktree(target):
+                remove = subprocess.run(
+                    ["git", "worktree", "remove", "--force", str(target)],
+                    cwd=source,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                if remove.returncode == 0:
+                    removed_worktree = True
+                else:
+                    errors.append((remove.stderr or remove.stdout).strip())
+            default_branch = self._submodule_default_branch(relative, source)
+            if self._git_ref_exists_in_repo(source, submodule_branch) and self._git_ref_is_ancestor_in_repo(
+                source, submodule_branch, default_branch
+            ):
+                delete = subprocess.run(
+                    ["git", "branch", "-D", submodule_branch],
+                    cwd=source,
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                if delete.returncode == 0:
+                    deleted_branch = True
+                else:
+                    errors.append((delete.stderr or delete.stdout).strip())
+            results.append(
+                {
+                    "path": relative,
+                    "branch": submodule_branch,
+                    "removed_worktree": removed_worktree,
+                    "deleted_branch": deleted_branch,
+                    "cleaned": not errors,
+                    "errors": errors,
+                }
+            )
+        return results
 
     def _dirty_merge_conflict_paths(self, branch_name: str, *, ignore_paths: set[str] | None = None) -> list[str]:
         dirty_paths = self._dirty_worktree_paths(self.repo_root)
