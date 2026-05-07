@@ -1415,6 +1415,56 @@ def test_llm_router_invocation_runs_isolated_child_with_prefixed_env(tmp_path: P
     }
 
 
+def test_llm_router_invocation_supports_copilot_cli_provider(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
+    package = tmp_path / "ipfs_datasets_py"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "llm_router.py").write_text(
+        "\n".join(
+            [
+                "import json",
+                "",
+                "def generate_text(prompt, model_name, provider, allow_local_fallback, timeout, max_new_tokens, temperature):",
+                "    return json.dumps({",
+                "        'prompt': prompt,",
+                "        'model_name': model_name,",
+                "        'provider': provider,",
+                "        'allow_local_fallback': allow_local_fallback,",
+                "    })",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    payload = json.loads(
+        call_llm_router(
+            "implement the ready todo task",
+            LlmRouterInvocation(
+                repo_root=tmp_path,
+                model_name="gpt-5.4",
+                provider="copilot_cli",
+                allow_local_fallback=False,
+                timeout_seconds=12,
+                max_new_tokens=512,
+                max_prompt_chars=2000,
+                temperature=0.1,
+                backend_env_name="SYNTH_LLM_BACKEND",
+                env_prefix="SYNTH_LLM",
+                prompt_file_prefix="synthetic-copilot-llm-prompt-",
+            ),
+        )
+    )
+
+    assert payload == {
+        "prompt": "implement the ready todo task",
+        "model_name": "gpt-5.4",
+        "provider": "copilot_cli",
+        "allow_local_fallback": False,
+    }
+
+
 def test_llm_router_invocation_passes_optional_trace_kwargs(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
     package = tmp_path / "ipfs_datasets_py"
