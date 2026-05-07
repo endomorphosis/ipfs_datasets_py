@@ -163,7 +163,8 @@ from ipfs_datasets_py.utils.cli_tools import Claude
 
 ### Implemented
 - ✅ BaseCLITool: Abstract base class
-- ✅ Copilot: Full GitHub Copilot CLI wrapper
+- ✅ Copilot: `gh copilot` extension wrapper
+- ✅ StandaloneCopilot: local `copilot` prompt wrapper
 - ✅ Caching integration with utils.cache
 - ✅ Error handling and logging
 

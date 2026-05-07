@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-GitHub Copilot CLI MCP Tools — standalone function wrappers.
+"""GitHub Copilot MCP tools for the ``gh copilot`` extension.
 
-Business logic delegates to ipfs_datasets_py.utils.cli_tools.Copilot.
+These wrappers target the GitHub CLI extension surface, not the standalone
+local ``copilot`` agent CLI.
 """
 
 import logging
@@ -15,14 +15,10 @@ logger = logging.getLogger(__name__)
 
 
 def copilot_cli_status(github_cli_path: Optional[str] = None) -> Dict[str, Any]:
-    """Get GitHub Copilot CLI installation status and information."""
+    """Get ``gh copilot`` extension status and installation details."""
     try:
         copilot = CopilotCLI(github_cli_path=github_cli_path)
-        return {
-            "success": True,
-            "installed": copilot.is_installed(),
-            "copilot_installed": getattr(copilot, "copilot_installed", False),
-        }
+        return {"success": True, **copilot.get_status()}
     except Exception as e:
         logger.error("Failed to get Copilot CLI status: %s", e)
         return {"success": False, "error": str(e)}
@@ -31,11 +27,10 @@ def copilot_cli_status(github_cli_path: Optional[str] = None) -> Dict[str, Any]:
 def copilot_cli_install(
     github_cli_path: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Install or update GitHub Copilot CLI extension."""
+    """Install or update the ``gh-copilot`` extension."""
     try:
         copilot = CopilotCLI(github_cli_path=github_cli_path)
-        success = copilot.install()
-        return {"success": success, "message": "Installed successfully" if success else "Installation failed"}
+        return copilot.install()
     except Exception as e:
         logger.error("Failed to install Copilot CLI: %s", e)
         return {"success": False, "error": str(e)}
@@ -45,7 +40,7 @@ def copilot_cli_explain(
     code: str,
     github_cli_path: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Get AI explanation for a code snippet using GitHub Copilot CLI."""
+    """Get AI explanation for a code snippet using ``gh copilot explain``."""
     if not code:
         return {"success": False, "error": "code parameter is required"}
     try:
@@ -61,7 +56,7 @@ def copilot_cli_suggest_command(
     description: str,
     github_cli_path: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Get shell command suggestion from a natural language description."""
+    """Get shell command suggestion from ``gh copilot suggest``."""
     if not description:
         return {"success": False, "error": "description parameter is required"}
     try:
@@ -77,7 +72,7 @@ def copilot_cli_suggest_git(
     description: str,
     github_cli_path: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Get Git command suggestion from a natural language description."""
+    """Get Git command suggestion using the ``gh copilot`` extension."""
     if not description:
         return {"success": False, "error": "description parameter is required"}
     try:

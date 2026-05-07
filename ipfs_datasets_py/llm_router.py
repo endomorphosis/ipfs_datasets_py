@@ -88,6 +88,8 @@ import base64
 import mimetypes
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
+from .utils.cli_tools.copilot import build_standalone_copilot_command_template, find_standalone_copilot_cli
+
 from .router_deps import RouterDeps, get_default_router_deps
 from .optimizers.common.backend_selection import canonicalize_provider
 
@@ -2735,7 +2737,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
 
 
 def _get_copilot_cli_provider() -> Optional[LLMProvider]:
-    default_command = "npx --yes @github/copilot -p {prompt}"
+    default_command = build_standalone_copilot_command_template()
     command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", default_command)
     if not _cli_available(command):
         return None
@@ -2779,7 +2781,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     )
                 )
 
-            if shutil.which("copilot") is None:
+            if find_standalone_copilot_cli() is None:
                 raise RuntimeError(
                     "copilot CLI binary not found on PATH (required for session/tracing flags). "
                     "Install the GitHub Copilot CLI, or unset session args to use the command-template mode."
@@ -2803,10 +2805,12 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     )
 
             cmd: list[str] = [
-                "copilot",
-                "-s",
+                find_standalone_copilot_cli() or "copilot",
+                "--silent",
                 "--stream",
                 "off",
+                "--allow-all-tools",
+                "--no-ask-user",
                 "--model",
                 model,
                 "-p",
@@ -2944,7 +2948,21 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                     if text:
                         prompt_sections.append(text)
 
-            cmd: list[str] = ["npx", "--yes", "@github/copilot", "--model", model, "-p"]
+            copilot_cli = find_standalone_copilot_cli()
+            if copilot_cli is None:
+                raise LLMRouterError("Copilot CLI not found on PATH")
+
+            cmd: list[str] = [
+                copilot_cli,
+                "--silent",
+                "--stream",
+                "off",
+                "--allow-all-tools",
+                "--no-ask-user",
+                "--model",
+                model,
+                "-p",
+            ]
             for image_path in image_paths or ():
                 candidate = str(image_path or "").strip()
                 if candidate:

@@ -1,115 +1,102 @@
-# GitHub Copilot Agent Setup for CI/CD
+# GitHub Copilot Automation Setup
 
 ## Overview
 
-GitHub Copilot coding agents can be invoked in two ways:
+This repository has historically mixed together three separate Copilot automation surfaces:
 
-### Method 1: @copilot Mentions (ACTIVE - No Setup Required)
-- ✅ **Currently working**
-- Job #2 in workflow posts @copilot mentions in PR comments
-- `copilot-swe-agent` bot detects mentions and creates child PRs
-- No additional setup needed
-- **Verified working:** PR #344 → @copilot mention → Agent created PR #379
+1. local `gh copilot` extension commands
+2. local standalone `copilot` CLI prompt mode
+3. GitHub-hosted `@copilot` comment or PR workflows
 
-### Method 2: gh agent-task CLI (OPTIONAL - Requires PAT)
-- ⚠️ **Requires setup**
-- Uses `gh agent-task create` command programmatically
-- Requires Personal Access Token (PAT) authentication
-- See setup instructions below
+This guide only describes how to reason about those surfaces safely. It does not treat `gh agent-task` as a canonical or verified repo workflow.
 
-## Setting Up gh agent-task (Optional)
+## Recommended Split
 
-If you want to use the `gh agent-task` CLI approach in addition to @copilot mentions:
+### Local helper commands
 
-### Step 1: Create a Personal Access Token (Classic)
+Use `gh copilot` when you want shell suggestions or explanations.
 
-1. Go to https://github.com/settings/tokens
-2. Click "Generate new token" → "Generate new token (classic)"
-3. Give it a descriptive name: `Copilot Agent CI/CD`
-4. Select these scopes:
-   - ✅ `repo` (Full control of private repositories)
-   - ✅ `read:org` (Read org and team membership)
-   - ✅ `workflow` (Update GitHub Action workflows)
-5. Click "Generate token"
-6. **Copy the token immediately** (you won't see it again!)
-
-### Step 2: Add Token as Repository Secret
-
-1. Go to repository settings: https://github.com/endomorphosis/ipfs_datasets_py/settings/secrets/actions
-2. Click "New repository secret"
-3. Name: `GH_COPILOT_PAT`
-4. Value: Paste your PAT from Step 1
-5. Click "Add secret"
-
-### Step 3: Enable the CLI Job in Workflow
-
-1. Edit `.github/workflows/pr-copilot-monitor.yml`
-2. Find the commented `invoke-agents-with-cli` job (around line 305)
-3. Uncomment the entire job (remove the `#` from each line)
-4. Commit and push the changes
-
-### Step 4: Verify It Works
-
-1. Trigger the workflow: `gh workflow run pr-copilot-monitor.yml`
-2. Watch the run: `gh run watch`
-3. Check that "Invoke Agents with gh agent-task" job succeeds
-4. Verify agent tasks are created: `gh agent-task list`
-
-## How It Works
-
-When enabled, the workflow will:
+Examples:
 
 ```bash
-# Authenticate with your PAT
-echo "$GH_COPILOT_PAT" | gh auth login --with-token
-
-# For each incomplete PR:
-gh agent-task create \
-  "Fix issues in PR #123: Fix workflow. Tasks: 1) Review PR 2) Analyze root cause 3) Implement fix" \
-  --base "autofix/workflow-name/branch"
+gh copilot suggest "find the biggest test files"
+gh copilot explain "git cherry-pick --no-commit <sha>"
 ```
 
-The agent then:
-1. Creates a new PR based on the specified branch
-2. Implements the requested changes
-3. Commits to the PR
-4. Requests review when complete
+The package wrapper for this path is `ipfs_datasets_py.utils.copilot_cli.CopilotCLI`.
 
-## Comparison
+### Local autonomous prompt mode
 
-| Feature | @copilot Mentions | gh agent-task CLI |
-|---------|------------------|-------------------|
-| Setup Required | None | PAT + Secret |
-| Currently Active | ✅ Yes | ⚠️ Optional |
-| Authentication | Automatic | Manual PAT |
-| Works in CI/CD | ✅ Yes | ✅ Yes (with PAT) |
-| Agent Response | Child PR | New PR |
-| Tested & Verified | ✅ PR #344→#379 | 🔄 Needs testing |
+Use standalone `copilot` when you want local agentic execution in the working tree.
+
+Example:
+
+```bash
+copilot --silent --stream off --allow-all-tools --no-ask-user -p "Inspect this repo and summarize failing tests"
+```
+
+The package wrapper for this path is `ipfs_datasets_py.utils.cli_tools.StandaloneCopilot`.
+
+### GitHub-hosted PR or comment workflows
+
+Treat `@copilot` mentions and related GitHub product features as separate hosted workflows. They should be documented as GitHub automation behavior, not as CLI behavior.
+
+## What To Configure
+
+### For local standalone `copilot`
+
+Verify the binary:
+
+```bash
+copilot --help
+copilot --version
+```
+
+If it is not on `PATH`, set:
+
+```bash
+export COPILOT_CLI_PATH=/absolute/path/to/copilot
+```
+
+### For local `gh copilot`
+
+Verify the extension:
+
+```bash
+gh copilot --help
+ipfs-datasets copilot status
+```
+
+Install it if needed:
+
+```bash
+ipfs-datasets copilot install
+```
+
+## CI/CD Guidance
+
+If CI/CD needs local Copilot CLI behavior, prefer explicit installation and explicit command invocation of the standalone `copilot` binary. Do not assume legacy docs mentioning `gh agent-task` still describe a maintained path in this repo.
+
+If CI/CD needs GitHub-hosted Copilot behavior, document that separately as a GitHub workflow integration and validate it against the current product docs before relying on it.
 
 ## Recommendation
 
-**Start with @copilot mentions** (already working). Only enable `gh agent-task` if you need:
-- More programmatic control over agent tasks
-- Specific branch-based agent workflows
-- Multiple agent task creation patterns
+Use this decision rule:
+
+1. Need suggestions or explanations: use `gh copilot`.
+2. Need local autonomous execution: use standalone `copilot`.
+3. Need GitHub-hosted PR/comment behavior: document and validate that workflow separately.
 
 ## Troubleshooting
 
-### "GH_COPILOT_PAT secret not set"
-- You haven't created the secret yet
-- The job will skip gracefully - this is expected
+### `gh copilot` works but router Copilot calls fail
 
-### "this command requires an OAuth token"
-- Your PAT doesn't have the right scopes
-- Re-create the PAT with: repo, read:org, workflow
+The router uses standalone `copilot`, not the GitHub CLI extension.
 
-### "@copilot mentions not working"
-- Mentions ARE working - check for child PRs
-- Agent responses can take 1-2 minutes
-- Check PR #344 for working example
+### standalone `copilot` works but `ipfs-datasets copilot` fails
 
-## Links
+The `ipfs-datasets copilot` wrapper targets `gh copilot`, so install the GitHub CLI extension.
 
-- [GitHub Copilot in GitHub Support](https://github.blog/news-insights/product-news/github-copilot-in-github-support/)
-- [Workflow File](.github/workflows/pr-copilot-monitor.yml)
-- [Example Working Agent Response](https://github.com/endomorphosis/ipfs_datasets_py/pull/344#issuecomment-3479055520)
+### Historical docs mention `gh agent-task`
+
+Treat that as legacy documentation until it is re-verified against the current GitHub tooling surface.

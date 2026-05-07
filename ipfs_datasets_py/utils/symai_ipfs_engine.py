@@ -39,6 +39,8 @@ try:
 except Exception:
     GeminiCLI = None
 
+from ipfs_datasets_py.utils.cli_tools.copilot import build_standalone_copilot_command_template
+
 try:
     from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
 except Exception:
@@ -413,7 +415,7 @@ def _gemini_cli_generate(prompt: str) -> str:
 def _copilot_cli_generate(prompt: str) -> str:
     command = os.environ.get(
         "IPFS_DATASETS_PY_COPILOT_CLI_CMD",
-        "npx --yes @github/copilot -p",
+        build_standalone_copilot_command_template(),
     )
     return _run_cli_command(command, prompt)
 

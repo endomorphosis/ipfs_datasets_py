@@ -2,261 +2,150 @@
 
 ## Overview
 
-This repository now uses the **NEW GitHub Copilot CLI** - a powerful autonomous AI agent that can:
-- ✅ Create pull requests
-- ✅ Work on issues and implement fixes
-- ✅ Analyze code and suggest improvements
-- ✅ Interact with GitHub API directly
-- ✅ Make code changes autonomously
+This repository uses two different Copilot command-line surfaces, and they are not interchangeable:
 
-This is **different** from the `gh copilot` extension (which only provides suggest/explain commands).
+1. `gh copilot`
+Used for shell and explanation helpers such as `gh copilot suggest` and `gh copilot explain`.
 
-## Installation
+2. `copilot`
+Used for local non-interactive prompt mode and agentic task execution.
 
-### Requirements
-- Node.js 22+ and npm 10+
-- GitHub Copilot subscription
-- GitHub CLI authenticated
+3. GitHub-hosted `@copilot` or PR/issue workflows
+These are separate GitHub product flows, not the local CLI wrapper used by this package.
 
-### Install Copilot CLI
+The codebase now follows that split explicitly:
+
+- `ipfs-datasets copilot ...` wraps the `gh copilot` extension.
+- `llm_router` and related fallback paths use the standalone `copilot` binary.
+- Docs should not describe `gh copilot` as an autonomous file-editing agent.
+
+## What The Repo Uses
+
+### `gh copilot` extension
+
+This is the surface wrapped by `ipfs_datasets_py.utils.copilot_cli.CopilotCLI`.
+
+Supported operations in this repo:
+
+- status and installation checks
+- command suggestions
+- code explanations
+- MCP development-tool wrappers around those same operations
+
+Typical commands:
 
 ```bash
-# Install globally
-sudo npm install -g @github/copilot
+gh copilot suggest "find the largest files in this repo"
+gh copilot explain "git rebase --rebase-merges origin/main"
+```
 
-# Verify installation
+### standalone `copilot`
+
+This is the surface used by `llm_router`, SyMAI fallback generation, and implementation-daemon fallback command construction.
+
+The default non-interactive template is now:
+
+```bash
+copilot --silent --stream off --allow-all-tools --no-ask-user --model <model> -p "<prompt>"
+```
+
+That matches the installed CLI help more closely than the old `npx --yes @github/copilot` assumption.
+
+## Installation And Verification
+
+### Verify `gh copilot`
+
+```bash
+gh copilot --help
+ipfs-datasets copilot status
+```
+
+If the extension is missing:
+
+```bash
+ipfs-datasets copilot install
+```
+
+### Verify standalone `copilot`
+
+```bash
+copilot --help
 copilot --version
-# Expected: 0.0.353 or newer
 ```
 
-**Documentation:** https://docs.github.com/en/copilot/concepts/agents/about-copilot-cli
-
-## Usage
-
-### Interactive Mode
-
-Start an interactive session:
+If the binary is installed somewhere custom, set:
 
 ```bash
-copilot
+export COPILOT_CLI_PATH=/absolute/path/to/copilot
 ```
 
-This opens a chat interface where you can ask Copilot to perform tasks.
+## Environment Variables
 
-### Programmatic Mode
+The repo recognizes these Copilot-related settings:
 
-Use the `-p` flag for one-off commands:
+- `COPILOT_CLI_PATH`: explicit standalone `copilot` binary path
+- `IPFS_DATASETS_PY_COPILOT_CLI_CMD`: override the standalone command template used by router-style generation
+- `IPFS_DATASETS_PY_COPILOT_CLI_MODEL`: preferred standalone Copilot model for router calls
+
+If `IPFS_DATASETS_PY_COPILOT_CLI_CMD` is unset, the repo now defaults to the local `copilot` binary instead of `npx`.
+
+## Repo Conventions
+
+### Use `ipfs-datasets copilot` for helper flows
+
+These commands talk to `gh copilot` and are intended for command suggestions or explanations:
 
 ```bash
-# List PRs
-copilot -p "List open PRs in this repository" --allow-all-tools
-
-# Work on a specific PR
-copilot -p "Work on PR #246 and implement the fix for the permission error" --allow-all-tools
-
-# Create a new PR
-copilot -p "Create a PR that fixes the linting errors in test_automation.py" --allow-all-tools
+ipfs-datasets copilot status
+ipfs-datasets copilot suggest "list files modified today"
+ipfs-datasets copilot git "undo the last commit but keep the changes"
+ipfs-datasets copilot explain "pytest -k wallet_release --maxfail=1"
 ```
 
-### Tool Permissions
+### Use standalone `copilot` for autonomous local work
 
-Copilot CLI can use various tools to accomplish tasks:
+For local agentic work, call the standalone binary directly:
 
 ```bash
-# Allow all tools (best for automation)
---allow-all-tools
-
-# Allow specific tools only
---allow-tool 'shell(git)'
---allow-tool 'shell(gh)'
-
-# Interactive approval for each tool
-# (default, no flag needed)
+copilot --silent --stream off --allow-all-tools --no-ask-user -p "Summarize the failing tests in this repository"
 ```
 
-## Integration with PR Automation
+Add `--allow-all-paths` only when the task genuinely needs filesystem access outside the current working tree.
 
-### Option 1: Python Script Wrapper
+## Guidance For Automation
 
-Use the new `copilot_cli_pr_worker.py` script:
+### Local automation
 
-```bash
-# List PRs needing work
-python scripts/copilot_cli_pr_worker.py --list
+Use the standalone `copilot` binary for local scripted prompting and repo-aware agentic work.
 
-# Work on a specific PR
-python scripts/copilot_cli_pr_worker.py --pr 246
+### In-process Python integrations
 
-# Work on all PRs (max 5)
-python scripts/copilot_cli_pr_worker.py --all --limit 5
+Use the package wrappers instead of shelling out ad hoc:
 
-# Dry run
-python scripts/copilot_cli_pr_worker.py --all --dry-run
-```
+- `ipfs_datasets_py.utils.copilot_cli.CopilotCLI` for `gh copilot`
+- `ipfs_datasets_py.utils.cli_tools.StandaloneCopilot` for standalone `copilot`
 
-### Option 2: Direct CLI Usage
+### GitHub-hosted workflows
 
-Work directly with the Copilot CLI:
+Do not assume that `@copilot` comments, draft-PR workflows, or other GitHub-hosted automation are equivalent to local CLI execution. Those flows should be documented separately as GitHub product workflows, not as CLI behavior.
 
-```bash
-# Analyze a specific PR
-copilot -p "Analyze PR #246 and tell me what needs to be fixed" --allow-all-tools
+## Known Non-Goals
 
-# Implement a fix
-copilot -p "Checkout PR #246, implement the permission error fix, and push the changes" --allow-all-tools
-
-# Batch process multiple PRs
-copilot -p "Work on PRs #246, #244, and #242 - each has a permission or syntax error that needs to be fixed" --allow-all-tools
-```
-
-## Current Status
-
-### PRs Found by Copilot CLI
-
-**Total:** 31 open draft PRs with @copilot mentions
-
-**All waiting for implementation** - only AUTOFIX_README.md has been updated
-
-**Breakdown:**
-- 16 PRs with permission errors (80% confidence)
-- 13 PRs with unknown errors (30% confidence)
-- 1 PR with syntax error (85% confidence)
-- 1 PR with other issues
-
-**Recent PRs:**
-- PR #246: MCP Endpoints Integration Tests (Permission Error)
-- PR #244: MCP Dashboard Automated Tests (Permission Error)
-- PR #242: Self-Hosted Runner Validation (Syntax Error - IndentationError)
-
-## Comparison: @copilot Comments vs Copilot CLI
-
-### @copilot Comment Method
-
-**How it works:**
-1. Auto-healing workflow creates PR
-2. Adds @copilot mention in PR description
-3. GitHub Copilot sees the mention
-4. Copilot responds in comments with suggestions
-5. **Human must implement** the suggestions
-
-**Pros:**
-- ✅ Integrated with GitHub UI
-- ✅ Suggestions visible to all reviewers
-- ✅ No additional tools needed
-
-**Cons:**
-- ❌ Requires manual implementation
-- ❌ Slower feedback loop
-- ❌ Limited to suggestions only
-
-### Copilot CLI Method
-
-**How it works:**
-1. Run `copilot -p "Work on PR #246"` 
-2. Copilot CLI:
-   - Checks out the branch
-   - Analyzes the issue
-   - Implements the fix
-   - Commits and pushes
-3. **Autonomous implementation**
-
-**Pros:**
-- ✅ Fully autonomous
-- ✅ Direct code implementation
-- ✅ Faster resolution
-- ✅ Can batch process multiple PRs
-
-**Cons:**
-- ❌ Requires npm installation
-- ❌ Uses Premium request quota
-- ❌ Need to allow tool permissions
-
-## Recommended Workflow
-
-### For Single PRs
-
-```bash
-# 1. Check what needs work
-copilot -p "What needs to be fixed in PR #246?" --allow-all-tools
-
-# 2. Have Copilot implement it
-copilot -p "Work on PR #246, implement the fix, test it, and push" --allow-all-tools
-
-# 3. Verify the changes
-gh pr view 246 --comments
-gh pr diff 246
-```
-
-### For Batch Processing
-
-```bash
-# Use the Python wrapper
-python scripts/copilot_cli_pr_worker.py --all --limit 10
-
-# Or direct CLI
-copilot -p "Work on the first 10 draft PRs with @copilot mentions in endomorphosis/ipfs_datasets_py" --allow-all-tools
-```
-
-### For GitHub Actions Integration
-
-Add to workflow:
-
-```yaml
-- name: Setup Node.js
-  uses: actions/setup-node@v4
-  with:
-    node-version: '22'
-
-- name: Install Copilot CLI
-  run: npm install -g @github/copilot
-
-- name: Work on PRs with Copilot
-  run: |
-    copilot -p "Work on all open draft PRs with permission errors" --allow-all-tools
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
-
-## Model Information
-
-### Current Model
-- **Model:** Claude Sonnet 4.5
-- **Context:** ~60k input tokens per request
-- **Output:** ~700-2k tokens
-- **Duration:** 20-80 seconds per request
-
-### Request Types
-- **Premium Requests:** Used for code implementation
-- **Quota:** Check with `gh copilot status`
-
-## Security Considerations
-
-### Tool Permissions
-
-Copilot CLI can execute:
-- Shell commands (`git`, `gh`, etc.)
-- File operations
-- Network requests
-- GitHub API calls
-
-**Best Practices:**
-1. Use `--allow-all-tools` only in trusted environments
-2. Review what Copilot does in interactive mode first
-3. Use dry-run mode for testing workflows
-4. Monitor Premium request usage
-
-### Data Privacy
-
-Copilot CLI sends to GitHub:
-- Your prompts
-- Repository context (file contents, PR info)
-- Tool execution results
-
-**Not sent:**
-- Credentials (uses GitHub CLI authentication)
-- Secrets from environment variables
+This guide does not treat `gh agent-task` as a canonical or verified repo workflow. Historical docs in the repository mention it, but the maintained local integration points are `gh copilot` and standalone `copilot`.
 
 ## Troubleshooting
+
+### `ipfs-datasets copilot status` shows GitHub CLI but not Copilot
+
+The base `gh` binary exists, but the `gh-copilot` extension is missing. Install it with `ipfs-datasets copilot install`.
+
+### Router Copilot calls fail even though `gh copilot` works
+
+Those are different binaries. `llm_router` uses standalone `copilot`, not `gh copilot`.
+
+### Standalone Copilot is installed in a custom location
+
+Set `COPILOT_CLI_PATH` or override `IPFS_DATASETS_PY_COPILOT_CLI_CMD`.
 
 ### Installation Issues
 

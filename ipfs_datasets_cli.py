@@ -1814,10 +1814,11 @@ def execute_heavy_command(args):
                     if json_output:
                         print(json.dumps(status, indent=2))
                     else:
-                        print("GitHub Copilot CLI Status:")
+                        print("GitHub Copilot Extension Status:")
                         print(f"  Installed: {status['installed']}")
                         print(f"  GitHub CLI Available: {status['github_cli_available']}")
                         print(f"  GitHub CLI Path: {status['github_cli_path'] or 'Not found'}")
+                        print(f"  Copilot Extension Installed: {status.get('copilot_extension_installed', False)}")
                         if status.get('version_info'):
                             print(f"  Version: {status['version_info']}")
                     return
@@ -1840,7 +1841,7 @@ def execute_heavy_command(args):
                             i += 1
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
-                    print("Installing GitHub Copilot CLI extension...")
+                    print("Installing GitHub Copilot gh extension...")
                     result = copilot.install(force=force)
                     
                     if json_output:
@@ -1888,7 +1889,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.explain_code(code, language=language)
@@ -1930,7 +1931,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.suggest_command(description, shell=shell)
@@ -1968,7 +1969,7 @@ def execute_heavy_command(args):
                     
                     copilot = CopilotCLI(github_cli_path=github_cli_path)
                     if not copilot.installed:
-                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        print("GitHub Copilot gh extension is not installed. Run 'ipfs-datasets copilot install' first.")
                         return
                     
                     result = copilot.suggest_git_command(description)
