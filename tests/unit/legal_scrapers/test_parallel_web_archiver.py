@@ -120,6 +120,36 @@ def test_huggingface_api_search_honors_max_results(monkeypatch: pytest.MonkeyPat
     assert results[0]["url"] == "https://example.com/1"
 
 
+def test_huggingface_api_search_can_disable_streaming_with_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(hf_search_module, "HAVE_DATASETS", True)
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_API_SEARCH_DISABLE_STREAMING", "1")
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=True)
+
+    assert searcher.use_streaming is False
+
+
+def test_huggingface_api_search_caps_streaming_scan_rows(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(hf_search_module, "HAVE_DATASETS", True)
+    monkeypatch.setenv("IPFS_DATASETS_PY_HF_API_SEARCH_MAX_SCAN_ROWS", "2")
+    monkeypatch.setattr(
+        hf_search_module,
+        "load_dataset",
+        lambda *args, **kwargs: iter(
+            [
+                {"url": "https://example.com/1", "text": "not it"},
+                {"url": "https://example.com/2", "text": "still not it"},
+                {"url": "https://example.com/3", "text": "needle"},
+            ]
+        ),
+        raising=False,
+    )
+
+    searcher = hf_search_module.HuggingFaceAPISearch(use_streaming=True, max_results=10)
+
+    assert searcher.search("needle") == []
+
+
 def test_huggingface_api_search_defaults_to_state_jurisdiction(monkeypatch: pytest.MonkeyPatch) -> None:
     observed: dict[str, object] = {}
 

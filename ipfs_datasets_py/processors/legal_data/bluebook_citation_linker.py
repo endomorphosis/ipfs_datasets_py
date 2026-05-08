@@ -1979,6 +1979,28 @@ def resolve_bluebook_lookup_result_document(
                 publish_to_hf=publish_recovery_to_hf,
                 hf_token=hf_token,
             )
+    non_exact_matched_citations = []
+    for item in link_payloads:
+        if not bool(item.get("matched")):
+            continue
+        metadata = dict(item.get("metadata") or {})
+        resolution_quality = str(metadata.get("resolution_quality") or "")
+        guarantee_level = str((metadata.get("source_provenance") or {}).get("guarantee_level") or "")
+        if resolution_quality == "exact_anchor" and guarantee_level == "exact_anchor":
+            continue
+        non_exact_matched_citations.append(
+            {
+                "citation_text": str(item.get("citation_text") or ""),
+                "citation_type": str(item.get("citation_type") or ""),
+                "corpus_key": str(item.get("corpus_key") or ""),
+                "resolution_method": str(metadata.get("resolution_method") or ""),
+                "resolution_quality": resolution_quality,
+                "guarantee_level": guarantee_level,
+                "source_url": str(item.get("source_url") or ""),
+                "source_cid": str(item.get("source_cid") or ""),
+            }
+        )
+    exact_anchor_match_count = max(0, matched_count - len(non_exact_matched_citations))
     return {
         "source": "bluebook_lookup_result_document",
         "input_text": text,
@@ -1989,8 +2011,12 @@ def resolve_bluebook_lookup_result_document(
         "matched_citation_count": matched_count,
         "unmatched_citation_count": len(link_payloads) - matched_count,
         "citation_resolution_ratio": (matched_count / len(link_payloads)) if link_payloads else 1.0,
+        "exact_anchor_match_count": exact_anchor_match_count,
+        "non_exact_match_count": len(non_exact_matched_citations),
+        "exact_anchor_match_ratio": (exact_anchor_match_count / matched_count) if matched_count else 1.0,
         "citations": link_payloads,
         "unresolved_citations": unresolved,
+        "non_exact_matched_citations": non_exact_matched_citations,
         "citation_suggestions": suggestions,
         "recovery_results": recovery_results,
     }

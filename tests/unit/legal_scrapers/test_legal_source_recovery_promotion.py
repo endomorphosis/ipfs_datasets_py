@@ -356,16 +356,15 @@ def test_hf_token_resolver_uses_secret_keyring(monkeypatch):
         def get(self, name):
             return ""
 
-    keyring_values = {
-        ("huggingface_hub", "default"): "keyring-write-token",
-    }
-    fake_keyring = types.SimpleNamespace(
-        get_password=lambda service, account: keyring_values.get((service, account), "")
-    )
+    fake_huggingface_hub = types.SimpleNamespace(get_token=lambda: "")
     fake_vault_module = types.SimpleNamespace(get_secrets_vault=lambda: _EmptyVault())
 
-    monkeypatch.setitem(sys.modules, "keyring", fake_keyring)
+    monkeypatch.setitem(sys.modules, "huggingface_hub", fake_huggingface_hub)
     monkeypatch.setitem(sys.modules, "ipfs_datasets_py.mcp_server.secrets_vault", fake_vault_module)
+    monkeypatch.setattr(
+        "ipfs_datasets_py.processors.legal_scrapers.legal_source_recovery_promotion._resolve_hf_token_from_keyring",
+        lambda **kwargs: "keyring-write-token",
+    )
 
     assert _resolve_hf_token() == "keyring-write-token"
 

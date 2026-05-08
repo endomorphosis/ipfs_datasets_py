@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.util
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional
@@ -92,6 +94,60 @@ def _parse_csv(value: Optional[str]) -> Optional[List[str]]:
         return None
     items = [item.strip() for item in raw.split(",") if item.strip()]
     return items or None
+
+
+def _run_state_laws_full_corpus_guard_audit(*, states: List[str]) -> Dict[str, Any]:
+    """Run the static full-corpus scraper guard audit for selected state-law scrapers."""
+    script_path = Path(__file__).with_name("audit_state_scraper_full_corpus_guards.py")
+    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
+    if spec is None or spec.loader is None:
+        return {
+            "status": "fail",
+            "states_checked": 0,
+            "missing_states": list(states),
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [{"severity": "error", "detail": f"Unable to load audit script: {script_path}"}],
+        }
+
+    try:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+
+        state_modules = dict(getattr(module, "STATE_MODULES", {}) or {})
+        repo_root = Path(__file__).resolve().parents[3]
+        scraper_dir = repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+        findings: List[Any] = []
+        missing_states: List[str] = []
+
+        for state_code in states:
+            normalized = str(state_code or "").upper()
+            module_name = state_modules.get(normalized)
+            if not module_name:
+                missing_states.append(normalized)
+                continue
+            findings.extend(module.audit_file(state=normalized, path=scraper_dir / f"{module_name}.py", repo_root=repo_root))
+
+        errors = [item for item in findings if getattr(item, "severity", "") == "error"]
+        warnings = [item for item in findings if getattr(item, "severity", "") == "warning"]
+        return {
+            "status": "pass" if not missing_states and not errors and not warnings else "fail",
+            "states_checked": len(states) - len(missing_states),
+            "missing_states": missing_states,
+            "error_count": len(errors),
+            "warning_count": len(warnings),
+            "findings": [item.__dict__ for item in findings],
+        }
+    except Exception as exc:
+        return {
+            "status": "fail",
+            "states_checked": 0,
+            "missing_states": list(states),
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [{"severity": "error", "detail": str(exc)}],
+        }
 
 
 def _state_code_to_scraper_file(state_code: str) -> Optional[str]:
@@ -215,6 +271,13 @@ async def _run_corpus(
     stop_after_recovered_rows: bool,
     search_engines: Optional[List[str]],
     tactic: Optional[str],
+    admin_agentic_max_candidates_per_state: int,
+    admin_agentic_max_fetch_per_state: int,
+    admin_agentic_max_results_per_domain: int,
+    admin_agentic_max_hops: int,
+    admin_agentic_max_pages: int,
+    admin_agentic_fetch_concurrency: Optional[int],
+    full_corpus_mode: bool,
     skip_passed: bool,
 ) -> Dict[str, Any]:
     corpus_output_dir = output_root / corpus
@@ -229,6 +292,10 @@ async def _run_corpus(
             "summary": existing_summary,
             "output_dir": str(corpus_output_dir),
         }
+
+    if full_corpus_mode:
+        os.environ.setdefault("LEGAL_ADMIN_RULES_FULL_CORPUS_MODE", "1")
+        os.environ.setdefault("LEGAL_ADMIN_RULES_FULL_CORPUS_UNBOUNDED", "1")
 
     config = StateLawsAgenticDaemonConfig(
         corpus_key=CORPUS_RUNNERS[corpus],
@@ -250,11 +317,12 @@ async def _run_corpus(
         forced_tactic_name=tactic,
         target_score=target_score,
         stop_on_target_score=stop_on_target_score,
-        admin_agentic_max_candidates_per_state=1000,
-        admin_agentic_max_fetch_per_state=1000,
-        admin_agentic_max_results_per_domain=1000,
-        admin_agentic_max_hops=4,
-        admin_agentic_max_pages=1000,
+        admin_agentic_max_candidates_per_state=admin_agentic_max_candidates_per_state,
+        admin_agentic_max_fetch_per_state=admin_agentic_max_fetch_per_state,
+        admin_agentic_max_results_per_domain=admin_agentic_max_results_per_domain,
+        admin_agentic_max_hops=admin_agentic_max_hops,
+        admin_agentic_max_pages=admin_agentic_max_pages,
+        admin_agentic_fetch_concurrency=admin_agentic_fetch_concurrency,
         admin_parallel_assist_enabled=True,
         admin_parallel_assist_state_limit=6,
         admin_parallel_assist_max_urls_per_domain=20,
@@ -301,6 +369,15 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stop-after-recovered-rows", action="store_true", help="Finalize each daemon cycle immediately after recovered row artifacts are written.")
     parser.add_argument("--search-engines", default=None, help="Optional comma-separated search engine override for daemon tactics, e.g. duckduckgo.")
     parser.add_argument("--tactic", default=None, help="Force one tactic profile for each corpus daemon, e.g. document_first.")
+    parser.add_argument("--full-corpus-mode", action="store_true", help="Enable full admin-rules corpus crawling; 0-valued admin caps become effectively unbounded.")
+    parser.add_argument("--preflight-only", action="store_true", help="Write the aggregated preflight summary and exit before starting corpus daemon cycles.")
+    parser.add_argument("--skip-full-corpus-guard-audit", action="store_true", help="Skip the state-law full-corpus static safety audit before unbounded full-corpus runs.")
+    parser.add_argument("--admin-agentic-max-candidates-per-state", type=int, default=0, help="Admin-rule agentic candidate cap per state. 0 means effectively unbounded in full-corpus mode.")
+    parser.add_argument("--admin-agentic-max-fetch-per-state", type=int, default=0, help="Admin-rule agentic fetch/row cap per state. 0 means effectively unbounded in full-corpus mode.")
+    parser.add_argument("--admin-agentic-max-results-per-domain", type=int, default=0, help="Admin-rule search-result cap per domain. 0 means effectively unbounded in full-corpus mode.")
+    parser.add_argument("--admin-agentic-max-hops", type=int, default=0, help="Admin-rule discovery hop cap. 0 means effectively unbounded in full-corpus mode.")
+    parser.add_argument("--admin-agentic-max-pages", type=int, default=0, help="Admin-rule discovery page cap. 0 means effectively unbounded in full-corpus mode.")
+    parser.add_argument("--admin-agentic-fetch-concurrency", type=int, default=6, help="Admin-rule agentic fetch concurrency.")
     parser.add_argument("--skip-passed", action="store_true", help="Skip corpora whose existing latest summary already passed.")
     parser.add_argument("--cache-to-ipfs", action=argparse.BooleanOptionalAction, default=True, help="Mirror the shared fetch cache to IPFS.")
     parser.add_argument("--pin-ipfs-pages", action=argparse.BooleanOptionalAction, default=False, help="Pin per-page IPFS cache entries.")
@@ -338,6 +415,38 @@ async def _main_async(args: argparse.Namespace) -> int:
     aggregated_path = output_root / "aggregated_summary.json"
     aggregated_path.write_text(json.dumps(aggregated, indent=2), encoding="utf-8")
 
+    if (
+        bool(args.full_corpus_mode)
+        and "state_laws" in corpora
+        and not bool(getattr(args, "skip_full_corpus_guard_audit", False))
+    ):
+        guard_audit = _run_state_laws_full_corpus_guard_audit(states=states)
+        aggregated["state_laws_full_corpus_guard_audit"] = guard_audit
+        if str(guard_audit.get("status") or "").lower() != "pass":
+            aggregated.update(
+                {
+                    "status": "failed_preflight",
+                    "finished_at": _utc_now(),
+                    "reason": "state_laws_full_corpus_guard_audit_failed",
+                }
+            )
+            aggregated_path.write_text(json.dumps(aggregated, indent=2), encoding="utf-8")
+            print(json.dumps(aggregated, indent=2))
+            return 2
+        aggregated_path.write_text(json.dumps(aggregated, indent=2), encoding="utf-8")
+
+    if bool(getattr(args, "preflight_only", False)):
+        aggregated.update(
+            {
+                "status": "preflight_passed",
+                "finished_at": _utc_now(),
+                "preflight_only": True,
+            }
+        )
+        aggregated_path.write_text(json.dumps(aggregated, indent=2), encoding="utf-8")
+        print(json.dumps(aggregated, indent=2))
+        return 0
+
     for corpus in corpora:
         result = await _run_corpus(
             corpus=corpus,
@@ -356,6 +465,13 @@ async def _main_async(args: argparse.Namespace) -> int:
             stop_after_recovered_rows=bool(args.stop_after_recovered_rows),
             search_engines=_parse_csv(args.search_engines),
             tactic=args.tactic,
+            admin_agentic_max_candidates_per_state=int(args.admin_agentic_max_candidates_per_state),
+            admin_agentic_max_fetch_per_state=int(args.admin_agentic_max_fetch_per_state),
+            admin_agentic_max_results_per_domain=int(args.admin_agentic_max_results_per_domain),
+            admin_agentic_max_hops=int(args.admin_agentic_max_hops),
+            admin_agentic_max_pages=int(args.admin_agentic_max_pages),
+            admin_agentic_fetch_concurrency=max(1, int(args.admin_agentic_fetch_concurrency or 1)),
+            full_corpus_mode=bool(args.full_corpus_mode),
             skip_passed=bool(args.skip_passed),
         )
         aggregated["runs"][corpus] = result

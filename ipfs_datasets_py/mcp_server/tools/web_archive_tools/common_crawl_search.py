@@ -4,6 +4,9 @@ This tool provides access to Common Crawl datasets for large-scale web content a
 using the CDX (Canonical Document Index) format.
 """
 import logging
+import asyncio
+import multiprocessing as mp
+import os
 from typing import Dict, List, Optional, Any, Literal
 from datetime import datetime
 
@@ -66,23 +69,73 @@ async def search_common_crawl(
         if to_timestamp:
             kwargs['to_ts'] = to_timestamp
 
-        # Perform search
+        def _run_cdx_search(queue: Any) -> None:
+            records: List[Dict[str, Any]] = []
+            try:
+                for record in cdx.iter(**kwargs):
+                    if output_format == 'json':
+                        records.append({
+                            'url': record.data.get('url', ''),
+                            'timestamp': record.data.get('timestamp', ''),
+                            'status_code': record.data.get('status', ''),
+                            'mime_type': record.data.get('mime', ''),
+                            'digest': record.data.get('digest', ''),
+                            'length': record.data.get('length', ''),
+                            'warc_filename': record.data.get('filename', ''),
+                            'warc_offset': record.data.get('offset', ''),
+                        })
+                    else:  # cdx format
+                        records.append(record.data)
+                queue.put({"ok": True, "records": records})
+            except Exception as exc:
+                queue.put({"ok": False, "error": str(exc), "records": records})
+
+        # Perform search in a killable worker. cdx_toolkit can otherwise retry
+        # a single unhealthy Common Crawl endpoint forever, which stalls
+        # full-corpus legal crawls instead of recording the shard as failed.
+        timeout_seconds = float(os.getenv("COMMON_CRAWL_CDX_SEARCH_TIMEOUT_SECONDS", "180"))
         records = []
         try:
-            for record in cdx.iter(**kwargs):
-                if output_format == 'json':
-                    records.append({
-                        'url': record.data.get('url', ''),
-                        'timestamp': record.data.get('timestamp', ''),
-                        'status_code': record.data.get('status', ''),
-                        'mime_type': record.data.get('mime', ''),
-                        'digest': record.data.get('digest', ''),
-                        'length': record.data.get('length', ''),
-                        'warc_filename': record.data.get('filename', ''),
-                        'warc_offset': record.data.get('offset', ''),
-                    })
-                else:  # cdx format
-                    records.append(record.data)
+            queue: mp.Queue = mp.Queue(maxsize=1)
+            process = mp.Process(target=_run_cdx_search, args=(queue,), daemon=True)
+            process.start()
+            await asyncio.to_thread(process.join, max(1.0, timeout_seconds))
+            if process.is_alive():
+                process.terminate()
+                await asyncio.to_thread(process.join, 5.0)
+                logger.warning(
+                    "Common Crawl search timed out for domain %s after %.1fs",
+                    domain,
+                    timeout_seconds,
+                )
+                return {
+                    "status": "error",
+                    "error": f"Common Crawl search timed out after {timeout_seconds:.1f}s",
+                    "results": records,
+                    "count": len(records),
+                }
+            payload = queue.get_nowait() if not queue.empty() else {"ok": True, "records": []}
+            records = list(payload.get("records") or [])
+            if not payload.get("ok"):
+                raise RuntimeError(str(payload.get("error") or "Common Crawl search failed"))
+        except asyncio.TimeoutError:
+            try:
+                if process.is_alive():
+                    process.terminate()
+                    process.join(5.0)
+            except Exception:
+                pass
+            logger.warning(
+                "Common Crawl search timed out for domain %s after %.1fs",
+                domain,
+                timeout_seconds,
+            )
+            return {
+                "status": "error",
+                "error": f"Common Crawl search timed out after {timeout_seconds:.1f}s",
+                "results": records,
+                "count": len(records),
+            }
         except Exception as search_error:
             logger.warning(f"Search completed with some errors: {search_error}")
 

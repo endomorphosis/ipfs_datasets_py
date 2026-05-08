@@ -412,6 +412,11 @@ class LegalScraperDaemon:
             "all_readable": None,
             "datasets": {},
         }
+        state_laws_guard_audit = (
+            self._state_laws_full_corpus_guard_audit()
+            if bool(self.config.full_corpus and self.config.state_refresh.enabled and self.config.state_refresh.scrape)
+            else {"enabled": False, "status": "skipped", "reason": "not_full_corpus_state_refresh"}
+        )
 
         invariants = {
             "all_supported_corpora_requested": set(self.config.agentic_corpora.corpora or []) >= set(SUPPORTED_CORPORA)
@@ -424,6 +429,11 @@ class LegalScraperDaemon:
             "hf_dataset_access_readable": (
                 bool(hf_dataset_access.get("all_readable"))
                 if bool(hf_dataset_access.get("enabled"))
+                else True
+            ),
+            "state_laws_full_corpus_guard_audit_passed": (
+                str(state_laws_guard_audit.get("status") or "").lower() == "pass"
+                if bool(state_laws_guard_audit.get("enabled"))
                 else True
             ),
             "publication_opt_in": not bool(self.config.state_refresh.publish_to_hf)
@@ -453,9 +463,28 @@ class LegalScraperDaemon:
             "supported_corpora": list(SUPPORTED_CORPORA),
             "hf_datasets": hf_datasets,
             "hf_dataset_access": hf_dataset_access,
+            "state_laws_full_corpus_guard_audit": state_laws_guard_audit,
             "invariants": invariants,
             "blocking_invariants": blocking_invariants,
         }
+
+    def _state_laws_full_corpus_guard_audit(self) -> Dict[str, Any]:
+        try:
+            module = _load_refresh_state_laws_module()
+            audit = module._run_full_corpus_guard_audit(states=self.states)
+            payload = dict(audit)
+            payload["enabled"] = True
+            return payload
+        except Exception as exc:
+            return {
+                "enabled": True,
+                "status": "fail",
+                "states_checked": 0,
+                "missing_states": list(self.states),
+                "error_count": 1,
+                "warning_count": 0,
+                "findings": [{"severity": "error", "detail": str(exc)}],
+            }
 
     def _probe_hf_dataset_access(self, hf_datasets: Mapping[str, str]) -> Dict[str, Any]:
         datasets: Dict[str, Any] = {}
@@ -845,6 +874,16 @@ class LegalScraperDaemon:
             merged_count = int(report.get("merged_row_count", 0) or 0)
             if not parquet_path or not Path(parquet_path).exists() or merged_count <= 0:
                 state_report_artifact_gaps.append(state)
+        combined_parquet_path = str(build.get("combined_parquet_path") or "").strip()
+        combined_row_count = int(build.get("combined_row_count", 0) or 0)
+        missing_state_refresh_combined_artifact = (
+            bool(state_refresh)
+            and (
+                not combined_parquet_path
+                or not Path(combined_parquet_path).exists()
+                or combined_row_count <= 0
+            )
+        )
         missing_state_refresh_states = sorted(set(scrape_gap_states + build_gap_states + missing_jsonld_states + missing_built_states + state_report_artifact_gaps))
 
         agentic_results = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
@@ -885,6 +924,7 @@ class LegalScraperDaemon:
         status = "complete"
         if (
             missing_state_refresh_states
+            or missing_state_refresh_combined_artifact
             or missing_agentic_corpora
             or missing_agentic_states_by_corpus
             or errored_agentic_corpora
@@ -901,6 +941,8 @@ class LegalScraperDaemon:
             "state_refresh_status": str(state_refresh.get("status") or "disabled"),
             "missing_state_refresh_states": missing_state_refresh_states,
             "missing_state_refresh_artifact_states": sorted(set(state_report_artifact_gaps)),
+            "missing_state_refresh_combined_artifact": missing_state_refresh_combined_artifact,
+            "state_refresh_combined_parquet_path": combined_parquet_path or None,
             "agentic_status": str(agentic.get("status") or "disabled"),
             "missing_agentic_corpora": missing_agentic_corpora,
             "missing_agentic_states_by_corpus": missing_agentic_states_by_corpus,
@@ -926,6 +968,7 @@ class LegalScraperDaemon:
                 if str(item).strip()
             }
         )
+        state_refresh_combined_artifact_missing = bool(completeness.get("missing_state_refresh_combined_artifact"))
         missing_agentic_corpora = [
             str(item)
             for item in list(completeness.get("missing_agentic_corpora") or [])
@@ -950,16 +993,21 @@ class LegalScraperDaemon:
             missing_agentic_by_corpus.setdefault(corpus, list(required_states))
 
         retry_phases: List[Dict[str, Any]] = []
-        if state_refresh_states:
+        if state_refresh_states or state_refresh_combined_artifact_missing:
+            retry_states_for_refresh = state_refresh_states or list(required_states)
             retry_phases.append(
                 {
                     "phase": "state_refresh",
-                    "states": state_refresh_states,
-                    "reason": "state refresh scrape/build artifacts are missing or empty for these states",
+                    "states": retry_states_for_refresh,
+                    "reason": (
+                        "state refresh scrape/build artifacts are missing or empty for these states"
+                        if state_refresh_states
+                        else "state refresh combined parquet artifact is missing or empty; rerun the full state refresh build"
+                    ),
                     "recommended_args": [
                         "--state-refresh-scrape",
                         "--states",
-                        ",".join(state_refresh_states),
+                        ",".join(retry_states_for_refresh),
                     ],
                 }
             )
@@ -983,6 +1031,7 @@ class LegalScraperDaemon:
                 }
             )
 
+        merge_handoffs = self._build_merge_handoffs(cycle)
         retry_states = sorted(
             {
                 state
@@ -1007,11 +1056,61 @@ class LegalScraperDaemon:
             "retry_states": retry_states,
             "retry_phase_count": len(retry_phases),
             "retry_phases": retry_phases,
+            "merge_handoff_count": len(merge_handoffs),
+            "merge_handoffs": merge_handoffs,
             "missing_state_refresh_states": state_refresh_states,
+            "missing_state_refresh_combined_artifact": state_refresh_combined_artifact_missing,
             "missing_agentic_corpora": missing_agentic_corpora,
             "missing_agentic_states_by_corpus": missing_agentic_by_corpus,
             "errored_agentic_corpora": errored_agentic_corpora,
         }
+
+    def _build_merge_handoffs(self, cycle: Dict[str, Any]) -> List[Dict[str, Any]]:
+        phases = cycle.get("phases") if isinstance(cycle.get("phases"), dict) else {}
+        agentic = phases.get("agentic_corpora") if isinstance(phases.get("agentic_corpora"), dict) else {}
+        corpora = agentic.get("corpora") if isinstance(agentic.get("corpora"), dict) else {}
+        admin_rules = corpora.get("state_admin_rules") if isinstance(corpora.get("state_admin_rules"), dict) else {}
+        summary = admin_rules.get("summary") if isinstance(admin_rules.get("summary"), dict) else {}
+        latest_cycle = summary.get("latest_cycle") if isinstance(summary.get("latest_cycle"), dict) else {}
+        recovered = latest_cycle.get("recovered_row_artifacts") if isinstance(latest_cycle.get("recovered_row_artifacts"), dict) else {}
+        state_artifacts = recovered.get("state_artifacts") if isinstance(recovered.get("state_artifacts"), dict) else {}
+        inputs: List[str] = []
+        states: List[str] = []
+        for state, artifact in sorted(state_artifacts.items()):
+            if not isinstance(artifact, dict):
+                continue
+            candidate = str(artifact.get("manifest_path") or artifact.get("statutes_jsonl_path") or "").strip()
+            if not candidate:
+                continue
+            inputs.append(candidate)
+            normalized_state = str(state).upper().strip()
+            if normalized_state:
+                states.append(normalized_state)
+        if not inputs:
+            return []
+
+        output_dir = self.output_dir / "state_admin_rules_recovered_rows_merge" / f"cycle_{int(cycle.get('cycle') or 0):04d}"
+        script_path = Path("scripts") / "ops" / "legal_data" / "merge_state_admin_recovered_rows.py"
+        command = [
+            sys.executable,
+            str(script_path),
+            *inputs,
+            "--output-dir",
+            str(output_dir),
+            "--json",
+        ]
+        return [
+            {
+                "type": "state_admin_rules_recovered_rows_merge",
+                "corpus": "state_admin_rules",
+                "states": states,
+                "input_count": len(inputs),
+                "inputs": inputs,
+                "recovered_row_count": int(recovered.get("row_count") or 0),
+                "output_dir": str(output_dir),
+                "recommended_command": command,
+            }
+        ]
 
     def _write_full_corpus_retry_artifact(self, cycle: Dict[str, Any]) -> Dict[str, Any]:
         manifest = self._build_full_corpus_retry_manifest(cycle)

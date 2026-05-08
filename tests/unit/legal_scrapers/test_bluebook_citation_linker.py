@@ -2074,6 +2074,9 @@ def test_resolve_bluebook_lookup_result_document_returns_exhaustive_payload(monk
     assert result["exhaustive"] is True
     assert result["citation_count"] == 1
     assert result["matched_citation_count"] == 1
+    assert result["exact_anchor_match_count"] == 1
+    assert result["non_exact_match_count"] == 0
+    assert result["exact_anchor_match_ratio"] == 1.0
     assert result["citations"][0]["matched"] is True
     assert result["citations"][0]["metadata"]["resolution_method"] == "canonical_lexical_query"
 
@@ -2136,6 +2139,24 @@ def test_resolve_bluebook_lookup_result_document_includes_recovery_for_unmatched
     assert len(result["recovery_results"]) == 1
     assert result["recovery_results"][0]["status"] == "tracked"
     assert result["recovery_results"][0]["citation_text"] == "Minn. Stat. § 999.999"
+
+
+def test_resolve_bluebook_lookup_result_document_tracks_non_exact_case_fallback_in_permissive_mode():
+    resolver = BluebookCitationResolver(allow_hf_fallback=False, require_exact_anchor=False)
+
+    result = resolve_bluebook_lookup_result_document(
+        "The filing relies on 38 Mich. 90 as authority.",
+        resolver=resolver,
+        exhaustive=False,
+        include_recovery=False,
+    )
+
+    assert result["citation_count"] == 1
+    assert result["matched_citation_count"] == 1
+    assert result["exact_anchor_match_count"] == 0
+    assert result["non_exact_match_count"] == 1
+    assert len(result["non_exact_matched_citations"]) == 1
+    assert result["non_exact_matched_citations"][0]["resolution_method"] == "citation_url_fallback"
 
 
 def test_resolve_bluebook_lookup_result_document_recovers_when_hf_lookup_misses_entirely(monkeypatch):

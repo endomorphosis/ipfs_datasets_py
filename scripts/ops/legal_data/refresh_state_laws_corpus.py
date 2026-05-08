@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -556,6 +557,52 @@ def _publish_parquet_dir(
     )
 
 
+def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
+    """Run the static full-corpus truncation audit before uncapped scrapes."""
+    script_path = Path(__file__).with_name("audit_state_scraper_full_corpus_guards.py")
+    spec = importlib.util.spec_from_file_location("audit_state_scraper_full_corpus_guards", script_path)
+    if spec is None or spec.loader is None:
+        return {
+            "status": "fail",
+            "states_checked": 0,
+            "missing_states": list(states),
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [{"severity": "error", "detail": f"unable_to_load_audit:{script_path}"}],
+        }
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    repo_root = Path(__file__).resolve().parents[3]
+    scraper_root = repo_root / "ipfs_datasets_py" / "processors" / "legal_scrapers" / "state_scrapers"
+    findings: List[Any] = []
+    missing: List[str] = []
+    for state in states:
+        state_code = str(state).upper()
+        module_name = module.STATE_MODULES.get(state_code)
+        if not module_name:
+            missing.append(state_code)
+            continue
+        path = scraper_root / f"{module_name}.py"
+        if not path.exists():
+            missing.append(state_code)
+            continue
+        findings.extend(module.audit_file(state=state_code, path=path, repo_root=repo_root))
+
+    error_count = sum(1 for item in findings if str(getattr(item, "severity", "")) == "error")
+    warning_count = sum(1 for item in findings if str(getattr(item, "severity", "")) == "warning")
+    return {
+        "status": "fail" if error_count or warning_count or missing else "pass",
+        "states_checked": len(states) - len(missing),
+        "missing_states": missing,
+        "error_count": error_count,
+        "warning_count": warning_count,
+        "findings": [item.to_dict() if hasattr(item, "to_dict") else dict(item) for item in findings],
+    }
+
+
 async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     states = _normalize_states(args.states, include_dc=bool(args.include_dc))
     output_root = Path(args.output_root).expanduser().resolve() if args.output_root else _CORPUS.default_local_root()
@@ -664,8 +711,18 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 )
 
     scrape_result: Dict[str, Any] | None = None
+    full_corpus_guard_audit: Dict[str, Any] | None = None
     if args.scrape:
         scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+        if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
+            full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
+            if str(full_corpus_guard_audit.get("status")) != "pass":
+                return {
+                    "status": "failed_preflight",
+                    "reason": "full_corpus_guard_audit_failed",
+                    "plan": plan,
+                    "full_corpus_guard_audit": full_corpus_guard_audit,
+                }
         previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
         previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
         if scrape_max_statutes is None:
@@ -749,6 +806,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "scrape": scrape_result,
         "build": build_result,
         "startup_sync": startup_sync_result,
+        "full_corpus_guard_audit": full_corpus_guard_audit,
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
             "results": incremental_publish_results,
@@ -796,6 +854,11 @@ def parse_args() -> argparse.Namespace:
         help="Disable per-state HF upload as each state finishes scraping.",
     )
     parser.add_argument("--allow-incomplete-publish", action="store_true")
+    parser.add_argument(
+        "--skip-full-corpus-guard-audit",
+        action="store_true",
+        help="Skip the static full-corpus truncation audit before an uncapped scrape.",
+    )
     parser.add_argument("--repo-id", default=_CORPUS.hf_dataset_id)
     parser.add_argument("--hf-token", default="")
     parser.add_argument("--create-repo", action="store_true")

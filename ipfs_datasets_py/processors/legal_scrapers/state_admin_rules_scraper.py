@@ -1951,6 +1951,85 @@ def _full_corpus_mode_enabled() -> bool:
     }
 
 
+def _full_corpus_unbounded_enabled() -> bool:
+    return str(os.getenv("LEGAL_ADMIN_RULES_FULL_CORPUS_UNBOUNDED") or "1").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _effective_full_corpus_limit(value: Optional[int], *, fallback: int = 1000) -> int:
+    try:
+        requested = int(value or 0)
+    except Exception:
+        requested = 0
+    if requested > 0:
+        return requested
+    if _full_corpus_mode_enabled():
+        raw_limit = str(os.getenv("LEGAL_ADMIN_RULES_FULL_CORPUS_EFFECTIVE_LIMIT") or "").strip()
+        try:
+            configured_limit = int(raw_limit) if raw_limit else 10_000
+        except Exception:
+            configured_limit = 10_000
+        return max(1, configured_limit)
+    return max(1, int(fallback))
+
+
+def _full_corpus_row_limits_disabled() -> bool:
+    return _full_corpus_mode_enabled() and _full_corpus_unbounded_enabled()
+
+
+def _reached_rule_cap(statutes: Sequence[Any], max_fetch: int) -> bool:
+    if _full_corpus_row_limits_disabled():
+        return False
+    return len(statutes) >= max(1, int(max_fetch))
+
+
+def _has_rule_capacity(statutes: Sequence[Any], max_fetch: int) -> bool:
+    return not _reached_rule_cap(statutes, max_fetch)
+
+
+def _remaining_rule_slots(statutes: Sequence[Any], max_fetch: int, *, batch_size: int) -> int:
+    if _full_corpus_row_limits_disabled():
+        return max(1, int(batch_size))
+    return max(0, max(1, int(max_fetch)) - len(statutes))
+
+
+def _full_corpus_bootstrap_satisfied(count: int, threshold: int) -> bool:
+    if _full_corpus_row_limits_disabled():
+        return False
+    return int(count) >= max(1, int(threshold))
+
+
+def _candidate_inspection_available(inspected_urls: int, max_candidates: int) -> bool:
+    if _full_corpus_row_limits_disabled():
+        return True
+    return int(inspected_urls) < max(4, max(1, int(max_candidates)) * 4)
+
+
+def _effective_full_corpus_search_limit(value: Optional[int], *, fallback: int = 100) -> int:
+    """Return a provider request window, not the total corpus row target.
+
+    Full-corpus mode should remove corpus/debug caps, but public search
+    providers still need bounded request windows; otherwise adapters may try to
+    allocate or paginate enormous result sets before any scraping can start.
+    """
+    try:
+        requested = int(value or 0)
+    except Exception:
+        requested = 0
+    if requested > 0:
+        return max(1, requested)
+    raw_limit = str(os.getenv("LEGAL_ADMIN_RULES_FULL_CORPUS_SEARCH_LIMIT") or "").strip()
+    try:
+        configured_limit = int(raw_limit) if raw_limit else fallback
+    except Exception:
+        configured_limit = fallback
+    return max(1, configured_limit)
+
+
 def _bounded_discovery_limit(
     *,
     max_fetch: int,
@@ -1960,6 +2039,8 @@ def _bounded_discovery_limit(
 ) -> int:
     requested = max(1, int(max_fetch)) * max(1, int(multiplier))
     if _full_corpus_mode_enabled():
+        if _full_corpus_unbounded_enabled():
+            return requested
         if full_corpus_cap is None or int(full_corpus_cap) <= 0:
             return requested
         return min(requested, int(full_corpus_cap))
@@ -3130,8 +3211,9 @@ def _build_initial_pending_candidates(
 ) -> List[tuple[str, int]]:
     pending_by_key: Dict[str, tuple[str, int]] = {}
     pending: List[tuple[str, int]] = []
+    ranked_source = ranked_urls if _full_corpus_row_limits_disabled() else ranked_urls[: max(1, int(max_candidates))]
 
-    for url, score in [*ranked_urls[: max(1, int(max_candidates))], *seed_expansion_candidates]:
+    for url, score in [*ranked_source, *seed_expansion_candidates]:
         key = _url_key(url)
         if not key:
             continue
@@ -14090,10 +14172,18 @@ async def _agentic_discover_admin_state_blocks(
         query = _agentic_query_for_state(state_code)
         candidate_urls: List[str] = []
         source_breakdown: Dict[str, int] = {}
-        max_fetch = max(1, int(max_fetch_per_state))
+        max_fetch = _effective_full_corpus_limit(max_fetch_per_state)
         state_fetch_cap = _max_fetch_cap_for_state(state_code)
-        if state_fetch_cap is not None:
+        if state_fetch_cap is not None and not _full_corpus_mode_enabled():
             max_fetch = min(max_fetch, state_fetch_cap)
+        max_fetch_per_state = max_fetch
+        max_candidates_per_state = _effective_full_corpus_limit(max_candidates_per_state)
+        max_results_per_domain = _effective_full_corpus_search_limit(max_results_per_domain)
+        max_pages = _effective_full_corpus_limit(max_pages)
+        search_result_window = _effective_full_corpus_search_limit(0)
+        if int(max_hops or 0) <= 0 and _full_corpus_mode_enabled():
+            max_hops = 64
+        max_fetch_per_state = max_fetch
         new_hampshire_bootstrap_diagnostics: Dict[str, Any] = {}
         az_fetch_diagnostics: Dict[str, Any] = {}
         allowed_hosts = _allowed_discovery_hosts_for_state(state_code, state_name)
@@ -15690,7 +15780,7 @@ async def _agentic_discover_admin_state_blocks(
                             unified_api.search,
                             UnifiedSearchRequest(
                                 query=query,
-                                max_results=max(5, int(max_candidates_per_state)),
+                                max_results=max(5, int(search_result_window)),
                                 mode=OperationMode.BALANCED,
                                 domain="legal",
                             ),
@@ -15795,9 +15885,9 @@ async def _agentic_discover_admin_state_blocks(
         parallel_prefetch_rule_hits = 0
         expanded_urls = 0
         inspected_urls = 0
-        max_fetch = max(1, int(max_fetch_per_state))
+        max_fetch = _effective_full_corpus_limit(max_fetch_per_state)
         state_fetch_cap = _max_fetch_cap_for_state(state_code)
-        if state_fetch_cap is not None:
+        if state_fetch_cap is not None and not _full_corpus_mode_enabled():
             max_fetch = min(max_fetch, state_fetch_cap)
         min_text_chars = max(140, int(min_full_text_chars // 2))
         if require_substantive_text:
@@ -16022,7 +16112,7 @@ async def _agentic_discover_admin_state_blocks(
         official_seed_direct_satisfied = False
         if preseed_direct_documents:
             for document_url, seed_title, seed_text, seed_method_value in preseed_direct_documents:
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 inspected_urls += 1
                 accepted_seed = await _append_document_if_rule(
@@ -16071,7 +16161,7 @@ async def _agentic_discover_admin_state_blocks(
                 archived_results = []
 
             for archived in archived_results:
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if not getattr(archived, "success", False):
                     continue
@@ -16209,7 +16299,7 @@ async def _agentic_discover_admin_state_blocks(
                         timeout_s=az_batch_timeout_s,
                         elapsed_s=az_elapsed_s,
                     )
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         prioritized_utah_seed_rule_urls: List[str] = []
@@ -16223,7 +16313,7 @@ async def _agentic_discover_admin_state_blocks(
                     continue
                 seen_utah_rule_keys.add(rule_key)
                 prioritized_utah_seed_rule_urls.append(rule_url)
-                if len(prioritized_utah_seed_rule_urls) >= min(max_fetch, 8):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_utah_seed_rule_urls), min(max_fetch, 8)):
                     break
 
         prioritized_california_bootstrap_document_urls: List[str] = []
@@ -16237,7 +16327,7 @@ async def _agentic_discover_admin_state_blocks(
                     continue
                 seen_california_document_keys.add(rule_key)
                 prioritized_california_bootstrap_document_urls.append(rule_url)
-                if len(prioritized_california_bootstrap_document_urls) >= min(max_fetch, 8):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_california_bootstrap_document_urls), min(max_fetch, 8)):
                     break
 
         prioritized_arizona_seed_rule_urls: List[str] = []
@@ -16262,7 +16352,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_arizona_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_arizona_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_hawaii_seed_rule_urls: List[str] = []
@@ -16277,7 +16367,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_hawaii_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_hawaii_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_louisiana_seed_rule_urls: List[str] = []
@@ -16292,7 +16382,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_louisiana_seed_rule_urls) >= min(max(max_fetch * 2, 8), 16):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_louisiana_seed_rule_urls), min(max(max_fetch * 2, 8), 16)):
                     break
 
         prioritized_iowa_seed_rule_urls: List[str] = []
@@ -16307,7 +16397,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_iowa_seed_rule_urls) >= min(max_fetch, 8):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_iowa_seed_rule_urls), min(max_fetch, 8)):
                     break
 
         prioritized_kansas_seed_rule_urls: List[str] = []
@@ -16380,7 +16470,7 @@ async def _agentic_discover_admin_state_blocks(
 
         if state_code == "DC" and dc_bootstrap_section_documents:
             for document_url, dc_title, dc_text, dc_method_value in dc_bootstrap_section_documents:
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 inspected_urls += 1
                 accepted_dc_section = await _append_document_if_rule(
@@ -16417,12 +16507,12 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "NE" and prioritized_nebraska_seed_rule_urls:
             nebraska_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_nebraska_seed_rule_urls), nebraska_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = [
                     rule_url
                     for rule_url in prioritized_nebraska_seed_rule_urls[batch_start : batch_start + nebraska_batch_size]
@@ -16467,11 +16557,11 @@ async def _agentic_discover_admin_state_blocks(
                         source_phase="bootstrap_batch",
                     )
                     official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_nebraska_bootstrap)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         for rule_url in prioritized_california_bootstrap_document_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -16501,12 +16591,12 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "AZ" and prioritized_arizona_seed_rule_urls:
             arizona_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_arizona_seed_rule_urls), arizona_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = [
                     rule_url
                     for rule_url in prioritized_arizona_seed_rule_urls[batch_start : batch_start + arizona_batch_size]
@@ -16578,18 +16668,18 @@ async def _agentic_discover_admin_state_blocks(
                         timeout_s=batch_timeout_s,
                         elapsed_s=az_elapsed_s,
                     )
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "HI" and prioritized_hawaii_seed_rule_urls:
             hawaii_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_hawaii_seed_rule_urls), hawaii_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_hawaii_seed_rule_urls[
                     batch_start : batch_start + min(hawaii_batch_size, remaining_slots)
                 ]
@@ -16631,20 +16721,20 @@ async def _agentic_discover_admin_state_blocks(
                     if hawaii_method_value is None:
                         hawaii_method_value = getattr(hawaii_scraped, "method_used", None)
                     await _append_document_if_rule(rule_url, hawaii_title, hawaii_text, hawaii_method_value)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "MD" and prioritized_maryland_seed_rule_urls:
             maryland_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_maryland_seed_rule_urls), maryland_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
                 if time.monotonic() >= preloop_budget_deadline:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_maryland_seed_rule_urls[
                     batch_start : batch_start + min(maryland_batch_size, remaining_slots)
                 ]
@@ -16687,20 +16777,20 @@ async def _agentic_discover_admin_state_blocks(
                         source_phase="bootstrap_batch",
                     )
                     official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_maryland_bootstrap)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "ME" and prioritized_maine_seed_rule_urls:
             maine_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_maine_seed_rule_urls), maine_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
                 if time.monotonic() >= preloop_budget_deadline:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_maine_seed_rule_urls[
                     batch_start : batch_start + min(maine_batch_size, remaining_slots)
                 ]
@@ -16742,7 +16832,7 @@ async def _agentic_discover_admin_state_blocks(
                         source_phase="bootstrap_batch",
                     )
                     official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_maine_bootstrap)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if (
@@ -16756,12 +16846,12 @@ async def _agentic_discover_admin_state_blocks(
         if state_code == "LA" and prioritized_louisiana_seed_rule_urls:
             louisiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_louisiana_seed_rule_urls), louisiana_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_louisiana_seed_rule_urls[
                     batch_start : batch_start + min(louisiana_batch_size, remaining_slots)
                 ]
@@ -16799,18 +16889,18 @@ async def _agentic_discover_admin_state_blocks(
                     if louisiana_method_value is None:
                         louisiana_method_value = getattr(louisiana_scraped, "method_used", None)
                     await _append_document_if_rule(rule_url, louisiana_title, louisiana_text, louisiana_method_value)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "IA" and prioritized_iowa_seed_rule_urls:
             iowa_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_iowa_seed_rule_urls), iowa_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_iowa_seed_rule_urls[
                     batch_start : batch_start + min(iowa_batch_size, remaining_slots)
                 ]
@@ -16848,18 +16938,18 @@ async def _agentic_discover_admin_state_blocks(
                     if iowa_method_value is None:
                         iowa_method_value = getattr(iowa_scraped, "method_used", None)
                     await _append_document_if_rule(rule_url, iowa_title, iowa_text, iowa_method_value)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "KS" and prioritized_kansas_seed_rule_urls:
             kansas_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
             for batch_start in range(0, len(prioritized_kansas_seed_rule_urls), kansas_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = prioritized_kansas_seed_rule_urls[
                     batch_start : batch_start + min(kansas_batch_size, remaining_slots)
                 ]
@@ -16901,17 +16991,17 @@ async def _agentic_discover_admin_state_blocks(
                         kansas_method_value,
                         source_phase="kansas_bootstrap_batch",
                     )
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         utah_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_utah_seed_rule_urls), utah_batch_size):
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
 
-            remaining_slots = max_fetch - len(statutes)
+            remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
             batch_rule_urls = prioritized_utah_seed_rule_urls[batch_start : batch_start + min(utah_batch_size, remaining_slots)]
             if not batch_rule_urls:
                 continue
@@ -16942,7 +17032,7 @@ async def _agentic_discover_admin_state_blocks(
                 if utah_method_value is None:
                     utah_method_value = getattr(utah_scraped, "method_used", None)
                 await _append_document_if_rule(rule_url, utah_title, utah_text, utah_method_value)
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
 
         utah_official_bootstrap_recovered_rules = (
@@ -16954,7 +17044,7 @@ async def _agentic_discover_admin_state_blocks(
         louisiana_official_bootstrap_recovered_rules = (
             state_code == "LA"
             and bool(prioritized_louisiana_seed_rule_urls)
-            and len(statutes) >= min(max_fetch, max(1, len(prioritized_louisiana_seed_rule_urls)))
+            and (not _full_corpus_row_limits_disabled()) and len(statutes) >= min(max_fetch, max(1, len(prioritized_louisiana_seed_rule_urls)))
             and any(_url_key(rule_url) in direct_doc_urls for rule_url in prioritized_louisiana_seed_rule_urls)
         )
 
@@ -17072,13 +17162,13 @@ async def _agentic_discover_admin_state_blocks(
             az_ranked_rule_urls = prioritized_ranked_document_urls[: min(len(prioritized_ranked_document_urls), max_fetch * 4, 20)]
             az_ranked_batch_size = 1
             for batch_start in range(0, len(az_ranked_rule_urls), az_ranked_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
                 if time.monotonic() >= preloop_budget_deadline:
                     break
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = [
                     rule_url
                     for rule_url in az_ranked_rule_urls[batch_start : batch_start + az_ranked_batch_size]
@@ -17172,11 +17262,11 @@ async def _agentic_discover_admin_state_blocks(
                         timeout_s=az_ranked_timeout_s,
                         elapsed_s=az_elapsed_s,
                     )
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         for document_url in prioritized_ranked_document_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17379,7 +17469,7 @@ async def _agentic_discover_admin_state_blocks(
         if new_york_official_bootstrap_recovered_rules:
             max_fetch = len(statutes)
 
-        if state_code == "AZ" and len(statutes) < max_fetch:
+        if state_code == "AZ" and _has_rule_capacity(statutes, max_fetch):
             az_late_retry_urls = _prioritized_arizona_late_retry_urls(
                 prioritized_ranked_document_urls,
                 limit=min(max_fetch - len(statutes), 5),
@@ -17387,7 +17477,7 @@ async def _agentic_discover_admin_state_blocks(
                 exclude_urls={url for url in direct_doc_urls if url},
             )
             for document_url in az_late_retry_urls:
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if _url_key(document_url) in direct_doc_urls:
                     continue
@@ -17472,7 +17562,7 @@ async def _agentic_discover_admin_state_blocks(
                 exclude_urls={url for url in direct_doc_urls if url},
             )
             for document_url in az_last_chance_retry_urls:
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 remaining_state_budget_s = per_state_budget_s - (time.monotonic() - state_start)
                 az_late_timeout_s = min(12.0, _arizona_late_retry_timeout_s(remaining_state_budget_s))
@@ -17579,12 +17669,12 @@ async def _agentic_discover_admin_state_blocks(
 
             indiana_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 6))
             for batch_start in range(0, len(prioritized_indiana_seed_rule_urls), indiana_batch_size):
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
                 if (time.monotonic() - state_start) >= per_state_budget_s:
                     break
 
-                remaining_slots = max_fetch - len(statutes)
+                remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
                 batch_rule_urls = [
                     rule_url
                     for rule_url in prioritized_indiana_seed_rule_urls[batch_start : batch_start + indiana_batch_size]
@@ -17629,7 +17719,7 @@ async def _agentic_discover_admin_state_blocks(
                         source_phase="bootstrap_batch",
                     )
                     official_bootstrap_rule_hit = official_bootstrap_rule_hit or bool(accepted_indiana_bootstrap)
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
 
         if state_code == "SD":
@@ -17645,7 +17735,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_south_dakota_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_south_dakota_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_alabama_seed_rule_urls: List[str] = []
@@ -17662,11 +17752,11 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 4))
-                if len(prioritized_alabama_seed_rule_urls) >= min(max_fetch, 24):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_alabama_seed_rule_urls), min(max_fetch, 24)):
                     break
 
         for rule_url in prioritized_south_dakota_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17705,7 +17795,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_michigan_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_michigan_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_alaska_seed_rule_urls: List[str] = []
@@ -17722,7 +17812,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_alaska_seed_rule_urls) >= min(max_fetch * 3, 20):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_alaska_seed_rule_urls), min(max_fetch * 3, 20)):
                     break
 
         prioritized_texas_seed_rule_urls: List[str] = []
@@ -17739,7 +17829,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_texas_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_texas_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_oklahoma_seed_rule_urls: List[str] = []
@@ -17756,7 +17846,7 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_oklahoma_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_oklahoma_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         prioritized_tennessee_seed_rule_urls: List[str] = []
@@ -17773,11 +17863,11 @@ async def _agentic_discover_admin_state_blocks(
                 if rule_url not in candidate_urls:
                     candidate_urls.append(rule_url)
                 seed_expansion_candidates.append((rule_url, _score_candidate_url(rule_url) + 5))
-                if len(prioritized_tennessee_seed_rule_urls) >= min(max_fetch * 2, 12):
+                if _full_corpus_bootstrap_satisfied(len(prioritized_tennessee_seed_rule_urls), min(max_fetch * 2, 12)):
                     break
 
         for rule_url in prioritized_alabama_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17805,7 +17895,7 @@ async def _agentic_discover_admin_state_blocks(
             await _append_document_if_rule(rule_url, alabama_title, alabama_text, alabama_method_value)
 
         for rule_url in prioritized_michigan_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17841,7 +17931,7 @@ async def _agentic_discover_admin_state_blocks(
             await _append_document_if_rule(rule_url, michigan_title, michigan_text, michigan_method_value)
 
         for rule_url in prioritized_alaska_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17869,7 +17959,7 @@ async def _agentic_discover_admin_state_blocks(
             await _append_document_if_rule(rule_url, alaska_title, alaska_text, alaska_method_value)
 
         for rule_url in prioritized_texas_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17895,7 +17985,7 @@ async def _agentic_discover_admin_state_blocks(
             await _append_document_if_rule(rule_url, texas_title, texas_text, texas_method_value)
 
         for rule_url in prioritized_oklahoma_seed_rule_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -17924,14 +18014,14 @@ async def _agentic_discover_admin_state_blocks(
 
         tennessee_batch_size = max(1, min(effective_fetch_concurrency, max_fetch, 4))
         for batch_start in range(0, len(prioritized_tennessee_seed_rule_urls), tennessee_batch_size):
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
 
-            remaining_slots = max_fetch - len(statutes)
+            remaining_slots = _remaining_rule_slots(statutes, max_fetch, batch_size=effective_fetch_concurrency)
             batch_rule_urls = [
                 rule_url
                 for rule_url in prioritized_tennessee_seed_rule_urls[batch_start : batch_start + tennessee_batch_size]
@@ -17969,11 +18059,11 @@ async def _agentic_discover_admin_state_blocks(
                 if tennessee_method_value is None:
                     tennessee_method_value = getattr(tennessee_scraped, "method_used", None)
                 await _append_document_if_rule(rule_url, tennessee_title, tennessee_text, tennessee_method_value)
-                if len(statutes) >= max_fetch:
+                if _reached_rule_cap(statutes, max_fetch):
                     break
 
         for document_url in prioritized_seed_document_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -18112,7 +18202,7 @@ async def _agentic_discover_admin_state_blocks(
 
         # Give curated/official entrypoints one deterministic direct fetch pass.
         for seed_url in ([] if official_seed_direct_satisfied else ordered_seed_urls[:6]):
-            if len(statutes) >= max(1, int(max_fetch_per_state)):
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if time.monotonic() >= preloop_budget_deadline:
                 break
@@ -18256,7 +18346,7 @@ async def _agentic_discover_admin_state_blocks(
         )
 
         for document_url in prioritized_seed_expansion_document_urls:
-            if len(statutes) >= max_fetch:
+            if _reached_rule_cap(statutes, max_fetch):
                 break
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
@@ -18347,7 +18437,7 @@ async def _agentic_discover_admin_state_blocks(
                     method_value = getattr(method_used, "value", method_used)
                     if not await _append_document_if_rule(doc_url, doc_title, doc_text, method_value, source_phase="discovered_result"):
                         continue
-                    if len(statutes) >= max(1, int(max_fetch_per_state)):
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
         except Exception:
             pass
@@ -18427,7 +18517,7 @@ async def _agentic_discover_admin_state_blocks(
                         if link_score <= 0:
                             continue
                         seed_expansion_candidates.append((link_url, link_score + 3))
-                    if len(statutes) >= max(1, int(max_fetch_per_state)):
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
             except Exception:
                 pass
@@ -18438,7 +18528,7 @@ async def _agentic_discover_admin_state_blocks(
             and any(_url_key(seed_url) in direct_doc_urls for seed_url in prioritized_seed_document_urls)
         )
 
-        max_candidates = max(1, int(max_candidates_per_state))
+        max_candidates = _effective_full_corpus_limit(max_candidates_per_state)
         pending = [] if (official_seed_direct_satisfied or utah_official_bootstrap_recovered_rules or louisiana_official_bootstrap_recovered_rules or iowa_official_bootstrap_recovered_rules or kansas_official_bootstrap_recovered_rules or new_york_official_bootstrap_recovered_rules) else _build_initial_pending_candidates(
             ranked_urls=ranked_urls,
             seed_expansion_candidates=seed_expansion_candidates,
@@ -18563,7 +18653,7 @@ async def _agentic_discover_admin_state_blocks(
                     )
             return scraped
 
-        while pending and len(statutes) < max_fetch and inspected_urls < max(4, max_candidates * 4):
+        while pending and _has_rule_capacity(statutes, max_fetch) and _candidate_inspection_available(inspected_urls, max_candidates):
             if (time.monotonic() - state_start) >= per_state_budget_s:
                 break
             if _should_abort_vermont_after_lexis_block(
@@ -18577,8 +18667,8 @@ async def _agentic_discover_admin_state_blocks(
             while (
                 pending
                 and len(batch_candidates) < effective_fetch_concurrency
-                and len(statutes) + len(batch_candidates) < max_fetch
-                and inspected_urls < max(4, max_candidates * 4)
+                and (_full_corpus_row_limits_disabled() or len(statutes) + len(batch_candidates) < max_fetch)
+                and _candidate_inspection_available(inspected_urls, max_candidates)
             ):
                 url, score = pending.pop(0)
                 key = _url_key(url)
@@ -18888,7 +18978,7 @@ async def _agentic_discover_admin_state_blocks(
                                 expanded_urls += 1
                         pending.sort(key=_pending_candidate_sort_key)
 
-                    if len(statutes) >= max_fetch:
+                    if _reached_rule_cap(statutes, max_fetch):
                         break
                 except Exception:
                     continue
@@ -19076,7 +19166,7 @@ async def _agentic_discover_admin_state_blocks(
             "arizona_fetch_diagnostics": az_fetch_diagnostics if state_code == "AZ" else {},
             "timed_out": bool(state_elapsed_s >= per_state_budget_s and not statutes),
         }
-        if state_fetch_cap is not None:
+        if state_fetch_cap is not None and not _full_corpus_mode_enabled():
             report[state_code]["max_fetch_cap"] = int(state_fetch_cap)
             report[state_code]["effective_max_fetch"] = int(max_fetch)
         if state_rate_limit_metadata:
@@ -19131,11 +19221,11 @@ async def scrape_state_admin_rules(
     per_state_timeout_seconds: float = 86400.0,
     include_dc: bool = False,
     agentic_fallback_enabled: bool = True,
-    agentic_max_candidates_per_state: int = 1000,
-    agentic_max_fetch_per_state: int = 1000,
-    agentic_max_results_per_domain: int = 1000,
-    agentic_max_hops: int = 4,
-    agentic_max_pages: int = 1000,
+    agentic_max_candidates_per_state: int = 0,
+    agentic_max_fetch_per_state: int = 0,
+    agentic_max_results_per_domain: int = 0,
+    agentic_max_hops: int = 0,
+    agentic_max_pages: int = 0,
     agentic_fetch_concurrency: int = 6,
     agentic_checkpoint_interval: int = 10,
     write_agentic_kg_corpus: bool = True,

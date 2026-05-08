@@ -4,9 +4,9 @@
   "output_root": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000025_000125",
   "logic_proof_artifacts": "/home/barberb/HACC/complaint-generator/ipfs_datasets_py/workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000025_000125/laws_logic_proof_artifacts.parquet",
   "source_row_count": 100,
-  "artifact_row_count": 100,
-  "completed_row_count": 100,
-  "remaining_row_count": 0,
+  "artifact_row_count": 99,
+  "completed_row_count": 99,
+  "remaining_row_count": 1,
   "failure_count": 0,
   "failures": [],
   "bm25_document_count": 60068,
@@ -20,9 +20,11 @@
   "zkp_backend": "groth16",
   "zkp_circuit_version": 1,
   "zkp_verified_count": 100,
-  "llm_generated_count": 100,
+  "llm_generated_count": 99,
   "llm_fallback_count": 0,
-  "status": "complete",
+  "status": "incomplete_spark_only_quota_blocked",
   "started_at": "2026-04-26T23:02:16.325804+00:00",
-  "updated_at": "2026-04-26T23:06:20.998399+00:00"
+  "updated_at": "2026-04-26T23:06:20.998399+00:00",
+  "spark_only_filter_applied": true,
+  "quarantined_non_spark_artifact": "workspace/ipfs_uscode_logic_proofs_llm_router_groth16_shard_000025_000125/laws_logic_proof_artifacts_non_spark.quarantined.parquet"
 }

@@ -244,8 +244,13 @@ def test_refresh_state_laws_corpus_sets_full_corpus_env_for_uncapped_scrape(tmp_
         observed["max_statutes"] = kwargs.get("max_statutes")
         return {"status": "success", "data": [], "metadata": {"coverage_summary": {}}}
 
+    def _fake_audit(*, states):
+        observed["audit_states"] = list(states)
+        return {"status": "pass", "states_checked": len(states), "missing_states": [], "error_count": 0, "warning_count": 0, "findings": []}
+
     monkeypatch.delenv("STATE_SCRAPER_FULL_CORPUS", raising=False)
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(refresh_state_laws_corpus, "_run_full_corpus_guard_audit", _fake_audit)
     monkeypatch.setattr(
         refresh_state_laws_corpus,
         "build_state_laws_parquet_artifacts",
@@ -290,8 +295,70 @@ def test_refresh_state_laws_corpus_sets_full_corpus_env_for_uncapped_scrape(tmp_
     result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
 
     assert result["status"] == "success"
-    assert observed == {"full_corpus_env": "1", "max_statutes": None}
+    assert observed == {"audit_states": ["MN"], "full_corpus_env": "1", "max_statutes": None}
+    assert result["full_corpus_guard_audit"]["status"] == "pass"
     assert __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS") is None
+
+
+def test_refresh_state_laws_corpus_blocks_uncapped_scrape_when_guard_audit_fails(tmp_path, monkeypatch):
+    observed = {"scrape_called": False, "build_called": False}
+
+    async def _fake_scrape_state_laws(**kwargs):
+        observed["scrape_called"] = True
+        return {"status": "success", "data": [], "metadata": {"coverage_summary": {}}}
+
+    def _fake_build(**kwargs):
+        observed["build_called"] = True
+        return {"status": "success", "missing_jsonld_states": []}
+
+    def _fake_audit(*, states):
+        return {
+            "status": "fail",
+            "states_checked": len(states),
+            "missing_states": [],
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [{"state": "MN", "severity": "error", "detail": "return seed_rows"}],
+        }
+
+    monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(refresh_state_laws_corpus, "build_state_laws_parquet_artifacts", _fake_build)
+    monkeypatch.setattr(refresh_state_laws_corpus, "_run_full_corpus_guard_audit", _fake_audit)
+
+    args = argparse.Namespace(
+        states="MN",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=True,
+        max_statutes=0,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "failed_preflight"
+    assert result["reason"] == "full_corpus_guard_audit_failed"
+    assert observed == {"scrape_called": False, "build_called": False}
 
 
 def test_refresh_state_laws_corpus_preserves_bounded_scrape_env(tmp_path, monkeypatch):
@@ -302,8 +369,12 @@ def test_refresh_state_laws_corpus_preserves_bounded_scrape_env(tmp_path, monkey
         observed["max_statutes"] = kwargs.get("max_statutes")
         return {"status": "success", "data": [], "metadata": {"coverage_summary": {}}}
 
+    def _fail_audit(*, states):
+        raise AssertionError("bounded refresh should not run full-corpus guard audit")
+
     monkeypatch.setenv("STATE_SCRAPER_FULL_CORPUS", "0")
     monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(refresh_state_laws_corpus, "_run_full_corpus_guard_audit", _fail_audit)
     monkeypatch.setattr(
         refresh_state_laws_corpus,
         "build_state_laws_parquet_artifacts",

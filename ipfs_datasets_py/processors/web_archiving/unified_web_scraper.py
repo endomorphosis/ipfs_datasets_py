@@ -30,6 +30,8 @@ import multiprocessing
 import os
 import queue
 import re
+import subprocess
+import sys
 import time
 from io import BytesIO
 from pathlib import Path
@@ -813,16 +815,47 @@ class UnifiedWebScraper:
             return None
 
         def _keyring_value(*names: str) -> Optional[str]:
+            timeout_seconds = 1.0
             try:
-                import keyring  # type: ignore
-
-                for name in names:
-                    resolved = str(keyring.get_password("ipfs_datasets_py", name) or "").strip()
-                    if resolved:
-                        return resolved
+                timeout_seconds = float(
+                    os.getenv("IPFS_DATASETS_PY_KEYRING_TIMEOUT_SECONDS", "1") or "1"
+                )
+            except Exception:
+                timeout_seconds = 1.0
+            if timeout_seconds <= 0:
+                return None
+            code = (
+                "import json, keyring; "
+                f"names = {tuple(str(name) for name in names)!r}; "
+                "value = ''; "
+                "\nfor name in names:\n"
+                "    try:\n"
+                "        candidate = str(keyring.get_password('ipfs_datasets_py', name) or '').strip()\n"
+                "    except Exception:\n"
+                "        candidate = ''\n"
+                "    if candidate:\n"
+                "        value = candidate\n"
+                "        break\n"
+                "print(json.dumps({'value': value}))\n"
+            )
+            try:
+                completed = subprocess.run(
+                    [sys.executable, "-c", code],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=max(0.1, timeout_seconds),
+                )
             except Exception:
                 return None
-            return None
+            if completed.returncode != 0:
+                return None
+            try:
+                payload = json.loads(str(completed.stdout or "{}"))
+            except Exception:
+                return None
+            value = str((payload or {}).get("value") or "").strip()
+            return value or None
 
         account_id = (
             self.config.cloudflare_account_id

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -322,6 +323,7 @@ async def test_legal_scraper_daemon_resumes_completed_phase(tmp_path):
 @pytest.mark.asyncio
 async def test_legal_scraper_daemon_full_corpus_retries_partial_phase_by_default(tmp_path):
     calls = {"refresh": 0}
+    combined_parquet = tmp_path / "state_laws_all_states.parquet"
 
     async def _fake_refresh_runner(args):
         calls["refresh"] += 1
@@ -332,9 +334,15 @@ async def test_legal_scraper_daemon_full_corpus_retries_partial_phase_by_default
                 "scrape_gap_states": [],
                 "build_gap_states": ["OR"],
             }
+        combined_parquet.write_bytes(b"PAR1")
         return {
             "status": "success",
-            "build": {"states": ["MN", "OR"], "missing_jsonld_states": [], "combined_row_count": 6},
+            "build": {
+                "states": ["MN", "OR"],
+                "missing_jsonld_states": [],
+                "combined_parquet_path": str(combined_parquet),
+                "combined_row_count": 6,
+            },
             "scrape_gap_states": [],
             "build_gap_states": [],
         }
@@ -503,6 +511,23 @@ async def test_legal_scraper_daemon_shards_state_admin_agentic_runs_by_state(tmp
     assert recovered_rows["row_count"] == 3
     assert sorted(recovered_rows["state_artifacts"]) == ["CT", "NJ"]
     assert summary["latest_cycle"]["diagnostics"]["documents"]["recovered_row_count"] == 3
+    handoffs = daemon._build_merge_handoffs(
+        {
+            "cycle": 1,
+            "phases": {
+                "agentic_corpora": {
+                    "corpora": {
+                        "state_admin_rules": result,
+                    }
+                }
+            },
+        }
+    )
+    assert handoffs[0]["type"] == "state_admin_rules_recovered_rows_merge"
+    assert handoffs[0]["states"] == ["CT", "NJ"]
+    assert handoffs[0]["input_count"] == 2
+    assert handoffs[0]["inputs"] == ["/tmp/CT.jsonl", "/tmp/NJ.jsonl"]
+    assert handoffs[0]["recommended_command"][1].endswith("scripts/ops/legal_data/merge_state_admin_recovered_rows.py")
 
 
 def test_legal_scraper_daemon_arg_config_keeps_publish_opt_in(tmp_path):
@@ -678,7 +703,10 @@ def test_legal_scraper_daemon_arg_config_full_corpus_preset(tmp_path):
     assert preflight["invariants"]["state_refresh_unbounded"] is True
     assert preflight["invariants"]["state_refresh_hf_merge_enabled"] is True
     assert preflight["invariants"]["hf_dataset_access_readable"] is True
+    assert preflight["invariants"]["state_laws_full_corpus_guard_audit_passed"] is True
     assert preflight["invariants"]["publication_opt_in"] is True
+    assert preflight["state_laws_full_corpus_guard_audit"]["status"] == "pass"
+    assert preflight["state_laws_full_corpus_guard_audit"]["states_checked"] == 51
     assert target_manifest["status"] == "planned"
     assert target_manifest["state_count"] == 51
     assert target_manifest["corpus_count"] == 3
@@ -715,6 +743,43 @@ def test_legal_scraper_daemon_writes_preflight_artifacts(tmp_path):
     assert target_manifest_path.exists()
     assert json.loads(preflight_path.read_text(encoding="utf-8"))["target_manifest"]["state_shard_count"] == 153
     assert json.loads(target_manifest_path.read_text(encoding="utf-8"))["state_shard_count"] == 153
+
+
+def test_legal_scraper_daemon_preflight_blocks_failed_full_corpus_guard_audit(tmp_path, monkeypatch):
+    def _fake_guard_audit(self):
+        return {
+            "enabled": True,
+            "status": "fail",
+            "states_checked": 51,
+            "missing_states": [],
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [{"state": "MN", "severity": "error", "detail": "return seed_rows"}],
+        }
+
+    monkeypatch.setattr(LegalScraperDaemon, "_state_laws_full_corpus_guard_audit", _fake_guard_audit)
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            include_dc=True,
+            states=["all"],
+            output_dir=str(tmp_path),
+            bluebook=BluebookDaemonConfig(corpora=["state_laws", "state_admin_rules", "state_court_rules"]),
+            state_refresh=StateRefreshDaemonConfig(scrape=True, merge_hf_existing=True, max_statutes=0),
+            agentic_corpora=AgenticCorpusDaemonConfig(
+                enabled=True,
+                corpora=["state_laws", "state_admin_rules", "state_court_rules"],
+                max_statutes=0,
+            ),
+        )
+    )
+
+    preflight = daemon.build_plan()["preflight"]
+
+    assert preflight["status"] == "blocked"
+    assert preflight["invariants"]["state_laws_full_corpus_guard_audit_passed"] is False
+    assert preflight["blocking_invariants"] == {"state_laws_full_corpus_guard_audit_passed": False}
+    assert preflight["state_laws_full_corpus_guard_audit"]["findings"][0]["detail"] == "return seed_rows"
 
 
 def test_legal_scraper_daemon_preflight_hf_probe_blocks_unreadable_dataset(tmp_path, monkeypatch):
@@ -901,6 +966,9 @@ async def test_legal_scraper_daemon_scopes_bluebook_skip_live_search_env(tmp_pat
 
 @pytest.mark.asyncio
 async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
+    combined_parquet = tmp_path / "state_laws_all_states.parquet"
+    combined_parquet.write_bytes(b"PAR1")
+
     class _FakeBluebookRun:
         def to_dict(self):
             return {"summary": {"recovery_count": 0}}
@@ -915,6 +983,7 @@ async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
             "build": {
                 "states": states,
                 "missing_jsonld_states": [],
+                "combined_parquet_path": str(combined_parquet),
                 "combined_row_count": 100,
             },
             "scrape_gap_states": [],
@@ -961,6 +1030,7 @@ async def test_legal_scraper_daemon_full_corpus_completeness_audit(tmp_path):
     assert completeness["status"] == "complete"
     assert completeness["required_state_count"] == 2
     assert completeness["missing_state_refresh_states"] == []
+    assert completeness["missing_state_refresh_combined_artifact"] is False
     assert completeness["missing_agentic_corpora"] == []
     assert completeness["missing_agentic_states_by_corpus"] == {}
 
@@ -1055,6 +1125,65 @@ async def test_legal_scraper_daemon_full_corpus_marks_missing_state_artifacts_pa
 
 
 @pytest.mark.asyncio
+async def test_legal_scraper_daemon_full_corpus_marks_missing_combined_state_refresh_artifact_partial(tmp_path):
+    present_parquet = tmp_path / "STATE-MN.parquet"
+    present_parquet.write_bytes(b"PAR1")
+    present_parquet_or = tmp_path / "STATE-OR.parquet"
+    present_parquet_or.write_bytes(b"PAR1")
+
+    async def _fake_refresh_runner(args):
+        return {
+            "status": "success",
+            "build": {
+                "states": ["MN", "OR"],
+                "missing_jsonld_states": [],
+                "combined_parquet_path": str(tmp_path / "state_laws_all_states.parquet"),
+                "combined_row_count": 10,
+                "state_reports": [
+                    {
+                        "state": "MN",
+                        "parquet_path": str(present_parquet),
+                        "merged_row_count": 5,
+                    },
+                    {
+                        "state": "OR",
+                        "parquet_path": str(present_parquet_or),
+                        "merged_row_count": 5,
+                    },
+                ],
+            },
+            "scrape_gap_states": [],
+            "build_gap_states": [],
+        }
+
+    daemon = LegalScraperDaemon(
+        LegalScraperDaemonConfig(
+            full_corpus=True,
+            states=["MN", "OR"],
+            output_dir=str(tmp_path / "daemon"),
+            bluebook=BluebookDaemonConfig(enabled=False),
+            state_refresh=StateRefreshDaemonConfig(scrape=True),
+            agentic_corpora=AgenticCorpusDaemonConfig(enabled=False),
+        ),
+        state_refresh_runner=_fake_refresh_runner,
+    )
+
+    result = await daemon.run()
+    completeness = result["cycles"][0]["corpus_completeness"]
+    retry = result["cycles"][0]["full_corpus_retry"]
+    retry_payload = json.loads(Path(retry["cycle_retry_path"]).read_text(encoding="utf-8"))
+
+    assert result["cycles"][0]["status"] == "partial_success"
+    assert completeness["status"] == "incomplete"
+    assert completeness["missing_state_refresh_states"] == []
+    assert completeness["missing_state_refresh_combined_artifact"] is True
+    assert retry["status"] == "needs_retry"
+    assert retry_payload["missing_state_refresh_combined_artifact"] is True
+    assert retry_payload["retry_phases"][0]["phase"] == "state_refresh"
+    assert retry_payload["retry_phases"][0]["states"] == ["MN", "OR"]
+
+
+@pytest.mark.asyncio
 async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
     async def _fake_refresh_runner(args):
         return {
@@ -1080,6 +1209,37 @@ async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
                         "diagnostics": {
                             "coverage": {
                                 "coverage_gap_states": ["OR"],
+                            },
+                        },
+                    },
+                },
+            }
+        if corpus == "state_admin_rules":
+            return {
+                "status": "error",
+                "summary": {
+                    "corpus": corpus,
+                    "states": [],
+                    "latest_cycle": {
+                        "diagnostics": {
+                            "coverage": {
+                                "coverage_gap_states": ["MN", "OR"],
+                            },
+                            "documents": {
+                                "recovered_row_artifacts": {
+                                    "status": "success",
+                                    "row_count": 4,
+                                    "state_artifacts": {
+                                        "MN": {"statutes_jsonl_path": "/tmp/MN_admin.jsonl"},
+                                    },
+                                },
+                            },
+                        },
+                        "recovered_row_artifacts": {
+                            "status": "success",
+                            "row_count": 4,
+                            "state_artifacts": {
+                                "MN": {"statutes_jsonl_path": "/tmp/MN_admin.jsonl"},
                             },
                         },
                     },
@@ -1133,6 +1293,11 @@ async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
         "state_laws": ["OR"],
     }
     assert retry_payload["retry_phases"][0]["phase"] == "state_refresh"
+    assert retry_payload["merge_handoff_count"] == 1
+    assert retry_payload["merge_handoffs"][0]["type"] == "state_admin_rules_recovered_rows_merge"
+    assert retry_payload["merge_handoffs"][0]["states"] == ["MN"]
+    assert retry_payload["merge_handoffs"][0]["input_count"] == 1
+    assert retry_payload["merge_handoffs"][0]["inputs"] == ["/tmp/MN_admin.jsonl"]
     assert {
         (phase.get("phase"), phase.get("corpus"))
         for phase in retry_payload["retry_phases"]
@@ -1147,6 +1312,8 @@ async def test_legal_scraper_daemon_writes_full_corpus_retry_manifest(tmp_path):
 async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_complete_cycle(tmp_path):
     latest_retry_path = tmp_path / "latest_full_corpus_retry.json"
     latest_retry_path.write_text(json.dumps({"status": "needs_retry"}), encoding="utf-8")
+    combined_parquet = tmp_path / "state_laws_all_states.parquet"
+    combined_parquet.write_bytes(b"PAR1")
 
     async def _fake_refresh_runner(args):
         states = str(args.states).split(",")
@@ -1155,6 +1322,7 @@ async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_comp
             "build": {
                 "states": states,
                 "missing_jsonld_states": [],
+                "combined_parquet_path": str(combined_parquet),
                 "combined_row_count": 10,
             },
             "scrape_gap_states": [],
@@ -1206,6 +1374,9 @@ async def test_legal_scraper_daemon_clears_full_corpus_retry_manifest_after_comp
 
 @pytest.mark.asyncio
 async def test_legal_scraper_daemon_full_corpus_marks_agentic_state_gaps_partial(tmp_path):
+    combined_parquet = tmp_path / "state_laws_all_states.parquet"
+    combined_parquet.write_bytes(b"PAR1")
+
     async def _fake_refresh_runner(args):
         states = str(args.states).split(",")
         return {
@@ -1213,6 +1384,7 @@ async def test_legal_scraper_daemon_full_corpus_marks_agentic_state_gaps_partial
             "build": {
                 "states": states,
                 "missing_jsonld_states": [],
+                "combined_parquet_path": str(combined_parquet),
                 "combined_row_count": 10,
             },
             "scrape_gap_states": [],

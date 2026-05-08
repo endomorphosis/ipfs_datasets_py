@@ -26,6 +26,7 @@ STATE_MODULES = {
     "CA": "california",
     "CO": "colorado",
     "CT": "connecticut",
+    "DC": "district_of_columbia",
     "DE": "delaware",
     "FL": "florida",
     "GA": "georgia",

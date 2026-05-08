@@ -375,11 +375,11 @@ class StateLawsAgenticDaemonConfig:
     per_state_timeout_seconds: float = 86400.0
     scrape_timeout_seconds: float = 0.0
     scrape_heartbeat_seconds: float = 60.0
-    admin_agentic_max_candidates_per_state: Optional[int] = 1000
-    admin_agentic_max_fetch_per_state: Optional[int] = 1000
-    admin_agentic_max_results_per_domain: Optional[int] = 1000
-    admin_agentic_max_hops: Optional[int] = 4
-    admin_agentic_max_pages: Optional[int] = 1000
+    admin_agentic_max_candidates_per_state: Optional[int] = 0
+    admin_agentic_max_fetch_per_state: Optional[int] = 0
+    admin_agentic_max_results_per_domain: Optional[int] = 0
+    admin_agentic_max_hops: Optional[int] = 0
+    admin_agentic_max_pages: Optional[int] = 0
     admin_agentic_fetch_concurrency: Optional[int] = None
     admin_parallel_assist_enabled: bool = True
     admin_parallel_assist_state_limit: int = 6

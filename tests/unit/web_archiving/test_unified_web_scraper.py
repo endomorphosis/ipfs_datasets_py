@@ -418,6 +418,42 @@ def test_common_crawl_search_options_enable_hf_remote_when_no_local_meta(
     assert options["hf_revision"] == "main"
 
 
+def test_cloudflare_credential_keyring_lookup_is_subprocess_bounded(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    token_names = (
+        "IPFS_DATASETS_CLOUDFLARE_API_TOKEN",
+        "LEGAL_SCRAPER_CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_AGENT_API_KEY",
+    )
+    account_names = (
+        "IPFS_DATASETS_CLOUDFLARE_ACCOUNT_ID",
+        "LEGAL_SCRAPER_CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_AGENT_ACCOUNT_ID",
+    )
+    for name in token_names + account_names:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("IPFS_DATASETS_PY_KEYRING_TIMEOUT_SECONDS", "0.2")
+
+    calls: list[float] = []
+
+    def _fake_run(*_args, **kwargs):
+        calls.append(float(kwargs["timeout"]))
+        stdout = json.dumps({"value": "cf-secret-token"})
+        return SimpleNamespace(returncode=0, stdout=stdout)
+
+    monkeypatch.setattr("ipfs_datasets_py.processors.web_archiving.unified_web_scraper.subprocess.run", _fake_run)
+
+    scraper = object.__new__(UnifiedWebScraper)
+    scraper.config = ScraperConfig()
+    account_id, api_token = scraper._resolve_cloudflare_credentials()
+
+    assert account_id == "cf-secret-token"
+    assert api_token == "cf-secret-token"
+    assert calls == [0.2, 0.2]
+
+
 @pytest.mark.anyio
 async def test_common_crawl_exact_url_scrape_rejects_domain_only_match(
     monkeypatch: pytest.MonkeyPatch,

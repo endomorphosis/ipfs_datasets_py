@@ -110,6 +110,23 @@ def _admin_rules_force_state_hf_index() -> bool:
     }
 
 
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = str(os.getenv(name, "")).strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = str(os.getenv(name, "")).strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 class HuggingFaceAPISearch:
     """Search HuggingFace Common Crawl indexes via API without full download.
     
@@ -149,9 +166,14 @@ class HuggingFaceAPISearch:
         """
         self.api_key = api_key or _resolve_hf_api_token()
         self.bill_to = _resolve_hf_bill_to(bill_to)
-        self.use_streaming = use_streaming and HAVE_DATASETS
+        streaming_disabled = _env_flag("IPFS_DATASETS_PY_HF_API_SEARCH_DISABLE_STREAMING")
+        streaming_enabled_override = os.getenv("IPFS_DATASETS_PY_HF_API_SEARCH_STREAMING")
+        if streaming_enabled_override is not None and str(streaming_enabled_override).strip():
+            use_streaming = _env_flag("IPFS_DATASETS_PY_HF_API_SEARCH_STREAMING", default=use_streaming)
+        self.use_streaming = bool(use_streaming and HAVE_DATASETS and not streaming_disabled)
         self.cache_dir = Path(cache_dir) if cache_dir else Path.home() / ".cache" / "hf_api_search"
         self.max_results = max_results
+        self.max_scan_rows = _env_int("IPFS_DATASETS_PY_HF_API_SEARCH_MAX_SCAN_ROWS", 5000)
         
         # Create cache directory
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -372,8 +394,19 @@ class HuggingFaceAPISearch:
                 token=self.api_key
             )
             
-            # Iterate through records
+            # Iterate through records. Full streaming scans can otherwise stall a
+            # full-corpus scrape on very large sidecar indexes before the real
+            # scraper work begins.
+            scanned = 0
             for record in dataset:
+                scanned += 1
+                if self.max_scan_rows > 0 and scanned > self.max_scan_rows:
+                    logger.info(
+                        "Stopping streaming search for %s after %s scanned rows without enough matches",
+                        dataset_name,
+                        self.max_scan_rows,
+                    )
+                    break
                 if len(results) >= result_limit:
                     break
                 

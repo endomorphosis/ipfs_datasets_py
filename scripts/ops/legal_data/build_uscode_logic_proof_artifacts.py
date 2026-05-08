@@ -515,6 +515,7 @@ def _generate_llm_logic(
                     provider=llm_provider or None,
                     model_name=model_candidate or None,
                     allow_local_fallback=False,
+                    disable_model_retry=True,
                     max_new_tokens=int(llm_max_new_tokens),
                     temperature=float(llm_temperature),
                     timeout=float(llm_timeout),
@@ -788,6 +789,11 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--llm-temperature", type=float, default=0.0)
     parser.add_argument("--llm-trace-dir", default="")
     parser.add_argument("--llm-retries", type=int, default=2)
+    parser.add_argument(
+        "--abort-on-llm-quota",
+        action="store_true",
+        help="Stop the shard immediately when the pinned LLM reports quota or usage-limit exhaustion.",
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args()
 
@@ -904,7 +910,22 @@ def main() -> int:
             out_rows.append(built)
             completed.add(cid)
         except Exception as exc:
-            failures.append({"index": str(index), "ipfs_cid": cid, "error": f"{type(exc).__name__}: {exc}"})
+            error_text = f"{type(exc).__name__}: {exc}"
+            failures.append({"index": str(index), "ipfs_cid": cid, "error": error_text})
+            if (
+                bool(args.abort_on_llm_quota)
+                and str(args.logic_source) == "llm_router"
+                and ("usage limit" in error_text.lower() or "quota" in error_text.lower())
+            ):
+                if out_rows:
+                    _write_parquet(output_path, out_rows)
+                _write_manifest(manifest_path, _manifest("blocked_llm_quota"))
+                if args.json:
+                    print(json.dumps(_manifest("blocked_llm_quota"), indent=2, ensure_ascii=False))
+                else:
+                    print(f"Blocked by LLM quota after {len(out_rows)} completed rows")
+                    print(f"Output: {output_path}")
+                return 2
         since_checkpoint += 1
         if since_checkpoint >= checkpoint_every:
             if out_rows:
