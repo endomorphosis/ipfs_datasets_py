@@ -93,6 +93,7 @@ class TodoDaemonRunner:
         board_path = self.config.resolve(self.config.task_board)
         board = read_text(board_path)
         tasks = self.hooks.parse_tasks(board)
+        self.write_status("selecting_task", target_task="")
         selected = self.hooks.select_task(tasks, self.config)
         if selected is None:
             proposal = Proposal(summary=self.hooks.no_eligible_summary, failure_kind="no_eligible_tasks")
