@@ -87,6 +87,108 @@ def _caveat_truthy(caveats: Dict[str, Any], *names: str) -> bool:
     return any(caveats.get(name) is True for name in names)
 
 
+def _assert_caveat_subset(
+    *,
+    parent_caveats: Mapping[str, Any],
+    child_caveats: Mapping[str, Any],
+    key: str,
+    parent_label: str = "wallet_grant",
+) -> None:
+    parent_value = parent_caveats.get(key)
+    if parent_value is None:
+        return
+    if key not in child_caveats:
+        raise ValueError(f"UCAN profile caveats must preserve {parent_label} {key} caveat")
+    child_value = child_caveats[key]
+    if not _caveat_values(child_value).issubset(_caveat_values(parent_value)):
+        raise ValueError(f"UCAN profile caveats exceed {parent_label} {key} caveat")
+
+
+def _assert_not_before_preserved(
+    *,
+    parent_caveats: Mapping[str, Any],
+    child_caveats: Mapping[str, Any],
+    key: str,
+    parent_label: str = "wallet_grant",
+) -> None:
+    parent_value = parent_caveats.get(key)
+    if parent_value is None:
+        return
+    if key not in child_caveats:
+        raise ValueError(f"UCAN profile caveats must preserve {parent_label} {key} caveat")
+    if _parse_datetime(str(child_caveats[key])) < _parse_datetime(str(parent_value)):
+        raise ValueError(f"UCAN profile caveats weaken {parent_label} {key} caveat")
+
+
+def _assert_caveats_preserve_grant(
+    profile_caveats: Mapping[str, Any],
+    grant_caveats: Mapping[str, Any],
+) -> None:
+    """Ensure adapter-visible caveats are no broader than wallet grant caveats."""
+
+    if not grant_caveats:
+        return
+
+    exact_or_custom_keys = set(grant_caveats)
+    subset_keys = {
+        "record_ids",
+        "allowed_record_ids",
+        "data_types",
+        "allowed_data_types",
+        "output_types",
+        "allowed_output_types",
+    }
+    for key in subset_keys:
+        exact_or_custom_keys.discard(key)
+        _assert_caveat_subset(parent_caveats=grant_caveats, child_caveats=profile_caveats, key=key)
+
+    for key in ("not_before", "nbf"):
+        exact_or_custom_keys.discard(key)
+        _assert_not_before_preserved(parent_caveats=grant_caveats, child_caveats=profile_caveats, key=key)
+
+    for key in ("user_presence_required", "require_user_presence"):
+        exact_or_custom_keys.discard(key)
+        if grant_caveats.get(key) is True and profile_caveats.get(key) is not True:
+            raise ValueError(f"UCAN profile caveats must preserve wallet_grant {key} caveat")
+
+    exact_or_custom_keys.discard("max_delegation_depth")
+    if "max_delegation_depth" in grant_caveats:
+        if "max_delegation_depth" not in profile_caveats:
+            raise ValueError("UCAN profile caveats must preserve wallet_grant max_delegation_depth caveat")
+        if int(profile_caveats["max_delegation_depth"]) > int(grant_caveats["max_delegation_depth"]):
+            raise ValueError("UCAN profile caveats exceed wallet_grant max_delegation_depth caveat")
+
+    for key in sorted(exact_or_custom_keys):
+        if key not in profile_caveats:
+            raise ValueError(f"UCAN profile caveats must preserve wallet_grant {key} caveat")
+        if profile_caveats[key] != grant_caveats[key]:
+            raise ValueError(f"UCAN profile caveats changed wallet_grant {key} caveat")
+
+
+def _assert_caveats_include_source(
+    profile_caveats: Mapping[str, Any],
+    source_caveats: Mapping[str, Any],
+    *,
+    source_label: str,
+) -> None:
+    for key, value in source_caveats.items():
+        if key not in profile_caveats:
+            raise ValueError(f"UCAN profile caveats must include {source_label} {key} caveat")
+        if profile_caveats[key] != value:
+            raise ValueError(f"UCAN profile caveats {key} does not match {source_label}")
+
+
+def _effective_profile_caveats(
+    invocation_caveats: Mapping[str, Any] | None,
+    grant: Mapping[str, Any] | None,
+) -> Dict[str, Any]:
+    grant_caveats = dict((grant or {}).get("caveats") or {})
+    effective = dict(grant_caveats)
+    effective.update(dict(invocation_caveats or {}))
+    _assert_caveats_preserve_grant(effective, grant_caveats)
+    return effective
+
+
 def assert_caveats_allow(
     caveats: Dict[str, Any],
     *,
@@ -538,7 +640,7 @@ def invocation_to_ucan_profile_payload(
     capability = {
         "with": invocation.resource,
         "can": invocation.ability,
-        "nb": dict(invocation.caveats or {}),
+        "nb": _effective_profile_caveats(invocation.caveats, grant_dict),
     }
     payload = {
         "profile": WALLET_UCAN_PROFILE_ID,
@@ -712,8 +814,11 @@ def validate_ucan_profile_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
         for key, expected in comparisons.items():
             if str(wallet_invocation.get(key)) != expected:
                 raise ValueError(f"wallet_invocation {key} does not match UCAN payload")
-        if dict(wallet_invocation.get("caveats") or {}) != normalized["caveats"]:
-            raise ValueError("wallet_invocation caveats do not match UCAN payload")
+        _assert_caveats_include_source(
+            normalized["caveats"],
+            dict(wallet_invocation.get("caveats") or {}),
+            source_label="wallet_invocation",
+        )
         invocation_grant_id = wallet_invocation.get("grant_id")
         if invocation_grant_id is not None and str(invocation_grant_id) not in normalized["proofs"]:
             raise ValueError("wallet_invocation grant_id is not in UCAN proof chain")
@@ -728,9 +833,23 @@ def validate_ucan_profile_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
     if isinstance(wallet_grant, Mapping):
         if str(wallet_grant.get("issuer_did")) != normalized["issuer_did"]:
             raise ValueError("wallet_grant issuer_did does not match UCAN payload")
+        if str(wallet_grant.get("audience_did")) != normalized["audience_did"]:
+            raise ValueError("wallet_grant audience_did does not match UCAN payload")
+        if wallet_grant.get("status", "active") != "active":
+            raise ValueError("wallet_grant is not active")
         grant_id = wallet_grant.get("grant_id")
         if grant_id is not None and str(grant_id) not in normalized["proofs"]:
             raise ValueError("wallet_grant grant_id is not in UCAN proof chain")
+        grant_abilities = {str(ability) for ability in wallet_grant.get("abilities") or []}
+        if normalized["ability"] not in grant_abilities and "*" not in grant_abilities:
+            raise ValueError("wallet_grant ability does not cover UCAN payload")
+        grant_resources = [str(resource) for resource in wallet_grant.get("resources") or []]
+        if not _matches_resource(grant_resources, normalized["resource"]):
+            raise ValueError("wallet_grant resources do not cover UCAN payload")
+        _assert_caveats_preserve_grant(
+            normalized["caveats"],
+            dict(wallet_grant.get("caveats") or {}),
+        )
 
     return normalized
 
@@ -878,8 +997,11 @@ def validate_wallet_ucan_conformance_fixture(fixture: Mapping[str, Any]) -> Dict
     for key, value in token_comparisons.items():
         if value != normalized[key]:
             raise ValueError(f"Conformance fixture token {key} does not match profile payload")
-    if dict(token_invocation.caveats or {}) != normalized["caveats"]:
-        raise ValueError("Conformance fixture token caveats do not match profile payload")
+    _assert_caveats_include_source(
+        normalized["caveats"],
+        dict(token_invocation.caveats or {}),
+        source_label="token",
+    )
     if token_invocation.grant_id not in normalized["proofs"]:
         raise ValueError("Conformance fixture token grant_id is not in proof chain")
 

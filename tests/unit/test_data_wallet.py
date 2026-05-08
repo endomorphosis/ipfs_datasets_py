@@ -2004,6 +2004,63 @@ def test_wallet_ucan_external_adapter_fixture_preserves_dag_cbor_bytes(tmp_path)
     assert fixture_normalized["external_cid"] == fixture["external_adapters"][WALLET_UCAN_EXTERNAL_ADAPTER_KEY]["cid"]
 
 
+def test_wallet_ucan_external_adapter_rejects_grant_widening(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    owner_secret = b"o" * 32
+    delegate_secret = b"d" * 32
+    wallet = service.create_wallet(owner_did=OWNER)
+    source = tmp_path / "grant-bounded-adapter-case-note.txt"
+    source.write_text("Grant-bounded adapter fixture must not expose this text.", encoding="utf-8")
+    record = service.add_document(wallet.wallet_id, source, actor_secret=owner_secret)
+    resource = resource_for_record(wallet.wallet_id, record.record_id)
+    grant = service.create_grant(
+        wallet_id=wallet.wallet_id,
+        issuer_did=OWNER,
+        audience_did=ADVOCATE,
+        resources=[resource],
+        abilities=["record/analyze"],
+        caveats={"purpose": "case_review", "output_types": ["summary"]},
+        issuer_secret=owner_secret,
+        audience_secret=delegate_secret,
+    )
+    invocation = service.issue_invocation(
+        wallet.wallet_id,
+        grant_id=grant.grant_id,
+        actor_did=ADVOCATE,
+        resource=resource,
+        ability="record/analyze",
+        actor_secret=delegate_secret,
+    )
+    profile_payload = invocation_to_ucan_profile_payload(invocation, grant=grant)
+    adapter_fixture = wallet_ucan_external_adapter_fixture(profile_payload=profile_payload)
+
+    assert profile_payload["ucan"]["att"][0]["nb"] == {
+        "purpose": "case_review",
+        "output_types": ["summary"],
+    }
+    assert validate_wallet_ucan_external_adapter_fixture(
+        adapter_fixture,
+        profile_payload=profile_payload,
+    )["caveats"] == {"purpose": "case_review", "output_types": ["summary"]}
+
+    widened_caveats = json.loads(json.dumps(profile_payload))
+    widened_caveats["ucan"]["att"][0]["nb"].pop("output_types")
+    with pytest.raises(ValueError, match="preserve wallet_grant output_types"):
+        validate_ucan_profile_payload(widened_caveats)
+
+    widened_ability = json.loads(json.dumps(profile_payload))
+    widened_ability["ucan"]["att"][0]["can"] = "record/decrypt"
+    widened_ability["wallet_invocation"]["ability"] = "record/decrypt"
+    with pytest.raises(ValueError, match="wallet_grant ability"):
+        validate_ucan_profile_payload(widened_ability)
+
+    widened_resource = json.loads(json.dumps(profile_payload))
+    widened_resource["ucan"]["att"][0]["with"] = resource_for_record(wallet.wallet_id, "different-record")
+    widened_resource["wallet_invocation"]["resource"] = widened_resource["ucan"]["att"][0]["with"]
+    with pytest.raises(ValueError, match="wallet_grant resources"):
+        validate_ucan_profile_payload(widened_resource)
+
+
 def test_wallet_ucan_conformance_fixture_cli_round_trip(tmp_path, capsys):
     from ipfs_datasets_py.wallet.cli import main as wallet_cli_main
 
