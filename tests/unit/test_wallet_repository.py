@@ -101,6 +101,9 @@ def test_local_wallet_repository_persists_analytics_ledger(tmp_path):
     assert ledger_report["valid"] is True
     assert ledger_payload["snapshot_type"] == "wallet_repository_analytics_ledger_v1"
     assert ledger_payload["snapshot_hash"] == repository.snapshot_hash(ledger_payload["ledger"])
+    assert "wallet_ids" not in ledger_payload["ledger"]
+    assert wallet1.wallet_id not in json.dumps(ledger_payload["ledger"])
+    assert wallet2.wallet_id not in json.dumps(ledger_payload["ledger"])
     assert loaded_wallet_ids == sorted([wallet1.wallet_id, wallet2.wallet_id])
     assert restored.analytics_templates[template.template_id].status == "approved"
     assert len(restored.analytics_consents) == 2

@@ -3088,7 +3088,12 @@ class DataWalletService:
         if disallowed:
             raise AccessDeniedError(f"Analytics fields are not consented: {sorted(disallowed)}")
 
-        nullifier = contribution_nullifier(wallet_id, template_id, consent_id)
+        nullifier = contribution_nullifier(
+            wallet_id,
+            template_id,
+            consent_id,
+            wallet_secret=self._ensure_principal_secret(wallet.owner_did),
+        )
         if any(item.nullifier == nullifier for item in self.analytics_contributions.values()):
             raise AccessDeniedError("Duplicate analytics contribution rejected by nullifier")
 
@@ -3392,20 +3397,29 @@ class DataWalletService:
             ),
         }
 
-    def export_analytics_ledger(self) -> Dict[str, Any]:
+    def export_analytics_ledger(self, *, redact_subjects: bool = True) -> Dict[str, Any]:
         """Export durable aggregate analytics state shared across wallets."""
 
-        return {
+        consents = [
+            consent.to_dict()
+            for consent in sorted(self.analytics_consents.values(), key=lambda item: item.consent_id)
+        ]
+        if redact_subjects:
+            consents = [self._redacted_analytics_consent(consent) for consent in consents]
+
+        ledger = {
             "ledger_type": "wallet_analytics_ledger_v1",
-            "wallet_ids": sorted(self.wallets),
+            "subject_count": len({consent.wallet_id for consent in self.analytics_consents.values()}),
+            "subject_id_policy": (
+                "redacted-consent-subject-v1"
+                if redact_subjects
+                else "private-wallet-id"
+            ),
             "analytics_templates": [
                 template.to_dict()
                 for template in sorted(self.analytics_templates.values(), key=lambda item: item.template_id)
             ],
-            "analytics_consents": [
-                consent.to_dict()
-                for consent in sorted(self.analytics_consents.values(), key=lambda item: item.consent_id)
-            ],
+            "analytics_consents": consents,
             "analytics_contributions": [
                 contribution.to_dict()
                 for contribution in sorted(
@@ -3419,6 +3433,9 @@ class DataWalletService:
             ],
             "analytics_query_budget_spent": dict(sorted(self.analytics_query_budget_spent.items())),
         }
+        if not redact_subjects:
+            ledger["wallet_ids"] = sorted(self.wallets)
+        return ledger
 
     def import_analytics_ledger(self, ledger: Dict[str, Any]) -> None:
         """Import durable aggregate analytics state."""
@@ -3428,7 +3445,14 @@ class DataWalletService:
         for template_data in ledger.get("analytics_templates", []):
             self.analytics_templates[template_data["template_id"]] = AnalyticsTemplate(**template_data)
         for consent_data in ledger.get("analytics_consents", []):
-            self.analytics_consents[consent_data["consent_id"]] = AnalyticsConsent(**consent_data)
+            consent_id = consent_data["consent_id"]
+            incoming = AnalyticsConsent(**consent_data)
+            existing = self.analytics_consents.get(consent_id)
+            if existing is None or (
+                self._is_redacted_analytics_subject(existing.wallet_id)
+                and not self._is_redacted_analytics_subject(incoming.wallet_id)
+            ):
+                self.analytics_consents[consent_id] = incoming
         for contribution_data in ledger.get("analytics_contributions", []):
             self.analytics_contributions[contribution_data["contribution_id"]] = AnalyticsContribution(
                 **contribution_data
@@ -4412,6 +4436,24 @@ class DataWalletService:
         self.analytics_query_budget_spent[budget_key] = next_spent
         return next_spent
 
+    @staticmethod
+    def _redacted_analytics_consent(consent: Dict[str, Any]) -> Dict[str, Any]:
+        redacted = dict(consent)
+        redacted["wallet_id"] = "analytics-subject:" + sha256_hex(
+            canonical_bytes(
+                {
+                    "domain": "wallet-analytics-subject-v1",
+                    "template_id": consent.get("template_id"),
+                    "consent_id": consent.get("consent_id"),
+                }
+            )
+        )[:32]
+        return redacted
+
+    @staticmethod
+    def _is_redacted_analytics_subject(wallet_id: str) -> bool:
+        return str(wallet_id).startswith("analytics-subject:")
+
     def _audit_aggregate_query(
         self,
         template_id: str,
@@ -4427,6 +4469,8 @@ class DataWalletService:
             }
         )
         for wallet_id in wallet_ids:
+            if wallet_id not in self.audit_events:
+                continue
             append_audit_event(
                 self.audit_events[wallet_id],
                 wallet_id=wallet_id,

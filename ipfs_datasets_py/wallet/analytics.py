@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import uuid
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -11,16 +12,34 @@ from .models import AggregateResult, AnalyticsContribution
 from .privacy import noisy_count
 
 
-def contribution_nullifier(wallet_id: str, template_id: str, consent_id: str) -> str:
+def contribution_nullifier(
+    wallet_id: str,
+    template_id: str,
+    consent_id: str,
+    *,
+    wallet_secret: bytes | None = None,
+    domain: str = "wallet-analytics-nullifier-v1",
+) -> str:
     """Return a stable per-wallet/per-template nullifier.
 
-    This MVP uses a deterministic hash so duplicate contributions can be
-    rejected in tests. Production should derive nullifiers from a wallet secret
-    and study domain separator.
+    When a wallet secret is supplied, the nullifier is a keyed digest so a
+    released analytics ledger cannot be linked back to an enumerated wallet ID.
+    The consent ID remains intentionally outside the keyed message so a wallet
+    cannot bypass duplicate protection by creating a fresh consent for the same
+    analytics template.
     """
 
     _ = consent_id
-    return hashlib.sha256(f"{wallet_id}:{template_id}".encode("utf-8")).hexdigest()
+    payload = canonical_bytes(
+        {
+            "domain": domain,
+            "wallet_id": wallet_id,
+            "template_id": template_id,
+        }
+    )
+    if wallet_secret is not None:
+        return hmac.new(wallet_secret, payload, hashlib.sha256).hexdigest()
+    return hashlib.sha256(payload).hexdigest()
 
 
 def make_contribution(

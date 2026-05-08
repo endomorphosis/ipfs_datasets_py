@@ -2807,6 +2807,39 @@ def test_analytics_contribution_requires_consented_fields(tmp_path):
         )
 
 
+def test_analytics_nullifier_is_secret_keyed_not_wallet_id_hash(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet = service.create_wallet(owner_did=OWNER)
+    owner_secret = b"a" * 32
+    service.set_principal_secret(OWNER, owner_secret)
+    template_id = "secret_keyed_nullifier_v1"
+    consent = service.create_analytics_consent(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        template_id=template_id,
+        allowed_record_types=["location", "need"],
+        allowed_derived_fields=["county"],
+    )
+
+    contribution = service.create_analytics_contribution(
+        wallet.wallet_id,
+        actor_did=OWNER,
+        consent_id=consent.consent_id,
+        template_id=template_id,
+        fields={"county": "Multnomah"},
+    )
+
+    legacy_wallet_id_hash = hashlib.sha256(f"{wallet.wallet_id}:{template_id}".encode("utf-8")).hexdigest()
+    assert contribution.nullifier == wallet_analytics.contribution_nullifier(
+        wallet.wallet_id,
+        template_id,
+        consent.consent_id,
+        wallet_secret=owner_secret,
+    )
+    assert contribution.nullifier != legacy_wallet_id_hash
+    assert wallet.wallet_id not in json.dumps(contribution.to_dict())
+
+
 def test_analytics_template_constrains_consent_and_snapshot(tmp_path):
     service = WalletService(storage_dir=tmp_path)
     wallet = service.create_wallet(owner_did=OWNER)
@@ -2856,6 +2889,62 @@ def test_analytics_template_constrains_consent_and_snapshot(tmp_path):
     restored = WalletService(storage_dir=tmp_path / "restored")
     restored.import_wallet_snapshot(snapshot)
     assert restored.list_analytics_templates()[0].template_id == template.template_id
+
+
+def test_analytics_ledger_redacts_subject_ids_and_import_preserves_wallet_consents(tmp_path):
+    service = WalletService(storage_dir=tmp_path)
+    wallet1 = service.create_wallet(owner_did="did:key:ledger-owner1")
+    wallet2 = service.create_wallet(owner_did="did:key:ledger-owner2")
+    template_id = "redacted_ledger_subjects_v1"
+    consents = []
+    for wallet, owner in [(wallet1, "did:key:ledger-owner1"), (wallet2, "did:key:ledger-owner2")]:
+        consent = service.create_analytics_consent(
+            wallet.wallet_id,
+            actor_did=owner,
+            template_id=template_id,
+            allowed_record_types=["location", "need"],
+            allowed_derived_fields=["county"],
+            aggregation_policy={"min_cohort_size": 2, "epsilon_budget": 0.5},
+        )
+        consents.append(consent)
+        service.create_analytics_contribution(
+            wallet.wallet_id,
+            actor_did=owner,
+            consent_id=consent.consent_id,
+            template_id=template_id,
+            fields={"county": "Multnomah"},
+        )
+
+    ledger = service.export_analytics_ledger()
+    serialized = json.dumps(ledger)
+
+    assert "wallet_ids" not in ledger
+    assert ledger["subject_count"] == 2
+    assert ledger["subject_id_policy"] == "redacted-consent-subject-v1"
+    assert wallet1.wallet_id not in serialized
+    assert wallet2.wallet_id not in serialized
+    assert all(
+        consent["wallet_id"].startswith("analytics-subject:")
+        for consent in ledger["analytics_consents"]
+    )
+
+    restored = WalletService(storage_dir=tmp_path / "restored")
+    restored.import_wallet_snapshot(service.export_wallet_snapshot(wallet1.wallet_id))
+    assert restored.analytics_consents[consents[0].consent_id].wallet_id == wallet1.wallet_id
+    restored.import_analytics_ledger(ledger)
+    assert restored.analytics_consents[consents[0].consent_id].wallet_id == wallet1.wallet_id
+
+    ledger_first = WalletService(storage_dir=tmp_path / "ledger-first")
+    ledger_first.import_analytics_ledger(ledger)
+    assert ledger_first.analytics_consents[consents[0].consent_id].wallet_id.startswith("analytics-subject:")
+    ledger_first.import_wallet_snapshot(service.export_wallet_snapshot(wallet1.wallet_id))
+    assert ledger_first.analytics_consents[consents[0].consent_id].wallet_id == wallet1.wallet_id
+
+    analytics_only = WalletService(storage_dir=tmp_path / "analytics-only")
+    analytics_only.import_analytics_ledger(ledger)
+    result = analytics_only.run_aggregate_count(template_id, min_cohort_size=2)
+    assert result.released is True
+    assert result.count == 2
 
 
 def test_analytics_template_review_states_gate_consent_contribution_and_queries(tmp_path):
