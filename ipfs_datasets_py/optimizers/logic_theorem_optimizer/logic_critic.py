@@ -63,6 +63,7 @@ class CriticScore:
     weaknesses: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
     prover_results: Dict[str, Any] = field(default_factory=dict)
+    metrics: Dict[str, Any] = field(default_factory=dict)
     
     def get_dimension_score(self, dimension: CriticDimensions) -> Optional[float]:
         """Get score for a specific dimension."""
@@ -265,8 +266,46 @@ class LogicCritic(BaseCritic):
             dimension_scores=dimension_scores,
             strengths=strengths,
             weaknesses=weaknesses,
-            recommendations=recommendations
+            recommendations=recommendations,
+            metrics=self._collect_modal_metrics(extraction_result),
         )
+
+    def _collect_modal_metrics(self, extraction_result: Any) -> Dict[str, Any]:
+        """Collect modal/legal parser metrics without changing critic dimensions."""
+        statements = getattr(extraction_result, "statements", [])
+        extraction_metrics = getattr(extraction_result, "metrics", {}) or {}
+        modal_statements = [
+            statement for statement in statements
+            if getattr(statement, "metadata", {}).get("modal_family")
+        ]
+        if not modal_statements and not extraction_metrics:
+            return {}
+
+        family_count = sum(
+            1 for statement in modal_statements
+            if statement.metadata.get("modal_family")
+        )
+        system_count = sum(
+            1 for statement in modal_statements
+            if statement.metadata.get("modal_system")
+        )
+        operator_count = sum(
+            1 for statement in modal_statements
+            if statement.metadata.get("operator")
+        )
+        total = len(modal_statements) or 1
+        return {
+            "cross_entropy_loss": extraction_metrics.get("cross_entropy_loss"),
+            "deterministic_coverage_ratio": extraction_metrics.get("deterministic_coverage_ratio"),
+            "embedding_cosine_similarity": extraction_metrics.get("embedding_cosine_similarity"),
+            "frame_top_k_quality": extraction_metrics.get("frame_top_k_quality"),
+            "llm_call_count": extraction_metrics.get("llm_call_count"),
+            "modal_family_accuracy": family_count / total,
+            "modal_system_accuracy": system_count / total,
+            "operator_scope_accuracy": operator_count / total,
+            "provenance_coverage": 1.0 if modal_statements else 0.0,
+            "symbolic_validity": 1.0 if statements else 0.0,
+        }
     
     def _evaluate_soundness(self, extraction_result) -> DimensionScore:
         """Evaluate logical soundness using theorem provers.

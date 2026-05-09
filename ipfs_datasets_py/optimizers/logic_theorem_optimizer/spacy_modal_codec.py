@@ -1,0 +1,504 @@
+"""spaCy-based legal modal encoder, IR compiler, and vector decoder."""
+
+from __future__ import annotations
+
+import hashlib
+import math
+import re
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+
+from .legal_samples import LegalSample
+from .modal_ir import (
+    ModalIRDocument,
+    ModalIRFormula,
+    ModalIROperator,
+    ModalIRPredicate,
+    ModalIRProvenance,
+)
+from .modal_registry import (
+    DEFAULT_MODAL_REGISTRY,
+    ModalLogicFamily,
+    ModalOperatorSpec,
+    ModalParseProfile,
+    ModalRegistry,
+)
+
+_WHITESPACE_RE = re.compile(r"\s+")
+
+
+@dataclass(frozen=True)
+class SpaCyTokenFeature:
+    """Stable token-level features extracted from a spaCy `Doc`."""
+
+    text: str
+    lemma: str
+    lower: str
+    pos: str
+    dep: str
+    start_char: int
+    end_char: int
+    is_stop: bool = False
+    is_alpha: bool = False
+
+    def normalized(self) -> str:
+        return self.lemma or self.lower or self.text.lower()
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "dep": self.dep,
+            "end_char": self.end_char,
+            "is_alpha": self.is_alpha,
+            "is_stop": self.is_stop,
+            "lemma": self.lemma,
+            "lower": self.lower,
+            "pos": self.pos,
+            "start_char": self.start_char,
+            "text": self.text,
+        }
+
+
+@dataclass(frozen=True)
+class SpaCySentenceFeature:
+    """Sentence span features independent of a live spaCy object."""
+
+    text: str
+    start_char: int
+    end_char: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "end_char": self.end_char,
+            "start_char": self.start_char,
+            "text": self.text,
+        }
+
+
+@dataclass(frozen=True)
+class SpaCyModalCueFeature:
+    """One modal cue matched in encoded text."""
+
+    family: str
+    system: str
+    symbol: str
+    label: str
+    cue: str
+    start_char: int
+    end_char: int
+    token_indices: List[int] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "cue": self.cue,
+            "end_char": self.end_char,
+            "family": self.family,
+            "label": self.label,
+            "start_char": self.start_char,
+            "symbol": self.symbol,
+            "system": self.system,
+            "token_indices": list(self.token_indices),
+        }
+
+
+@dataclass(frozen=True)
+class SpaCyLegalEncoding:
+    """Serializable spaCy-derived intermediate encoding for one legal text."""
+
+    document_id: str
+    text: str
+    normalized_text: str
+    tokens: List[SpaCyTokenFeature]
+    sentences: List[SpaCySentenceFeature]
+    cues: List[SpaCyModalCueFeature]
+    citation: Optional[str] = None
+    source: str = "legal_text"
+    model_name: str = ""
+    used_fallback_model: bool = False
+
+    def modal_family_counts(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for cue in self.cues:
+            counts[cue.family] = counts.get(cue.family, 0) + 1
+        return dict(sorted(counts.items()))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "citation": self.citation,
+            "cues": [cue.to_dict() for cue in self.cues],
+            "document_id": self.document_id,
+            "modal_family_counts": self.modal_family_counts(),
+            "model_name": self.model_name,
+            "normalized_text": self.normalized_text,
+            "sentences": [sentence.to_dict() for sentence in self.sentences],
+            "source": self.source,
+            "text": self.text,
+            "tokens": [token.to_dict() for token in self.tokens],
+            "used_fallback_model": self.used_fallback_model,
+        }
+
+
+class SpaCyLegalEncoder:
+    """Encode legal text using spaCy tokens plus deterministic modal cues."""
+
+    def __init__(
+        self,
+        *,
+        model_name: str = "en_core_web_sm",
+        registry: ModalRegistry = DEFAULT_MODAL_REGISTRY,
+    ) -> None:
+        self.model_name = model_name
+        self.registry = registry
+        self.nlp, self.used_fallback_model = self._load_nlp(model_name)
+
+    def encode(
+        self,
+        text: str,
+        *,
+        document_id: Optional[str] = None,
+        citation: Optional[str] = None,
+        source: str = "legal_text",
+    ) -> SpaCyLegalEncoding:
+        normalized = _normalize(text)
+        resolved_document_id = document_id or _document_id(normalized)
+        doc = self.nlp(normalized)
+        tokens = [
+            SpaCyTokenFeature(
+                text=token.text,
+                lemma=(token.lemma_ or token.lower_).lower(),
+                lower=token.lower_,
+                pos=token.pos_,
+                dep=token.dep_,
+                start_char=token.idx,
+                end_char=token.idx + len(token.text),
+                is_stop=bool(token.is_stop),
+                is_alpha=bool(token.is_alpha),
+            )
+            for token in doc
+        ]
+        sentences = [
+            SpaCySentenceFeature(
+                text=sent.text,
+                start_char=sent.start_char,
+                end_char=sent.end_char,
+            )
+            for sent in doc.sents
+        ]
+        if not sentences and normalized:
+            sentences = [SpaCySentenceFeature(text=normalized, start_char=0, end_char=len(normalized))]
+        return SpaCyLegalEncoding(
+            document_id=resolved_document_id,
+            text=text,
+            normalized_text=normalized,
+            tokens=tokens,
+            sentences=sentences,
+            cues=self._extract_cues(normalized, tokens),
+            citation=citation,
+            source=source,
+            model_name=self.model_name,
+            used_fallback_model=self.used_fallback_model,
+        )
+
+    def _extract_cues(
+        self,
+        normalized: str,
+        tokens: Sequence[SpaCyTokenFeature],
+    ) -> List[SpaCyModalCueFeature]:
+        found: Dict[tuple[int, int, str, str], SpaCyModalCueFeature] = {}
+        token_spans = [(index, token.start_char, token.end_char) for index, token in enumerate(tokens)]
+        for profile in self.registry.all_profiles():
+            for operator in profile.operators:
+                for cue in sorted(operator.cue_terms, key=lambda value: (-len(value), value)):
+                    pattern = re.compile(rf"(?<!\w){re.escape(cue)}(?!\w)", re.IGNORECASE)
+                    for match in pattern.finditer(normalized):
+                        token_indices = [
+                            index
+                            for index, start, end in token_spans
+                            if start < match.end() and end > match.start()
+                        ]
+                        key = (match.start(), match.end(), profile.family.value, operator.symbol)
+                        found[key] = self._cue_feature(
+                            profile,
+                            operator,
+                            cue,
+                            match.start(),
+                            match.end(),
+                            token_indices,
+                        )
+        return sorted(
+            found.values(),
+            key=lambda cue: (cue.start_char, cue.end_char, cue.family, cue.symbol, cue.cue),
+        )
+
+    def _cue_feature(
+        self,
+        profile: ModalParseProfile,
+        operator: ModalOperatorSpec,
+        cue: str,
+        start_char: int,
+        end_char: int,
+        token_indices: Sequence[int],
+    ) -> SpaCyModalCueFeature:
+        return SpaCyModalCueFeature(
+            family=profile.family.value,
+            system=profile.system.value,
+            symbol=operator.symbol,
+            label=operator.aliases[0] if operator.aliases else operator.symbol,
+            cue=cue,
+            start_char=start_char,
+            end_char=end_char,
+            token_indices=list(token_indices),
+        )
+
+    def _load_nlp(self, model_name: str):
+        try:
+            import spacy
+        except ImportError as exc:  # pragma: no cover - dependency is present in supported envs
+            raise RuntimeError("spaCy is required for SpaCyLegalEncoder") from exc
+        try:
+            nlp = spacy.load(model_name)
+            used_fallback = False
+        except OSError:
+            nlp = spacy.blank("en")
+            used_fallback = True
+        if "sentencizer" not in nlp.pipe_names:
+            nlp.add_pipe("sentencizer")
+        return nlp, used_fallback
+
+
+class SpaCyModalIRCompiler:
+    """Compile spaCy legal encodings into canonical modal IR documents."""
+
+    def compile(self, encoding: SpaCyLegalEncoding) -> ModalIRDocument:
+        formulas: List[ModalIRFormula] = []
+        for index, cue in enumerate(encoding.cues, start=1):
+            sentence = _sentence_for_cue(encoding.sentences, cue)
+            tokens = _tokens_for_span(encoding.tokens, sentence.start_char, sentence.end_char)
+            predicate = _predicate_from_tokens(tokens, cue)
+            formulas.append(
+                ModalIRFormula(
+                    formula_id=f"{encoding.document_id}:spacy:f{index:04d}",
+                    operator=ModalIROperator(
+                        family=cue.family,
+                        system=cue.system,
+                        symbol=cue.symbol,
+                        label=cue.label,
+                    ),
+                    predicate=predicate,
+                    provenance=ModalIRProvenance(
+                        source_id=encoding.document_id,
+                        start_char=sentence.start_char,
+                        end_char=sentence.end_char,
+                        citation=encoding.citation,
+                    ),
+                    metadata={
+                        "cue": cue.cue,
+                        "cue_start_char": cue.start_char,
+                        "cue_end_char": cue.end_char,
+                        "encoder": "spacy_modal_codec_v1",
+                    },
+                )
+            )
+        return ModalIRDocument(
+            document_id=encoding.document_id,
+            source=encoding.source,
+            normalized_text=encoding.normalized_text,
+            formulas=formulas,
+            metadata={
+                "citation": encoding.citation,
+                "deterministic_parser": "spacy_modal_codec_v1",
+                "llm_call_count": 0,
+                "model_name": encoding.model_name,
+                "sentence_count": len(encoding.sentences),
+                "token_count": len(encoding.tokens),
+                "used_fallback_model": encoding.used_fallback_model,
+            },
+        )
+
+
+class SpaCyModalDecoder:
+    """Decode spaCy/IR features into deterministic embedding-like vectors."""
+
+    def decode_embedding(self, encoding: SpaCyLegalEncoding, *, dimensions: int = 8) -> List[float]:
+        if dimensions < 1:
+            raise ValueError("dimensions must be >= 1")
+        vector = [0.0 for _ in range(dimensions)]
+        for feature in self._feature_stream(encoding):
+            slot, value = _feature_hash(feature, dimensions)
+            vector[slot] += value
+        norm = math.sqrt(sum(value * value for value in vector))
+        if norm == 0.0:
+            return vector
+        return [round(value / norm, 6) for value in vector]
+
+    def family_logits(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        modal_families: Sequence[str],
+    ) -> Dict[str, float]:
+        logits = {family: -0.25 for family in modal_families}
+        counts = encoding.modal_family_counts()
+        for family, count in counts.items():
+            if family in logits:
+                logits[family] = 2.0 + float(count)
+        if not counts and ModalLogicFamily.HYBRID.value in logits:
+            logits[ModalLogicFamily.HYBRID.value] = 1.0
+        return logits
+
+    def _feature_stream(self, encoding: SpaCyLegalEncoding) -> Iterable[str]:
+        yield f"doclen:{len(encoding.tokens)}"
+        for token in encoding.tokens:
+            if token.is_alpha and not token.is_stop:
+                yield f"lemma:{token.normalized()}"
+            if token.pos:
+                yield f"pos:{token.pos}"
+            if token.dep:
+                yield f"dep:{token.dep}"
+        for cue in encoding.cues:
+            yield f"cue:{cue.family}:{cue.symbol}:{cue.cue.lower()}"
+        for family, count in encoding.modal_family_counts().items():
+            yield f"family:{family}:{count}"
+
+
+class SpaCyModalCodec:
+    """Convenience facade for encoder -> IR -> vector workflows."""
+
+    def __init__(
+        self,
+        *,
+        encoder: Optional[SpaCyLegalEncoder] = None,
+        compiler: Optional[SpaCyModalIRCompiler] = None,
+        decoder: Optional[SpaCyModalDecoder] = None,
+    ) -> None:
+        self.encoder = encoder or SpaCyLegalEncoder()
+        self.compiler = compiler or SpaCyModalIRCompiler()
+        self.decoder = decoder or SpaCyModalDecoder()
+
+    def encode_sample(self, sample: LegalSample) -> SpaCyLegalEncoding:
+        return self.encoder.encode(
+            sample.text,
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+        )
+
+    def compile_sample_ir(self, sample: LegalSample) -> ModalIRDocument:
+        return self.compiler.compile(self.encode_sample(sample))
+
+    def decode_sample_embedding(self, sample: LegalSample, *, dimensions: int) -> List[float]:
+        return self.decoder.decode_embedding(self.encode_sample(sample), dimensions=dimensions)
+
+    def family_logits_for_sample(
+        self,
+        sample: LegalSample,
+        *,
+        modal_families: Sequence[str],
+    ) -> Dict[str, float]:
+        return self.decoder.family_logits(
+            self.encode_sample(sample),
+            modal_families=modal_families,
+        )
+
+    def feature_keys_for_sample(self, sample: LegalSample) -> List[str]:
+        """Return text-derived features that can receive generalizable SGD updates."""
+        encoding = self.encode_sample(sample)
+        return _unique_preserve_order(self.decoder._feature_stream(encoding))
+
+
+def _normalize(text: str) -> str:
+    return _WHITESPACE_RE.sub(" ", text).strip()
+
+
+def _document_id(normalized: str) -> str:
+    digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+    return f"spacy-legal-text-{digest}"
+
+
+def _feature_hash(feature: str, dimensions: int) -> tuple[int, float]:
+    digest = hashlib.sha256(feature.encode("utf-8")).digest()
+    slot = int.from_bytes(digest[:4], "big") % dimensions
+    sign = 1.0 if digest[4] % 2 == 0 else -1.0
+    magnitude = 0.5 + (digest[5] / 255.0)
+    return slot, sign * magnitude
+
+
+def _unique_preserve_order(features: Iterable[str]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for feature in features:
+        if feature in seen:
+            continue
+        seen.add(feature)
+        result.append(feature)
+    return result
+
+
+def _sentence_for_cue(
+    sentences: Sequence[SpaCySentenceFeature],
+    cue: SpaCyModalCueFeature,
+) -> SpaCySentenceFeature:
+    for sentence in sentences:
+        if sentence.start_char <= cue.start_char < sentence.end_char:
+            return sentence
+    return SpaCySentenceFeature(text="", start_char=cue.start_char, end_char=cue.end_char)
+
+
+def _tokens_for_span(
+    tokens: Sequence[SpaCyTokenFeature],
+    start_char: int,
+    end_char: int,
+) -> List[SpaCyTokenFeature]:
+    return [
+        token
+        for token in tokens
+        if token.start_char < end_char and token.end_char > start_char
+    ]
+
+
+def _predicate_from_tokens(
+    tokens: Sequence[SpaCyTokenFeature],
+    cue: SpaCyModalCueFeature,
+) -> ModalIRPredicate:
+    after_cue = [
+        token.normalized()
+        for token in tokens
+        if token.start_char >= cue.end_char and token.is_alpha and not token.is_stop
+    ]
+    before_cue = [
+        token.normalized()
+        for token in tokens
+        if token.end_char <= cue.start_char and token.is_alpha and not token.is_stop
+    ]
+    predicate_terms = after_cue[:6] or before_cue[-6:] or [cue.label]
+    arguments = []
+    if before_cue:
+        arguments.append(f"actor:{'_'.join(before_cue[-4:])}")
+    if after_cue:
+        arguments.append(f"scope:{'_'.join(after_cue[:4])}")
+    return ModalIRPredicate(
+        name="_".join(predicate_terms),
+        arguments=arguments,
+        role=_role_for_cue(cue),
+    )
+
+
+def _role_for_cue(cue: SpaCyModalCueFeature) -> str:
+    if cue.family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
+        return "condition"
+    if cue.family == ModalLogicFamily.TEMPORAL.value:
+        return "temporal_scope"
+    if cue.family == ModalLogicFamily.FRAME.value:
+        return "frame"
+    return "clause"
+
+
+__all__ = [
+    "SpaCyLegalEncoder",
+    "SpaCyLegalEncoding",
+    "SpaCyModalCodec",
+    "SpaCyModalCueFeature",
+    "SpaCyModalDecoder",
+    "SpaCyModalIRCompiler",
+    "SpaCySentenceFeature",
+    "SpaCyTokenFeature",
+]

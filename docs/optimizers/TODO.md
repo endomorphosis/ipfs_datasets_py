@@ -114,6 +114,25 @@ with a new item from a different track.
 
 This plan is intentionally evergreen. It balances refactors, feature growth, test hardening, and documentation quality while keeping delivery incremental and verifiable.
 
+### Logic Parser Sprint: Deterministic Modal Legal Parser
+
+Source plan: `docs/optimizers/logic_theorem_optimizer/MODAL_LEGAL_PARSER_IMPROVEMENT_PLAN.md`
+
+- [x] (P0) [logic] Start supervised fast tests for `logic_theorem_optimizer` and temporal-deontic regressions — Done 2026-05-08: bounded loop rehearsal completed two full iterations before timeout; fast profile produced JUnit XML under `workspace/test-reports/loop-fast-*.xml` and passed `150/150`.
+- [x] (P0) [tests] Restore or replace `ipfs_datasets_py.logic.integration.temporal_deontic_rag_store` for `tests/test_temporal_deontic_rag.py` — Done 2026-05-08: added compatibility shims for temporal-deontic RAG store and document consistency checker; temporal-deontic regression imports and passes.
+- [x] (P0) [graphrag] Fix `test_ontology_schema_invariants.py::test_empty_input_produces_valid_schema` fixture/config drift — Done 2026-05-08: `infer_relationships()` now falls back from `extraction_config` to `config` and treats non-numeric `sentence_window` as zero; GraphRAG adjacency profile passes `27/27`.
+- [x] (P0) [tests] Add baseline modal-family matrix tests that preserve current deontic behavior and mark unsupported non-deontic families as xfail — Done 2026-05-08: added `test_modal_family_baseline_matrix.py`; deontic baselines pass and seven non-deontic modal families are explicit xfail coverage.
+- [x] (P1) [logic] Add modal registry and canonical modal IR contracts — Done 2026-05-08: added `modal_registry.py` and `modal_ir.py`; registry covers all planned modal families and IR has stable JSON/hash tests.
+- [x] (P1) [logic] Implement deterministic legal parser front-end before LLM extraction — Done 2026-05-08: added `legal_modal_parser.py`, parser unit tests, and a legal `ExtractionMode.MODAL` path in `LogicExtractor` that emits modal IR-backed statements without calling the LLM backend.
+- [x] (P1) [graphrag] Implement BM25-guided frame selector for ontology framings — Done 2026-05-08: added `frame_bm25_selector.py` with deterministic BM25 ranking, local legal frame fixture, matched-term explanations, tie-breaking, domain filtering, and tests.
+- [x] (P1) [tests] Add U.S. Code sample fixture contract with mocked embeddings — Done 2026-05-08: added `legal_samples.py` with deterministic U.S. Code sample builder, stable mocked embeddings, modal IR, BM25 frame candidates, parser trace, validation errors, and tests.
+- [x] (P2) [logic] Add encoder/decoder baseline and loss metrics — Done 2026-05-08: added dependency-free `modal_autoencoder.py` baseline with cosine similarity/loss, MSE reconstruction loss, cross entropy, frame ranking loss, symbolic validity penalty, decoded embeddings, and fixture tests.
+- [x] (P2) [agentic] Add loss-driven modal TODO daemon queue with batch claiming — Done 2026-05-08: added `modal_todo_daemon.py` with `LossSnapshot`, deterministic TODO generation from cross entropy/cosine/reconstruction/frame/symbolic losses, JSONL queue persistence, supervisor seeding, `claim_batch()` for multiple TODOs per worker, and validated optimization steps that complete TODOs only after lowering loss or increasing cosine similarity.
+- [x] (P2) [logic] Add adaptive encoder/IR/decoder training state for daemon-driven improvement — Done 2026-05-08: added `AdaptiveModalAutoencoder` and `ModalAutoencoderTrainingState`; supervisor runs now apply claimed TODOs as deterministic SGD-like updates, persist state/run summaries, reduce cross entropy, and improve decoded embedding cosine similarity.
+- [x] (P2) [logic] Add local spaCy encoder/IR/decoder path to reduce LLM inference — Done 2026-05-08: added `spacy_modal_codec.py` with `SpaCyLegalEncoder`, `SpaCyModalIRCompiler`, `SpaCyModalDecoder`, and `SpaCyModalCodec`; adaptive autoencoder can use spaCy feature logits/vectors, falls back to `spacy.blank("en")`, and U.S. Code parquet daemon tests now exercise the spaCy path.
+- [x] (P2) [data] Add Hugging Face U.S. Code parquet adapter for modal daemon tests — Done 2026-05-08: added `uscode_dataset.py` for `justicedao/ipfs_uscode` `uscode_parquet/laws.parquet` and optional `laws_embeddings.parquet`, schema-compatible parquet unit fixtures, supervisor `optimize_uscode_parquet()`, and an opt-in live Hub smoke test gated by `IPFS_DATASETS_PY_RUN_HF_USCODE_LIVE=1`.
+- [x] (P2) [obs] Track LLM-reduction metrics for legal parsing — Done 2026-05-08: `ExtractionResult` now carries metrics; deterministic legal modal extraction reports `llm_call_count=0`, `deterministic_coverage_ratio=1.0`, modal families, and modal systems.
+
 ### Phase 1: Stabilize & Align (Always-On)
 - Keep test baselines green; fix regressions first.
 - Tighten contracts between modules (`dict` ↔ dataclass drift, schema checks).
@@ -2844,4 +2863,3 @@ This keeps the module **perpetually fresh** without ever feeling "done."
 - State tracking across agents
 
 **Integration Tests**: Full 4-step extraction pipeline verified end-to-end
-

@@ -774,6 +774,7 @@ print(f"Average score: {avg_score}")
 
 ## See Also
 
+- [Deterministic Modal Legal Parser Improvement Plan](../../../docs/optimizers/logic_theorem_optimizer/MODAL_LEGAL_PARSER_IMPROVEMENT_PLAN.md) - Roadmap for modal-family parsing, BM25 frame selection, and U.S. Code encoder/decoder training
 - [complaint-generator](https://github.com/endomorphosis/complaint-generator) - Original adversarial harness inspiration
 - [Logic Integration](/ipfs_datasets_py/logic/README.md) - Existing logic frameworks
 - [GraphRAG Integration](/ipfs_datasets_py/rag/README.md) - Knowledge graph integration

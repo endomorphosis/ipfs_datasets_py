@@ -377,26 +377,19 @@ def summarize_phase8_quality_records(
 
     reconstruction = summarize_reconstruction_slot_loss(decoder_records, required_slots)
     prover = summarize_prover_syntax_target_coverage(prover_syntax_records, required_targets)
+    prover_corpus = summarize_prover_syntax_target_corpus_coverage(
+        prover_syntax_records,
+        required_targets,
+    )
     provenance = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
 
     blockers = set(reconstruction.get("coverage_blockers") or [])
-    blockers.update(
-        f"missing_prover_syntax_target:{target}"
-        for target in prover.get("missing_targets", [])
-    )
-    blockers.update(
-        f"failed_prover_syntax_target:{target}"
-        for target in prover.get("failed_targets", [])
-    )
-    blockers.update(
-        f"skipped_prover_syntax_target:{target}"
-        for target in prover.get("skipped_targets", [])
-    )
+    blockers.update(prover_corpus.get("coverage_blocker_distribution", {}).keys())
     blockers.update(provenance.get("coverage_blockers") or [])
 
     complete = (
         reconstruction.get("slot_reconstruction_complete") is True
-        and prover.get("all_required_passed") is True
+        and prover_corpus.get("all_sources_complete") is True
         and provenance.get("all_checked_slots_grounded") is True
     )
 
@@ -406,6 +399,7 @@ def summarize_phase8_quality_records(
         "coverage_blockers": sorted(blockers),
         "reconstruction_slot_loss": reconstruction,
         "prover_syntax_target_coverage": prover,
+        "prover_syntax_corpus_coverage": prover_corpus,
         "ir_slot_provenance": provenance,
     }
 
@@ -524,34 +518,77 @@ def summarize_prover_syntax_target_coverage(
     """
 
     required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
-    status_by_target: Dict[str, str] = {}
+    target_statuses: Dict[str, List[str]] = {target: [] for target in required}
 
     for record in records or []:
         if not isinstance(record, Mapping):
             continue
         target = _prover_syntax_record_target(record)
-        if not target:
+        if target not in target_statuses:
             continue
-        status = _prover_syntax_record_status(record)
-        current = status_by_target.get(target)
-        if current == "failed" or status == current:
-            continue
-        if status == "failed" or current is None:
-            status_by_target[target] = status
-        elif current == "skipped" and status == "passed":
-            status_by_target[target] = status
+        target_statuses[target].append(_prover_syntax_record_status(record))
+
+    status_by_target: Dict[str, str] = {}
+    target_record_count_by_target: Dict[str, int] = {}
+    target_status_matrix: List[Dict[str, Any]] = []
+    matrix_blockers: List[str] = []
+    duplicate_targets: List[str] = []
+    duplicate_record_count = 0
+    for target in required:
+        statuses = target_statuses[target]
+        count = len(statuses)
+        target_record_count_by_target[target] = count
+        status = "missing"
+        for item in statuses:
+            status = _merge_prover_status(status, item)
+        status_by_target[target] = status
+        blockers: List[str] = []
+        if status == "missing":
+            blockers.append(f"missing_prover_syntax_target:{target}")
+        elif status == "failed":
+            blockers.append(f"failed_prover_syntax_target:{target}")
+        elif status == "skipped":
+            blockers.append(f"skipped_prover_syntax_target:{target}")
+        if count > 1:
+            duplicate_targets.append(target)
+            duplicate_record_count += count - 1
+            blockers.append(f"duplicate_prover_syntax_target_record:{target}:{count}")
+        matrix_blockers.extend(blockers)
+        target_status_matrix.append(
+            {
+                "target": target,
+                "status": status,
+                "present": count > 0,
+                "passed": status == "passed",
+                "failed": status == "failed",
+                "skipped": status == "skipped",
+                "missing": status == "missing",
+                "duplicate": count > 1,
+                "record_count": count,
+                "statuses": statuses,
+                "blockers": blockers,
+            }
+        )
 
     passed_targets = sorted(
-        target for target in required if status_by_target.get(target) == "passed"
+        target for target in required if status_by_target[target] == "passed"
     )
     failed_targets = sorted(
-        target for target in required if status_by_target.get(target) == "failed"
+        target for target in required if status_by_target[target] == "failed"
     )
     skipped_targets = sorted(
-        target for target in required if status_by_target.get(target) == "skipped"
+        target for target in required if status_by_target[target] == "skipped"
     )
-    missing_targets = sorted(target for target in required if target not in status_by_target)
+    missing_targets = [target for target in required if status_by_target[target] == "missing"]
     present_required_count = len(required) - len(missing_targets)
+    all_required_passed = (
+        bool(required)
+        and len(passed_targets) == len(required)
+        and not failed_targets
+        and not skipped_targets
+        and not missing_targets
+    )
+    matrix_complete = all_required_passed and duplicate_record_count == 0
 
     return {
         "required_targets": list(required),
@@ -561,12 +598,150 @@ def summarize_prover_syntax_target_coverage(
         "failed_targets": failed_targets,
         "skipped_targets": skipped_targets,
         "missing_targets": missing_targets,
-        "all_required_passed": bool(required)
-        and len(passed_targets) == len(required)
-        and not failed_targets
-        and not skipped_targets
-        and not missing_targets,
+        "target_status_by_target": status_by_target,
+        "target_record_count_by_target": target_record_count_by_target,
+        "target_status_matrix": target_status_matrix,
+        "target_status_matrix_complete": matrix_complete,
+        "target_status_matrix_requires_validation": not matrix_complete,
+        "target_status_matrix_blockers": matrix_blockers,
+        "target_duplicate_record_count": duplicate_record_count,
+        "target_duplicate_targets": duplicate_targets,
+        "all_required_passed": all_required_passed,
         "syntax_valid_rate": round(len(passed_targets) / len(required), 6) if required else 0.0,
+    }
+
+
+def summarize_prover_syntax_target_corpus_coverage(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize local prover-target coverage grouped by source norm."""
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    valid_records = [record for record in records or [] if isinstance(record, Mapping)]
+    grouped: Dict[str, List[Mapping[str, Any]]] = {}
+    missing_source_record_count = 0
+    for record in valid_records:
+        source_id = str(record.get("source_id") or "").strip()
+        if not source_id:
+            source_id = "unknown"
+            missing_source_record_count += 1
+        grouped.setdefault(source_id, []).append(record)
+
+    source_status_by_source: Dict[str, Dict[str, str]] = {}
+    source_missing_targets_by_source: Dict[str, List[str]] = {}
+    source_failed_targets_by_source: Dict[str, List[str]] = {}
+    source_skipped_targets_by_source: Dict[str, List[str]] = {}
+    source_duplicate_targets_by_source: Dict[str, List[str]] = {}
+    source_target_record_count_by_source: Dict[str, Dict[str, int]] = {}
+    source_blockers_by_source: Dict[str, List[str]] = {}
+    target_presence_distribution: Counter[str] = Counter()
+    target_pass_distribution: Counter[str] = Counter()
+    blocker_distribution: Counter[str] = Counter()
+    complete_sources: List[str] = []
+    requiring_validation: List[str] = []
+    failed_sources: List[str] = []
+    skipped_sources: List[str] = []
+    duplicate_sources: List[str] = []
+    missing_source_ids: List[str] = []
+    duplicate_record_count = 0
+    passed_required_source_count = 0
+
+    for source_id, source_records in sorted(grouped.items()):
+        statuses, counts, source_blockers = _source_prover_target_status(
+            source_records,
+            required,
+        )
+        has_missing_source_id = any(
+            not str(record.get("source_id") or "").strip()
+            for record in source_records
+        )
+        if source_id == "unknown" and has_missing_source_id:
+            source_blockers.append("missing_prover_syntax_source_id")
+            missing_source_ids.append(source_id)
+
+        missing_targets = [target for target in required if statuses[target] == "missing"]
+        failed_targets = [target for target in required if statuses[target] == "failed"]
+        skipped_targets = [target for target in required if statuses[target] == "skipped"]
+        duplicate_targets = [target for target in required if counts[target] > 1]
+        for target in duplicate_targets:
+            duplicate_record_count += counts[target] - 1
+            source_blockers.append(
+                f"duplicate_prover_syntax_target_record:{target}:{counts[target]}"
+            )
+        source_blockers.extend(
+            f"missing_prover_syntax_target:{target}" for target in missing_targets
+        )
+        source_blockers.extend(
+            f"failed_prover_syntax_target:{target}" for target in failed_targets
+        )
+        source_blockers.extend(
+            f"skipped_prover_syntax_target:{target}" for target in skipped_targets
+        )
+        source_blockers = sorted(dict.fromkeys(source_blockers))
+
+        source_status_by_source[source_id] = dict(statuses)
+        source_missing_targets_by_source[source_id] = missing_targets
+        source_failed_targets_by_source[source_id] = failed_targets
+        source_skipped_targets_by_source[source_id] = skipped_targets
+        source_duplicate_targets_by_source[source_id] = duplicate_targets
+        source_target_record_count_by_source[source_id] = dict(counts)
+        source_blockers_by_source[source_id] = source_blockers
+
+        for target in required:
+            if counts[target] > 0:
+                target_presence_distribution[target] += 1
+            if statuses[target] == "passed":
+                target_pass_distribution[target] += 1
+        if all(statuses[target] == "passed" for target in required):
+            passed_required_source_count += 1
+        if failed_targets:
+            failed_sources.append(source_id)
+        if skipped_targets:
+            skipped_sources.append(source_id)
+        if duplicate_targets:
+            duplicate_sources.append(source_id)
+        if not source_blockers:
+            complete_sources.append(source_id)
+        else:
+            requiring_validation.append(source_id)
+            blocker_distribution.update(source_blockers)
+
+    source_count = len(grouped)
+    complete_count = len(complete_sources)
+    return {
+        "record_count": len(valid_records),
+        "source_count": source_count,
+        "source_id_missing_record_count": missing_source_record_count,
+        "sources_with_missing_source_id": sorted(dict.fromkeys(missing_source_ids)),
+        "source_identity_complete": missing_source_record_count == 0,
+        "complete_source_count": complete_count,
+        "incomplete_source_count": source_count - complete_count,
+        "sources_with_complete_required_targets": complete_sources,
+        "sources_requiring_validation": requiring_validation,
+        "source_complete_rate": round(complete_count / source_count, 6) if source_count else 0.0,
+        "formal_syntax_valid_source_rate": round(
+            passed_required_source_count / source_count,
+            6,
+        )
+        if source_count
+        else 0.0,
+        "source_status_by_source": source_status_by_source,
+        "source_missing_targets_by_source": source_missing_targets_by_source,
+        "source_failed_targets_by_source": source_failed_targets_by_source,
+        "source_skipped_targets_by_source": source_skipped_targets_by_source,
+        "source_duplicate_targets_by_source": source_duplicate_targets_by_source,
+        "source_target_record_count_by_source": source_target_record_count_by_source,
+        "source_blockers_by_source": source_blockers_by_source,
+        "sources_with_failed_targets": failed_sources,
+        "sources_with_skipped_targets": skipped_sources,
+        "sources_with_duplicate_targets": duplicate_sources,
+        "target_duplicate_record_count": duplicate_record_count,
+        "target_presence_distribution": dict(sorted(target_presence_distribution.items())),
+        "target_pass_distribution": dict(sorted(target_pass_distribution.items())),
+        "coverage_blocker_distribution": dict(sorted(blocker_distribution.items())),
+        "all_sources_complete": source_count > 0 and complete_count == source_count,
+        "all_sources_required_targets_passed": source_count > 0
+        and passed_required_source_count == source_count,
     }
 
 
@@ -597,6 +772,8 @@ def build_prover_syntax_target_coverage_record(
         f"skipped_prover_syntax_target:{target}"
         for target in summary["skipped_targets"]
     )
+    blockers.extend(summary.get("target_status_matrix_blockers", []))
+    blockers = sorted(dict.fromkeys(blockers))
 
     normalized_source_id = str(source_id or "").strip()
     return {
@@ -638,6 +815,68 @@ def build_prover_syntax_target_coverage_records_from_irs(
         )
         for norm in norms
     ]
+
+
+def _source_prover_target_status(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str],
+) -> tuple[Dict[str, str], Dict[str, int], List[str]]:
+    statuses = {target: "missing" for target in required_targets}
+    counts = {target: 0 for target in required_targets}
+    blockers: List[str] = []
+
+    for record in records or []:
+        coverage_summary = record.get("coverage_summary")
+        if (
+            isinstance(coverage_summary, Mapping)
+            and record.get("target_logic") == "local_prover_syntax"
+        ):
+            record_counts = coverage_summary.get("target_record_count_by_target") or {}
+            if isinstance(record_counts, Mapping):
+                for target, count in record_counts.items():
+                    target = str(target)
+                    if target in counts:
+                        counts[target] = max(counts[target], int(count or 0))
+            for target in coverage_summary.get("passed_targets") or []:
+                target = str(target)
+                if target in statuses:
+                    counts[target] = max(counts[target], 1)
+                    statuses[target] = _merge_prover_status(statuses[target], "passed")
+            for target in coverage_summary.get("failed_targets") or []:
+                target = str(target)
+                if target in statuses:
+                    counts[target] = max(counts[target], 1)
+                    statuses[target] = _merge_prover_status(statuses[target], "failed")
+            for target in coverage_summary.get("skipped_targets") or []:
+                target = str(target)
+                if target in statuses:
+                    counts[target] = max(counts[target], 1)
+                    statuses[target] = _merge_prover_status(statuses[target], "skipped")
+            for target in coverage_summary.get("missing_targets") or []:
+                target = str(target)
+                if target in statuses and counts[target] == 0:
+                    statuses[target] = "missing"
+            for blocker in record.get("coverage_blockers") or []:
+                blocker_text = str(blocker or "").strip()
+                if blocker_text:
+                    blockers.append(blocker_text)
+            continue
+
+        target = _prover_syntax_record_target(record)
+        if target not in statuses:
+            continue
+        counts[target] += 1
+        statuses[target] = _merge_prover_status(
+            statuses[target],
+            _prover_syntax_record_status(record),
+        )
+
+    return statuses, counts, blockers
+
+
+def _merge_prover_status(current: str, incoming: str) -> str:
+    priority = {"missing": 0, "passed": 1, "skipped": 2, "failed": 3}
+    return incoming if priority[incoming] >= priority[current] else current
 
 
 def _prover_syntax_record_target(record: Mapping[str, Any]) -> str:

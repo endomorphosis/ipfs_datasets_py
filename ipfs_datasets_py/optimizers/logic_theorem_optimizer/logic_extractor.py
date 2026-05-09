@@ -132,6 +132,7 @@ class ExtractionResult:
     errors: List[str] = field(default_factory=list)
     reasoning_trace: List[str] = field(default_factory=list)
     ontology_alignment: Dict[str, float] = field(default_factory=dict)
+    metrics: Dict[str, Any] = field(default_factory=dict)
 
 
 class LogicExtractor:
@@ -197,6 +198,7 @@ class LogicExtractor:
             recovery_timeout=self._llm_call_policy.circuit_recovery_timeout,
             expected_exception=Exception,
         )
+        self.llm_call_count = 0
         self._init_backend()
         
         # Track extraction history for improvement
@@ -302,6 +304,15 @@ class LogicExtractor:
                 # Store KG context for later use
                 context.metadata = getattr(context, 'metadata', {})
                 context.metadata['kg_context'] = kg_context
+
+            # Deterministic legal modal parser path. This keeps modal legal
+            # extraction reproducible and avoids LLM calls when registry cues
+            # are enough to produce IR.
+            if context.extraction_mode == ExtractionMode.MODAL and context.domain == "legal":
+                deterministic_result = self._extract_with_deterministic_modal_parser(context)
+                if deterministic_result.statements:
+                    self.extraction_history.append(deterministic_result)
+                    return deterministic_result
             
             # Phase 2.2: Use formula translation if available
             if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
@@ -327,7 +338,11 @@ class LogicExtractor:
                 statements=statements,
                 context=context,
                 success=True,
-                ontology_alignment=alignment
+                ontology_alignment=alignment,
+                metrics={
+                    "deterministic_coverage_ratio": 0.0,
+                    "llm_call_count": 1,
+                },
             )
             
             # Phase 2.5: Store successful extraction in RAG
@@ -365,8 +380,88 @@ class LogicExtractor:
                 statements=[],
                 context=context,
                 success=False,
-                errors=[str(e)]
+            errors=[str(e)]
+        )
+
+    def _extract_with_deterministic_modal_parser(
+        self,
+        context: LogicExtractionContext,
+    ) -> ExtractionResult:
+        """Extract legal modal statements without LLM calls."""
+        parser_name = "legal_modal_parser_v1"
+        parser_metadata: Dict[str, Any] = {}
+        modal_profile = (context.config.modal_profile or "").lower()
+        if modal_profile in {"spacy", "spacy_modal", "spacy_modal_codec_v1"}:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import SpaCyModalCodec
+
+            codec = SpaCyModalCodec()
+            encoding = codec.encoder.encode(
+                str(context.data),
+                source="logic_extractor",
+                citation=(context.hints or [None])[0],
             )
+            modal_ir = codec.compiler.compile(encoding)
+            parser_name = "spacy_modal_codec_v1"
+            parser_metadata = {
+                "spacy_model_name": encoding.model_name,
+                "spacy_token_count": len(encoding.tokens),
+                "spacy_used_fallback_model": encoding.used_fallback_model,
+            }
+        else:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
+
+            parser = LegalModalParser()
+            modal_ir = parser.parse(
+                str(context.data),
+                source="logic_extractor",
+                citation=(context.hints or [None])[0],
+            )
+        statements: List[LogicalStatement] = []
+        for formula in modal_ir.formulas:
+            statement_text = modal_ir.normalized_text[
+                formula.provenance.start_char:formula.provenance.end_char
+            ]
+            statements.append(
+                LogicalStatement(
+                    formula=formula.formula_id,
+                    natural_language=statement_text,
+                    confidence=0.82,
+                    formalism=ExtractionMode.MODAL.value,
+                    metadata={
+                        "cue": formula.metadata.get("cue"),
+                        "deterministic_parser": parser_name,
+                        "modal_family": formula.operator.family,
+                        "modal_ir_document_hash": modal_ir.canonical_hash(),
+                        "modal_system": formula.operator.system,
+                        "operator": formula.operator.symbol,
+                        **parser_metadata,
+                    },
+                )
+            )
+
+        modal_families = sorted(
+            {statement.metadata["modal_family"] for statement in statements}
+        )
+        modal_systems = sorted(
+            {statement.metadata["modal_system"] for statement in statements}
+        )
+        return ExtractionResult(
+            statements=statements,
+            context=context,
+            success=True,
+            reasoning_trace=[
+                f"Parsed legal modal statements with deterministic {parser_name}"
+            ],
+            metrics={
+                "deterministic_coverage_ratio": 1.0,
+                "deterministic_parser": parser_name,
+                "llm_call_count": 0,
+                "modal_families": modal_families,
+                "modal_profile": context.config.modal_profile,
+                "modal_systems": modal_systems,
+                **parser_metadata,
+            },
+        )
     
     def _extract_with_translation(
         self,
@@ -427,7 +522,11 @@ class LogicExtractor:
             context=context,
             success=True,
             ontology_alignment=alignment,
-            reasoning_trace=[f"Translated to {formalism.value} using formula translator"]
+            reasoning_trace=[f"Translated to {formalism.value} using formula translator"],
+            metrics={
+                "deterministic_coverage_ratio": 1.0,
+                "llm_call_count": 0,
+            },
         )
         
         self.extraction_history.append(result)
@@ -451,7 +550,11 @@ class LogicExtractor:
             statements=statements,
             context=context,
             success=True,
-            ontology_alignment=alignment
+            ontology_alignment=alignment,
+            metrics={
+                "deterministic_coverage_ratio": 0.0,
+                "llm_call_count": 1,
+            },
         )
     
     def extract_batch(
@@ -566,6 +669,7 @@ class LogicExtractor:
         Returns:
             LLM response text
         """
+        self.llm_call_count += 1
         # Phase 2.3: Use LLM backend adapter
         if self.backend:
             try:

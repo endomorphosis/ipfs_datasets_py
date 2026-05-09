@@ -3729,7 +3729,10 @@ class OntologyGenerator:
         relationships = []
         text = str(data) if data is not None else ""
         text_lower = text.lower()
-        sentence_window = getattr(context.extraction_config, "sentence_window", 0)
+        extraction_config = getattr(context, "extraction_config", None) or getattr(context, "config", None)
+        sentence_window = getattr(extraction_config, "sentence_window", 0)
+        if not isinstance(sentence_window, (int, float)):
+            sentence_window = 0
         sentence_spans = self._get_sentence_spans(text) if sentence_window > 0 else []
         entity_sentence_index: Dict[str, int] = {}
 

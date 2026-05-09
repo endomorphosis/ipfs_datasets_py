@@ -508,6 +508,41 @@ def _init_provers(self):
 
 ## Future Enhancements
 
+### Deterministic Modal Legal Parser
+
+The modal legal parser adds a deterministic path beside LLM-oriented extraction:
+
+```text
+legal text
+  -> LegalModalParser / SpaCyLegalEncoder
+  -> ModalIRDocument
+  -> BM25FrameSelector
+  -> LegalSample
+  -> ModalAutoencoderBaseline / AdaptiveModalAutoencoder
+  -> ModalTodoSupervisor
+  -> ModalParserReport
+```
+
+Core contracts:
+
+- `modal_registry.py` defines modal families, systems, cue terms, operators, and frame constraints.
+- `modal_ir.py` provides canonical JSON and hashes for parser cache keys.
+- `legal_modal_parser.py` normalizes legal text, segments clauses, extracts modal cues, and emits provenance-backed IR.
+- `spacy_modal_codec.py` provides a local spaCy encoder, modal IR compiler, and deterministic feature-vector decoder. It uses `en_core_web_sm` when installed and falls back to `spacy.blank("en")` with a sentencizer so tests and daemon runs do not require model downloads.
+- `frame_bm25_selector.py` ranks ontology frames deterministically with lexical explanations.
+- `legal_samples.py` builds U.S. Code-style samples with mocked stable embeddings.
+- `uscode_dataset.py` adapts `justicedao/ipfs_uscode` parquet files (`laws.parquet` and `laws_embeddings.parquet`) into `LegalSample` batches for daemon tests and opt-in live Hub smoke checks.
+- `modal_autoencoder.py` reports reconstruction, cross-entropy, frame-ranking, and symbolic-validity losses, and includes an adaptive encoder/IR/decoder state for deterministic SGD-like updates.
+- `modal_todo_daemon.py` turns loss signals into TODOs, claims batches for workers, applies adaptive autoencoder updates, and completes TODOs only after re-evaluation proves cross entropy dropped, reconstruction loss dropped, or cosine similarity increased.
+- `modal_prover_router.py` routes K/T/D/S4/S5 systems to TDFOL modal tableaux and returns typed `UNAVAILABLE` results for unsupported systems.
+- `modal_reporting.py` summarizes modal-family counts, frame top-1 accuracy, reconstruction loss, parser failures, and prover availability.
+
+`LogicExtractor` uses this deterministic path for legal `ExtractionMode.MODAL`
+inputs before falling back to LLM extraction. Extraction results expose
+`llm_call_count`, `deterministic_coverage_ratio`, modal families, modal systems,
+and modal profile metadata so supervised loops can track whether LLM usage is
+going down without losing legal structure.
+
 ### Planned Features
 
 1. **Neural-Symbolic Integration**

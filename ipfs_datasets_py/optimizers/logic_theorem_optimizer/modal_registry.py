@@ -1,0 +1,266 @@
+"""Modal logic registry for deterministic legal parsing.
+
+The registry is deliberately data-oriented: parser code can ask for a profile
+by family or system without hard-coding modal cue words throughout the pipeline.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, Iterable, Mapping, Optional, Tuple
+
+
+class ModalLogicFamily(Enum):
+    """Modal logic families planned for deterministic legal parsing."""
+
+    ALETHIC = "alethic"
+    DEONTIC = "deontic"
+    TEMPORAL = "temporal"
+    EPISTEMIC = "epistemic"
+    DOXASTIC = "doxastic"
+    DYNAMIC = "dynamic"
+    CONDITIONAL_NORMATIVE = "conditional_normative"
+    FRAME = "frame"
+    HYBRID = "hybrid"
+
+
+class ModalSystem(Enum):
+    """Common modal systems and legal-parser profiles."""
+
+    K = "K"
+    T = "T"
+    D = "D"
+    K4 = "K4"
+    S4 = "S4"
+    S5 = "S5"
+    KD = "KD"
+    KD45 = "KD45"
+    LTL = "LTL"
+    CTL = "CTL"
+    PDL = "PDL"
+    STIT = "STIT"
+    FRAME_BM25 = "FRAME_BM25"
+    HYBRID = "HYBRID"
+
+
+@dataclass(frozen=True)
+class ModalOperatorSpec:
+    """Description of an operator and its deterministic text cues."""
+
+    symbol: str
+    aliases: Tuple[str, ...]
+    arity: int = 1
+    cue_terms: Tuple[str, ...] = ()
+    allowed_systems: Tuple[ModalSystem, ...] = ()
+
+
+@dataclass(frozen=True)
+class ModalSemanticsSpec:
+    """Frame constraints for a modal profile."""
+
+    reflexive: bool = False
+    transitive: bool = False
+    serial: bool = False
+    symmetric: bool = False
+    euclidean: bool = False
+    tree_time: bool = False
+    action_transition: bool = False
+    ontology_frame_grounded: bool = False
+
+    def to_dict(self) -> Dict[str, bool]:
+        """Return a stable JSON-ready mapping."""
+        return {
+            "action_transition": self.action_transition,
+            "euclidean": self.euclidean,
+            "ontology_frame_grounded": self.ontology_frame_grounded,
+            "reflexive": self.reflexive,
+            "serial": self.serial,
+            "symmetric": self.symmetric,
+            "transitive": self.transitive,
+            "tree_time": self.tree_time,
+        }
+
+
+@dataclass(frozen=True)
+class ModalParseProfile:
+    """Registry entry for one modal parsing profile."""
+
+    family: ModalLogicFamily
+    system: ModalSystem
+    operators: Tuple[ModalOperatorSpec, ...]
+    semantics: ModalSemanticsSpec = field(default_factory=ModalSemanticsSpec)
+    description: str = ""
+
+    @property
+    def profile_id(self) -> str:
+        """Stable profile identifier."""
+        return f"{self.family.value}:{self.system.value}"
+
+    def to_dict(self) -> Dict[str, object]:
+        """Return a stable JSON-ready mapping."""
+        return {
+            "description": self.description,
+            "family": self.family.value,
+            "operators": [
+                {
+                    "aliases": list(operator.aliases),
+                    "allowed_systems": [system.value for system in operator.allowed_systems],
+                    "arity": operator.arity,
+                    "cue_terms": list(operator.cue_terms),
+                    "symbol": operator.symbol,
+                }
+                for operator in self.operators
+            ],
+            "profile_id": self.profile_id,
+            "semantics": self.semantics.to_dict(),
+            "system": self.system.value,
+        }
+
+
+def _op(
+    symbol: str,
+    aliases: Iterable[str],
+    cue_terms: Iterable[str],
+    systems: Iterable[ModalSystem],
+) -> ModalOperatorSpec:
+    return ModalOperatorSpec(
+        symbol=symbol,
+        aliases=tuple(aliases),
+        cue_terms=tuple(cue_terms),
+        allowed_systems=tuple(systems),
+    )
+
+
+DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
+    ModalParseProfile(
+        family=ModalLogicFamily.ALETHIC,
+        system=ModalSystem.S5,
+        operators=(
+            _op("□", ("necessary", "must_be"), ("necessary", "impossible", "cannot"), (ModalSystem.K, ModalSystem.T, ModalSystem.S4, ModalSystem.S5)),
+            _op("◇", ("possible",), ("possible", "may be", "can be"), (ModalSystem.K, ModalSystem.T, ModalSystem.S4, ModalSystem.S5)),
+        ),
+        semantics=ModalSemanticsSpec(reflexive=True, transitive=True, symmetric=True, euclidean=True),
+        description="Alethic necessity and possibility.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.DEONTIC,
+        system=ModalSystem.D,
+        operators=(
+            _op("O", ("obligation", "obligatory"), ("shall", "must", "required", "obligated"), (ModalSystem.D, ModalSystem.KD)),
+            _op("P", ("permission", "permitted"), ("may", "permitted", "authorized", "allowed"), (ModalSystem.D, ModalSystem.KD)),
+            _op("F", ("prohibition", "forbidden"), ("may not", "must not", "prohibited", "forbidden"), (ModalSystem.D, ModalSystem.KD)),
+        ),
+        semantics=ModalSemanticsSpec(serial=True),
+        description="Legal obligations, permissions, and prohibitions.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.TEMPORAL,
+        system=ModalSystem.LTL,
+        operators=(
+            _op("G", ("always",), ("always", "throughout", "until"), (ModalSystem.LTL, ModalSystem.CTL)),
+            _op("F", ("eventually",), ("eventually", "within", "by"), (ModalSystem.LTL, ModalSystem.CTL)),
+            _op("X", ("next",), ("next", "after", "following"), (ModalSystem.LTL, ModalSystem.CTL)),
+        ),
+        semantics=ModalSemanticsSpec(tree_time=True),
+        description="Deadlines, effective dates, and temporal scopes.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.EPISTEMIC,
+        system=ModalSystem.S5,
+        operators=(
+            _op("K", ("knows", "knowledge"), ("knows", "finds", "determines", "has reason to know"), (ModalSystem.S4, ModalSystem.S5)),
+        ),
+        semantics=ModalSemanticsSpec(reflexive=True, transitive=True, symmetric=True, euclidean=True),
+        description="Knowledge, findings, and determinations.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.DOXASTIC,
+        system=ModalSystem.KD45,
+        operators=(
+            _op("B", ("believes", "belief"), ("believes", "reasonably believes", "intends", "suspects"), (ModalSystem.KD45,)),
+        ),
+        semantics=ModalSemanticsSpec(serial=True, transitive=True, euclidean=True),
+        description="Belief and intent-style legal states.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.DYNAMIC,
+        system=ModalSystem.PDL,
+        operators=(
+            _op("[a]", ("after_action",), ("files", "serves", "transfers", "terminates", "enforces"), (ModalSystem.PDL, ModalSystem.STIT)),
+        ),
+        semantics=ModalSemanticsSpec(action_transition=True),
+        description="Action transitions and pre/postconditions.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.CONDITIONAL_NORMATIVE,
+        system=ModalSystem.KD,
+        operators=(
+            _op("O|", ("conditional_obligation",), ("if", "unless", "except", "provided that", "subject to"), (ModalSystem.KD,)),
+        ),
+        semantics=ModalSemanticsSpec(serial=True),
+        description="Conditions, exceptions, provisos, and scoped norms.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.FRAME,
+        system=ModalSystem.FRAME_BM25,
+        operators=(
+            _op("Frame", ("ontology_frame",), ("is a", "part of", "administered by", "jurisdiction", "authority"), (ModalSystem.FRAME_BM25,)),
+        ),
+        semantics=ModalSemanticsSpec(ontology_frame_grounded=True),
+        description="Ontology-grounded frame logic selected with BM25.",
+    ),
+    ModalParseProfile(
+        family=ModalLogicFamily.HYBRID,
+        system=ModalSystem.HYBRID,
+        operators=(),
+        description="Composed profiles for statutory clauses with mixed modal content.",
+    ),
+)
+
+
+class ModalRegistry:
+    """Lookup table for modal parse profiles."""
+
+    def __init__(self, profiles: Iterable[ModalParseProfile] = DEFAULT_MODAL_PROFILES) -> None:
+        self._profiles: Dict[str, ModalParseProfile] = {
+            profile.profile_id: profile for profile in profiles
+        }
+        self._by_family: Dict[ModalLogicFamily, ModalParseProfile] = {
+            profile.family: profile for profile in profiles
+        }
+
+    def get_profile(
+        self,
+        family: ModalLogicFamily | str,
+        system: Optional[ModalSystem | str] = None,
+    ) -> ModalParseProfile:
+        """Get a profile by family, optionally constrained by system."""
+        resolved_family = family if isinstance(family, ModalLogicFamily) else ModalLogicFamily(str(family))
+        if system is None:
+            return self._by_family[resolved_family]
+        resolved_system = system if isinstance(system, ModalSystem) else ModalSystem(str(system))
+        return self._profiles[f"{resolved_family.value}:{resolved_system.value}"]
+
+    def all_profiles(self) -> Tuple[ModalParseProfile, ...]:
+        """Return all profiles in deterministic order."""
+        return tuple(sorted(self._profiles.values(), key=lambda profile: profile.profile_id))
+
+    def to_dict(self) -> Mapping[str, object]:
+        """Return a stable JSON-ready registry mapping."""
+        return {profile.profile_id: profile.to_dict() for profile in self.all_profiles()}
+
+
+DEFAULT_MODAL_REGISTRY = ModalRegistry()
+
+
+__all__ = [
+    "DEFAULT_MODAL_PROFILES",
+    "DEFAULT_MODAL_REGISTRY",
+    "ModalLogicFamily",
+    "ModalOperatorSpec",
+    "ModalParseProfile",
+    "ModalRegistry",
+    "ModalSemanticsSpec",
+    "ModalSystem",
+]

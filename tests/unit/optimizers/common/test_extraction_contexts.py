@@ -63,11 +63,15 @@ def test_logic_config_roundtrip_keeps_enum_mode() -> None:
     cfg = LogicExtractionConfig(
         domain="legal",
         extraction_mode=ExtractionMode.TDFOL,
+        formalism_hint="modal",
+        modal_profile="deontic:D",
         prover_list=["z3", "cvc5"],
         include_schema=True,
     )
     restored = LogicExtractionConfig.from_dict(cfg.to_dict())
     assert restored.extraction_mode == ExtractionMode.TDFOL
+    assert restored.formalism_hint == "modal"
+    assert restored.modal_profile == "deontic:D"
     assert restored.prover_list == ["z3", "cvc5"]
     assert restored.include_schema is True
 

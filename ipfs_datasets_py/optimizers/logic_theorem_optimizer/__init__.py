@@ -42,6 +42,72 @@ __all__ = [
     'ExtractionResult',
     'ExtractionMode',
     'DataType',
+    # Deterministic modal legal parser
+    'ModalLogicFamily',
+    'ModalSystem',
+    'ModalOperatorSpec',
+    'ModalSemanticsSpec',
+    'ModalParseProfile',
+    'ModalRegistry',
+    'DEFAULT_MODAL_REGISTRY',
+    'ModalIRDocument',
+    'ModalIRFormula',
+    'ModalIRFrame',
+    'ModalIROperator',
+    'ModalIRPredicate',
+    'ModalIRProvenance',
+    'LegalModalParser',
+    'LegalSegment',
+    'ModalCueSpan',
+    'BM25FrameSelector',
+    'FrameCandidate',
+    'FrameSelection',
+    'DEFAULT_LEGAL_FRAME_FIXTURE',
+    'LegalSample',
+    'LegalSampleValidationError',
+    'build_us_code_sample',
+    'stable_mock_embedding',
+    'HF_USCODE_DATASET_ID',
+    'USCODE_BM25_PARQUET',
+    'USCODE_EMBEDDINGS_PARQUET',
+    'USCODE_LAWS_PARQUET',
+    'USCODE_LOGIC_PROOF_SAMPLE_PARQUET',
+    'USCODE_PARQUET_DIR',
+    'USCodeParquetRecord',
+    'iter_uscode_records_from_parquet',
+    'load_hf_uscode_samples',
+    'load_uscode_embeddings_from_parquet',
+    'load_uscode_samples_from_parquet',
+    'SpaCyLegalEncoder',
+    'SpaCyLegalEncoding',
+    'SpaCyModalCodec',
+    'SpaCyModalCueFeature',
+    'SpaCyModalDecoder',
+    'SpaCyModalIRCompiler',
+    'SpaCySentenceFeature',
+    'SpaCyTokenFeature',
+    'AdaptiveModalAutoencoder',
+    'ModalAutoencoderBaseline',
+    'ModalAutoencoderTrainingState',
+    'AutoencoderEvaluation',
+    'cosine_similarity',
+    'cosine_loss',
+    'mse_loss',
+    'cross_entropy_loss',
+    'frame_ranking_loss',
+    'symbolic_validity_penalty',
+    'ModalProverRouter',
+    'ModalProverRouteResult',
+    'ModalProverStatus',
+    'ModalParserReport',
+    'build_modal_parser_report',
+    'LossSnapshot',
+    'ModalLossTodoGenerator',
+    'ModalOptimizationRun',
+    'ModalOptimizationStep',
+    'ModalTodo',
+    'ModalTodoQueue',
+    'ModalTodoSupervisor',
     # Critic
     'LogicCritic',
     'CriticScore',
@@ -244,6 +310,246 @@ def __getattr__(name):
             return DataType
         else:
             return ExtractionResult
+    elif name in (
+        'ModalLogicFamily',
+        'ModalSystem',
+        'ModalOperatorSpec',
+        'ModalSemanticsSpec',
+        'ModalParseProfile',
+        'ModalRegistry',
+        'DEFAULT_MODAL_REGISTRY',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+            DEFAULT_MODAL_REGISTRY,
+            ModalLogicFamily,
+            ModalOperatorSpec,
+            ModalParseProfile,
+            ModalRegistry,
+            ModalSemanticsSpec,
+            ModalSystem,
+        )
+        return {
+            'DEFAULT_MODAL_REGISTRY': DEFAULT_MODAL_REGISTRY,
+            'ModalLogicFamily': ModalLogicFamily,
+            'ModalOperatorSpec': ModalOperatorSpec,
+            'ModalParseProfile': ModalParseProfile,
+            'ModalRegistry': ModalRegistry,
+            'ModalSemanticsSpec': ModalSemanticsSpec,
+            'ModalSystem': ModalSystem,
+        }[name]
+    elif name in (
+        'ModalIRDocument',
+        'ModalIRFormula',
+        'ModalIRFrame',
+        'ModalIROperator',
+        'ModalIRPredicate',
+        'ModalIRProvenance',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+            ModalIRDocument,
+            ModalIRFormula,
+            ModalIRFrame,
+            ModalIROperator,
+            ModalIRPredicate,
+            ModalIRProvenance,
+        )
+        return {
+            'ModalIRDocument': ModalIRDocument,
+            'ModalIRFormula': ModalIRFormula,
+            'ModalIRFrame': ModalIRFrame,
+            'ModalIROperator': ModalIROperator,
+            'ModalIRPredicate': ModalIRPredicate,
+            'ModalIRProvenance': ModalIRProvenance,
+        }[name]
+    elif name in ('LegalModalParser', 'LegalSegment', 'ModalCueSpan'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
+            LegalModalParser,
+            LegalSegment,
+            ModalCueSpan,
+        )
+        return {
+            'LegalModalParser': LegalModalParser,
+            'LegalSegment': LegalSegment,
+            'ModalCueSpan': ModalCueSpan,
+        }[name]
+    elif name in ('BM25FrameSelector', 'FrameCandidate', 'FrameSelection', 'DEFAULT_LEGAL_FRAME_FIXTURE'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+            BM25FrameSelector,
+            DEFAULT_LEGAL_FRAME_FIXTURE,
+            FrameCandidate,
+            FrameSelection,
+        )
+        return {
+            'BM25FrameSelector': BM25FrameSelector,
+            'DEFAULT_LEGAL_FRAME_FIXTURE': DEFAULT_LEGAL_FRAME_FIXTURE,
+            'FrameCandidate': FrameCandidate,
+            'FrameSelection': FrameSelection,
+        }[name]
+    elif name in ('LegalSample', 'LegalSampleValidationError', 'build_us_code_sample', 'stable_mock_embedding'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+            LegalSample,
+            LegalSampleValidationError,
+            build_us_code_sample,
+            stable_mock_embedding,
+        )
+        return {
+            'LegalSample': LegalSample,
+            'LegalSampleValidationError': LegalSampleValidationError,
+            'build_us_code_sample': build_us_code_sample,
+            'stable_mock_embedding': stable_mock_embedding,
+        }[name]
+    elif name in (
+        'HF_USCODE_DATASET_ID',
+        'USCODE_BM25_PARQUET',
+        'USCODE_EMBEDDINGS_PARQUET',
+        'USCODE_LAWS_PARQUET',
+        'USCODE_LOGIC_PROOF_SAMPLE_PARQUET',
+        'USCODE_PARQUET_DIR',
+        'USCodeParquetRecord',
+        'iter_uscode_records_from_parquet',
+        'load_hf_uscode_samples',
+        'load_uscode_embeddings_from_parquet',
+        'load_uscode_samples_from_parquet',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
+            HF_USCODE_DATASET_ID,
+            USCODE_BM25_PARQUET,
+            USCODE_EMBEDDINGS_PARQUET,
+            USCODE_LAWS_PARQUET,
+            USCODE_LOGIC_PROOF_SAMPLE_PARQUET,
+            USCODE_PARQUET_DIR,
+            USCodeParquetRecord,
+            iter_uscode_records_from_parquet,
+            load_hf_uscode_samples,
+            load_uscode_embeddings_from_parquet,
+            load_uscode_samples_from_parquet,
+        )
+        return {
+            'HF_USCODE_DATASET_ID': HF_USCODE_DATASET_ID,
+            'USCODE_BM25_PARQUET': USCODE_BM25_PARQUET,
+            'USCODE_EMBEDDINGS_PARQUET': USCODE_EMBEDDINGS_PARQUET,
+            'USCODE_LAWS_PARQUET': USCODE_LAWS_PARQUET,
+            'USCODE_LOGIC_PROOF_SAMPLE_PARQUET': USCODE_LOGIC_PROOF_SAMPLE_PARQUET,
+            'USCODE_PARQUET_DIR': USCODE_PARQUET_DIR,
+            'USCodeParquetRecord': USCodeParquetRecord,
+            'iter_uscode_records_from_parquet': iter_uscode_records_from_parquet,
+            'load_hf_uscode_samples': load_hf_uscode_samples,
+            'load_uscode_embeddings_from_parquet': load_uscode_embeddings_from_parquet,
+            'load_uscode_samples_from_parquet': load_uscode_samples_from_parquet,
+        }[name]
+    elif name in (
+        'SpaCyLegalEncoder',
+        'SpaCyLegalEncoding',
+        'SpaCyModalCodec',
+        'SpaCyModalCueFeature',
+        'SpaCyModalDecoder',
+        'SpaCyModalIRCompiler',
+        'SpaCySentenceFeature',
+        'SpaCyTokenFeature',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+            SpaCyLegalEncoder,
+            SpaCyLegalEncoding,
+            SpaCyModalCodec,
+            SpaCyModalCueFeature,
+            SpaCyModalDecoder,
+            SpaCyModalIRCompiler,
+            SpaCySentenceFeature,
+            SpaCyTokenFeature,
+        )
+        return {
+            'SpaCyLegalEncoder': SpaCyLegalEncoder,
+            'SpaCyLegalEncoding': SpaCyLegalEncoding,
+            'SpaCyModalCodec': SpaCyModalCodec,
+            'SpaCyModalCueFeature': SpaCyModalCueFeature,
+            'SpaCyModalDecoder': SpaCyModalDecoder,
+            'SpaCyModalIRCompiler': SpaCyModalIRCompiler,
+            'SpaCySentenceFeature': SpaCySentenceFeature,
+            'SpaCyTokenFeature': SpaCyTokenFeature,
+        }[name]
+    elif name in (
+        'AutoencoderEvaluation',
+        'AdaptiveModalAutoencoder',
+        'ModalAutoencoderBaseline',
+        'ModalAutoencoderTrainingState',
+        'cosine_similarity',
+        'cosine_loss',
+        'mse_loss',
+        'cross_entropy_loss',
+        'frame_ranking_loss',
+        'symbolic_validity_penalty',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+            AdaptiveModalAutoencoder,
+            AutoencoderEvaluation,
+            ModalAutoencoderBaseline,
+            ModalAutoencoderTrainingState,
+            cosine_loss,
+            cosine_similarity,
+            cross_entropy_loss,
+            frame_ranking_loss,
+            mse_loss,
+            symbolic_validity_penalty,
+        )
+        return {
+            'AdaptiveModalAutoencoder': AdaptiveModalAutoencoder,
+            'AutoencoderEvaluation': AutoencoderEvaluation,
+            'ModalAutoencoderBaseline': ModalAutoencoderBaseline,
+            'ModalAutoencoderTrainingState': ModalAutoencoderTrainingState,
+            'cosine_loss': cosine_loss,
+            'cosine_similarity': cosine_similarity,
+            'cross_entropy_loss': cross_entropy_loss,
+            'frame_ranking_loss': frame_ranking_loss,
+            'mse_loss': mse_loss,
+            'symbolic_validity_penalty': symbolic_validity_penalty,
+        }[name]
+    elif name in ('ModalProverRouter', 'ModalProverRouteResult', 'ModalProverStatus'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_prover_router import (
+            ModalProverRouteResult,
+            ModalProverRouter,
+            ModalProverStatus,
+        )
+        return {
+            'ModalProverRouteResult': ModalProverRouteResult,
+            'ModalProverRouter': ModalProverRouter,
+            'ModalProverStatus': ModalProverStatus,
+        }[name]
+    elif name in ('ModalParserReport', 'build_modal_parser_report'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_reporting import (
+            ModalParserReport,
+            build_modal_parser_report,
+        )
+        return {
+            'ModalParserReport': ModalParserReport,
+            'build_modal_parser_report': build_modal_parser_report,
+        }[name]
+    elif name in (
+        'LossSnapshot',
+        'ModalLossTodoGenerator',
+        'ModalOptimizationRun',
+        'ModalOptimizationStep',
+        'ModalTodo',
+        'ModalTodoQueue',
+        'ModalTodoSupervisor',
+    ):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+            LossSnapshot,
+            ModalLossTodoGenerator,
+            ModalOptimizationRun,
+            ModalOptimizationStep,
+            ModalTodo,
+            ModalTodoQueue,
+            ModalTodoSupervisor,
+        )
+        return {
+            'LossSnapshot': LossSnapshot,
+            'ModalLossTodoGenerator': ModalLossTodoGenerator,
+            'ModalOptimizationRun': ModalOptimizationRun,
+            'ModalOptimizationStep': ModalOptimizationStep,
+            'ModalTodo': ModalTodo,
+            'ModalTodoQueue': ModalTodoQueue,
+            'ModalTodoSupervisor': ModalTodoSupervisor,
+        }[name]
     elif name == 'LogicCritic' or name == 'CriticScore' or name == 'CriticDimensions':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import (
             LogicCritic, CriticScore, CriticDimensions

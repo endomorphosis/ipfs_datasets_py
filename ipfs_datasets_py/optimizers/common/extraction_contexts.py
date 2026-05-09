@@ -191,12 +191,14 @@ class LogicExtractionConfig(BaseExtractionConfig):
     Attributes:
         extraction_mode: Formalism to extract into (TDFOL, FOL, etc.).
         formalism_hint: Hint for formalism selection (default: None).
+        modal_profile: Optional modal family/system profile, e.g. "deontic:D".
         prover_list: List of applicable theorem provers (default: []).
         include_schema: Include type/predicate schema in output (default: True).
     """
     
     extraction_mode: ExtractionMode = ExtractionMode.AUTO
     formalism_hint: Optional[str] = None
+    modal_profile: Optional[str] = None
     prover_list: List[str] = field(default_factory=list)
     include_schema: bool = True
     
@@ -206,6 +208,7 @@ class LogicExtractionConfig(BaseExtractionConfig):
         d.update({
             "extraction_mode": self.extraction_mode.value if isinstance(self.extraction_mode, ExtractionMode) else self.extraction_mode,
             "formalism_hint": self.formalism_hint,
+            "modal_profile": self.modal_profile,
             "prover_list": list(self.prover_list),
             "include_schema": self.include_schema,
         })
@@ -233,6 +236,7 @@ class LogicExtractionConfig(BaseExtractionConfig):
             max_confidence=base.max_confidence,
             extraction_mode=extraction_mode,
             formalism_hint=d.get("formalism_hint"),
+            modal_profile=d.get("modal_profile"),
             prover_list=list(d.get("prover_list", [])),
             include_schema=bool(d.get("include_schema", True)),
         )

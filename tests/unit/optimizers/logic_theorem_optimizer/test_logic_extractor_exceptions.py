@@ -60,6 +60,7 @@ def test_query_llm_handles_typed_runtime_error_with_fallback() -> None:
     response = extractor._query_llm("prompt", context)
 
     assert "Formula:" in response
+    assert extractor.llm_call_count == 1
 
 
 def test_query_llm_does_not_swallow_keyboard_interrupt() -> None:
@@ -93,6 +94,25 @@ def test_extract_auto_mode_updates_config_instead_of_property_assignment() -> No
 
     assert result.success is True
     assert context.extraction_mode == le.ExtractionMode.TDFOL
+
+
+def test_legal_modal_extraction_can_use_spacy_profile_without_llm() -> None:
+    extractor = _build_extractor()
+    context = le.LogicExtractionContext(
+        data="The agency must make records promptly available to any person.",
+        domain="legal",
+        config={"extraction_mode": "modal", "modal_profile": "spacy"},
+        hints=["5 U.S.C. 552"],
+    )
+
+    result = extractor.extract(context)
+
+    assert result.success is True
+    assert result.statements
+    assert result.metrics["llm_call_count"] == 0
+    assert result.metrics["deterministic_parser"] == "spacy_modal_codec_v1"
+    assert result.metrics["spacy_token_count"] > 0
+    assert result.statements[0].metadata["modal_family"] == "deontic"
 
 
 def test_query_llm_uses_common_backend_resilience_wrapper(monkeypatch: pytest.MonkeyPatch) -> None:
