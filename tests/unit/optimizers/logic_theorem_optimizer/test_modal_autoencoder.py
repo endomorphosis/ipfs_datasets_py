@@ -101,6 +101,53 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     assert autoencoder.state.applied_todo_ids == ["ce-1", "cos-1"]
 
 
+def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    todos = [
+        type(
+            "Todo",
+            (),
+            {
+                "action": "improve_modal_family_classifier",
+                "loss_name": "cross_entropy_loss",
+                "sample_ids": [sample.sample_id],
+                "todo_id": "ce-introspection",
+            },
+        )(),
+        type(
+            "Todo",
+            (),
+            {
+                "action": "improve_encoder_decoder_reconstruction",
+                "loss_name": "cosine_loss",
+                "sample_ids": [sample.sample_id],
+                "todo_id": "cos-introspection",
+            },
+        )(),
+    ]
+    autoencoder.apply_todos(todos, {sample.sample_id: sample}, learning_rate=0.5)
+
+    introspection = autoencoder.introspect_sample(sample)
+    data = introspection.to_dict()
+
+    assert introspection.sample_id == sample.sample_id
+    assert introspection.sample_memory_used is False
+    assert introspection.target_family == "deontic"
+    assert introspection.top_family_contributions
+    assert introspection.top_embedding_contributions
+    assert all(
+        contribution.contribution_type != "sample_family_logit"
+        for contribution in introspection.top_family_contributions
+    )
+    assert "refine_typed_ir_or_decompiler_slots" in introspection.synthesis_focus
+    assert data["top_family_contributions"][0]["feature"]
+
+
 def test_feature_family_updates_generalize_without_sample_id_leakage() -> None:
     train = build_us_code_sample(
         title="5",
@@ -133,6 +180,55 @@ def test_feature_family_updates_generalize_without_sample_id_leakage() -> None:
     assert after.cross_entropy_loss < before.cross_entropy_loss
 
 
+def test_adaptive_autoencoder_skips_program_synthesis_todos() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    state_before = autoencoder.state.to_dict()
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "add_deterministic_parser_rule",
+            "loss_name": "parser_formula_count",
+            "sample_ids": [sample.sample_id],
+            "todo_id": "program-1",
+        },
+    )()
+
+    report = autoencoder.apply_todo(
+        todo,
+        {sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+
+    assert report["skipped"] is True
+    assert report["changed"] == []
+    assert autoencoder.state.to_dict() == state_before
+
+
+def test_clean_evaluation_ignores_sample_specific_memory() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    memory_before = autoencoder.evaluate([sample], use_sample_memory=False)
+    autoencoder.state.decoded_embeddings[sample.sample_id] = list(sample.embedding_vector)
+    memorized = autoencoder.evaluate([sample])
+    clean = autoencoder.evaluate([sample], use_sample_memory=False)
+
+    assert sample.sample_id in autoencoder.state.decoded_embeddings
+    assert memorized.embedding_cosine_similarity > memory_before.embedding_cosine_similarity
+    assert clean.embedding_cosine_similarity == pytest.approx(
+        memory_before.embedding_cosine_similarity
+    )
+
+
 def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
@@ -149,6 +245,46 @@ def test_adaptive_autoencoder_state_roundtrip(tmp_path) -> None:
 
     assert loaded.to_dict() == state.to_dict()
     assert loaded_from_file.to_dict() == state.to_dict()
+
+
+def test_generalizable_state_copy_drops_sample_specific_memory() -> None:
+    state = ModalAutoencoderTrainingState(
+        decoded_embeddings={"sample": [0.1, 0.2]},
+        family_logits={"sample": {"deontic": 1.0}},
+        feature_embedding_weights={"token:agency": [0.01, -0.01]},
+        feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+        applied_todo_ids=["todo-1"],
+    )
+
+    generalizable = state.generalizable_copy()
+
+    assert generalizable.decoded_embeddings == {}
+    assert generalizable.family_logits == {}
+    assert generalizable.applied_todo_ids == []
+    assert generalizable.feature_embedding_weights == state.feature_embedding_weights
+    assert generalizable.feature_family_logits == state.feature_family_logits
+
+
+def test_average_generalizable_state_reuses_prior_feature_learning() -> None:
+    first = ModalAutoencoderTrainingState(
+        decoded_embeddings={"sample-a": [1.0, 1.0]},
+        family_logits={"sample-a": {"deontic": 4.0}},
+        feature_embedding_weights={"token:agency": [0.2, -0.2]},
+        feature_family_logits={"modal-family:deontic": {"deontic": 0.6}},
+    )
+    second = ModalAutoencoderTrainingState(
+        decoded_embeddings={"sample-b": [2.0, 2.0]},
+        family_logits={"sample-b": {"temporal": 4.0}},
+        feature_embedding_weights={"token:agency": [0.4, -0.4]},
+        feature_family_logits={"modal-family:deontic": {"deontic": 0.2}},
+    )
+
+    averaged = ModalAutoencoderTrainingState.average_generalizable([first, second])
+
+    assert averaged.decoded_embeddings == {}
+    assert averaged.family_logits == {}
+    assert averaged.feature_embedding_weights["token:agency"] == pytest.approx([0.3, -0.3])
+    assert averaged.feature_family_logits["modal-family:deontic"]["deontic"] == pytest.approx(0.4)
 
 
 def test_frame_and_symbolic_penalties_for_valid_sample() -> None:

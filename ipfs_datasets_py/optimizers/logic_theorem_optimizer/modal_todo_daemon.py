@@ -9,12 +9,74 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, BinaryIO, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.logic.modal.synthesis import (
+    ModalProgramSynthesisHint,
+    synthesis_hints_from_autoencoder_introspections,
+)
+
 from .legal_samples import LegalSample
 from .modal_autoencoder import AdaptiveModalAutoencoder, AutoencoderEvaluation
 
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+AUTOENCODER_SGD_ROLE = "autoencoder_sgd"
+PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
+AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
+PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
+
+AUTOENCODER_TRAINABLE_ACTIONS = {
+    "improve_encoder_decoder_reconstruction",
+    "improve_modal_family_classifier",
+}
+AUTOENCODER_TRAINABLE_LOSSES = {
+    "cosine_loss",
+    "cross_entropy_loss",
+    "reconstruction_loss",
+}
+
+
+@dataclass(frozen=True)
+class ModalOptimizerPolicy:
+    """Policy separating continuous optimizer updates from program repair."""
+
+    autoencoder_role: str = AUTOENCODER_SGD_ROLE
+    program_synthesis_role: str = PROGRAM_SYNTHESIS_ROLE
+    program_synthesis_min_support: int = 2
+    enable_program_synthesis_todos: bool = True
+
+    def role_for(self, *, action: str, loss_name: str = "") -> str:
+        if (
+            action in AUTOENCODER_TRAINABLE_ACTIONS
+            or loss_name in AUTOENCODER_TRAINABLE_LOSSES
+        ):
+            return self.autoencoder_role
+        return self.program_synthesis_role
+
+    def execution_target_for(self, *, action: str, loss_name: str = "") -> str:
+        if self.role_for(action=action, loss_name=loss_name) == self.autoencoder_role:
+            return AUTOENCODER_EXECUTION_TARGET
+        return PROGRAM_SYNTHESIS_EXECUTION_TARGET
+
+    def metadata_for(self, *, action: str, loss_name: str = "") -> Dict[str, str]:
+        role = self.role_for(action=action, loss_name=loss_name)
+        return {
+            "execution_target": self.execution_target_for(
+                action=action,
+                loss_name=loss_name,
+            ),
+            "optimizer_role": role,
+            "optimizer_stage": (
+                "continuous_state_update"
+                if role == self.autoencoder_role
+                else "typed_program_synthesis"
+            ),
+        }
+
+    def is_trainable(self, todo: "ModalTodo") -> bool:
+        return _todo_optimizer_role(todo) == self.autoencoder_role
 
 
 @dataclass(frozen=True)
@@ -165,6 +227,10 @@ class ModalOptimizationStep:
     failed_validation_count: int = 0
     failed_validation_todo_ids: List[str] = field(default_factory=list)
     applied_updates: List[Dict[str, Any]] = field(default_factory=list)
+    autoencoder_claimed_count: int = 0
+    loss_seeded_count: int = 0
+    program_synthesis_pending_count: int = 0
+    program_synthesis_seeded_count: int = 0
     validation_before: Optional[AutoencoderEvaluation] = None
     validation_after: Optional[AutoencoderEvaluation] = None
     created_at: str = field(default_factory=_utc_now)
@@ -206,6 +272,7 @@ class ModalOptimizationStep:
             "after": self.after.to_dict(),
             "applied_count": self.applied_count,
             "applied_updates": list(self.applied_updates),
+            "autoencoder_claimed_count": self.autoencoder_claimed_count,
             "before": self.before.to_dict(),
             "claimed_count": self.claimed_count,
             "claimed_open_count": self.claimed_open_count,
@@ -218,7 +285,10 @@ class ModalOptimizationStep:
             "failed_validation_todo_ids": list(self.failed_validation_todo_ids),
             "improved": self.improved,
             "iteration": self.iteration,
+            "loss_seeded_count": self.loss_seeded_count,
             "pending_count": self.pending_count,
+            "program_synthesis_pending_count": self.program_synthesis_pending_count,
+            "program_synthesis_seeded_count": self.program_synthesis_seeded_count,
             "seeded_count": self.seeded_count,
             "worker_id": self.worker_id,
         }
@@ -263,20 +333,30 @@ class ModalOptimizationRun:
 
 
 class ModalLossTodoGenerator:
-    """Convert SGD-style loss signals into deterministic parser TODOs."""
+    """Convert loss signals into optimizer or program-repair TODOs."""
 
     DEFAULT_THRESHOLDS = {
         "cosine_loss": 0.05,
         "cross_entropy_loss": 0.05,
+        "flogic_similarity_loss": 0.05,
         "frame_ranking_loss": 0.0,
+        "modal_span_coverage_loss": 0.0,
+        "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
         "symbolic_validity_penalty": 0.0,
+        "text_reconstruction_loss": 0.0,
     }
 
-    def __init__(self, thresholds: Optional[Mapping[str, float]] = None) -> None:
+    def __init__(
+        self,
+        thresholds: Optional[Mapping[str, float]] = None,
+        *,
+        policy: Optional[ModalOptimizerPolicy] = None,
+    ) -> None:
         self.thresholds = dict(self.DEFAULT_THRESHOLDS)
         if thresholds:
             self.thresholds.update({name: float(value) for name, value in thresholds.items()})
+        self.policy = policy or ModalOptimizerPolicy()
 
     def generate(self, snapshots: Iterable[LossSnapshot]) -> List[ModalTodo]:
         """Generate unique pending TODOs sorted by highest priority first."""
@@ -311,9 +391,25 @@ class ModalLossTodoGenerator:
                 "improve_bm25_frame_selector",
                 "Add ontology frame vocabulary or weights so the expected frame ranks first.",
             ),
+            "flogic_similarity_loss": (
+                "improve_flogic_frame_alignment",
+                "Refine ontology frame triples or decoded IR text so F-logic semantic similarity improves.",
+            ),
+            "modal_span_coverage_loss": (
+                "increase_modal_ir_span_coverage",
+                "Add deterministic parser or IR coverage for source spans preserved as text but not typed as modal logic.",
+            ),
+            "ontology_violation_count": (
+                "repair_flogic_ontology_constraints",
+                "Fix F-logic frame triples or ontology signatures that violate deterministic frame constraints.",
+            ),
             "symbolic_validity_penalty": (
                 "add_deterministic_parser_rule",
                 "Add a deterministic parser rule or fixture for legal text that failed symbolic validation.",
+            ),
+            "text_reconstruction_loss": (
+                "refine_semantic_decompiler_reconstruction",
+                "Fix deterministic decompiler reconstruction so source semantics survive the IR round trip.",
             ),
         }.get(
             loss_name,
@@ -353,10 +449,95 @@ class ModalLossTodoGenerator:
             loss_value=round(loss_value, 12),
             priority=priority,
             metadata={
+                **self.policy.metadata_for(action=action, loss_name=loss_name),
                 "selected_frame": snapshot.selected_frame,
                 "source": "modal_loss_todo_generator_v1",
             },
         )
+
+
+class ModalProgramSynthesisTodoGenerator:
+    """Create Codex/program-repair TODOs from stable autoencoder residual hints."""
+
+    def __init__(
+        self,
+        *,
+        policy: Optional[ModalOptimizerPolicy] = None,
+        min_support: Optional[int] = None,
+    ) -> None:
+        self.policy = policy or ModalOptimizerPolicy()
+        self.min_support = (
+            self.policy.program_synthesis_min_support
+            if min_support is None
+            else int(min_support)
+        )
+
+    def generate(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        autoencoder: AdaptiveModalAutoencoder,
+    ) -> List[ModalTodo]:
+        """Generate program-repair TODOs only for repeated interpretable hints."""
+        if not self.policy.enable_program_synthesis_todos:
+            return []
+        sample_list = list(samples)
+        if not sample_list:
+            return []
+
+        samples_by_id = {sample.sample_id: sample for sample in sample_list}
+        introspections = [
+            autoencoder.introspect_sample(sample, use_sample_memory=False).to_dict()
+            for sample in sample_list
+        ]
+        hints = synthesis_hints_from_autoencoder_introspections(introspections)
+        clusters: Dict[tuple[str, str], List[ModalProgramSynthesisHint]] = {}
+        for hint in hints:
+            clusters.setdefault((hint.action, hint.target_component), []).append(hint)
+
+        todos: List[ModalTodo] = []
+        min_support = max(1, self.min_support)
+        for (action, target_component), cluster in sorted(clusters.items()):
+            sample_ids = _unique_preserve_order(
+                str(hint.evidence.get("sample_id") or _sample_id_from_hint(hint))
+                for hint in cluster
+            )
+            sample_ids = [sample_id for sample_id in sample_ids if sample_id]
+            if len(sample_ids) < min_support:
+                continue
+            citations = _unique_preserve_order(
+                samples_by_id[sample_id].citation
+                for sample_id in sample_ids
+                if sample_id in samples_by_id
+            )
+            priority = sum(float(hint.priority) for hint in cluster) / len(cluster)
+            representative = max(cluster, key=lambda hint: (hint.priority, hint.hint_id))
+            todo = ModalTodo(
+                todo_id=_program_todo_id(
+                    action=action,
+                    target_component=target_component,
+                    sample_ids=sample_ids,
+                ),
+                action=action,
+                objective=representative.rationale,
+                sample_ids=sample_ids,
+                citations=citations,
+                loss_name="autoencoder_residual_cluster",
+                loss_value=round(priority, 12),
+                priority=round((priority * 100.0) + len(sample_ids), 6),
+                metadata={
+                    **self.policy.metadata_for(
+                        action=action,
+                        loss_name="autoencoder_residual_cluster",
+                    ),
+                    "hint_ids": sorted(hint.hint_id for hint in cluster),
+                    "source": "modal_program_synthesis_todo_generator_v1",
+                    "support_count": len(sample_ids),
+                    "target_component": target_component,
+                },
+            )
+            todos.append(todo)
+        return sorted(todos, key=lambda todo: (-todo.priority, todo.todo_id))
 
 
 class ModalTodoQueue:
@@ -377,11 +558,11 @@ class ModalTodoQueue:
             added += 1
         return added
 
-    def pending(self) -> List[ModalTodo]:
-        return self._by_priority(status="pending")
+    def pending(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
+        return self._by_priority(status="pending", optimizer_role=optimizer_role)
 
-    def claimed(self) -> List[ModalTodo]:
-        return self._by_priority(status="claimed")
+    def claimed(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
+        return self._by_priority(status="claimed", optimizer_role=optimizer_role)
 
     def all(self) -> List[ModalTodo]:
         return sorted(self._todos.values(), key=lambda todo: (-todo.priority, todo.todo_id))
@@ -395,12 +576,30 @@ class ModalTodoQueue:
             counts[todo.status] = counts.get(todo.status, 0) + 1
         return dict(sorted(counts.items()))
 
-    def claim_batch(self, *, worker_id: str, max_items: int) -> List[ModalTodo]:
+    def role_status_counts(self) -> Dict[str, Dict[str, int]]:
+        """Return queue counts grouped by optimizer role and status."""
+        counts: Dict[str, Dict[str, int]] = {}
+        for todo in self._todos.values():
+            role = _todo_optimizer_role(todo)
+            role_counts = counts.setdefault(role, {})
+            role_counts[todo.status] = role_counts.get(todo.status, 0) + 1
+        return {
+            role: dict(sorted(role_counts.items()))
+            for role, role_counts in sorted(counts.items())
+        }
+
+    def claim_batch(
+        self,
+        *,
+        worker_id: str,
+        max_items: int,
+        optimizer_role: Optional[str] = None,
+    ) -> List[ModalTodo]:
         """Claim up to ``max_items`` pending TODOs for one worker."""
         if max_items < 1:
             return []
         claimed: List[ModalTodo] = []
-        for todo in self.pending()[:max_items]:
+        for todo in self.pending(optimizer_role=optimizer_role)[:max_items]:
             todo.claim(worker_id)
             claimed.append(todo)
         return claimed
@@ -436,9 +635,22 @@ class ModalTodoQueue:
         ]
         return cls(todos)
 
-    def _by_priority(self, *, status: str) -> List[ModalTodo]:
+    def _by_priority(
+        self,
+        *,
+        status: str,
+        optimizer_role: Optional[str] = None,
+    ) -> List[ModalTodo]:
         return sorted(
-            (todo for todo in self._todos.values() if todo.status == status),
+            (
+                todo
+                for todo in self._todos.values()
+                if todo.status == status
+                and (
+                    optimizer_role is None
+                    or _todo_optimizer_role(todo) == optimizer_role
+                )
+            ),
             key=lambda todo: (-todo.priority, todo.created_at, todo.todo_id),
         )
 
@@ -451,9 +663,16 @@ class ModalTodoSupervisor:
         *,
         queue: Optional[ModalTodoQueue] = None,
         generator: Optional[ModalLossTodoGenerator] = None,
+        policy: Optional[ModalOptimizerPolicy] = None,
+        program_synthesis_generator: Optional[ModalProgramSynthesisTodoGenerator] = None,
     ) -> None:
+        self.policy = policy or ModalOptimizerPolicy()
         self.queue = queue or ModalTodoQueue()
-        self.generator = generator or ModalLossTodoGenerator()
+        self.generator = generator or ModalLossTodoGenerator(policy=self.policy)
+        self.program_synthesis_generator = (
+            program_synthesis_generator
+            or ModalProgramSynthesisTodoGenerator(policy=self.policy)
+        )
 
     def seed_from_evaluation(
         self,
@@ -467,8 +686,32 @@ class ModalTodoSupervisor:
         self.queue.add_many(todos)
         return todos
 
-    def claim_next_batch(self, *, worker_id: str, max_items: int) -> List[ModalTodo]:
-        return self.queue.claim_batch(worker_id=worker_id, max_items=max_items)
+    def seed_program_synthesis_from_introspection(
+        self,
+        samples: Sequence[LegalSample],
+        *,
+        autoencoder: AdaptiveModalAutoencoder,
+    ) -> List[ModalTodo]:
+        """Seed Codex/program-repair TODOs from stable autoencoder evidence."""
+        todos = self.program_synthesis_generator.generate(
+            list(samples),
+            autoencoder=autoencoder,
+        )
+        self.queue.add_many(todos)
+        return todos
+
+    def claim_next_batch(
+        self,
+        *,
+        worker_id: str,
+        max_items: int,
+        optimizer_role: Optional[str] = None,
+    ) -> List[ModalTodo]:
+        return self.queue.claim_batch(
+            worker_id=worker_id,
+            max_items=max_items,
+            optimizer_role=optimizer_role,
+        )
 
     def optimize_once(
         self,
@@ -486,46 +729,80 @@ class ModalTodoSupervisor:
         validation_list = list(validation_samples or [])
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
         before = autoencoder.evaluate(sample_list)
-        validation_before = autoencoder.evaluate(validation_list) if validation_list else None
-        seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
-        claimed = self.claim_next_batch(worker_id=worker_id, max_items=max_items)
-        applied_updates = autoencoder.apply_todos(
-            claimed,
-            samples_by_id,
-            learning_rate=learning_rate,
+        validation_before = (
+            autoencoder.evaluate(validation_list, use_sample_memory=False)
+            if validation_list
+            else None
         )
-        after = autoencoder.evaluate(sample_list)
-        validation_after = autoencoder.evaluate(validation_list) if validation_list else None
+        loss_seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
+        program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
+            sample_list,
+            autoencoder=autoencoder,
+        )
+        claimed = self.claim_next_batch(
+            worker_id=worker_id,
+            max_items=max_items,
+            optimizer_role=self.policy.autoencoder_role,
+        )
         validation_scope = (
             "validation"
-            if validation_before is not None and validation_after is not None
+            if validation_before is not None
             else "training"
         )
-        completion_before = validation_before or before
-        completion_after = validation_after or after
 
+        applied_updates: List[Dict[str, Any]] = []
         completed_ids: List[str] = []
         failed_validation_ids: List[str] = []
         for todo in claimed:
+            state_before_todo = autoencoder.state.copy()
+            todo_before = autoencoder.evaluate(sample_list)
+            todo_validation_before = (
+                autoencoder.evaluate(validation_list, use_sample_memory=False)
+                if validation_list
+                else None
+            )
+            update_report = autoencoder.apply_todo(
+                todo,
+                samples_by_id,
+                learning_rate=learning_rate,
+            )
+            todo_after = autoencoder.evaluate(sample_list)
+            todo_validation_after = (
+                autoencoder.evaluate(validation_list, use_sample_memory=False)
+                if validation_list
+                else None
+            )
+            completion_before = todo_validation_before or todo_before
+            completion_after = todo_validation_after or todo_after
             validation = _todo_validation(todo, before=completion_before, after=completion_after)
             validation["scope"] = validation_scope
             todo.metadata["validation"] = validation
             if validation["improved"]:
                 self.queue.complete(todo.todo_id)
                 completed_ids.append(todo.todo_id)
+                applied_updates.append(update_report)
             elif validation_scope == "validation":
+                autoencoder.state = state_before_todo
+                validation["rolled_back"] = True
                 self.queue.fail_validation(
                     todo.todo_id,
                     reason="held-out validation metric did not improve",
                 )
                 failed_validation_ids.append(todo.todo_id)
 
+        after = autoencoder.evaluate(sample_list)
+        validation_after = (
+            autoencoder.evaluate(validation_list, use_sample_memory=False)
+            if validation_list
+            else None
+        )
+
         return ModalOptimizationStep(
             iteration=iteration,
             worker_id=worker_id,
             before=before,
             after=after,
-            seeded_count=len(seeded),
+            seeded_count=len(loss_seeded) + len(program_synthesis_seeded),
             claimed_count=len(claimed),
             applied_count=len(applied_updates),
             completed_count=len(completed_ids),
@@ -535,6 +812,12 @@ class ModalTodoSupervisor:
             failed_validation_count=len(failed_validation_ids),
             failed_validation_todo_ids=failed_validation_ids,
             applied_updates=applied_updates,
+            autoencoder_claimed_count=len(claimed),
+            loss_seeded_count=len(loss_seeded),
+            program_synthesis_pending_count=len(
+                self.queue.pending(optimizer_role=self.policy.program_synthesis_role)
+            ),
+            program_synthesis_seeded_count=len(program_synthesis_seeded),
             validation_before=validation_before,
             validation_after=validation_after,
         )
@@ -557,7 +840,7 @@ class ModalTodoSupervisor:
         stopped_reason = "max_iterations"
         final_evaluation = autoencoder.evaluate(samples)
         validation_final_evaluation = (
-            autoencoder.evaluate(validation_samples)
+            autoencoder.evaluate(validation_samples, use_sample_memory=False)
             if validation_samples is not None and len(validation_samples) > 0
             else None
         )
@@ -648,6 +931,48 @@ def _todo_id(action: str, sample_id: str, loss_name: str, loss_value: float) -> 
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
+def _program_todo_id(
+    *,
+    action: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = {
+        "action": action,
+        "sample_ids": sorted(sample_ids),
+        "target_component": target_component,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
+    ).hexdigest()[:16]
+    return f"program-{digest}"
+
+
+def _sample_id_from_hint(hint: ModalProgramSynthesisHint) -> str:
+    return str(hint.evidence.get("sample_id") or "").strip()
+
+
+def _todo_optimizer_role(todo: ModalTodo) -> str:
+    role = str(todo.metadata.get("optimizer_role") or "").strip()
+    if role:
+        return role
+    return ModalOptimizerPolicy().role_for(
+        action=str(todo.action),
+        loss_name=str(todo.loss_name),
+    )
+
+
+def _unique_preserve_order(values: Iterable[str]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
 def _todo_validation(
     todo: ModalTodo,
     *,
@@ -685,8 +1010,10 @@ def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[floa
 __all__ = [
     "LossSnapshot",
     "ModalLossTodoGenerator",
+    "ModalOptimizerPolicy",
     "ModalOptimizationRun",
     "ModalOptimizationStep",
+    "ModalProgramSynthesisTodoGenerator",
     "ModalTodo",
     "ModalTodoQueue",
     "ModalTodoSupervisor",

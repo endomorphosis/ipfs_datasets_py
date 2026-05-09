@@ -34,7 +34,7 @@ if BeartypeDecorHintPep585DeprecationWarning is not None:
         category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
     )
 
-__all__ = ["api", "integrations", "tools", "integration", "cli", "flogic"]
+__all__ = ["api", "integrations", "tools", "integration", "cli", "flogic", "modal"]
 
 
 def __getattr__(name):
@@ -66,5 +66,9 @@ def __getattr__(name):
     if name == "cli":
         from . import cli
         return cli
+
+    if name == "modal":
+        from . import modal
+        return modal
     
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

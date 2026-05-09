@@ -68,6 +68,76 @@ class AutoencoderEvaluation:
         }
 
 
+@dataclass(frozen=True)
+class AutoencoderFeatureContribution:
+    """One explainable autoencoder contribution for advisor-driven synthesis."""
+
+    feature: str
+    contribution_type: str
+    value: float
+    magnitude: float
+    family: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "contribution_type": self.contribution_type,
+            "family": self.family,
+            "feature": self.feature,
+            "magnitude": self.magnitude,
+            "metadata": dict(sorted(self.metadata.items())),
+            "value": self.value,
+        }
+
+
+@dataclass(frozen=True)
+class AutoencoderIntrospection:
+    """Serializable evidence explaining an adaptive modal autoencoder decision."""
+
+    sample_id: str
+    target_family: str
+    predicted_family: str
+    target_probability: float
+    predicted_probability: float
+    family_margin: float
+    cosine_similarity: float
+    reconstruction_loss: float
+    residual_vector: List[float]
+    base_decoded_embedding: List[float]
+    decoded_embedding: List[float]
+    feature_count: int
+    sample_memory_used: bool
+    top_family_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
+    top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
+    synthesis_focus: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "base_decoded_embedding": list(self.base_decoded_embedding),
+            "cosine_similarity": self.cosine_similarity,
+            "decoded_embedding": list(self.decoded_embedding),
+            "family_margin": self.family_margin,
+            "feature_count": self.feature_count,
+            "predicted_family": self.predicted_family,
+            "predicted_probability": self.predicted_probability,
+            "reconstruction_loss": self.reconstruction_loss,
+            "residual_vector": list(self.residual_vector),
+            "sample_id": self.sample_id,
+            "sample_memory_used": self.sample_memory_used,
+            "synthesis_focus": list(self.synthesis_focus),
+            "target_family": self.target_family,
+            "target_probability": self.target_probability,
+            "top_embedding_contributions": [
+                contribution.to_dict()
+                for contribution in self.top_embedding_contributions
+            ],
+            "top_family_contributions": [
+                contribution.to_dict()
+                for contribution in self.top_family_contributions
+            ],
+        }
+
+
 @dataclass
 class ModalAutoencoderTrainingState:
     """Mutable deterministic state for the modal encoder/decoder optimizer."""
@@ -101,6 +171,99 @@ class ModalAutoencoderTrainingState:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+    def copy(self) -> "ModalAutoencoderTrainingState":
+        """Return a deep copy suitable for transactional optimizer rollback."""
+        return self.from_dict(self.to_dict())
+
+    def generalizable_copy(self) -> "ModalAutoencoderTrainingState":
+        """Return only feature-level state safe to reuse across samples.
+
+        Sample-specific decoded embeddings and family logits are deliberately
+        dropped.  Those entries are useful for transactional training, but they
+        can contaminate future validation if carried into a fresh run.
+        """
+        return ModalAutoencoderTrainingState(
+            feature_embedding_weights={
+                feature: list(vector)
+                for feature, vector in self.feature_embedding_weights.items()
+            },
+            feature_family_logits={
+                feature: dict(logits)
+                for feature, logits in self.feature_family_logits.items()
+            },
+        )
+
+    def merge_generalizable_from(
+        self,
+        other: "ModalAutoencoderTrainingState",
+        *,
+        scale: float = 1.0,
+    ) -> None:
+        """Add feature-level weights from ``other`` into this state."""
+        for feature, vector in other.feature_embedding_weights.items():
+            if feature not in self.feature_embedding_weights:
+                self.feature_embedding_weights[feature] = [
+                    float(value) * scale for value in vector
+                ]
+                continue
+            current = self.feature_embedding_weights[feature]
+            if len(current) != len(vector):
+                continue
+            for index, value in enumerate(vector):
+                current[index] += float(value) * scale
+
+        for feature, logits in other.feature_family_logits.items():
+            current_logits = self.feature_family_logits.setdefault(feature, {})
+            for family, value in logits.items():
+                current_logits[family] = current_logits.get(family, 0.0) + (
+                    float(value) * scale
+                )
+
+    @classmethod
+    def average_generalizable(
+        cls,
+        states: Iterable["ModalAutoencoderTrainingState"],
+    ) -> "ModalAutoencoderTrainingState":
+        """Average feature-level state from previous runs for warm starts."""
+        state_list = [state.generalizable_copy() for state in states]
+        if not state_list:
+            return cls()
+
+        merged = cls()
+        vector_counts: Dict[str, int] = {}
+        logit_counts: Dict[tuple[str, str], int] = {}
+
+        for state in state_list:
+            for feature, vector in state.feature_embedding_weights.items():
+                if feature not in merged.feature_embedding_weights:
+                    merged.feature_embedding_weights[feature] = [0.0 for _ in vector]
+                    vector_counts[feature] = 0
+                current = merged.feature_embedding_weights[feature]
+                if len(current) != len(vector):
+                    continue
+                for index, value in enumerate(vector):
+                    current[index] += float(value)
+                vector_counts[feature] += 1
+
+            for feature, logits in state.feature_family_logits.items():
+                current_logits = merged.feature_family_logits.setdefault(feature, {})
+                for family, value in logits.items():
+                    current_logits[family] = current_logits.get(family, 0.0) + float(value)
+                    logit_counts[(feature, family)] = logit_counts.get((feature, family), 0) + 1
+
+        for feature, count in vector_counts.items():
+            if count <= 0:
+                continue
+            merged.feature_embedding_weights[feature] = [
+                value / count for value in merged.feature_embedding_weights[feature]
+            ]
+        for feature, logits in merged.feature_family_logits.items():
+            for family, value in list(logits.items()):
+                count = logit_counts.get((feature, family), 0)
+                if count > 0:
+                    logits[family] = value / count
+        return merged
 
     def save_json(self, path: str | Path) -> None:
         destination = Path(path)
@@ -208,9 +371,11 @@ class ModalAutoencoderBaseline:
 class AdaptiveModalAutoencoder:
     """Small trainable modal encoder/decoder used by the TODO supervisor.
 
-    This is intentionally dependency-free: it is not a neural model, but it has
-    enough mutable state to let daemon iterations prove that claimed TODOs move
-    cross entropy down and cosine similarity up before work is marked complete.
+    This is an adaptive diagnostic/advisor, not the canonical legal
+    representation.  The expert-auditable path is the deterministic modal
+    compiler/decompiler in ``ipfs_datasets_py.logic.modal``; this class keeps
+    feature-level nudges only to identify where vague text, frame choice, or
+    reconstruction may need compiler-rule improvements.
     """
 
     def __init__(
@@ -226,7 +391,12 @@ class AdaptiveModalAutoencoder:
         self.modal_families = tuple(modal_families or _all_modal_families())
         self.feature_codec = feature_codec
 
-    def evaluate(self, samples: Iterable[LegalSample]) -> AutoencoderEvaluation:
+    def evaluate(
+        self,
+        samples: Iterable[LegalSample],
+        *,
+        use_sample_memory: bool = True,
+    ) -> AutoencoderEvaluation:
         """Evaluate current encoder/decoder state against legal samples."""
         sample_list = list(samples)
         if not sample_list:
@@ -250,13 +420,16 @@ class AdaptiveModalAutoencoder:
         decoded_embeddings: Dict[str, List[float]] = {}
 
         for sample in sample_list:
-            decoded = self.decode(self.encode(sample))
+            decoded = self.decode(self.encode(sample, use_sample_memory=use_sample_memory))
             decoded_embeddings[sample.sample_id] = decoded
             cosine_scores.append(cosine_similarity(sample.embedding_vector, decoded))
             cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
             reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
             ce_losses.append(
-                cross_entropy_loss(self._family_distribution(sample), _target_family(sample))
+                cross_entropy_loss(
+                    self._family_distribution(sample, use_sample_memory=use_sample_memory),
+                    _target_family(sample),
+                )
             )
             frame_losses.append(frame_ranking_loss(sample))
             symbolic_penalties.append(symbolic_validity_penalty(sample))
@@ -272,14 +445,17 @@ class AdaptiveModalAutoencoder:
             decoded_embeddings=decoded_embeddings,
         )
 
-    def encode(self, sample: LegalSample) -> Dict[str, object]:
+    def encode(self, sample: LegalSample, *, use_sample_memory: bool = True) -> Dict[str, object]:
         """Encode sample into the current intermediate representation state."""
         return {
-            "family_distribution": self._family_distribution(sample),
+            "family_distribution": self._family_distribution(
+                sample,
+                use_sample_memory=use_sample_memory,
+            ),
             "sample_id": sample.sample_id,
             "selected_frame": sample.selected_frame,
             "target_family": _target_family(sample),
-            "embedding_projection": self._decoded_for(sample),
+            "embedding_projection": self._decoded_for(sample, use_sample_memory=use_sample_memory),
         }
 
     def decode(self, encoded: Mapping[str, object]) -> List[float]:
@@ -288,6 +464,73 @@ class AdaptiveModalAutoencoder:
             float(value)
             for value in encoded.get("embedding_projection", [])  # type: ignore[arg-type]
         ]
+
+    def introspect_sample(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool = False,
+        top_k: int = 8,
+    ) -> AutoencoderIntrospection:
+        """Explain which adaptive features influenced this sample.
+
+        The default ignores sample-specific memory so the resulting evidence is
+        suitable for deterministic compiler/decompiler synthesis.
+        """
+        logits = self._logits_for(sample, use_sample_memory=use_sample_memory)
+        probabilities = _softmax(logits)
+        target_family = _target_family(sample)
+        predicted_family = max(
+            probabilities,
+            key=lambda family: (probabilities[family], family),
+        ) if probabilities else ModalLogicFamily.HYBRID.value
+        target_probability = float(probabilities.get(target_family, 0.0))
+        predicted_probability = float(probabilities.get(predicted_family, 0.0))
+        other_probabilities = [
+            value for family, value in probabilities.items() if family != target_family
+        ]
+        best_other = max(other_probabilities) if other_probabilities else 0.0
+        decoded = self._decoded_for(sample, use_sample_memory=use_sample_memory)
+        base_decoded = self._base_decoded_for(sample)
+        residual = [
+            float(target_value) - float(decoded_value)
+            for target_value, decoded_value in zip(sample.embedding_vector, decoded)
+        ]
+        feature_keys = self._feature_keys_for(sample)
+        family_contributions = self._family_contributions_for(
+            sample,
+            feature_keys,
+            use_sample_memory=use_sample_memory,
+        )
+        embedding_contributions = self._embedding_contributions_for(
+            feature_keys,
+            residual,
+            dimensions=len(sample.embedding_vector),
+        )
+        return AutoencoderIntrospection(
+            sample_id=sample.sample_id,
+            target_family=target_family,
+            predicted_family=predicted_family,
+            target_probability=round(target_probability, 12),
+            predicted_probability=round(predicted_probability, 12),
+            family_margin=round(target_probability - best_other, 12),
+            cosine_similarity=round(cosine_similarity(sample.embedding_vector, decoded), 12),
+            reconstruction_loss=round(mse_loss(sample.embedding_vector, decoded), 12),
+            residual_vector=[round(value, 12) for value in residual],
+            base_decoded_embedding=[round(float(value), 12) for value in base_decoded],
+            decoded_embedding=[round(float(value), 12) for value in decoded],
+            feature_count=len(feature_keys),
+            sample_memory_used=use_sample_memory,
+            top_family_contributions=family_contributions[:max(top_k, 0)],
+            top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
+            synthesis_focus=self._synthesis_focus_for(
+                sample,
+                target_family=target_family,
+                predicted_family=predicted_family,
+                target_probability=target_probability,
+                reconstruction_loss=mse_loss(sample.embedding_vector, decoded),
+            ),
+        )
 
     def apply_todos(
         self,
@@ -316,6 +559,29 @@ class AdaptiveModalAutoencoder:
         sample_ids = [str(value) for value in getattr(todo, "sample_ids", [])]
         changed: List[str] = []
 
+        trainable = (
+            action
+            in {
+                "improve_encoder_decoder_reconstruction",
+                "improve_modal_family_classifier",
+            }
+            or loss_name
+            in {
+                "cosine_loss",
+                "cross_entropy_loss",
+                "reconstruction_loss",
+            }
+        )
+        if not trainable:
+            return {
+                "action": action,
+                "changed": [],
+                "reason": "todo targets deterministic program synthesis, not autoencoder SGD",
+                "sample_ids": sample_ids,
+                "skipped": True,
+                "todo_id": todo_id,
+            }
+
         for sample_id in sample_ids:
             sample = samples_by_id.get(sample_id)
             if sample is None:
@@ -339,8 +605,8 @@ class AdaptiveModalAutoencoder:
             "todo_id": todo_id,
         }
 
-    def _decoded_for(self, sample: LegalSample) -> List[float]:
-        stored = self.state.decoded_embeddings.get(sample.sample_id)
+    def _decoded_for(self, sample: LegalSample, *, use_sample_memory: bool = True) -> List[float]:
+        stored = self.state.decoded_embeddings.get(sample.sample_id) if use_sample_memory else None
         if stored is not None and len(stored) == len(sample.embedding_vector):
             return list(stored)
         base = self._base_decoded_for(sample)
@@ -363,10 +629,20 @@ class AdaptiveModalAutoencoder:
                 return [float(value) for value in decoded]
         return [self.initial_embedding_scale * float(value) for value in sample.embedding_vector]
 
-    def _family_distribution(self, sample: LegalSample) -> Dict[str, float]:
-        return _softmax(self._logits_for(sample))
+    def _family_distribution(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool = True,
+    ) -> Dict[str, float]:
+        return _softmax(self._logits_for(sample, use_sample_memory=use_sample_memory))
 
-    def _logits_for(self, sample: LegalSample) -> Dict[str, float]:
+    def _logits_for(
+        self,
+        sample: LegalSample,
+        *,
+        use_sample_memory: bool = True,
+    ) -> Dict[str, float]:
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "family_logits_for_sample",
@@ -384,9 +660,10 @@ class AdaptiveModalAutoencoder:
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 if family in logits:
                     logits[family] += float(value)
-        for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
-            if family in logits:
-                logits[family] += float(value)
+        if use_sample_memory:
+            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                if family in logits:
+                    logits[family] += float(value)
         return logits
 
     def _nudge_decoded_embedding(self, sample: LegalSample, *, learning_rate: float) -> None:
@@ -469,6 +746,113 @@ class AdaptiveModalAutoencoder:
                 keys.append(f"modal-cue:{str(cue).lower()}")
         keys.extend(f"token:{token}" for token in _token_features(sample.normalized_text))
         return _unique_preserve_order(keys)
+
+    def _family_contributions_for(
+        self,
+        sample: LegalSample,
+        feature_keys: Sequence[str],
+        *,
+        use_sample_memory: bool,
+    ) -> List[AutoencoderFeatureContribution]:
+        target = _target_family(sample)
+        contributions: List[AutoencoderFeatureContribution] = []
+        for feature in feature_keys:
+            logits = self.state.feature_family_logits.get(feature, {})
+            for family, value in logits.items():
+                if family not in self.modal_families:
+                    continue
+                family_value = float(value)
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=feature,
+                        contribution_type="feature_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "supports_target": family == target,
+                        },
+                    )
+                )
+        if use_sample_memory:
+            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                family_value = float(value)
+                contributions.append(
+                    AutoencoderFeatureContribution(
+                        feature=f"sample-memory:{sample.sample_id}",
+                        contribution_type="sample_family_logit",
+                        family=family,
+                        value=round(family_value, 12),
+                        magnitude=round(abs(family_value), 12),
+                        metadata={
+                            "supports_target": family == target,
+                        },
+                    )
+                )
+        return sorted(
+            contributions,
+            key=lambda contribution: (
+                -contribution.magnitude,
+                contribution.feature,
+                contribution.family or "",
+            ),
+        )
+
+    def _embedding_contributions_for(
+        self,
+        feature_keys: Sequence[str],
+        residual: Sequence[float],
+        *,
+        dimensions: int,
+    ) -> List[AutoencoderFeatureContribution]:
+        contributions: List[AutoencoderFeatureContribution] = []
+        residual_norm = _vector_norm(residual)
+        for feature in feature_keys:
+            weights = self.state.feature_embedding_weights.get(feature)
+            if weights is None or len(weights) != dimensions:
+                continue
+            alignment = sum(float(left) * float(right) for left, right in zip(residual, weights))
+            weight_norm = _vector_norm(weights)
+            normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
+            contributions.append(
+                AutoencoderFeatureContribution(
+                    feature=feature,
+                    contribution_type="feature_embedding_weight",
+                    value=round(alignment, 12),
+                    magnitude=round(weight_norm, 12),
+                    metadata={
+                        "alignment_with_residual": round(normalized_alignment, 12),
+                    },
+                )
+            )
+        return sorted(
+            contributions,
+            key=lambda contribution: (
+                -abs(float(contribution.metadata.get("alignment_with_residual", 0.0))),
+                -contribution.magnitude,
+                contribution.feature,
+            ),
+        )
+
+    def _synthesis_focus_for(
+        self,
+        sample: LegalSample,
+        *,
+        target_family: str,
+        predicted_family: str,
+        target_probability: float,
+        reconstruction_loss: float,
+    ) -> List[str]:
+        focus: List[str] = []
+        if not sample.modal_ir.formulas:
+            focus.append("add_deterministic_parser_rule")
+        if predicted_family != target_family or target_probability < 0.5:
+            focus.append("refine_modal_family_cue_rules")
+        if reconstruction_loss > 0.05:
+            focus.append("refine_typed_ir_or_decompiler_slots")
+        if sample.selected_frame:
+            focus.append("audit_frame_logic_terms")
+        return _unique_preserve_order(focus)
 
 
 def _observed_family_distribution(sample: LegalSample) -> Dict[str, float]:
@@ -556,6 +940,10 @@ def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
 
 
+def _vector_norm(values: Sequence[float]) -> float:
+    return math.sqrt(sum(float(value) * float(value) for value in values))
+
+
 def frame_ranking_loss(sample: LegalSample) -> float:
     """Return zero when the selected frame is ranked first, otherwise rank penalty."""
     if not sample.frame_candidates or sample.selected_frame is None:
@@ -578,7 +966,9 @@ def _check_same_length(left: Sequence[float], right: Sequence[float]) -> None:
 
 __all__ = [
     "AdaptiveModalAutoencoder",
+    "AutoencoderFeatureContribution",
     "AutoencoderEvaluation",
+    "AutoencoderIntrospection",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
     "cosine_loss",

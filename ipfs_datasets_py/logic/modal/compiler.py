@@ -1,0 +1,268 @@
+"""Deterministic compiler for legal text into modal IR.
+
+This module is deliberately rule-based and auditable.  It can surface
+ambiguities for a neural or human advisor, but it does not use adaptive weights
+to decide the canonical IR.
+"""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field, replace
+from typing import Any, Dict, List, Optional, Sequence
+
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    BM25FrameSelector,
+    DEFAULT_LEGAL_FRAME_FIXTURE,
+    FrameSelection,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
+    LegalModalParser,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+    ModalIRDocument,
+    ModalIRFrame,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    DEFAULT_MODAL_REGISTRY,
+    ModalRegistry,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+    SpaCyLegalEncoder,
+    SpaCyLegalEncoding,
+    SpaCyModalIRCompiler,
+)
+
+
+@dataclass(frozen=True)
+class ModalCompilerConfig:
+    """Configuration for deterministic modal compilation."""
+
+    parser_backend: str = "spacy"
+    spacy_model_name: str = "en_core_web_sm"
+    top_k_frames: int = 3
+    frame_domain: Optional[str] = None
+    frame_score_margin: float = 0.05
+
+
+@dataclass(frozen=True)
+class ModalCompilationAmbiguity:
+    """A compiler-detected ambiguity requiring review or advisor help."""
+
+    ambiguity_type: str
+    message: str
+    candidate_ids: List[str] = field(default_factory=list)
+    severity: str = "review"
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ModalCompilationResult:
+    """Result of deterministic legal text compilation."""
+
+    modal_ir: ModalIRDocument
+    parser_name: str
+    normalized_text: str
+    frame_candidates: List[Dict[str, Any]]
+    selected_frame: Optional[str]
+    ambiguities: List[ModalCompilationAmbiguity] = field(default_factory=list)
+    encoding: Optional[SpaCyLegalEncoding] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "ambiguities": [ambiguity.to_dict() for ambiguity in self.ambiguities],
+            "encoding": self.encoding.to_dict() if self.encoding is not None else None,
+            "frame_candidates": list(self.frame_candidates),
+            "metadata": dict(sorted(self.metadata.items())),
+            "modal_ir": self.modal_ir.to_dict(),
+            "normalized_text": self.normalized_text,
+            "parser_name": self.parser_name,
+            "selected_frame": self.selected_frame,
+        }
+
+
+class DeterministicModalCompiler:
+    """Compile legal text into modal IR with explainable frame selection."""
+
+    def __init__(
+        self,
+        config: Optional[ModalCompilerConfig] = None,
+        *,
+        registry: ModalRegistry = DEFAULT_MODAL_REGISTRY,
+        frame_selector: Optional[BM25FrameSelector] = None,
+    ) -> None:
+        self.config = config or ModalCompilerConfig()
+        self.registry = registry
+        self.parser = LegalModalParser(registry=registry)
+        self.encoder = SpaCyLegalEncoder(
+            model_name=self.config.spacy_model_name,
+            registry=registry,
+        )
+        self.ir_compiler = SpaCyModalIRCompiler()
+        self.frame_selector = frame_selector or BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
+
+    def compile(
+        self,
+        text: str,
+        *,
+        document_id: Optional[str] = None,
+        citation: Optional[str] = None,
+        source: str = "legal_text",
+    ) -> ModalCompilationResult:
+        """Compile text into modal IR using deterministic rules only."""
+        normalized_text = self.parser.normalize_text(text)
+        backend = self.config.parser_backend.lower().strip()
+        encoding: Optional[SpaCyLegalEncoding] = self.encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source=source,
+        )
+        if backend in {"regex", "legal", "legal_modal_parser", "deontic", "deontic:d"}:
+            modal_ir = self.parser.parse(
+                text,
+                document_id=document_id or encoding.document_id,
+                citation=citation,
+                source=source,
+            )
+            parser_name = "legal_modal_parser_v1"
+        else:
+            modal_ir = self.ir_compiler.compile(encoding)
+            parser_name = "spacy_modal_codec_v1"
+
+        frame_selections = self.frame_selector.rank(
+            normalized_text,
+            top_k=self.config.top_k_frames,
+            domain=self.config.frame_domain,
+        )
+        frame_candidates = [selection.to_dict() for selection in frame_selections]
+        selected_frame = str(frame_candidates[0]["frame_id"]) if frame_candidates else None
+        ambiguities = [
+            *self._formula_ambiguities(modal_ir),
+            *self._frame_ambiguities(frame_selections),
+        ]
+        if normalized_text and not modal_ir.formulas:
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type="missing_modal_formula",
+                    message="No deterministic modal formula was produced for non-empty text.",
+                    severity="requires_rule",
+                )
+            )
+
+        modal_ir = self._attach_metadata(
+            modal_ir,
+            frame_selections,
+            parser_name=parser_name,
+            selected_frame=selected_frame,
+            ambiguity_count=len(ambiguities),
+            encoding=encoding,
+        )
+        return ModalCompilationResult(
+            modal_ir=modal_ir,
+            parser_name=parser_name,
+            normalized_text=normalized_text,
+            frame_candidates=frame_candidates,
+            selected_frame=selected_frame,
+            ambiguities=ambiguities,
+            encoding=encoding,
+            metadata={
+                "ambiguity_count": len(ambiguities),
+                "deterministic_compiler": "modal_compiler_v1",
+                "frame_selector": "bm25_v1",
+                "llm_call_count": 0,
+                "parser_backend": self.config.parser_backend,
+            },
+        )
+
+    def _attach_metadata(
+        self,
+        modal_ir: ModalIRDocument,
+        frame_selections: Sequence[FrameSelection],
+        *,
+        parser_name: str,
+        selected_frame: Optional[str],
+        ambiguity_count: int,
+        encoding: SpaCyLegalEncoding,
+    ) -> ModalIRDocument:
+        frame_candidates = [
+            ModalIRFrame(
+                frame_id=selection.frame.frame_id,
+                score=selection.score,
+                matched_terms=list(selection.matched_terms),
+                explanation=selection.explanation,
+            )
+            for selection in frame_selections
+        ]
+        metadata = {
+            **modal_ir.metadata,
+            "ambiguity_count": ambiguity_count,
+            "deterministic_compiler": "modal_compiler_v1",
+            "deterministic_parser": parser_name,
+            "frame_selector": "bm25_v1",
+            "llm_call_count": 0,
+            "modal_family_counts": encoding.modal_family_counts(),
+            "selected_frame": selected_frame,
+        }
+        return replace(modal_ir, frame_candidates=frame_candidates, metadata=metadata)
+
+    def _formula_ambiguities(
+        self,
+        modal_ir: ModalIRDocument,
+    ) -> List[ModalCompilationAmbiguity]:
+        by_span: Dict[tuple[int, int], List[str]] = {}
+        for formula in modal_ir.formulas:
+            span = (formula.provenance.start_char, formula.provenance.end_char)
+            candidate = (
+                f"{formula.formula_id}:{formula.operator.family}:"
+                f"{formula.operator.system}:{formula.operator.symbol}"
+            )
+            by_span.setdefault(span, []).append(candidate)
+
+        ambiguities: List[ModalCompilationAmbiguity] = []
+        for span, candidates in sorted(by_span.items()):
+            families = {candidate.split(":")[1] for candidate in candidates}
+            if len(candidates) > 1 and len(families) > 1:
+                ambiguities.append(
+                    ModalCompilationAmbiguity(
+                        ambiguity_type="multi_family_same_span",
+                        message="Multiple modal families were compiled from the same text span.",
+                        candidate_ids=sorted(candidates),
+                        metadata={"span": list(span)},
+                    )
+                )
+        return ambiguities
+
+    def _frame_ambiguities(
+        self,
+        frame_selections: Sequence[FrameSelection],
+    ) -> List[ModalCompilationAmbiguity]:
+        if len(frame_selections) < 2:
+            return []
+        first, second = frame_selections[0], frame_selections[1]
+        margin = float(first.score) - float(second.score)
+        if margin > self.config.frame_score_margin:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="close_bm25_frame_scores",
+                message="Top ontology frame choices are close enough to require review.",
+                candidate_ids=[first.frame.frame_id, second.frame.frame_id],
+                metadata={
+                    "margin": round(margin, 6),
+                    "top_score": first.score,
+                    "runner_up_score": second.score,
+                },
+            )
+        ]
+
+
+__all__ = [
+    "DeterministicModalCompiler",
+    "ModalCompilationAmbiguity",
+    "ModalCompilationResult",
+    "ModalCompilerConfig",
+]

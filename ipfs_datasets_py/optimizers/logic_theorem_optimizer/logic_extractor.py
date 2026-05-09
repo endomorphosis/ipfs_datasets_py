@@ -388,34 +388,28 @@ class LogicExtractor:
         context: LogicExtractionContext,
     ) -> ExtractionResult:
         """Extract legal modal statements without LLM calls."""
-        parser_name = "legal_modal_parser_v1"
-        parser_metadata: Dict[str, Any] = {}
         modal_profile = (context.config.modal_profile or "").lower()
-        if modal_profile in {"spacy", "spacy_modal", "spacy_modal_codec_v1"}:
-            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import SpaCyModalCodec
+        parser_backend = "spacy" if modal_profile in {
+            "spacy",
+            "spacy_modal",
+            "spacy_modal_codec_v1",
+        } else "regex"
+        from ipfs_datasets_py.logic.modal import (  # noqa: PLC0415
+            DeterministicModalLogicCodec,
+            ModalLogicCodecConfig,
+            modal_formula_to_text,
+        )
 
-            codec = SpaCyModalCodec()
-            encoding = codec.encoder.encode(
-                str(context.data),
-                source="logic_extractor",
-                citation=(context.hints or [None])[0],
-            )
-            modal_ir = codec.compiler.compile(encoding)
-            parser_name = "spacy_modal_codec_v1"
-            parser_metadata = {
-                "spacy_model_name": encoding.model_name,
-                "spacy_token_count": len(encoding.tokens),
-                "spacy_used_fallback_model": encoding.used_fallback_model,
-            }
-        else:
-            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
-
-            parser = LegalModalParser()
-            modal_ir = parser.parse(
-                str(context.data),
-                source="logic_extractor",
-                citation=(context.hints or [None])[0],
-            )
+        codec = DeterministicModalLogicCodec(
+            ModalLogicCodecConfig(parser_backend=parser_backend)
+        )
+        codec_result = codec.encode(
+            str(context.data),
+            source="logic_extractor",
+            citation=(context.hints or [None])[0],
+        )
+        modal_ir = codec_result.modal_ir
+        parser_name = codec_result.parser_name
         statements: List[LogicalStatement] = []
         for formula in modal_ir.formulas:
             statement_text = modal_ir.normalized_text[
@@ -423,18 +417,21 @@ class LogicExtractor:
             ]
             statements.append(
                 LogicalStatement(
-                    formula=formula.formula_id,
+                    formula=modal_formula_to_text(formula),
                     natural_language=statement_text,
                     confidence=0.82,
                     formalism=ExtractionMode.MODAL.value,
                     metadata={
                         "cue": formula.metadata.get("cue"),
                         "deterministic_parser": parser_name,
+                        "flogic_ontology_consistent": codec_result.metadata["flogic_ontology_consistent"],
+                        "frame_candidates": list(codec_result.frame_candidates),
+                        "formula_id": formula.formula_id,
                         "modal_family": formula.operator.family,
                         "modal_ir_document_hash": modal_ir.canonical_hash(),
                         "modal_system": formula.operator.system,
                         "operator": formula.operator.symbol,
-                        **parser_metadata,
+                        "selected_frame": codec_result.selected_frame,
                     },
                 )
             )
@@ -453,13 +450,25 @@ class LogicExtractor:
                 f"Parsed legal modal statements with deterministic {parser_name}"
             ],
             metrics={
+                "cosine_similarity": codec_result.losses["cosine_similarity"],
+                "cross_entropy_loss": codec_result.losses["cross_entropy_loss"],
                 "deterministic_coverage_ratio": 1.0,
+                "flogic_ontology_consistent": codec_result.metadata["flogic_ontology_consistent"],
+                "flogic_similarity_score": codec_result.losses["flogic_similarity_score"],
+                "frame_candidate_count": len(codec_result.frame_candidates),
+                "frame_logic_selected_frame": codec_result.selected_frame,
+                "frame_ranking_loss": codec_result.losses["frame_ranking_loss"],
                 "deterministic_parser": parser_name,
                 "llm_call_count": 0,
                 "modal_families": modal_families,
                 "modal_profile": context.config.modal_profile,
                 "modal_systems": modal_systems,
-                **parser_metadata,
+                "ontology_violation_count": codec_result.losses["ontology_violation_count"],
+                "reconstruction_loss": codec_result.losses["reconstruction_loss"],
+                "spacy_model_name": codec_result.metadata["spacy_model_name"],
+                "spacy_token_count": codec_result.metadata["spacy_token_count"],
+                "spacy_used_fallback_model": codec_result.metadata["spacy_used_fallback_model"],
+                "symbolic_validity_penalty": codec_result.losses["symbolic_validity_penalty"],
             },
         )
     
