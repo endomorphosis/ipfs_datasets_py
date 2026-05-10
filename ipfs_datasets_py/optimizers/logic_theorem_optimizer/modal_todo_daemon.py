@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import heapq
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -46,6 +47,7 @@ class ModalOptimizerPolicy:
     program_synthesis_role: str = PROGRAM_SYNTHESIS_ROLE
     program_synthesis_min_support: int = 2
     enable_program_synthesis_todos: bool = True
+    max_program_synthesis_pending: int = 512
 
     def role_for(self, *, action: str, loss_name: str = "") -> str:
         if (
@@ -531,6 +533,10 @@ class ModalProgramSynthesisTodoGenerator:
                         loss_name="autoencoder_residual_cluster",
                     ),
                     "hint_ids": sorted(hint.hint_id for hint in cluster),
+                    "hint_evidence": [
+                        _compact_hint_evidence(hint)
+                        for hint in sorted(cluster, key=lambda hint: hint.hint_id)
+                    ],
                     "source": "modal_program_synthesis_todo_generator_v1",
                     "support_count": len(sample_ids),
                     "target_component": target_component,
@@ -558,6 +564,25 @@ class ModalTodoQueue:
             added += 1
         return added
 
+    def merge_from(
+        self,
+        other: "ModalTodoQueue",
+        *,
+        preserve_claimed_role: Optional[str] = None,
+    ) -> None:
+        """Merge another queue while preserving externally claimed role items."""
+        for todo in other.all():
+            existing = self._todos.get(todo.todo_id)
+            if (
+                existing is not None
+                and preserve_claimed_role is not None
+                and _todo_optimizer_role(existing) == preserve_claimed_role
+                and existing.status in {"claimed", "completed", "failed_validation"}
+                and todo.status == "pending"
+            ):
+                continue
+            self._todos[todo.todo_id] = todo
+
     def pending(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
         return self._by_priority(status="pending", optimizer_role=optimizer_role)
 
@@ -565,10 +590,18 @@ class ModalTodoQueue:
         return self._by_priority(status="claimed", optimizer_role=optimizer_role)
 
     def all(self) -> List[ModalTodo]:
-        return sorted(self._todos.values(), key=lambda todo: (-todo.priority, todo.todo_id))
+        return sorted(self._todos.values(), key=_todo_priority_key)
 
     def get(self, todo_id: str) -> Optional[ModalTodo]:
         return self._todos.get(todo_id)
+
+    def pending_count(self, *, optimizer_role: Optional[str] = None) -> int:
+        """Return pending queue depth without materializing a sorted TODO list."""
+        return self._count(status="pending", optimizer_role=optimizer_role)
+
+    def claimed_count(self, *, optimizer_role: Optional[str] = None) -> int:
+        """Return open claimed queue depth without materializing a sorted TODO list."""
+        return self._count(status="claimed", optimizer_role=optimizer_role)
 
     def status_counts(self) -> Dict[str, int]:
         counts: Dict[str, int] = {}
@@ -599,7 +632,11 @@ class ModalTodoQueue:
         if max_items < 1:
             return []
         claimed: List[ModalTodo] = []
-        for todo in self.pending(optimizer_role=optimizer_role)[:max_items]:
+        for todo in self._top_by_priority(
+            status="pending",
+            optimizer_role=optimizer_role,
+            max_items=max_items,
+        ):
             todo.claim(worker_id)
             claimed.append(todo)
         return claimed
@@ -645,13 +682,30 @@ class ModalTodoQueue:
             (
                 todo
                 for todo in self._todos.values()
-                if todo.status == status
-                and (
-                    optimizer_role is None
-                    or _todo_optimizer_role(todo) == optimizer_role
-                )
+                if _todo_matches(todo, status=status, optimizer_role=optimizer_role)
             ),
-            key=lambda todo: (-todo.priority, todo.created_at, todo.todo_id),
+            key=_todo_priority_key,
+        )
+
+    def _top_by_priority(
+        self,
+        *,
+        status: str,
+        optimizer_role: Optional[str],
+        max_items: int,
+    ) -> List[ModalTodo]:
+        candidates = (
+            todo
+            for todo in self._todos.values()
+            if _todo_matches(todo, status=status, optimizer_role=optimizer_role)
+        )
+        return heapq.nsmallest(max_items, candidates, key=_todo_priority_key)
+
+    def _count(self, *, status: str, optimizer_role: Optional[str] = None) -> int:
+        return sum(
+            1
+            for todo in self._todos.values()
+            if _todo_matches(todo, status=status, optimizer_role=optimizer_role)
         )
 
 
@@ -682,7 +736,7 @@ class ModalTodoSupervisor:
     ) -> List[ModalTodo]:
         """Generate TODOs from a batch and add them to the queue."""
         snapshots = [LossSnapshot.from_sample(sample, autoencoder=autoencoder) for sample in samples]
-        todos = self.generator.generate(snapshots)
+        todos = self._bounded_new_todos(self.generator.generate(snapshots))
         self.queue.add_many(todos)
         return todos
 
@@ -697,8 +751,29 @@ class ModalTodoSupervisor:
             list(samples),
             autoencoder=autoencoder,
         )
+        todos = self._bounded_new_todos(todos)
         self.queue.add_many(todos)
         return todos
+
+    def _bounded_new_todos(self, todos: Iterable[ModalTodo]) -> List[ModalTodo]:
+        """Drop duplicates and keep program-repair work within the pending cap."""
+        program_capacity = max(
+            0,
+            int(self.policy.max_program_synthesis_pending)
+            - self.queue.pending_count(
+                optimizer_role=self.policy.program_synthesis_role,
+            ),
+        )
+        selected: List[ModalTodo] = []
+        for todo in todos:
+            if self.queue.get(todo.todo_id) is not None:
+                continue
+            if _todo_optimizer_role(todo) == self.policy.program_synthesis_role:
+                if program_capacity < 1:
+                    continue
+                program_capacity -= 1
+            selected.append(todo)
+        return selected
 
     def claim_next_batch(
         self,
@@ -712,6 +787,116 @@ class ModalTodoSupervisor:
             max_items=max_items,
             optimizer_role=optimizer_role,
         )
+
+    def claim_program_synthesis_batch(
+        self,
+        *,
+        worker_id: str,
+        max_items: int,
+    ) -> List[ModalTodo]:
+        """Claim reviewable deterministic repair TODOs for an external Codex worker."""
+        return self.claim_next_batch(
+            worker_id=worker_id,
+            max_items=max_items,
+            optimizer_role=self.policy.program_synthesis_role,
+        )
+
+    def role_status(
+        self,
+        *,
+        optimizer_role: str,
+        execution_mode: str,
+    ) -> Dict[str, Any]:
+        """Return queue counters for one optimizer role."""
+        counts = self.queue.role_status_counts().get(optimizer_role, {})
+        return {
+            "claimed": int(counts.get("claimed", 0)),
+            "completed": int(counts.get("completed", 0)),
+            "execution_mode": execution_mode,
+            "failed_validation": int(counts.get("failed_validation", 0)),
+            "pending": int(counts.get("pending", 0)),
+        }
+
+    def program_synthesis_status(
+        self,
+        *,
+        execution_mode: str = "queued_for_external_codex_worker",
+    ) -> Dict[str, Any]:
+        """Return queue counters for program-synthesis TODOs."""
+        return self.role_status(
+            optimizer_role=self.policy.program_synthesis_role,
+            execution_mode=execution_mode,
+        )
+
+    def update_program_synthesis_summary(
+        self,
+        summary: Dict[str, Any],
+        *,
+        execution_mode: str = "queued_for_external_codex_worker",
+    ) -> Dict[str, Any]:
+        """Apply program-synthesis queue counters onto a run summary mapping."""
+        status = self.program_synthesis_status(execution_mode=execution_mode)
+        summary["program_synthesis_pending"] = status["pending"]
+        summary["program_synthesis_claimed"] = status["claimed"]
+        summary["program_synthesis_completed"] = status["completed"]
+        summary["codex_program_synthesis_execution_mode"] = status["execution_mode"]
+        return status
+
+    def finalize_program_synthesis_batch(
+        self,
+        claimed_todos: Sequence[ModalTodo],
+        *,
+        codex_exec_status: str,
+        patch_status: Optional[str],
+    ) -> Dict[str, Any]:
+        """Finalize claimed program-synthesis TODOs based on Codex execution outcome."""
+        todo_ids = [
+            todo.todo_id
+            for todo in claimed_todos
+            if _todo_optimizer_role(todo) == self.policy.program_synthesis_role
+        ]
+        if not todo_ids:
+            return {
+                "completed_count": 0,
+                "failed_validation_count": 0,
+                "outcome": "no_program_synthesis_todos",
+                "reason": None,
+                "updated": False,
+            }
+
+        normalized_exec_status = str(codex_exec_status or "").strip().lower()
+        normalized_patch_status = str(patch_status or "").strip().lower()
+        completed_count = 0
+        failed_validation_count = 0
+        reason: Optional[str] = None
+        outcome = "no_status_change"
+
+        if normalized_patch_status == "created":
+            for todo_id in todo_ids:
+                completed_count += int(self.queue.complete(todo_id))
+            outcome = "completed"
+        elif normalized_exec_status in {"failed", "timeout"}:
+            reason = f"codex_exec_{normalized_exec_status}"
+            for todo_id in todo_ids:
+                failed_validation_count += int(
+                    self.queue.fail_validation(todo_id, reason=reason)
+                )
+            outcome = "failed_validation"
+        elif normalized_patch_status != "created":
+            reason = str(patch_status or "patch_not_created")
+            for todo_id in todo_ids:
+                failed_validation_count += int(
+                    self.queue.fail_validation(todo_id, reason=reason)
+                )
+            outcome = "failed_validation"
+
+        return {
+            "completed_count": completed_count,
+            "failed_validation_count": failed_validation_count,
+            "outcome": outcome,
+            "reason": reason,
+            "updated": bool(completed_count or failed_validation_count),
+        }
 
     def optimize_once(
         self,
@@ -806,16 +991,16 @@ class ModalTodoSupervisor:
             claimed_count=len(claimed),
             applied_count=len(applied_updates),
             completed_count=len(completed_ids),
-            pending_count=len(self.queue.pending()),
-            claimed_open_count=len(self.queue.claimed()),
+            pending_count=self.queue.pending_count(),
+            claimed_open_count=self.queue.claimed_count(),
             completed_todo_ids=completed_ids,
             failed_validation_count=len(failed_validation_ids),
             failed_validation_todo_ids=failed_validation_ids,
             applied_updates=applied_updates,
             autoencoder_claimed_count=len(claimed),
             loss_seeded_count=len(loss_seeded),
-            program_synthesis_pending_count=len(
-                self.queue.pending(optimizer_role=self.policy.program_synthesis_role)
+            program_synthesis_pending_count=self.queue.pending_count(
+                optimizer_role=self.policy.program_synthesis_role
             ),
             program_synthesis_seeded_count=len(program_synthesis_seeded),
             validation_before=validation_before,
@@ -952,6 +1137,31 @@ def _sample_id_from_hint(hint: ModalProgramSynthesisHint) -> str:
     return str(hint.evidence.get("sample_id") or "").strip()
 
 
+def _compact_hint_evidence(hint: ModalProgramSynthesisHint) -> Dict[str, Any]:
+    """Keep the autoencoder evidence needed for later deterministic repair."""
+    evidence = dict(hint.evidence)
+    summary: Dict[str, Any] = {
+        "hint_id": hint.hint_id,
+        "priority": hint.priority,
+    }
+    for key in (
+        "cosine_similarity",
+        "family_margin",
+        "frame_features",
+        "predicted_family",
+        "reconstruction_loss",
+        "sample_id",
+        "target_family",
+        "target_probability",
+        "top_embedding_features",
+        "top_family_features",
+    ):
+        value = evidence.get(key)
+        if value not in (None, "", []):
+            summary[key] = value
+    return summary
+
+
 def _todo_optimizer_role(todo: ModalTodo) -> str:
     role = str(todo.metadata.get("optimizer_role") or "").strip()
     if role:
@@ -960,6 +1170,21 @@ def _todo_optimizer_role(todo: ModalTodo) -> str:
         action=str(todo.action),
         loss_name=str(todo.loss_name),
     )
+
+
+def _todo_matches(
+    todo: ModalTodo,
+    *,
+    status: str,
+    optimizer_role: Optional[str] = None,
+) -> bool:
+    if todo.status != status:
+        return False
+    return optimizer_role is None or _todo_optimizer_role(todo) == optimizer_role
+
+
+def _todo_priority_key(todo: ModalTodo) -> tuple[float, str, str]:
+    return (-todo.priority, todo.created_at, todo.todo_id)
 
 
 def _unique_preserve_order(values: Iterable[str]) -> List[str]:

@@ -148,7 +148,7 @@ def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -
     assert data["top_family_contributions"][0]["feature"]
 
 
-def test_feature_family_updates_generalize_without_sample_id_leakage() -> None:
+def test_feature_family_updates_are_stored_without_sample_id_leakage() -> None:
     train = build_us_code_sample(
         title="5",
         section="552",
@@ -169,6 +169,38 @@ def test_feature_family_updates_generalize_without_sample_id_leakage() -> None:
             "loss_name": "cross_entropy_loss",
             "sample_ids": [train.sample_id],
             "todo_id": "ce-feature-1",
+        },
+    )()
+
+    autoencoder.apply_todos([todo], {train.sample_id: train}, learning_rate=0.5)
+    after = autoencoder.evaluate([validation])
+
+    assert validation.sample_id not in autoencoder.state.family_logits
+    assert autoencoder.state.feature_family_logits
+    assert after.cross_entropy_loss == pytest.approx(before.cross_entropy_loss)
+
+
+def test_feature_family_updates_can_be_opted_into_for_experiments() -> None:
+    train = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must make records promptly available.",
+    )
+    validation = build_us_code_sample(
+        title="5",
+        section="553",
+        text="The agency must make notices promptly available.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    before = autoencoder.evaluate([validation])
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_modal_family_classifier",
+            "loss_name": "cross_entropy_loss",
+            "sample_ids": [train.sample_id],
+            "todo_id": "ce-feature-opt-in",
         },
     )()
 

@@ -125,3 +125,4 @@ workspace/logs/
 .daemon/
 workspace/test-reports/
 workspace/test-logs/
+workspace/codex-work/

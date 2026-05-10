@@ -14,10 +14,12 @@ import json
 import random
 import signal
 import subprocess
+import sys
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Sequence
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
 
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
@@ -26,11 +28,14 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
 )
+from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, WorktreeManager
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
     ModalAutoencoderTrainingState,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+    ModalOptimizerPolicy,
+    ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
 )
@@ -53,6 +58,60 @@ LAW_COLUMNS = [
 ]
 
 
+CODEX_TARGET_FILE_HINTS = {
+    "modal.compiler": [
+        "ipfs_datasets_py/logic/modal/compiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+    ],
+    "modal.compiler.ambiguity": [
+        "ipfs_datasets_py/logic/modal/compiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+    ],
+    "modal.compiler.registry": [
+        "ipfs_datasets_py/logic/modal/compiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_registry.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+    ],
+    "modal.frame_logic": [
+        "ipfs_datasets_py/logic/modal/codec.py",
+        "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
+    ],
+    "modal.ir_decompiler": [
+        "ipfs_datasets_py/logic/modal/codec.py",
+        "ipfs_datasets_py/logic/modal/decompiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+    ],
+}
+
+CODEX_ACTION_FILE_HINTS = {
+    "add_deterministic_parser_rule": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        "ipfs_datasets_py/logic/modal/compiler.py",
+    ],
+    "increase_modal_ir_span_coverage": [
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        "ipfs_datasets_py/logic/modal/compiler.py",
+    ],
+    "refine_semantic_decompiler_reconstruction": [
+        "ipfs_datasets_py/logic/modal/decompiler.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+        "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
+    ],
+}
+
+CODEX_SANDBOX_FALLBACK = "danger-full-access"
+CODEX_SANDBOX_BLOCKER_PATTERNS = (
+    "blocked by the execution sandbox",
+    "bwrap: loopback: failed rtm_newaddr",
+    "operation not permitted",
+)
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
@@ -66,6 +125,21 @@ def load_laws_table():
     path = f"datasets/{HF_USCODE_DATASET_ID}/{USCODE_LAWS_PARQUET}"
     with fs.open(path, "rb") as laws_file:
         return pq.ParquetFile(laws_file).read(columns=LAW_COLUMNS)
+
+
+@contextmanager
+def queue_file_lock(queue_path: Path) -> Iterator[None]:
+    """Serialize async autoencoder/Codex writes to the shared JSONL queue."""
+    import fcntl
+
+    lock_path = queue_path.with_suffix(queue_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("w", encoding="utf-8") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def row_to_sample(row: Mapping[str, Any]):
@@ -117,6 +191,685 @@ def metric_block(evaluation) -> Dict[str, Any]:
     }
 
 
+def compiler_ir_metric_block(
+    samples: Sequence[Any],
+    codec: DeterministicModalLogicCodec,
+) -> Dict[str, Any]:
+    """Aggregate deterministic compiler/IR/decompiler round-trip metrics."""
+    sample_list = list(samples)
+    if not sample_list:
+        return {
+            "evaluated_count": 0,
+            "metric_failures": 0,
+            "sample_count": 0,
+        }
+
+    losses: Dict[str, List[float]] = {
+        "cosine_loss": [],
+        "cosine_similarity": [],
+        "cross_entropy_loss": [],
+        "flogic_similarity_loss": [],
+        "flogic_similarity_score": [],
+        "frame_ranking_loss": [],
+        "modal_span_coverage_loss": [],
+        "ontology_violation_count": [],
+        "reconstruction_loss": [],
+        "symbolic_validity_penalty": [],
+        "text_reconstruction_loss": [],
+    }
+    formula_counts: List[float] = []
+    frame_candidate_counts: List[float] = []
+    llm_call_counts: List[float] = []
+    failures = 0
+    for sample in sample_list:
+        try:
+            result = codec.encode(
+                sample.text,
+                document_id=sample.sample_id,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+        except Exception:
+            failures += 1
+            continue
+        for name in losses:
+            value = result.losses.get(name)
+            if value is not None:
+                losses[name].append(float(value))
+        formula_counts.append(float(len(result.modal_ir.formulas)))
+        frame_candidate_counts.append(float(len(result.frame_candidates)))
+        llm_call_counts.append(float(result.metadata.get("llm_call_count", 0.0)))
+
+    block: Dict[str, Any] = {
+        "evaluated_count": len(formula_counts),
+        "metric_failures": failures,
+        "sample_count": len(sample_list),
+    }
+    for name, values in losses.items():
+        if values:
+            block[name] = round(sum(values) / len(values), 9)
+    if formula_counts:
+        block["formula_count"] = round(sum(formula_counts) / len(formula_counts), 9)
+        block["frame_candidate_count"] = round(
+            sum(frame_candidate_counts) / len(frame_candidate_counts),
+            9,
+        )
+        block["llm_call_count"] = round(sum(llm_call_counts) / len(llm_call_counts), 9)
+    if "modal_span_coverage_loss" in block:
+        block["modal_span_coverage"] = round(
+            1.0 - float(block["modal_span_coverage_loss"]),
+            9,
+        )
+    if "text_reconstruction_loss" in block:
+        block["text_reconstruction_similarity"] = round(
+            1.0 - float(block["text_reconstruction_loss"]),
+            9,
+        )
+    return block
+
+
+def program_synthesis_status_block(
+    queue: ModalTodoQueue,
+    policy: ModalOptimizerPolicy,
+    *,
+    execution_mode: str = "queued_for_external_codex_worker",
+) -> Dict[str, Any]:
+    """Report program-synthesis queue status using the shared supervisor logic."""
+    supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+    return supervisor.program_synthesis_status(execution_mode=execution_mode)
+
+
+def update_program_synthesis_summary(
+    summary: Dict[str, Any],
+    queue: ModalTodoQueue,
+    policy: ModalOptimizerPolicy,
+    *,
+    execution_mode: Optional[str] = None,
+) -> Dict[str, Any]:
+    supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+    return supervisor.update_program_synthesis_summary(
+        summary,
+        execution_mode=execution_mode or "queued_for_external_codex_worker",
+    )
+
+
+def codex_loop_execution_mode(args: argparse.Namespace) -> str:
+    if getattr(args, "codex_exec_mode", "packet_only") == "codex_cli":
+        return "codex_cli_executor"
+    return "queued_for_external_codex_worker"
+
+
+def build_paired_daemon_commands(
+    args: argparse.Namespace,
+    *,
+    module_name: str,
+) -> Dict[str, Any]:
+    """Build child process commands for paired autoencoder/codex execution."""
+    autoencoder_run_id = getattr(args, "autoencoder_run_id", None) or f"{args.run_id}-autoencoder"
+    codex_run_id = getattr(args, "codex_run_id", None) or f"{args.run_id}-codex"
+    queue_run_id = autoencoder_run_id
+    autoencoder_command = [
+        sys.executable,
+        "-m",
+        module_name,
+        "--loop-role",
+        "autoencoder",
+        "--run-id",
+        autoencoder_run_id,
+        "--duration-seconds",
+        str(args.duration_seconds),
+        "--train-count",
+        str(args.train_count),
+        "--validation-count",
+        str(args.validation_count),
+        "--max-inner-iterations",
+        str(args.max_inner_iterations),
+        "--max-items",
+        str(args.max_items),
+        "--learning-rate",
+        str(args.learning_rate),
+        "--test-every-cycles",
+        str(args.test_every_cycles),
+    ]
+    for warm_start_run_id in getattr(args, "warm_start_run_id", []):
+        autoencoder_command.extend(["--warm-start-run-id", str(warm_start_run_id)])
+    for warm_start_state in getattr(args, "warm_start_state", []):
+        autoencoder_command.extend(["--warm-start-state", str(warm_start_state)])
+
+    codex_command = [
+        sys.executable,
+        "-m",
+        module_name,
+        "--loop-role",
+        "codex",
+        "--run-id",
+        codex_run_id,
+        "--queue-run-id",
+        queue_run_id,
+        "--duration-seconds",
+        str(args.duration_seconds),
+        "--max-items",
+        str(args.max_items),
+        "--poll-seconds",
+        str(args.poll_seconds),
+        "--codex-exec-mode",
+        str(args.codex_exec_mode),
+        "--codex-command",
+        str(args.codex_command),
+        "--codex-sandbox",
+        str(args.codex_sandbox),
+        "--codex-timeout-seconds",
+        str(args.codex_timeout_seconds),
+    ]
+    if getattr(args, "worker_id", None):
+        codex_command.extend(["--worker-id", str(args.worker_id)])
+    if getattr(args, "codex_model", None):
+        codex_command.extend(["--codex-model", str(args.codex_model)])
+
+    return {
+        "autoencoder_run_id": autoencoder_run_id,
+        "codex_run_id": codex_run_id,
+        "queue_run_id": queue_run_id,
+        "autoencoder_command": autoencoder_command,
+        "codex_command": codex_command,
+    }
+
+
+def create_codex_work_packet(
+    *,
+    cycle: int,
+    queue_path: Path,
+    queue_run_id: str,
+    repo_root: Path,
+    run_id: str,
+    todos: Sequence[ModalTodo],
+    work_dir: Path,
+    worker_id: str,
+) -> Dict[str, Any]:
+    """Create an isolated worktree-backed Codex packet for claimed TODOs."""
+    packet_id = f"packet-{cycle:06d}"
+    packet_dir = work_dir / packet_id
+    packet_dir.mkdir(parents=True, exist_ok=True)
+    suggested_files = _suggested_target_files(todos)
+    todo_list_path = packet_dir / "TODO_LIST.jsonl"
+    todo_markdown_path = packet_dir / "TODO_LIST.md"
+    todo_list_path.write_text(
+        "\n".join(todo.to_json() for todo in todos) + "\n",
+        encoding="utf-8",
+    )
+    todo_markdown_path.write_text(
+        _todo_list_markdown(todos=todos, queue_path=queue_path, queue_run_id=queue_run_id),
+        encoding="utf-8",
+    )
+
+    worktree_path: Optional[Path] = None
+    worktree_error: Optional[str] = None
+    patch_path: Optional[Path] = None
+    patch_status = "worktree_unavailable"
+    patch_error: Optional[str] = None
+    agent_id = _safe_artifact_name(f"{worker_id}-{packet_id}")
+
+    try:
+        worktree_manager = WorktreeManager(
+            repo_path=repo_root,
+            worktrees_base=work_dir / "worktrees",
+        )
+        worktree_path = worktree_manager.create_worktree(agent_id, branch="HEAD")
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        worktree_error = str(exc)
+
+    if worktree_path is not None:
+        try:
+            patch_manager = PatchManager(patches_dir=packet_dir / "patches")
+            patch = patch_manager.create_patch(
+                agent_id=worker_id,
+                task_id=packet_id,
+                worktree_path=worktree_path,
+                description=_packet_description(todos),
+            )
+            patch_path = patch_manager.save_patch(
+                patch,
+                packet_dir / "patches" / f"{packet_id}.patch",
+            )
+            patch_status = "created"
+        except ValueError as exc:
+            patch_status = "awaiting_codex_changes"
+            patch_error = str(exc)
+        except (OSError, RuntimeError, subprocess.SubprocessError, TypeError) as exc:
+            patch_status = "patch_generation_failed"
+            patch_error = str(exc)
+
+    task_markdown = _codex_task_markdown(
+        packet_id=packet_id,
+        patch_path=patch_path,
+        patch_status=patch_status,
+        suggested_files=suggested_files,
+        todo_list_path=todo_list_path,
+        todo_markdown_path=todo_markdown_path,
+        todos=todos,
+        worktree_path=worktree_path,
+    )
+    task_path = packet_dir / "CODEX_TASK.md"
+    task_path.write_text(task_markdown, encoding="utf-8")
+
+    packet = {
+        "claimed_at": utc_now(),
+        "packet_id": packet_id,
+        "patch_error": patch_error,
+        "patch_path": str(patch_path) if patch_path is not None else None,
+        "patch_status": patch_status,
+        "queue_path": str(queue_path),
+        "queue_run_id": queue_run_id,
+        "run_id": run_id,
+        "suggested_target_files": suggested_files,
+        "task_source": "autoencoder_supervisor_program_synthesis_queue",
+        "task_path": str(task_path),
+        "todo_list_path": str(todo_list_path),
+        "todo_markdown_path": str(todo_markdown_path),
+        "todos": [todo.to_dict() for todo in todos],
+        "worker_id": worker_id,
+        "worktree_error": worktree_error,
+        "worktree_path": str(worktree_path) if worktree_path is not None else None,
+    }
+    packet_path = packet_dir / "packet.json"
+    packet_path.write_text(
+        json.dumps(packet, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    packet["packet_path"] = str(packet_path)
+    return packet
+
+
+def refresh_codex_work_packet_patch(packet: Mapping[str, Any]) -> Dict[str, Any]:
+    """Generate or refresh the patch file for a packet worktree."""
+    updated = dict(packet)
+    packet_path_value = updated.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    worktree_value = updated.get("worktree_path")
+    if not worktree_value:
+        updated["patch_status"] = "worktree_unavailable"
+        updated["patch_error"] = "packet has no worktree_path"
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    patch_path: Optional[Path] = None
+    patch_status = "patch_generation_failed"
+    patch_error: Optional[str] = None
+    try:
+        patch_manager = PatchManager(patches_dir=packet_dir / "patches")
+        patch = patch_manager.create_patch(
+            agent_id=str(updated.get("worker_id") or "codex-worker"),
+            task_id=str(updated.get("packet_id") or packet_dir.name),
+            worktree_path=Path(str(worktree_value)),
+            description=str(_packet_description_from_dict(updated)),
+        )
+        patch_path = patch_manager.save_patch(
+            patch,
+            packet_dir / "patches" / f"{updated.get('packet_id', packet_dir.name)}.patch",
+        )
+        patch_status = "created"
+    except ValueError as exc:
+        patch_status = "awaiting_codex_changes"
+        patch_error = str(exc)
+    except (OSError, RuntimeError, subprocess.SubprocessError, TypeError) as exc:
+        patch_error = str(exc)
+
+    updated["patch_error"] = patch_error
+    updated["patch_path"] = str(patch_path) if patch_path is not None else None
+    updated["patch_status"] = patch_status
+    _save_packet_if_possible(updated, packet_path)
+    return updated
+
+
+def execute_codex_work_packet(
+    packet: Mapping[str, Any],
+    *,
+    codex_command: str = "codex",
+    model: Optional[str] = None,
+    sandbox: str = "workspace-write",
+    timeout_seconds: float = 900.0,
+) -> Dict[str, Any]:
+    """Run ``codex exec`` in the packet worktree and refresh its patch."""
+    updated = dict(packet)
+    packet_path_value = updated.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    task_value = updated.get("task_path")
+    worktree_value = updated.get("worktree_path")
+    if not task_value or not worktree_value:
+        updated["codex_exec"] = {
+            "status": "skipped",
+            "reason": "packet is missing task_path or worktree_path",
+        }
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    prompt_path = packet_dir / "CODEX_PROMPT.md"
+    stdout_path = packet_dir / "codex-stdout.log"
+    stderr_path = packet_dir / "codex-stderr.log"
+    last_message_path = packet_dir / "codex-last-message.md"
+    prompt = _codex_exec_prompt(updated)
+    prompt_path.write_text(prompt, encoding="utf-8")
+
+    exec_result = _run_codex_exec_attempt(
+        codex_command=codex_command,
+        model=model,
+        prompt=prompt,
+        prompt_path=prompt_path,
+        sandbox=sandbox,
+        stderr_path=stderr_path,
+        stdout_path=stdout_path,
+        timeout_seconds=timeout_seconds,
+        worktree_path=Path(str(worktree_value)),
+        last_message_path=last_message_path,
+    )
+    updated["codex_exec"] = exec_result
+    _save_packet_if_possible(updated, packet_path)
+    refreshed = refresh_codex_work_packet_patch(updated)
+    exec_result["attempt_count"] = 1
+
+    if _should_retry_codex_exec_with_fallback(
+        exec_result=exec_result,
+        patch_status=str(refreshed.get("patch_status") or ""),
+        requested_sandbox=sandbox,
+    ):
+        fallback_stdout_path = packet_dir / "codex-stdout-fallback.log"
+        fallback_stderr_path = packet_dir / "codex-stderr-fallback.log"
+        fallback_last_message_path = packet_dir / "codex-last-message-fallback.md"
+        fallback_result = _run_codex_exec_attempt(
+            codex_command=codex_command,
+            model=model,
+            prompt=prompt,
+            prompt_path=prompt_path,
+            sandbox=CODEX_SANDBOX_FALLBACK,
+            stderr_path=fallback_stderr_path,
+            stdout_path=fallback_stdout_path,
+            timeout_seconds=float(timeout_seconds),
+            worktree_path=Path(str(worktree_value)),
+            last_message_path=fallback_last_message_path,
+        )
+        fallback_result["attempt_count"] = 2
+        fallback_result["fallback_from_sandbox"] = sandbox
+        fallback_result["fallback_reason"] = "sandbox_block_or_no_patch"
+        refreshed["codex_exec"] = fallback_result
+        _save_packet_if_possible(refreshed, packet_path)
+        refreshed = refresh_codex_work_packet_patch(refreshed)
+    return refreshed
+
+
+def _process_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return str(value)
+
+
+def _run_codex_exec_attempt(
+    *,
+    codex_command: str,
+    model: Optional[str],
+    prompt: str,
+    prompt_path: Path,
+    sandbox: str,
+    stderr_path: Path,
+    stdout_path: Path,
+    timeout_seconds: float,
+    worktree_path: Path,
+    last_message_path: Path,
+) -> Dict[str, Any]:
+    cmd = [
+        codex_command,
+        "exec",
+        "--cd",
+        str(worktree_path),
+        "--sandbox",
+        sandbox,
+        "--output-last-message",
+        str(last_message_path),
+    ]
+    if model:
+        cmd.extend(["--model", model])
+    cmd.append("-")
+
+    started = time.time()
+    try:
+        result = subprocess.run(
+            cmd,
+            input=prompt,
+            text=True,
+            capture_output=True,
+            timeout=max(1.0, float(timeout_seconds)),
+        )
+        stdout_path.write_text(result.stdout or "", encoding="utf-8")
+        stderr_path.write_text(result.stderr or "", encoding="utf-8")
+        status = "succeeded" if result.returncode == 0 else "failed"
+        return {
+            "command": cmd,
+            "duration_seconds": round(time.time() - started, 3),
+            "exit_code": result.returncode,
+            "last_message_path": str(last_message_path),
+            "prompt_path": str(prompt_path),
+            "sandbox": sandbox,
+            "status": status,
+            "stderr_path": str(stderr_path),
+            "stdout_path": str(stdout_path),
+        }
+    except subprocess.TimeoutExpired as exc:
+        stdout_path.write_text(_process_text(exc.stdout), encoding="utf-8")
+        stderr_path.write_text(_process_text(exc.stderr), encoding="utf-8")
+        return {
+            "command": cmd,
+            "duration_seconds": round(time.time() - started, 3),
+            "exit_code": None,
+            "last_message_path": str(last_message_path),
+            "prompt_path": str(prompt_path),
+            "sandbox": sandbox,
+            "status": "timeout",
+            "stderr_path": str(stderr_path),
+            "stdout_path": str(stdout_path),
+            "timeout_seconds": float(timeout_seconds),
+        }
+
+
+def _should_retry_codex_exec_with_fallback(
+    *,
+    exec_result: Mapping[str, Any],
+    patch_status: str,
+    requested_sandbox: str,
+) -> bool:
+    normalized_sandbox = str(requested_sandbox).strip().lower()
+    if normalized_sandbox == CODEX_SANDBOX_FALLBACK:
+        return False
+
+    normalized_status = str(exec_result.get("status") or "").strip().lower()
+    if normalized_status in {"failed", "timeout"}:
+        return True
+
+    if patch_status.strip().lower() == "created":
+        return False
+    return _codex_exec_logs_indicate_sandbox_block(exec_result)
+
+
+def _codex_exec_logs_indicate_sandbox_block(exec_result: Mapping[str, Any]) -> bool:
+    text_chunks: List[str] = []
+    for key in ("stderr_path", "last_message_path"):
+        value = exec_result.get(key)
+        if not value:
+            continue
+        path = Path(str(value))
+        if not path.exists():
+            continue
+        try:
+            text_chunks.append(path.read_text(encoding="utf-8", errors="replace").lower())
+        except OSError:
+            continue
+    if not text_chunks:
+        return False
+    combined = "\n".join(text_chunks)
+    return any(pattern in combined for pattern in CODEX_SANDBOX_BLOCKER_PATTERNS)
+
+
+def _suggested_target_files(todos: Sequence[ModalTodo]) -> List[str]:
+    files: List[str] = []
+    for todo in todos:
+        target_component = str(todo.metadata.get("target_component") or "")
+        added_component_hint = False
+        for file_path in CODEX_TARGET_FILE_HINTS.get(target_component, []):
+            if file_path not in files:
+                files.append(file_path)
+                added_component_hint = True
+        if not added_component_hint:
+            for file_path in CODEX_ACTION_FILE_HINTS.get(todo.action, []):
+                if file_path not in files:
+                    files.append(file_path)
+    return files
+
+
+def _packet_description(todos: Sequence[ModalTodo]) -> str:
+    actions = sorted({todo.action for todo in todos})
+    return "Codex modal program synthesis: " + ", ".join(actions)
+
+
+def _packet_description_from_dict(packet: Mapping[str, Any]) -> str:
+    todos = [dict(todo) for todo in packet.get("todos", [])]
+    actions = sorted(str(todo.get("action", "")) for todo in todos if todo.get("action"))
+    if not actions:
+        return "Codex modal program synthesis"
+    return "Codex modal program synthesis: " + ", ".join(actions)
+
+
+def _todo_list_markdown(
+    *,
+    todos: Sequence[ModalTodo],
+    queue_path: Path,
+    queue_run_id: str,
+) -> str:
+    lines = [
+        "# Autoencoder TODO List",
+        "",
+        "These TODOs were generated from autoencoder introspection and claimed from the supervisor queue.",
+        "",
+        f"- Queue run: `{queue_run_id}`",
+        f"- Queue path: `{queue_path}`",
+        f"- TODO count: `{len(todos)}`",
+        "",
+        "## TODOs",
+    ]
+    for todo in todos:
+        lines.extend(
+            [
+                f"- `{todo.todo_id}`",
+                f"  action: `{todo.action}`",
+                f"  role: `{todo.metadata.get('optimizer_role', '')}`",
+                f"  target: `{todo.metadata.get('target_component', '')}`",
+                f"  loss: `{todo.loss_name}` = `{todo.loss_value}`",
+                f"  objective: {todo.objective}",
+                f"  samples: `{', '.join(todo.sample_ids)}`",
+            ]
+        )
+        for evidence in todo.metadata.get("hint_evidence", [])[:4]:
+            lines.append(f"  evidence: `{json.dumps(evidence, sort_keys=True)}`")
+    return "\n".join(lines) + "\n"
+
+
+def _codex_task_markdown(
+    *,
+    packet_id: str,
+    patch_path: Optional[Path],
+    patch_status: str,
+    suggested_files: Sequence[str],
+    todo_list_path: Path,
+    todo_markdown_path: Path,
+    todos: Sequence[ModalTodo],
+    worktree_path: Optional[Path],
+) -> str:
+    lines = [
+        f"# {packet_id}",
+        "",
+        "## Source",
+        "The TODO batch is autoencoder/supervisor output; this file is the Codex-facing work order.",
+        f"- Raw TODO JSONL: `{todo_list_path}`",
+        f"- TODO markdown: `{todo_markdown_path}`",
+        "",
+        "## Worktree",
+        str(worktree_path) if worktree_path is not None else "unavailable",
+        "",
+        "## Patch",
+        str(patch_path) if patch_path is not None else f"pending: {patch_status}",
+        "",
+        "## Suggested Files",
+    ]
+    lines.extend(f"- `{file_path}`" for file_path in suggested_files)
+    if not suggested_files:
+        lines.append("- No direct target file hint was available.")
+    lines.extend(["", "## TODOs"])
+    for todo in todos:
+        lines.extend(
+            [
+                f"- `{todo.todo_id}` `{todo.action}`",
+                f"  target: `{todo.metadata.get('target_component', '')}`",
+                f"  objective: {todo.objective}",
+                f"  support: {todo.metadata.get('support_count', '')}",
+            ]
+        )
+        for evidence in todo.metadata.get("hint_evidence", [])[:4]:
+            lines.append(f"  evidence: `{json.dumps(evidence, sort_keys=True)}`")
+    lines.extend(
+        [
+            "",
+            "## Patch Command",
+            "Run this after editing the worktree:",
+            "",
+            "```bash",
+            "git diff HEAD > changes.patch",
+            "```",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
+    task_path = Path(str(packet["task_path"]))
+    todo_markdown_path = Path(str(packet.get("todo_markdown_path") or task_path))
+    sections = [
+        task_path.read_text(encoding="utf-8") if task_path.exists() else "",
+        "",
+        "## Execution Instructions",
+        "Work only inside the packet worktree.",
+        "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
+        "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
+        "Use local repository files and tests only; do not use web search for this packet.",
+        "Run the smallest relevant tests you can before finishing.",
+        "Leave unrelated files alone.",
+    ]
+    if todo_markdown_path.exists() and todo_markdown_path != task_path:
+        sections.extend(
+            [
+                "",
+                "## Claimed Autoencoder TODO List",
+                todo_markdown_path.read_text(encoding="utf-8"),
+            ]
+        )
+    return "\n".join(sections).strip() + "\n"
+
+
+def _save_packet_if_possible(packet: Mapping[str, Any], packet_path: Optional[Path]) -> None:
+    if packet_path is None:
+        return
+    packet_path.write_text(
+        json.dumps(dict(packet), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _safe_artifact_name(value: str) -> str:
+    safe = "".join(character if character.isalnum() or character in "-_" else "-" for character in value)
+    return safe.strip("-")[:96] or "codex-worker"
+
+
 def run_tests(root: Path, report_dir: Path, cycle: int) -> Dict[str, Any]:
     xml_path = report_dir / f"cycle-{cycle}.xml"
     cmd = [
@@ -160,16 +913,26 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
     return {
         "best_validation_ce": 1.0e12,
         "best_validation_cosine": -1.0,
+        "best_validation_ir_ce": 1.0e12,
+        "best_validation_ir_cosine": -1.0,
+        "best_validation_ir_reconstruction": 1.0e12,
+        "best_validation_ir_text_reconstruction": 1.0e12,
         "best_validation_reconstruction": 1.0e12,
         "cycles": 0,
+        "codex_program_synthesis_execution_mode": "queued_for_external_codex_worker",
         "dataset_id": HF_USCODE_DATASET_ID,
         "final": False,
         "laws_path": USCODE_LAWS_PARQUET,
         "log_path": str(log_path),
+        "loop_role": getattr(args, "loop_role", "autoencoder"),
         "metric_failures": 0,
         "optimizer_policy": "autoencoder_sgd_with_codex_program_synthesis_backlog",
+        "program_synthesis_claimed": 0,
+        "program_synthesis_completed": 0,
+        "program_synthesis_pending_cap": ModalOptimizerPolicy().max_program_synthesis_pending,
         "program_synthesis_pending": 0,
         "program_synthesis_seeded": 0,
+        "queue_run_id": getattr(args, "queue_run_id", None) or args.run_id,
         "queue_path": str(queue_path),
         "run_id": args.run_id,
         "seed": seed,
@@ -186,13 +949,45 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
 def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
+    parser.add_argument(
+        "--loop-role",
+        choices=("autoencoder", "codex", "paired"),
+        default="autoencoder",
+        help="Run one daemon loop, or run both loops together with a paired orchestrator.",
+    )
+    parser.add_argument(
+        "--queue-run-id",
+        default=None,
+        help="Existing run id whose TODO queue should be shared by this loop.",
+    )
     parser.add_argument("--duration-seconds", type=float, default=3600.0)
     parser.add_argument("--train-count", type=int, default=4)
     parser.add_argument("--validation-count", type=int, default=4)
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
+    parser.add_argument("--poll-seconds", type=float, default=5.0)
     parser.add_argument("--test-every-cycles", type=int, default=24)
+    parser.add_argument("--worker-id", default=None)
+    parser.add_argument(
+        "--codex-exec-mode",
+        choices=("packet_only", "codex_cli"),
+        default="packet_only",
+        help="For the Codex loop, either only create work packets or run codex exec in each packet worktree.",
+    )
+    parser.add_argument("--codex-command", default="codex")
+    parser.add_argument("--codex-model", default="gpt-5.3-codex")
+    parser.add_argument(
+        "--codex-sandbox",
+        choices=("read-only", "workspace-write", "danger-full-access"),
+        default="workspace-write",
+    )
+    parser.add_argument("--codex-timeout-seconds", type=float, default=900.0)
+    parser.add_argument("--autoencoder-run-id", default=None)
+    parser.add_argument("--codex-run-id", default=None)
+    parser.add_argument("--paired-launch-delay-seconds", type=float, default=0.0)
+    parser.add_argument("--paired-poll-seconds", type=float, default=1.0)
+    parser.add_argument("--paired-grace-seconds", type=float, default=300.0)
     parser.add_argument(
         "--warm-start-run-id",
         action="append",
@@ -238,6 +1033,197 @@ def load_warm_start_state(paths: Sequence[Path]) -> tuple[ModalAutoencoderTraini
         "missing_paths": missing_paths,
         "source_count": len(loaded_states),
     }
+
+
+def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
+    """Run autoencoder and codex daemons as coordinated child processes."""
+    root = Path.cwd()
+    log_dir = root / "workspace" / "test-logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{args.run_id}.jsonl"
+    summary_path = log_dir / f"{args.run_id}.summary"
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+    auto_stdout_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stdout.log"
+    auto_stderr_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stderr.log"
+    codex_stdout_path = log_dir / f"{paired['codex_run_id']}.orchestrator.stdout.log"
+    codex_stderr_path = log_dir / f"{paired['codex_run_id']}.orchestrator.stderr.log"
+
+    summary: Dict[str, Any] = {
+        "autoencoder_command": list(paired["autoencoder_command"]),
+        "autoencoder_run_id": paired["autoencoder_run_id"],
+        "autoencoder_stderr_path": str(auto_stderr_path),
+        "autoencoder_stdout_path": str(auto_stdout_path),
+        "codex_command": list(paired["codex_command"]),
+        "codex_run_id": paired["codex_run_id"],
+        "codex_stderr_path": str(codex_stderr_path),
+        "codex_stdout_path": str(codex_stdout_path),
+        "duration_seconds": float(args.duration_seconds),
+        "final": False,
+        "log_path": str(log_path),
+        "loop_role": "paired",
+        "paired_grace_seconds": float(args.paired_grace_seconds),
+        "paired_poll_seconds": float(args.paired_poll_seconds),
+        "queue_run_id": paired["queue_run_id"],
+        "run_id": args.run_id,
+        "started_at": utc_now(),
+    }
+    save_summary(summary_path, summary)
+
+    stop_requested = False
+    stop_signal: int | None = None
+    previous_signal_handlers: Dict[int, Any] = {}
+
+    def request_stop(signum: int, frame: Any) -> None:
+        nonlocal stop_requested, stop_signal
+        stop_requested = True
+        stop_signal = signum
+
+    for signum in (signal.SIGINT, signal.SIGTERM):
+        previous_signal_handlers[signum] = signal.getsignal(signum)
+        signal.signal(signum, request_stop)
+
+    append_event(
+        log_path,
+        args.run_id,
+        {
+            "event": "paired_runner_started",
+            "autoencoder_run_id": paired["autoencoder_run_id"],
+            "codex_run_id": paired["codex_run_id"],
+            "queue_run_id": paired["queue_run_id"],
+        },
+    )
+
+    started = time.time()
+    auto_process: Optional[subprocess.Popen[str]] = None
+    codex_process: Optional[subprocess.Popen[str]] = None
+    auto_exit_code: Optional[int] = None
+    codex_exit_code: Optional[int] = None
+
+    try:
+        with auto_stdout_path.open("a", encoding="utf-8") as auto_stdout, auto_stderr_path.open(
+            "a", encoding="utf-8"
+        ) as auto_stderr, codex_stdout_path.open("a", encoding="utf-8") as codex_stdout, codex_stderr_path.open(
+            "a", encoding="utf-8"
+        ) as codex_stderr:
+            auto_process = subprocess.Popen(
+                list(paired["autoencoder_command"]),
+                cwd=root,
+                stdout=auto_stdout,
+                stderr=auto_stderr,
+                text=True,
+            )
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "event": "paired_child_started",
+                    "child_role": "autoencoder",
+                    "child_pid": auto_process.pid,
+                    "child_run_id": paired["autoencoder_run_id"],
+                },
+            )
+
+            launch_delay = max(0.0, float(args.paired_launch_delay_seconds))
+            if launch_delay > 0.0:
+                time.sleep(launch_delay)
+
+            codex_process = subprocess.Popen(
+                list(paired["codex_command"]),
+                cwd=root,
+                stdout=codex_stdout,
+                stderr=codex_stderr,
+                text=True,
+            )
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "event": "paired_child_started",
+                    "child_role": "codex",
+                    "child_pid": codex_process.pid,
+                    "child_run_id": paired["codex_run_id"],
+                },
+            )
+
+            poll_seconds = max(0.2, float(args.paired_poll_seconds))
+            max_wait = float(args.duration_seconds) + max(0.0, float(args.paired_grace_seconds))
+            while True:
+                auto_exit_code = auto_process.poll()
+                codex_exit_code = codex_process.poll()
+                summary["elapsed_seconds"] = round(time.time() - started, 3)
+                summary["autoencoder_pid"] = auto_process.pid
+                summary["codex_pid"] = codex_process.pid
+                summary["autoencoder_exit_code"] = auto_exit_code
+                summary["codex_exit_code"] = codex_exit_code
+                summary["child_status"] = {
+                    "autoencoder": "running" if auto_exit_code is None else "exited",
+                    "codex": "running" if codex_exit_code is None else "exited",
+                }
+                save_summary(summary_path, summary)
+
+                if auto_exit_code is not None and codex_exit_code is not None:
+                    break
+                if stop_requested:
+                    break
+                if (time.time() - started) > max_wait:
+                    summary["latest_stop_reason"] = "paired_timeout_grace_exceeded"
+                    break
+                time.sleep(poll_seconds)
+    finally:
+        for process in (auto_process, codex_process):
+            if process is None or process.poll() is not None:
+                continue
+            process.terminate()
+
+        for process in (auto_process, codex_process):
+            if process is None or process.poll() is not None:
+                continue
+            try:
+                process.wait(timeout=10.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=5.0)
+
+        if auto_process is not None:
+            auto_exit_code = auto_process.poll()
+        if codex_process is not None:
+            codex_exit_code = codex_process.poll()
+
+        if stop_requested:
+            summary["latest_stop_reason"] = f"signal_{stop_signal}"
+            summary["stopped_by_signal"] = stop_signal
+        summary["elapsed_seconds"] = round(time.time() - started, 3)
+        summary["autoencoder_exit_code"] = auto_exit_code
+        summary["codex_exit_code"] = codex_exit_code
+        summary["child_status"] = {
+            "autoencoder": "running" if auto_exit_code is None else "exited",
+            "codex": "running" if codex_exit_code is None else "exited",
+        }
+        summary["finished_at"] = utc_now()
+        summary["status"] = (
+            "succeeded"
+            if auto_exit_code == 0 and codex_exit_code == 0
+            else "failed"
+        )
+        save_summary(summary_path, summary, final=True)
+        append_event(
+            log_path,
+            args.run_id,
+            {
+                "event": "paired_runner_finished",
+                "status": summary["status"],
+                "autoencoder_exit_code": auto_exit_code,
+                "codex_exit_code": codex_exit_code,
+                "elapsed_seconds": summary["elapsed_seconds"],
+            },
+        )
+        for signum, handler in previous_signal_handlers.items():
+            signal.signal(signum, handler)
+
+    return 0 if auto_exit_code == 0 and codex_exit_code == 0 else 1
 
 
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
@@ -307,17 +1293,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 args.run_id,
                 {"event": "warm_start_loaded", "warm_start": warm_start},
             )
-    queue = ModalTodoQueue.load_jsonl(queue_path)
-    autoencoder = AdaptiveModalAutoencoder(
-        state=state,
-        feature_codec=DeterministicModalLogicCodec(
-            ModalLogicCodecConfig(
-                parser_backend="spacy",
-                spacy_model_name="definitely_missing_legal_model",
-                use_flogic=True,
-            )
-        ),
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+    feature_codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+            use_flogic=True,
+        )
     )
+    autoencoder = AdaptiveModalAutoencoder(state=state, feature_codec=feature_codec)
     supervisor = ModalTodoSupervisor(queue=queue)
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
@@ -352,6 +1337,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_samples,
                 use_sample_memory=False,
             )
+            compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
+            compiler_ir_validation = compiler_ir_metric_block(
+                validation_samples,
+                feature_codec,
+            )
             run = supervisor.optimize(
                 train_samples,
                 validation_samples=validation_samples,
@@ -369,7 +1359,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 use_sample_memory=False,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)
-            queue.save_jsonl(queue_path)
+            with queue_file_lock(queue_path):
+                latest_queue = ModalTodoQueue.load_jsonl(queue_path)
+                latest_queue.merge_from(
+                    supervisor.queue,
+                    preserve_claimed_role=supervisor.policy.program_synthesis_role,
+                )
+                latest_queue.save_jsonl(queue_path)
+                supervisor.queue = latest_queue
+                queue = latest_queue
             autoencoder.state.save_json(state_path)
             run.save_json(run_json_path)
 
@@ -384,17 +1382,39 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["latest_stop_reason"] = run.stopped_reason
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
-            summary["program_synthesis_pending"] = len(
-                supervisor.queue.pending(optimizer_role=supervisor.policy.program_synthesis_role)
+            program_synthesis_status = update_program_synthesis_summary(
+                summary,
+                supervisor.queue,
+                supervisor.policy,
             )
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
             ) + sum(step.program_synthesis_seeded_count for step in run.steps)
+            summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
+                compiler_ir_train.get("metric_failures", 0)
+                + compiler_ir_validation.get("metric_failures", 0)
+            )
             summary["train_ce_improved_cycles"] = int(summary.get("train_ce_improved_cycles", 0)) + int(train_ce_delta > 0.0)
             summary["validation_ce_improved_cycles"] = int(summary.get("validation_ce_improved_cycles", 0)) + int(validation_ce_delta > 0.0)
             summary["train_cosine_improved_cycles"] = int(summary.get("train_cosine_improved_cycles", 0)) + int(train_cos_delta > 0.0)
             summary["validation_cosine_improved_cycles"] = int(summary.get("validation_cosine_improved_cycles", 0)) + int(validation_cos_delta > 0.0)
             summary["best_validation_ce"] = min(summary.get("best_validation_ce"), after_validation.cross_entropy_loss)
+            summary["best_validation_ir_ce"] = min(
+                summary.get("best_validation_ir_ce", 1.0e12),
+                float(compiler_ir_validation.get("cross_entropy_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_cosine"] = max(
+                summary.get("best_validation_ir_cosine", -1.0),
+                float(compiler_ir_validation.get("cosine_similarity", -1.0)),
+            )
+            summary["best_validation_ir_reconstruction"] = min(
+                summary.get("best_validation_ir_reconstruction", 1.0e12),
+                float(compiler_ir_validation.get("reconstruction_loss", 1.0e12)),
+            )
+            summary["best_validation_ir_text_reconstruction"] = min(
+                summary.get("best_validation_ir_text_reconstruction", 1.0e12),
+                float(compiler_ir_validation.get("text_reconstruction_loss", 1.0e12)),
+            )
             summary["best_validation_cosine"] = max(
                 summary.get("best_validation_cosine"),
                 after_validation.embedding_cosine_similarity,
@@ -410,9 +1430,15 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "after_train": metric_block(after_train),
                     "after_validation": metric_block(after_validation),
                     "applied_count": sum(step.applied_count for step in run.steps),
+                    "autoencoder_after_train": metric_block(after_train),
+                    "autoencoder_after_validation": metric_block(after_validation),
+                    "autoencoder_before_train": metric_block(before_train),
+                    "autoencoder_before_validation": metric_block(before_validation),
                     "before_train": metric_block(before_train),
                     "before_validation": metric_block(before_validation),
                     "completed_count": sum(step.completed_count for step in run.steps),
+                    "compiler_ir_train": compiler_ir_train,
+                    "compiler_ir_validation": compiler_ir_validation,
                     "cycle": cycle,
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "cycle",
@@ -420,11 +1446,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "queue_counts": supervisor.queue.status_counts(),
                     "role_queue_counts": supervisor.queue.role_status_counts(),
                     "stopped_reason": run.stopped_reason,
-                    "program_synthesis_pending_count": len(
-                        supervisor.queue.pending(
-                            optimizer_role=supervisor.policy.program_synthesis_role
-                        )
-                    ),
+                    "program_synthesis_claimed_count": program_synthesis_status["claimed"],
+                    "program_synthesis_completed_count": program_synthesis_status["completed"],
+                    "program_synthesis_execution_mode": program_synthesis_status["execution_mode"],
+                    "program_synthesis_pending_count": program_synthesis_status["pending"],
                     "program_synthesis_seeded_count": sum(
                         step.program_synthesis_seeded_count for step in run.steps
                     ),
@@ -457,9 +1482,232 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         summary["finished_at"] = utc_now()
         summary["latest_queue_counts"] = supervisor.queue.status_counts()
         summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
-        summary["program_synthesis_pending"] = len(
-            supervisor.queue.pending(optimizer_role=supervisor.policy.program_synthesis_role)
+        update_program_synthesis_summary(
+            summary,
+            supervisor.queue,
+            supervisor.policy,
         )
+        save_summary(summary_path, summary, final=True)
+        append_event(log_path, args.run_id, {"event": "run_finished", **summary})
+        for signum, handler in previous_signal_handlers.items():
+            signal.signal(signum, handler)
+    return 0
+
+
+def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
+    """Claim program-synthesis TODOs asynchronously for an external Codex worker."""
+    root = Path.cwd()
+    log_dir = root / "workspace" / "test-logs"
+    queue_dir = root / "workspace" / "todo-queues"
+    work_dir = root / "workspace" / "codex-work" / args.run_id
+    queue_run_id = getattr(args, "queue_run_id", None) or args.run_id
+    queue_path = queue_dir / f"{queue_run_id}.jsonl"
+    log_path = log_dir / f"{args.run_id}.jsonl"
+    summary_path = log_dir / f"{args.run_id}.summary"
+    worker_id = (
+        getattr(args, "worker_id", None)
+        or f"codex-program-synthesis-{args.run_id}"
+    )
+    log_dir.mkdir(parents=True, exist_ok=True)
+    queue_dir.mkdir(parents=True, exist_ok=True)
+    work_dir.mkdir(parents=True, exist_ok=True)
+    execution_mode = codex_loop_execution_mode(args)
+
+    stop_requested = False
+    stop_signal: int | None = None
+    previous_signal_handlers: Dict[int, Any] = {}
+
+    def request_stop(signum: int, frame: Any) -> None:
+        nonlocal stop_requested, stop_signal
+        stop_requested = True
+        stop_signal = signum
+
+    for signum in (signal.SIGINT, signal.SIGTERM):
+        previous_signal_handlers[signum] = signal.getsignal(signum)
+        signal.signal(signum, request_stop)
+
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    else:
+        summary = {
+            "codex_claimed_total": 0,
+            "codex_exec_mode": args.codex_exec_mode,
+            "codex_execution_count": 0,
+            "codex_execution_failure_count": 0,
+            "codex_packet_count": 0,
+            "codex_patch_count": 0,
+            "codex_program_synthesis_execution_mode": execution_mode,
+            "codex_worktree_count": 0,
+            "cycles": 0,
+            "final": False,
+            "log_path": str(log_path),
+            "loop_role": "codex",
+            "program_synthesis_claimed": 0,
+            "program_synthesis_completed": 0,
+            "program_synthesis_pending": 0,
+            "queue_path": str(queue_path),
+            "queue_run_id": queue_run_id,
+            "run_id": args.run_id,
+            "started_at": utc_now(),
+            "worker_id": worker_id,
+            "work_dir": str(work_dir),
+        }
+        save_summary(summary_path, summary)
+
+    started_at = parse_utc(summary["started_at"])
+    end_at = started_at + args.duration_seconds
+    policy = ModalOptimizerPolicy()
+    append_event(
+        log_path,
+        args.run_id,
+        {
+            "codex_exec_mode": args.codex_exec_mode,
+            "codex_program_synthesis_execution_mode": execution_mode,
+            "event": "codex_program_synthesis_runner_started",
+            "queue_run_id": queue_run_id,
+            "worker_id": worker_id,
+        },
+    )
+
+    try:
+        while not stop_requested and time.time() < end_at:
+            cycle = int(summary.get("cycles", 0)) + 1
+            cycle_started = time.time()
+            packet: Dict[str, Any] = {}
+            with queue_file_lock(queue_path):
+                queue = ModalTodoQueue.load_jsonl(queue_path)
+                supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+                claimed = supervisor.claim_program_synthesis_batch(
+                    worker_id=worker_id,
+                    max_items=args.max_items,
+                )
+                if claimed:
+                    queue.save_jsonl(queue_path)
+                status = update_program_synthesis_summary(
+                    summary,
+                    queue,
+                    policy,
+                    execution_mode=execution_mode,
+                )
+
+            if claimed:
+                packet = create_codex_work_packet(
+                    cycle=cycle,
+                    queue_path=queue_path,
+                    queue_run_id=queue_run_id,
+                    repo_root=root,
+                    run_id=args.run_id,
+                    todos=claimed,
+                    work_dir=work_dir,
+                    worker_id=worker_id,
+                )
+                if args.codex_exec_mode == "codex_cli":
+                    packet = execute_codex_work_packet(
+                        packet,
+                        codex_command=args.codex_command,
+                        model=args.codex_model,
+                        sandbox=args.codex_sandbox,
+                        timeout_seconds=args.codex_timeout_seconds,
+                    )
+                    exec_status = str(
+                        dict(packet.get("codex_exec", {})).get("status", "unknown")
+                    )
+                    with queue_file_lock(queue_path):
+                        queue = ModalTodoQueue.load_jsonl(queue_path)
+                        supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+                        finalize_report = supervisor.finalize_program_synthesis_batch(
+                            claimed,
+                            codex_exec_status=exec_status,
+                            patch_status=(
+                                str(packet.get("patch_status"))
+                                if packet.get("patch_status") is not None
+                                else None
+                            ),
+                        )
+                        if finalize_report["updated"]:
+                            queue.save_jsonl(queue_path)
+                        status = update_program_synthesis_summary(
+                            summary,
+                            queue,
+                            policy,
+                            execution_mode=execution_mode,
+                        )
+
+            summary["cycles"] = cycle
+            summary["codex_claimed_total"] = int(
+                summary.get("codex_claimed_total", 0)
+            ) + len(claimed)
+            if packet.get("codex_exec"):
+                summary["codex_execution_count"] = int(
+                    summary.get("codex_execution_count", 0)
+                ) + 1
+                exec_status = str(
+                    packet.get("codex_exec", {}).get("status", "")
+                ).strip().lower()
+                patch_status = str(packet.get("patch_status", "")).strip().lower()
+                if exec_status != "succeeded" and patch_status != "created":
+                    summary["codex_execution_failure_count"] = int(
+                        summary.get("codex_execution_failure_count", 0)
+                    ) + 1
+            summary["codex_packet_count"] = int(
+                summary.get("codex_packet_count", 0)
+            ) + int(bool(packet.get("packet_path")))
+            summary["codex_patch_count"] = int(
+                summary.get("codex_patch_count", 0)
+            ) + int(bool(packet.get("patch_path")))
+            summary["codex_worktree_count"] = int(
+                summary.get("codex_worktree_count", 0)
+            ) + int(bool(packet.get("worktree_path")))
+            summary["elapsed_seconds"] = round(time.time() - started_at, 3)
+            summary["latest_queue_counts"] = queue.status_counts()
+            summary["latest_role_queue_counts"] = queue.role_status_counts()
+            summary["latest_stop_reason"] = (
+                "claimed_program_synthesis_todos"
+                if claimed
+                else "waiting_for_program_synthesis_todos"
+            )
+            append_event(
+                log_path,
+                args.run_id,
+                {
+                    "claimed_count": len(claimed),
+                    "cycle": cycle,
+                    "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
+                    "duration_seconds": round(time.time() - cycle_started, 3),
+                    "event": "codex_program_synthesis_cycle",
+                    "packet_path": packet.get("packet_path"),
+                    "patch_path": packet.get("patch_path"),
+                    "patch_status": packet.get("patch_status"),
+                    "program_synthesis_claimed_count": status["claimed"],
+                    "program_synthesis_completed_count": status["completed"],
+                    "program_synthesis_execution_mode": status["execution_mode"],
+                    "program_synthesis_pending_count": status["pending"],
+                    "queue_run_id": queue_run_id,
+                    "todo_list_path": packet.get("todo_list_path"),
+                    "todo_markdown_path": packet.get("todo_markdown_path"),
+                    "worktree_path": packet.get("worktree_path"),
+                },
+            )
+            save_summary(summary_path, summary)
+            sleep_seconds = max(0.1, float(args.poll_seconds))
+            if not stop_requested:
+                time.sleep(sleep_seconds)
+    finally:
+        if stop_requested:
+            summary["latest_stop_reason"] = f"signal_{stop_signal}"
+            summary["stopped_by_signal"] = stop_signal
+        summary["elapsed_seconds"] = round(time.time() - started_at, 3)
+        with queue_file_lock(queue_path):
+            queue = ModalTodoQueue.load_jsonl(queue_path)
+            update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+            summary["latest_queue_counts"] = queue.status_counts()
+            summary["latest_role_queue_counts"] = queue.role_status_counts()
+        summary["finished_at"] = utc_now()
         save_summary(summary_path, summary, final=True)
         append_event(log_path, args.run_id, {"event": "run_finished", **summary})
         for signum, handler in previous_signal_handlers.items():
@@ -469,7 +1717,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_uscode_modal_daemon_arg_parser()
-    return run_guarded_uscode_modal_daemon(parser.parse_args(argv))
+    args = parser.parse_args(argv)
+    if args.loop_role == "paired":
+        return run_paired_uscode_modal_daemons(args)
+    if args.loop_role == "codex":
+        return run_codex_program_synthesis_daemon(args)
+    return run_guarded_uscode_modal_daemon(args)
 
 
 if __name__ == "__main__":

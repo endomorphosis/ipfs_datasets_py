@@ -385,11 +385,18 @@ class AdaptiveModalAutoencoder:
         initial_embedding_scale: float = 0.0,
         modal_families: Optional[Sequence[str]] = None,
         feature_codec: Optional[Any] = None,
+        feature_embedding_weight_scale: float = 0.5,
+        feature_family_logit_scale: float = 0.0,
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
         self.modal_families = tuple(modal_families or _all_modal_families())
         self.feature_codec = feature_codec
+        self.feature_embedding_weight_scale = max(
+            0.0,
+            float(feature_embedding_weight_scale),
+        )
+        self.feature_family_logit_scale = max(0.0, float(feature_family_logit_scale))
 
     def evaluate(
         self,
@@ -659,7 +666,7 @@ class AdaptiveModalAutoencoder:
         for feature in self._feature_keys_for(sample):
             for family, value in self.state.feature_family_logits.get(feature, {}).items():
                 if family in logits:
-                    logits[family] += float(value)
+                    logits[family] += float(value) * self.feature_family_logit_scale
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
                 if family in logits:
@@ -723,7 +730,7 @@ class AdaptiveModalAutoencoder:
             if weights is None or len(weights) != dimensions:
                 continue
             for index, value in enumerate(weights):
-                adjustment[index] += float(value)
+                adjustment[index] += float(value) * self.feature_embedding_weight_scale
         return adjustment
 
     def _feature_keys_for(self, sample: LegalSample) -> List[str]:
@@ -761,7 +768,7 @@ class AdaptiveModalAutoencoder:
             for family, value in logits.items():
                 if family not in self.modal_families:
                     continue
-                family_value = float(value)
+                family_value = float(value) * self.feature_family_logit_scale
                 contributions.append(
                     AutoencoderFeatureContribution(
                         feature=feature,
@@ -770,6 +777,8 @@ class AdaptiveModalAutoencoder:
                         value=round(family_value, 12),
                         magnitude=round(abs(family_value), 12),
                         metadata={
+                            "feature_family_logit_scale": self.feature_family_logit_scale,
+                            "raw_value": round(float(value), 12),
                             "supports_target": family == target,
                         },
                     )
@@ -811,8 +820,12 @@ class AdaptiveModalAutoencoder:
             weights = self.state.feature_embedding_weights.get(feature)
             if weights is None or len(weights) != dimensions:
                 continue
-            alignment = sum(float(left) * float(right) for left, right in zip(residual, weights))
-            weight_norm = _vector_norm(weights)
+            scaled_weights = [
+                float(value) * self.feature_embedding_weight_scale
+                for value in weights
+            ]
+            alignment = sum(float(left) * float(right) for left, right in zip(residual, scaled_weights))
+            weight_norm = _vector_norm(scaled_weights)
             normalized_alignment = alignment / (residual_norm * weight_norm) if residual_norm and weight_norm else 0.0
             contributions.append(
                 AutoencoderFeatureContribution(
@@ -822,6 +835,7 @@ class AdaptiveModalAutoencoder:
                     magnitude=round(weight_norm, 12),
                     metadata={
                         "alignment_with_residual": round(normalized_alignment, 12),
+                        "feature_embedding_weight_scale": self.feature_embedding_weight_scale,
                     },
                 )
             )

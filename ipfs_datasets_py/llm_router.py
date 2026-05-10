@@ -1045,7 +1045,7 @@ def _effective_model_key(*, provider_key: str, model_name: Optional[str], kwargs
     if pk in {"codex", "codex_cli"}:
         return (
             _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL")
-            or "gpt-5.1-codex-mini"
+            or "gpt-5.3-codex"
         ).strip()
     if pk == "copilot_sdk":
         return (os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "") or "").strip()
@@ -2542,7 +2542,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             image_paths: Sequence[str] | None = None,
             **kwargs: object,
         ) -> str:
-            model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.1-codex-mini").strip()
+            model = (model_name or _coalesce_env("IPFS_DATASETS_PY_CODEX_CLI_MODEL", "IPFS_DATASETS_PY_CODEX_MODEL") or "gpt-5.3-codex").strip()
             sandbox = (os.getenv("IPFS_DATASETS_PY_CODEX_SANDBOX", "auto") or "auto").strip()
             skip_git_repo_check = os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
             timeout = float(kwargs.get("timeout", 180))
