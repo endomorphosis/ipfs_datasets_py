@@ -65,6 +65,12 @@ def _env_truthy(name: str, default: str = "1") -> bool:
     return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
 
 
+def _include_vcs_dependencies() -> bool:
+    """Allow constrained builds to skip optional VCS-based dependencies."""
+
+    return _env_truthy("IPFS_DATASETS_PY_INCLUDE_VCS_DEPENDENCIES", "1")
+
+
 def _maybe_download_nltk_data() -> None:
     """Best-effort NLTK data download during install.
 
@@ -180,6 +186,17 @@ if _PlatformWheel is not None:
     _cmdclass["bdist_wheel"] = _PlatformWheel
 
 
+optional_vcs_dependencies = []
+if _include_vcs_dependencies():
+    optional_vcs_dependencies.extend(
+        [
+            ipfs_kit_dependency,
+            ipfs_accelerate_dependency,
+            "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
+        ]
+    )
+
+
 setup(
     name="ipfs_datasets_py",
     version='0.2.0',
@@ -210,9 +227,9 @@ setup(
     install_requires=[
         # Core dependencies - all from GitHub main branches
         'orbitdb_kit_py',
-        # ipfs_kit_py from GitHub main branch
-        ipfs_kit_dependency,
-        ipfs_accelerate_dependency,
+        # Optional VCS dependencies stay enabled by default, but constrained
+        # container builds can skip them when those backends are not used.
+        *optional_vcs_dependencies,
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
@@ -246,7 +263,6 @@ setup(
         "ipfshttpclient>=0.7.0",
 
         # libp2p crypto/pubsub dependencies (avoid runtime warnings)
-        "libp2p @ git+https://github.com/libp2p/py-libp2p.git@main",
         "pymultihash>=0.8.2",
         "protobuf>=3.20.0",
         "eth-hash>=0.3.2",

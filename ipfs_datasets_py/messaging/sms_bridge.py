@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import html
 import io
 import json
 import os
 import re
 import smtplib
+import threading
 import uuid
 import wave
 from dataclasses import dataclass, field
@@ -114,6 +116,22 @@ def default_sms_bridge_db_path() -> str:
         "IPFS_DATASETS_SMS_BRIDGE_DB_PATH",
         os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "sms_bridge.duckdb"),
     )
+
+
+def default_sms_bridge_export_root() -> str:
+    return os.environ.get(
+        "IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ROOT",
+        os.path.join(os.path.dirname(default_sms_bridge_db_path()), "exports"),
+    )
+
+
+_SMS_BRIDGE_EXPORT_TABLES: tuple[str, ...] = (
+    "sms_messages",
+    "email_messages",
+    "phone_calls",
+    "voice_call_sessions",
+    "voice_call_turns",
+)
 
 
 def _perform_request(
@@ -808,8 +826,196 @@ class SmsBridgeStore:
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_voice_call_turns_session_created ON voice_call_turns(session_id, created_at)"
             )
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS bridge_exports (
+                    export_id VARCHAR PRIMARY KEY,
+                    status VARCHAR NOT NULL,
+                    parquet_dir VARCHAR NOT NULL,
+                    car_path VARCHAR,
+                    ipfs_cid VARCHAR,
+                    filecoin_request_id VARCHAR,
+                    error_message VARCHAR,
+                    metadata_json VARCHAR NOT NULL,
+                    created_at VARCHAR NOT NULL,
+                    updated_at VARCHAR NOT NULL
+                )
+                """
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_bridge_exports_created_at ON bridge_exports(created_at)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_bridge_exports_status ON bridge_exports(status)"
+            )
         finally:
             connection.close()
+
+    def create_bridge_export(self, export_id: str, *, parquet_dir: str, metadata: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        timestamp = _utcnow_iso()
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                INSERT INTO bridge_exports(
+                    export_id,
+                    status,
+                    parquet_dir,
+                    car_path,
+                    ipfs_cid,
+                    filecoin_request_id,
+                    error_message,
+                    metadata_json,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    export_id,
+                    "running",
+                    str(parquet_dir or ""),
+                    "",
+                    "",
+                    "",
+                    "",
+                    _json_dumps(dict(metadata or {})),
+                    timestamp,
+                    timestamp,
+                ),
+            )
+        finally:
+            connection.close()
+        return self.get_bridge_export(export_id) or {}
+
+    def update_bridge_export(
+        self,
+        export_id: str,
+        *,
+        status: str,
+        car_path: str | None = None,
+        ipfs_cid: str | None = None,
+        filecoin_request_id: str | None = None,
+        error_message: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        current = self.get_bridge_export(export_id)
+        if current is None:
+            return None
+        merged_metadata = dict(current.get("metadata") or {})
+        if metadata:
+            merged_metadata.update(dict(metadata))
+        updated_at = _utcnow_iso()
+        connection = self._connect()
+        try:
+            connection.execute(
+                """
+                UPDATE bridge_exports
+                SET status = ?,
+                    car_path = ?,
+                    ipfs_cid = ?,
+                    filecoin_request_id = ?,
+                    error_message = ?,
+                    metadata_json = ?,
+                    updated_at = ?
+                WHERE export_id = ?
+                """,
+                (
+                    str(status or current.get("status") or "running"),
+                    str(car_path if car_path is not None else current.get("car_path") or ""),
+                    str(ipfs_cid if ipfs_cid is not None else current.get("ipfs_cid") or ""),
+                    str(filecoin_request_id if filecoin_request_id is not None else current.get("filecoin_request_id") or ""),
+                    str(error_message if error_message is not None else current.get("error_message") or ""),
+                    _json_dumps(merged_metadata),
+                    updated_at,
+                    export_id,
+                ),
+            )
+        finally:
+            connection.close()
+        return self.get_bridge_export(export_id)
+
+    def get_bridge_export(self, export_id: str) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                WHERE export_id = ?
+                """,
+                (export_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+        return _bridge_export_row_to_dict(row) if row is not None else None
+
+    def get_latest_bridge_export(self) -> dict[str, Any] | None:
+        connection = self._connect()
+        try:
+            row = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                ORDER BY created_at DESC
+                LIMIT 1
+                """
+            ).fetchone()
+        finally:
+            connection.close()
+        return _bridge_export_row_to_dict(row) if row is not None else None
+
+    def list_bridge_exports(self, *, limit: int = 10) -> list[dict[str, Any]]:
+        normalized_limit = max(1, min(int(limit), 100))
+        connection = self._connect()
+        try:
+            rows = connection.execute(
+                """
+                SELECT export_id, status, parquet_dir, car_path, ipfs_cid, filecoin_request_id,
+                       error_message, metadata_json, created_at, updated_at
+                FROM bridge_exports
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (normalized_limit,),
+            ).fetchall()
+        finally:
+            connection.close()
+        return [_bridge_export_row_to_dict(row) for row in rows]
+
+    def export_tables_to_parquet(
+        self,
+        output_dir: str | Path,
+        *,
+        table_names: Sequence[str] | None = None,
+    ) -> dict[str, Any]:
+        requested_tables = tuple(table_names or _SMS_BRIDGE_EXPORT_TABLES)
+        invalid_tables = [table_name for table_name in requested_tables if table_name not in _SMS_BRIDGE_EXPORT_TABLES]
+        if invalid_tables:
+            raise ValueError(f"Unsupported bridge export tables: {', '.join(sorted(invalid_tables))}")
+
+        parquet_dir = Path(output_dir).expanduser().resolve()
+        parquet_dir.mkdir(parents=True, exist_ok=True)
+        connection = self._connect()
+        exported_files: dict[str, str] = {}
+        try:
+            for table_name in requested_tables:
+                target_path = parquet_dir / f"{table_name}.parquet"
+                connection.execute(f"COPY {table_name} TO ? (FORMAT PARQUET)", (str(target_path),))
+                exported_files[table_name] = str(target_path)
+        finally:
+            connection.close()
+
+        manifest = {
+            "db_path": self.path,
+            "generated_at": _utcnow_iso(),
+            "table_count": len(exported_files),
+            "tables": exported_files,
+        }
+        manifest_path = parquet_dir / "manifest.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+        return {"parquet_dir": str(parquet_dir), "tables": exported_files, "manifest_path": str(manifest_path)}
 
     def _insert_message(
         self,
@@ -1788,6 +1994,242 @@ class CallDeliveryProvider(Protocol):
         from_phone: str = "",
         metadata: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]: ...
+
+
+def _bridge_export_row_to_dict(row: Sequence[Any]) -> dict[str, Any]:
+    return {
+        "export_id": str(row[0] or ""),
+        "status": str(row[1] or ""),
+        "parquet_dir": str(row[2] or ""),
+        "car_path": str(row[3] or ""),
+        "ipfs_cid": str(row[4] or ""),
+        "filecoin_request_id": str(row[5] or ""),
+        "error_message": str(row[6] or ""),
+        "metadata": json.loads(str(row[7] or "{}")),
+        "created_at": str(row[8] or ""),
+        "updated_at": str(row[9] or ""),
+    }
+
+
+def _create_bridge_export_car(parquet_dir: Path, *, export_id: str) -> tuple[Path, str, dict[str, Any]]:
+    car_path = parquet_dir.parent / f"{export_id}.car"
+    from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
+
+    backend = get_ipfs_backend(use_cache=False)
+    root_cid = backend.add_path(str(parquet_dir), recursive=True, pin=True)
+    car_path.write_bytes(backend.dag_export(root_cid))
+    return car_path, root_cid, {"success": True, "root_cid": root_cid}
+
+
+def _bridge_filecoin_pin_request_headers(*, include_json_content_type: bool) -> dict[str, str]:
+    headers: dict[str, str] = {"accept": "application/json"}
+    if include_json_content_type:
+        headers["content-type"] = "application/json"
+    if bearer_token := str(os.getenv("WALLET_FILECOIN_PIN_BEARER_TOKEN") or "").strip():
+        headers["authorization"] = f"Bearer {bearer_token}"
+    if header_name := str(os.getenv("WALLET_FILECOIN_PIN_HTTP_HEADER_NAME") or "").strip():
+        header_value = str(os.getenv("WALLET_FILECOIN_PIN_HTTP_HEADER_VALUE") or "").strip()
+        if not header_value:
+            raise RuntimeError(
+                "WALLET_FILECOIN_PIN_HTTP_HEADER_VALUE is required when WALLET_FILECOIN_PIN_HTTP_HEADER_NAME is set"
+            )
+        headers[header_name] = header_value
+    return headers
+
+
+def _bridge_filecoin_pin_service_url() -> str:
+    return str(os.getenv("WALLET_FILECOIN_PIN_SERVICE_URL") or "").strip().rstrip("/")
+
+
+def _bridge_filecoin_pin_timeout_seconds() -> float:
+    timeout_seconds = float(str(os.getenv("WALLET_FILECOIN_PIN_TIMEOUT_SECONDS") or "30").strip())
+    if timeout_seconds <= 0:
+        raise RuntimeError("WALLET_FILECOIN_PIN_TIMEOUT_SECONDS must be positive")
+    return timeout_seconds
+
+
+def _bridge_mock_filecoin_status() -> str:
+    return str(os.getenv("WALLET_FILECOIN_PIN_MOCK_STATUS") or "pinned").strip() or "pinned"
+
+
+def _bridge_mock_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    normalized_method = str(method or "").strip().upper()
+    normalized_path = str(path or "").strip()
+    if normalized_method == "POST" and normalized_path == "/pins":
+        cid = str((payload or {}).get("cid") or "").strip()
+        if not cid:
+            raise RuntimeError("mock Filecoin Pin request requires a cid")
+        request_id = f"bridge-pin-{hashlib.sha256(cid.encode('utf-8')).hexdigest()[:12]}"
+        return {
+            "requestid": request_id,
+            "status": "queued",
+            "info": {"provider": "mock-filecoin-pin", "cid": cid, "mock": True},
+        }
+    if normalized_method == "GET" and normalized_path.startswith("/pins/"):
+        request_id = normalized_path.rsplit("/", 1)[-1].strip()
+        return {
+            "requestid": request_id,
+            "status": _bridge_mock_filecoin_status(),
+            "info": {"provider": "mock-filecoin-pin", "mock": True},
+        }
+    raise RuntimeError(f"mock Filecoin Pin does not support {normalized_method} {normalized_path}")
+
+
+def _bridge_filecoin_pin_request(method: str, path: str, *, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    service_url = _bridge_filecoin_pin_service_url()
+    if not service_url:
+        return {}
+    if service_url == "mock":
+        return _bridge_mock_filecoin_pin_request(method, path, payload=payload)
+
+    endpoint = f"{service_url}{path}"
+    body = json.dumps(payload, sort_keys=True).encode("utf-8") if payload is not None else None
+    req = urllib_request.Request(
+        endpoint,
+        data=body,
+        headers=_bridge_filecoin_pin_request_headers(include_json_content_type=payload is not None),
+        method=method,
+    )
+    try:
+        with urllib_request.urlopen(req, timeout=_bridge_filecoin_pin_timeout_seconds()) as response:
+            raw = response.read().decode("utf-8")
+            content_type = str(getattr(response, "headers", {}).get("content-type", ""))
+    except urllib_error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(error_body or f"Filecoin Pin sidecar rejected the request with HTTP {exc.code}") from exc
+    except urllib_error.URLError as exc:
+        raise RuntimeError(f"Unable to reach Filecoin Pin sidecar at {endpoint}: {exc.reason}") from exc
+    if not raw:
+        return {}
+    if "json" not in content_type.lower() and not raw.lstrip().startswith("{"):
+        raise RuntimeError("Filecoin Pin sidecar returned a non-JSON response")
+    parsed = json.loads(raw)
+    if not isinstance(parsed, dict):
+        raise RuntimeError("Filecoin Pin sidecar returned a non-object response")
+    return parsed
+
+
+def _submit_bridge_export_cid_to_filecoin_pin(
+    cid: str,
+    *,
+    export_id: str,
+    file_name: str,
+    parquet_tables: Sequence[str],
+) -> dict[str, Any] | None:
+    service_url = _bridge_filecoin_pin_service_url()
+    if not service_url:
+        return None
+    origins = [
+        origin.strip()
+        for origin in str(os.getenv("WALLET_FILECOIN_PIN_ORIGINS") or "").split(",")
+        if origin.strip()
+    ]
+    payload: dict[str, Any] = {
+        "cid": cid,
+        "name": file_name,
+        "meta": {
+            "source": "sms-bridge-parquet-export",
+            "exportId": export_id,
+            "fileName": file_name,
+            "mimeType": "application/vnd.ipld.car",
+            "tableCount": str(len(parquet_tables)),
+            "tables": ",".join(sorted(parquet_tables)),
+        },
+    }
+    if origins:
+        payload["origins"] = origins
+    return _bridge_filecoin_pin_request("POST", "/pins", payload=payload)
+
+
+class SmsBridgeArchiveExporter:
+    def __init__(
+        self,
+        *,
+        repository: SmsBridgeStore,
+        export_root: str | None = None,
+        interval_seconds: float = 3600.0,
+        enabled: bool = False,
+    ):
+        self.repository = repository
+        self.export_root = Path(export_root or default_sms_bridge_export_root()).expanduser().resolve()
+        self.interval_seconds = max(1.0, float(interval_seconds))
+        self.enabled = bool(enabled)
+        self._stop_event = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    @classmethod
+    def from_env(cls, *, repository: SmsBridgeStore) -> "SmsBridgeArchiveExporter":
+        return cls(
+            repository=repository,
+            export_root=os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ROOT", ""),
+            interval_seconds=float(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_INTERVAL_SECONDS", "3600") or "3600"),
+            enabled=_truthy(os.getenv("IPFS_DATASETS_SMS_BRIDGE_ARCHIVE_EXPORT_ENABLED")),
+        )
+
+    def start(self) -> None:
+        if not self.enabled:
+            return
+        if self._thread is not None and self._thread.is_alive():
+            return
+        self._stop_event.clear()
+        self._thread = threading.Thread(target=self._run_loop, name="sms-bridge-archive-exporter", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        if self._thread is not None and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
+
+    def _run_loop(self) -> None:
+        self.run_once()
+        while not self._stop_event.wait(self.interval_seconds):
+            self.run_once()
+
+    def run_once(self) -> dict[str, Any]:
+        export_id = f"bridge-export-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
+        export_base_dir = self.export_root / export_id
+        parquet_dir = export_base_dir / "parquet"
+        export_base_dir.mkdir(parents=True, exist_ok=True)
+        export_record = self.repository.create_bridge_export(
+            export_id,
+            parquet_dir=str(parquet_dir),
+            metadata={
+                "db_path": self.repository.path,
+                "interval_seconds": self.interval_seconds,
+            },
+        )
+        try:
+            parquet_result = self.repository.export_tables_to_parquet(parquet_dir)
+            car_path, root_cid, car_result = _create_bridge_export_car(parquet_dir, export_id=export_id)
+            filecoin_result = _submit_bridge_export_cid_to_filecoin_pin(
+                root_cid,
+                export_id=export_id,
+                file_name=car_path.name,
+                parquet_tables=tuple(parquet_result["tables"].keys()),
+            )
+            filecoin_request_id = str(
+                (filecoin_result or {}).get("requestid") or (filecoin_result or {}).get("requestId") or ""
+            ).strip()
+            final_status = str((filecoin_result or {}).get("status") or "stored").strip() or "stored"
+            export_record = self.repository.update_bridge_export(
+                export_id,
+                status=final_status,
+                car_path=str(car_path),
+                ipfs_cid=root_cid,
+                filecoin_request_id=filecoin_request_id,
+                metadata={
+                    "parquet": parquet_result,
+                    "car": {"path": str(car_path), **car_result},
+                    "filecoin": filecoin_result or {},
+                },
+            ) or export_record
+        except Exception as exc:
+            export_record = self.repository.update_bridge_export(
+                export_id,
+                status="failed",
+                error_message=str(exc),
+            ) or export_record
+        return export_record
 
 
 class VoiceReplyProvider(Protocol):
@@ -3023,9 +3465,18 @@ def create_sms_bridge_app(
         else build_voice_reply_provider(assistant_profile=resolved_voice_profile)
     )
     media_store = voice_media_store or VoiceMediaAssetStore()
+    archive_exporter = SmsBridgeArchiveExporter.from_env(repository=sms_store)
     configured_public_base_url = str(public_base_url or os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL") or "").strip()
 
     app = FastAPI(title="IPFS Datasets Messaging Bridge", version="0.1.0")
+
+    @app.on_event("startup")
+    async def _startup_archive_exporter() -> None:
+        archive_exporter.start()
+
+    @app.on_event("shutdown")
+    async def _shutdown_archive_exporter() -> None:
+        archive_exporter.stop()
 
     @app.get("/health")
     def health() -> dict[str, Any]:
@@ -3041,7 +3492,18 @@ def create_sms_bridge_app(
             "voice_reply_provider_configured": resolved_voice_reply_provider is not None,
             "inbound_forwarding_configured": forwarder is not None,
             "db_path": sms_store.path,
+            "archive_export_enabled": archive_exporter.enabled,
+            "archive_export_interval_seconds": archive_exporter.interval_seconds if archive_exporter.enabled else 0,
+            "latest_archive_export": sms_store.get_latest_bridge_export(),
         }
+
+    @app.get("/exports/archive")
+    def list_archive_exports(limit: int = 10) -> dict[str, Any]:
+        return {"exports": sms_store.list_bridge_exports(limit=limit)}
+
+    @app.post("/exports/archive/run")
+    def run_archive_export() -> dict[str, Any]:
+        return archive_exporter.run_once()
 
     @app.post("/messages/email/outbound")
     def send_outbound_email(request: OutboundEmailRequest) -> dict[str, Any]:
