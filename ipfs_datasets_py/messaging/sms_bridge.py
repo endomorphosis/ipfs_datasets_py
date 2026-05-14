@@ -2973,6 +2973,20 @@ def _parse_form_body(body: bytes) -> dict[str, str]:
     return {key: values[-1] if values else "" for key, values in parsed.items()}
 
 
+async def _parse_request_form(request: Request) -> dict[str, str]:
+    try:
+        form = await request.form()
+    except Exception:
+        return _parse_form_body(await request.body())
+
+    normalized: dict[str, str] = {}
+    for key, value in form.multi_items():
+        if hasattr(value, "filename"):
+            continue
+        normalized[str(key)] = str(value)
+    return normalized
+
+
 def _forward_inbound_message(
     forwarder: WebhookEventForwarder | None,
     record: SmsMessageRecord,
@@ -3420,6 +3434,68 @@ def create_sms_bridge_app(
 
     def _voice_media_url(public_base: str, asset_id: str) -> str:
         return _join_public_url(public_base, f"/voice/media/{asset_id}")
+
+    def _mock_voice_proxy_enabled() -> bool:
+        return str(getattr(resolved_voice_reply_provider, "provider_name", "") or "").strip() == "mock-voice"
+
+    def _mock_voice_proxy_session() -> VoiceCallSessionRecord:
+        timestamp = _utcnow_iso()
+        return VoiceCallSessionRecord(
+            session_id="voice-proxy-mock-session",
+            provider="mock-voice-proxy",
+            provider_call_id="",
+            status="active",
+            assistant_name=resolved_voice_profile.assistant_name,
+            service_name=resolved_voice_profile.service_name,
+            greeting=resolved_voice_profile.greeting,
+            metadata={"entrypoint": "browser-voice-proxy"},
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+    @app.post("/voice/tts")
+    async def mock_voice_tts(request: Request) -> dict[str, Any]:
+        if not _mock_voice_proxy_enabled():
+            raise HTTPException(status_code=503, detail="mock browser voice proxy is not enabled")
+        form = await _parse_request_form(request)
+        text = _normalize_turn_text(str(form.get("text") or ""), max_length=480)
+        if not text:
+            raise HTTPException(status_code=400, detail="text is required")
+        return {
+            "provider": "mock-voice-proxy",
+            "model": getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
+            "text": text,
+        }
+
+    @app.post("/voice/infer")
+    async def mock_voice_infer(request: Request) -> dict[str, Any]:
+        if not _mock_voice_proxy_enabled() or resolved_voice_reply_provider is None:
+            raise HTTPException(status_code=503, detail="mock browser voice proxy is not enabled")
+        form = await _parse_request_form(request)
+        transcript = _normalize_turn_text(
+            _first_non_empty(
+                str(form.get("userPrompt") or ""),
+                str(form.get("user_prompt") or ""),
+                str(form.get("text") or ""),
+                str(form.get("fallbackText") or ""),
+                str(form.get("fallback_text") or ""),
+            ),
+            max_length=480,
+        )
+        if not transcript:
+            raise HTTPException(status_code=400, detail="text is required")
+        reply = resolved_voice_reply_provider.generate_reply(
+            transcript=transcript,
+            session=_mock_voice_proxy_session(),
+            turns=[],
+        )
+        if not reply.text:
+            raise HTTPException(status_code=502, detail="mock voice provider returned no text")
+        return {
+            "provider": "mock-voice-proxy",
+            "model": reply.model_name or getattr(resolved_voice_reply_provider, "provider_name", "mock-voice"),
+            "text": reply.text,
+        }
 
     @app.post("/providers/twilio/voice/inbound")
     async def receive_twilio_voice_inbound(request: Request) -> Response:

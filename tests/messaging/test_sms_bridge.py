@@ -9,6 +9,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 
 from ipfs_datasets_py.messaging.sms_bridge import (
+    MockVoiceReplyProvider,
     SmsBridgeStore,
     VoiceAssistantProfile,
     VoiceCallSessionRecord,
@@ -379,6 +380,58 @@ def test_voice_gateway_accepts_inbound_call_and_serves_generated_audio(tmp_path:
     assert status_body["updated"] is True
     assert status_body["voice_session_updated"] is True
     assert status_body["voice_session"]["status"] == "completed"
+
+
+def test_mock_browser_voice_proxy_routes_return_text_payloads(tmp_path: Path) -> None:
+    store = SmsBridgeStore(str(tmp_path / "mock_voice_proxy.duckdb"))
+    app = create_sms_bridge_app(
+        repository=store,
+        voice_reply_provider=MockVoiceReplyProvider(
+            assistant_profile=VoiceAssistantProfile(assistant_name="Abby", service_name="211 AI")
+        ),
+        public_base_url="https://211-ai.com/messaging",
+    )
+    client = TestClient(app, raise_server_exceptions=False)
+
+    tts_response = client.post(
+        "/voice/tts",
+        data={"text": "Neighborhood Pantry can help with food today."},
+    )
+    assert tts_response.status_code == 200, tts_response.text
+    assert tts_response.json() == {
+        "provider": "mock-voice-proxy",
+        "model": "mock-voice",
+        "text": "Neighborhood Pantry can help with food today.",
+    }
+
+    infer_response = client.post(
+        "/voice/infer",
+        data={
+            "text": "Where can I find shelter tonight?",
+            "userPrompt": "Where can I find shelter tonight?",
+            "fallbackText": "I can help you find shelter tonight.",
+        },
+        files={"audio": ("input.wav", b"RIFFmockWAVE", "audio/wav")},
+    )
+    assert infer_response.status_code == 200, infer_response.text
+    infer_body = infer_response.json()
+    assert infer_body["provider"] == "mock-voice-proxy"
+    assert infer_body["model"] == "mock-voice"
+    assert "Where can I find shelter tonight?" in infer_body["text"]
+
+
+def test_browser_voice_proxy_routes_are_unavailable_without_mock_provider(tmp_path: Path) -> None:
+    client, _, _, _, _, _, _ = _client(tmp_path)
+
+    tts_response = client.post("/voice/tts", data={"text": "hello"})
+    assert tts_response.status_code == 503, tts_response.text
+
+    infer_response = client.post(
+        "/voice/infer",
+        data={"text": "hello"},
+        files={"audio": ("input.wav", b"RIFFmockWAVE", "audio/wav")},
+    )
+    assert infer_response.status_code == 503, infer_response.text
 
 
 def test_email_bridge_records_outbound_email(tmp_path: Path) -> None:
