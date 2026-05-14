@@ -158,6 +158,7 @@ ipfs_datasets_py = [
 [project.scripts]
 netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main"
 ipfs-netherlands-laws = "ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main"
+ipfs-datasets-sms-bridge = "ipfs_datasets_py.messaging.sms_bridge:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

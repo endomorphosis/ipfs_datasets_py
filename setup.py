@@ -592,6 +592,7 @@ setup(
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
             'netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',
             'ipfs-netherlands-laws=ipfs_datasets_py.processors.legal_scrapers.netherlands_laws.cli:main',
+            'ipfs-datasets-sms-bridge=ipfs_datasets_py.messaging.sms_bridge:main',
             # File converter CLI (Phase 6.4)
             'file-converter=ipfs_datasets_py.processors.file_converter.cli:main',
             'fc=ipfs_datasets_py.processors.file_converter.cli:main',
