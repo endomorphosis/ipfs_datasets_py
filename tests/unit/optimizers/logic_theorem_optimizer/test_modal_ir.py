@@ -8,6 +8,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
     ModalIRFrame,
+    ModalIRFrameLogic,
     ModalIROperator,
     ModalIRPredicate,
     ModalIRProvenance,
@@ -54,6 +55,17 @@ def test_modal_ir_document_serializes_to_stable_json() -> None:
                 explanation="Matched notice and agency cues.",
             )
         ],
+        frame_logic=ModalIRFrameLogic.from_triples(
+            [
+                {
+                    "subject": "sample-1",
+                    "predicate": "type",
+                    "object": "legal_modal_document",
+                }
+            ],
+            ontology_name="sample_flogic",
+            selected_frame="administrative_notice",
+        ),
         metadata={"title": "5", "section": "1"},
     )
 
@@ -63,6 +75,8 @@ def test_modal_ir_document_serializes_to_stable_json() -> None:
     assert parsed["document_id"] == "sample-1"
     assert parsed["formulas"][0]["operator"]["family"] == "deontic"
     assert parsed["frame_candidates"][0]["matched_terms"] == ["agency", "notice"]
+    assert parsed["frame_logic"]["ontology_name"] == "sample_flogic"
+    assert parsed["frame_logic"]["triples"][0]["predicate"] == "type"
     assert rendered == document.to_json()
 
 

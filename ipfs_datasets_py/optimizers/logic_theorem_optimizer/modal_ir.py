@@ -83,6 +83,79 @@ class ModalIRFrame:
 
 
 @dataclass(frozen=True)
+class ModalIRFrameLogicTriple:
+    """One frame-logic assertion carried by the modal IR."""
+
+    subject: str
+    predicate: str
+    object: str
+
+    def to_dict(self) -> Dict[str, str]:
+        return {
+            "object": self.object,
+            "predicate": self.predicate,
+            "subject": self.subject,
+        }
+
+    @classmethod
+    def from_mapping(cls, data: Mapping[str, Any]) -> "ModalIRFrameLogicTriple":
+        return cls(
+            subject=str(data.get("subject", "")),
+            predicate=str(data.get("predicate", "")),
+            object=str(data.get("object", "")),
+        )
+
+
+@dataclass(frozen=True)
+class ModalIRFrameLogic:
+    """Frame-logic layer embedded in the modal legal IR."""
+
+    ontology_name: str = "modal_flogic_ir"
+    triples: List[ModalIRFrameLogicTriple] = field(default_factory=list)
+    selected_frame: Optional[str] = None
+    graph_id: Optional[str] = None
+    neo4j_node_labels: List[str] = field(default_factory=list)
+    neo4j_relationship_types: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_triples(self) -> List[Dict[str, str]]:
+        return [triple.to_dict() for triple in self.triples]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "graph_id": self.graph_id,
+            "metadata": dict(sorted(self.metadata.items())),
+            "neo4j_node_labels": sorted(self.neo4j_node_labels),
+            "neo4j_relationship_types": sorted(self.neo4j_relationship_types),
+            "ontology_name": self.ontology_name,
+            "selected_frame": self.selected_frame,
+            "triples": [triple.to_dict() for triple in self.triples],
+        }
+
+    @classmethod
+    def from_triples(
+        cls,
+        triples: List[Mapping[str, Any]],
+        *,
+        ontology_name: str = "modal_flogic_ir",
+        selected_frame: Optional[str] = None,
+        graph_id: Optional[str] = None,
+        neo4j_node_labels: Optional[List[str]] = None,
+        neo4j_relationship_types: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "ModalIRFrameLogic":
+        return cls(
+            ontology_name=ontology_name,
+            triples=[ModalIRFrameLogicTriple.from_mapping(triple) for triple in triples],
+            selected_frame=selected_frame,
+            graph_id=graph_id,
+            neo4j_node_labels=neo4j_node_labels or [],
+            neo4j_relationship_types=neo4j_relationship_types or [],
+            metadata=metadata or {},
+        )
+
+
+@dataclass(frozen=True)
 class ModalIRFormula:
     """One formula node in the modal IR."""
 
@@ -115,6 +188,7 @@ class ModalIRDocument:
     normalized_text: str
     formulas: List[ModalIRFormula] = field(default_factory=list)
     frame_candidates: List[ModalIRFrame] = field(default_factory=list)
+    frame_logic: ModalIRFrameLogic = field(default_factory=ModalIRFrameLogic)
     metadata: Dict[str, Any] = field(default_factory=dict)
     version: str = "modal-ir-v1"
 
@@ -132,6 +206,7 @@ class ModalIRDocument:
                     key=lambda item: (-item.score, item.frame_id),
                 )
             ],
+            "frame_logic": self.frame_logic.to_dict(),
             "metadata": dict(sorted(self.metadata.items())),
             "normalized_text": self.normalized_text,
             "source": self.source,
@@ -151,6 +226,8 @@ __all__ = [
     "ModalIRDocument",
     "ModalIRFormula",
     "ModalIRFrame",
+    "ModalIRFrameLogic",
+    "ModalIRFrameLogicTriple",
     "ModalIROperator",
     "ModalIRPredicate",
     "ModalIRProvenance",

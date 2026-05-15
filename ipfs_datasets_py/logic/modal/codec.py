@@ -40,6 +40,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
     ModalIRFrame,
+    ModalIRFrameLogic,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     DEFAULT_MODAL_REGISTRY,
@@ -228,8 +229,24 @@ class DeterministicModalLogicCodec:
                 "modal_ir_version": modal_ir.version,
             },
         )
+        graph_schema = neo4j_graph_data.schema
+        frame_logic = ModalIRFrameLogic.from_triples(
+            kg_triples,
+            ontology_name=flogic_ontology.name,
+            selected_frame=selected_frame,
+            graph_id=neo4j_graph_data.metadata.get("graph_id"),
+            neo4j_node_labels=graph_schema.node_labels if graph_schema else [],
+            neo4j_relationship_types=graph_schema.relationship_types
+            if graph_schema
+            else [],
+            metadata={
+                "neo4j_compatible": True,
+                "source": "deterministic_modal_logic_codec_v1",
+            },
+        )
         modal_ir = replace(
             modal_ir,
+            frame_logic=frame_logic,
             metadata={
                 **modal_ir.metadata,
                 "flogic_ontology": flogic_ontology_to_dict(flogic_ontology),
@@ -482,6 +499,8 @@ def modal_ir_to_flogic_triples(
     selected_frame: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     """Project modal IR into simple F-logic-style triples."""
+    if modal_ir.frame_logic.triples:
+        return modal_ir.frame_logic.to_triples()
     triples: List[Dict[str, str]] = [
         {"subject": modal_ir.document_id, "predicate": "type", "object": "legal_modal_document"},
         {"subject": modal_ir.document_id, "predicate": "source", "object": modal_ir.source},

@@ -121,6 +121,10 @@ def modal_ir_to_neo4j_graph_data(
 ) -> GraphData:
     """Project a modal IR document into Neo4j-compatible F-logic graph data."""
     if triples is None:
+        frame_logic = getattr(modal_ir, "frame_logic", None)
+        if frame_logic is not None and getattr(frame_logic, "triples", None):
+            triples = frame_logic.to_triples()
+    if triples is None:
         triples = modal_ir.metadata.get("flogic_triples")
     if triples is None:
         from .codec import modal_ir_to_flogic_triples

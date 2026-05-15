@@ -58,6 +58,11 @@ def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
     assert result.flogic_result.ontology_consistent is True
     assert result.kg_triples
     assert all(triple["predicate"] for triple in result.kg_triples)
+    assert result.modal_ir.frame_logic.triples
+    assert result.modal_ir.frame_logic.to_triples() == result.kg_triples
+    assert result.modal_ir.frame_logic.selected_frame == result.selected_frame
+    assert result.modal_ir.frame_logic.graph_id == "sample-doc:flogic"
+    assert "LegalModalDocument" in result.modal_ir.frame_logic.neo4j_node_labels
     assert result.modal_ir.metadata["flogic_triple_count"] == len(result.kg_triples)
     assert result.modal_ir.metadata["flogic_triples"] == result.kg_triples
     assert result.flogic_ontology.frames
