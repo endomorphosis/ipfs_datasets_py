@@ -28,6 +28,7 @@ def _candidate_secret_files() -> list[Path]:
     xdg_config_home = Path(os.getenv("XDG_CONFIG_HOME") or Path.home() / ".config").expanduser()
     paths.extend(
         [
+            Path.home() / ".ipfs_datasets" / "secrets.json",
             xdg_config_home / "ipfs_datasets_py" / "secrets.json",
             xdg_config_home / "ipfs_datasets" / "secrets.json",
             xdg_config_home / "secrets.json",
@@ -66,6 +67,10 @@ def _value_from_json_file(path: Path, names: tuple[str, ...]) -> str:
     except Exception:
         return ""
 
+    encrypted = _value_from_encrypted_keychain(payload, path, names)
+    if encrypted:
+        return encrypted
+
     values = [
         (key, value)
         for key, value in _iter_json_values(payload)
@@ -82,6 +87,55 @@ def _value_from_json_file(path: Path, names: tuple[str, ...]) -> str:
             if text:
                 return text
     return ""
+
+
+def _value_from_encrypted_keychain(payload: Any, path: Path, names: tuple[str, ...]) -> str:
+    if not isinstance(payload, Mapping):
+        return ""
+    secrets = payload.get("secrets")
+    if not isinstance(secrets, Mapping):
+        return ""
+    key_text = _encrypted_keychain_key(payload, path)
+    if not key_text:
+        return ""
+    try:
+        from cryptography.fernet import Fernet
+
+        fernet = Fernet(key_text.encode("utf-8"))
+    except Exception:
+        return ""
+    for name in (str(item) for item in names if str(item or "").strip()):
+        candidates = (name, _normalized_name(name))
+        for candidate in candidates:
+            entry = secrets.get(candidate)
+            if not isinstance(entry, Mapping):
+                continue
+            if str(entry.get("type") or "") != "fernet":
+                continue
+            value = str(entry.get("value") or "").strip()
+            if not value:
+                continue
+            try:
+                return fernet.decrypt(value.encode("utf-8")).decode("utf-8").strip()
+            except Exception:
+                continue
+    return ""
+
+
+def _encrypted_keychain_key(payload: Mapping[str, Any], path: Path) -> str:
+    env_key = str(os.getenv("IPFS_DATASETS_KEYCHAIN_KEY") or "").strip()
+    if env_key:
+        return env_key
+    raw_key_file = str(payload.get("key_file") or "").strip()
+    if not raw_key_file:
+        raw_key_file = str(path.with_suffix(".key"))
+    key_file = Path(raw_key_file).expanduser()
+    if not key_file.is_absolute():
+        key_file = path.parent / key_file
+    try:
+        return key_file.read_text(encoding="utf-8").strip()
+    except Exception:
+        return ""
 
 
 def _value_from_config_files(names: tuple[str, ...]) -> str:
