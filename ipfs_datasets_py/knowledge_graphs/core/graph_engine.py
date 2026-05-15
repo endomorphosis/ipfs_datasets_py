@@ -309,6 +309,105 @@ class GraphEngine:
         logger.debug("Found %d nodes", len(results))
         return results
 
+    def import_graph_data(
+        self,
+        graph_data: Any,
+        *,
+        preserve_ids: bool = True,
+        skip_duplicates: bool = True,
+    ) -> Dict[str, int]:
+        """Import migration ``GraphData`` into the in-process graph engine.
+
+        ``GraphData`` is the shared Neo4j/IPFS migration representation.  This
+        importer gives deterministic symbolic IR projections, including modal
+        F-logic graphs, a direct path into the same engine used by the
+        Neo4j-compatible query surface.
+        """
+        nodes = _graph_items(graph_data, "nodes")
+        relationships = _graph_items(graph_data, "relationships")
+        report = {
+            "nodes_imported": 0,
+            "relationships_imported": 0,
+            "nodes_skipped": 0,
+            "relationships_skipped": 0,
+            "missing_endpoint_relationships": 0,
+        }
+        node_id_map: Dict[str, str] = {}
+
+        for node_data in nodes:
+            external_id = str(_item_value(node_data, "id", "")).strip()
+            if not external_id:
+                report["nodes_skipped"] += 1
+                continue
+            labels = list(_item_value(node_data, "labels", []) or [])
+            properties = dict(_item_value(node_data, "properties", {}) or {})
+            properties.setdefault("external_id", external_id)
+
+            if preserve_ids:
+                if skip_duplicates and external_id in self._node_cache:
+                    node_id_map[external_id] = external_id
+                    report["nodes_skipped"] += 1
+                    continue
+                node = Node(
+                    node_id=external_id,
+                    labels=labels,
+                    properties=properties,
+                )
+                self._node_cache[external_id] = node
+                self._persist_imported_node(node)
+                node_id_map[external_id] = external_id
+            else:
+                created = self.create_node(labels=labels, properties=properties)
+                node_id_map[external_id] = str(created.id)
+            report["nodes_imported"] += 1
+
+        for rel_data in relationships:
+            external_rel_id = str(_item_value(rel_data, "id", "")).strip()
+            rel_type = str(_item_value(rel_data, "type", "")).strip()
+            start_external = str(_item_value(rel_data, "start_node", "")).strip()
+            end_external = str(_item_value(rel_data, "end_node", "")).strip()
+            if not external_rel_id or not rel_type or not start_external or not end_external:
+                report["relationships_skipped"] += 1
+                continue
+            if skip_duplicates and external_rel_id in self._relationship_cache:
+                report["relationships_skipped"] += 1
+                continue
+
+            start_node = node_id_map.get(start_external, start_external)
+            end_node = node_id_map.get(end_external, end_external)
+            if start_node not in self._node_cache or end_node not in self._node_cache:
+                report["missing_endpoint_relationships"] += 1
+                report["relationships_skipped"] += 1
+                continue
+            properties = dict(_item_value(rel_data, "properties", {}) or {})
+            properties.setdefault("external_id", external_rel_id)
+
+            if preserve_ids:
+                relationship = Relationship(
+                    rel_id=external_rel_id,
+                    rel_type=rel_type,
+                    start_node=start_node,
+                    end_node=end_node,
+                    properties=properties,
+                )
+                self._relationship_cache[external_rel_id] = relationship
+                self._persist_imported_relationship(relationship)
+            else:
+                self.create_relationship(
+                    rel_type=rel_type,
+                    start_node=start_node,
+                    end_node=end_node,
+                    properties=properties,
+                )
+            report["relationships_imported"] += 1
+
+        logger.info(
+            "Imported graph data: %d nodes, %d relationships",
+            report["nodes_imported"],
+            report["relationships_imported"],
+        )
+        return report
+
     def _generate_node_id(self) -> str:
         """Generate a unique node ID."""
         import uuid
@@ -318,6 +417,42 @@ class GraphEngine:
         """Generate a unique relationship ID."""
         import uuid
         return f"rel-{uuid.uuid4().hex[:12]}"
+
+    def _persist_imported_node(self, node: Node) -> None:
+        """Persist an imported node when the engine has an IPLD backend."""
+        if not self._enable_persistence or not self.storage:
+            return
+        try:
+            node_data = {
+                "id": node.id,
+                "labels": list(node.labels),
+                "properties": node.properties,
+            }
+            cid = self.storage.store(node_data, pin=True, codec="dag-json")
+            self._node_cache[f"cid:{node.id}"] = cid
+        except StorageError as e:
+            logger.warning("Failed to persist imported node %s: %s", node.id, e)
+
+    def _persist_imported_relationship(self, relationship: Relationship) -> None:
+        """Persist an imported relationship when the engine has an IPLD backend."""
+        if not self._enable_persistence or not self.storage:
+            return
+        try:
+            rel_data = {
+                "id": relationship.id,
+                "type": relationship.type,
+                "start_node": relationship.start_node,
+                "end_node": relationship.end_node,
+                "properties": relationship.properties,
+            }
+            cid = self.storage.store(rel_data, pin=True, codec="dag-json")
+            self._relationship_cache[f"cid:{relationship.id}"] = cid
+        except StorageError as e:
+            logger.warning(
+                "Failed to persist imported relationship %s: %s",
+                relationship.id,
+                e,
+            )
 
     def save_graph(self) -> Optional[str]:
         """Save the entire graph to IPLD storage."""
@@ -556,6 +691,18 @@ class GraphEngine:
             len(paths), start_node_id, end_node_id
         )
         return paths
+
+
+def _graph_items(graph_data: Any, name: str) -> List[Any]:
+    if isinstance(graph_data, dict):
+        return list(graph_data.get(name, []) or [])
+    return list(getattr(graph_data, name, []) or [])
+
+
+def _item_value(item: Any, name: str, default: Any = None) -> Any:
+    if isinstance(item, dict):
+        return item.get(name, default)
+    return getattr(item, name, default)
 
 
 __all__ = ["GraphEngine"]

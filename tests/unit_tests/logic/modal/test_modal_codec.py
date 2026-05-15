@@ -11,6 +11,7 @@ from ipfs_datasets_py.logic.modal import (
     ModalLogicCodecConfig,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
+    import_graph_data_to_graph_engine,
     modal_formula_to_text,
     modal_text_token_similarity,
     synthesis_hints_from_autoencoder_introspection,
@@ -57,6 +58,22 @@ def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
     assert result.flogic_result.ontology_consistent is True
     assert result.kg_triples
     assert all(triple["predicate"] for triple in result.kg_triples)
+    assert result.modal_ir.metadata["flogic_triple_count"] == len(result.kg_triples)
+    assert result.modal_ir.metadata["flogic_triples"] == result.kg_triples
+    assert result.flogic_ontology.frames
+    assert result.neo4j_graph_data.metadata["neo4j_compatible"] is True
+    assert result.neo4j_graph_data.node_count > 0
+    assert result.neo4j_graph_data.relationship_count == len(result.kg_triples)
+    assert "LegalModalDocument" in result.neo4j_graph_data.schema.node_labels
+    engine, import_report = import_graph_data_to_graph_engine(result.neo4j_graph_data)
+    assert import_report["nodes_imported"] == result.neo4j_graph_data.node_count
+    assert import_report["relationships_imported"] == result.neo4j_graph_data.relationship_count
+    assert engine.find_nodes(labels=["LegalModalDocument"], properties={"name": "sample-doc"})
+    assert any(
+        relationship.type == "BELONGS_TO_DOCUMENT"
+        for relationship in engine._relationship_cache.values()
+        if hasattr(relationship, "type")
+    )
     assert modal_formula_to_text(result.modal_ir.formulas[0])
     assert result.metadata["deterministic_decompiler"] == "modal_decompiler_v2"
     assert result.decoded_text == result.normalized_text

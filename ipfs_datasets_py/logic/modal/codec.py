@@ -53,6 +53,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyModalIRCompiler,
 )
 from .decompiler import DecodedModalText, decode_modal_ir_document
+from .kg_bridge import (
+    flogic_ontology_to_dict,
+    flogic_triples_to_graph_data,
+    flogic_triples_to_ontology,
+)
 
 
 @dataclass(frozen=True)
@@ -87,6 +92,8 @@ class ModalLogicCodecResult:
     frame_candidates: List[Dict[str, Any]]
     selected_frame: Optional[str]
     kg_triples: List[Dict[str, str]]
+    flogic_ontology: Any
+    neo4j_graph_data: Any
     decoded_modal_text: DecodedModalText
     decoded_text: str
     losses: Dict[str, float]
@@ -102,12 +109,16 @@ class ModalLogicCodecResult:
             "encoding": self.encoding.to_dict(),
             "family_logits": dict(sorted(self.family_logits.items())),
             "family_probabilities": dict(sorted(self.family_probabilities.items())),
+            "flogic_ontology": flogic_ontology_to_dict(self.flogic_ontology)
+            if self.flogic_ontology is not None
+            else None,
             "flogic_result": _flogic_result_to_dict(self.flogic_result),
             "frame_candidates": list(self.frame_candidates),
             "kg_triples": list(self.kg_triples),
             "losses": dict(sorted(self.losses.items())),
             "metadata": dict(sorted(self.metadata.items())),
             "modal_ir": self.modal_ir.to_dict(),
+            "neo4j_graph_data": _object_to_dict(self.neo4j_graph_data),
             "normalized_text": self.normalized_text,
             "parser_name": self.parser_name,
             "selected_frame": self.selected_frame,
@@ -203,9 +214,39 @@ class DeterministicModalLogicCodec:
         family_probabilities = _softmax(family_logits)
         target_family = target_family_for_modal_ir(modal_ir)
         target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
+        kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
+        flogic_ontology = flogic_triples_to_ontology(
+            kg_triples,
+            name=f"{modal_ir.document_id}_flogic",
+        )
+        neo4j_graph_data = flogic_triples_to_graph_data(
+            kg_triples,
+            graph_id=f"{modal_ir.document_id}:flogic",
+            metadata={
+                "modal_ir_document_id": modal_ir.document_id,
+                "modal_ir_hash": modal_ir.canonical_hash(),
+                "modal_ir_version": modal_ir.version,
+            },
+        )
+        modal_ir = replace(
+            modal_ir,
+            metadata={
+                **modal_ir.metadata,
+                "flogic_ontology": flogic_ontology_to_dict(flogic_ontology),
+                "flogic_triple_count": len(kg_triples),
+                "flogic_triples": list(kg_triples),
+                "neo4j_graph": {
+                    "graph_id": neo4j_graph_data.metadata.get("graph_id"),
+                    "node_count": neo4j_graph_data.node_count,
+                    "relationship_count": neo4j_graph_data.relationship_count,
+                    "schema": neo4j_graph_data.schema.to_dict()
+                    if neo4j_graph_data.schema
+                    else None,
+                },
+            },
+        )
         decoded_modal_text = decode_modal_ir_document(modal_ir)
         decoded_text = decoded_modal_text.text
-        kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
         flogic_result = self._evaluate_flogic(
             normalized_text,
             decoded_text,
@@ -260,6 +301,8 @@ class DeterministicModalLogicCodec:
             frame_candidates=frame_candidates,
             selected_frame=selected_frame,
             kg_triples=kg_triples,
+            flogic_ontology=flogic_ontology,
+            neo4j_graph_data=neo4j_graph_data,
             decoded_modal_text=decoded_modal_text,
             decoded_text=decoded_text,
             losses=losses,
@@ -544,6 +587,14 @@ def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[
     data = asdict(result)
     data["violations"] = [asdict(violation) for violation in result.violations]
     return data
+
+
+def _object_to_dict(value: Any) -> Any:
+    if value is None:
+        return None
+    if hasattr(value, "to_dict"):
+        return value.to_dict()
+    return value
 
 
 __all__ = [
