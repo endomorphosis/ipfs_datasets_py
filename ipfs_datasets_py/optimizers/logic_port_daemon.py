@@ -3,8 +3,8 @@
 The daemon is intentionally conservative:
 
 - it uses :mod:`ipfs_datasets_py.optimizers.common` session tooling;
-- it calls ``ipfs_datasets_py.llm_router.generate_text`` with ``gpt-5.5`` by
-  default for legacy JSON/file proposals;
+- it calls ``ipfs_datasets_py.llm_router.generate_text`` with
+  ``gpt-5.3-codex`` by default for legacy JSON/file proposals;
 - by default it asks Codex to edit an isolated Git worktree directly and then
   harvests Git's canonical audit diff plus complete file replacements;
 - it keeps legacy llm_router JSON/diff proposal mode available as an explicit
@@ -38,6 +38,7 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizationContext,
     OptimizerConfig,
 )
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL, DEFAULT_CODEX_PROVIDER
 from ipfs_datasets_py.optimizers.common.log_schema_v3 import (
     log_error,
     log_iteration_complete,
@@ -297,8 +298,8 @@ class LogicPortDaemonConfig:
     status_docs: Tuple[Path, ...] = field(default_factory=lambda: tuple(Path(p) for p in DEFAULT_STATUS_DOCS))
     typescript_logic_dir: Path = Path("src/lib/logic")
     python_logic_dir: Path = Path("ipfs_datasets_py/ipfs_datasets_py/logic")
-    model_name: str = "gpt-5.5"
-    provider: Optional[str] = None
+    model_name: str = DEFAULT_CODEX_MODEL
+    provider: Optional[str] = DEFAULT_CODEX_PROVIDER
     slice_mode: str = "balanced"
     max_iterations: int = 1
     interval_seconds: float = 0.0
@@ -3322,6 +3323,7 @@ Current repository file contents after rollback:
 
     def _call_llm(self, prompt: str) -> str:
         provider = self._resolved_provider()
+        required_providers = self._required_effective_router_providers(provider)
         self._write_status(
             "llm_call_started",
             model_name=self.daemon_config.model_name,
@@ -3345,6 +3347,7 @@ Current repository file contents after rollback:
                     trace=bool(self.daemon_config.codex_trace_dir),
                     trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
                 )
+                self._ensure_effective_router_provider(self.llm_router, provider)
                 self._write_status("llm_call_completed", response_chars=len(text))
                 return text
             generator = getattr(self.llm_router, "generate", None)
@@ -3360,6 +3363,7 @@ Current repository file contents after rollback:
                     trace=bool(self.daemon_config.codex_trace_dir),
                     trace_dir=str(self.daemon_config.resolve(self.daemon_config.codex_trace_dir)) if self.daemon_config.codex_trace_dir else None,
                 )
+                self._ensure_effective_router_provider(self.llm_router, provider)
                 self._write_status("llm_call_completed", response_chars=len(text))
                 return text
 
@@ -3382,6 +3386,7 @@ Current repository file contents after rollback:
                     trace_dir=self.daemon_config.resolve(self.daemon_config.codex_trace_dir)
                     if self.daemon_config.codex_trace_dir
                     else None,
+                    required_effective_providers=required_providers,
                 ),
             )
         except Exception as exc:
@@ -3393,6 +3398,27 @@ Current repository file contents after rollback:
             ) from exc
         self._write_status("llm_call_completed", response_chars=len(text), provider=provider or "auto")
         return text
+
+    @staticmethod
+    def _required_effective_router_providers(provider: Optional[str]) -> Tuple[str, ...]:
+        normalized = str(provider or "").strip().lower()
+        if normalized in {"codex", "codex_cli"}:
+            return ("codex", "codex_cli")
+        return tuple()
+
+    def _ensure_effective_router_provider(self, router: Any, provider: Optional[str]) -> None:
+        required = set(self._required_effective_router_providers(provider))
+        if not required:
+            return
+        trace_getter = getattr(router, "get_last_generation_trace", None)
+        if not callable(trace_getter):
+            return
+        trace = trace_getter()
+        effective_provider = str(trace.get("effective_provider_name") or "")
+        if effective_provider not in required:
+            raise RuntimeError(
+                f"llm_router resolved to {effective_provider or 'unknown'}; expected Codex provider"
+            )
 
     def _resolved_provider(self) -> Optional[str]:
         if self.daemon_config.provider:
@@ -3615,7 +3641,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         not in {"0", "false", "no", "off"}
     )
     parser.add_argument("--repo-root", default=".", help="Repository root containing package.json and ipfs_datasets_py/")
-    parser.add_argument("--model", default="gpt-5.5", help="llm_router model name")
+    parser.add_argument("--model", default=DEFAULT_CODEX_MODEL, help="llm_router model name")
     parser.add_argument("--provider", default=None, help="Optional llm_router provider")
     parser.add_argument(
         "--proposal-transport",

@@ -24,6 +24,12 @@ def _build_context() -> le.LogicExtractionContext:
     )
 
 
+def test_logic_extractor_defaults_to_codex_53_model() -> None:
+    extractor = _build_extractor()
+
+    assert extractor.model == "gpt-5.3-codex"
+
+
 def test_extract_handles_typed_value_error(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = _build_extractor()
     context = _build_context()
@@ -63,6 +69,26 @@ def test_query_llm_handles_typed_runtime_error_with_fallback() -> None:
     assert extractor.llm_call_count == 1
 
 
+def test_query_llm_raises_when_mock_fallback_is_disabled() -> None:
+    extractor = le.LogicExtractor(
+        use_ipfs_accelerate=False,
+        enable_formula_translation=False,
+        enable_kg_integration=False,
+        enable_rag_integration=False,
+        allow_mock_fallback=False,
+    )
+    context = _build_context()
+
+    class BrokenBackend:
+        def generate(self, request):
+            raise RuntimeError("backend down")
+
+    extractor.backend = BrokenBackend()
+
+    with pytest.raises(RuntimeError, match="mock fallback is disabled"):
+        extractor._query_llm("prompt", context)
+
+
 def test_query_llm_does_not_swallow_keyboard_interrupt() -> None:
     extractor = _build_extractor()
     context = _build_context()
@@ -79,7 +105,10 @@ def test_query_llm_does_not_swallow_keyboard_interrupt() -> None:
 
 def test_extract_auto_mode_updates_config_instead_of_property_assignment() -> None:
     extractor = _build_extractor()
-    context = le.LogicExtractionContext(data="Contract parties must pay", domain="legal")
+    context = le.LogicExtractionContext(
+        data="The agency must make records promptly available to any person.",
+        domain="legal",
+    )
 
     class SimpleBackend:
         def generate(self, request):
@@ -93,7 +122,8 @@ def test_extract_auto_mode_updates_config_instead_of_property_assignment() -> No
     result = extractor.extract(context)
 
     assert result.success is True
-    assert context.extraction_mode == le.ExtractionMode.TDFOL
+    assert context.extraction_mode == le.ExtractionMode.MODAL
+    assert result.metrics["llm_call_count"] == 0
 
 
 def test_legal_modal_extraction_can_use_spacy_profile_without_llm() -> None:
@@ -110,6 +140,7 @@ def test_legal_modal_extraction_can_use_spacy_profile_without_llm() -> None:
     assert result.success is True
     assert result.statements
     assert result.metrics["llm_call_count"] == 0
+    assert result.metrics["embedding_cosine_similarity"] == result.metrics["cosine_similarity"]
     assert result.metrics["deterministic_parser"] == "spacy_modal_codec_v1"
     assert result.metrics["spacy_token_count"] > 0
     assert result.statements[0].metadata["modal_family"] == "deontic"

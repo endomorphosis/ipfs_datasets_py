@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 
 import pytest
 
@@ -13,6 +14,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
     ModalAutoencoderTrainingState,
     cosine_loss,
     cosine_similarity,
+    cross_entropy_distribution_loss,
     cross_entropy_loss,
     frame_ranking_loss,
     mse_loss,
@@ -25,6 +27,10 @@ def test_embedding_loss_helpers() -> None:
     assert cosine_loss([1.0, 0.0], [1.0, 0.0]) == pytest.approx(0.0)
     assert mse_loss([1.0, 2.0], [1.0, 4.0]) == pytest.approx(2.0)
     assert cross_entropy_loss({"deontic": 0.25}, "deontic") == pytest.approx(-math.log(0.25))
+    assert cross_entropy_distribution_loss(
+        {"deontic": 0.25, "temporal": 0.75},
+        {"deontic": 0.5, "temporal": 0.5},
+    ) == pytest.approx(0.5 * -math.log(0.25) + 0.5 * -math.log(0.75))
 
 
 def test_loss_helpers_reject_vector_length_mismatch() -> None:
@@ -99,6 +105,51 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     assert after.cross_entropy_loss < before.cross_entropy_loss
     assert after.embedding_cosine_similarity > before.embedding_cosine_similarity
     assert autoencoder.state.applied_todo_ids == ["ce-1", "cos-1"]
+
+
+def test_adaptive_autoencoder_cross_entropy_uses_mixed_family_targets() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    first_formula = sample.modal_ir.formulas[0]
+    temporal_formula = replace(
+        first_formula,
+        formula_id=f"{first_formula.formula_id}-temporal",
+        operator=replace(
+            first_formula.operator,
+            family="temporal",
+            system="LTL",
+            symbol="G",
+            label="always",
+        ),
+    )
+    mixed_sample = replace(
+        sample,
+        modal_ir=replace(sample.modal_ir, formulas=[first_formula, temporal_formula]),
+    )
+    autoencoder = AdaptiveModalAutoencoder(
+        state=ModalAutoencoderTrainingState(
+            family_logits={
+                mixed_sample.sample_id: {
+                    "deontic": 4.0,
+                    "temporal": -4.0,
+                }
+            }
+        )
+    )
+
+    evaluation = autoencoder.evaluate([mixed_sample])
+    predicted = autoencoder._family_distribution(mixed_sample)
+
+    assert evaluation.cross_entropy_loss == pytest.approx(
+        cross_entropy_distribution_loss(
+            predicted,
+            {"deontic": 0.5, "temporal": 0.5},
+        )
+    )
+    assert evaluation.cross_entropy_loss > cross_entropy_loss(predicted, "deontic")
 
 
 def test_adaptive_autoencoder_introspection_explains_feature_level_decisions() -> None:

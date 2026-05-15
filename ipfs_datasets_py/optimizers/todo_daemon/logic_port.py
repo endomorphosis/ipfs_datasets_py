@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
+
 from .core import (
     ManagedDaemonSpec,
     check_daemon_health,
@@ -42,9 +44,10 @@ def logic_port_launch_env() -> Dict[str, str]:
 
     sandbox = _env("WORKTREE_CODEX_SANDBOX", _env("IPFS_DATASETS_PY_CODEX_SANDBOX", "danger-full-access"))
     return {
-        "MODEL_NAME": _env("MODEL_NAME", "gpt-5.5"),
+        "MODEL_NAME": _env("MODEL_NAME", DEFAULT_CODEX_MODEL),
         "LOGIC_PORT_PROVIDER": provider,
         "PROVIDER": resolved_provider,
+        "IPFS_DATASETS_PY_LLM_PROVIDER": _env("IPFS_DATASETS_PY_LLM_PROVIDER", "codex_cli"),
         "SLICE_MODE": _env("SLICE_MODE", "balanced"),
         "PROPOSAL_TRANSPORT": _env("PROPOSAL_TRANSPORT", "worktree"),
         "WORKTREE_EDIT_TIMEOUT_SECONDS": _env("WORKTREE_EDIT_TIMEOUT_SECONDS", "300"),

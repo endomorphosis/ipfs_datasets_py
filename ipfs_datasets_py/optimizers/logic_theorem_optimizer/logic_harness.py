@@ -14,7 +14,7 @@ complaint-generator system.
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
             LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
         )
-        extractor = LogicExtractor(model="gpt-4")
+        extractor = LogicExtractor(model="gpt-5.3-codex")
         critic = LogicCritic(use_provers=['z3', 'cvc5'])
         harness = LogicHarness(
             extractor=extractor,
@@ -145,7 +145,7 @@ class LogicHarness:
         >>> from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         ...     LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
         ... )
-        >>> extractor = LogicExtractor(model="gpt-4")
+        >>> extractor = LogicExtractor(model="gpt-5.3-codex")
         >>> critic = LogicCritic(use_provers=['z3', 'cvc5'])
         >>> harness = LogicHarness(
         ...     extractor=extractor,

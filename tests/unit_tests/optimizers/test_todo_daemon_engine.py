@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 from ipfs_datasets_py.optimizers.todo_daemon import (
     ACCEPTED_WORK_LEDGER_SCHEMA_VERSION,
     AcceptedWorkEvidencePaths,
@@ -1502,6 +1504,42 @@ def test_llm_router_invocation_passes_optional_trace_kwargs(tmp_path: Path, monk
     )
 
     assert payload == {"trace": True, "trace_dir": str(tmp_path / "traces")}
+
+
+def test_llm_router_invocation_rejects_unexpected_effective_provider(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("SYNTH_LLM_BACKEND", raising=False)
+    package = tmp_path / "ipfs_datasets_py"
+    package.mkdir()
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "llm_router.py").write_text(
+        "\n".join(
+            [
+                "def generate_text(prompt, **kwargs):",
+                "    return 'ok'",
+                "",
+                "def get_last_generation_trace():",
+                "    return {'effective_provider_name': 'openai'}",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="expected one of"):
+        call_llm_router(
+            "hello",
+            LlmRouterInvocation(
+                repo_root=tmp_path,
+                provider="codex",
+                max_prompt_chars=1000,
+                backend_env_name="SYNTH_LLM_BACKEND",
+                env_prefix="SYNTH_LLM",
+                required_effective_providers=("codex", "codex_cli"),
+            ),
+        )
 
 
 def test_daemon_history_helpers_are_reusable(tmp_path: Path) -> None:

@@ -33,7 +33,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     cosine_loss,
     cosine_similarity,
-    cross_entropy_loss,
+    cross_entropy_distribution_loss,
     mse_loss,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
@@ -83,6 +83,7 @@ class ModalLogicCodecResult:
     family_logits: Dict[str, float]
     family_probabilities: Dict[str, float]
     target_family: str
+    target_family_distribution: Dict[str, float]
     frame_candidates: List[Dict[str, Any]]
     selected_frame: Optional[str]
     kg_triples: List[Dict[str, str]]
@@ -113,6 +114,7 @@ class ModalLogicCodecResult:
             "source_embedding": list(self.source_embedding),
             "source_text": self.source_text,
             "target_family": self.target_family,
+            "target_family_distribution": dict(sorted(self.target_family_distribution.items())),
         }
 
 
@@ -200,6 +202,7 @@ class DeterministicModalLogicCodec:
         )
         family_probabilities = _softmax(family_logits)
         target_family = target_family_for_modal_ir(modal_ir)
+        target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
         decoded_modal_text = decode_modal_ir_document(modal_ir)
         decoded_text = decoded_modal_text.text
         kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
@@ -213,7 +216,10 @@ class DeterministicModalLogicCodec:
         losses = {
             "cosine_loss": cosine_loss(resolved_source_embedding, decoded_embedding),
             "cosine_similarity": cosine_similarity(resolved_source_embedding, decoded_embedding),
-            "cross_entropy_loss": cross_entropy_loss(family_probabilities, target_family),
+            "cross_entropy_loss": cross_entropy_distribution_loss(
+                family_probabilities,
+                target_family_distribution,
+            ),
             "flogic_similarity_loss": 1.0 - (flogic_result.similarity_score if flogic_result else 0.0),
             "flogic_similarity_score": flogic_result.similarity_score if flogic_result else 0.0,
             "frame_ranking_loss": 0.0 if selected_frame else 1.0,
@@ -250,6 +256,7 @@ class DeterministicModalLogicCodec:
             family_logits=family_logits,
             family_probabilities=family_probabilities,
             target_family=target_family,
+            target_family_distribution=target_family_distribution,
             frame_candidates=frame_candidates,
             selected_frame=selected_frame,
             kg_triples=kg_triples,
@@ -411,6 +418,21 @@ def target_family_for_modal_ir(modal_ir: ModalIRDocument) -> str:
     return modal_ir.formulas[0].operator.family
 
 
+def target_family_distribution_for_modal_ir(modal_ir: ModalIRDocument) -> Dict[str, float]:
+    """Return observed modal-family frequencies for multi-family legal clauses."""
+    families = [formula.operator.family for formula in modal_ir.formulas]
+    if not families:
+        return {ModalLogicFamily.HYBRID.value: 1.0}
+    counts: Dict[str, int] = {}
+    for family in families:
+        counts[family] = counts.get(family, 0) + 1
+    total = float(sum(counts.values()))
+    return {
+        family: count / total
+        for family, count in sorted(counts.items())
+    }
+
+
 def modal_ir_to_flogic_triples(
     modal_ir: ModalIRDocument,
     *,
@@ -531,5 +553,6 @@ __all__ = [
     "decode_modal_ir_text",
     "modal_formula_to_text",
     "modal_ir_to_flogic_triples",
+    "target_family_distribution_for_modal_ir",
     "target_family_for_modal_ir",
 ]

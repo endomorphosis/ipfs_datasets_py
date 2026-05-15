@@ -222,6 +222,20 @@ class ProverIntegrationAdapter:
         self.stats['round_trip_max_ms'] = max(self.stats['round_trip_max_ms'], elapsed_ms)
 
         return aggregated
+
+    def validate_statement(
+        self,
+        statement: Any,
+        formalism: Optional[str] = None,
+        timeout: Optional[float] = None,
+    ) -> bool:
+        """Return a boolean validity result for legacy validation callers.
+
+        ``formalism`` is accepted for API compatibility; prover translation is
+        still inferred from the statement payload in ``verify_statement``.
+        """
+        del formalism
+        return self.verify_statement(statement, timeout=timeout).overall_valid
     
     def _verify_with_prover(
         self,

@@ -45,8 +45,9 @@ class TestOptimizerLLMRouter:
     def test_init_default(self):
         """Test default initialization."""
         router = OptimizerLLMRouter()
-        assert router.preferred_provider is not None
-        assert len(router.fallback_providers) > 0
+        assert router.preferred_provider == LLMProvider.CODEX
+        assert router.model_name == "gpt-5.3-codex"
+        assert router.fallback_providers == []
         assert router.enable_tracking is True
     
     def test_init_with_provider(self):
@@ -56,6 +57,16 @@ class TestOptimizerLLMRouter:
             fallback_providers=[LLMProvider.GPT4],
         )
         assert router.preferred_provider == LLMProvider.CLAUDE
+
+    def test_codex_preference_stays_codex_for_reasoning_methods(self):
+        """Codex-pinned optimizer runs should not route reasoning methods elsewhere."""
+        router = OptimizerLLMRouter(
+            preferred_provider=LLMProvider.CODEX,
+            fallback_providers=[LLMProvider.CLAUDE, LLMProvider.GPT4],
+            enable_caching=False,
+        )
+
+        assert router.select_provider(OptimizationMethod.ACTOR_CRITIC) == LLMProvider.CODEX
 
     @pytest.mark.parametrize(
         ("provider", "expected"),
@@ -117,8 +128,9 @@ class TestOptimizerLLMRouter:
         call_kwargs = mocked_generate.call_args.kwargs
         assert call_kwargs["top_p"] == 0.1
         assert call_kwargs["presence_penalty"] == 0.2
-        assert call_kwargs["provider"] == "hf"
-        assert call_kwargs["max_tokens"] == 128
+        assert call_kwargs["provider"] == "codex"
+        assert call_kwargs["model_name"] == "gpt-5.3-codex"
+        assert call_kwargs["max_tokens"] == 2000
 
     def test_generate_cache_key_includes_router_kwargs(self):
         """router_kwargs should participate in cache-key arguments."""

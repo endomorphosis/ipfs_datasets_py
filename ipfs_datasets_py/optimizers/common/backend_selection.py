@@ -10,6 +10,8 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional
 
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
+
 
 _PROVIDER_ALIASES: Dict[str, str] = {
     "gpt4": "openai",
@@ -18,7 +20,7 @@ _PROVIDER_ALIASES: Dict[str, str] = {
     "openrouter": "openrouter",
     "claude": "anthropic",
     "anthropic": "anthropic",
-    "codex": "codex",
+    "codex": DEFAULT_CODEX_MODEL,
     "copilot": "copilot",
     "gemini": "gemini",
     "hf_api": "hf_inference_api",

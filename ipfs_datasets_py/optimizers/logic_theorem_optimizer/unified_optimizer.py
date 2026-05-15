@@ -28,6 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import logging as _logging
 import logging
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 
 _logger = logging.getLogger(__name__)
@@ -128,6 +129,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         use_provers: Optional[List[str]] = None,
         enable_caching: bool = True,
         domain: str = "general",
+        allow_mock_fallback: bool = False,
         metrics_collector: Optional[Any] = None,
         learning_metrics_collector: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
@@ -140,6 +142,8 @@ class LogicTheoremOptimizer(BaseOptimizer):
             extraction_mode: Logic formalism to extract
             use_provers: Theorem provers to use for validation
             domain: Domain context
+            allow_mock_fallback: Allow test-only mock LLM extraction when no
+                real backend is available. Defaults to False for optimizer runs.
             metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
                 instance.  When provided, each ``run_session()`` call records
                 timing and success/failure via ``start_cycle`` / ``end_cycle``.
@@ -155,7 +159,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
         self._log = logger or _logging.getLogger(__name__)
         
         # Initialize components
-        self.extractor = LogicExtractor(backend=llm_backend)
+        self.extractor = LogicExtractor(
+            backend=llm_backend,
+            allow_mock_fallback=allow_mock_fallback,
+        )
         self.critic = LogicCritic(use_provers=use_provers or ['z3'])
         self.legacy_optimizer = LegacyLogicOptimizer()
         self.prover_adapter = ProverIntegrationAdapter(
@@ -166,9 +173,11 @@ class LogicTheoremOptimizer(BaseOptimizer):
         # Store settings
         self.extraction_mode = extraction_mode
         self.domain = domain
+        self.allow_mock_fallback = allow_mock_fallback
         
         # Track extraction history for optimization
         self.extraction_history: List[ExtractionResult] = []
+        self._last_critic_score: Optional[CriticScore] = None
 
         # Wire learning-metrics collector
         if learning_metrics_collector is not None:
@@ -424,6 +433,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         try:
             # Evaluate with critic
             critic_score: CriticScore = self.critic.evaluate(artifact)
+            self._last_critic_score = critic_score
             
             # Build feedback list from critic results
             feedback = []
@@ -479,9 +489,15 @@ class LogicTheoremOptimizer(BaseOptimizer):
         try:
             # Analyze feedback with legacy optimizer
             # (This provides strategic guidance for improvement)
-            optimization_report = self.legacy_optimizer.analyze_batch(
-                [artifact]  # Wrap in list for batch analysis
-            )
+            session_results = []
+            if self._last_critic_score is not None:
+                session_results.append(
+                    SimpleNamespace(
+                        critic_score=self._last_critic_score,
+                        success=getattr(artifact, "success", True),
+                    )
+                )
+            optimization_report = self.legacy_optimizer.analyze_batch(session_results)
             
             # Combine feedback from critique and optimizer
             combined_feedback = feedback + optimization_report.recommendations
@@ -552,11 +568,8 @@ class LogicTheoremOptimizer(BaseOptimizer):
             validation_results = []
             
             for statement in artifact.statements:
-                # Validate with prover integration
-                is_valid = self.prover_adapter.validate_statement(
-                    statement.formula,
-                    statement.formalism
-                )
+                # Verify the full statement so adapters can inspect metadata and formalism.
+                is_valid = self.prover_adapter.verify_statement(statement).overall_valid
                 validation_results.append(is_valid)
                 all_valid = all_valid and is_valid
             

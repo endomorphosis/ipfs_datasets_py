@@ -14,6 +14,7 @@ from .codec import (
     ModalLogicCodecResult,
     decode_modal_ir_text,
     modal_ir_to_flogic_triples,
+    target_family_distribution_for_modal_ir,
     target_family_for_modal_ir,
 )
 from .decompiler import (
@@ -49,5 +50,6 @@ __all__ = [
     "modal_ir_to_flogic_triples",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
     "target_family_for_modal_ir",
 ]

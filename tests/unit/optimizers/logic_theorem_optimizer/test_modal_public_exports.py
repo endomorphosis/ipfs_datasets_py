@@ -31,6 +31,7 @@ def test_modal_parser_components_are_publicly_exported() -> None:
     assert lto.AutoencoderIntrospection
     assert lto.modal_formula_to_text(codec_result.modal_ir.formulas[0])
     assert lto.modal_text_token_similarity("agency must act", "agency must act") == 1.0
+    assert lto.target_family_distribution_for_modal_ir(codec_result.modal_ir)
     assert lto.ModalAutoencoderBaseline().evaluate([]).sample_count == 0
     assert lto.AdaptiveModalAutoencoder().evaluate([]).sample_count == 0
     assert lto.ModalAutoencoderTrainingState().to_dict()["applied_todo_ids"] == []
@@ -68,6 +69,9 @@ def test_modal_daemon_components_are_exported_from_logic_namespace() -> None:
     ).phrases
     assert callable(legacy_logic.synthesis_hints_from_autoencoder_introspection)
     assert legacy_logic.modal_text_token_similarity("agency must act", "agency may act") < 1.0
+    assert legacy_logic.target_family_distribution_for_modal_ir(
+        legacy_logic.DeterministicModalCompiler().compile("The agency must act.").modal_ir
+    )
     assert legacy_logic.ModalAutoencoderTrainingState().to_dict()["applied_todo_ids"] == []
     assert legacy_logic.ModalOptimizerPolicy().role_for(
         action="add_deterministic_parser_rule",

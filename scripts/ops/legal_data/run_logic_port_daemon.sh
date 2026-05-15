@@ -3,8 +3,9 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "$SCRIPT_DIR/../../../.." && pwd)}"
-MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
+MODEL_NAME="${MODEL_NAME:-gpt-5.3-codex}"
 LOGIC_PORT_PROVIDER="${LOGIC_PORT_PROVIDER:-}"
+IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-codex_cli}"
 if [[ -n "$LOGIC_PORT_PROVIDER" ]]; then
   PROVIDER="$LOGIC_PORT_PROVIDER"
 elif [[ "${LOGIC_PORT_RESPECT_INHERITED_PROVIDER:-0}" == "1" ]]; then
@@ -14,7 +15,9 @@ else
 fi
 SUPERVISOR_ROUTER_DEFAULT_MODE="llm_router_auto"
 # Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
-# selection and fallback. Set LOGIC_PORT_PROVIDER=codex_cli to force Codex only,
+# selection; IPFS_DATASETS_PY_LLM_PROVIDER pins that router path to Codex CLI
+# with Codex 5.3 as the default model.
+# Set LOGIC_PORT_PROVIDER=codex_cli to force Codex only,
 # or another registered llm_router provider when debugging a specific backend.
 # Generic inherited PROVIDER values are ignored unless
 # LOGIC_PORT_RESPECT_INHERITED_PROVIDER=1, because other daemons also use that
@@ -1216,6 +1219,7 @@ while true; do
     cd "$REPO_ROOT" || exit 2
     export PYTHONUNBUFFERED=1
     export PYTHONPATH="$REPO_ROOT/ipfs_datasets_py${PYTHONPATH:+:$PYTHONPATH}"
+    export IPFS_DATASETS_PY_LLM_PROVIDER="$IPFS_DATASETS_PY_LLM_PROVIDER"
     export IPFS_DATASETS_PY_CODEX_CLI_MODEL="$MODEL_NAME"
     python3_args=(
       python3 -u -m ipfs_datasets_py.optimizers.logic_port_daemon

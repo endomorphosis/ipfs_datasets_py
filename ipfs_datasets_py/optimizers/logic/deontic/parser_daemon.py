@@ -6,7 +6,7 @@ legal parser.  Each cycle:
 1. evaluates parser quality on a representative probe corpus;
 2. reads the two deterministic-parser roadmap documents;
 3. asks ``llm_router`` for a strict JSON improvement proposal using a pinned
-   model, defaulting to ``gpt-5.5``;
+   Codex model, defaulting to ``gpt-5.3-codex``;
 4. stores proposal metadata and Git's canonical diff as cycle artifacts;
 5. optionally applies the Git-generated diff and runs validation tests.
 
@@ -45,6 +45,7 @@ from ipfs_datasets_py.optimizers.common.base_optimizer import (
     OptimizationContext,
     OptimizerConfig,
 )
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL, DEFAULT_CODEX_PROVIDER
 from ipfs_datasets_py.optimizers.todo_daemon.git_utils import (
     current_git_head as _shared_current_git_head,
     dirty_paths_diff_summary as _shared_dirty_paths_diff_summary,
@@ -170,8 +171,8 @@ class LegalParserDaemonConfig:
 
     repo_root: Path = field(default_factory=lambda: Path.cwd())
     output_dir: Path = field(default_factory=lambda: Path("artifacts/legal_parser_optimizer_daemon"))
-    model_name: str = "gpt-5.5"
-    provider: Optional[str] = None
+    model_name: str = DEFAULT_CODEX_MODEL
+    provider: Optional[str] = DEFAULT_CODEX_PROVIDER
     max_cycles: int = 1
     cycle_interval_seconds: float = 0.0
     error_backoff_seconds: float = 30.0
@@ -470,7 +471,7 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     )
                 from ipfs_datasets_py import llm_router
 
-                return llm_router.generate_text(
+                text = llm_router.generate_text(
                     prompt,
                     provider=self.daemon_config.llm_router_provider(),
                     model_name=self.daemon_config.model_name,
@@ -480,6 +481,8 @@ class LegalParserParityOptimizer(BaseOptimizer):
                     allow_local_fallback=False,
                     disable_model_retry=True,
                 )
+                self._ensure_effective_router_provider(llm_router)
+                return text
 
             with self._read_only_codex_cli_generation():
                 raw_response = _shared_call_with_thread_deadline(
@@ -815,6 +818,26 @@ class LegalParserParityOptimizer(BaseOptimizer):
         if provider and provider not in {"codex", "codex_cli", "llm_router", "router", "auto"}:
             return _TemporaryEnv({})
         return _TemporaryEnv({"IPFS_DATASETS_PY_CODEX_SANDBOX": "read-only"})
+
+    def _ensure_effective_router_provider(self, router: Any) -> None:
+        required = self._required_effective_router_providers()
+        if not required:
+            return
+        trace_getter = getattr(router, "get_last_generation_trace", None)
+        if not callable(trace_getter):
+            return
+        trace = trace_getter()
+        effective_provider = str(trace.get("effective_provider_name") or "")
+        if effective_provider not in required:
+            raise RuntimeError(
+                f"llm_router resolved to {effective_provider or 'unknown'}; expected Codex provider"
+            )
+
+    def _required_effective_router_providers(self) -> Tuple[str, ...]:
+        provider = str(self.daemon_config.llm_router_provider() or "").strip().lower()
+        if provider in {"codex", "codex_cli"}:
+            return ("codex", "codex_cli")
+        return tuple()
 
     def _working_tree_diff(self) -> str:
         return _shared_working_tree_diff(
@@ -5159,8 +5182,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the deterministic legal parser optimizer daemon.")
     parser.add_argument("--repo-root", default=".", help="Repository root for ipfs_datasets_py.")
     parser.add_argument("--output-dir", default="artifacts/legal_parser_optimizer_daemon")
-    parser.add_argument("--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", "gpt-5.5"))
-    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or "llm_router")
+    parser.add_argument("--model-name", default=os.environ.get("LEGAL_PARSER_DAEMON_MODEL", DEFAULT_CODEX_MODEL))
+    parser.add_argument("--provider", default=os.environ.get("LEGAL_PARSER_DAEMON_PROVIDER") or DEFAULT_CODEX_PROVIDER)
     parser.add_argument("--max-cycles", type=int, default=1)
     parser.add_argument("--cycle-interval-seconds", type=float, default=0.0)
     parser.add_argument("--error-backoff-seconds", type=float, default=30.0)

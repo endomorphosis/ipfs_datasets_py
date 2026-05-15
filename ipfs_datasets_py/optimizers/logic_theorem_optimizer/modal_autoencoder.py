@@ -42,6 +42,25 @@ def cross_entropy_loss(probabilities: Mapping[str, float], target: str) -> float
     return -math.log(probability)
 
 
+def cross_entropy_distribution_loss(
+    probabilities: Mapping[str, float],
+    target_distribution: Mapping[str, float],
+) -> float:
+    """Return cross entropy against a target label distribution."""
+    total_weight = sum(
+        max(0.0, float(weight))
+        for weight in target_distribution.values()
+    )
+    if total_weight <= 0.0:
+        return 0.0
+    loss = 0.0
+    for family, weight in target_distribution.items():
+        normalized_weight = max(0.0, float(weight)) / total_weight
+        probability = max(float(probabilities.get(str(family), 0.0)), 1e-12)
+        loss += normalized_weight * -math.log(probability)
+    return loss
+
+
 @dataclass(frozen=True)
 class AutoencoderEvaluation:
     """Metrics for one deterministic baseline pass."""
@@ -332,8 +351,12 @@ class ModalAutoencoderBaseline:
             cosine_scores.append(cosine_similarity(sample.embedding_vector, decoded))
             cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
             reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
-            target_family = self._target_family(sample)
-            ce_losses.append(cross_entropy_loss(self._family_distribution(sample), target_family))
+            ce_losses.append(
+                cross_entropy_distribution_loss(
+                    self._family_distribution(sample),
+                    _observed_family_distribution(sample),
+                )
+            )
             frame_losses.append(frame_ranking_loss(sample))
             symbolic_penalties.append(symbolic_validity_penalty(sample))
 
@@ -433,9 +456,9 @@ class AdaptiveModalAutoencoder:
             cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
             reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
             ce_losses.append(
-                cross_entropy_loss(
+                cross_entropy_distribution_loss(
                     self._family_distribution(sample, use_sample_memory=use_sample_memory),
-                    _target_family(sample),
+                    _observed_family_distribution(sample),
                 )
             )
             frame_losses.append(frame_ranking_loss(sample))
@@ -987,6 +1010,7 @@ __all__ = [
     "ModalAutoencoderTrainingState",
     "cosine_loss",
     "cosine_similarity",
+    "cross_entropy_distribution_loss",
     "cross_entropy_loss",
     "frame_ranking_loss",
     "mse_loss",

@@ -5,6 +5,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 import ipfs_datasets_py.optimizers.logic_port_daemon as logic_port_daemon
 from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
 from ipfs_datasets_py.optimizers.logic_port_daemon import (
@@ -67,6 +69,14 @@ class HangingRouter:
         self.calls.append({"prompt": prompt, "kwargs": kwargs})
         time.sleep(30)
         return "{}"
+
+
+class WrongProviderRouter:
+    def generate_text(self, prompt, **kwargs):
+        return "{}"
+
+    def get_last_generation_trace(self):
+        return {"effective_provider_name": "openai", "effective_model_name": "gpt-5.3-codex"}
 
 
 def test_default_plan_docs_use_typescript_port_plan():
@@ -146,6 +156,7 @@ def test_logic_port_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monk
     monkeypatch.delenv("AUTO_COMMIT", raising=False)
     monkeypatch.delenv("LOGIC_PORT_PROVIDER", raising=False)
     monkeypatch.delenv("PROVIDER", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_LLM_PROVIDER", raising=False)
 
     spec = build_logic_port_spec(str(tmp_path))
     launch_env = logic_port_launch_env()
@@ -159,6 +170,7 @@ def test_logic_port_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monk
     assert launch_env["WORKTREE_REPAIR_ATTEMPTS"] == "1"
     assert launch_env["AUTO_COMMIT"] == "1"
     assert launch_env["PROVIDER"] == ""
+    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
 
 
 def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monkeypatch):
@@ -184,9 +196,9 @@ def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, mo
     assert spec.tmux_session_name == "legal-parser-daemon"
     assert spec.worktree_root == Path(".daemon/legal-parser-worktrees")
     assert "ipfs_datasets_py.optimizers.logic.deontic.parser_daemon" in spec.daemon_process_match_all
-    assert launch_env["MODEL_NAME"] == "gpt-5.5"
-    assert launch_env["PROVIDER"] == "llm_router"
-    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == ""
+    assert launch_env["MODEL_NAME"] == "gpt-5.3-codex"
+    assert launch_env["PROVIDER"] == "codex"
+    assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
 
 
 def test_reusable_todo_daemon_health_reports_legal_parser_legacy_fields(tmp_path, monkeypatch):
@@ -220,7 +232,7 @@ def test_reusable_todo_daemon_health_reports_legal_parser_legacy_fields(tmp_path
             "cycle_index": 17,
             "phase": "requesting_worktree_edit",
             "phase_started_at": now,
-            "model_name": "gpt-5.5",
+            "model_name": "gpt-5.3-codex",
             "provider": "llm_router",
             "proposal_transport": "worktree",
             "worktree_edit_timeout_seconds": 1200,
@@ -1212,7 +1224,7 @@ def test_task_board_marks_artifact_target_not_next_strategy_target(tmp_path):
     assert "Target: `Task checkbox-1: Hard blocked task`" in updated
 
 
-def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
+def test_dry_run_daemon_calls_codex_53_and_does_not_apply_patch(tmp_path):
     plan = tmp_path / "plan.md"
     status = tmp_path / "status.md"
     logic_dir = tmp_path / "src" / "lib" / "logic"
@@ -1238,8 +1250,8 @@ def test_dry_run_daemon_calls_gpt_55_and_does_not_apply_patch(tmp_path):
     result = LogicPortDaemonOptimizer(config, llm_router=router).run_once(session_id="test-session")
 
     assert router.calls
-    assert router.calls[0]["kwargs"]["model_name"] == "gpt-5.5"
-    assert router.calls[0]["kwargs"]["provider"] is None
+    assert router.calls[0]["kwargs"]["model_name"] == "gpt-5.3-codex"
+    assert router.calls[0]["kwargs"]["provider"] == "codex"
     assert router.calls[0]["kwargs"]["allow_local_fallback"] is False
     assert router.calls[0]["kwargs"]["max_new_tokens"] == 4096
     assert router.calls[0]["kwargs"]["timeout"] == 300
@@ -2174,11 +2186,22 @@ def test_llm_call_has_daemon_side_deadline_for_stuck_router(tmp_path):
     status = json.loads(status_path.read_text(encoding="utf-8"))
     assert router.calls
     assert router.calls[0]["kwargs"]["timeout"] == 0.01
-    assert router.calls[0]["kwargs"]["provider"] is None
+    assert router.calls[0]["kwargs"]["provider"] == "codex"
     assert status["state"] == "llm_call_timeout"
-    assert status["provider"] == "auto"
+    assert status["provider"] == "codex"
     assert status["timeout_seconds"] == 0.01
     assert status["state_started_at"] == status["timestamp"]
+
+
+def test_llm_call_rejects_non_codex_router_fallback(tmp_path):
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        status_path=tmp_path / "daemon" / "status.json",
+    )
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=WrongProviderRouter())
+
+    with pytest.raises(RuntimeError, match="expected Codex provider"):
+        optimizer._call_llm("return json")
 
 
 def test_daemon_retries_empty_or_non_json_proposals_as_file_replacements(tmp_path):

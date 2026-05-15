@@ -50,6 +50,7 @@ __all__ = [
     "sample_train_validation_rows",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
     "target_family_for_modal_ir",
 ]
 
@@ -89,6 +90,7 @@ _MODAL_DAEMON_EXPORTS = {
     "sample_train_validation_rows",
     "synthesis_hints_from_autoencoder_introspection",
     "synthesis_hints_from_autoencoder_introspections",
+    "target_family_distribution_for_modal_ir",
     "target_family_for_modal_ir",
 }
 
@@ -130,6 +132,7 @@ def __getattr__(name: str):
             modal_ir_to_flogic_triples,
             synthesis_hints_from_autoencoder_introspection,
             synthesis_hints_from_autoencoder_introspections,
+            target_family_distribution_for_modal_ir,
             target_family_for_modal_ir,
         )
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (  # noqa: PLC0415
@@ -174,6 +177,7 @@ def __getattr__(name: str):
             "sample_train_validation_rows": sample_train_validation_rows,
             "synthesis_hints_from_autoencoder_introspection": synthesis_hints_from_autoencoder_introspection,
             "synthesis_hints_from_autoencoder_introspections": synthesis_hints_from_autoencoder_introspections,
+            "target_family_distribution_for_modal_ir": target_family_distribution_for_modal_ir,
             "target_family_for_modal_ir": target_family_for_modal_ir,
         }
         value = _locals[name]

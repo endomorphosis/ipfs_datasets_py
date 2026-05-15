@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL, DEFAULT_CODEX_PROVIDER
+
 from .core import (
     ManagedDaemonSpec,
     StopResult,
@@ -48,9 +50,9 @@ def legal_parser_launch_env() -> Dict[str, str]:
     """Return environment defaults used by the legal-parser supervisor."""
 
     return {
-        "MODEL_NAME": _env("MODEL_NAME", "gpt-5.5"),
-        "PROVIDER": _env("PROVIDER", "llm_router"),
-        "IPFS_DATASETS_PY_LLM_PROVIDER": _env("IPFS_DATASETS_PY_LLM_PROVIDER", ""),
+        "MODEL_NAME": _env("MODEL_NAME", DEFAULT_CODEX_MODEL),
+        "PROVIDER": _env("PROVIDER", DEFAULT_CODEX_PROVIDER),
+        "IPFS_DATASETS_PY_LLM_PROVIDER": _env("IPFS_DATASETS_PY_LLM_PROVIDER", "codex_cli"),
     }
 
 

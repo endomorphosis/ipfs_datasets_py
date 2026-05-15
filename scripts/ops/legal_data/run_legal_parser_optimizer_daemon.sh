@@ -3,10 +3,10 @@ set -uo pipefail
 
 REPO_ROOT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
 OUTPUT_DIR="${OUTPUT_DIR:-artifacts/legal_parser_optimizer_daemon}"
-MODEL_NAME="${MODEL_NAME:-gpt-5.5}"
-PROVIDER="${PROVIDER:-llm_router}"
-# Call llm_router by default. The router backend defaults to codex_cli, but callers
-# can override it with IPFS_DATASETS_PY_LLM_PROVIDER without changing daemon wiring.
+MODEL_NAME="${MODEL_NAME:-gpt-5.3-codex}"
+PROVIDER="${PROVIDER:-codex}"
+# Call llm_router through Codex by default. Callers can override it with
+# IPFS_DATASETS_PY_LLM_PROVIDER without changing daemon wiring.
 IPFS_DATASETS_PY_LLM_PROVIDER="${IPFS_DATASETS_PY_LLM_PROVIDER:-codex_cli}"
 RESTART_BACKOFF_SECONDS="${RESTART_BACKOFF_SECONDS:-30}"
 SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS="${SUPERVISOR_FAST_RESTART_BACKOFF_SECONDS:-2}"

@@ -21,6 +21,7 @@ from enum import Enum
 from ipfs_datasets_py.optimizers.common.backend_resilience import BackendCallPolicy, execute_with_resilience
 from ipfs_datasets_py.optimizers.common.circuit_breaker import CircuitBreaker
 from ipfs_datasets_py.optimizers.common.exceptions import CircuitBreakerOpenError, RetryableBackendError
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL, DEFAULT_CODEX_PROVIDER
 from ipfs_datasets_py.optimizers.common.log_redaction import redact_sensitive
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ class SupportsGenerateBatch(Protocol):
 
 class LLMBackendType(Enum):
     """Supported LLM backend types."""
+    LLM_ROUTER = "llm_router"
     ACCELERATE = "ipfs_accelerate_py"
     MOCK = "mock"
     LOCAL = "local"
@@ -75,7 +77,7 @@ class LLMRequest:
         metadata: Additional metadata
     """
     prompt: str
-    model: str = "gpt-4"
+    model: str = DEFAULT_CODEX_MODEL
     temperature: float = 0.7
     max_tokens: int = 1024
     stream: bool = False
@@ -127,18 +129,24 @@ class LLMBackendAdapter:
         self,
         preferred_backend: Optional[str] = None,
         fallback_to_mock: bool = True,
-        enable_caching: bool = True
+        enable_caching: bool = True,
+        router_provider: str = DEFAULT_CODEX_PROVIDER,
+        router_model: str = DEFAULT_CODEX_MODEL,
     ) -> None:
         """Initialize the LLM backend adapter.
         
         Args:
-            preferred_backend: Preferred backend ('accelerate', 'local', 'mock')
+            preferred_backend: Preferred backend ('llm_router', 'accelerate', 'local', 'mock')
             fallback_to_mock: Whether to fall back to mock if preferred unavailable
             enable_caching: Whether to cache responses
+            router_provider: llm_router provider alias to use for routed calls
+            router_model: Model name to pin when routing through Codex
         """
-        self.preferred_backend = preferred_backend or "accelerate"
+        self.preferred_backend = self._normalize_backend_name(preferred_backend or "llm_router")
         self.fallback_to_mock = fallback_to_mock
         self.enable_caching = enable_caching
+        self.router_provider = router_provider
+        self.router_model = router_model
         self._backend_call_policy = BackendCallPolicy(
             service_name="logic_theorem_optimizer_backend",
             timeout_seconds=30.0,
@@ -173,6 +181,13 @@ class LLMBackendAdapter:
     
     def _init_backends(self) -> None:
         """Initialize available backends."""
+        self.backends['llm_router'] = RouterBackend(
+            provider=self.router_provider,
+            model=self.router_model,
+            allow_local_fallback=False,
+        )
+        logger.info("Initialized llm_router backend")
+
         # Try to initialize ipfs_accelerate_py backend
         try:
             from ipfs_datasets_py.ml.accelerate_integration import AccelerateManager
@@ -194,6 +209,9 @@ class LLMBackendAdapter:
         # Try preferred backend first
         if self.preferred_backend in self.backends:
             return self.preferred_backend
+
+        if 'llm_router' in self.backends:
+            return 'llm_router'
         
         # Try accelerate if available
         if 'accelerate' in self.backends:
@@ -204,6 +222,15 @@ class LLMBackendAdapter:
             return 'mock'
         
         raise RuntimeError("No LLM backend available")
+
+    @staticmethod
+    def _normalize_backend_name(name: str) -> str:
+        normalized = str(name or "").strip().lower()
+        if normalized in {"router", "llm-router", "llm_router"}:
+            return "llm_router"
+        if normalized in {"ipfs_accelerate", "ipfs_accelerate_py"}:
+            return "accelerate"
+        return normalized
     
     def generate(self, request: LLMRequest) -> LLMResponse:
         """Generate response for request.
@@ -261,10 +288,14 @@ class LLMBackendAdapter:
             self.stats['errors'] += 1
             logger.error("Generation error: %s", _safe_error_text(e))
             
-            # Try fallback to mock
-            if self.active_backend != 'mock' and 'mock' in self.backends:
+            # Try fallback to mock only when explicitly allowed.
+            if self.fallback_to_mock and self.active_backend != 'mock' and 'mock' in self.backends:
                 logger.info("Falling back to mock backend")
-                return self.backends['mock'].generate(request)
+                response = self.backends['mock'].generate(request)
+                response.metadata = dict(response.metadata or {})
+                response.metadata["fallback_from_backend"] = self.active_backend
+                response.metadata["mock_fallback"] = True
+                return response
             
             raise
 
@@ -440,6 +471,64 @@ class AccelerateBackend:
         return [self.generate(req) for req in requests]
 
 
+class RouterBackend:
+    """Backend that routes theorem optimizer LLM calls through ``llm_router``."""
+
+    def __init__(
+        self,
+        *,
+        provider: str = DEFAULT_CODEX_PROVIDER,
+        model: str = DEFAULT_CODEX_MODEL,
+        allow_local_fallback: bool = False,
+        require_codex_provider: bool = True,
+    ) -> None:
+        self.provider = provider
+        self.model = model
+        self.allow_local_fallback = allow_local_fallback
+        self.require_codex_provider = require_codex_provider
+
+    def generate(self, request: LLMRequest) -> LLMResponse:
+        """Generate a response through the package-level LLM router."""
+
+        try:
+            from ipfs_datasets_py import llm_router
+
+            model_name = (request.model or self.model or DEFAULT_CODEX_MODEL).strip()
+            text = llm_router.generate_text(
+                request.prompt,
+                provider=self.provider,
+                model_name=model_name,
+                max_tokens=request.max_tokens,
+                max_new_tokens=request.max_tokens,
+                temperature=request.temperature,
+                allow_local_fallback=self.allow_local_fallback,
+                disable_model_retry=True,
+            )
+            trace_getter = getattr(llm_router, "get_last_generation_trace", None)
+            trace = trace_getter() if callable(trace_getter) else {}
+            effective_provider = str(trace.get("effective_provider_name") or self.provider)
+            if self.require_codex_provider and effective_provider not in {"codex", "codex_cli"}:
+                raise RuntimeError(
+                    f"llm_router resolved to {effective_provider!r}; expected Codex provider"
+                )
+            effective_model = str(trace.get("effective_model_name") or model_name)
+            return LLMResponse(
+                text=str(text),
+                model=effective_model,
+                tokens_used=len(str(text).split()),
+                finish_reason="stop",
+                backend="llm_router",
+                metadata={
+                    "router_provider": self.provider,
+                    "effective_provider_name": effective_provider,
+                    "effective_model_name": effective_model,
+                },
+            )
+        except (AttributeError, ImportError, RuntimeError, TypeError, ValueError) as e:
+            logger.error("llm_router generation error: %s", _safe_error_text(e))
+            raise
+
+
 class MockBackend:
     """Mock backend for testing."""
     
@@ -507,14 +596,23 @@ class MockBackend:
         return "Improve by: Add more specific predicates, clarify temporal constraints, strengthen logical connections."
 
 
-def get_default_adapter() -> LLMBackendAdapter:
+def get_default_adapter(
+    *,
+    preferred_backend: str = "llm_router",
+    fallback_to_mock: bool = True,
+    enable_caching: bool = True,
+    router_provider: str = DEFAULT_CODEX_PROVIDER,
+    router_model: str = DEFAULT_CODEX_MODEL,
+) -> LLMBackendAdapter:
     """Get default LLM backend adapter.
     
     Returns:
         Configured LLMBackendAdapter
     """
     return LLMBackendAdapter(
-        preferred_backend="accelerate",
-        fallback_to_mock=True,
-        enable_caching=True
+        preferred_backend=preferred_backend,
+        fallback_to_mock=fallback_to_mock,
+        enable_caching=enable_caching,
+        router_provider=router_provider,
+        router_model=router_model,
     )

@@ -104,6 +104,7 @@ __all__ = [
     'modal_ir_to_flogic_triples',
     'synthesis_hints_from_autoencoder_introspection',
     'synthesis_hints_from_autoencoder_introspections',
+    'target_family_distribution_for_modal_ir',
     'target_family_for_modal_ir',
     'AdaptiveModalAutoencoder',
     'AutoencoderFeatureContribution',
@@ -114,6 +115,7 @@ __all__ = [
     'cosine_similarity',
     'cosine_loss',
     'mse_loss',
+    'cross_entropy_distribution_loss',
     'cross_entropy_loss',
     'frame_ranking_loss',
     'symbolic_validity_penalty',
@@ -168,6 +170,7 @@ __all__ = [
     'LLMBackendAdapter',
     'LLMRequest',
     'LLMResponse',
+    'RouterBackend',
     # Phase 2.5: RAG Integration
     'RAGIntegration',
     'RAGContext',
@@ -512,6 +515,7 @@ def __getattr__(name):
         'modal_ir_to_flogic_triples',
         'synthesis_hints_from_autoencoder_introspection',
         'synthesis_hints_from_autoencoder_introspections',
+        'target_family_distribution_for_modal_ir',
         'target_family_for_modal_ir',
     ):
         from ipfs_datasets_py.logic.modal import (
@@ -533,6 +537,7 @@ def __getattr__(name):
             modal_ir_to_flogic_triples,
             synthesis_hints_from_autoencoder_introspection,
             synthesis_hints_from_autoencoder_introspections,
+            target_family_distribution_for_modal_ir,
             target_family_for_modal_ir,
         )
         return {
@@ -554,6 +559,7 @@ def __getattr__(name):
             'modal_ir_to_flogic_triples': modal_ir_to_flogic_triples,
             'synthesis_hints_from_autoencoder_introspection': synthesis_hints_from_autoencoder_introspection,
             'synthesis_hints_from_autoencoder_introspections': synthesis_hints_from_autoencoder_introspections,
+            'target_family_distribution_for_modal_ir': target_family_distribution_for_modal_ir,
             'target_family_for_modal_ir': target_family_for_modal_ir,
         }[name]
     elif name in (
@@ -566,6 +572,7 @@ def __getattr__(name):
         'cosine_similarity',
         'cosine_loss',
         'mse_loss',
+        'cross_entropy_distribution_loss',
         'cross_entropy_loss',
         'frame_ranking_loss',
         'symbolic_validity_penalty',
@@ -577,6 +584,7 @@ def __getattr__(name):
             AutoencoderIntrospection,
             ModalAutoencoderBaseline,
             ModalAutoencoderTrainingState,
+            cross_entropy_distribution_loss,
             cosine_loss,
             cosine_similarity,
             cross_entropy_loss,
@@ -593,6 +601,7 @@ def __getattr__(name):
             'ModalAutoencoderTrainingState': ModalAutoencoderTrainingState,
             'cosine_loss': cosine_loss,
             'cosine_similarity': cosine_similarity,
+            'cross_entropy_distribution_loss': cross_entropy_distribution_loss,
             'cross_entropy_loss': cross_entropy_loss,
             'frame_ranking_loss': frame_ranking_loss,
             'mse_loss': mse_loss,
@@ -764,16 +773,18 @@ def __getattr__(name):
             return ProverVerificationResult
         else:
             return AggregatedProverResult
-    elif name == 'LLMBackendAdapter' or name == 'LLMRequest' or name == 'LLMResponse':
+    elif name in {'LLMBackendAdapter', 'LLMRequest', 'LLMResponse', 'RouterBackend'}:
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
-            LLMBackendAdapter, LLMRequest, LLMResponse
+            LLMBackendAdapter, LLMRequest, LLMResponse, RouterBackend
         )
         if name == 'LLMBackendAdapter':
             return LLMBackendAdapter
         elif name == 'LLMRequest':
             return LLMRequest
-        else:
+        elif name == 'LLMResponse':
             return LLMResponse
+        else:
+            return RouterBackend
     elif name == 'RAGIntegration' or name == 'RAGContext' or name == 'RAGStatistics':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import (
             RAGIntegration, RAGContext, RAGStatistics

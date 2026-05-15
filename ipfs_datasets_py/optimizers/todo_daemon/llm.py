@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.common.llm_defaults import DEFAULT_CODEX_MODEL
+
 from .engine import compact_message
 
 
@@ -21,7 +23,7 @@ class LlmRouterInvocation:
     """Configuration for one isolated ``llm_router.generate_text`` call."""
 
     repo_root: Path
-    model_name: str = "gpt-5.5"
+    model_name: str = DEFAULT_CODEX_MODEL
     provider: Optional[str] = None
     allow_local_fallback: bool = False
     timeout_seconds: int = 300
@@ -39,6 +41,7 @@ class LlmRouterInvocation:
     trace: bool = False
     trace_dir: Optional[Path] = None
     reject_effective_provider_name: Optional[str] = "local_hf"
+    required_effective_providers: Sequence[str] = ()
 
 
 _ACTIVE_LLM_PROCESS: Optional[subprocess.Popen[Any]] = None
@@ -138,6 +141,7 @@ def _llm_router_child_code(config: LlmRouterInvocation) -> str:
     trace_env = _env_name(config, "TRACE")
     trace_dir_env = _env_name(config, "TRACE_DIR")
     reject_provider_env = _env_name(config, "REJECT_EFFECTIVE_PROVIDER")
+    required_providers_env = _env_name(config, "REQUIRED_EFFECTIVE_PROVIDERS")
     return f"""
 import inspect
 import os
@@ -167,10 +171,22 @@ if "trace_dir" in parameters:
     kwargs["trace_dir"] = trace_dir
 text = llm_router.generate_text(prompt, **kwargs)
 reject_provider = os.environ.get({reject_provider_env!r}) or ""
+required_providers = {{
+    value.strip()
+    for value in (os.environ.get({required_providers_env!r}) or "").split(",")
+    if value.strip()
+}}
 trace_getter = getattr(llm_router, "get_last_generation_trace", None)
-if reject_provider and callable(trace_getter):
+if (reject_provider or required_providers) and callable(trace_getter):
     trace = trace_getter()
-    if isinstance(trace, dict) and trace.get("effective_provider_name") == reject_provider:
+    effective_provider = trace.get("effective_provider_name") if isinstance(trace, dict) else ""
+    if required_providers and effective_provider not in required_providers:
+        sys.stderr.write(
+            f"llm_router resolved to {{effective_provider or 'unknown'}}; "
+            f"expected one of {{sorted(required_providers)}}.\\n"
+        )
+        raise SystemExit(2)
+    if reject_provider and effective_provider == reject_provider:
         sys.stderr.write(
             f"llm_router resolved to {{reject_provider}} fallback; configure a real provider.\\n"
         )
@@ -217,6 +233,7 @@ def call_llm_router(prompt: str, config: LlmRouterInvocation) -> str:
                 _env_name(config, "TRACE"): "1" if config.trace else "0",
                 _env_name(config, "TRACE_DIR"): str(config.trace_dir or ""),
                 _env_name(config, "REJECT_EFFECTIVE_PROVIDER"): config.reject_effective_provider_name or "",
+                _env_name(config, "REQUIRED_EFFECTIVE_PROVIDERS"): ",".join(config.required_effective_providers),
             }
         )
         command = [config.python_executable, "-c", _llm_router_child_code(config)]
