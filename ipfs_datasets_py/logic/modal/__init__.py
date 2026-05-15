@@ -8,6 +8,13 @@ from .compiler import (
     ModalCompilationResult,
     ModalCompilerConfig,
 )
+from .autoencoder_loop import (
+    FrameLogicPatchValidation,
+    LegalModalAutoencoderLoop,
+    ModalAutoencoderLoopConfig,
+    ModalAutoencoderLoopResult,
+    validate_frame_logic_patch,
+)
 from .codec import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
@@ -44,9 +51,13 @@ __all__ = [
     "DecodedModalText",
     "DeterministicModalCompiler",
     "DeterministicModalLogicCodec",
+    "FrameLogicPatchValidation",
+    "LegalModalAutoencoderLoop",
     "ModalCompilationAmbiguity",
     "ModalCompilationResult",
     "ModalCompilerConfig",
+    "ModalAutoencoderLoopConfig",
+    "ModalAutoencoderLoopResult",
     "ModalLogicCodecConfig",
     "ModalLogicCodecResult",
     "ModalProgramSynthesisHint",
@@ -66,4 +77,5 @@ __all__ = [
     "synthesis_hints_from_autoencoder_introspections",
     "target_family_distribution_for_modal_ir",
     "target_family_for_modal_ir",
+    "validate_frame_logic_patch",
 ]
