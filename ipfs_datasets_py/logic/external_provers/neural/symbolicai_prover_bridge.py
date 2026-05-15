@@ -26,6 +26,7 @@ Usage:
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
+import importlib
 import time
 import logging
 
@@ -54,7 +55,83 @@ try:
     SYMBOLIC_FOL_BRIDGE_AVAILABLE = True
 except ImportError:
     SYMBOLIC_FOL_BRIDGE_AVAILABLE = False
+    SymbolicFOLBridge = None
+    FOLConversionResult = None
+    LogicalComponents = None
     logger.warning("SymbolicFOLBridge not available")
+
+
+def _import_symbolicai_symbols() -> bool:
+    """Import SymbolicAI symbols using project-safe config defaults."""
+
+    global Symbol, Expression, SYMBOLICAI_AVAILABLE
+    try:
+        from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+        ensure_symai_config_for_import()
+        module = importlib.import_module("symai")
+        Symbol = getattr(module, "Symbol")
+        Expression = getattr(module, "Expression")
+        SYMBOLICAI_AVAILABLE = True
+        return True
+    except (Exception, SystemExit):
+        Symbol = None
+        Expression = None
+        SYMBOLICAI_AVAILABLE = False
+        return False
+
+
+def _ensure_symbolicai_available() -> bool:
+    """Ensure SymbolicAI imports, with opt-in lazy install support."""
+
+    if SYMBOLICAI_AVAILABLE and Symbol is not None and Expression is not None:
+        return True
+
+    if _import_symbolicai_symbols():
+        return True
+
+    strict = False
+    try:
+        from ..lazy_installer import lazy_install_prover, lazy_install_strict
+
+        strict = lazy_install_strict()
+        if not lazy_install_prover("symbolicai", reason="SymbolicAIProverBridge requested"):
+            return False
+        importlib.invalidate_caches()
+        return _import_symbolicai_symbols()
+    except Exception:
+        if strict:
+            raise
+        return False
+
+
+def _ensure_symbolic_fol_bridge_available() -> bool:
+    """Re-import SymbolicFOLBridge after a possible lazy SymbolicAI install."""
+
+    global SymbolicFOLBridge, FOLConversionResult, LogicalComponents
+    global SYMBOLIC_FOL_BRIDGE_AVAILABLE
+
+    if SYMBOLIC_FOL_BRIDGE_AVAILABLE and SymbolicFOLBridge is not None:
+        return True
+
+    try:
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import (
+            SymbolicFOLBridge as _SymbolicFOLBridge,
+            FOLConversionResult as _FOLConversionResult,
+            LogicalComponents as _LogicalComponents,
+        )
+
+        SymbolicFOLBridge = _SymbolicFOLBridge
+        FOLConversionResult = _FOLConversionResult
+        LogicalComponents = _LogicalComponents
+        SYMBOLIC_FOL_BRIDGE_AVAILABLE = True
+        return True
+    except ImportError:
+        SymbolicFOLBridge = None
+        FOLConversionResult = None
+        LogicalComponents = None
+        SYMBOLIC_FOL_BRIDGE_AVAILABLE = False
+        return False
 
 
 @dataclass
@@ -125,7 +202,7 @@ class SymbolicAIProverBridge:
             timeout: Timeout in seconds
             enable_cache: Whether to enable proof caching
         """
-        if not SYMBOLICAI_AVAILABLE:
+        if not _ensure_symbolicai_available():
             raise ImportError(
                 "SymbolicAI not available. Install with: pip install symbolicai"
             )
@@ -149,6 +226,7 @@ class SymbolicAIProverBridge:
         
         # Initialize SymbolicFOL bridge if available (code reuse!)
         self.fol_bridge = None
+        _ensure_symbolic_fol_bridge_available()
         if SYMBOLIC_FOL_BRIDGE_AVAILABLE:
             self.fol_bridge = SymbolicFOLBridge(
                 confidence_threshold=confidence_threshold,
@@ -459,4 +537,5 @@ __all__ = [
     "NeuralProofResult",
     "prove_with_neural",
     "SYMBOLICAI_AVAILABLE",
+    "_ensure_symbolicai_available",
 ]

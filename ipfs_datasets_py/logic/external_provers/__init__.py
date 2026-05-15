@@ -30,6 +30,19 @@ from typing import List, Optional
 
 __version__ = "1.0.0"
 
+try:
+    from .lazy_installer import (
+        find_executable,
+        lazy_install_prover,
+        lazy_installs_enabled,
+        prover_lazy_install_enabled,
+    )
+except ImportError:
+    find_executable = None
+    lazy_install_prover = None
+    lazy_installs_enabled = None
+    prover_lazy_install_enabled = None
+
 # Try to import SMT solvers (optional dependencies)
 try:
     from .smt.z3_prover_bridge import Z3ProverBridge, Z3_AVAILABLE
@@ -158,4 +171,8 @@ __all__ = [
     # Utility functions
     "get_available_provers",
     "check_prover_availability",
+    "find_executable",
+    "lazy_install_prover",
+    "lazy_installs_enabled",
+    "prover_lazy_install_enabled",
 ]

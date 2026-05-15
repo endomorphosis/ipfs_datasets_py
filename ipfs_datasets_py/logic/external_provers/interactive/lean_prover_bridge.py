@@ -21,13 +21,30 @@ Usage:
 from dataclasses import dataclass
 from typing import List, Optional
 import subprocess
-import shutil
 import time
 import tempfile
 import os
 
+from ..lazy_installer import find_executable, lazy_install_prover
+
 # Check Lean availability
-LEAN_AVAILABLE = shutil.which("lean") is not None or shutil.which("lake") is not None
+LEAN_AVAILABLE = find_executable("lean") is not None or find_executable("lake") is not None
+
+
+def _ensure_lean_available() -> bool:
+    """Ensure Lean is executable, with opt-in lazy install support."""
+
+    global LEAN_AVAILABLE
+    if find_executable("lean") or find_executable("lake"):
+        LEAN_AVAILABLE = True
+        return True
+
+    if lazy_install_prover("lean", reason="LeanProverBridge requested"):
+        LEAN_AVAILABLE = find_executable("lean") is not None or find_executable("lake") is not None
+        return LEAN_AVAILABLE
+
+    LEAN_AVAILABLE = False
+    return False
 
 
 def _node_args(node) -> tuple:
@@ -200,7 +217,7 @@ class LeanProverBridge:
             auto_tactics: List of tactics to try (default: ["trivial", "simp", "tauto"])
             enable_cache: Whether to enable proof caching
         """
-        if not LEAN_AVAILABLE:
+        if not _ensure_lean_available():
             raise ImportError("Lean is not available. Install from: https://leanprover.github.io/")
         
         self.timeout = timeout or 30.0
@@ -356,17 +373,19 @@ class LeanProverBridge:
         
         try:
             # Execute with lean compiler
-            if shutil.which("lean"):
+            lean_cmd = find_executable("lean")
+            lake_cmd = find_executable("lake")
+            if lean_cmd:
                 result = subprocess.run(
-                    ["lean", script_file],
+                    [lean_cmd, script_file],
                     capture_output=True,
                     text=True,
                     timeout=timeout
                 )
-            elif shutil.which("lake"):
+            elif lake_cmd:
                 # If only lake is available, try using it
                 result = subprocess.run(
-                    ["lake", "env", "lean", script_file],
+                    [lake_cmd, "env", "lean", script_file],
                     capture_output=True,
                     text=True,
                     timeout=timeout
@@ -395,4 +414,10 @@ class LeanProverBridge:
                 pass
 
 
-__all__ = ["LeanProverBridge", "LeanProofResult", "LEAN_AVAILABLE", "TDFOLToLeanConverter"]
+__all__ = [
+    "LeanProverBridge",
+    "LeanProofResult",
+    "LEAN_AVAILABLE",
+    "TDFOLToLeanConverter",
+    "_ensure_lean_available",
+]

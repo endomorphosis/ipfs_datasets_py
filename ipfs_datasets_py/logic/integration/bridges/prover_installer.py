@@ -17,6 +17,9 @@ Environment variables (all optional):
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN: enable Lean install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ: enable Coq install attempts (default: 0)
 - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI: enable SymbolicAI install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
+- IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS: enable install attempts from requested prover bridges (default: 0)
+- IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>: per-prover lazy install override (Z3/CVC5/LEAN/COQ/SYMBOLICAI)
+- IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS: allow lazy Coq install to use interactive sudo (default: 0)
 
 The installer is best-effort and never raises on failure unless `--strict` is used.
 """
@@ -33,6 +36,7 @@ import sys
 import tempfile
 import urllib.request
 from pathlib import Path
+from shlex import split as shell_split
 
 logger = logging.getLogger(__name__)
 
@@ -48,23 +52,76 @@ def _run(cmd: list[str], *, check: bool, env: dict[str, str] | None = None) -> i
     return proc.returncode
 
 
+def _common_bin_dirs() -> list[Path]:
+    dirs: list[Path] = []
+    try:
+        home = Path.home()
+    except (OSError, RuntimeError):
+        return dirs
+    dirs.extend(
+        [
+            home / ".local" / "bin",
+            home / ".elan" / "bin",
+            home / ".opam" / "default" / "bin",
+        ]
+    )
+    return dirs
+
+
 def _which(cmd: str) -> str | None:
-    return shutil.which(cmd)
+    found = shutil.which(cmd)
+    if found:
+        return found
+    for directory in _common_bin_dirs():
+        candidate = directory / cmd
+        try:
+            if candidate.exists() and os.access(str(candidate), os.X_OK):
+                return str(candidate)
+        except OSError:
+            continue
+    return None
 
 
 def _module_available(module_name: str) -> bool:
     try:
         importlib.import_module(module_name)
         return True
-    except Exception:
+    except (Exception, SystemExit):
         return False
 
 
 def _pip_install(requirement: str, *, strict: bool) -> bool:
-    rc = _run([sys.executable, "-m", "pip", "install", requirement], check=False)
-    if rc != 0 and strict:
-        raise RuntimeError(f"Could not install Python dependency: {requirement}")
-    return rc == 0
+    base = [sys.executable, "-m", "pip", "install"]
+    extra_args = shell_split(os.environ.get("IPFS_DATASETS_PY_PIP_INSTALL_ARGS", ""))
+    commands = [base + extra_args + [requirement]]
+    in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
+    if not in_venv:
+        commands.append(base + extra_args + ["--user", requirement])
+    if _truthy(os.environ.get("IPFS_DATASETS_PY_ALLOW_BREAK_SYSTEM_PACKAGES")):
+        commands.append(base + extra_args + ["--break-system-packages", requirement])
+
+    errors: list[str] = []
+    for cmd in commands:
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+        except Exception as exc:
+            errors.append(f"{' '.join(cmd)}: {exc}")
+            continue
+        if proc.returncode == 0:
+            return True
+        stderr = (proc.stderr or proc.stdout or "").strip()
+        errors.append(f"{' '.join(cmd)} -> {proc.returncode}: {stderr}")
+
+    message = (
+        f"Could not install Python dependency: {requirement}\n"
+        + "\n".join(errors[-2:])
+        + "\nUse a virtualenv, set IPFS_DATASETS_PY_PIP_INSTALL_ARGS, or set "
+        "IPFS_DATASETS_PY_ALLOW_BREAK_SYSTEM_PACKAGES=1 if you accept that risk."
+    )
+    if strict:
+        raise RuntimeError(message)
+    print(message)
+    return False
 
 
 def ensure_z3(*, yes: bool, strict: bool) -> bool:
@@ -173,9 +230,11 @@ def ensure_lean(*, yes: bool, strict: bool) -> bool:
             # `-y` accepts defaults and avoids prompts.
             _run(["sh", str(script_path), "-y"], check=strict)
 
+        lean_path = _which("lean")
         lean_home = Path.home() / ".elan" / "bin" / "lean"
-        if lean_home.exists():
-            print(f"Installed Lean via elan: {lean_home}")
+        if lean_path or lean_home.exists():
+            print(f"Installed Lean via elan: {lean_path or lean_home}")
+            print("If Lean is not on PATH, add ~/.elan/bin to PATH.")
             return True
 
         print("Attempted to install Lean via elan, but lean binary was not found afterwards.")
@@ -188,7 +247,7 @@ def ensure_lean(*, yes: bool, strict: bool) -> bool:
         return False
 
 
-def ensure_coq(*, yes: bool, strict: bool) -> bool:
+def ensure_coq(*, yes: bool, strict: bool, allow_sudo: bool = False) -> bool:
     """Attempt to ensure `coqc` exists.
 
     Strategy:
@@ -234,6 +293,13 @@ def ensure_coq(*, yes: bool, strict: bool) -> bool:
                 rc = _run(["apt-get", "install", "-y", "coq"], check=False)
                 if rc == 0 and _which("coqc"):
                     print("Installed Coq via apt-get.")
+                    return True
+            elif allow_sudo:
+                print("Attempting to install Coq via sudo apt-get (may prompt for password)...")
+                _run(["sudo", "apt-get", "update"], check=False)
+                rc = _run(["sudo", "apt-get", "install", "-y", "coq"], check=False)
+                if rc == 0 and _which("coqc"):
+                    print("Installed Coq via sudo apt-get.")
                     return True
             elif _sudo_non_interactive_ok():
                 print("Attempting to install Coq via sudo apt-get (passwordless sudo detected)...")
@@ -284,6 +350,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", action="store_true", help="Install/ensure Coq")
     parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
+    parser.add_argument(
+        "--allow-sudo",
+        action="store_true",
+        help="Allow interactive sudo for system packages such as Coq.",
+    )
     parser.add_argument("--yes", action="store_true", help="Non-interactive / accept defaults")
     parser.add_argument(
         "--strict",
@@ -313,7 +384,7 @@ def main(argv: list[str] | None = None) -> int:
     if want_lean:
         ok = ensure_lean(yes=args.yes, strict=args.strict) and ok
     if want_coq:
-        ok = ensure_coq(yes=args.yes, strict=args.strict) and ok
+        ok = ensure_coq(yes=args.yes, strict=args.strict, allow_sudo=bool(args.allow_sudo)) and ok
     if want_symbolicai:
         ok = ensure_symbolicai(yes=args.yes, strict=args.strict) and ok
 

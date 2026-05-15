@@ -378,6 +378,7 @@ def ensure_logic_provers() -> None:
     - IPFS_DATASETS_PY_AUTO_INSTALL_CVC5
     - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN
     - IPFS_DATASETS_PY_AUTO_INSTALL_COQ
+    - IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI
     """
 
     def env_truthy(name: str, default: str = "1") -> bool:
@@ -401,6 +402,8 @@ def ensure_logic_provers() -> None:
         args.append("--lean")
     if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "1"):
         args.append("--coq")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI", "1"):
+        args.append("--symbolicai")
 
     print("\n🧠 Installing theorem provers (best-effort)...")
     subprocess.run(args, check=False, text=True)

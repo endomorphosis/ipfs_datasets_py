@@ -135,9 +135,10 @@ class ProverRouter:
         # Z3
         if self.enable_z3:
             try:
-                from .smt.z3_prover_bridge import Z3ProverBridge, Z3_AVAILABLE
-                if Z3_AVAILABLE:
-                    self.provers['z3'] = Z3ProverBridge(
+                from .smt import z3_prover_bridge
+
+                if z3_prover_bridge._ensure_z3_available():
+                    self.provers['z3'] = z3_prover_bridge.Z3ProverBridge(
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )
@@ -147,36 +148,40 @@ class ProverRouter:
         # CVC5
         if self.enable_cvc5:
             try:
-                from .smt.cvc5_prover_bridge import CVC5ProverBridge, CVC5_AVAILABLE
-                if CVC5_AVAILABLE:
-                    self.provers['cvc5'] = CVC5ProverBridge(timeout=self.default_timeout)
+                from .smt import cvc5_prover_bridge
+
+                if cvc5_prover_bridge._ensure_cvc5_available():
+                    self.provers['cvc5'] = cvc5_prover_bridge.CVC5ProverBridge(timeout=self.default_timeout)
             except ImportError:
                 pass
         
         # Lean
         if self.enable_lean:
             try:
-                from .interactive.lean_prover_bridge import LeanProverBridge, LEAN_AVAILABLE
-                if LEAN_AVAILABLE:
-                    self.provers['lean'] = LeanProverBridge(timeout=self.default_timeout)
+                from .interactive import lean_prover_bridge
+
+                if lean_prover_bridge._ensure_lean_available():
+                    self.provers['lean'] = lean_prover_bridge.LeanProverBridge(timeout=self.default_timeout)
             except ImportError:
                 pass
         
         # Coq
         if self.enable_coq:
             try:
-                from .interactive.coq_prover_bridge import CoqProverBridge, COQ_AVAILABLE
-                if COQ_AVAILABLE:
-                    self.provers['coq'] = CoqProverBridge(timeout=self.default_timeout)
+                from .interactive import coq_prover_bridge
+
+                if coq_prover_bridge._ensure_coq_available():
+                    self.provers['coq'] = coq_prover_bridge.CoqProverBridge(timeout=self.default_timeout)
             except ImportError:
                 pass
         
         # SymbolicAI
         if self.enable_symbolicai:
             try:
-                from .neural.symbolicai_prover_bridge import SymbolicAIProverBridge, SYMBOLICAI_AVAILABLE
-                if SYMBOLICAI_AVAILABLE:
-                    self.provers['symbolicai'] = SymbolicAIProverBridge(
+                from .neural import symbolicai_prover_bridge
+
+                if symbolicai_prover_bridge._ensure_symbolicai_available():
+                    self.provers['symbolicai'] = symbolicai_prover_bridge.SymbolicAIProverBridge(
                         timeout=self.default_timeout,
                         enable_cache=self.enable_cache
                     )

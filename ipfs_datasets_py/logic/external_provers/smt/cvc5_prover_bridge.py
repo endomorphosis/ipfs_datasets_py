@@ -20,6 +20,7 @@ Usage:
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+import importlib
 import time
 
 # Check CVC5 availability
@@ -29,7 +30,45 @@ try:
     CVC5_AVAILABLE = True
 except ImportError:
     cvc5 = None
+    Kind = None
     CVC5_AVAILABLE = False
+
+
+def _ensure_cvc5_available() -> bool:
+    """Ensure CVC5 bindings are importable, with opt-in lazy install support."""
+
+    global cvc5, Kind, CVC5_AVAILABLE
+    if CVC5_AVAILABLE and cvc5 is not None and Kind is not None:
+        return True
+
+    try:
+        importlib.invalidate_caches()
+        cvc5 = importlib.import_module("cvc5")
+        Kind = getattr(cvc5, "Kind")
+        CVC5_AVAILABLE = True
+        return True
+    except Exception:
+        pass
+
+    strict = False
+    try:
+        from ..lazy_installer import lazy_install_prover, lazy_install_strict
+
+        strict = lazy_install_strict()
+        if not lazy_install_prover("cvc5", reason="CVC5ProverBridge requested"):
+            return False
+        importlib.invalidate_caches()
+        cvc5 = importlib.import_module("cvc5")
+        Kind = getattr(cvc5, "Kind")
+        CVC5_AVAILABLE = True
+        return True
+    except Exception:
+        if strict:
+            raise
+        cvc5 = None
+        Kind = None
+        CVC5_AVAILABLE = False
+        return False
 
 
 def _node_args(node: Any) -> tuple:
@@ -87,7 +126,7 @@ class TDFOLToCVC5Converter:
         Args:
             solver: CVC5 solver instance
         """
-        if not CVC5_AVAILABLE:
+        if not _ensure_cvc5_available():
             raise ImportError("CVC5 is not available. Install with: pip install cvc5")
         
         self.solver = solver
@@ -308,7 +347,7 @@ class CVC5ProverBridge:
             use_model: Whether to generate models for satisfiable formulas
             enable_cache: Whether to enable proof caching
         """
-        if not CVC5_AVAILABLE:
+        if not _ensure_cvc5_available():
             raise ImportError("CVC5 is not available. Install with: pip install cvc5")
         
         self.timeout = timeout
@@ -478,4 +517,10 @@ class CVC5ProverBridge:
             )
 
 
-__all__ = ["CVC5ProverBridge", "CVC5ProofResult", "CVC5_AVAILABLE", "TDFOLToCVC5Converter"]
+__all__ = [
+    "CVC5ProverBridge",
+    "CVC5ProofResult",
+    "CVC5_AVAILABLE",
+    "TDFOLToCVC5Converter",
+    "_ensure_cvc5_available",
+]

@@ -22,6 +22,7 @@ Usage:
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
+import importlib
 import time
 
 # Check Z3 availability
@@ -31,6 +32,40 @@ try:
 except ImportError:
     z3 = None
     Z3_AVAILABLE = False
+
+
+def _ensure_z3_available() -> bool:
+    """Ensure Z3 bindings are importable, with opt-in lazy install support."""
+
+    global z3, Z3_AVAILABLE
+    if Z3_AVAILABLE and z3 is not None:
+        return True
+
+    try:
+        importlib.invalidate_caches()
+        z3 = importlib.import_module("z3")
+        Z3_AVAILABLE = True
+        return True
+    except Exception:
+        pass
+
+    strict = False
+    try:
+        from ..lazy_installer import lazy_install_prover, lazy_install_strict
+
+        strict = lazy_install_strict()
+        if not lazy_install_prover("z3", reason="Z3ProverBridge requested"):
+            return False
+        importlib.invalidate_caches()
+        z3 = importlib.import_module("z3")
+        Z3_AVAILABLE = True
+        return True
+    except Exception:
+        if strict:
+            raise
+        z3 = None
+        Z3_AVAILABLE = False
+        return False
 
 
 def _node_args(node: Any) -> tuple:
@@ -84,7 +119,7 @@ class TDFOLToZ3Converter:
     
     def __init__(self):
         """Initialize the converter."""
-        if not Z3_AVAILABLE:
+        if not _ensure_z3_available():
             raise ImportError("Z3 is not available. Install with: pip install z3-solver")
         
         self.var_cache: Dict[str, Any] = {}
@@ -293,7 +328,7 @@ class Z3ProverBridge:
             use_model: Whether to generate models for satisfiable formulas
             enable_cache: Whether to enable proof caching
         """
-        if not Z3_AVAILABLE:
+        if not _ensure_z3_available():
             raise ImportError("Z3 is not available. Install with: pip install z3-solver")
         
         self.timeout = timeout
@@ -539,4 +574,5 @@ __all__ = [
     "TDFOLToZ3Converter",
     "prove_with_z3",
     "Z3_AVAILABLE",
+    "_ensure_z3_available",
 ]
