@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import re
 from dataclasses import dataclass, field
@@ -154,6 +155,147 @@ class AutoencoderIntrospection:
                 contribution.to_dict()
                 for contribution in self.top_family_contributions
             ],
+        }
+
+
+@dataclass(frozen=True)
+class ProverCompilationSignal:
+    """Local theorem-prover compilation health for one modal IR sample."""
+
+    attempted_count: int
+    valid_count: int
+    unavailable_count: int = 0
+    error_count: int = 0
+    failed_count: int = 0
+    verified_by: List[str] = field(default_factory=list)
+    details: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def compiles(self) -> bool:
+        """Return True when every attempted modal formula reached a prover route."""
+        return self.attempted_count > 0 and self.valid_count == self.attempted_count
+
+    @property
+    def failure_ratio(self) -> float:
+        """Return the fraction of formulas that failed local prover compilation."""
+        if self.attempted_count <= 0:
+            return 1.0
+        failures = self.unavailable_count + self.error_count + self.failed_count
+        return min(1.0, failures / self.attempted_count)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "attempted_count": self.attempted_count,
+            "compiles": self.compiles,
+            "details": list(self.details),
+            "error_count": self.error_count,
+            "failed_count": self.failed_count,
+            "failure_ratio": self.failure_ratio,
+            "unavailable_count": self.unavailable_count,
+            "valid_count": self.valid_count,
+            "verified_by": list(self.verified_by),
+        }
+
+
+@dataclass(frozen=True)
+class CodexCallGateConfig:
+    """Thresholds and call-cost settings for the Codex advisor gate."""
+
+    min_cosine_similarity: float = 0.72
+    max_cross_entropy_loss: float = 1.20
+    max_reconstruction_loss: float = 0.20
+    max_frame_ranking_loss: float = 0.0
+    max_symbolic_validity_penalty: float = 0.0
+    require_prover_compilation: bool = True
+    allow_repeat_signatures: bool = False
+    max_codex_calls: Optional[int] = None
+    min_net_benefit: float = 0.0
+    codex_call_cost: float = 0.35
+    cosine_weight: float = 1.0
+    cross_entropy_weight: float = 1.0
+    reconstruction_weight: float = 1.0
+    frame_weight: float = 0.5
+    symbolic_weight: float = 1.0
+    prover_weight: float = 1.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "allow_repeat_signatures": self.allow_repeat_signatures,
+            "codex_call_cost": self.codex_call_cost,
+            "cosine_weight": self.cosine_weight,
+            "cross_entropy_weight": self.cross_entropy_weight,
+            "frame_weight": self.frame_weight,
+            "max_codex_calls": self.max_codex_calls,
+            "max_cross_entropy_loss": self.max_cross_entropy_loss,
+            "max_frame_ranking_loss": self.max_frame_ranking_loss,
+            "max_reconstruction_loss": self.max_reconstruction_loss,
+            "max_symbolic_validity_penalty": self.max_symbolic_validity_penalty,
+            "min_cosine_similarity": self.min_cosine_similarity,
+            "min_net_benefit": self.min_net_benefit,
+            "prover_weight": self.prover_weight,
+            "reconstruction_weight": self.reconstruction_weight,
+            "require_prover_compilation": self.require_prover_compilation,
+            "symbolic_weight": self.symbolic_weight,
+        }
+
+
+@dataclass
+class CodexCallCache:
+    """In-memory cache for suppressing repeated Codex advisor calls."""
+
+    codex_text_hashes: set[str] = field(default_factory=set)
+    codex_feature_signature_hashes: set[str] = field(default_factory=set)
+    local_success_feature_signature_hashes: set[str] = field(default_factory=set)
+    codex_call_count: int = 0
+
+    def record_codex_call(self, decision: "CodexCallDecision") -> None:
+        self.codex_text_hashes.add(decision.text_hash)
+        self.codex_feature_signature_hashes.add(decision.feature_signature_hash)
+        self.codex_call_count += 1
+
+    def record_local_success(self, decision: "CodexCallDecision") -> None:
+        self.local_success_feature_signature_hashes.add(decision.feature_signature_hash)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "codex_call_count": self.codex_call_count,
+            "codex_feature_signature_hashes": sorted(self.codex_feature_signature_hashes),
+            "codex_text_hashes": sorted(self.codex_text_hashes),
+            "local_success_feature_signature_hashes": sorted(
+                self.local_success_feature_signature_hashes
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class CodexCallDecision:
+    """Decision record for whether the expensive Codex loop should run."""
+
+    should_call_codex: bool
+    reasons: List[str]
+    suppressed_reasons: List[str]
+    local_loss: float
+    codex_call_cost: float
+    net_benefit: float
+    text_hash: str
+    feature_signature: List[str]
+    feature_signature_hash: str
+    metrics: Dict[str, float]
+    prover_signal: Optional[ProverCompilationSignal] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "codex_call_cost": self.codex_call_cost,
+            "feature_signature": list(self.feature_signature),
+            "feature_signature_hash": self.feature_signature_hash,
+            "local_loss": self.local_loss,
+            "metrics": dict(sorted(self.metrics.items())),
+            "net_benefit": self.net_benefit,
+            "prover_signal": self.prover_signal.to_dict() if self.prover_signal else None,
+            "reasons": list(self.reasons),
+            "should_call_codex": self.should_call_codex,
+            "suppressed_reasons": list(self.suppressed_reasons),
+            "text_hash": self.text_hash,
         }
 
 
@@ -562,6 +704,102 @@ class AdaptiveModalAutoencoder:
             ),
         )
 
+    def codex_call_decision(
+        self,
+        sample: LegalSample,
+        *,
+        config: Optional[CodexCallGateConfig] = None,
+        cache: Optional[CodexCallCache] = None,
+        prover_signal: Optional[ProverCompilationSignal] = None,
+        use_sample_memory: bool = False,
+    ) -> CodexCallDecision:
+        """Decide whether this sample is worth an expensive Codex advisor call."""
+        gate = config or CodexCallGateConfig()
+        evaluation = self.evaluate([sample], use_sample_memory=use_sample_memory)
+        metrics = {
+            "cosine_loss": evaluation.cosine_loss,
+            "cross_entropy_loss": evaluation.cross_entropy_loss,
+            "embedding_cosine_similarity": evaluation.embedding_cosine_similarity,
+            "frame_ranking_loss": evaluation.frame_ranking_loss,
+            "reconstruction_loss": evaluation.reconstruction_loss,
+            "symbolic_validity_penalty": evaluation.symbolic_validity_penalty,
+        }
+        feature_signature = self.codex_feature_signature(sample)
+        text_hash = _hash_text(sample.normalized_text)
+        feature_signature_hash = _hash_json(feature_signature)
+        reasons: List[str] = []
+        suppressed_reasons: List[str] = []
+
+        if evaluation.embedding_cosine_similarity < gate.min_cosine_similarity:
+            reasons.append("low_embedding_cosine_similarity")
+        if evaluation.cross_entropy_loss > gate.max_cross_entropy_loss:
+            reasons.append("high_cross_entropy_loss")
+        if evaluation.reconstruction_loss > gate.max_reconstruction_loss:
+            reasons.append("high_reconstruction_loss")
+        if evaluation.frame_ranking_loss > gate.max_frame_ranking_loss:
+            reasons.append("frame_ranking_uncertain")
+        if evaluation.symbolic_validity_penalty > gate.max_symbolic_validity_penalty:
+            reasons.append("missing_or_invalid_symbolic_ir")
+
+        if gate.require_prover_compilation:
+            resolved_prover_signal = prover_signal or evaluate_modal_prover_compilation(sample)
+            prover_signal = resolved_prover_signal
+            if resolved_prover_signal.attempted_count == 0:
+                reasons.append("no_modal_formula_for_prover")
+            elif not resolved_prover_signal.compiles:
+                if resolved_prover_signal.unavailable_count:
+                    reasons.append("prover_route_unavailable")
+                if resolved_prover_signal.error_count:
+                    reasons.append("prover_error")
+                if resolved_prover_signal.failed_count:
+                    reasons.append("prover_rejected_ir")
+
+        local_loss = _codex_gate_local_loss(
+            metrics,
+            gate,
+            prover_signal=prover_signal,
+        )
+        net_benefit = local_loss - max(0.0, float(gate.codex_call_cost))
+
+        if cache is not None:
+            if (
+                gate.max_codex_calls is not None
+                and cache.codex_call_count >= gate.max_codex_calls
+            ):
+                suppressed_reasons.append("codex_call_budget_exhausted")
+            if not gate.allow_repeat_signatures:
+                if text_hash in cache.codex_text_hashes:
+                    suppressed_reasons.append("duplicate_text_hash")
+                if feature_signature_hash in cache.codex_feature_signature_hashes:
+                    suppressed_reasons.append("duplicate_feature_signature")
+
+        if net_benefit < gate.min_net_benefit:
+            suppressed_reasons.append("codex_cost_exceeds_expected_benefit")
+
+        should_call = bool(reasons) and not suppressed_reasons
+        return CodexCallDecision(
+            should_call_codex=should_call,
+            reasons=_unique_preserve_order(reasons),
+            suppressed_reasons=_unique_preserve_order(suppressed_reasons),
+            local_loss=round(local_loss, 12),
+            codex_call_cost=round(max(0.0, float(gate.codex_call_cost)), 12),
+            net_benefit=round(net_benefit, 12),
+            text_hash=text_hash,
+            feature_signature=feature_signature,
+            feature_signature_hash=feature_signature_hash,
+            metrics={key: round(float(value), 12) for key, value in metrics.items()},
+            prover_signal=prover_signal,
+        )
+
+    def codex_feature_signature(self, sample: LegalSample) -> List[str]:
+        """Return the stable signature used to batch or suppress Codex calls."""
+        keys = [
+            f"text-shape:{_text_shape(sample.normalized_text)}",
+            f"formula-count:{len(sample.modal_ir.formulas)}",
+        ]
+        keys.extend(self._feature_keys_for(sample))
+        return _unique_preserve_order(keys)
+
     def apply_todos(
         self,
         todos: Iterable[object],
@@ -903,6 +1141,97 @@ def _observed_family_distribution(sample: LegalSample) -> Dict[str, float]:
     return {family: count / total for family, count in sorted(counts.items())}
 
 
+@dataclass(frozen=True)
+class _ModalStatement:
+    formula: str
+    natural_language: str
+    confidence: float
+    formalism: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+def evaluate_modal_prover_compilation(
+    sample: LegalSample,
+    *,
+    prover_adapter: Optional[Any] = None,
+    timeout: Optional[float] = None,
+) -> ProverCompilationSignal:
+    """Compile modal IR formulas through the local prover adapter."""
+    formulas = list(sample.modal_ir.formulas)
+    if not formulas:
+        return ProverCompilationSignal(
+            attempted_count=0,
+            valid_count=0,
+            details=[
+                {
+                    "reason": "sample contains no modal formulas",
+                    "sample_id": sample.sample_id,
+                }
+            ],
+        )
+
+    if prover_adapter is None:
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
+            ProverIntegrationAdapter,
+        )
+
+        prover_adapter = ProverIntegrationAdapter(use_provers=[], enable_cache=True)
+
+    valid_count = 0
+    unavailable_count = 0
+    error_count = 0
+    failed_count = 0
+    verified_by: List[str] = []
+    details: List[Dict[str, Any]] = []
+
+    for formula in formulas:
+        statement = _ModalStatement(
+            formula=_render_modal_formula(formula),
+            natural_language=_modal_formula_span_text(sample, formula),
+            confidence=1.0,
+            formalism="modal",
+            metadata={
+                "formula_id": formula.formula_id,
+                "modal_family": formula.operator.family,
+                "modal_system": formula.operator.system,
+                "operator": formula.operator.symbol,
+            },
+        )
+        result = prover_adapter.verify_statement(statement, timeout=timeout)
+        statuses = [
+            str(getattr(prover_result.status, "value", prover_result.status))
+            for prover_result in result.prover_results
+        ]
+        verified_by.extend(str(name) for name in result.verified_by)
+        if result.overall_valid:
+            valid_count += 1
+        elif "unavailable" in statuses:
+            unavailable_count += 1
+        elif "error" in statuses or "timeout" in statuses:
+            error_count += 1
+        else:
+            failed_count += 1
+        details.append(
+            {
+                "formula": statement.formula,
+                "formula_id": formula.formula_id,
+                "overall_valid": bool(result.overall_valid),
+                "statuses": statuses,
+                "verified_by": list(result.verified_by),
+            }
+        )
+
+    return ProverCompilationSignal(
+        attempted_count=len(formulas),
+        valid_count=valid_count,
+        unavailable_count=unavailable_count,
+        error_count=error_count,
+        failed_count=failed_count,
+        verified_by=sorted(set(verified_by)),
+        details=details,
+    )
+
+
 def _target_family(sample: LegalSample) -> str:
     if not sample.modal_ir.formulas:
         return ModalLogicFamily.HYBRID.value
@@ -952,6 +1281,56 @@ def _unique_preserve_order(values: Iterable[str]) -> List[str]:
         seen.add(value)
         result.append(value)
     return result
+
+
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _hash_json(value: Any) -> str:
+    payload = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _text_shape(text: str) -> str:
+    tokens = _token_features(text)
+    return "|".join(tokens[:12]) or "empty"
+
+
+def _render_modal_formula(formula: Any) -> str:
+    arguments = ", ".join(str(value) for value in getattr(formula.predicate, "arguments", []))
+    predicate = str(formula.predicate.name)
+    if arguments:
+        predicate = f"{predicate}({arguments})"
+    return f"{formula.operator.symbol}[{formula.operator.family}:{formula.operator.system}]({predicate})"
+
+
+def _modal_formula_span_text(sample: LegalSample, formula: Any) -> str:
+    start = max(0, int(getattr(formula.provenance, "start_char", 0)))
+    end = max(start, int(getattr(formula.provenance, "end_char", 0)))
+    return sample.normalized_text[start:end] or sample.normalized_text
+
+
+def _codex_gate_local_loss(
+    metrics: Mapping[str, float],
+    gate: CodexCallGateConfig,
+    *,
+    prover_signal: Optional[ProverCompilationSignal],
+) -> float:
+    cosine_gap = max(0.0, 1.0 - float(metrics.get("embedding_cosine_similarity", 0.0)))
+    loss = (
+        gate.cosine_weight * cosine_gap
+        + gate.cross_entropy_weight * max(0.0, float(metrics.get("cross_entropy_loss", 0.0)))
+        + gate.reconstruction_weight * max(0.0, float(metrics.get("reconstruction_loss", 0.0)))
+        + gate.frame_weight * max(0.0, float(metrics.get("frame_ranking_loss", 0.0)))
+        + gate.symbolic_weight * max(0.0, float(metrics.get("symbolic_validity_penalty", 0.0)))
+    )
+    if gate.require_prover_compilation:
+        if prover_signal is None:
+            loss += gate.prover_weight
+        else:
+            loss += gate.prover_weight * prover_signal.failure_ratio
+    return loss
 
 
 def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
@@ -1006,12 +1385,17 @@ __all__ = [
     "AutoencoderFeatureContribution",
     "AutoencoderEvaluation",
     "AutoencoderIntrospection",
+    "CodexCallCache",
+    "CodexCallDecision",
+    "CodexCallGateConfig",
     "ModalAutoencoderBaseline",
     "ModalAutoencoderTrainingState",
+    "ProverCompilationSignal",
     "cosine_loss",
     "cosine_similarity",
     "cross_entropy_distribution_loss",
     "cross_entropy_loss",
+    "evaluate_modal_prover_compilation",
     "frame_ranking_loss",
     "mse_loss",
     "symbolic_validity_penalty",

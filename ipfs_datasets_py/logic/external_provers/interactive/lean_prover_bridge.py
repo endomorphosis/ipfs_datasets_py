@@ -30,6 +30,16 @@ import os
 LEAN_AVAILABLE = shutil.which("lean") is not None or shutil.which("lake") is not None
 
 
+def _node_args(node) -> tuple:
+    """Return TDFOL node arguments across current and legacy field names."""
+    return tuple(getattr(node, "arguments", getattr(node, "args", ())) or ())
+
+
+def _function_name(term) -> str:
+    """Return a TDFOL function name across current and legacy field names."""
+    return str(getattr(term, "function_name", getattr(term, "function_symbol", "")) or "")
+
+
 @dataclass
 class LeanProofResult:
     """Result from Lean prover.
@@ -98,16 +108,18 @@ class TDFOLToLeanConverter:
         elif isinstance(term, tdfol_core.Constant):
             return term.name
         elif isinstance(term, tdfol_core.FunctionApplication):
-            args = " ".join(self._convert_term(arg) for arg in term.args)
-            return f"({term.function_symbol} {args})"
+            func_name = _function_name(term)
+            args = " ".join(self._convert_term(arg) for arg in _node_args(term))
+            return f"({func_name} {args})" if args else func_name
         else:
             return str(term)
     
     def _convert_predicate(self, pred) -> str:
         """Convert a predicate to Lean notation."""
-        if not pred.args:
+        args_tuple = _node_args(pred)
+        if not args_tuple:
             return pred.name
-        args = " ".join(self._convert_term(arg) for arg in pred.args)
+        args = " ".join(self._convert_term(arg) for arg in args_tuple)
         return f"({pred.name} {args})"
     
     def _convert_binary(self, formula) -> str:

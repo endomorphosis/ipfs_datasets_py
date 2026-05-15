@@ -157,16 +157,17 @@ class LogicTheoremOptimizer(BaseOptimizer):
         """
         super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
         self._log = logger or _logging.getLogger(__name__)
+        resolved_use_provers = ['z3'] if use_provers is None else list(use_provers)
         
         # Initialize components
         self.extractor = LogicExtractor(
             backend=llm_backend,
             allow_mock_fallback=allow_mock_fallback,
         )
-        self.critic = LogicCritic(use_provers=use_provers or ['z3'])
+        self.critic = LogicCritic(use_provers=resolved_use_provers)
         self.legacy_optimizer = LegacyLogicOptimizer()
         self.prover_adapter = ProverIntegrationAdapter(
-            use_provers=use_provers or ['z3'],
+            use_provers=resolved_use_provers,
             enable_cache=enable_caching,
         )
         

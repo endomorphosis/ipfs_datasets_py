@@ -32,6 +32,16 @@ except ImportError:
     CVC5_AVAILABLE = False
 
 
+def _node_args(node: Any) -> tuple:
+    """Return TDFOL node arguments across current and legacy field names."""
+    return tuple(getattr(node, "arguments", getattr(node, "args", ())) or ())
+
+
+def _function_name(term: Any) -> str:
+    """Return a TDFOL function name across current and legacy field names."""
+    return str(getattr(term, "function_name", getattr(term, "function_symbol", "")) or "")
+
+
 @dataclass
 class CVC5ProofResult:
     """Result from CVC5 prover.
@@ -141,16 +151,19 @@ class TDFOLToCVC5Converter:
         
         elif isinstance(term, tdfol_core.FunctionApplication):
             # Convert function application
-            func_name = term.function_symbol
+            func_name = _function_name(term)
+            args = _node_args(term)
+            if not func_name:
+                raise ValueError("FunctionApplication is missing a function name")
             if func_name not in self.func_cache:
                 # Create uninterpreted function
-                arity = len(term.args)
+                arity = len(args)
                 arg_sorts = [self._get_sort("Object")] * arity
                 result_sort = self._get_sort("Object")
                 func_sort = self.tm.mkFunctionSort(arg_sorts, result_sort)
                 self.func_cache[func_name] = self.tm.mkConst(func_sort, func_name)
             
-            cvc5_args = [self._convert_term(arg) for arg in term.args]
+            cvc5_args = [self._convert_term(arg) for arg in args]
             return self.tm.mkTerm(Kind.APPLY_UF, self.func_cache[func_name], *cvc5_args)
         
         else:
@@ -159,16 +172,22 @@ class TDFOLToCVC5Converter:
     def _convert_predicate(self, pred) -> Any:
         """Convert a predicate to CVC5 boolean function."""
         pred_name = pred.name
+        args = _node_args(pred)
+        bool_sort = self.tm.getBooleanSort()
+
+        if not args:
+            if pred_name not in self.pred_cache:
+                self.pred_cache[pred_name] = self.tm.mkConst(bool_sort, pred_name)
+            return self.pred_cache[pred_name]
         
         if pred_name not in self.pred_cache:
             # Create boolean function
-            arity = len(pred.args)
+            arity = len(args)
             arg_sorts = [self._get_sort("Object")] * arity
-            bool_sort = self.tm.getBooleanSort()
             func_sort = self.tm.mkFunctionSort(arg_sorts, bool_sort)
             self.pred_cache[pred_name] = self.tm.mkConst(func_sort, pred_name)
         
-        cvc5_args = [self._convert_term(arg) for arg in pred.args]
+        cvc5_args = [self._convert_term(arg) for arg in args]
         return self.tm.mkTerm(Kind.APPLY_UF, self.pred_cache[pred_name], *cvc5_args)
     
     def _convert_binary(self, formula) -> Any:

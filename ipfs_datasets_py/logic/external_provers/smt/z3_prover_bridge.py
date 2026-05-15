@@ -33,6 +33,16 @@ except ImportError:
     Z3_AVAILABLE = False
 
 
+def _node_args(node: Any) -> tuple:
+    """Return TDFOL node arguments across current and legacy field names."""
+    return tuple(getattr(node, "arguments", getattr(node, "args", ())) or ())
+
+
+def _function_name(term: Any) -> str:
+    """Return a TDFOL function name across current and legacy field names."""
+    return str(getattr(term, "function_name", getattr(term, "function_symbol", "")) or "")
+
+
 @dataclass
 class Z3ProofResult:
     """Result from Z3 prover.
@@ -136,15 +146,18 @@ class TDFOLToZ3Converter:
         
         elif isinstance(term, tdfol_core.FunctionApplication):
             # Convert function application
-            func_name = term.function_symbol
+            func_name = _function_name(term)
+            args = _node_args(term)
+            if not func_name:
+                raise ValueError("FunctionApplication is missing a function name")
             if func_name not in self.func_cache:
                 # Create uninterpreted function
-                arity = len(term.args)
+                arity = len(args)
                 arg_sorts = [self._get_sort("Object")] * arity
                 result_sort = self._get_sort("Object")
                 self.func_cache[func_name] = z3.Function(func_name, *arg_sorts, result_sort)
             
-            z3_args = [self._convert_term(arg) for arg in term.args]
+            z3_args = [self._convert_term(arg) for arg in args]
             return self.func_cache[func_name](*z3_args)
         
         else:
@@ -153,14 +166,20 @@ class TDFOLToZ3Converter:
     def _convert_predicate(self, pred) -> Any:
         """Convert a predicate to Z3 boolean function."""
         pred_name = pred.name
+        args = _node_args(pred)
+
+        if not args:
+            if pred_name not in self.pred_cache:
+                self.pred_cache[pred_name] = z3.Bool(pred_name)
+            return self.pred_cache[pred_name]
         
         if pred_name not in self.pred_cache:
             # Create boolean function
-            arity = len(pred.args)
+            arity = len(args)
             arg_sorts = [self._get_sort("Object")] * arity
             self.pred_cache[pred_name] = z3.Function(pred_name, *arg_sorts, z3.BoolSort())
         
-        z3_args = [self._convert_term(arg) for arg in pred.args]
+        z3_args = [self._convert_term(arg) for arg in args]
         return self.pred_cache[pred_name](*z3_args)
     
     def _convert_binary(self, formula) -> Any:

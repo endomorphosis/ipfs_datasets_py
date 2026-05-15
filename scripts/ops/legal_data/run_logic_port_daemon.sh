@@ -14,9 +14,10 @@ else
   PROVIDER=""
 fi
 SUPERVISOR_ROUTER_DEFAULT_MODE="llm_router_auto"
-# Leave PROVIDER empty by default so ipfs_datasets_py.llm_router owns provider
-# selection; IPFS_DATASETS_PY_LLM_PROVIDER pins that router path to Codex CLI
-# with Codex 5.3 as the default model.
+# Leave PROVIDER empty by default for supervisor environment compatibility; the
+# Python daemon defaults its llm_router provider to Codex, and
+# IPFS_DATASETS_PY_LLM_PROVIDER pins that router path to Codex CLI with Codex
+# 5.3 as the default model.
 # Set LOGIC_PORT_PROVIDER=codex_cli to force Codex only,
 # or another registered llm_router provider when debugging a specific backend.
 # Generic inherited PROVIDER values are ignored unless

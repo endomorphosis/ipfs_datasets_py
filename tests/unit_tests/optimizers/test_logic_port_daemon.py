@@ -171,6 +171,7 @@ def test_logic_port_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monk
     assert launch_env["AUTO_COMMIT"] == "1"
     assert launch_env["PROVIDER"] == ""
     assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"
+    assert build_arg_parser().parse_args([]).provider == "codex"
 
 
 def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, monkeypatch):

@@ -3642,7 +3642,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--repo-root", default=".", help="Repository root containing package.json and ipfs_datasets_py/")
     parser.add_argument("--model", default=DEFAULT_CODEX_MODEL, help="llm_router model name")
-    parser.add_argument("--provider", default=None, help="Optional llm_router provider")
+    parser.add_argument("--provider", default=os.environ.get("LOGIC_PORT_PROVIDER") or DEFAULT_CODEX_PROVIDER, help="Optional llm_router provider")
     parser.add_argument(
         "--proposal-transport",
         choices=("llm_router", "router", "router-json", "patch", "hybrid", "worktree", "patchless", "direct-edit"),

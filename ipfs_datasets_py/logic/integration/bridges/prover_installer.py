@@ -2,6 +2,7 @@
 
 Important:
 - Lean/Coq are *system tools*, not Python packages.
+- Z3/CVC5/SymbolicAI are imported through Python packages by the prover bridges.
 - Installing them automatically during `pip install` can be surprising and may fail
   depending on OS/package manager permissions.
 
@@ -11,8 +12,11 @@ This module provides an *opt-in* installer that can be invoked:
 
 Environment variables (all optional):
 - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS: enable running installer post-install (default: 0)
+- IPFS_DATASETS_PY_AUTO_INSTALL_Z3: enable Z3 install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
+- IPFS_DATASETS_PY_AUTO_INSTALL_CVC5: enable CVC5 install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN: enable Lean install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 - IPFS_DATASETS_PY_AUTO_INSTALL_COQ: enable Coq install attempts (default: 0)
+- IPFS_DATASETS_PY_AUTO_INSTALL_SYMBOLICAI: enable SymbolicAI install attempts (default: 1 when AUTO_INSTALL_PROVERS=1)
 
 The installer is best-effort and never raises on failure unless `--strict` is used.
 """
@@ -20,6 +24,7 @@ The installer is best-effort and never raises on failure unless `--strict` is us
 from __future__ import annotations
 
 import argparse
+import importlib
 import logging
 import os
 import shutil
@@ -45,6 +50,97 @@ def _run(cmd: list[str], *, check: bool, env: dict[str, str] | None = None) -> i
 
 def _which(cmd: str) -> str | None:
     return shutil.which(cmd)
+
+
+def _module_available(module_name: str) -> bool:
+    try:
+        importlib.import_module(module_name)
+        return True
+    except Exception:
+        return False
+
+
+def _pip_install(requirement: str, *, strict: bool) -> bool:
+    rc = _run([sys.executable, "-m", "pip", "install", requirement], check=False)
+    if rc != 0 and strict:
+        raise RuntimeError(f"Could not install Python dependency: {requirement}")
+    return rc == 0
+
+
+def ensure_z3(*, yes: bool, strict: bool) -> bool:
+    """Attempt to ensure the Python Z3 bindings used by Z3ProverBridge exist."""
+    if _module_available("z3"):
+        return True
+
+    if not yes:
+        print("Z3 Python bindings not found. Re-run with --yes to install z3-solver.")
+        return False
+
+    try:
+        if _pip_install("z3-solver>=4.12.0,<5.0.0", strict=strict) and _module_available("z3"):
+            print("Installed z3-solver Python bindings.")
+            return True
+        print("Unable to install Z3 automatically. Install with: pip install z3-solver")
+        return False
+    except Exception as exc:
+        print(f"Failed to install Z3: {exc}")
+        if strict:
+            raise
+        return False
+
+
+def ensure_cvc5(*, yes: bool, strict: bool) -> bool:
+    """Attempt to ensure the Python CVC5 bindings used by CVC5ProverBridge exist."""
+    if _module_available("cvc5"):
+        return True
+
+    if not yes:
+        print("CVC5 Python bindings not found. Re-run with --yes to install cvc5.")
+        return False
+
+    try:
+        if _pip_install("cvc5>=1.0.0,<2.0.0", strict=strict) and _module_available("cvc5"):
+            print("Installed cvc5 Python bindings.")
+            return True
+        print("Unable to install CVC5 automatically. Install with: pip install cvc5")
+        return False
+    except Exception as exc:
+        print(f"Failed to install CVC5: {exc}")
+        if strict:
+            raise
+        return False
+
+
+def ensure_symbolicai(*, yes: bool, strict: bool) -> bool:
+    """Attempt to ensure SymbolicAI imports safely with project config defaults."""
+    try:
+        from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+        ensure_symai_config_for_import()
+        if _module_available("symai"):
+            return True
+    except Exception:
+        pass
+
+    if not yes:
+        print("SymbolicAI not found or not importable. Re-run with --yes to install symbolicai.")
+        return False
+
+    try:
+        if _pip_install("symbolicai>=1.14.0,<2.0.0", strict=strict):
+            from ipfs_datasets_py.utils.symai_config import ensure_symai_config_for_import
+
+            ensure_symai_config_for_import(force=True)
+            if _module_available("symai"):
+                print("Installed SymbolicAI.")
+                return True
+        print("Unable to install SymbolicAI automatically. Install with: pip install symbolicai")
+        return False
+    except Exception as exc:
+        print(f"Failed to install SymbolicAI: {exc}")
+        if strict:
+            raise
+        return False
 
 
 def ensure_lean(*, yes: bool, strict: bool) -> bool:
@@ -182,9 +278,12 @@ def ensure_coq(*, yes: bool, strict: bool) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Best-effort installer for Lean/Coq")
+    parser = argparse.ArgumentParser(description="Best-effort installer for Z3/CVC5/Lean/Coq/SymbolicAI")
+    parser.add_argument("--z3", action="store_true", help="Install/ensure Z3 Python bindings")
+    parser.add_argument("--cvc5", action="store_true", help="Install/ensure CVC5 Python bindings")
     parser.add_argument("--lean", action="store_true", help="Install/ensure Lean")
     parser.add_argument("--coq", action="store_true", help="Install/ensure Coq")
+    parser.add_argument("--symbolicai", "--symai", action="store_true", help="Install/ensure SymbolicAI")
     parser.add_argument("--yes", action="store_true", help="Non-interactive / accept defaults")
     parser.add_argument(
         "--strict",
@@ -194,17 +293,29 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    want_z3 = bool(args.z3)
+    want_cvc5 = bool(args.cvc5)
     want_lean = bool(args.lean)
     want_coq = bool(args.coq)
-    if not (want_lean or want_coq):
+    want_symbolicai = bool(args.symbolicai)
+    if not (want_z3 or want_cvc5 or want_lean or want_coq or want_symbolicai):
+        want_z3 = True
+        want_cvc5 = True
         want_lean = True
         want_coq = True
+        want_symbolicai = True
 
     ok = True
+    if want_z3:
+        ok = ensure_z3(yes=args.yes, strict=args.strict) and ok
+    if want_cvc5:
+        ok = ensure_cvc5(yes=args.yes, strict=args.strict) and ok
     if want_lean:
         ok = ensure_lean(yes=args.yes, strict=args.strict) and ok
     if want_coq:
         ok = ensure_coq(yes=args.yes, strict=args.strict) and ok
+    if want_symbolicai:
+        ok = ensure_symbolicai(yes=args.yes, strict=args.strict) and ok
 
     if ok:
         return 0

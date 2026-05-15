@@ -10,12 +10,16 @@ import pytest
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import build_us_code_sample
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
+    CodexCallCache,
+    CodexCallGateConfig,
     ModalAutoencoderBaseline,
     ModalAutoencoderTrainingState,
+    ProverCompilationSignal,
     cosine_loss,
     cosine_similarity,
     cross_entropy_distribution_loss,
     cross_entropy_loss,
+    evaluate_modal_prover_compilation,
     frame_ranking_loss,
     mse_loss,
     symbolic_validity_penalty,
@@ -42,7 +46,7 @@ def test_modal_autoencoder_baseline_reports_fixture_losses() -> None:
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text="The agency must provide notice within 30 days.",
+        text="The agency must provide notice.",
     )
     baseline = ModalAutoencoderBaseline()
 
@@ -70,7 +74,7 @@ def test_adaptive_autoencoder_todo_updates_lower_ce_and_increase_cosine() -> Non
     sample = build_us_code_sample(
         title="5",
         section="552",
-        text="The agency must provide notice within 30 days.",
+        text="The agency must provide notice.",
     )
     autoencoder = AdaptiveModalAutoencoder()
     before = autoencoder.evaluate([sample])
@@ -291,6 +295,102 @@ def test_adaptive_autoencoder_skips_program_synthesis_todos() -> None:
     assert report["skipped"] is True
     assert report["changed"] == []
     assert autoencoder.state.to_dict() == state_before
+
+
+def test_codex_gate_skips_call_when_local_losses_and_prover_are_good() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    config = CodexCallGateConfig(
+        min_cosine_similarity=0.0,
+        max_cross_entropy_loss=10.0,
+        max_reconstruction_loss=10.0,
+        codex_call_cost=0.0,
+    )
+    signal = ProverCompilationSignal(
+        attempted_count=1,
+        valid_count=1,
+        verified_by=["modal:tdfol_modal_tableaux"],
+    )
+
+    decision = autoencoder.codex_call_decision(
+        sample,
+        config=config,
+        prover_signal=signal,
+    )
+
+    assert decision.should_call_codex is False
+    assert decision.reasons == []
+    assert decision.prover_signal.compiles is True
+    assert decision.feature_signature_hash
+
+
+def test_codex_gate_calls_once_per_feature_signature() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    cache = CodexCallCache()
+    config = CodexCallGateConfig(
+        require_prover_compilation=False,
+        min_cosine_similarity=0.99,
+        max_cross_entropy_loss=0.01,
+        codex_call_cost=0.0,
+    )
+
+    first = autoencoder.codex_call_decision(sample, config=config, cache=cache)
+    cache.record_codex_call(first)
+    second = autoencoder.codex_call_decision(sample, config=config, cache=cache)
+
+    assert first.should_call_codex is True
+    assert "low_embedding_cosine_similarity" in first.reasons
+    assert "high_cross_entropy_loss" in first.reasons
+    assert second.should_call_codex is False
+    assert "duplicate_feature_signature" in second.suppressed_reasons
+    assert cache.codex_call_count == 1
+
+
+def test_codex_gate_escalates_missing_formula_before_api_cache() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="555",
+        text="The agency publishes records.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    config = CodexCallGateConfig(
+        min_cosine_similarity=0.0,
+        max_cross_entropy_loss=10.0,
+        max_reconstruction_loss=10.0,
+        codex_call_cost=0.0,
+    )
+
+    decision = autoencoder.codex_call_decision(sample, config=config)
+
+    assert decision.should_call_codex is True
+    assert "missing_or_invalid_symbolic_ir" in decision.reasons
+    assert "no_modal_formula_for_prover" in decision.reasons
+    assert decision.prover_signal.attempted_count == 0
+
+
+def test_modal_prover_compilation_signal_uses_local_router() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+
+    signal = evaluate_modal_prover_compilation(sample)
+
+    assert signal.compiles is True
+    assert signal.valid_count == 1
+    assert signal.unavailable_count == 0
+    assert signal.details[0]["statuses"] == ["valid"]
+    assert signal.verified_by == ["modal:tdfol_modal_tableaux"]
 
 
 def test_clean_evaluation_ignores_sample_specific_memory() -> None:

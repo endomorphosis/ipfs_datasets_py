@@ -124,7 +124,7 @@ class LogicCritic(BaseCritic):
             strict_mode: Whether to use strict evaluation criteria
             enable_prover_integration: Use real prover integration (Phase 2 feature)
         """
-        self.use_provers = use_provers or ['z3']
+        self.use_provers = ['z3'] if use_provers is None else list(use_provers)
         self.strict_mode = strict_mode
         self.enable_prover_integration = enable_prover_integration
         

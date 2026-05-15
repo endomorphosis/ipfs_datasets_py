@@ -388,7 +388,7 @@ def ensure_logic_provers() -> None:
         return
 
     repo_root = Path(__file__).resolve().parents[2]
-    installer = repo_root / "ipfs_prover_installer.py"
+    installer = repo_root / "scripts" / "setup" / "ipfs_prover_installer.py"
     if not installer.exists():
         return
 

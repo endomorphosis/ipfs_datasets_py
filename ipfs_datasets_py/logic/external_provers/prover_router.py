@@ -194,6 +194,31 @@ class ProverRouter:
     def get_available_provers(self) -> List[str]:
         """Get list of available provers."""
         return list(self.provers.keys())
+
+    @property
+    def fallback_prover(self) -> Optional[str]:
+        """Return the primary fallback prover currently available."""
+        if "native" in self.provers:
+            return "native"
+        if self.provers:
+            return next(iter(self.provers))
+        return None
+
+    @property
+    def backup_provers(self) -> List[str]:
+        """Return available prover names for legacy router callers."""
+        return list(self.provers.keys())
+
+    def select_prover(self, formula) -> Optional[str]:
+        """Public compatibility wrapper for automatic prover selection."""
+        try:
+            return self._select_prover_for_formula(formula)
+        except RuntimeError:
+            return None
+
+    def route(self, formula, **kwargs) -> RouterProofResult:
+        """Public compatibility wrapper for proving through the router."""
+        return self.prove(formula, **kwargs)
     
     def _select_prover_for_formula(self, formula) -> str:
         """Select best prover for a formula based on characteristics.
@@ -494,20 +519,3 @@ __all__ = [
     "ProverStrategy",
     "RouterProofResult",
 ]
-
-
-# Add backward-compat aliases to ProverRouter
-def _prover_router_select_prover(self, formula):
-    """Alias for _select_prover_for_formula()."""
-    return self._select_prover_for_formula(formula)
-
-
-def _prover_router_route(self, formula, **kwargs):
-    """Alias for prove()."""
-    return self.prove(formula, **kwargs)
-
-
-ProverRouter.select_prover = _prover_router_select_prover
-ProverRouter.route = _prover_router_route
-ProverRouter.fallback_prover = property(lambda self: "native")
-ProverRouter.backup_provers = property(lambda self: list(self._provers.keys()))
