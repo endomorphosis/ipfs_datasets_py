@@ -9,9 +9,10 @@ Engines:
 - relationship: Relationship analysis and graph queries (from relationship_*.py)
 
 Architecture:
-Current implementation uses facade pattern with imports from parent files,
-maintaining 100% backward compatibility while establishing modular structure
-for future full extraction of functionality.
+Current implementation uses a facade-heavy layout: the engines packages expose
+modular entry points, while substantial logic still lives in the corresponding
+root processor modules. Treat this package as the organized engine surface for
+the current codebase, not as a fully standalone extraction.
 """
 
 # Import subpackages to make them accessible as attributes

@@ -1,13 +1,19 @@
 # Processors Architecture
 
-**Last Updated:** 2026-02-16  
-**Status:** Production (Phase 5 Complete)
+**Last Updated:** 2026-05-16  
+**Status:** Production (mixed root/core layout)
 
 ---
 
 ## Overview
 
-The processors module uses a **5-layer architecture** with clear dependency rules to maintain modularity, testability, and scalability.
+The processors module uses a **5-layer architecture** with clear dependency
+rules to maintain modularity, testability, and scalability.
+
+> **Current-state note:** the refactored `core/`, `engines/`,
+> `infrastructure/`, and `specialized/` packages are active, but several
+> root-level processor modules remain part of the public surface and still
+> coexist with the refactored packages.
 
 ---
 
@@ -23,10 +29,11 @@ The processors module uses a **5-layer architecture** with clear dependency rule
 
 **Key Files:**
 - `protocol.py` - ProcessorProtocol interface
-- `registry.py` - Processor registration system  
-- `universal_processor.py` - Unified entry point
-- `input_detector.py` - Input type detection
-- `processor_registry.py` - Legacy registry (transitioning)
+- `registry.py` - Consolidated registry surface used by some public/root code
+- `processor_registry.py` - Alternate async registry still used by some
+  infrastructure/core modules
+- `universal_processor.py` - Async core entry point
+- `input_detector.py` - Core input type detection
 
 **Design Principle:** Core defines interfaces and contracts. It should never import from other internal layers.
 

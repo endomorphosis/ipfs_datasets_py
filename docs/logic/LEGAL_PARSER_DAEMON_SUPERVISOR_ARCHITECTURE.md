@@ -22,12 +22,15 @@ LLM dependencies.
      repeated recovery failures.
    - Runs focused recovery or Codex maintenance when the daemon is stuck.
 
-3. `ipfs_datasets_py.optimizers.logic.deontic.parser_daemon`
+3. `ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon`
    - Owns parser improvement cycles.
    - Evaluates deterministic parser quality.
    - Requests a bounded implementation slice through `llm_router`.
    - Validates candidate patches before retaining them.
    - Emits progress and current-status artifacts for the supervisor.
+
+   The older `ipfs_datasets_py.optimizers.logic.deontic.parser_daemon` import
+   path is retained only as a compatibility wrapper.
 
 ## Mission Lanes
 

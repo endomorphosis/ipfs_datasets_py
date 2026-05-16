@@ -2,6 +2,11 @@
 
 A stochastic gradient descent (SGD) based system for generating and optimizing logical theorems from arbitrary data types.
 
+> **Namespace note**: This package is the production home for theorem/logic
+> optimization workflows. The F-logic semantic optimizer is maintained
+> separately at `ipfs_datasets_py.logic.flogic_optimizer`, while
+> `ipfs_datasets_py.optimizers.logic` is now a legacy compatibility facade.
+
 ## Quick Start (Recommended)
 
 **Use the unified `LogicTheoremOptimizer` for new code** - it provides the same functionality through a standardized interface:

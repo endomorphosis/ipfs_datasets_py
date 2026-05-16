@@ -363,7 +363,8 @@ print("✅ Auto-installation enabled for IPFS Datasets")
     
     # Try to create in the project directory
     try:
-        config_file = Path('ipfs_auto_install_config.py')
+        config_file = Path("scripts") / "setup" / "ipfs_auto_install_config.py"
+        config_file.parent.mkdir(parents=True, exist_ok=True)
         with open(config_file, 'w', encoding='utf-8') as f:
             f.write(config_content)
         logger.info(f"📝 Created auto-install configuration: {config_file}")
@@ -470,7 +471,8 @@ if __name__ == '__main__':
 '''
     
     try:
-        script_file = Path('install_deps.py')
+        script_file = Path("scripts") / "setup" / "install_deps.py"
+        script_file.parent.mkdir(parents=True, exist_ok=True)
         with open(script_file, 'w', encoding='utf-8') as f:
             f.write(script_content)
         

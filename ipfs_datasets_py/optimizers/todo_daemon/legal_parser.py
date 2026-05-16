@@ -96,7 +96,7 @@ def build_legal_parser_spec(repo_root: Optional[str] = None) -> ManagedDaemonSpe
         latest_log_path=env_path_in_dir("LATEST_LOG_PATH", daemon_dir, "legal_parser_daemon_overnight.log"),
         tmux_session_name=_env("TMUX_SESSION_NAME", "legal-parser-daemon"),
         worktree_root=worktree_root,
-        daemon_process_match_all=("ipfs_datasets_py.optimizers.logic.deontic.parser_daemon",),
+        daemon_process_match_all=("ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon",),
         llm_process_match_any=(
             worktree_root.as_posix(),
             str(root / worktree_root),
@@ -519,7 +519,7 @@ def stop_legal_parser_daemon(
         if pid == os.getpid():
             continue
         if "run_legal_parser_optimizer_daemon.sh" in args or (
-            "ipfs_datasets_py.optimizers.logic.deontic.parser_daemon" in args
+            "ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon" in args
         ):
             if terminate_pid_tree(pid, grace_seconds=grace_seconds):
                 stopped.append(pid)
@@ -554,7 +554,7 @@ def run_legal_parser_daemon_runtime(argv: Optional[Sequence[str]] = None) -> int
     todo-daemon package dispatcher.
     """
 
-    from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import main as runtime_main
+    from ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon import main as runtime_main
 
     return runtime_main(argv)
 
