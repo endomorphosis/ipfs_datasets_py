@@ -1,10 +1,7 @@
 archive
 artifacts
 benchmarks
-bin
-build
 config
-data
 datasets
 deployments
 docker
@@ -17,3 +14,4 @@ scripts
 state
 tests
 tmp
+workspace
