@@ -27,7 +27,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from brave_search import search_brave  # noqa: E402
+from ipfs_datasets_py.processors.web_archiving.brave_search_engine import (  # noqa: E402
+    search_brave,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
