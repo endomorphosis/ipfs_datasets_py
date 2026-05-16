@@ -205,13 +205,12 @@ async def flogic_check_consistency(
     #       module level (tracked separately).
     import importlib.util as _ilu
     import sys as _sys
-    _mod_name = "ipfs_datasets_py.optimizers.logic.flogic_optimizer"
+    _mod_name = "ipfs_datasets_py.logic.flogic_optimizer"
     if _mod_name not in _sys.modules:
         import pathlib as _pl
         _path = (
             _pl.Path(__file__).resolve().parents[4]
             / "ipfs_datasets_py"
-            / "optimizers"
             / "logic"
             / "flogic_optimizer.py"
         )

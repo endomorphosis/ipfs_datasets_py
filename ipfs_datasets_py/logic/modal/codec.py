@@ -13,7 +13,7 @@ import math
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
-from ipfs_datasets_py.optimizers.logic.flogic_optimizer import (
+from ipfs_datasets_py.logic.flogic_optimizer import (
     FLogicOptimizerConfig,
     FLogicOptimizerResult,
     FLogicSemanticOptimizer,

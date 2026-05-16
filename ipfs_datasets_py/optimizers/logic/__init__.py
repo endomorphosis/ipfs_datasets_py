@@ -1,4 +1,4 @@
-"""Logic optimizer public API exports."""
+"""Legacy compatibility facade for logic optimizer exports."""
 
 from .exceptions import (
     LogicError,
@@ -109,7 +109,7 @@ _MODAL_DAEMON_EXPORTS = {
 
 def __getattr__(name: str):
     if name in _FLOGIC_EXPORTS:
-        from .flogic_optimizer import (  # noqa: PLC0415
+        from ipfs_datasets_py.logic.flogic_optimizer import (  # noqa: PLC0415
             FLogicSemanticOptimizer,
             FLogicOptimizerConfig,
             FLogicOptimizerResult,

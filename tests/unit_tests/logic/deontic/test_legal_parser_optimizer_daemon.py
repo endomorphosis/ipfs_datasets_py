@@ -5,8 +5,8 @@ import sys
 import time
 from pathlib import Path
 
-import ipfs_datasets_py.optimizers.logic.deontic.parser_daemon as parser_daemon_module
-from ipfs_datasets_py.optimizers.logic.deontic.parser_daemon import (
+import ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon as parser_daemon_module
+from ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon import (
     LegalParserDaemonConfig,
     LegalParserCycleProposal,
     LegalParserOptimizerDaemon,
