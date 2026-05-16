@@ -21,10 +21,16 @@ if __name__ == "__main__":
     runpy.run_path(str(_validate_canonical_script()), run_name="__main__")
 else:
     _namespace = runpy.run_path(str(_validate_canonical_script()))
-    install_profile = _namespace.get("install_profile")
+    public_exports = {
+        name: value
+        for name, value in _namespace.items()
+        if not name.startswith("_")
+    }
+    install_profile = public_exports.get("install_profile")
     if install_profile is None:
         raise RuntimeError(
             f"'install_profile' is missing from canonical install helper: {_CANONICAL_SCRIPT}"
         )
+    globals().update(public_exports)
 
-    __all__ = ["install_profile"]
+    __all__ = sorted(public_exports)

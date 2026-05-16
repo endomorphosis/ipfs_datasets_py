@@ -14,4 +14,4 @@ if not _CANONICAL_SCRIPT.is_file():
         f"Canonical auto-install configuration not found: {_CANONICAL_SCRIPT}"
     )
 
-globals().update(runpy.run_path(str(_CANONICAL_SCRIPT)))
+runpy.run_path(str(_CANONICAL_SCRIPT))
