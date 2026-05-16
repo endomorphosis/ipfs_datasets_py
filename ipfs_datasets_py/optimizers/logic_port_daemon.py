@@ -2557,10 +2557,7 @@ Hard constraints:
 Repair payload:
 {json.dumps(payload, indent=2, default=str)}
 """
-        budget = max(4000, int(self.daemon_config.max_prompt_chars))
-        if len(prompt) > budget:
-            return prompt[:budget] + "\n\n[worktree validation repair prompt truncated]\n"
-        return prompt
+        return self._truncate_llm_prompt(prompt)
 
     def _build_worktree_edit_prompt(
         self,
@@ -2616,10 +2613,7 @@ The planning context below may say to return JSON with `files` or `patch`; ignor
 PLANNING CONTEXT:
 """
         prompt = header + planning_context
-        budget = max(4000, int(self.daemon_config.max_prompt_chars))
-        if len(prompt) > budget:
-            return prompt[:budget] + "\n\n[worktree edit prompt truncated]\n"
-        return prompt
+        return self._truncate_llm_prompt(prompt)
 
     def _worktree_diff_paths(self) -> List[str]:
         return _shared_unique_worktree_paths(
@@ -2991,7 +2985,7 @@ Original patch:
 {patch}
 """
         try:
-            repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+            repaired = parse_llm_patch_response(self._call_llm(self._truncate_llm_prompt(repair_prompt)))
         except Exception as exc:
             LOGGER.warning("patch repair call failed: %s", exc)
             return patch
@@ -3065,7 +3059,7 @@ Current file contents for likely targets:
 {chr(10).join(file_sections) if file_sections else "[No paths could be recovered from the malformed patch.]"}
 """
         try:
-            repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+            repaired = parse_llm_patch_response(self._call_llm(self._truncate_llm_prompt(repair_prompt)))
         except Exception as exc:
             LOGGER.warning("patch-to-files repair call failed: %s", exc)
             return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
@@ -3158,7 +3152,7 @@ Original files JSON:
                 session_id=context.session_id,
             )
             try:
-                repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+                repaired = parse_llm_patch_response(self._call_llm(self._truncate_llm_prompt(repair_prompt)))
             except Exception as exc:
                 LOGGER.warning("preflight repair call failed: %s", exc)
                 return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)], failure_kind="preflight_repair_exception")
@@ -3276,7 +3270,7 @@ Current repository file contents after rollback:
             failed_commands=[" ".join(result.command) for result in artifact.validation_results if not result.ok],
         )
         try:
-            repaired = parse_llm_patch_response(self._call_llm(repair_prompt))
+            repaired = parse_llm_patch_response(self._call_llm(self._truncate_llm_prompt(repair_prompt)))
         except Exception as exc:
             LOGGER.warning("validation repair call failed: %s", exc)
             return LogicPortArtifact(raw_response=artifact.raw_response, errors=[str(exc)])
@@ -3322,6 +3316,7 @@ Current repository file contents after rollback:
         )
 
     def _call_llm(self, prompt: str) -> str:
+        prompt = self._truncate_llm_prompt(prompt)
         provider = self._resolved_provider()
         required_providers = self._required_effective_router_providers(provider)
         self._write_status(
@@ -3398,6 +3393,13 @@ Current repository file contents after rollback:
             ) from exc
         self._write_status("llm_call_completed", response_chars=len(text), provider=provider or "auto")
         return text
+
+    def _truncate_llm_prompt(self, prompt: str) -> str:
+        budget = max(4000, int(self.daemon_config.max_prompt_chars))
+        suffix = "\n\n[truncated]\n"
+        if len(prompt) > budget + len(suffix):
+            return prompt[:budget] + suffix
+        return prompt
 
     @staticmethod
     def _required_effective_router_providers(provider: Optional[str]) -> Tuple[str, ...]:
@@ -3623,7 +3625,7 @@ Documents:
 {chr(10).join(doc_sections)}
 """
         if len(prompt) > budget:
-            return prompt[:budget] + "\n\n[daemon prompt truncated]\n"
+            return prompt[:budget] + "\n\n[truncated]\n"
         return prompt
 
     def _run_validation(self) -> List[CommandResult]:

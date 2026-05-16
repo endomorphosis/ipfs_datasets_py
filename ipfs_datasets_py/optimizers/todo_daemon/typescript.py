@@ -57,12 +57,34 @@ def repair_common_typescript_text_damage(content: str) -> str:
         repaired,
     )
     repaired = re.sub(
+        r"for \(let (?P<var>[A-Za-z_$][\w$]*) = (?P<start>\d+); "
+        r"(?P=var)\s+(?P<bound>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+);",
+        r"for (let \g<var> = \g<start>; \g<var> < \g<bound>;",
+        repaired,
+    )
+    repaired = re.sub(
+        r"for \(let (?P<var>[A-Za-z_$][\w$]*) = (?P<start>\d+); "
+        r"(?P=var)\s+(?P<bound>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)\) \{",
+        r"for (let \g<var> = \g<start>; \g<var> < \g<bound>; \g<var> += 1) {",
+        repaired,
+    )
+    repaired = re.sub(
         r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length)\)",
         r"while (\g<var> < \g<bound>)",
         repaired,
     )
     repaired = re.sub(
         r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$.]*\.length)\s+&&",
+        r"while (\g<var> < \g<bound> &&",
+        repaired,
+    )
+    repaired = re.sub(
+        r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)\)",
+        r"while (\g<var> < \g<bound>)",
+        repaired,
+    )
+    repaired = re.sub(
+        r"while \((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+)\s+&&",
         r"while (\g<var> < \g<bound> &&",
         repaired,
     )
@@ -167,6 +189,13 @@ def obvious_typescript_text_damage(content: str) -> List[str]:
         (
             "missing comparison operator before a numeric bound",
             re.compile(r"\b(?:index|offset|position|cursor|start|end|count|arity|weight|score)\s{2,}\d+\b"),
+        ),
+        (
+            "missing comparison operator before a dotted bound",
+            re.compile(
+                r"\b(?:index|offset|position|cursor|start|end|count|arity|weight|score|total)"
+                r"\s{2,}[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+\b"
+            ),
         ),
         (
             "missing comparison operator before a string literal",

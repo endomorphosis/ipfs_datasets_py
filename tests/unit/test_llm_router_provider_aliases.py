@@ -33,6 +33,27 @@ def test_resolve_provider_uncached_preferred_alias_canonicalized(monkeypatch) ->
     assert "openai" in calls
 
 
+def test_resolve_provider_uncached_codex_alias_targets_codex_cli(monkeypatch) -> None:
+    calls = []
+
+    def fake_builtin(name: str):
+        calls.append(name)
+        if name == "codex_cli":
+            return _DummyProvider()
+        return None
+
+    monkeypatch.setattr(llm_router, "_builtin_provider_by_name", fake_builtin)
+    monkeypatch.setattr(llm_router, "_get_accelerate_provider", lambda deps: None)
+
+    provider = llm_router._resolve_provider_uncached(
+        preferred="codex",
+        deps=llm_router.get_default_router_deps(),
+    )
+
+    assert isinstance(provider, _DummyProvider)
+    assert "codex_cli" in calls
+
+
 def test_resolve_provider_uncached_forced_alias_canonicalized(monkeypatch) -> None:
     calls = []
 

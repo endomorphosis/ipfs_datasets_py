@@ -256,6 +256,7 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     action_text = _normalize_assignment_allocation_light_verb_action(action_text)
     action_text = _normalize_prioritization_scheduling_light_verb_action(action_text)
     action_text = _normalize_delegation_reservation_light_verb_action(action_text)
+    action_text = _normalize_domain_canonical_action(action_text)
 
     action_pred = normalize_predicate_name(action_text) if action_text else "Action"
     condition_preds = _unique_predicates(_formula_condition_texts(norm))
@@ -275,6 +276,107 @@ def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     inner_parts.extend(f"¬{pred}(x)" for pred in exception_preds[:_FORMULA_EXCEPTION_LIMIT])
     inner = " ∧ ".join(inner_parts)
     return f"{operator}(∀x ({inner} → {action_pred}(x)))"
+
+
+def _normalize_domain_canonical_action(action_text: str) -> str:
+    """Apply final domain-specific canonical predicates after generic passes."""
+
+    text = str(action_text or "").strip()
+    if not text:
+        return text
+
+    patterns: Sequence[tuple[str, str]] = (
+        (r"^(?:make|provide|grant)\s+(?:an?\s+|the\s+)?reasonable\s+accommodation\s+(?:for|to|of)\s+(?:the\s+)?(.+)$", "accommodate"),
+        (r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?recordation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record"),
+        (r"^(?:make|complete|enter|file|record)\s+(?:a\s+|the\s+)?memorialization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "memorialize"),
+        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?stay\s+(?:of|for)\s+(?:the\s+)?(.+)$", "stay"),
+        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?continuance\s+(?:of|for)\s+(?:the\s+)?(.+)$", "continue"),
+        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?postponement\s+(?:of|for)\s+(?:the\s+)?(.+)$", "postpone"),
+        (r"^(?:grant|order|approve|authorize|issue|enter)\s+(?:a\s+|the\s+)?deferral\s+(?:of|for)\s+(?:the\s+)?(.+)$", "defer"),
+        (r"^(?:perform|conduct|complete|prepare|undertake)\s+(?:an?\s+|the\s+)?access\s+review\s+(?:of|for)\s+(?:the\s+)?(.+)$", "review access"),
+        (r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?credential\s+rotation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "rotate credentials"),
+        (r"^(?:complete|perform|conduct|prepare)\s+(?:an?\s+|the\s+)?password\s+reset\s+(?:of|for)\s+(?:the\s+)?(.+)$", "reset password"),
+        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?vulnerability\s+scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "scan vulnerabilities"),
+        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?intrusion\s+monitoring\s+(?:of|for)\s+(?:the\s+)?(.+)$", "monitor intrusions"),
+        (r"^(?:issue|provide|give|send|deliver)\s+(?:an?\s+|the\s+)?notification\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "notify"),
+        (r"^(?:provide|give|issue|deliver|send)\s+(?:a\s+|the\s+)?notice\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "notice"),
+        (r"^(?:provide|give|furnish|deliver)\s+(?:an?\s+|the\s+)?disclosure\s+(?:of|to|regarding|concerning|about)\s+(?:the\s+)?(.+)$", "disclose"),
+        (r"^(?:provide|furnish|deliver)\s+auxiliary\s+aids?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "provide auxiliary aid"),
+        (r"^(?:make|complete|perform|prepare)\s+accessibility\s+modifications\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "modify accessibility"),
+        (r"^(?:prepare|submit|maintain|adopt)\s+(?:a\s+|the\s+)?language\s+access\s+plan\s+(?:for|of)\s+(?:the\s+)?(.+)$", "plan language access"),
+        (r"^(?:provide|furnish|deliver)\s+accessible\s+formats\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "format accessibly"),
+        (r"^(?:provide|furnish|deliver)\s+sign\s+language\s+interpretation\s+(?:to|for|of)\s+(?:the\s+)?(.+)$", "interpret sign language"),
+        (r"^(?:conduct|perform|complete|prepare)\s+(?:an?\s+|the\s+)?risk\s+assessment(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "assess risk"),
+        (r"^(?:perform|conduct|complete|prepare)\s+(?:an?\s+|the\s+)?safety\s+analysis(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "analyze safety"),
+        (r"^(?:prepare|develop|complete|submit)\s+(?:an?\s+|the\s+)?emergency\s+response\s+plan(?:\s+(?:of|for)\s+(?:the\s+)?(.+))?$", "plan emergency response"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?matching\s+(?:of|for)\s+(?:the\s+)?(.+)$", "match"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?comparison\s+(?:of|for)\s+(?:the\s+)?(.+)$", "compare"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?validation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "validate"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?normalization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "normalize"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?deduplication\s+(?:of|for)\s+(?:the\s+)?(.+)$", "deduplicate"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?cross-checking\s+(?:of|for)\s+(?:the\s+)?(.+)$", "cross-check"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?digitization\s+(?:of|for)\s+(?:the\s+)?(.+)$", "digitize"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?scanning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "scan"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out)\s+(?:an?\s+|the\s+)?migration\s+(?:of|for)\s+(?:the\s+)?(.+)$", "migrate"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?upload\s+(?:of|for)\s+(?:the\s+)?(.+)$", "upload"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?download\s+(?:of|for)\s+(?:the\s+)?(.+)$", "download"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?import\s+(?:of|for)\s+(?:the\s+)?(.+)$", "import"),
+        (r"^(?:perform|conduct|complete|provide|make|carry\s+out|execute)\s+(?:an?\s+|the\s+)?export\s+(?:of|for)\s+(?:the\s+)?(.+)$", "export"),
+        (r"^(?:make|prepare|submit|file)\s+(?:an?\s+|the\s+)?report\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$", "report"),
+        (r"^(?:submit|file|prepare)\s+reporting\s+(?:of|for|on|regarding|concerning)\s+(?:the\s+)?(.+)$", "report"),
+        (r"^(?:prepare|file|submit)\s+(?:a\s+|the\s+)?return\s+(?:of|for)\s+(?:the\s+)?(.+)$", "file return"),
+        (r"^(?:file|submit|prepare)\s+(?:a\s+|the\s+)?statement\s+of\s+compliance$", "declare compliance"),
+        (r"^(?:secure|obtain|record)\s+(?:an?\s+|the\s+)?authorization\s+(?:from|of|for)\s+(?:the\s+)?(.+)$", "obtain authorization"),
+        (r"^(?:obtain|secure|record)\s+(?:a\s+|the\s+)?consent\s+(?:from|of|for)\s+(?:the\s+)?(.+)$", "obtain consent"),
+        (r"^(?:file|record|grant|approve)\s+(?:a\s+|the\s+)?waiver\s+(?:of|for|from)\s+(?:the\s+)?(.+)$", "waive"),
+        (r"^(?:record|file|execute)\s+(?:a\s+|the\s+)?release\s+(?:of|for)\s+(?:the\s+)?(.+)$", "release"),
+        (r"^(?:furnish|make|provide|deliver)\s+(?:a\s+|the\s+)?copy\s+(?:of|for)\s+(?:the\s+)?(.+)$", "provide copy"),
+        (r"^(?:make|provide|post)\s+(?:a\s+|the\s+)?deposit\s+(?:of|for)\s+(?:the\s+)?(.+)$", "deposit"),
+        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?mapping\s+(?:of|for)\s+(?:the\s+)?(.+)$", "map"),
+        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?geocoding\s+(?:of|for)\s+(?:the\s+)?(.+)$", "geocode"),
+        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?georeferencing\s+(?:of|for)\s+(?:the\s+)?(.+)$", "georeference"),
+        (r"^(?:perform|conduct|prepare|maintain|complete)\s+(?:a\s+|the\s+)?survey\s+(?:of|for)\s+(?:the\s+)?(.+)$", "survey"),
+        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:an?\s+|the\s+)?evacuation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "evacuate"),
+        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?sheltering\s+(?:of|for)\s+(?:the\s+)?(.+)$", "shelter"),
+        (r"^(?:perform|conduct|prepare|provide|complete)\s+(?:a\s+|the\s+)?rescue\s+(?:of|for)\s+(?:the\s+)?(.+)$", "rescue"),
+        (r"^(?:carry\s+out|perform|conduct|complete)\s+(?:an?\s+|the\s+)?emergency\s+drill\s+(?:of|for)\s+(?:the\s+)?(.+)$", "drill"),
+        (r"^(?:maintain|create|prepare|conduct)\s+(?:a\s+|the\s+)?custody\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log custody"),
+        (r"^(?:prepare|document|complete|maintain)\s+chain(?:-|\s+)of(?:-|\s+)custody\s+documentation\s+(?:of|for)\s+(?:the\s+)?(.+)$", "document chain custody"),
+        (r"^(?:prepare|complete|maintain)\s+(?:an?\s+|the\s+)?exhibit\s+inventory\s+(?:of|for)\s+(?:the\s+)?(.+)$", "inventory exhibit"),
+        (r"^(?:complete|prepare|maintain)\s+(?:a\s+|the\s+)?specimen\s+accession\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "accession"),
+        (r"^(?:maintain|prepare|complete)\s+evidence\s+preservation\s+records?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "preserve evidence"),
+        (r"^(?:keep|maintain|prepare|complete)\s+(?:a\s+|the\s+)?transfer\s+log\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record evidence transfer"),
+        (r"^(?:prepare|adopt|publish|issue)\s+(?:a\s+|the\s+)?revisions?\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "revise"),
+        (r"^(?:publish|prepare|adopt|issue)\s+annotations\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "annotate"),
+        (r"^(?:issue|prepare|publish|adopt)\s+(?:a\s+|the\s+)?supplement\s+(?:of|for|to)\s+(?:the\s+)?(.+)$", "supplement"),
+        (r"^(?:prepare|record|approve)\s+minutes\s+(?:of|for)\s+(?:the\s+)?(.+)$", "record minutes"),
+        (r"^(?:approve|prepare|set)\s+(?:an?\s+|the\s+)?agenda\s+(?:of|for)\s+(?:the\s+)?(.+)$", "set agenda"),
+        (r"^(?:conduct|perform|record)\s+(?:a\s+|the\s+)?roll\s+call\s+(?:of|for)\s+(?:the\s+)?(.+)$", "call roll"),
+        (r"^(?:publish|issue|provide)\s+meeting\s+notices?\s+(?:to|for)\s+(?:the\s+)?(.+)$", "notice meeting"),
+        (r"^(?:prepare|publish|provide)\s+(?:an?\s+|the\s+)?abstract\s+(?:of|for)\s+(?:the\s+)?(.+)$", "abstract"),
+        (r"^(?:prepare|publish|provide)\s+excerpts\s+(?:of|for)\s+(?:the\s+)?(.+)$", "excerpt"),
+        (r"^(?:provide|prepare|publish)\s+captioning\s+(?:of|for)\s+(?:the\s+)?(.+)$", "caption"),
+        (r"^(?:assign|prepare|provide)\s+tags\s+(?:to|for)\s+(?:the\s+)?(.+)$", "tag"),
+        (r"^(?:file|prepare|submit)\s+(?:an?\s+|the\s+)?incident\s+report\s+(?:of|for)\s+(?:the\s+)?(.+)$", "report incident"),
+        (r"^(?:create|maintain|prepare|conduct)\s+(?:an?\s+|the\s+)?incident\s+log(?:ging)?\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log incident"),
+        (r"^(?:conduct)\s+incident\s+logging\s+(?:of|for)\s+(?:the\s+)?(.+)$", "log incident"),
+        (r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?breach\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register breach"),
+        (r"^(?:maintain|create|prepare|update)\s+(?:a\s+|the\s+)?risk\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register risk"),
+        (r"^(?:maintain|create|prepare|update)\s+(?:an?\s+|the\s+)?incident\s+register\s+(?:of|for)\s+(?:the\s+)?(.+)$", "register incident"),
+    )
+    for pattern, replacement in patterns:
+        match = re.match(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        target = _domain_canonical_target(match.group(1) if match.lastindex else "")
+        return f"{replacement} {target}".strip()
+    return text
+
+
+def _domain_canonical_target(target: str) -> str:
+    normalized = _normalized_light_verb_target(target)
+    normalized = re.sub(r"^(?:a|an|the)\s+", "", normalized, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", normalized).strip()
 
 
 def _formula_operator(norm: LegalNormIR, action_text: str) -> str:

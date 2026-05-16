@@ -492,9 +492,13 @@ def _target_components(
     missing_symbols = list(symbol_alignment.get("missing_exported_formula_symbols") or [])
     source_symbols = list(symbol_alignment.get("source_formula_symbols") or [])
     exported_symbols = list(symbol_alignment.get("exported_formula_symbols") or [])
+    semantic_predicate = _semantic_formula_predicate(source_symbols, exported_symbols)
+    semantic_family = _semantic_formula_family(semantic_predicate)
     return {
         "target": target,
         "formula_role": _target_formula_role(target),
+        "semantic_formula_predicate": semantic_predicate,
+        "semantic_formula_family": semantic_family,
         "uses_frame_record": target == "frame_logic" and text.startswith("legal_norm("),
         "uses_event_calculus_wrapper": target == "deontic_cec" and text.startswith("Happens("),
         "uses_deontic_wrapper": bool(re.match(r"^[OPF]\(", text)),
@@ -581,6 +585,54 @@ def _target_components(
             target_parse_profile.get("event_predicates") or []
         ),
     }
+
+
+def _semantic_formula_predicate(
+    source_symbols: Sequence[Any],
+    exported_symbols: Sequence[Any],
+) -> str:
+    for symbols in (source_symbols, exported_symbols):
+        values = [str(symbol or "").strip() for symbol in symbols if str(symbol or "").strip()]
+        if len(values) >= 2:
+            return values[-1]
+        if len(values) == 1:
+            return values[0]
+    return ""
+
+
+def _semantic_formula_family(action_predicate: str) -> str:
+    predicate = str(action_predicate or "").strip()
+    if not predicate:
+        return "ordinary_duty"
+
+    ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
+        (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
+        (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
+        (("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"), "consent_release_instrument_duty"),
+        (("Accommodate", "ProvideAuxiliaryAid", "ProvideAccessible", "ModifyAccessibility", "PlanLanguageAccess", "FormatAccessibly", "InterpretSignLanguage"), "accessibility_accommodation_duty"),
+        (("ProvideAccess", "ProvideRecordsInspection", "PermitInspection", "ProvideCopy", "ProvidePublicAccess"), "public_access_records_duty"),
+        (("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"), "document_authentication_duty"),
+        (("Mediate", "Arbitrate", "Settle", "Conciliate", "Negotiate"), "dispute_resolution_duty"),
+        (("Anonymize", "Decrypt", "Deidentify", "Destroy", "Detokenize", "Encrypt", "Erase", "Expunge", "Hash", "Mask", "Pseudonymize", "Redact", "Seal", "Tokenize", "Unseal"), "data_protection_duty"),
+        (("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"), "legal_recordkeeping_duty"),
+        (("Train", "Orient", "Instruct"), "training_orientation_duty"),
+        (("ReviewAccess", "RotateCredentials", "ResetPassword", "ScanVulnerabilities", "MonitorIntrusions"), "cybersecurity_access_control_duty"),
+        (("ImplementCorrectiveActionPlan", "SubmitCompliancePlan", "AssessRisk", "MaintainComplianceProgram", "PlanEmergencyResponse", "AnalyzeSafety"), "compliance_planning_duty"),
+        (("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"), "data_quality_processing_duty"),
+        (("Report", "FileReturn", "DeclareCompliance"), "regulatory_reporting_duty"),
+        (("Map", "Geocode", "Georeference", "Survey"), "geospatial_records_duty"),
+        (("Evacuate", "Shelter", "Rescue", "Drill"), "emergency_operations_duty"),
+        (("Revise", "Annotate", "Supplement"), "code_maintenance_duty"),
+        (("Catalog", "Index", "Interpret", "Summarize", "Transcribe", "Translate", "Abstract", "Excerpt", "Caption", "Tag"), "records_information_processing_duty"),
+        (("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"), "administrative_relief_duty"),
+        (("DepositSecurity", "ProvideProofInsurance", "MaintainLiabilityInsurance", "PostBond", "EstablishEscrow", "ReleaseBond"), "financial_assurance_duty"),
+        (("Notice", "Notify", "Disclose"), "public_information_duty"),
+    )
+    for prefixes, family in ordered_prefixes:
+        if predicate.startswith(tuple(prefixes)):
+            return family
+    return "ordinary_duty"
 
 
 def _target_quality_gate(

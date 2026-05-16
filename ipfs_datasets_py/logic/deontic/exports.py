@@ -60,6 +60,22 @@ LOCAL_PROVER_SYNTAX_TARGETS = (
     "deontic_temporal_fol",
 )
 
+EXPECTED_PROVER_TARGET_ROLES = {
+    "frame_logic": "frame_record",
+    "deontic_cec": "event_calculus_state",
+    "fol": "first_order_formula",
+    "deontic_fol": "deontic_first_order_formula",
+    "deontic_temporal_fol": "temporal_deontic_first_order_formula",
+}
+
+EXPECTED_PROVER_TARGET_DIALECT_FAMILIES = {
+    "frame_logic": "frame_logic",
+    "deontic_cec": "event_calculus",
+    "fol": "first_order",
+    "deontic_fol": "deontic_first_order",
+    "deontic_temporal_fol": "deontic_temporal_first_order",
+}
+
 DEFAULT_RECONSTRUCTION_LEGAL_SLOTS = (
     "actor",
     "modality",
@@ -383,13 +399,33 @@ def summarize_phase8_quality_records(
     )
     provenance = summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
 
+    prover_records_have_source_ids = any(
+        isinstance(record, Mapping) and str(record.get("source_id") or "").strip()
+        for record in prover_syntax_records or []
+    )
+    prover_complete = (
+        prover_corpus.get("all_sources_complete") is True
+        if prover_records_have_source_ids
+        else prover.get("all_required_passed") is True
+    )
+
     blockers = set(reconstruction.get("coverage_blockers") or [])
-    blockers.update(prover_corpus.get("coverage_blocker_distribution", {}).keys())
+    prover_target_blockers = [
+        str(blocker)
+        for blocker in prover.get("target_status_matrix_blockers") or []
+        if not (
+            prover_records_have_source_ids
+            and str(blocker).startswith("duplicate_prover_syntax_target_record:")
+        )
+    ]
+    blockers.update(prover_target_blockers)
+    if prover_records_have_source_ids:
+        blockers.update(prover_corpus.get("coverage_blocker_distribution", {}).keys())
     blockers.update(provenance.get("coverage_blockers") or [])
 
     complete = (
         reconstruction.get("slot_reconstruction_complete") is True
-        and prover_corpus.get("all_sources_complete") is True
+        and prover_complete
         and provenance.get("all_checked_slots_grounded") is True
     )
 
@@ -611,6 +647,370 @@ def summarize_prover_syntax_target_coverage(
     }
 
 
+def summarize_prover_target_quality_gates(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize per-target proof-readiness quality gates."""
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    gates_by_target: Dict[str, Mapping[str, Any]] = {}
+    gate_record_count = 0
+    failed_distribution: Counter[str] = Counter()
+    failed_by_target: Dict[str, List[str]] = {}
+    complete_targets: List[str] = []
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        if target not in required or target in gates_by_target:
+            continue
+        gate = record.get("target_quality_gate")
+        if not isinstance(gate, Mapping):
+            continue
+        gates_by_target[target] = gate
+        gate_record_count += 1
+        failed_checks = [
+            str(check or "").strip()
+            for check in gate.get("failed_quality_checks") or []
+            if str(check or "").strip()
+        ]
+        failed_by_target[target] = failed_checks
+        failed_distribution.update(failed_checks)
+        if gate.get("formal_validation_complete") is True:
+            complete_targets.append(target)
+
+    missing_targets = [target for target in required if target not in gates_by_target]
+    incomplete_targets = [
+        target
+        for target in required
+        if target in gates_by_target and target not in complete_targets
+    ]
+    complete_rate = (
+        round(len(complete_targets) / len(required), 6)
+        if required and gate_record_count
+        else 1.0
+    )
+    return {
+        "quality_gate_record_count": gate_record_count,
+        "quality_gate_present_targets": sorted(gates_by_target),
+        "quality_gate_missing_targets": missing_targets,
+        "quality_gate_complete_targets": sorted(complete_targets),
+        "quality_gate_incomplete_targets": sorted(incomplete_targets),
+        "quality_gate_complete_rate": complete_rate,
+        "quality_gate_all_targets_complete": bool(
+            gate_record_count
+            and len(complete_targets) == len(required)
+            and not missing_targets
+        ),
+        "failed_quality_checks_by_target": {
+            target: failed_by_target.get(target, []) for target in required
+        },
+        "failed_quality_check_distribution": dict(
+            sorted(failed_distribution.items())
+        ),
+    }
+
+
+def summarize_prover_target_role_matrix(
+    records: Sequence[Mapping[str, Any]],
+    required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
+) -> Dict[str, Any]:
+    """Summarize target formula roles, dialect families, and semantic families."""
+
+    required = tuple(dict.fromkeys(str(target) for target in required_targets if target))
+    valid_records = [record for record in records or [] if isinstance(record, Mapping)]
+    records_by_target: Dict[str, List[Mapping[str, Any]]] = {
+        target: [] for target in required
+    }
+    for record in valid_records:
+        target = _prover_syntax_record_target(record)
+        if target in records_by_target:
+            records_by_target[target].append(record)
+
+    matrix: List[Dict[str, Any]] = []
+    status_by_target: Dict[str, str] = {}
+    roles_by_target: Dict[str, str] = {}
+    dialects_by_target: Dict[str, str] = {}
+    semantic_family_by_target: Dict[str, str] = {}
+    syntax_status_by_target: Dict[str, str] = {}
+    formal_validation_by_target: Dict[str, bool] = {}
+    failed_quality_by_target: Dict[str, List[str]] = {}
+    record_count_by_target: Dict[str, int] = {}
+    duplicate_statuses_by_target: Dict[str, List[str]] = {}
+    duplicate_targets: List[str] = []
+    missing_targets: List[str] = []
+    unknown_role_targets: List[str] = []
+    unknown_dialect_targets: List[str] = []
+    mismatched_role_targets: List[str] = []
+    mismatched_dialect_targets: List[str] = []
+    complete_targets: List[str] = []
+    incomplete_targets: List[str] = []
+    role_values: set[str] = set()
+    dialect_values: set[str] = set()
+    semantic_distribution: Counter[str] = Counter()
+    syntax_distribution: Counter[str] = Counter()
+    status_distribution: Counter[str] = Counter()
+    formal_complete_count = 0
+    duplicate_record_count = 0
+
+    for target in required:
+        target_records = records_by_target[target]
+        count = len(target_records)
+        record_count_by_target[target] = count
+        if count > 1:
+            duplicate_targets.append(target)
+            duplicate_record_count += count - 1
+            duplicate_statuses_by_target[target] = [
+                _prover_syntax_record_status(record) for record in target_records
+            ]
+        if count == 0:
+            record = {}
+            missing_targets.append(target)
+            syntax_status = "missing"
+        else:
+            record = target_records[0]
+            syntax_status = _prover_syntax_record_status(record)
+
+        components = _record_mapping(record.get("target_components"))
+        dialect_profile = _record_mapping(record.get("target_dialect_profile"))
+        gate = _record_mapping(record.get("target_quality_gate"))
+        role = str(
+            components.get("formula_role")
+            or record.get("target_formula_role")
+            or dialect_profile.get("formula_role")
+            or ""
+        ).strip() or "unknown"
+        dialect = str(
+            components.get("dialect_family")
+            or dialect_profile.get("dialect_family")
+            or ""
+        ).strip() or "unknown"
+        semantic_predicate = str(
+            components.get("semantic_formula_predicate")
+            or record.get("semantic_formula_predicate")
+            or ""
+        ).strip()
+        semantic_family = str(
+            components.get("semantic_formula_family")
+            or record.get("semantic_formula_family")
+            or ""
+        ).strip()
+        if not semantic_family:
+            semantic_family = _semantic_family_for_action_predicate(
+                semantic_predicate
+            ) or "ordinary_duty"
+        failed_checks = [
+            str(check or "").strip()
+            for check in gate.get("failed_quality_checks") or []
+            if str(check or "").strip()
+        ]
+        formal_complete = (
+            bool(gate.get("formal_validation_complete") is True)
+            if "formal_validation_complete" in gate
+            else syntax_status == "passed"
+        )
+
+        expected_role = EXPECTED_PROVER_TARGET_ROLES.get(target, "unknown")
+        expected_dialect = EXPECTED_PROVER_TARGET_DIALECT_FAMILIES.get(
+            target, "unknown"
+        )
+        role_matches = role == expected_role
+        dialect_matches = dialect == expected_dialect
+        if count == 0:
+            matrix_status = "missing"
+        elif count > 1:
+            matrix_status = "duplicate_records"
+        elif role == "unknown" and dialect == "unknown":
+            matrix_status = "unknown_role_and_dialect"
+        elif role == "unknown":
+            matrix_status = "unknown_role"
+        elif dialect == "unknown":
+            matrix_status = "unknown_dialect"
+        elif not role_matches and not dialect_matches:
+            matrix_status = "mismatched_role_and_dialect"
+        elif not role_matches:
+            matrix_status = "mismatched_role"
+        elif not dialect_matches:
+            matrix_status = "mismatched_dialect"
+        else:
+            matrix_status = "complete"
+
+        if role == "unknown":
+            unknown_role_targets.append(target)
+        elif not role_matches and count == 1:
+            mismatched_role_targets.append(target)
+        else:
+            role_values.add(role)
+        if dialect == "unknown":
+            unknown_dialect_targets.append(target)
+        elif not dialect_matches and count == 1:
+            mismatched_dialect_targets.append(target)
+        else:
+            dialect_values.add(dialect)
+        if matrix_status == "complete":
+            complete_targets.append(target)
+        else:
+            incomplete_targets.append(target)
+        if semantic_family:
+            semantic_family_by_target[target] = semantic_family
+            semantic_distribution[semantic_family] += 1
+        roles_by_target[target] = role
+        dialects_by_target[target] = dialect
+        syntax_status_by_target[target] = syntax_status
+        syntax_distribution[syntax_status] += 1
+        formal_validation_by_target[target] = formal_complete
+        if formal_complete:
+            formal_complete_count += 1
+        failed_quality_by_target[target] = failed_checks
+        status_by_target[target] = matrix_status
+        status_distribution[matrix_status] += 1
+        matrix.append(
+            {
+                "target": target,
+                "record_count": count,
+                "status": matrix_status,
+                "formula_role": role,
+                "expected_formula_role": expected_role,
+                "dialect_family": dialect,
+                "expected_dialect_family": expected_dialect,
+                "semantic_formula_predicate": semantic_predicate,
+                "semantic_formula_family": semantic_family,
+                "syntax_status": syntax_status,
+                "syntax_valid": syntax_status == "passed",
+                "formal_validation_complete": formal_complete,
+                "failed_quality_checks": failed_checks,
+            }
+        )
+
+    blockers: List[str] = []
+    blockers.extend(
+        f"duplicate_target_role_records:{target}:{record_count_by_target[target]}"
+        for target in sorted(duplicate_targets)
+    )
+    blockers.extend(
+        f"missing_target_role_record:{target}" for target in sorted(missing_targets)
+    )
+    blockers.extend(
+        f"unknown_target_formula_role:{target}" for target in sorted(unknown_role_targets)
+    )
+    blockers.extend(
+        f"unknown_target_dialect_family:{target}"
+        for target in sorted(unknown_dialect_targets)
+    )
+    blockers.extend(
+        f"mismatched_target_formula_role:{target}:{roles_by_target[target]}!={EXPECTED_PROVER_TARGET_ROLES[target]}"
+        for target in sorted(mismatched_role_targets)
+    )
+    blockers.extend(
+        f"mismatched_target_dialect_family:{target}:{dialects_by_target[target]}!={EXPECTED_PROVER_TARGET_DIALECT_FAMILIES[target]}"
+        for target in sorted(mismatched_dialect_targets)
+    )
+
+    present_count = sum(1 for count in record_count_by_target.values() if count > 0)
+    complete_count = len(complete_targets)
+    return {
+        "target_role_input_record_count": len(valid_records),
+        "target_role_record_count": present_count,
+        "target_role_unique_target_count": present_count,
+        "target_role_duplicate_record_count": duplicate_record_count,
+        "target_role_duplicate_targets": sorted(duplicate_targets),
+        "duplicate_role_targets": sorted(duplicate_targets),
+        "target_role_record_count_by_target": record_count_by_target,
+        "target_role_duplicate_statuses_by_target": duplicate_statuses_by_target,
+        "target_role_required_count": len(required),
+        "target_role_present_required_count": present_count,
+        "target_role_complete_count": complete_count,
+        "target_role_incomplete_count": len(required) - complete_count,
+        "target_role_matrix_coverage_rate": round(complete_count / len(required), 6)
+        if required
+        else 0.0,
+        "target_role_complete_targets": complete_targets,
+        "target_role_incomplete_targets": incomplete_targets,
+        "missing_role_targets": missing_targets,
+        "unknown_role_targets": sorted(unknown_role_targets),
+        "unknown_dialect_targets": sorted(unknown_dialect_targets),
+        "target_formula_roles": sorted(role_values),
+        "target_roles_by_target": roles_by_target,
+        "target_dialect_families_by_target": dialects_by_target,
+        "target_role_matrix": matrix,
+        "target_role_matrix_status_distribution": dict(
+            sorted(status_distribution.items())
+        ),
+        "target_role_matrix_status_by_target": status_by_target,
+        "target_semantic_family_by_target": semantic_family_by_target,
+        "target_semantic_family_distribution": dict(
+            sorted(semantic_distribution.items())
+        ),
+        "target_syntax_status_by_target": syntax_status_by_target,
+        "target_syntax_status_distribution": dict(
+            sorted(syntax_distribution.items())
+        ),
+        "target_formal_validation_complete_by_target": formal_validation_by_target,
+        "target_formal_validation_complete_count": formal_complete_count,
+        "target_formal_validation_incomplete_count": len(required)
+        - formal_complete_count,
+        "target_failed_quality_checks_by_target": failed_quality_by_target,
+        "expected_target_roles_by_target": {
+            target: EXPECTED_PROVER_TARGET_ROLES[target] for target in required
+        },
+        "expected_target_dialect_families_by_target": {
+            target: EXPECTED_PROVER_TARGET_DIALECT_FAMILIES[target]
+            for target in required
+        },
+        "mismatched_role_targets": sorted(mismatched_role_targets),
+        "mismatched_dialect_targets": sorted(mismatched_dialect_targets),
+        "target_role_matrix_blockers": blockers,
+        "target_role_matrix_complete": bool(required and complete_count == len(required)),
+        "target_role_matrix_requires_validation": complete_count != len(required),
+    }
+
+
+def summarize_prover_target_semantic_families(
+    records: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    families: List[str] = []
+    distribution: Counter[str] = Counter()
+    predicate_by_target: Dict[str, str] = {}
+    family_by_target: Dict[str, str] = {}
+
+    for record in records or []:
+        if not isinstance(record, Mapping):
+            continue
+        target = _prover_syntax_record_target(record)
+        components = _record_mapping(record.get("target_components"))
+        predicate = str(
+            components.get("semantic_formula_predicate")
+            or record.get("semantic_formula_predicate")
+            or ""
+        ).strip()
+        family = str(
+            components.get("semantic_formula_family")
+            or record.get("semantic_formula_family")
+            or ""
+        ).strip()
+        if not family:
+            family = _semantic_family_for_action_predicate(predicate)
+        if not family:
+            continue
+        if family not in families:
+            families.append(family)
+        distribution[family] += 1
+        if target:
+            predicate_by_target[target] = predicate
+            family_by_target[target] = family
+
+    return {
+        "semantic_formula_families": sorted(families),
+        "semantic_formula_family_distribution": dict(sorted(distribution.items())),
+        "semantic_formula_predicate_by_target": predicate_by_target,
+        "semantic_formula_family_by_target": family_by_target,
+        "target_semantic_family_consistent": len(families) <= 1,
+        "semantic_formula_family": families[0] if len(families) == 1 else "",
+    }
+
+
 def summarize_prover_syntax_target_corpus_coverage(
     records: Sequence[Mapping[str, Any]],
     required_targets: Sequence[str] = LOCAL_PROVER_SYNTAX_TARGETS,
@@ -759,6 +1159,11 @@ def build_prover_syntax_target_coverage_record(
     """
 
     summary = summarize_prover_syntax_target_coverage(records, required_targets)
+    quality_summary = summarize_prover_target_quality_gates(
+        records, required_targets
+    )
+    role_summary = summarize_prover_target_role_matrix(records, required_targets)
+    semantic_summary = summarize_prover_target_semantic_families(records)
     blockers: List[str] = []
     blockers.extend(
         f"missing_prover_syntax_target:{target}"
@@ -773,7 +1178,48 @@ def build_prover_syntax_target_coverage_record(
         for target in summary["skipped_targets"]
     )
     blockers.extend(summary.get("target_status_matrix_blockers", []))
+    blockers.extend(
+        f"failed_prover_quality_check:{check}"
+        for check, count in quality_summary.get(
+            "failed_quality_check_distribution", {}
+        ).items()
+        if count
+    )
     blockers = sorted(dict.fromkeys(blockers))
+
+    quality_gate_present = quality_summary["quality_gate_record_count"] > 0
+    quality_complete = (
+        quality_summary["quality_gate_all_targets_complete"]
+        if quality_gate_present
+        else True
+    )
+    formal_syntax_valid = bool(summary["all_required_passed"] and quality_complete)
+    coverage_summary = dict(summary)
+    coverage_summary.update(
+        {
+            "quality_gate_summary": quality_summary,
+            "target_role_matrix_summary": role_summary,
+            "target_role_matrix_complete": role_summary[
+                "target_role_matrix_complete"
+            ],
+            "target_role_matrix_requires_validation": role_summary[
+                "target_role_matrix_requires_validation"
+            ],
+            "target_role_matrix_blockers": role_summary[
+                "target_role_matrix_blockers"
+            ],
+            "semantic_family_summary": semantic_summary,
+            "semantic_formula_families": semantic_summary[
+                "semantic_formula_families"
+            ],
+            "semantic_formula_family_distribution": semantic_summary[
+                "semantic_formula_family_distribution"
+            ],
+            "target_semantic_family_consistent": semantic_summary[
+                "target_semantic_family_consistent"
+            ],
+        }
+    )
 
     normalized_source_id = str(source_id or "").strip()
     return {
@@ -788,10 +1234,25 @@ def build_prover_syntax_target_coverage_record(
         "present_required_target_count": summary["present_required_target_count"],
         "record_count": summary["record_count"],
         "syntax_valid_rate": summary["syntax_valid_rate"],
-        "formal_syntax_valid": summary["all_required_passed"],
-        "requires_validation": not summary["all_required_passed"],
+        "formal_syntax_valid": formal_syntax_valid,
+        "requires_validation": (not formal_syntax_valid) or bool(blockers),
         "coverage_blockers": blockers,
-        "coverage_summary": summary,
+        "quality_gate_summary": quality_summary,
+        "target_role_matrix_summary": role_summary,
+        "target_role_matrix_complete": role_summary["target_role_matrix_complete"],
+        "target_role_matrix_requires_validation": role_summary[
+            "target_role_matrix_requires_validation"
+        ],
+        "target_role_matrix_blockers": role_summary["target_role_matrix_blockers"],
+        "semantic_family_summary": semantic_summary,
+        "semantic_formula_families": semantic_summary["semantic_formula_families"],
+        "semantic_formula_family_distribution": semantic_summary[
+            "semantic_formula_family_distribution"
+        ],
+        "target_semantic_family_consistent": semantic_summary[
+            "target_semantic_family_consistent"
+        ],
+        "coverage_summary": coverage_summary,
     }
 
 
@@ -898,6 +1359,10 @@ def _prover_syntax_record_status(record: Mapping[str, Any]) -> str:
     if status in {"passed", "pass", "valid", "ok"} or record.get("syntax_valid") is True:
         return "passed"
     return "failed"
+
+
+def _record_mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
 
 
 def build_ir_slot_provenance_audit_record(
@@ -4202,6 +4667,9 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
 
     formula = build_deontic_formula_record_from_ir(norm)["formula"]
     action_predicate = _deterministic_formula_action_predicate(formula)
+    semantic_family = _deterministic_action_predicate_family(norm, action_predicate)
+    if semantic_family:
+        return semantic_family
 
     if action_predicate.startswith((
         "AdministerAgreement",
@@ -4348,6 +4816,51 @@ def _deterministic_norm_family(norm: LegalNormIR) -> str:
     if norm.modality == "F" or norm.norm_type == "prohibition":
         return "prohibition"
     return norm.norm_type or norm.modality or "unknown"
+
+
+def _deterministic_action_predicate_family(
+    norm: LegalNormIR,
+    action_predicate: str,
+) -> str:
+    action_text = str(norm.action or "").strip().lower()
+    if action_predicate.startswith("Waive") and action_text.startswith("file "):
+        return "consent_release_instrument_duty"
+    return _semantic_family_for_action_predicate(action_predicate)
+
+
+def _semantic_family_for_action_predicate(action_predicate: str) -> str:
+    predicate = str(action_predicate or "").strip()
+    if not predicate:
+        return ""
+
+    ordered_prefixes: Sequence[tuple[Sequence[str], str]] = (
+        (("DocumentChainCustody", "LogCustody", "RecordEvidenceTransfer", "InventoryEvidence", "InventoryExhibit", "Accession", "PreserveEvidence"), "evidence_custody_duty"),
+        (("RecordMinutes", "SetAgenda", "CallRoll", "NoticeMeeting"), "meeting_governance_duty"),
+        (("ReportIncident", "LogIncident", "RegisterBreach", "RegisterRisk", "RegisterIncident"), "incident_risk_reporting_duty"),
+        (("RecordRelease", "ObtainConsent", "ObtainAuthorization", "ReleaseLien"), "consent_release_instrument_duty"),
+        (("Accommodate", "ProvideAuxiliaryAid", "ProvideAccessible", "ModifyAccessibility", "PlanLanguageAccess", "FormatAccessibly", "InterpretSignLanguage"), "accessibility_accommodation_duty"),
+        (("ProvideAccess", "ProvideRecordsInspection", "PermitInspection", "ProvideCopy", "ProvidePublicAccess"), "public_access_records_duty"),
+        (("Acknowledge", "Authenticate", "Attest", "Notarize", "Ratify", "Confirm"), "document_authentication_duty"),
+        (("Mediate", "Arbitrate", "Settle", "Conciliate", "Negotiate"), "dispute_resolution_duty"),
+        (("Anonymize", "Decrypt", "Deidentify", "Destroy", "Detokenize", "Encrypt", "Erase", "Expunge", "Hash", "Mask", "Pseudonymize", "Redact", "Seal", "Tokenize", "Unseal"), "data_protection_duty"),
+        (("Record", "Memorialize", "Archive", "Retain", "Restore", "Preserve"), "legal_recordkeeping_duty"),
+        (("Train", "Orient", "Instruct"), "training_orientation_duty"),
+        (("ReviewAccess", "RotateCredentials", "ResetPassword", "ScanVulnerabilities", "MonitorIntrusions"), "cybersecurity_access_control_duty"),
+        (("ImplementCorrectiveActionPlan", "SubmitCompliancePlan", "AssessRisk", "MaintainComplianceProgram", "PlanEmergencyResponse", "AnalyzeSafety"), "compliance_planning_duty"),
+        (("Match", "Compare", "Validate", "Normalize", "Deduplicate", "CrossCheck"), "data_quality_processing_duty"),
+        (("Report", "FileReturn", "DeclareCompliance"), "regulatory_reporting_duty"),
+        (("Map", "Geocode", "Georeference", "Survey"), "geospatial_records_duty"),
+        (("Evacuate", "Shelter", "Rescue", "Drill"), "emergency_operations_duty"),
+        (("Revise", "Annotate", "Supplement"), "code_maintenance_duty"),
+        (("Catalog", "Index", "Interpret", "Summarize", "Transcribe", "Translate", "Abstract", "Excerpt", "Caption", "Tag"), "records_information_processing_duty"),
+        (("Stay", "Continue", "Postpone", "Defer", "Waive", "Extend"), "administrative_relief_duty"),
+        (("DepositSecurity", "ProvideProofInsurance", "MaintainLiabilityInsurance", "PostBond", "EstablishEscrow", "ReleaseBond"), "financial_assurance_duty"),
+        (("Notice", "Notify", "Disclose"), "public_information_duty"),
+    )
+    for prefixes, family in ordered_prefixes:
+        if predicate.startswith(tuple(prefixes)):
+            return family
+    return ""
 
 
 def _predicate_mentions_regulated_instrument(action_predicate: str) -> bool:

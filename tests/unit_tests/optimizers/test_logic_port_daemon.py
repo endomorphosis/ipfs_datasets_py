@@ -861,6 +861,29 @@ export function count(input: string): number {
     assert "if (total >= input.length || input.length === 0)" in repaired
 
 
+def test_repair_common_typescript_text_damage_recovers_dotted_loop_bounds():
+    damaged = """
+interface State {
+  budget: {
+    maxSteps: number;
+  };
+}
+
+export function fillBudget(state: State): Array<number> {
+  const workerBudgets: Array = [];
+  for (let index = 0; index  state.budget.maxSteps) {
+    workerBudgets.push(index);
+  }
+  return workerBudgets;
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "const workerBudgets: Array<string> = [];" in repaired
+    assert "for (let index = 0; index < state.budget.maxSteps; index += 1)" in repaired
+
+
 def test_repair_common_typescript_text_damage_recovers_string_arrays_and_while_guards():
     damaged = """
 const ORDERED_SYMBOLS: Array = Object.keys(SYMBOL_REPLACEMENTS);
@@ -908,12 +931,16 @@ def test_obvious_typescript_text_damage_detects_stripped_operator_artifacts():
 export function validateArity(arity: number): void {
   if (arity  'Entity');
   const metadata: Record = {};
+  for (let index = 0; index  state.budget.maxSteps) {
+    return;
+  }
 }
 """
 
     findings = logic_port_daemon._obvious_typescript_text_damage(damaged)
 
     assert any("missing comparison operator before a string literal" in finding for finding in findings)
+    assert any("missing comparison operator before a dotted bound" in finding for finding in findings)
     assert any("bare TypeScript generic alias" in finding for finding in findings)
 
 
@@ -1581,6 +1608,71 @@ def test_preflight_repair_recovers_malformed_typescript_files(tmp_path, monkeypa
     assert len(router.calls) == 2
     assert "preflight rejected them before touching the worktree" in router.calls[1]["prompt"]
     assert "export type Good = Record<string, unknown>;" in router.responses[1]
+
+
+def test_preflight_repair_prompt_is_capped_to_router_budget(tmp_path, monkeypatch):
+    plan = tmp_path / "plan.md"
+    status = tmp_path / "status.md"
+    logic_dir = tmp_path / "src" / "lib" / "logic"
+    python_logic_dir = tmp_path / "ipfs_datasets_py" / "ipfs_datasets_py" / "logic"
+    logic_dir.mkdir(parents=True)
+    python_logic_dir.mkdir(parents=True)
+    plan.write_text("- [ ] Port browser-native proof budget planner\n", encoding="utf-8")
+    status.write_text("status notes\n", encoding="utf-8")
+
+    bad = {
+        "summary": "Large malformed replacement",
+        "impact": "Exercises repair prompt truncation.",
+        "tasks": ["Task checkbox-1: Port browser-native proof budget planner"],
+        "patch": "",
+        "files": [
+            {
+                "path": "src/lib/logic/proofSearchBudgets.ts",
+                "content": "export const bad = ;\n" + ("// filler\n" * 2000),
+            }
+        ],
+    }
+    fixed = {
+        "summary": "Fixed budget replacement",
+        "impact": "Adds a compileable replacement after capped repair.",
+        "tasks": ["Task checkbox-1: Port browser-native proof budget planner"],
+        "patch": "",
+        "files": [
+            {
+                "path": "src/lib/logic/proofSearchBudgets.ts",
+                "content": "export const fixedBudget = 1;\n",
+            }
+        ],
+    }
+    router = SequencedRouter([json.dumps(bad), json.dumps(fixed)])
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        plan_docs=(plan,),
+        status_docs=(status,),
+        task_board_doc=plan,
+        typescript_logic_dir=logic_dir,
+        python_logic_dir=python_logic_dir,
+        dry_run=True,
+        validation_commands=tuple(),
+        max_iterations=1,
+        max_prompt_chars=4096,
+    )
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=router)
+
+    def fake_preflight(edits):
+        content = "\n".join(edit["content"] for edit in edits)
+        if "export const bad = ;" in content:
+            return ["src/lib/logic/proofSearchBudgets.ts(1,20): error TS1109: Expression expected."]
+        return []
+
+    monkeypatch.setattr(optimizer, "_typescript_replacement_preflight_errors", fake_preflight)
+
+    result = optimizer.run_once(session_id="preflight-repair-budget")
+
+    assert result["valid"] is True
+    assert len(router.calls) == 2
+    assert len(router.calls[1]["prompt"]) <= 4096 + len("\n\n[truncated]\n")
+    assert router.calls[1]["prompt"].endswith("\n\n[truncated]\n")
 
 
 def test_daemon_reports_router_failures_without_traceback(tmp_path):
