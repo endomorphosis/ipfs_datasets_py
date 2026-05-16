@@ -9,7 +9,11 @@
 
 ## Overview
 
-This changelog documents all changes made during the comprehensive processors directory refactoring project (Phases 1-7). All changes maintain 100% backward compatibility with a 6-month deprecation timeline (until v2.0.0, August 2026).
+This changelog documents the refactoring project snapshot from February 2026.
+Use it as historical context, not as the sole source of truth for the current
+tree: the repository still contains both `processors/core/registry.py` and
+`processors/core/processor_registry.py`, along with root-level processor
+modules that remain part of the public surface.
 
 ---
 
