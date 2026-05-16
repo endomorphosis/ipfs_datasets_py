@@ -292,6 +292,27 @@ class UnifiedGraphRAGOptimizer(BaseOptimizer):
         return (score.overall, feedback)
 ```
 
+#### F-Logic Semantic Optimizer
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseOptimizer
+from ipfs_datasets_py.logic.flogic_optimizer import (
+    FLogicOptimizerConfig,
+    FLogicSemanticOptimizer,
+)
+
+class UnifiedFLogicOptimizer(BaseOptimizer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.flogic_optimizer = FLogicSemanticOptimizer(
+            config=FLogicOptimizerConfig()
+        )
+```
+
+Use `ipfs_datasets_py.logic.flogic_optimizer` for new code. The older
+`ipfs_datasets_py.optimizers.logic` namespace remains available only as a
+compatibility facade.
+
 #### GraphRAG ExtractionConfig: custom_rules
 
 ```python

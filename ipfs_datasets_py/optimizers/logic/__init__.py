@@ -1,4 +1,14 @@
-"""Legacy compatibility facade for logic optimizer exports."""
+"""Legacy compatibility facade for logic optimizer exports.
+
+New code should prefer canonical import paths:
+
+- ``ipfs_datasets_py.logic.flogic_optimizer`` for the F-logic semantic optimizer
+- ``ipfs_datasets_py.optimizers.logic_theorem_optimizer`` for theorem/logic
+  optimization workflows
+
+This module remains importable for backward compatibility while older
+``ipfs_datasets_py.optimizers.logic`` imports are drained from the codebase.
+"""
 
 from .exceptions import (
     LogicError,

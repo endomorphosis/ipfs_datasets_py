@@ -143,16 +143,17 @@ The F-logic module is designed to complement the existing knowledge-graph layer
 3. **Assert** the frames into `ErgoAIWrapper`.
 4. **Prove** statements about the ontology (e.g. class membership, inheritance).
 5. **Feed** the proven facts back into the graph or into the NL→KG→NL pipeline
-   (see `ipfs_datasets_py/optimizers/logic/flogic_optimizer.py`).
+   (see `ipfs_datasets_py/logic/flogic_optimizer.py`).
 
 ---
 
 ## Integration with the optimizers
 
-The companion module
-`ipfs_datasets_py.optimizers.logic.flogic_optimizer` (`FLogicSemanticOptimizer`)
-uses F-logic consistency checking to preserve semantic meaning across the
-encoder/decoder round-trip:
+The companion module `ipfs_datasets_py.logic.flogic_optimizer`
+(`FLogicSemanticOptimizer`) uses F-logic consistency checking to preserve
+semantic meaning across the encoder/decoder round-trip. The older
+`ipfs_datasets_py.optimizers.logic.flogic_optimizer` path remains only as a
+compatibility wrapper:
 
 ```
 Natural Language
