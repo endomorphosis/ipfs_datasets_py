@@ -219,6 +219,30 @@ def test_modal_compiler_surfaces_primary_family_margin_ambiguity_when_outvoted()
     assert low_margin_ambiguity.metadata["family_margin"] < 0.0
 
 
+def test_modal_compiler_surfaces_frame_family_margin_ambiguity_when_outvoted() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_primary_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The authority must, shall, and is required to issue written notice."
+    )
+
+    frame_margin_ambiguity = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "low_frame_modal_family_margin"
+    )
+    assert frame_margin_ambiguity.candidate_ids == ["frame", "deontic"]
+    assert frame_margin_ambiguity.metadata["competing_family"] == "deontic"
+    assert frame_margin_ambiguity.metadata["family_margin"] < 0.0
+    assert frame_margin_ambiguity.metadata["frame_share"] > 0.0
+
+
 def test_modal_decompiler_preserves_context_without_formula_style_text() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="regex", embedding_dimensions=8)

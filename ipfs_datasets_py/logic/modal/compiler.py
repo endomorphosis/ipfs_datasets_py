@@ -254,6 +254,10 @@ class DeterministicModalCompiler:
             return []
 
         ambiguities: List[ModalCompilationAmbiguity] = []
+        family_shares = {
+            str(candidate["family"]): float(candidate["share"])
+            for candidate in ranking
+        }
         if modal_ir.formulas:
             primary_family = str(modal_ir.formulas[0].operator.family)
             primary_share = next(
@@ -320,6 +324,48 @@ class DeterministicModalCompiler:
                     },
                 )
             )
+
+        has_frame_formula = any(
+            str(formula.operator.family) == ModalLogicFamily.FRAME.value
+            for formula in modal_ir.formulas
+        )
+        if has_frame_formula:
+            frame_share = family_shares.get(ModalLogicFamily.FRAME.value, 0.0)
+            best_non_frame = max(
+                (
+                    candidate
+                    for candidate in ranking
+                    if str(candidate["family"]) != ModalLogicFamily.FRAME.value
+                ),
+                key=lambda candidate: (
+                    float(candidate["share"]),
+                    str(candidate["family"]),
+                ),
+                default=None,
+            )
+            if best_non_frame is not None:
+                competing_family = str(best_non_frame["family"])
+                competing_share = float(best_non_frame["share"])
+                frame_margin = frame_share - competing_share
+                if frame_margin <= self.config.modal_primary_family_margin:
+                    ambiguities.append(
+                        ModalCompilationAmbiguity(
+                            ambiguity_type="low_frame_modal_family_margin",
+                            message=(
+                                "Frame-family evidence is weak relative to competing modal cues; "
+                                "family interpretation requires review."
+                            ),
+                            candidate_ids=[ModalLogicFamily.FRAME.value, competing_family],
+                            metadata={
+                                "competing_family": competing_family,
+                                "competing_share": round(competing_share, 6),
+                                "family_margin": round(frame_margin, 6),
+                                "family_ranking": ranking,
+                                "frame_share": round(frame_share, 6),
+                                "primary_family_margin_threshold": self.config.modal_primary_family_margin,
+                            },
+                        )
+                    )
 
         strong_contenders = [
             candidate
