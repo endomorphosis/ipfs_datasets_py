@@ -79,7 +79,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         formulas.append(formula_text)
         phrases.extend(_decode_formula_phrases(formula))
 
-    selected_frame = str(document.metadata.get("selected_frame") or "").strip()
+    selected_frame = _selected_frame(document)
     if selected_frame:
         if phrases:
             phrases.append(_fixed_phrase("in", "frame_connector"))
@@ -211,6 +211,34 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             DecodedModalPhrase(
                 text=str(formula.predicate.role),
                 slot="role",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for condition in _phrase_values(formula.conditions):
+        phrases.append(
+            DecodedModalPhrase(
+                text=condition,
+                slot="condition",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for exception in _phrase_values(formula.exceptions):
+        phrases.append(
+            DecodedModalPhrase(
+                text=exception,
+                slot="exception",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    citation = _clean_text(formula.provenance.citation or "")
+    if citation:
+        phrases.append(
+            DecodedModalPhrase(
+                text=citation,
+                slot="citation",
                 spans=spans,
                 provenance_only=True,
             )
@@ -378,6 +406,31 @@ def _span_from_values(start: Any, end: Any) -> List[List[int]]:
 
 def _clean_text(text: str) -> str:
     return " ".join(str(text or "").split()).strip()
+
+
+def _phrase_values(values: Sequence[str]) -> List[str]:
+    result: List[str] = []
+    for value in values:
+        cleaned = _clean_text(value)
+        if cleaned and cleaned not in result:
+            result.append(cleaned)
+    return result
+
+
+def _selected_frame(document: ModalIRDocument) -> str:
+    metadata_frame = _clean_text(document.metadata.get("selected_frame") or "")
+    if metadata_frame:
+        return metadata_frame
+    frame_logic = getattr(document, "frame_logic", None)
+    if frame_logic is not None:
+        frame_logic_frame = _clean_text(getattr(frame_logic, "selected_frame", "") or "")
+        if frame_logic_frame:
+            return frame_logic_frame
+    for frame in getattr(document, "frame_candidates", []):
+        frame_id = _clean_text(getattr(frame, "frame_id", "") or "")
+        if frame_id:
+            return frame_id
+    return ""
 
 
 def _tokenize_for_similarity(text: str) -> List[str]:

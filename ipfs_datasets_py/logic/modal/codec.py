@@ -559,6 +559,30 @@ def modal_ir_to_flogic_triples(
                     "object": formula.predicate.role,
                 }
             )
+        for condition in sorted({value for value in formula.conditions if value}):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "condition",
+                    "object": condition,
+                }
+            )
+        for exception in sorted({value for value in formula.exceptions if value}):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "exception",
+                    "object": exception,
+                }
+            )
+        if formula.provenance.citation:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "citation",
+                    "object": formula.provenance.citation,
+                }
+            )
         if selected_frame:
             triples.append(
                 {

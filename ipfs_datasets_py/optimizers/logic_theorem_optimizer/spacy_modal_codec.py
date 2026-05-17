@@ -25,6 +25,10 @@ from .modal_registry import (
 )
 
 _WHITESPACE_RE = re.compile(r"\s+")
+_CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
+_CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
+_CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
+_EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 
 
 @dataclass(frozen=True)
@@ -278,6 +282,9 @@ class SpaCyModalIRCompiler:
             sentence = _sentence_for_cue(encoding.sentences, cue)
             tokens = _tokens_for_span(encoding.tokens, sentence.start_char, sentence.end_char)
             predicate = _predicate_from_tokens(tokens, cue)
+            conditions, exceptions = _conditions_and_exceptions_from_sentence(
+                sentence.text
+            )
             formulas.append(
                 ModalIRFormula(
                     formula_id=f"{encoding.document_id}:spacy:f{index:04d}",
@@ -294,6 +301,8 @@ class SpaCyModalIRCompiler:
                         end_char=sentence.end_char,
                         citation=encoding.citation,
                     ),
+                    conditions=conditions,
+                    exceptions=exceptions,
                     metadata={
                         "cue": cue.cue,
                         "cue_start_char": cue.start_char,
@@ -512,6 +521,32 @@ def _role_for_cue(cue: SpaCyModalCueFeature) -> str:
     if cue.family == ModalLogicFamily.FRAME.value:
         return "frame"
     return "clause"
+
+
+def _conditions_and_exceptions_from_sentence(sentence_text: str) -> tuple[List[str], List[str]]:
+    return (
+        _prefixed_clause_phrases(sentence_text, _CONDITION_PREFIXES),
+        _prefixed_clause_phrases(sentence_text, _EXCEPTION_PREFIXES),
+    )
+
+
+def _prefixed_clause_phrases(segment_text: str, prefixes: Sequence[str]) -> List[str]:
+    normalized = _normalize(segment_text)
+    phrases: List[str] = []
+    for prefix in sorted(prefixes, key=lambda value: (-len(value), value)):
+        pattern = re.compile(rf"(?<!\w){re.escape(prefix)}(?!\w)", re.IGNORECASE)
+        for match in pattern.finditer(normalized):
+            fragment = normalized[match.start() :]
+            fragment = _CLAUSE_DELIMITER_RE.split(fragment, maxsplit=1)[0]
+            phrase = _normalized_clause_phrase(fragment)
+            if phrase and phrase not in phrases:
+                phrases.append(phrase)
+    return phrases
+
+
+def _normalized_clause_phrase(text: str) -> str:
+    tokens = _CLAUSE_TOKEN_RE.findall(text.lower())
+    return " ".join(tokens[:18]).strip()
 
 
 __all__ = [

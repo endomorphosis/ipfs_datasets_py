@@ -37,6 +37,22 @@ def test_spacy_encoder_compiles_modal_ir_without_downloaded_model() -> None:
     assert "records" in modal_ir.formulas[0].predicate.name
 
 
+def test_spacy_compiler_extracts_condition_and_exception_slots() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "If the application is complete, the agency must issue written notice unless waived.",
+        document_id="sample-condition-exception",
+    )
+
+    modal_ir = SpaCyModalIRCompiler().compile(encoding)
+    deontic_formula = next(
+        formula for formula in modal_ir.formulas if formula.operator.family == "deontic"
+    )
+
+    assert "if the application is complete" in deontic_formula.conditions
+    assert "unless waived" in deontic_formula.exceptions
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

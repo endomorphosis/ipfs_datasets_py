@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import re
 
 from ipfs_datasets_py.logic.modal import (
@@ -12,6 +13,7 @@ from ipfs_datasets_py.logic.modal import (
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
     import_graph_data_to_graph_engine,
+    modal_ir_to_flogic_triples,
     modal_formula_to_text,
     modal_text_token_similarity,
     synthesis_hints_from_autoencoder_introspection,
@@ -24,6 +26,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import bu
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import ModalIRFrameLogic
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
     DataType,
     LogicExtractionContext,
@@ -217,6 +220,54 @@ def test_modal_decompiler_preserves_context_without_formula_style_text() -> None
     assert "O[deontic:D]" not in result.decoded_text
     assert "obligatory" not in result.decoded_text
     assert modal_text_token_similarity(source, result.decoded_text) == 1.0
+
+
+def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "If the application is complete, the agency must issue written notice unless waived.",
+        citation="5 U.S.C. 552",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert "if the application is complete" in slot_texts["condition"]
+    assert "unless waived" in slot_texts["exception"]
+    assert slot_texts["citation"] == ["5 U.S.C. 552"]
+    assert any(
+        triple["predicate"] == "condition"
+        and triple["object"] == "if the application is complete"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception"
+        and triple["object"] == "unless waived"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation"
+        and triple["object"] == "5 U.S.C. 552"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile("The agency must provide notice.")
+    assert compiled.selected_frame
+
+    frame_only_modal_ir = replace(
+        compiled.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=compiled.selected_frame),
+        metadata={**compiled.modal_ir.metadata, "selected_frame": ""},
+    )
+    decoded = decode_modal_ir_document(frame_only_modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_texts["selected_frame"] == [compiled.selected_frame]
 
 
 def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:

@@ -55,6 +55,21 @@ def test_parser_compiles_cues_to_modal_ir_with_provenance() -> None:
     assert document.canonical_hash() == document.canonical_hash()
 
 
+def test_parser_extracts_condition_and_exception_slots() -> None:
+    parser = LegalModalParser()
+
+    document = parser.parse(
+        "If the application is complete, the agency must issue written notice unless waived.",
+        citation="5 U.S.C. 552",
+    )
+
+    deontic_formula = next(
+        formula for formula in document.formulas if formula.operator.family == "deontic"
+    )
+    assert "if the application is complete" in deontic_formula.conditions
+    assert "unless waived" in deontic_formula.exceptions
+
+
 def test_parser_document_id_is_deterministic_from_normalized_text() -> None:
     parser = LegalModalParser()
 

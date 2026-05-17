@@ -26,6 +26,9 @@ from .modal_registry import (
 _WHITESPACE_RE = re.compile(r"\s+")
 _SEGMENT_RE = re.compile(r"[^.;:\n]+[.;:]?")
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
+_CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
+_CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
+_EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 
 
 @dataclass(frozen=True)
@@ -117,6 +120,9 @@ class LegalModalParser:
         for index, cue in enumerate(cues, start=1):
             segment = self._segment_for_cue(segments, cue)
             predicate = self._predicate_from_segment(segment.text, cue.cue)
+            conditions, exceptions = self._conditions_and_exceptions_from_segment(
+                segment.text
+            )
             formulas.append(
                 ModalIRFormula(
                     formula_id=f"{resolved_document_id}:f{index:04d}",
@@ -137,6 +143,8 @@ class LegalModalParser:
                         end_char=segment.end_char,
                         citation=citation,
                     ),
+                    conditions=conditions,
+                    exceptions=exceptions,
                     metadata={
                         "cue": cue.cue,
                         "cue_start_char": cue.start_char,
@@ -179,6 +187,36 @@ class LegalModalParser:
         if not tokens:
             tokens = _TOKEN_RE.findall(segment_text.lower())
         return "_".join(tokens[:6]) or "unnamed_predicate"
+
+    def _conditions_and_exceptions_from_segment(
+        self,
+        segment_text: str,
+    ) -> tuple[List[str], List[str]]:
+        return (
+            self._prefixed_clause_phrases(segment_text, _CONDITION_PREFIXES),
+            self._prefixed_clause_phrases(segment_text, _EXCEPTION_PREFIXES),
+        )
+
+    def _prefixed_clause_phrases(
+        self,
+        segment_text: str,
+        prefixes: Iterable[str],
+    ) -> List[str]:
+        normalized = self.normalize_text(segment_text)
+        phrases: List[str] = []
+        for prefix in sorted(prefixes, key=lambda value: (-len(value), value)):
+            pattern = re.compile(rf"(?<!\w){re.escape(prefix)}(?!\w)", re.IGNORECASE)
+            for match in pattern.finditer(normalized):
+                fragment = normalized[match.start() :]
+                fragment = _CLAUSE_DELIMITER_RE.split(fragment, maxsplit=1)[0]
+                phrase = self._normalized_clause_phrase(fragment)
+                if phrase and phrase not in phrases:
+                    phrases.append(phrase)
+        return phrases
+
+    def _normalized_clause_phrase(self, text: str) -> str:
+        tokens = _TOKEN_RE.findall(text.lower())
+        return " ".join(tokens[:18]).strip()
 
     def _document_id(self, normalized_text: str) -> str:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:16]
