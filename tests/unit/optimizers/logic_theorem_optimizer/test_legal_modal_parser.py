@@ -120,6 +120,24 @@ def test_parser_replays_transferred_heading_zero_formula_sample_for_15_688() -> 
     assert fallback.provenance.citation == "15 U.S.C. 688"
 
 
+def test_parser_replays_transferred_heading_zero_formula_sample_for_10_7082() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        "\u00a77082. Transferred.",
+        document_id="us-code-10-7082-9e036c2a899ad874",
+        source="us_code",
+        citation="10 U.S.C. 7082",
+    )
+
+    assert document.document_id == "us-code-10-7082-9e036c2a899ad874"
+    assert document.formulas
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+    assert fallback.provenance.citation == "10 U.S.C. 7082"
+
+
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:
     class FailingBackend:
         def generate(self, request):  # pragma: no cover - should never be called
