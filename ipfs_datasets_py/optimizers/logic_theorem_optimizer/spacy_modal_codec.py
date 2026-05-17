@@ -29,6 +29,13 @@ _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
 _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
+_CONDITIONAL_SCOPE_PHRASES = (
+    "in the case of",
+    "in the event that",
+    "to the extent provided",
+    "except to the extent",
+    "except as otherwise provided",
+)
 _TEMPORAL_SCOPE_TOKENS = frozenset(
     {
         "after",
@@ -61,11 +68,23 @@ _TEMPORAL_SCOPE_PHRASES = (
     "calendar year",
     "effective date",
     "effective on",
+    "for any fiscal year",
+    "for each fiscal year",
+    "for that fiscal year",
+    "for the period beginning",
     "fiscal year",
     "no earlier than",
     "no later than",
     "not earlier than",
     "not later than",
+    "period beginning on",
+    "period ending on",
+)
+_CALENDAR_DATE_RE = re.compile(
+    r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?)\s+\d{1,2}(?:,\s*|\s+)\d{4}\b",
+    re.IGNORECASE,
 )
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
@@ -524,21 +543,40 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     }
     normalized_text = encoding.normalized_text.lower()
     cue_families = {cue.family for cue in encoding.cues}
-    temporal_scope_phrase = any(
-        re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", normalized_text)
-        for phrase in _TEMPORAL_SCOPE_PHRASES
+    conditional_scope_phrase = _contains_scope_phrase(
+        normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
-    temporal_scope = bool(token_terms & _TEMPORAL_SCOPE_TOKENS) or bool(temporal_scope_phrase)
+    temporal_scope_phrase = _contains_scope_phrase(
+        normalized_text, _TEMPORAL_SCOPE_PHRASES
+    )
+    calendar_date_scope = bool(_CALENDAR_DATE_RE.search(normalized_text))
+    temporal_scope = (
+        bool(token_terms & _TEMPORAL_SCOPE_TOKENS)
+        or bool(temporal_scope_phrase)
+        or calendar_date_scope
+    )
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
         "has_condition_clause": condition_clauses,
+        "has_conditional_scope_phrase": conditional_scope_phrase,
         "has_exception_clause": exception_clauses,
-        "has_condition_or_exception_scope": condition_clauses or exception_clauses,
+        "has_condition_or_exception_scope": (
+            condition_clauses or exception_clauses or conditional_scope_phrase
+        ),
+        "has_calendar_date_scope": calendar_date_scope,
         "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
+        "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_frame_context": frame_context,
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
+
+
+def _contains_scope_phrase(text: str, phrases: Sequence[str]) -> bool:
+    for phrase in phrases:
+        if re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", text):
+            return True
+    return False
 
 
 def _unique_preserve_order(features: Iterable[str]) -> List[str]:
