@@ -25,6 +25,12 @@ class ModalLogicFamily(Enum):
     HYBRID = "hybrid"
 
 
+NORMATIVE_MODAL_FAMILIES: Tuple[ModalLogicFamily, ...] = (
+    ModalLogicFamily.DEONTIC,
+    ModalLogicFamily.CONDITIONAL_NORMATIVE,
+)
+
+
 class ModalSystem(Enum):
     """Common modal systems and legal-parser profiles."""
 
@@ -251,16 +257,30 @@ class ModalRegistry:
         return {profile.profile_id: profile.to_dict() for profile in self.all_profiles()}
 
 
+def is_normative_modal_family(family: ModalLogicFamily | str) -> bool:
+    """Return whether a modal family encodes normative legal force."""
+    if isinstance(family, ModalLogicFamily):
+        resolved = family
+    else:
+        try:
+            resolved = ModalLogicFamily(str(family))
+        except ValueError:
+            return False
+    return resolved in NORMATIVE_MODAL_FAMILIES
+
+
 DEFAULT_MODAL_REGISTRY = ModalRegistry()
 
 
 __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
+    "NORMATIVE_MODAL_FAMILIES",
     "ModalLogicFamily",
     "ModalOperatorSpec",
     "ModalParseProfile",
     "ModalRegistry",
     "ModalSemanticsSpec",
     "ModalSystem",
+    "is_normative_modal_family",
 ]

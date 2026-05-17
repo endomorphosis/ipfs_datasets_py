@@ -121,6 +121,10 @@ class SpaCyLegalEncoding:
             counts[cue.family] = counts.get(cue.family, 0) + 1
         return dict(sorted(counts.items()))
 
+    def ranked_modal_families(self) -> List[Dict[str, float]]:
+        """Return cue-count ranking with stable ordering and share ratios."""
+        return ranked_modal_families(self)
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "citation": self.citation,
@@ -422,6 +426,24 @@ def _feature_hash(feature: str, dimensions: int) -> tuple[int, float]:
     return slot, sign * magnitude
 
 
+def ranked_modal_families(encoding: SpaCyLegalEncoding) -> List[Dict[str, float]]:
+    """Rank modal families by deterministic cue count and normalized share."""
+    counts = encoding.modal_family_counts()
+    total = sum(counts.values())
+    if total <= 0:
+        return []
+    ranking: List[Dict[str, float]] = []
+    for family, count in sorted(counts.items(), key=lambda item: (-item[1], item[0])):
+        ranking.append(
+            {
+                "family": family,
+                "count": int(count),
+                "share": round(float(count) / float(total), 6),
+            }
+        )
+    return ranking
+
+
 def _unique_preserve_order(features: Iterable[str]) -> List[str]:
     seen: set[str] = set()
     result: List[str] = []
@@ -501,4 +523,5 @@ __all__ = [
     "SpaCyModalIRCompiler",
     "SpaCySentenceFeature",
     "SpaCyTokenFeature",
+    "ranked_modal_families",
 ]

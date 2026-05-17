@@ -24,12 +24,15 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     DEFAULT_MODAL_REGISTRY,
+    ModalLogicFamily,
     ModalRegistry,
+    is_normative_modal_family,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoder,
     SpaCyLegalEncoding,
     SpaCyModalIRCompiler,
+    ranked_modal_families,
 )
 
 
@@ -42,6 +45,8 @@ class ModalCompilerConfig:
     top_k_frames: int = 3
     frame_domain: Optional[str] = None
     frame_score_margin: float = 0.05
+    modal_family_share_margin: float = 0.34
+    modal_family_secondary_share_floor: float = 0.2
 
 
 @dataclass(frozen=True)
@@ -142,6 +147,7 @@ class DeterministicModalCompiler:
         selected_frame = str(frame_candidates[0]["frame_id"]) if frame_candidates else None
         ambiguities = [
             *self._formula_ambiguities(modal_ir),
+            *self._family_ambiguities(encoding),
             *self._frame_ambiguities(frame_selections),
         ]
         if normalized_text and not modal_ir.formulas:
@@ -234,6 +240,69 @@ class DeterministicModalCompiler:
                         metadata={"span": list(span)},
                     )
                 )
+        return ambiguities
+
+    def _family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+    ) -> List[ModalCompilationAmbiguity]:
+        ranking = ranked_modal_families(encoding)
+        if len(ranking) < 2:
+            return []
+
+        top, runner_up = ranking[0], ranking[1]
+        share_margin = float(top["share"]) - float(runner_up["share"])
+        ambiguities: List[ModalCompilationAmbiguity] = []
+
+        if share_margin <= self.config.modal_family_share_margin:
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type="close_modal_family_shares",
+                    message="Top modal families are close enough that legal family selection is ambiguous.",
+                    candidate_ids=[str(top["family"]), str(runner_up["family"])],
+                    metadata={
+                        "family_ranking": ranking,
+                        "share_margin": round(share_margin, 6),
+                        "top_family": str(top["family"]),
+                        "runner_up_family": str(runner_up["family"]),
+                    },
+                )
+            )
+
+        strong_contenders = [
+            candidate
+            for candidate in ranking
+            if float(candidate["share"]) >= self.config.modal_family_secondary_share_floor
+        ]
+        contender_families = {
+            str(candidate["family"]) for candidate in strong_contenders
+        }
+        has_temporal = ModalLogicFamily.TEMPORAL.value in contender_families
+        has_normative = any(
+            is_normative_modal_family(str(candidate["family"]))
+            for candidate in strong_contenders
+        )
+        runner_share = float(runner_up["share"])
+        if (
+            has_temporal
+            and has_normative
+            and len(contender_families) > 1
+        ):
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type="temporal_normative_overlap",
+                    message=(
+                        "Temporal scope and normative force both have strong cue evidence; "
+                        "family interpretation requires review."
+                    ),
+                    candidate_ids=sorted(contender_families),
+                    metadata={
+                        "family_ranking": ranking,
+                        "runner_up_share": round(runner_share, 6),
+                        "secondary_share_floor": self.config.modal_family_secondary_share_floor,
+                    },
+                )
+            )
         return ambiguities
 
     def _frame_ambiguities(

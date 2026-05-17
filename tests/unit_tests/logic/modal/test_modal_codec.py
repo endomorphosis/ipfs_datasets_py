@@ -143,6 +143,51 @@ def test_modal_compiler_decompiler_are_explainable_and_deterministic() -> None:
     }
 
 
+def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
+    frame_selector = BM25FrameSelector(
+        (
+            FrameCandidate(
+                frame_id="deadline_notice",
+                label="Deadline notice",
+                terms=("agency", "notice", "within", "days", "written"),
+            ),
+            FrameCandidate(
+                frame_id="import_tariff",
+                label="Import tariff",
+                terms=("tariff", "customs", "import"),
+            ),
+        )
+    )
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_family_share_margin=0.34,
+            modal_family_secondary_share_floor=0.2,
+        ),
+        frame_selector=frame_selector,
+    )
+
+    compiled = compiler.compile(
+        "If an application is denied, the agency shall issue written notice within 30 days."
+    )
+
+    ambiguity_types = {ambiguity.ambiguity_type for ambiguity in compiled.ambiguities}
+    assert "close_modal_family_shares" in ambiguity_types
+    assert "temporal_normative_overlap" in ambiguity_types
+    temporal_normative = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_normative_overlap"
+    )
+    assert "temporal" in temporal_normative.candidate_ids
+    assert (
+        "deontic" in temporal_normative.candidate_ids
+        or "conditional_normative" in temporal_normative.candidate_ids
+    )
+    assert compiled.modal_ir.metadata["modal_family_counts"]["temporal"] >= 1
+
+
 def test_modal_decompiler_preserves_context_without_formula_style_text() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="regex", embedding_dimensions=8)

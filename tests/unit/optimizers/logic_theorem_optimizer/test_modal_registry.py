@@ -9,6 +9,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalLogicFamily,
     ModalRegistry,
     ModalSystem,
+    is_normative_modal_family,
 )
 
 
@@ -45,3 +46,10 @@ def test_registry_serialization_is_stable_json_ready() -> None:
     assert "deontic:D" in payload
     assert "frame:FRAME_BM25" in payload
     assert rendered == json.dumps(payload, sort_keys=True)
+
+
+def test_normative_modal_family_helper_handles_strings_and_enums() -> None:
+    assert is_normative_modal_family(ModalLogicFamily.DEONTIC) is True
+    assert is_normative_modal_family("conditional_normative") is True
+    assert is_normative_modal_family("temporal") is False
+    assert is_normative_modal_family("unknown-family") is False

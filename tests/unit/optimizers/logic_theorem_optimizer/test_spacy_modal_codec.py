@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyModalCodec,
     SpaCyModalDecoder,
     SpaCyModalIRCompiler,
+    ranked_modal_families,
 )
 
 pytest.importorskip("spacy")
@@ -73,6 +74,25 @@ def test_spacy_codec_exposes_text_features_without_sample_ids() -> None:
     assert features
     assert any(feature.startswith("cue:deontic") for feature in features)
     assert all(sample.sample_id not in feature for feature in features)
+
+
+def test_spacy_codec_ranks_modal_families_from_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall provide notice within 30 days.",
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+
+    assert ranking
+    assert ranking[0]["family"] in {"deontic", "temporal"}
+    assert ranking[0]["count"] >= 1
+    assert abs(sum(item["share"] for item in ranking) - 1.0) <= 1e-6
 
 
 def test_spacy_codec_lowers_initial_family_cross_entropy() -> None:
