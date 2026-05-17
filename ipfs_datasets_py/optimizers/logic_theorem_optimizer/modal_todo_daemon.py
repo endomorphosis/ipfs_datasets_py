@@ -871,7 +871,7 @@ class ModalTodoSupervisor:
         reason: Optional[str] = None
         outcome = "no_status_change"
 
-        if normalized_patch_status == "created":
+        if normalized_patch_status in {"created", "applied_to_main"}:
             for todo_id in todo_ids:
                 completed_count += int(self.queue.complete(todo_id))
             outcome = "completed"
@@ -882,7 +882,7 @@ class ModalTodoSupervisor:
                     self.queue.fail_validation(todo_id, reason=reason)
                 )
             outcome = "failed_validation"
-        elif normalized_patch_status != "created":
+        elif normalized_patch_status not in {"created", "applied_to_main"}:
             reason = str(patch_status or "patch_not_created")
             for todo_id in todo_ids:
                 failed_validation_count += int(

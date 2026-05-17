@@ -110,6 +110,13 @@ CODEX_SANDBOX_BLOCKER_PATTERNS = (
     "bwrap: loopback: failed rtm_newaddr",
     "operation not permitted",
 )
+CODEX_COMPLETED_WORK_STATUSES = {"created", "applied_to_main"}
+CODEX_APPLY_VALIDATION_TESTS = (
+    "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
+    "tests/unit_tests/logic/modal/test_modal_codec.py",
+)
+CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
 
 def utc_now() -> str:
@@ -309,6 +316,10 @@ def build_paired_daemon_commands(
     autoencoder_run_id = getattr(args, "autoencoder_run_id", None) or f"{args.run_id}-autoencoder"
     codex_run_id = getattr(args, "codex_run_id", None) or f"{args.run_id}-codex"
     queue_run_id = autoencoder_run_id
+    codex_duration_seconds = float(args.duration_seconds) + max(
+        0.0,
+        float(getattr(args, "paired_grace_seconds", 0.0)),
+    )
     autoencoder_command = [
         sys.executable,
         "-m",
@@ -348,7 +359,7 @@ def build_paired_daemon_commands(
         "--queue-run-id",
         queue_run_id,
         "--duration-seconds",
-        str(args.duration_seconds),
+        str(codex_duration_seconds),
         "--max-items",
         str(args.max_items),
         "--poll-seconds",
@@ -361,6 +372,10 @@ def build_paired_daemon_commands(
         str(args.codex_sandbox),
         "--codex-timeout-seconds",
         str(args.codex_timeout_seconds),
+        "--codex-apply-mode",
+        str(getattr(args, "codex_apply_mode", "patch_only")),
+        "--codex-commit-mode",
+        str(getattr(args, "codex_commit_mode", "none")),
     ]
     if getattr(args, "worker_id", None):
         codex_command.extend(["--worker-id", str(args.worker_id)])
@@ -409,10 +424,11 @@ def create_codex_work_packet(
     patch_status = "worktree_unavailable"
     patch_error: Optional[str] = None
     agent_id = _safe_artifact_name(f"{worker_id}-{packet_id}")
+    source_repo_root = resolve_codex_worktree_repo_root(repo_root)
 
     try:
         worktree_manager = WorktreeManager(
-            repo_path=repo_root,
+            repo_path=source_repo_root,
             worktrees_base=work_dir / "worktrees",
         )
         worktree_path = worktree_manager.create_worktree(agent_id, branch="HEAD")
@@ -461,8 +477,10 @@ def create_codex_work_packet(
         "patch_status": patch_status,
         "queue_path": str(queue_path),
         "queue_run_id": queue_run_id,
+        "repo_root": str(repo_root),
         "run_id": run_id,
         "suggested_target_files": suggested_files,
+        "source_repo_root": str(source_repo_root),
         "task_source": "autoencoder_supervisor_program_synthesis_queue",
         "task_path": str(task_path),
         "todo_list_path": str(todo_list_path),
@@ -523,15 +541,472 @@ def refresh_codex_work_packet_patch(packet: Mapping[str, Any]) -> Dict[str, Any]
     return updated
 
 
+def _save_codex_packet_diff_patch(
+    packet: Mapping[str, Any],
+    *,
+    diff_content: str,
+    reason: str,
+) -> Optional[Path]:
+    """Persist a worktree diff when direct application needs human inspection."""
+    packet_path_value = packet.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    packet_id = str(packet.get("packet_id") or packet_dir.name)
+    patch_dir = packet_dir / "patches"
+    patch_dir.mkdir(parents=True, exist_ok=True)
+    patch_path = patch_dir / f"{packet_id}.{reason}.patch"
+    patch_path.write_text(diff_content, encoding="utf-8")
+    return patch_path
+
+
+def _is_codex_worktree_artifact(path: str) -> bool:
+    normalized = path.replace("\\", "/").strip("/")
+    name = Path(normalized).name
+    return name in CODEX_WORKTREE_ARTIFACT_FILENAMES or name.endswith(".patch")
+
+
+def _codex_worktree_diff(worktree_path: Path) -> Dict[str, Any]:
+    """Return a binary-safe git diff and target file list for a packet worktree."""
+    untracked = subprocess.run(
+        ["git", "ls-files", "--others", "--exclude-standard", "-z"],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    untracked.check_returncode()
+    untracked_paths = [path for path in untracked.stdout.split("\0") if path]
+    untracked_diff_paths = [
+        path for path in untracked_paths if not _is_codex_worktree_artifact(path)
+    ]
+    if untracked_diff_paths:
+        subprocess.run(
+            ["git", "add", "-N", "--", *untracked_diff_paths],
+            cwd=worktree_path,
+            capture_output=True,
+            text=True,
+            timeout=30.0,
+            check=True,
+        )
+
+    diff = subprocess.run(
+        ["git", "diff", "--binary", "HEAD"],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+        timeout=60.0,
+    )
+    diff.check_returncode()
+    names = subprocess.run(
+        ["git", "diff", "--name-only", "-z", "HEAD"],
+        cwd=worktree_path,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    names.check_returncode()
+    target_files = [
+        path
+        for path in names.stdout.split("\0")
+        if path and not _is_codex_worktree_artifact(path)
+    ]
+    if target_files:
+        diff = subprocess.run(
+            ["git", "diff", "--binary", "HEAD", "--", *target_files],
+            cwd=worktree_path,
+            capture_output=True,
+            text=True,
+            timeout=60.0,
+        )
+        diff.check_returncode()
+    else:
+        diff = subprocess.CompletedProcess(
+            ["git", "diff", "--binary", "HEAD"],
+            0,
+            stdout="",
+            stderr="",
+        )
+    return {
+        "diff_content": diff.stdout,
+        "target_files": target_files,
+        "untracked_paths": untracked_diff_paths,
+        "ignored_artifact_paths": [
+            path for path in untracked_paths if _is_codex_worktree_artifact(path)
+        ],
+    }
+
+
+def _dirty_target_files(repo_root: Path, target_files: Sequence[str]) -> List[str]:
+    """Return target files that already have local edits in the destination checkout."""
+    if not target_files:
+        return []
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--", *target_files],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    result.check_returncode()
+    dirty: List[str] = []
+    for line in result.stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        if path:
+            dirty.append(path)
+    return dirty
+
+
+def _run_git_apply_stdin(
+    repo_root: Path,
+    diff_content: str,
+    *args: str,
+    timeout_seconds: float = 60.0,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "apply", *args, "-"],
+        cwd=repo_root,
+        input=diff_content,
+        capture_output=True,
+        text=True,
+        timeout=max(1.0, float(timeout_seconds)),
+    )
+
+
+def _default_codex_apply_validation_commands(repo_root: Path) -> List[List[str]]:
+    tests = [path for path in CODEX_APPLY_VALIDATION_TESTS if (repo_root / path).exists()]
+    if not tests:
+        return []
+    return [[sys.executable, "-m", "pytest", "-q", *tests]]
+
+
+def _run_codex_apply_validation(
+    repo_root: Path,
+    packet_dir: Path,
+    *,
+    validation_commands: Optional[Sequence[Sequence[str]]] = None,
+    timeout_seconds: float = 300.0,
+) -> Dict[str, Any]:
+    commands = (
+        [list(command) for command in validation_commands]
+        if validation_commands is not None
+        else _default_codex_apply_validation_commands(repo_root)
+    )
+    if not commands:
+        return {"commands": [], "status": "skipped"}
+
+    results: List[Dict[str, Any]] = []
+    for index, command in enumerate(commands, start=1):
+        stdout_path = packet_dir / f"main-apply-validation-{index}.stdout.log"
+        stderr_path = packet_dir / f"main-apply-validation-{index}.stderr.log"
+        started = time.time()
+        try:
+            result = subprocess.run(
+                command,
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                timeout=max(1.0, float(timeout_seconds)),
+            )
+            stdout_path.write_text(result.stdout or "", encoding="utf-8")
+            stderr_path.write_text(result.stderr or "", encoding="utf-8")
+            command_result = {
+                "command": command,
+                "duration_seconds": round(time.time() - started, 3),
+                "exit_code": result.returncode,
+                "status": "passed" if result.returncode == 0 else "failed",
+                "stderr_path": str(stderr_path),
+                "stdout_path": str(stdout_path),
+            }
+        except subprocess.TimeoutExpired as exc:
+            stdout_path.write_text(_process_text(exc.stdout), encoding="utf-8")
+            stderr_path.write_text(_process_text(exc.stderr), encoding="utf-8")
+            command_result = {
+                "command": command,
+                "duration_seconds": round(time.time() - started, 3),
+                "exit_code": None,
+                "status": "timeout",
+                "stderr_path": str(stderr_path),
+                "stdout_path": str(stdout_path),
+                "timeout_seconds": float(timeout_seconds),
+            }
+        results.append(command_result)
+        if command_result["status"] != "passed":
+            return {"commands": results, "status": command_result["status"]}
+    return {"commands": results, "status": "passed"}
+
+
+def _commit_codex_main_changes(
+    repo_root: Path,
+    *,
+    packet: Mapping[str, Any],
+    target_files: Sequence[str],
+) -> Dict[str, Any]:
+    if not target_files:
+        return {"status": "skipped", "reason": "no_target_files"}
+    add = subprocess.run(
+        ["git", "add", "--", *target_files],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=60.0,
+    )
+    if add.returncode != 0:
+        return {
+            "status": "failed",
+            "step": "add",
+            "exit_code": add.returncode,
+            "stderr_tail": (add.stderr or "")[-500:],
+            "stdout_tail": (add.stdout or "")[-500:],
+        }
+
+    diff = subprocess.run(
+        ["git", "diff", "--cached", "--quiet", "--", *target_files],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    if diff.returncode == 0:
+        return {"status": "skipped", "reason": "no_staged_changes"}
+
+    packet_id = str(packet.get("packet_id") or "codex-packet")
+    todo_ids = [
+        str(todo.get("todo_id"))
+        for todo in packet.get("todos", [])
+        if isinstance(todo, Mapping) and todo.get("todo_id")
+    ]
+    message = f"Apply Codex legal IR packet {packet_id}"
+    body_lines = [
+        "Auto-applied from the legal IR autoencoder/Codex daemon.",
+        f"Packet: {packet_id}",
+    ]
+    if todo_ids:
+        body_lines.append("TODOs: " + ", ".join(todo_ids[:8]))
+    commit = subprocess.run(
+        ["git", "commit", "-m", message, "-m", "\n".join(body_lines), "--", *target_files],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=120.0,
+    )
+    return {
+        "status": "committed" if commit.returncode == 0 else "failed",
+        "exit_code": commit.returncode,
+        "stderr_tail": (commit.stderr or "")[-500:],
+        "stdout_tail": (commit.stdout or "")[-500:],
+    }
+
+
+def apply_codex_worktree_changes_to_main(
+    packet: Mapping[str, Any],
+    *,
+    commit_mode: str = "none",
+    validation_commands: Optional[Sequence[Sequence[str]]] = None,
+    validation_timeout_seconds: float = 300.0,
+) -> Dict[str, Any]:
+    """Apply a packet worktree diff to the source checkout and validate it."""
+    updated = dict(packet)
+    packet_path_value = updated.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    worktree_value = updated.get("worktree_path")
+    source_root_value = updated.get("source_repo_root") or updated.get("repo_root")
+
+    updated["codex_apply_mode"] = "apply_to_main"
+    updated["main_apply_status"] = "failed"
+    if not worktree_value:
+        updated["patch_status"] = "worktree_unavailable"
+        updated["patch_error"] = "packet has no worktree_path"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+    if not source_root_value:
+        updated["patch_status"] = "main_apply_missing_repo_root"
+        updated["patch_error"] = "packet has no source_repo_root or repo_root"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    worktree_path = Path(str(worktree_value))
+    source_repo_root = Path(str(source_root_value)).resolve()
+    updated["main_apply_target_repo_root"] = str(source_repo_root)
+
+    try:
+        diff_info = _codex_worktree_diff(worktree_path)
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        updated["patch_status"] = "patch_generation_failed"
+        updated["patch_error"] = str(exc)
+        updated["main_apply_error"] = str(exc)
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    diff_content = str(diff_info.get("diff_content") or "")
+    target_files = [str(path) for path in diff_info.get("target_files", [])]
+    updated["main_apply_target_files"] = target_files
+    updated["main_apply_untracked_paths"] = [
+        str(path) for path in diff_info.get("untracked_paths", [])
+    ]
+    updated["main_apply_ignored_artifact_paths"] = [
+        str(path) for path in diff_info.get("ignored_artifact_paths", [])
+    ]
+    if not diff_content.strip():
+        updated["patch_status"] = "awaiting_codex_changes"
+        updated["patch_error"] = "No changes found in worktree"
+        updated["patch_path"] = None
+        updated["main_apply_status"] = "no_changes"
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    try:
+        dirty_files = _dirty_target_files(source_repo_root, target_files)
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        dirty_files = []
+        updated["main_apply_dirty_check_error"] = str(exc)
+    if dirty_files:
+        patch_path = _save_codex_packet_diff_patch(
+            updated,
+            diff_content=diff_content,
+            reason="dirty-target",
+        )
+        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["patch_status"] = "main_apply_dirty_target"
+        updated["patch_error"] = "target checkout has local edits in Codex target files"
+        updated["main_apply_dirty_files"] = dirty_files
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    check = _run_git_apply_stdin(source_repo_root, diff_content, "--check")
+    updated["main_apply_check"] = {
+        "exit_code": check.returncode,
+        "stderr_tail": (check.stderr or "")[-500:],
+        "stdout_tail": (check.stdout or "")[-500:],
+    }
+    if check.returncode != 0:
+        patch_path = _save_codex_packet_diff_patch(
+            updated,
+            diff_content=diff_content,
+            reason="apply-check-failed",
+        )
+        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["patch_status"] = "main_apply_check_failed"
+        updated["patch_error"] = check.stderr or check.stdout or "git apply --check failed"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    apply_result = _run_git_apply_stdin(source_repo_root, diff_content)
+    updated["main_apply_result"] = {
+        "exit_code": apply_result.returncode,
+        "stderr_tail": (apply_result.stderr or "")[-500:],
+        "stdout_tail": (apply_result.stdout or "")[-500:],
+    }
+    if apply_result.returncode != 0:
+        patch_path = _save_codex_packet_diff_patch(
+            updated,
+            diff_content=diff_content,
+            reason="apply-failed",
+        )
+        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["patch_status"] = "main_apply_failed"
+        updated["patch_error"] = apply_result.stderr or apply_result.stdout or "git apply failed"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    validation = _run_codex_apply_validation(
+        source_repo_root,
+        packet_dir,
+        validation_commands=validation_commands,
+        timeout_seconds=validation_timeout_seconds,
+    )
+    updated["main_apply_validation"] = validation
+    if validation["status"] not in {"passed", "skipped"}:
+        rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
+        updated["main_apply_rollback"] = {
+            "exit_code": rollback.returncode,
+            "stderr_tail": (rollback.stderr or "")[-500:],
+            "stdout_tail": (rollback.stdout or "")[-500:],
+        }
+        patch_path = _save_codex_packet_diff_patch(
+            updated,
+            diff_content=diff_content,
+            reason="validation-failed",
+        )
+        updated["patch_path"] = str(patch_path) if patch_path is not None else None
+        updated["patch_status"] = (
+            "main_apply_validation_failed_rolled_back"
+            if rollback.returncode == 0
+            else "main_apply_validation_failed_rollback_failed"
+        )
+        updated["patch_error"] = f"validation {validation['status']}"
+        updated["main_apply_error"] = updated["patch_error"]
+        _save_packet_if_possible(updated, packet_path)
+        return updated
+
+    if str(commit_mode).strip().lower() == "commit_applied":
+        try:
+            commit = _commit_codex_main_changes(
+                source_repo_root,
+                packet=updated,
+                target_files=target_files,
+            )
+        except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+            commit = {"status": "failed", "error": str(exc), "step": "commit"}
+        updated["main_commit"] = commit
+        if commit["status"] != "committed":
+            subprocess.run(
+                ["git", "reset", "--", *target_files],
+                cwd=source_repo_root,
+                capture_output=True,
+                text=True,
+                timeout=60.0,
+            )
+            rollback = _run_git_apply_stdin(source_repo_root, diff_content, "-R")
+            updated["main_apply_rollback"] = {
+                "exit_code": rollback.returncode,
+                "stderr_tail": (rollback.stderr or "")[-500:],
+                "stdout_tail": (rollback.stdout or "")[-500:],
+            }
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason="commit-failed",
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
+            updated["patch_status"] = (
+                "main_apply_commit_failed_rolled_back"
+                if rollback.returncode == 0
+                else "main_apply_commit_failed_rollback_failed"
+            )
+            updated["patch_error"] = "commit failed"
+            updated["main_apply_error"] = updated["patch_error"]
+            _save_packet_if_possible(updated, packet_path)
+            return updated
+
+    updated["main_apply_status"] = "applied"
+    updated["patch_error"] = None
+    updated["patch_path"] = None
+    updated["patch_status"] = "applied_to_main"
+    _save_packet_if_possible(updated, packet_path)
+    return updated
+
+
 def execute_codex_work_packet(
     packet: Mapping[str, Any],
     *,
+    apply_mode: str = "patch_only",
+    commit_mode: str = "none",
     codex_command: str = "codex",
     model: Optional[str] = None,
     sandbox: str = "workspace-write",
     timeout_seconds: float = 900.0,
+    validation_commands: Optional[Sequence[Sequence[str]]] = None,
+    validation_timeout_seconds: float = 300.0,
 ) -> Dict[str, Any]:
-    """Run ``codex exec`` in the packet worktree and refresh its patch."""
+    """Run ``codex exec`` in the packet worktree and collect/apply its changes."""
     updated = dict(packet)
     packet_path_value = updated.get("packet_path")
     packet_path = Path(str(packet_path_value)) if packet_path_value else None
@@ -567,7 +1042,16 @@ def execute_codex_work_packet(
     )
     updated["codex_exec"] = exec_result
     _save_packet_if_possible(updated, packet_path)
-    refreshed = refresh_codex_work_packet_patch(updated)
+    normalized_apply_mode = str(apply_mode).strip().lower()
+    if normalized_apply_mode == "apply_to_main":
+        refreshed = apply_codex_worktree_changes_to_main(
+            updated,
+            commit_mode=commit_mode,
+            validation_commands=validation_commands,
+            validation_timeout_seconds=validation_timeout_seconds,
+        )
+    else:
+        refreshed = refresh_codex_work_packet_patch(updated)
     exec_result["attempt_count"] = 1
 
     if _should_retry_codex_exec_with_fallback(
@@ -595,7 +1079,15 @@ def execute_codex_work_packet(
         fallback_result["fallback_reason"] = "sandbox_block_or_no_patch"
         refreshed["codex_exec"] = fallback_result
         _save_packet_if_possible(refreshed, packet_path)
-        refreshed = refresh_codex_work_packet_patch(refreshed)
+        if normalized_apply_mode == "apply_to_main":
+            refreshed = apply_codex_worktree_changes_to_main(
+                refreshed,
+                commit_mode=commit_mode,
+                validation_commands=validation_commands,
+                validation_timeout_seconds=validation_timeout_seconds,
+            )
+        else:
+            refreshed = refresh_codex_work_packet_patch(refreshed)
     return refreshed
 
 
@@ -688,7 +1180,7 @@ def _should_retry_codex_exec_with_fallback(
     if normalized_status in {"failed", "timeout"}:
         return True
 
-    if patch_status.strip().lower() == "created":
+    if patch_status.strip().lower() in CODEX_COMPLETED_WORK_STATUSES:
         return False
     return _codex_exec_logs_indicate_sandbox_block(exec_result)
 
@@ -797,7 +1289,7 @@ def _codex_task_markdown(
         "## Worktree",
         str(worktree_path) if worktree_path is not None else "unavailable",
         "",
-        "## Patch",
+        "## Change Capture",
         str(patch_path) if patch_path is not None else f"pending: {patch_status}",
         "",
         "## Suggested Files",
@@ -820,12 +1312,8 @@ def _codex_task_markdown(
     lines.extend(
         [
             "",
-            "## Patch Command",
-            "Run this after editing the worktree:",
-            "",
-            "```bash",
-            "git diff HEAD > changes.patch",
-            "```",
+            "## Finish",
+            "Leave the completed edits in the worktree; the daemon captures, applies, and validates the diff.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -839,6 +1327,8 @@ def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
         "",
         "## Execution Instructions",
         "Work only inside the packet worktree.",
+        "Your worktree edits may be applied back to the source checkout and validated automatically when this packet finishes.",
+        "Do not create changes.patch or other patch artifact files; leave source and test edits directly in the worktree.",
         "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
         "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
         "Use local repository files and tests only; do not use web search for this packet.",
@@ -868,6 +1358,38 @@ def _save_packet_if_possible(packet: Mapping[str, Any], packet_path: Optional[Pa
 def _safe_artifact_name(value: str) -> str:
     safe = "".join(character if character.isalnum() or character in "-_" else "-" for character in value)
     return safe.strip("-")[:96] or "codex-worker"
+
+
+def resolve_codex_worktree_repo_root(repo_root: Path) -> Path:
+    """Return the checkout that actually contains modal source files for Codex.
+
+    The Portland site checkout tracks ``ipfs_datasets_py`` as a gitlink-like
+    nested checkout. A worktree from the parent repo only contains the gitlink,
+    so Codex cannot edit ``ipfs_datasets_py/logic/modal/...`` there. Prefer the
+    nested package checkout when it exists and is itself a git worktree.
+    """
+
+    root = Path(repo_root).resolve()
+    nested = root / "ipfs_datasets_py"
+    if (
+        (nested / "ipfs_datasets_py" / "logic" / "modal").exists()
+        and _path_is_git_worktree(nested)
+    ):
+        return nested
+    return root
+
+
+def _path_is_git_worktree(path: Path) -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--is-inside-work-tree"],
+            text=True,
+            capture_output=True,
+            timeout=5.0,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0 and result.stdout.strip().lower() == "true"
 
 
 def run_tests(root: Path, report_dir: Path, cycle: int) -> Dict[str, Any]:
@@ -977,6 +1499,21 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--codex-command", default="codex")
     parser.add_argument("--codex-model", default="gpt-5.3-codex")
+    parser.add_argument(
+        "--codex-apply-mode",
+        choices=("patch_only", "apply_to_main"),
+        default="patch_only",
+        help=(
+            "For codex_cli packets, either save a patch artifact or apply "
+            "validated worktree edits back to the source checkout."
+        ),
+    )
+    parser.add_argument(
+        "--codex-commit-mode",
+        choices=("none", "commit_applied"),
+        default="none",
+        help="Optionally commit successfully validated apply_to_main packet edits.",
+    )
     parser.add_argument(
         "--codex-sandbox",
         choices=("read-only", "workspace-write", "danger-full-access"),
@@ -1178,11 +1715,15 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 continue
             process.terminate()
 
+        termination_wait_seconds = max(
+            10.0,
+            float(args.paired_grace_seconds),
+        )
         for process in (auto_process, codex_process):
             if process is None or process.poll() is not None:
                 continue
             try:
-                process.wait(timeout=10.0)
+                process.wait(timeout=termination_wait_seconds)
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=5.0)
@@ -1530,10 +2071,14 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
     else:
         summary = {
+            "codex_apply_mode": args.codex_apply_mode,
             "codex_claimed_total": 0,
+            "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
+            "codex_main_apply_count": 0,
+            "codex_main_apply_failure_count": 0,
             "codex_packet_count": 0,
             "codex_patch_count": 0,
             "codex_program_synthesis_execution_mode": execution_mode,
@@ -1553,6 +2098,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "work_dir": str(work_dir),
         }
         save_summary(summary_path, summary)
+    summary.setdefault("codex_apply_mode", args.codex_apply_mode)
+    summary.setdefault("codex_commit_mode", args.codex_commit_mode)
+    summary.setdefault("codex_main_apply_count", 0)
+    summary.setdefault("codex_main_apply_failure_count", 0)
 
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
@@ -1561,6 +2110,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         log_path,
         args.run_id,
         {
+            "codex_apply_mode": args.codex_apply_mode,
+            "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
             "codex_program_synthesis_execution_mode": execution_mode,
             "event": "codex_program_synthesis_runner_started",
@@ -1604,6 +2155,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 if args.codex_exec_mode == "codex_cli":
                     packet = execute_codex_work_packet(
                         packet,
+                        apply_mode=args.codex_apply_mode,
+                        commit_mode=args.codex_commit_mode,
                         codex_command=args.codex_command,
                         model=args.codex_model,
                         sandbox=args.codex_sandbox,
@@ -1645,10 +2198,22 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     packet.get("codex_exec", {}).get("status", "")
                 ).strip().lower()
                 patch_status = str(packet.get("patch_status", "")).strip().lower()
-                if exec_status != "succeeded" and patch_status != "created":
+                if (
+                    exec_status != "succeeded"
+                    and patch_status not in CODEX_COMPLETED_WORK_STATUSES
+                ):
                     summary["codex_execution_failure_count"] = int(
                         summary.get("codex_execution_failure_count", 0)
                     ) + 1
+            main_apply_status = str(packet.get("main_apply_status", "")).strip().lower()
+            if main_apply_status == "applied":
+                summary["codex_main_apply_count"] = int(
+                    summary.get("codex_main_apply_count", 0)
+                ) + 1
+            elif main_apply_status and main_apply_status not in {"no_changes", "skipped"}:
+                summary["codex_main_apply_failure_count"] = int(
+                    summary.get("codex_main_apply_failure_count", 0)
+                ) + 1
             summary["codex_packet_count"] = int(
                 summary.get("codex_packet_count", 0)
             ) + int(bool(packet.get("packet_path")))
@@ -1675,6 +2240,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "codex_program_synthesis_cycle",
+                    "main_apply_status": packet.get("main_apply_status"),
+                    "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
+                    "main_apply_validation_status": dict(
+                        packet.get("main_apply_validation", {})
+                    ).get("status"),
+                    "main_commit_status": dict(packet.get("main_commit", {})).get("status"),
                     "packet_path": packet.get("packet_path"),
                     "patch_path": packet.get("patch_path"),
                     "patch_status": packet.get("patch_status"),

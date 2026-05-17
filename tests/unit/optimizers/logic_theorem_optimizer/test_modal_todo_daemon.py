@@ -24,12 +24,14 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodoSupervisor,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
+    apply_codex_worktree_changes_to_main,
     build_paired_daemon_commands,
     compiler_ir_metric_block,
     create_codex_work_packet,
     execute_codex_work_packet,
     program_synthesis_status_block,
     refresh_codex_work_packet_patch,
+    resolve_codex_worktree_repo_root,
 )
 
 
@@ -555,6 +557,27 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert timeout_patch["failed_validation_count"] == 0
     assert supervisor_timeout_patch.queue.get(claimed_timeout_patch[0].todo_id).status == "completed"
 
+    supervisor_applied = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor_applied.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed_applied = supervisor_applied.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    applied = supervisor_applied.finalize_program_synthesis_batch(
+        claimed_applied,
+        codex_exec_status="succeeded",
+        patch_status="applied_to_main",
+    )
+    assert applied["updated"] is True
+    assert applied["completed_count"] == 1
+    assert applied["failed_validation_count"] == 0
+    assert supervisor_applied.queue.get(claimed_applied[0].todo_id).status == "completed"
+
 
 def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     args = SimpleNamespace(
@@ -569,10 +592,13 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         learning_rate=0.25,
         test_every_cycles=99,
         poll_seconds=1.5,
+        paired_grace_seconds=300.0,
         worker_id="codex-worker",
         codex_exec_mode="packet_only",
         codex_command="codex",
         codex_model=None,
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
         codex_sandbox="workspace-write",
         codex_timeout_seconds=30.0,
         warm_start_run_id=["warm-a", "warm-b"],
@@ -590,6 +616,12 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert "--queue-run-id" in paired["codex_command"]
     queue_index = paired["codex_command"].index("--queue-run-id")
     assert paired["codex_command"][queue_index + 1] == paired["queue_run_id"]
+    duration_index = paired["codex_command"].index("--duration-seconds")
+    assert paired["codex_command"][duration_index + 1] == "420.0"
+    apply_index = paired["codex_command"].index("--codex-apply-mode")
+    assert paired["codex_command"][apply_index + 1] == "apply_to_main"
+    commit_index = paired["codex_command"].index("--codex-commit-mode")
+    assert paired["codex_command"][commit_index + 1] == "commit_applied"
     assert paired["autoencoder_command"].count("--warm-start-run-id") == 2
     assert paired["autoencoder_command"].count("--warm-start-state") == 1
 
@@ -611,6 +643,8 @@ def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -
         codex_exec_mode="codex_cli",
         codex_command="codex",
         codex_model="gpt-5.5",
+        codex_apply_mode="patch_only",
+        codex_commit_mode="none",
         codex_sandbox="workspace-write",
         codex_timeout_seconds=45.0,
         warm_start_run_id=[],
@@ -629,6 +663,20 @@ def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -
     model_index = paired["codex_command"].index("--codex-model")
     assert paired["codex_command"][model_index + 1] == "gpt-5.5"
     assert "--worker-id" not in paired["codex_command"]
+
+
+def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path) -> None:
+    parent = tmp_path / "site"
+    nested = parent / "ipfs_datasets_py"
+    modal_dir = nested / "ipfs_datasets_py" / "logic" / "modal"
+    modal_dir.mkdir(parents=True)
+    (modal_dir / "codec.py").write_text("# modal codec placeholder\n", encoding="utf-8")
+    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True, text=True)
+    parent.mkdir(exist_ok=True)
+    subprocess.run(["git", "init"], cwd=nested, check=True, capture_output=True, text=True)
+
+    assert resolve_codex_worktree_repo_root(parent) == nested.resolve()
+    assert resolve_codex_worktree_repo_root(nested) == nested.resolve()
 
 
 def _create_git_repo_with_program_synthesis_packet(tmp_path):
@@ -730,6 +778,80 @@ def test_codex_work_packet_refresh_creates_patch_after_worktree_edit(tmp_path) -
     )
 
 
+def test_codex_work_packet_apply_to_main_applies_worktree_diff(tmp_path) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    readme = Path(packet["worktree_path"]) / "README.md"
+    readme.write_text("test repo\napplied by codex packet\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(packet, validation_commands=())
+
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_validation"]["status"] == "skipped"
+    assert updated["patch_path"] is None
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "test repo\napplied by codex packet\n"
+    )
+    packet_data = json.loads(Path(updated["packet_path"]).read_text(encoding="utf-8"))
+    assert packet_data["patch_status"] == "applied_to_main"
+    assert packet_data["main_apply_status"] == "applied"
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_can_commit_applied_diff(tmp_path) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    readme = Path(packet["worktree_path"]) / "README.md"
+    readme.write_text("test repo\ncommitted by codex packet\n", encoding="utf-8")
+    (Path(packet["worktree_path"]) / "changes.patch").write_text(
+        "generated patch artifact should not be applied\n",
+        encoding="utf-8",
+    )
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        commit_mode="commit_applied",
+        validation_commands=(),
+    )
+
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_commit"]["status"] == "committed"
+    assert updated["main_apply_ignored_artifact_paths"] == ["changes.patch"]
+    assert updated["patch_path"] is None
+    assert not (repo / "changes.patch").exists()
+    latest_subject = subprocess.run(
+        ["git", "log", "-1", "--pretty=%s"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert latest_subject == "Apply Codex legal IR packet packet-000001"
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    assert status == ""
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, monkeypatch) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
     original_run = subprocess.run
@@ -757,6 +879,47 @@ def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, 
     assert updated["patch_path"]
     assert Path(updated["codex_exec"]["prompt_path"]).exists()
     assert Path(updated["codex_exec"]["stdout_path"]).read_text(encoding="utf-8") == "ok\n"
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_executor_can_apply_changes_to_main(tmp_path, monkeypatch) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    original_run = subprocess.run
+
+    def fake_codex_run(cmd, **kwargs):
+        if list(cmd[:2]) != ["codex", "exec"]:
+            return original_run(cmd, **kwargs)
+        worktree = Path(cmd[cmd.index("--cd") + 1])
+        (worktree / "README.md").write_text(
+            "test repo\nexecutor applied this packet\n",
+            encoding="utf-8",
+        )
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok\n", stderr="")
+
+    with monkeypatch.context() as context:
+        context.setattr(subprocess, "run", fake_codex_run)
+        updated = execute_codex_work_packet(
+            packet,
+            apply_mode="apply_to_main",
+            codex_command="codex",
+            timeout_seconds=1.0,
+            validation_commands=(),
+        )
+
+    assert updated["codex_exec"]["status"] == "succeeded"
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["patch_path"] is None
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "test repo\nexecutor applied this packet\n"
+    )
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],
