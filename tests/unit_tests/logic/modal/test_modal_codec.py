@@ -191,6 +191,34 @@ def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> N
     assert compiled.modal_ir.metadata["modal_family_counts"]["temporal"] >= 1
 
 
+def test_modal_compiler_surfaces_primary_family_margin_ambiguity_when_outvoted() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_family_share_margin=0.34,
+            modal_family_secondary_share_floor=0.2,
+            modal_primary_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days, the agency must, shall, and is required and obligated and must provide written notice."
+    )
+
+    assert compiled.modal_ir.formulas
+    assert compiled.modal_ir.formulas[0].operator.family == "temporal"
+    low_margin_ambiguity = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "low_primary_modal_family_margin"
+    )
+    assert low_margin_ambiguity.candidate_ids == ["temporal", "deontic"]
+    assert low_margin_ambiguity.metadata["primary_family"] == "temporal"
+    assert low_margin_ambiguity.metadata["best_other_family"] == "deontic"
+    assert low_margin_ambiguity.metadata["family_margin"] < 0.0
+
+
 def test_modal_decompiler_preserves_context_without_formula_style_text() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="regex", embedding_dimensions=8)

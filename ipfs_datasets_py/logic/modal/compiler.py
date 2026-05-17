@@ -47,6 +47,7 @@ class ModalCompilerConfig:
     frame_score_margin: float = 0.05
     modal_family_share_margin: float = 0.34
     modal_family_secondary_share_floor: float = 0.2
+    modal_primary_family_margin: float = 0.15
 
 
 @dataclass(frozen=True)
@@ -147,7 +148,7 @@ class DeterministicModalCompiler:
         selected_frame = str(frame_candidates[0]["frame_id"]) if frame_candidates else None
         ambiguities = [
             *self._formula_ambiguities(modal_ir),
-            *self._family_ambiguities(encoding),
+            *self._family_ambiguities(encoding, modal_ir=modal_ir),
             *self._frame_ambiguities(frame_selections),
         ]
         if normalized_text and not modal_ir.formulas:
@@ -245,15 +246,65 @@ class DeterministicModalCompiler:
     def _family_ambiguities(
         self,
         encoding: SpaCyLegalEncoding,
+        *,
+        modal_ir: ModalIRDocument,
     ) -> List[ModalCompilationAmbiguity]:
         ranking = ranked_modal_families(encoding)
-        if len(ranking) < 2:
+        if not ranking:
             return []
+
+        ambiguities: List[ModalCompilationAmbiguity] = []
+        if modal_ir.formulas:
+            primary_family = str(modal_ir.formulas[0].operator.family)
+            primary_share = next(
+                (
+                    float(candidate["share"])
+                    for candidate in ranking
+                    if str(candidate["family"]) == primary_family
+                ),
+                0.0,
+            )
+            best_other = max(
+                (
+                    candidate
+                    for candidate in ranking
+                    if str(candidate["family"]) != primary_family
+                ),
+                key=lambda candidate: (
+                    float(candidate["share"]),
+                    str(candidate["family"]),
+                ),
+                default=None,
+            )
+            if best_other is not None:
+                best_other_family = str(best_other["family"])
+                best_other_share = float(best_other["share"])
+                family_margin = primary_share - best_other_share
+                if family_margin <= self.config.modal_primary_family_margin:
+                    ambiguities.append(
+                        ModalCompilationAmbiguity(
+                            ambiguity_type="low_primary_modal_family_margin",
+                            message=(
+                                "The primary compiled modal family has a low margin "
+                                "against competing cue evidence."
+                            ),
+                            candidate_ids=[primary_family, best_other_family],
+                            metadata={
+                                "best_other_family": best_other_family,
+                                "best_other_share": round(best_other_share, 6),
+                                "family_margin": round(family_margin, 6),
+                                "family_ranking": ranking,
+                                "primary_family": primary_family,
+                                "primary_family_margin_threshold": self.config.modal_primary_family_margin,
+                                "primary_share": round(primary_share, 6),
+                            },
+                        )
+                    )
+        if len(ranking) < 2:
+            return ambiguities
 
         top, runner_up = ranking[0], ranking[1]
         share_margin = float(top["share"]) - float(runner_up["share"])
-        ambiguities: List[ModalCompilationAmbiguity] = []
-
         if share_margin <= self.config.modal_family_share_margin:
             ambiguities.append(
                 ModalCompilationAmbiguity(
@@ -261,6 +312,7 @@ class DeterministicModalCompiler:
                     message="Top modal families are close enough that legal family selection is ambiguous.",
                     candidate_ids=[str(top["family"]), str(runner_up["family"])],
                     metadata={
+                        "family_margin": round(share_margin, 6),
                         "family_ranking": ranking,
                         "share_margin": round(share_margin, 6),
                         "top_family": str(top["family"]),
