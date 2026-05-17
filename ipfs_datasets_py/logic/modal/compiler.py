@@ -48,6 +48,7 @@ class ModalCompilerConfig:
     modal_family_share_margin: float = 0.34
     modal_family_secondary_share_floor: float = 0.2
     modal_primary_family_margin: float = 0.15
+    modal_primary_family_outvote_margin: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -284,6 +285,27 @@ class DeterministicModalCompiler:
                 best_other_family = str(best_other["family"])
                 best_other_share = float(best_other["share"])
                 family_margin = primary_share - best_other_share
+                if family_margin < self.config.modal_primary_family_outvote_margin:
+                    ambiguities.append(
+                        ModalCompilationAmbiguity(
+                            ambiguity_type="primary_modal_family_outvoted",
+                            message=(
+                                "Cue evidence favors a competing modal family over the primary "
+                                "compiled family; interpretation requires review."
+                            ),
+                            candidate_ids=[primary_family, best_other_family],
+                            severity="requires_rule",
+                            metadata={
+                                "best_other_family": best_other_family,
+                                "best_other_share": round(best_other_share, 6),
+                                "family_margin": round(family_margin, 6),
+                                "family_ranking": ranking,
+                                "outvote_margin_threshold": self.config.modal_primary_family_outvote_margin,
+                                "primary_family": primary_family,
+                                "primary_share": round(primary_share, 6),
+                            },
+                        )
+                    )
                 if family_margin <= self.config.modal_primary_family_margin:
                     ambiguities.append(
                         ModalCompilationAmbiguity(
@@ -347,6 +369,26 @@ class DeterministicModalCompiler:
                 competing_family = str(best_non_frame["family"])
                 competing_share = float(best_non_frame["share"])
                 frame_margin = frame_share - competing_share
+                if frame_margin < self.config.modal_primary_family_outvote_margin:
+                    ambiguities.append(
+                        ModalCompilationAmbiguity(
+                            ambiguity_type="frame_modal_family_outvoted",
+                            message=(
+                                "Cue evidence favors a non-frame modal family over the compiled "
+                                "frame interpretation."
+                            ),
+                            candidate_ids=[ModalLogicFamily.FRAME.value, competing_family],
+                            severity="requires_rule",
+                            metadata={
+                                "competing_family": competing_family,
+                                "competing_share": round(competing_share, 6),
+                                "family_margin": round(frame_margin, 6),
+                                "family_ranking": ranking,
+                                "frame_share": round(frame_share, 6),
+                                "outvote_margin_threshold": self.config.modal_primary_family_outvote_margin,
+                            },
+                        )
+                    )
                 if frame_margin <= self.config.modal_primary_family_margin:
                     ambiguities.append(
                         ModalCompilationAmbiguity(

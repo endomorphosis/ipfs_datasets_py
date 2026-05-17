@@ -213,10 +213,19 @@ def test_modal_compiler_surfaces_primary_family_margin_ambiguity_when_outvoted()
         for ambiguity in compiled.ambiguities
         if ambiguity.ambiguity_type == "low_primary_modal_family_margin"
     )
+    outvoted_ambiguity = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "primary_modal_family_outvoted"
+    )
     assert low_margin_ambiguity.candidate_ids == ["temporal", "deontic"]
     assert low_margin_ambiguity.metadata["primary_family"] == "temporal"
     assert low_margin_ambiguity.metadata["best_other_family"] == "deontic"
     assert low_margin_ambiguity.metadata["family_margin"] < 0.0
+    assert outvoted_ambiguity.candidate_ids == ["temporal", "deontic"]
+    assert outvoted_ambiguity.metadata["primary_family"] == "temporal"
+    assert outvoted_ambiguity.metadata["best_other_family"] == "deontic"
+    assert outvoted_ambiguity.metadata["family_margin"] < 0.0
 
 
 def test_modal_compiler_surfaces_frame_family_margin_ambiguity_when_outvoted() -> None:
@@ -237,10 +246,18 @@ def test_modal_compiler_surfaces_frame_family_margin_ambiguity_when_outvoted() -
         for ambiguity in compiled.ambiguities
         if ambiguity.ambiguity_type == "low_frame_modal_family_margin"
     )
+    frame_outvoted_ambiguity = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "frame_modal_family_outvoted"
+    )
     assert frame_margin_ambiguity.candidate_ids == ["frame", "deontic"]
     assert frame_margin_ambiguity.metadata["competing_family"] == "deontic"
     assert frame_margin_ambiguity.metadata["family_margin"] < 0.0
     assert frame_margin_ambiguity.metadata["frame_share"] > 0.0
+    assert frame_outvoted_ambiguity.candidate_ids == ["frame", "deontic"]
+    assert frame_outvoted_ambiguity.metadata["competing_family"] == "deontic"
+    assert frame_outvoted_ambiguity.metadata["family_margin"] < 0.0
 
 
 def test_modal_decompiler_preserves_context_without_formula_style_text() -> None:
