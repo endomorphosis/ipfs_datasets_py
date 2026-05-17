@@ -50,6 +50,8 @@ class ModalCompilerConfig:
     modal_family_secondary_share_floor: float = 0.2
     modal_primary_family_margin: float = 0.15
     modal_primary_family_outvote_margin: float = 0.0
+    modal_conditional_target_family_outvote_margin: float = 0.0
+    modal_deontic_target_family_outvote_margin: float = 0.0
     modal_temporal_target_family_outvote_margin: float = 0.0
     modal_frame_target_family_outvote_margin: float = 0.0
 
@@ -350,6 +352,20 @@ class DeterministicModalCompiler:
                 family_shares=family_shares,
             )
         )
+        ambiguities.extend(
+            self._conditional_scope_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
+        ambiguities.extend(
+            self._deontic_scope_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
         if len(ranking) < 2:
             return ambiguities
 
@@ -612,6 +628,94 @@ class DeterministicModalCompiler:
                     "family_ranking": list(ranking),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_frame_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _conditional_scope_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        target_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+        if predicted_family == target_family:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        target_share = float(family_shares.get(target_family, 0.0))
+        signals = modal_ambiguity_signals(encoding)
+        has_condition_scope = bool(signals.get("has_condition_or_exception_scope"))
+        if not has_condition_scope and target_share <= 0.0:
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_conditional_target_family_outvote_margin:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="conditional_scope_family_outvoted",
+                message=(
+                    "Conditional or exception scope markers are present, but non-conditional "
+                    "cue evidence outvotes conditional-normative family evidence."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": self.config.modal_conditional_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _deontic_scope_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        target_family = ModalLogicFamily.DEONTIC.value
+        if predicted_family == target_family:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        target_share = float(family_shares.get(target_family, 0.0))
+        signals = modal_ambiguity_signals(encoding)
+        has_deontic_scope = bool(signals.get("has_deontic_cue"))
+        if not has_deontic_scope and target_share <= 0.0:
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_deontic_target_family_outvote_margin:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="deontic_scope_family_outvoted",
+                message=(
+                    "Deontic-force cues are present, but non-deontic cue evidence "
+                    "outvotes deontic family evidence."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": self.config.modal_deontic_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,

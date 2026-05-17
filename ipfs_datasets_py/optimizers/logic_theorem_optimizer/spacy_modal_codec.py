@@ -34,15 +34,20 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "after",
         "annual",
         "annually",
+        "calendar",
         "before",
         "daily",
         "day",
         "deadline",
+        "effective",
+        "fiscal",
         "immediately",
+        "later",
         "month",
         "monthly",
         "promptly",
         "quarterly",
+        "thereafter",
         "until",
         "week",
         "weekly",
@@ -50,6 +55,17 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "year",
         "yearly",
     }
+)
+_TEMPORAL_SCOPE_PHRASES = (
+    "as soon as practicable",
+    "calendar year",
+    "effective date",
+    "effective on",
+    "fiscal year",
+    "no earlier than",
+    "no later than",
+    "not earlier than",
+    "not later than",
 )
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
@@ -506,13 +522,19 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         for token in encoding.tokens
         if token.is_alpha
     }
+    normalized_text = encoding.normalized_text.lower()
     cue_families = {cue.family for cue in encoding.cues}
-    temporal_scope = bool(token_terms & _TEMPORAL_SCOPE_TOKENS)
+    temporal_scope_phrase = any(
+        re.search(rf"(?<!\w){re.escape(phrase)}(?!\w)", normalized_text)
+        for phrase in _TEMPORAL_SCOPE_PHRASES
+    )
+    temporal_scope = bool(token_terms & _TEMPORAL_SCOPE_TOKENS) or bool(temporal_scope_phrase)
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
         "has_condition_clause": condition_clauses,
         "has_exception_clause": exception_clauses,
         "has_condition_or_exception_scope": condition_clauses or exception_clauses,
+        "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_frame_context": frame_context,
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,

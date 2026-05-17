@@ -363,6 +363,85 @@ def test_modal_compiler_surfaces_frame_scope_family_outvote_ambiguity() -> None:
     assert frame_scope.metadata["lexical_signals"]["has_frame_context"] is True
 
 
+def test_modal_compiler_surfaces_conditional_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_conditional_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Before issuing a permit, the agency shall and must provide written notice."
+    )
+
+    conditional_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "conditional_scope_family_outvoted"
+    )
+    assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
+    assert conditional_scope.metadata["predicted_family"] == "deontic"
+    assert conditional_scope.metadata["target_family"] == "conditional_normative"
+    assert conditional_scope.metadata["family_margin"] < 0.0
+    assert (
+        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+
+
+def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_deontic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the agency shall submit an annual report."
+    )
+
+    deontic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "deontic_scope_family_outvoted"
+    )
+    assert deontic_scope.candidate_ids == ["temporal", "deontic"]
+    assert deontic_scope.metadata["predicted_family"] == "temporal"
+    assert deontic_scope.metadata["target_family"] == "deontic"
+    assert deontic_scope.metadata["family_margin"] < 0.0
+    assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is True
+
+
+def test_modal_compiler_treats_not_later_than_scope_as_temporal_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must provide written notice not later than 30 days."
+    )
+
+    temporal_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_scope_family_outvoted"
+    )
+    assert temporal_scope.candidate_ids == ["deontic", "temporal"]
+    assert temporal_scope.metadata["predicted_family"] == "deontic"
+    assert temporal_scope.metadata["target_family"] == "temporal"
+    assert temporal_scope.metadata["family_margin"] < 0.0
+    assert temporal_scope.metadata["target_share"] == 0.0
+    assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
+
+
 def test_modal_compiler_treats_before_scope_as_temporal_conditional_ambiguity_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
