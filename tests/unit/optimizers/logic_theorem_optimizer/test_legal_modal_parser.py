@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import LegalModalParser
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+    build_us_code_sample,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
     DataType,
     LogicExtractionContext,
@@ -78,6 +81,25 @@ def test_parser_document_id_is_deterministic_from_normalized_text() -> None:
 
     assert first.document_id == second.document_id
     assert first.to_json() == second.to_json()
+
+
+def test_parser_adds_uscode_codification_fallback_for_known_zero_formula_case() -> None:
+    sample = build_us_code_sample(
+        title="42",
+        section="5668.",
+        citation="42 U.S.C. 5668.",
+        text=(
+            "\u00a75668. Transferred Editorial Notes Codification Section 5668 was editorially "
+            "reclassified as section 11174 of Title 34, Crime Control and Law Enforcement."
+        ),
+    )
+
+    assert sample.sample_id == "us-code-42-5668.-a3bbd3be7319f8a1"
+    assert sample.modal_ir.formulas
+    fallback = sample.modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
 
 
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:

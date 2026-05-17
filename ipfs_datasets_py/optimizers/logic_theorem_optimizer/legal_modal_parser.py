@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Sequence
 
 from .modal_ir import (
     ModalIRDocument,
@@ -29,6 +29,10 @@ _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
+_USCODE_CODIFICATION_HINT_RE = re.compile(
+    r"\b(?:transferred editorial notes|editorially reclassified|codification)\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -153,6 +157,16 @@ class LegalModalParser:
                 )
             )
 
+        fallback_formula = self._uscode_codification_fallback_formula(
+            resolved_document_id=resolved_document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=segments,
+            start_index=len(formulas) + 1,
+        )
+        if fallback_formula is not None:
+            formulas.append(fallback_formula)
+
         return ModalIRDocument(
             document_id=resolved_document_id,
             source=source,
@@ -221,6 +235,74 @@ class LegalModalParser:
     def _document_id(self, normalized_text: str) -> str:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:16]
         return f"legal-text-{digest}"
+
+    def _uscode_codification_fallback_formula(
+        self,
+        *,
+        resolved_document_id: str,
+        normalized_text: str,
+        citation: Optional[str],
+        segments: Sequence[LegalSegment],
+        start_index: int,
+    ) -> Optional[ModalIRFormula]:
+        if not normalized_text.strip():
+            return None
+        if citation is None or "u.s.c." not in citation.lower():
+            return None
+        if self.extract_cues(normalized_text):
+            return None
+
+        candidate_segment: Optional[LegalSegment] = None
+        for segment in segments:
+            if _USCODE_CODIFICATION_HINT_RE.search(segment.text):
+                candidate_segment = segment
+                break
+        if candidate_segment is None:
+            return None
+
+        lowered = candidate_segment.text.lower()
+        if "reclassified" not in lowered and "codification" not in lowered:
+            return None
+        if "section" not in lowered:
+            return None
+
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return None
+        operator = profile.operators[0]
+        predicate = self._predicate_from_segment(
+            candidate_segment.text,
+            "__uscode_codification_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(
+            candidate_segment.text
+        )
+        return ModalIRFormula(
+            formula_id=f"{resolved_document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role="frame",
+            ),
+            provenance=ModalIRProvenance(
+                source_id=resolved_document_id,
+                start_char=candidate_segment.start_char,
+                end_char=candidate_segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_codification_fallback__",
+                "fallback_rule": "uscode_codification_transfer_heading_v1",
+            },
+        )
 
 
 __all__ = [
