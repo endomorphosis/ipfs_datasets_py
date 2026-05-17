@@ -310,6 +310,55 @@ def test_modal_compiler_surfaces_temporal_frame_family_outvote_ambiguity() -> No
     assert temporal_frame.metadata["lexical_signals"]["has_frame_context"] is True
 
 
+def test_modal_compiler_surfaces_temporal_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must provide written notice before each annual review deadline."
+    )
+
+    temporal_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_scope_family_outvoted"
+    )
+    assert temporal_scope.candidate_ids == ["deontic", "temporal"]
+    assert temporal_scope.metadata["predicted_family"] == "deontic"
+    assert temporal_scope.metadata["target_family"] == "temporal"
+    assert temporal_scope.metadata["family_margin"] < 0.0
+    assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
+
+
+def test_modal_compiler_treats_before_scope_as_temporal_conditional_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Before a removal takes effect, the agency shall provide written notice within 30 days after review and following consultation."
+    )
+
+    temporal_conditional = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_conditional_normative_family_outvoted"
+    )
+    assert temporal_conditional.metadata["predicted_family"] == "temporal"
+    assert temporal_conditional.metadata["target_family"] == "conditional_normative"
+    assert temporal_conditional.metadata["family_margin"] < 0.0
+    assert temporal_conditional.metadata["lexical_signals"]["has_condition_clause"] is True
+
+
 def test_modal_decompiler_preserves_context_without_formula_style_text() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="regex", embedding_dimensions=8)

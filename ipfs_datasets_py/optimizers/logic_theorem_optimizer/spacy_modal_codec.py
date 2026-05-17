@@ -27,8 +27,30 @@ from .modal_registry import (
 _WHITESPACE_RE = re.compile(r"\s+")
 _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
 _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
-_CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
+_CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
+_TEMPORAL_SCOPE_TOKENS = frozenset(
+    {
+        "after",
+        "annual",
+        "annually",
+        "before",
+        "daily",
+        "day",
+        "deadline",
+        "immediately",
+        "month",
+        "monthly",
+        "promptly",
+        "quarterly",
+        "until",
+        "week",
+        "weekly",
+        "within",
+        "year",
+        "yearly",
+    }
+)
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
         "administrator",
@@ -485,11 +507,13 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         if token.is_alpha
     }
     cue_families = {cue.family for cue in encoding.cues}
+    temporal_scope = bool(token_terms & _TEMPORAL_SCOPE_TOKENS)
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
         "has_condition_clause": condition_clauses,
         "has_exception_clause": exception_clauses,
         "has_condition_or_exception_scope": condition_clauses or exception_clauses,
+        "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_frame_context": frame_context,
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
