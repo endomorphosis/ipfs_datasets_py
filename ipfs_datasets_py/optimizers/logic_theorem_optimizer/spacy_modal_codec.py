@@ -36,6 +36,25 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "except to the extent",
     "except as otherwise provided",
 )
+_ALETHIC_SCOPE_TOKENS = frozenset(
+    {
+        "cannot",
+        "impossible",
+        "necessary",
+        "necessarily",
+        "possible",
+        "unable",
+    }
+)
+_ALETHIC_SCOPE_PHRASES = (
+    "impossible to",
+    "it is impossible",
+    "it is necessary",
+    "it is possible",
+    "necessary to",
+    "not possible",
+    "unable to",
+)
 _TEMPORAL_SCOPE_TOKENS = frozenset(
     {
         "after",
@@ -546,10 +565,17 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     conditional_scope_phrase = _contains_scope_phrase(
         normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
+    alethic_scope_phrase = _contains_scope_phrase(
+        normalized_text, _ALETHIC_SCOPE_PHRASES
+    )
     temporal_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_SCOPE_PHRASES
     )
     calendar_date_scope = bool(_CALENDAR_DATE_RE.search(normalized_text))
+    alethic_scope = (
+        bool(token_terms & _ALETHIC_SCOPE_TOKENS)
+        or bool(alethic_scope_phrase)
+    )
     temporal_scope = (
         bool(token_terms & _TEMPORAL_SCOPE_TOKENS)
         or bool(temporal_scope_phrase)
@@ -557,6 +583,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     )
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
+        "has_alethic_cue": ModalLogicFamily.ALETHIC.value in cue_families,
+        "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,
+        "has_alethic_scope_phrase": bool(alethic_scope_phrase),
         "has_condition_clause": condition_clauses,
         "has_conditional_scope_phrase": conditional_scope_phrase,
         "has_exception_clause": exception_clauses,

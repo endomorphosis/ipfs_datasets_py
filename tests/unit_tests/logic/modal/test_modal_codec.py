@@ -467,6 +467,59 @@ def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> Non
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is True
 
 
+def test_modal_compiler_surfaces_alethic_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_alethic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "It is possible that the agency will provide notice within 30 days after review."
+    )
+
+    alethic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "alethic_scope_family_outvoted"
+    )
+    assert alethic_scope.candidate_ids == ["temporal", "alethic"]
+    assert alethic_scope.metadata["predicted_family"] == "temporal"
+    assert alethic_scope.metadata["target_family"] == "alethic"
+    assert alethic_scope.metadata["family_margin"] < 0.0
+    assert alethic_scope.metadata["target_share"] > 0.0
+    assert alethic_scope.metadata["lexical_signals"]["has_alethic_cue"] is True
+
+
+def test_modal_compiler_treats_unable_to_as_alethic_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_alethic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must be unable to deny access to the record."
+    )
+
+    alethic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "alethic_scope_family_outvoted"
+    )
+    assert alethic_scope.candidate_ids == ["deontic", "alethic"]
+    assert alethic_scope.metadata["predicted_family"] == "deontic"
+    assert alethic_scope.metadata["target_family"] == "alethic"
+    assert alethic_scope.metadata["family_margin"] < 0.0
+    assert alethic_scope.metadata["target_share"] == 0.0
+    assert alethic_scope.metadata["lexical_signals"]["has_alethic_scope"] is True
+    assert alethic_scope.metadata["lexical_signals"]["has_alethic_cue"] is False
+
+
 def test_modal_compiler_treats_not_later_than_scope_as_temporal_ambiguity_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
