@@ -133,7 +133,10 @@ def test_modal_compiler_decompiler_are_explainable_and_deterministic() -> None:
     assert compiled.modal_ir.metadata["deterministic_compiler"] == "modal_compiler_v1"
     assert compiled.modal_ir.metadata["llm_call_count"] == 0
     assert compiled.ambiguities
-    assert compiled.ambiguities[0].ambiguity_type == "close_bm25_frame_scores"
+    assert any(
+        ambiguity.ambiguity_type == "close_bm25_frame_scores"
+        for ambiguity in compiled.ambiguities
+    )
     assert decoded.source_id == "compiler-doc"
     assert decoded.text == "The agency must provide notice."
     assert decoded.reconstruction_similarity == 1.0
@@ -333,6 +336,31 @@ def test_modal_compiler_surfaces_temporal_scope_family_outvote_ambiguity() -> No
     assert temporal_scope.metadata["target_family"] == "temporal"
     assert temporal_scope.metadata["family_margin"] < 0.0
     assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
+
+
+def test_modal_compiler_surfaces_frame_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_frame_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The secretary shall and must provide written notice."
+    )
+
+    frame_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "frame_scope_family_outvoted"
+    )
+    assert frame_scope.candidate_ids == ["deontic", "frame"]
+    assert frame_scope.metadata["predicted_family"] == "deontic"
+    assert frame_scope.metadata["target_family"] == "frame"
+    assert frame_scope.metadata["family_margin"] < 0.0
+    assert frame_scope.metadata["lexical_signals"]["has_frame_context"] is True
 
 
 def test_modal_compiler_treats_before_scope_as_temporal_conditional_ambiguity_signal() -> None:

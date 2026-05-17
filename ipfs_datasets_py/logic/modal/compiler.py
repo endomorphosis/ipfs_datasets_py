@@ -51,6 +51,7 @@ class ModalCompilerConfig:
     modal_primary_family_margin: float = 0.15
     modal_primary_family_outvote_margin: float = 0.0
     modal_temporal_target_family_outvote_margin: float = 0.0
+    modal_frame_target_family_outvote_margin: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -342,6 +343,13 @@ class DeterministicModalCompiler:
                 family_shares=family_shares,
             )
         )
+        ambiguities.extend(
+            self._frame_scope_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
         if len(ranking) < 2:
             return ambiguities
 
@@ -558,6 +566,52 @@ class DeterministicModalCompiler:
                     "family_ranking": list(ranking),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_temporal_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _frame_scope_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        if predicted_family in {ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.FRAME.value}:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        target_family = ModalLogicFamily.FRAME.value
+        target_share = float(family_shares.get(target_family, 0.0))
+        signals = modal_ambiguity_signals(encoding)
+        has_frame_scope = bool(
+            signals.get("has_frame_context") or signals.get("has_frame_cue")
+        )
+        if not has_frame_scope and target_share <= 0.0:
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_frame_target_family_outvote_margin:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="frame_scope_family_outvoted",
+                message=(
+                    "Frame-context markers are present, but non-frame cue evidence "
+                    "outvotes frame family evidence."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": self.config.modal_frame_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,
