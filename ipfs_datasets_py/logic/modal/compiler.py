@@ -32,6 +32,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyLegalEncoder,
     SpaCyLegalEncoding,
     SpaCyModalIRCompiler,
+    modal_ambiguity_signals,
     ranked_modal_families,
 )
 
@@ -49,6 +50,7 @@ class ModalCompilerConfig:
     modal_family_secondary_share_floor: float = 0.2
     modal_primary_family_margin: float = 0.15
     modal_primary_family_outvote_margin: float = 0.0
+    modal_temporal_target_family_outvote_margin: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -326,6 +328,13 @@ class DeterministicModalCompiler:
                             },
                         )
                     )
+        ambiguities.extend(
+            self._temporal_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
         if len(ranking) < 2:
             return ambiguities
 
@@ -440,6 +449,68 @@ class DeterministicModalCompiler:
                         "family_ranking": ranking,
                         "runner_up_share": round(runner_share, 6),
                         "secondary_share_floor": self.config.modal_family_secondary_share_floor,
+                    },
+                )
+            )
+        return ambiguities
+
+    def _temporal_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        top_family = str(ranking[0]["family"])
+        if top_family != ModalLogicFamily.TEMPORAL.value:
+            return []
+        temporal_share = float(ranking[0]["share"])
+        signals = modal_ambiguity_signals(encoding)
+        target_specs = (
+            (
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                bool(signals.get("has_condition_or_exception_scope")),
+                "temporal_conditional_normative_family_outvoted",
+                (
+                    "Conditional or exception scope markers are present, but temporal cues "
+                    "outvote conditional-normative family evidence."
+                ),
+            ),
+            (
+                ModalLogicFamily.FRAME.value,
+                bool(signals.get("has_frame_context") or signals.get("has_frame_cue")),
+                "temporal_frame_family_outvoted",
+                (
+                    "Frame-context markers are present, but temporal cues outvote frame-family "
+                    "evidence."
+                ),
+            ),
+        )
+        ambiguities: List[ModalCompilationAmbiguity] = []
+        for target_family, has_signal, ambiguity_type, message in target_specs:
+            target_share = float(family_shares.get(target_family, 0.0))
+            family_margin = target_share - temporal_share
+            if not has_signal and target_share <= 0.0:
+                continue
+            if family_margin >= self.config.modal_temporal_target_family_outvote_margin:
+                continue
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type=ambiguity_type,
+                    message=message,
+                    candidate_ids=[ModalLogicFamily.TEMPORAL.value, target_family],
+                    severity="requires_rule",
+                    metadata={
+                        "family_margin": round(family_margin, 6),
+                        "family_ranking": list(ranking),
+                        "lexical_signals": dict(sorted(signals.items())),
+                        "outvote_margin_threshold": self.config.modal_temporal_target_family_outvote_margin,
+                        "predicted_family": ModalLogicFamily.TEMPORAL.value,
+                        "target_family": target_family,
+                        "target_share": round(target_share, 6),
+                        "temporal_share": round(temporal_share, 6),
                     },
                 )
             )

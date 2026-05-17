@@ -29,6 +29,21 @@ _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
 _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
+_FRAME_CONTEXT_TOKENS = frozenset(
+    {
+        "administrator",
+        "agency",
+        "authority",
+        "board",
+        "bureau",
+        "commission",
+        "department",
+        "director",
+        "jurisdiction",
+        "officer",
+        "secretary",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -453,6 +468,33 @@ def ranked_modal_families(encoding: SpaCyLegalEncoding) -> List[Dict[str, float]
     return ranking
 
 
+def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
+    """Return deterministic lexical/contextual flags used by ambiguity policy."""
+    condition_clauses = False
+    exception_clauses = False
+    for sentence in encoding.sentences:
+        if _prefixed_clause_phrases(sentence.text, _CONDITION_PREFIXES):
+            condition_clauses = True
+        if _prefixed_clause_phrases(sentence.text, _EXCEPTION_PREFIXES):
+            exception_clauses = True
+        if condition_clauses and exception_clauses:
+            break
+    token_terms = {
+        token.normalized()
+        for token in encoding.tokens
+        if token.is_alpha
+    }
+    cue_families = {cue.family for cue in encoding.cues}
+    frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
+    return {
+        "has_condition_clause": condition_clauses,
+        "has_exception_clause": exception_clauses,
+        "has_condition_or_exception_scope": condition_clauses or exception_clauses,
+        "has_frame_context": frame_context,
+        "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
+    }
+
+
 def _unique_preserve_order(features: Iterable[str]) -> List[str]:
     seen: set[str] = set()
     result: List[str] = []
@@ -550,6 +592,7 @@ def _normalized_clause_phrase(text: str) -> str:
 
 
 __all__ = [
+    "modal_ambiguity_signals",
     "SpaCyLegalEncoder",
     "SpaCyLegalEncoding",
     "SpaCyModalCodec",
