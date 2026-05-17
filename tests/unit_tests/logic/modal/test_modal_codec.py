@@ -149,6 +149,26 @@ def test_modal_compiler_decompiler_are_explainable_and_deterministic() -> None:
     }
 
 
+def test_modal_compiler_handles_transferred_heading_for_uscode_15_688() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+
+    compiled = compiler.compile(
+        "\u00a7688. Transferred.",
+        document_id="us-code-15-688-3977b0476c11fbf1",
+        citation="15 U.S.C. 688",
+        source="us_code",
+    )
+
+    assert compiled.modal_ir.formulas
+    assert all(
+        ambiguity.ambiguity_type != "missing_modal_formula"
+        for ambiguity in compiled.ambiguities
+    )
+    fallback = compiled.modal_ir.formulas[-1]
+    assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+    assert fallback.provenance.citation == "15 U.S.C. 688"
+
+
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
     frame_selector = BM25FrameSelector(
         (

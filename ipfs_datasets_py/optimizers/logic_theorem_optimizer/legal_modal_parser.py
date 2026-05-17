@@ -30,7 +30,11 @@ _CLAUSE_DELIMITER_RE = re.compile(r"[,;:\n.]")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _USCODE_CODIFICATION_HINT_RE = re.compile(
-    r"\b(?:transferred editorial notes|editorially reclassified|codification)\b",
+    r"\b(?:transferred|editorially reclassified|codification)\b",
+    re.IGNORECASE,
+)
+_USCODE_CITATION_SECTION_RE = re.compile(
+    r"\bU\.S\.C\.\s*([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
 )
 
@@ -261,9 +265,16 @@ class LegalModalParser:
             return None
 
         lowered = candidate_segment.text.lower()
-        if "reclassified" not in lowered and "codification" not in lowered:
+        citation_section = self._citation_section_token(citation)
+        has_reclassification_hint = "reclassified" in lowered or "codification" in lowered
+        has_transferred_heading_hint = self._looks_like_transferred_section_heading(
+            candidate_segment.text,
+            citation_section=citation_section,
+        )
+
+        if not has_reclassification_hint and not has_transferred_heading_hint:
             return None
-        if "section" not in lowered:
+        if "section" not in lowered and not has_transferred_heading_hint:
             return None
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
@@ -300,9 +311,39 @@ class LegalModalParser:
             exceptions=exceptions,
             metadata={
                 "cue": "__uscode_codification_fallback__",
-                "fallback_rule": "uscode_codification_transfer_heading_v1",
+                "fallback_rule": (
+                    "uscode_codification_transfer_heading_v1"
+                    if has_reclassification_hint
+                    else "uscode_transferred_heading_v1"
+                ),
             },
         )
+
+    def _citation_section_token(self, citation: Optional[str]) -> str:
+        if not citation:
+            return ""
+        match = _USCODE_CITATION_SECTION_RE.search(citation)
+        if not match:
+            return ""
+        return match.group(1).strip().lower()
+
+    def _looks_like_transferred_section_heading(
+        self,
+        segment_text: str,
+        *,
+        citation_section: str,
+    ) -> bool:
+        normalized = self.normalize_text(segment_text).lower()
+        if "transferred" not in normalized:
+            return False
+        if normalized.startswith("transferred"):
+            return True
+        if citation_section:
+            if f"\u00a7{citation_section}" in normalized:
+                return True
+            if f"section {citation_section}" in normalized:
+                return True
+        return False
 
 
 __all__ = [
