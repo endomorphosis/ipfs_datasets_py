@@ -47,6 +47,9 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["citation_section_number_positioned"] == ["1:360", "2:0"]
     assert slot_map["citation_section_suffix_positioned"] == ["1:bbb"]
+    assert slot_map["citation_section_suffix_normalized"] == ["bbb"]
+    assert slot_map["citation_section_suffix_case"] == ["lower"]
+    assert slot_map["citation_section_suffix_case_positioned"] == ["1:lower"]
     assert slot_map["citation_section_component_kind_positioned"] == [
         "1:alphanumeric",
         "2:numeric",
@@ -55,6 +58,9 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["source_id_section_number_positioned"] == ["1:360", "2:0"]
     assert slot_map["source_id_section_suffix_positioned"] == ["1:bbb"]
+    assert slot_map["source_id_section_suffix_normalized"] == ["bbb"]
+    assert slot_map["source_id_section_suffix_case"] == ["lower"]
+    assert slot_map["source_id_section_suffix_case_positioned"] == ["1:lower"]
     assert slot_map["source_id_section_component_kind_positioned"] == [
         "1:alphanumeric",
         "2:numeric",
@@ -74,6 +80,9 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("citation_section_number_positioned") == ["1:360", "2:0"]
     assert objects("citation_section_suffix_positioned") == ["1:bbb"]
+    assert objects("citation_section_suffix_normalized") == ["bbb"]
+    assert objects("citation_section_suffix_case") == ["lower"]
+    assert objects("citation_section_suffix_case_positioned") == ["1:lower"]
     assert objects("citation_section_component_kind_positioned") == [
         "1:alphanumeric",
         "2:numeric",
@@ -82,6 +91,9 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("source_id_section_number_positioned") == ["1:360", "2:0"]
     assert objects("source_id_section_suffix_positioned") == ["1:bbb"]
+    assert objects("source_id_section_suffix_normalized") == ["bbb"]
+    assert objects("source_id_section_suffix_case") == ["lower"]
+    assert objects("source_id_section_suffix_case_positioned") == ["1:lower"]
     assert objects("source_id_section_component_kind_positioned") == [
         "1:alphanumeric",
         "2:numeric",

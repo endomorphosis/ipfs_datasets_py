@@ -2461,6 +2461,14 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "a" in slot_texts["citation_section_suffix"]
     assert "b" in slot_texts["citation_section_suffix"]
     assert "K" in slot_texts["citation_section_suffix"]
+    assert "a" in slot_texts["citation_section_suffix_normalized"]
+    assert "b" in slot_texts["citation_section_suffix_normalized"]
+    assert "k" in slot_texts["citation_section_suffix_normalized"]
+    assert "lower" in slot_texts["citation_section_suffix_case"]
+    assert "upper" in slot_texts["citation_section_suffix_case"]
+    assert "1:lower" in slot_texts["citation_section_suffix_case_positioned"]
+    assert "2:lower" in slot_texts["citation_section_suffix_case_positioned"]
+    assert "1:upper" in slot_texts["citation_section_suffix_case_positioned"]
     assert "2" in slot_texts["citation_section_token_count"]
     assert "1" in slot_texts["citation_section_token_count"]
     assert "31a" in slot_texts["citation_section_token_prefix"]
@@ -2488,6 +2496,21 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_section_suffix"
         and triple["object"] == "K"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_suffix_normalized"
+        and triple["object"] == "k"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_suffix_case"
+        and triple["object"] == "upper"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_suffix_case_positioned"
+        and triple["object"] == "1:upper"
         for triple in triples
     )
     assert any(
@@ -2590,6 +2613,9 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "10145" in slot_texts["source_id_section_number"]
     assert "2000" in slot_texts["source_id_section_number"]
     assert "e" in slot_texts["source_id_section_suffix"]
+    assert slot_texts["source_id_section_suffix_normalized"] == ["e"]
+    assert slot_texts["source_id_section_suffix_case"] == ["lower"]
+    assert slot_texts["source_id_section_suffix_case_positioned"] == ["1:lower"]
     assert slot_texts["source_id_section_shape"] == ["N", "NA"]
     assert slot_texts["source_id_section_numeric_component_count"] == ["1"]
     assert slot_texts["source_id_section_suffix_component_count"] == ["0", "1"]
@@ -2617,6 +2643,21 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert any(
         triple["predicate"] == "source_id_section_suffix"
         and triple["object"] == "e"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_suffix_normalized"
+        and triple["object"] == "e"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_suffix_case"
+        and triple["object"] == "lower"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_suffix_case_positioned"
+        and triple["object"] == "1:lower"
         for triple in triples
     )
     assert any(

@@ -1062,6 +1062,20 @@ def _canonical_statutory_scope_unit(unit: str) -> str:
     return normalized
 
 
+def _alpha_case_kind(value: str) -> str:
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return ""
+    letters = "".join(character for character in cleaned if character.isalpha())
+    if not letters:
+        return ""
+    if letters.islower():
+        return "lower"
+    if letters.isupper():
+        return "upper"
+    return "mixed"
+
+
 def _derived_status_keyword(
     *,
     formula: ModalIRFormula,
@@ -1194,6 +1208,18 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             )
             slots.append(("citation_section_suffix", suffix))
             slots.append(("citation_section_suffix_positioned", f"{position}:{suffix}"))
+            normalized_suffix = suffix.lower()
+            if normalized_suffix:
+                slots.append(("citation_section_suffix_normalized", normalized_suffix))
+            suffix_case = _alpha_case_kind(suffix)
+            if suffix_case:
+                slots.append(("citation_section_suffix_case", suffix_case))
+                slots.append(
+                    (
+                        "citation_section_suffix_case_positioned",
+                        f"{position}:{suffix_case}",
+                    )
+                )
         else:
             component_shapes.append("N")
             slots.append(("citation_section_component_kind", "numeric"))

@@ -1292,6 +1292,18 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
             )
             components.append(("citation_section_suffix", suffix))
             components.append(("citation_section_suffix_positioned", f"{position}:{suffix}"))
+            normalized_suffix = suffix.lower()
+            if normalized_suffix:
+                components.append(("citation_section_suffix_normalized", normalized_suffix))
+            suffix_case = _alpha_case_kind(suffix)
+            if suffix_case:
+                components.append(("citation_section_suffix_case", suffix_case))
+                components.append(
+                    (
+                        "citation_section_suffix_case_positioned",
+                        f"{position}:{suffix_case}",
+                    )
+                )
         else:
             component_shapes.append("N")
             components.append(("citation_section_component_kind", "numeric"))
@@ -1521,6 +1533,20 @@ def _canonical_statutory_scope_unit(unit: str) -> str:
         if singular in _STATUTORY_SCOPE_UNITS:
             return singular
     return normalized
+
+
+def _alpha_case_kind(value: str) -> str:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned:
+        return ""
+    letters = "".join(character for character in cleaned if character.isalpha())
+    if not letters:
+        return ""
+    if letters.islower():
+        return "lower"
+    if letters.isupper():
+        return "upper"
+    return "mixed"
 
 
 def _slot_features(decoded: DecodedModalText) -> List[str]:
