@@ -1864,10 +1864,18 @@ def _numeric_signature_slots(
     last_digit = cleaned[-1]
     trailing_two_digits = cleaned[-2:] if len(cleaned) > 1 else cleaned
     parity = "even" if last_digit in {"0", "2", "4", "6", "8"} else "odd"
+    zero_digit_count = cleaned.count("0")
+    trailing_zero_count = len(cleaned) - len(cleaned.rstrip("0"))
     return [
         (f"{slot_prefix}_parity", parity),
         (f"{slot_prefix}_leading_digit", cleaned[0]),
         (f"{slot_prefix}_trailing_two_digits", trailing_two_digits),
+        (f"{slot_prefix}_zero_digit_count", str(zero_digit_count)),
+        (
+            f"{slot_prefix}_has_zero_digit",
+            "true" if zero_digit_count > 0 else "false",
+        ),
+        (f"{slot_prefix}_trailing_zero_count", str(trailing_zero_count)),
     ]
 
 

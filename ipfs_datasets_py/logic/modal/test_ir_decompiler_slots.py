@@ -288,6 +288,32 @@ def _coarse_heading_tail_sample_document() -> ModalIRDocument:
     )
 
 
+def _zero_digit_signature_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-1470.-845d9dceb9d264ab"
+    formula = ModalIRFormula(
+        formula_id="f-zero-digit-signature",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_land_patent_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="43 U.S.C. 1470.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="43 U.S.C. 1470. Land patent adjustment applies.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -1142,9 +1168,15 @@ def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
     assert slot_map["citation_title_number_parity"] == ["even"]
     assert slot_map["citation_title_number_leading_digit"] == ["4"]
     assert slot_map["citation_title_number_trailing_two_digits"] == ["42"]
+    assert slot_map["citation_title_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_title_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_title_number_trailing_zero_count"] == ["0"]
     assert slot_map["source_id_title_number_parity"] == ["even"]
     assert slot_map["source_id_title_number_leading_digit"] == ["4"]
     assert slot_map["source_id_title_number_trailing_two_digits"] == ["42"]
+    assert slot_map["source_id_title_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_title_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_title_number_trailing_zero_count"] == ["0"]
 
     assert slot_map["citation_section_number_parity"] == ["even", "odd"]
     assert slot_map["citation_section_number_parity_positioned"] == ["1:even", "2:odd"]
@@ -1153,12 +1185,33 @@ def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
         "1:96",
         "2:1",
     ]
+    assert slot_map["citation_section_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_number_zero_digit_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["citation_section_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_number_has_zero_digit_positioned"] == [
+        "1:false",
+        "2:false",
+    ]
+    assert slot_map["citation_section_number_trailing_zero_count"] == ["0"]
+    assert slot_map["citation_section_number_trailing_zero_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
     assert slot_map["citation_section_primary_number_parity"] == ["even"]
     assert slot_map["citation_section_primary_number_leading_digit"] == ["1"]
     assert slot_map["citation_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["citation_section_primary_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_primary_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_primary_number_trailing_zero_count"] == ["0"]
     assert slot_map["citation_section_terminal_number_parity"] == ["odd"]
     assert slot_map["citation_section_terminal_number_leading_digit"] == ["1"]
     assert slot_map["citation_section_terminal_number_trailing_two_digits"] == ["1"]
+    assert slot_map["citation_section_terminal_number_zero_digit_count"] == ["0"]
+    assert slot_map["citation_section_terminal_number_has_zero_digit"] == ["false"]
+    assert slot_map["citation_section_terminal_number_trailing_zero_count"] == ["0"]
 
     assert slot_map["source_id_section_number_parity"] == ["even", "odd"]
     assert slot_map["source_id_section_number_parity_positioned"] == ["1:even", "2:odd"]
@@ -1170,12 +1223,73 @@ def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
         "1:96",
         "2:1",
     ]
+    assert slot_map["source_id_section_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_number_zero_digit_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
+    assert slot_map["source_id_section_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_number_has_zero_digit_positioned"] == [
+        "1:false",
+        "2:false",
+    ]
+    assert slot_map["source_id_section_number_trailing_zero_count"] == ["0"]
+    assert slot_map["source_id_section_number_trailing_zero_count_positioned"] == [
+        "1:0",
+        "2:0",
+    ]
     assert slot_map["source_id_section_primary_number_parity"] == ["even"]
     assert slot_map["source_id_section_primary_number_leading_digit"] == ["1"]
     assert slot_map["source_id_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["source_id_section_primary_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_primary_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_primary_number_trailing_zero_count"] == ["0"]
     assert slot_map["source_id_section_terminal_number_parity"] == ["odd"]
     assert slot_map["source_id_section_terminal_number_leading_digit"] == ["1"]
     assert slot_map["source_id_section_terminal_number_trailing_two_digits"] == ["1"]
+    assert slot_map["source_id_section_terminal_number_zero_digit_count"] == ["0"]
+    assert slot_map["source_id_section_terminal_number_has_zero_digit"] == ["false"]
+    assert slot_map["source_id_section_terminal_number_trailing_zero_count"] == ["0"]
+
+    zero_digit_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_zero_digit_signature_sample_document())
+    )
+    assert zero_digit_slot_map["citation_title_number_zero_digit_count"] == ["0"]
+    assert zero_digit_slot_map["citation_title_number_has_zero_digit"] == ["false"]
+    assert zero_digit_slot_map["citation_title_number_trailing_zero_count"] == ["0"]
+    assert zero_digit_slot_map["citation_section_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["citation_section_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["citation_section_number_trailing_zero_count"] == ["1"]
+    assert zero_digit_slot_map["citation_section_number_zero_digit_count_positioned"] == [
+        "1:1"
+    ]
+    assert zero_digit_slot_map["citation_section_number_has_zero_digit_positioned"] == [
+        "1:true"
+    ]
+    assert zero_digit_slot_map[
+        "citation_section_number_trailing_zero_count_positioned"
+    ] == ["1:1"]
+    assert zero_digit_slot_map["citation_section_primary_number_zero_digit_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["citation_section_primary_number_has_zero_digit"] == [
+        "true"
+    ]
+    assert zero_digit_slot_map["citation_section_primary_number_trailing_zero_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["source_id_section_number_zero_digit_count"] == ["1"]
+    assert zero_digit_slot_map["source_id_section_number_has_zero_digit"] == ["true"]
+    assert zero_digit_slot_map["source_id_section_number_trailing_zero_count"] == ["1"]
+    assert zero_digit_slot_map["source_id_section_primary_number_zero_digit_count"] == [
+        "1"
+    ]
+    assert zero_digit_slot_map["source_id_section_primary_number_has_zero_digit"] == [
+        "true"
+    ]
+    assert zero_digit_slot_map["source_id_section_primary_number_trailing_zero_count"] == [
+        "1"
+    ]
 
     odd_title_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_sample_document())
@@ -1197,9 +1311,15 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
     assert objects("citation_title_number_parity") == ["even"]
     assert objects("citation_title_number_leading_digit") == ["4"]
     assert objects("citation_title_number_trailing_two_digits") == ["42"]
+    assert objects("citation_title_number_zero_digit_count") == ["0"]
+    assert objects("citation_title_number_has_zero_digit") == ["false"]
+    assert objects("citation_title_number_trailing_zero_count") == ["0"]
     assert objects("source_id_title_number_parity") == ["even"]
     assert objects("source_id_title_number_leading_digit") == ["4"]
     assert objects("source_id_title_number_trailing_two_digits") == ["42"]
+    assert objects("source_id_title_number_zero_digit_count") == ["0"]
+    assert objects("source_id_title_number_has_zero_digit") == ["false"]
+    assert objects("source_id_title_number_trailing_zero_count") == ["0"]
 
     assert objects("citation_section_number_parity") == ["even", "odd"]
     assert objects("citation_section_number_parity_positioned") == ["1:even", "2:odd"]
@@ -1208,12 +1328,33 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
         "1:96",
         "2:1",
     ]
+    assert objects("citation_section_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_number_zero_digit_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("citation_section_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_number_has_zero_digit_positioned") == [
+        "1:false",
+        "2:false",
+    ]
+    assert objects("citation_section_number_trailing_zero_count") == ["0"]
+    assert objects("citation_section_number_trailing_zero_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
     assert objects("citation_section_primary_number_parity") == ["even"]
     assert objects("citation_section_primary_number_leading_digit") == ["1"]
     assert objects("citation_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("citation_section_primary_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_primary_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_primary_number_trailing_zero_count") == ["0"]
     assert objects("citation_section_terminal_number_parity") == ["odd"]
     assert objects("citation_section_terminal_number_leading_digit") == ["1"]
     assert objects("citation_section_terminal_number_trailing_two_digits") == ["1"]
+    assert objects("citation_section_terminal_number_zero_digit_count") == ["0"]
+    assert objects("citation_section_terminal_number_has_zero_digit") == ["false"]
+    assert objects("citation_section_terminal_number_trailing_zero_count") == ["0"]
 
     assert objects("source_id_section_number_parity") == ["even", "odd"]
     assert objects("source_id_section_number_parity_positioned") == ["1:even", "2:odd"]
@@ -1222,12 +1363,75 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
         "1:96",
         "2:1",
     ]
+    assert objects("source_id_section_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_number_zero_digit_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
+    assert objects("source_id_section_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_number_has_zero_digit_positioned") == [
+        "1:false",
+        "2:false",
+    ]
+    assert objects("source_id_section_number_trailing_zero_count") == ["0"]
+    assert objects("source_id_section_number_trailing_zero_count_positioned") == [
+        "1:0",
+        "2:0",
+    ]
     assert objects("source_id_section_primary_number_parity") == ["even"]
     assert objects("source_id_section_primary_number_leading_digit") == ["1"]
     assert objects("source_id_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("source_id_section_primary_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_primary_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_primary_number_trailing_zero_count") == ["0"]
     assert objects("source_id_section_terminal_number_parity") == ["odd"]
     assert objects("source_id_section_terminal_number_leading_digit") == ["1"]
     assert objects("source_id_section_terminal_number_trailing_two_digits") == ["1"]
+    assert objects("source_id_section_terminal_number_zero_digit_count") == ["0"]
+    assert objects("source_id_section_terminal_number_has_zero_digit") == ["false"]
+    assert objects("source_id_section_terminal_number_trailing_zero_count") == ["0"]
+
+    zero_digit_triples = modal_ir_to_flogic_triples(_zero_digit_signature_sample_document())
+
+    def zero_digit_objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in zero_digit_triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert zero_digit_objects("citation_title_number_zero_digit_count") == ["0"]
+    assert zero_digit_objects("citation_title_number_has_zero_digit") == ["false"]
+    assert zero_digit_objects("citation_title_number_trailing_zero_count") == ["0"]
+    assert zero_digit_objects("citation_section_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("citation_section_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("citation_section_number_trailing_zero_count") == ["1"]
+    assert zero_digit_objects("citation_section_number_zero_digit_count_positioned") == [
+        "1:1"
+    ]
+    assert zero_digit_objects("citation_section_number_has_zero_digit_positioned") == [
+        "1:true"
+    ]
+    assert zero_digit_objects("citation_section_number_trailing_zero_count_positioned") == [
+        "1:1"
+    ]
+    assert zero_digit_objects("citation_section_primary_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("citation_section_primary_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("citation_section_primary_number_trailing_zero_count") == [
+        "1"
+    ]
+    assert zero_digit_objects("source_id_section_number_zero_digit_count") == ["1"]
+    assert zero_digit_objects("source_id_section_number_has_zero_digit") == ["true"]
+    assert zero_digit_objects("source_id_section_number_trailing_zero_count") == ["1"]
+    assert zero_digit_objects("source_id_section_primary_number_zero_digit_count") == [
+        "1"
+    ]
+    assert zero_digit_objects("source_id_section_primary_number_has_zero_digit") == [
+        "true"
+    ]
+    assert zero_digit_objects("source_id_section_primary_number_trailing_zero_count") == [
+        "1"
+    ]
 
     odd_title_triples = modal_ir_to_flogic_triples(_sample_document())
 
