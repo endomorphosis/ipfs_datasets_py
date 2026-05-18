@@ -52,6 +52,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
 )
 
 logger = logging.getLogger(__name__)
+_FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
 
 
 # ---------------------------------------------------------------------------
@@ -200,10 +201,16 @@ class FLogicSemanticOptimizer:
             frame_ontology_feature_keys(frame_feature_key_list)
         )
         frame_ontology_terms_from_features = _sorted_unique_terms(
-            frame_ontology_terms_from_feature_keys(frame_audit_feature_key_list)
+            frame_ontology_terms_from_feature_keys(
+                frame_audit_feature_key_list,
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
         )
         frame_ontology_terms_from_kg_triples = _sorted_unique_terms(
-            frame_ontology_terms_from_triples(kg_triples or [])
+            frame_ontology_terms_from_triples(
+                kg_triples or [],
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
         )
         frame_ontology_terms = _sorted_unique_terms(
             frame_ontology_terms_from_features

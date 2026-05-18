@@ -198,6 +198,8 @@ _USCODE_STATUS_DERIVATION_RULES = frozenset(
         "uscode_editorial_status_heading_v1",
     }
 )
+_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS = 1024
+_FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
 
 
 @dataclass(frozen=True)
@@ -2027,13 +2029,16 @@ def _frame_ontology_audit_feature_keys(
             feature_keys.append(f"frame-term:{term}")
             if selected_frame and frame.frame_id == selected_frame:
                 feature_keys.append(f"selected-frame-term:{term}")
+    feature_keys.extend(str(value) for value in extra_feature_keys if str(value or "").strip())
     for triple in kg_triples:
         predicate = _clean_non_empty_string(triple.get("predicate"))
         obj = _clean_non_empty_string(triple.get("object"))
         if predicate and obj:
             feature_keys.append(f"flogic:{predicate}:{obj}")
-    feature_keys.extend(str(value) for value in extra_feature_keys if str(value or "").strip())
-    return _unique_preserve_order(feature_keys)
+    return frame_ontology_feature_keys(
+        _unique_preserve_order(feature_keys),
+        max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
+    )
 
 
 def _frame_ontology_audit_terms(
@@ -2042,8 +2047,18 @@ def _frame_ontology_audit_terms(
     kg_triples: Sequence[Mapping[str, str]],
 ) -> List[str]:
     return sorted(_unique_preserve_order(
-        list(frame_ontology_terms_from_feature_keys(frame_feature_keys))
-        + list(frame_ontology_terms_from_triples(kg_triples))
+        list(
+            frame_ontology_terms_from_feature_keys(
+                frame_feature_keys,
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
+        )
+        + list(
+            frame_ontology_terms_from_triples(
+                kg_triples,
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
+        )
     ))
 
 

@@ -369,7 +369,7 @@ def normalize_frame_ontology_term(
 def frame_ontology_terms_from_triples(
     triples: Iterable[Mapping[str, object]],
     *,
-    max_terms: int = 64,
+    max_terms: int = 256,
 ) -> List[str]:
     """Extract canonical frame ontology terms from frame-linked triples."""
     terms: List[str] = []
@@ -409,7 +409,7 @@ def frame_ontology_terms_from_triples(
 def frame_ontology_terms_from_feature_keys(
     feature_keys: Iterable[str],
     *,
-    max_terms: int = 64,
+    max_terms: int = 256,
 ) -> List[str]:
     """Extract canonical frame ontology terms from frame-linked feature keys."""
     terms: List[str] = []
@@ -453,7 +453,7 @@ def is_frame_ontology_feature_key(feature_key: str) -> bool:
 def frame_ontology_feature_keys(
     feature_keys: Iterable[str],
     *,
-    max_keys: int = 256,
+    max_keys: int = 1024,
 ) -> List[str]:
     """Return unique frame-linked feature keys in stable encounter order."""
     result: List[str] = []

@@ -18,7 +18,11 @@ from ipfs_datasets_py.logic.modal import (
     modal_text_token_similarity,
     synthesis_hints_from_autoencoder_introspection,
 )
-from ipfs_datasets_py.logic.modal.codec import _frame_decoder_audit_features
+from ipfs_datasets_py.logic.modal.codec import (
+    _frame_decoder_audit_features,
+    _frame_ontology_audit_feature_keys,
+    _frame_ontology_audit_terms,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
     FrameCandidate,
@@ -3831,6 +3835,56 @@ def test_modal_codec_frame_decoder_audit_features_use_canonical_feature_parser()
         "cue:frame:Frame:authority",
         "slot:selected_frame:administrative_notice_hearing",
     ]
+
+
+def test_modal_codec_frame_ontology_audit_prioritizes_decoder_frame_features() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="50",
+        section="3031.",
+        text="Sec. 3031. Intelligence policy and duties.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+
+    labels = [
+        f"{left}{right}"
+        for left in "abcdefghijklmnopqrstuvwxyz"
+        for right in "abcdefghijklmnopqrstuvwxyz"
+    ]
+    dense_triples = [
+        {
+            "subject": sample.sample_id,
+            "predicate": "selected_ontology_term",
+            "object": f"term {label}",
+        }
+        for label in labels[:140]
+    ]
+    frame_feature_keys = _frame_ontology_audit_feature_keys(
+        modal_ir=result.modal_ir,
+        selected_frame=result.selected_frame,
+        kg_triples=dense_triples,
+        extra_feature_keys=[
+            "cue:frame:transferred",
+            "family:selected_frame:deontic",
+        ],
+    )
+    frame_terms = _frame_ontology_audit_terms(
+        frame_feature_keys=frame_feature_keys,
+        kg_triples=dense_triples,
+    )
+
+    assert "transferred" in frame_terms
+    assert "deontic" in frame_terms
+    assert "term_fj" in frame_terms
+    assert len(frame_terms) > 64
 
 
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:

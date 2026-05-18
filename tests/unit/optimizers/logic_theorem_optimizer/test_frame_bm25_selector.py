@@ -294,6 +294,30 @@ def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_alias
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for_dense_inputs() -> None:
+    labels = [
+        f"{left}{right}"
+        for left in "abcdefghijklmnopqrstuvwxyz"
+        for right in "abcdefghijklmnopqrstuvwxyz"
+    ]
+    dense_features = [
+        f"flogic:selected_ontology_term:term {label}"
+        for label in labels[:140]
+    ]
+    terms = frame_ontology_terms_from_feature_keys(
+        dense_features
+        + [
+            "cue:frame:transferred",
+            "family:selected_frame:deontic",
+        ]
+    )
+
+    assert "transferred" in terms
+    assert "deontic" in terms
+    assert "term_fj" in terms
+    assert len(terms) > 64
+
+
 def test_frame_ontology_terms_from_feature_keys_are_case_insensitive_for_prefixes() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -493,6 +517,35 @@ def test_frame_ontology_terms_from_triples_support_modal_family_count_features()
         "temporal",
         "dynamic",
     ]
+
+
+def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_dense_inputs() -> None:
+    labels = [
+        f"{left}{right}"
+        for left in "abcdefghijklmnopqrstuvwxyz"
+        for right in "abcdefghijklmnopqrstuvwxyz"
+    ]
+    dense_triples = [
+        {
+            "subject": "doc-1",
+            "predicate": "selected_ontology_term",
+            "object": f"term {label}",
+        }
+        for label in labels[:140]
+    ]
+    dense_triples.append(
+        {
+            "subject": "doc-1",
+            "predicate": "condition",
+            "object": "unless written notice is provided",
+        }
+    )
+
+    terms = frame_ontology_terms_from_triples(dense_triples)
+
+    assert "unless_written_notice_provided" in terms
+    assert "term_fj" in terms
+    assert len(terms) > 64
 
 
 def test_frame_ontology_terms_from_triples_support_source_id_citation_canonical_terms() -> None:
