@@ -7,9 +7,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
     frame_ontology_feature_keys,
+    frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
     frame_ontology_terms,
+    is_high_signal_frame_ontology_term,
     is_frame_ontology_feature_key,
 )
 
@@ -1056,4 +1058,35 @@ def test_frame_ontology_feature_keys_prioritize_direct_signals_when_key_cap_is_e
         "flogic:citation_section_component:1000",
         "flogic:citation_section_component:1001",
         "flogic:citation_section_component:1002",
+    ]
+
+
+def test_is_high_signal_frame_ontology_term_filters_structural_noise() -> None:
+    assert is_high_signal_frame_ontology_term("final_order") is True
+    assert is_high_signal_frame_ontology_term("42_291") is True
+    assert is_high_signal_frame_ontology_term("291") is True
+    assert is_high_signal_frame_ontology_term("42") is False
+    assert is_high_signal_frame_ontology_term("1") is False
+    assert is_high_signal_frame_ontology_term("false") is False
+    assert is_high_signal_frame_ontology_term("odd") is False
+
+
+def test_frame_ontology_high_signal_terms_preserve_order_and_filter_noise() -> None:
+    terms = frame_ontology_high_signal_terms(
+        [
+            "0",
+            "false",
+            "291",
+            "42_291",
+            "final_order",
+            "odd",
+            "42_291",
+            "2",
+        ]
+    )
+
+    assert terms == [
+        "291",
+        "42_291",
+        "final_order",
     ]

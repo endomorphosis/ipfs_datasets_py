@@ -4354,6 +4354,37 @@ def test_modal_codec_frame_ontology_audit_prioritizes_decoder_frame_features() -
     assert len(frame_terms) > 64
 
 
+def test_modal_codec_frame_ontology_audit_reports_high_signal_terms() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="291.",
+        text="Sec. 291. Findings and declaration of policy.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+
+    raw_terms = result.modal_ir.metadata["frame_ontology_term_audit_terms"]
+    high_signal_terms = result.modal_ir.metadata[
+        "frame_ontology_high_signal_term_audit_terms"
+    ]
+    assert "42_291" in high_signal_terms
+    assert "0" in raw_terms
+    assert "0" not in high_signal_terms
+    assert "false" in raw_terms
+    assert "false" not in high_signal_terms
+    assert result.modal_ir.metadata["frame_ontology_high_signal_term_audit_count"] == len(
+        high_signal_terms
+    )
+
+
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:
     sample = build_us_code_sample(
         title="5",

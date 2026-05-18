@@ -218,6 +218,16 @@ _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
 _FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 1
 _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT = 2
+_FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS = frozenset(
+    {
+        "equal",
+        "even",
+        "false",
+        "odd",
+        "true",
+    }
+)
+_FRAME_ONTOLOGY_AUDIT_MIN_NUMERIC_TERM_LENGTH = 3
 
 
 @dataclass(frozen=True)
@@ -498,6 +508,46 @@ def frame_ontology_feature_keys(
     return _bounded_ontology_values(
         key_entries,
         max_items=max_keys,
+    )
+
+
+def is_high_signal_frame_ontology_term(
+    term: str,
+    *,
+    min_numeric_length: int = _FRAME_ONTOLOGY_AUDIT_MIN_NUMERIC_TERM_LENGTH,
+) -> bool:
+    """Return ``True`` when ``term`` is informative enough for ontology audits."""
+    normalized = str(term or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS:
+        return False
+    if normalized.isdigit() and len(normalized) < max(min_numeric_length, 1):
+        return False
+    return True
+
+
+def frame_ontology_high_signal_terms(
+    terms: Iterable[str],
+    *,
+    max_terms: int = 256,
+    min_numeric_length: int = _FRAME_ONTOLOGY_AUDIT_MIN_NUMERIC_TERM_LENGTH,
+) -> List[str]:
+    """Return deterministic high-signal ontology terms for audit summaries."""
+    term_entries: List[tuple[str, int]] = []
+    for term in terms:
+        normalized = str(term or "").strip()
+        if not normalized:
+            continue
+        if not is_high_signal_frame_ontology_term(
+            normalized,
+            min_numeric_length=min_numeric_length,
+        ):
+            continue
+        term_entries.append((normalized, _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT))
+    return _bounded_ontology_values(
+        term_entries,
+        max_items=max_terms,
     )
 
 
@@ -949,9 +999,11 @@ __all__ = [
     "FrameCandidate",
     "FrameSelection",
     "frame_ontology_feature_keys",
+    "frame_ontology_high_signal_terms",
     "frame_ontology_terms_from_feature_keys",
     "frame_ontology_terms_from_triples",
     "frame_ontology_terms",
+    "is_high_signal_frame_ontology_term",
     "is_frame_ontology_feature_key",
     "normalize_frame_ontology_term",
 ]

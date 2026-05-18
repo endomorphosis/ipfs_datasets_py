@@ -360,3 +360,45 @@ def test_flogic_optimizer_keeps_direct_frame_terms_when_audit_key_cap_is_exceede
 
     assert "selected-frame-term:final_order" in result.metadata["frame_audit_feature_keys"]
     assert "final_order" in result.metadata["frame_ontology_terms"]
+
+
+def test_flogic_optimizer_reports_high_signal_frame_ontology_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "selected-frame-term:final_order",
+            "flogic:citation_section_number:291",
+            "flogic:citation_title:42",
+            "flogic:citation_section_has_suffix:false",
+        ],
+    )
+
+    assert result.metadata["frame_ontology_terms"] == [
+        "291",
+        "42",
+        "false",
+        "final_order",
+    ]
+    assert result.metadata["frame_ontology_high_signal_term_count"] == 2
+    assert result.metadata["frame_ontology_high_signal_terms"] == [
+        "291",
+        "final_order",
+    ]
+    assert result.metadata["frame_ontology_high_signal_terms_from_feature_keys_count"] == 2
+    assert result.metadata["frame_ontology_high_signal_terms_from_feature_keys"] == [
+        "291",
+        "final_order",
+    ]
+    assert result.metadata["frame_ontology_high_signal_terms_from_triples_count"] == 0
+    assert result.metadata["frame_ontology_high_signal_terms_from_triples"] == []

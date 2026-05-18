@@ -47,6 +47,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     frame_ontology_feature_keys,
+    frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
 )
@@ -220,6 +221,22 @@ class FLogicSemanticOptimizer:
             frame_ontology_terms_from_features
             + frame_ontology_terms_from_kg_triples
         )
+        frame_ontology_high_signal_terms_from_features = _sorted_unique_terms(
+            frame_ontology_high_signal_terms(
+                frame_ontology_terms_from_features,
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
+        )
+        frame_ontology_high_signal_terms_from_kg_triples = _sorted_unique_terms(
+            frame_ontology_high_signal_terms(
+                frame_ontology_terms_from_kg_triples,
+                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+            )
+        )
+        frame_ontology_high_signal_term_list = _sorted_unique_terms(
+            frame_ontology_high_signal_terms_from_features
+            + frame_ontology_high_signal_terms_from_kg_triples
+        )
 
         passed = (
             similarity >= self.config.similarity_threshold and ontology_consistent
@@ -239,14 +256,26 @@ class FLogicSemanticOptimizer:
                 "frame_audit_feature_keys": frame_audit_feature_key_list,
                 "frame_ontology_term_count": len(frame_ontology_terms),
                 "frame_ontology_terms": frame_ontology_terms,
+                "frame_ontology_high_signal_term_count": len(
+                    frame_ontology_high_signal_term_list
+                ),
+                "frame_ontology_high_signal_terms": frame_ontology_high_signal_term_list,
                 "frame_ontology_terms_from_feature_keys_count": len(
                     frame_ontology_terms_from_features
                 ),
                 "frame_ontology_terms_from_feature_keys": frame_ontology_terms_from_features,
+                "frame_ontology_high_signal_terms_from_feature_keys_count": len(
+                    frame_ontology_high_signal_terms_from_features
+                ),
+                "frame_ontology_high_signal_terms_from_feature_keys": frame_ontology_high_signal_terms_from_features,
                 "frame_ontology_terms_from_triples_count": len(
                     frame_ontology_terms_from_kg_triples
                 ),
                 "frame_ontology_terms_from_triples": frame_ontology_terms_from_kg_triples,
+                "frame_ontology_high_signal_terms_from_triples_count": len(
+                    frame_ontology_high_signal_terms_from_kg_triples
+                ),
+                "frame_ontology_high_signal_terms_from_triples": frame_ontology_high_signal_terms_from_kg_triples,
                 "threshold": self.config.similarity_threshold,
             },
         )

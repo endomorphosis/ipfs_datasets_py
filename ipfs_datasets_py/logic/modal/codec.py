@@ -25,6 +25,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     FrameCandidate,
     FrameSelection,
     frame_ontology_feature_keys,
+    frame_ontology_high_signal_terms,
     frame_ontology_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
@@ -472,12 +473,20 @@ class DeterministicModalLogicCodec:
             frame_feature_keys=frame_feature_keys,
             kg_triples=kg_triples,
         )
+        frame_high_signal_audit_terms = frame_ontology_high_signal_terms(
+            frame_audit_terms,
+            max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+        )
         modal_ir = replace(
             modal_ir,
             metadata={
                 **modal_ir.metadata,
                 "frame_ontology_term_audit_count": len(frame_audit_terms),
                 "frame_ontology_term_audit_terms": frame_audit_terms,
+                "frame_ontology_high_signal_term_audit_count": len(
+                    frame_high_signal_audit_terms
+                ),
+                "frame_ontology_high_signal_term_audit_terms": frame_high_signal_audit_terms,
             },
         )
         decoded_text = decoded_modal_text.text
