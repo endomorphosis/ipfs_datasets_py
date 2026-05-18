@@ -366,6 +366,7 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
 )
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
+_DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -1094,11 +1095,45 @@ def _weighted_modal_family_counts(
     else:
         resolved_signals = signals
     if not _is_generic_frame_cue_debias_context(encoding, resolved_signals):
+        _apply_deontic_competing_scope_soft_cap(
+            counts,
+            resolved_signals,
+        )
         return counts
     frame_family = ModalLogicFamily.FRAME.value
     if frame_family in counts:
         counts[frame_family] *= _GENERIC_FRAME_CUE_DEBIAS_FACTOR
+    _apply_deontic_competing_scope_soft_cap(
+        counts,
+        resolved_signals,
+    )
     return counts
+
+
+def _apply_deontic_competing_scope_soft_cap(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Prevent repeated deontic cues from overwhelming frame/temporal evidence."""
+    deontic_family = ModalLogicFamily.DEONTIC.value
+    deontic_count = float(counts.get(deontic_family, 0.0))
+    if deontic_count <= _DEONTIC_COMPETING_SCOPE_SOFT_CAP:
+        return
+    has_temporal_competition = (
+        bool(signals.get("has_temporal_scope"))
+        or float(counts.get(ModalLogicFamily.TEMPORAL.value, 0.0)) > 0.0
+    )
+    has_frame_competition = (
+        bool(signals.get("has_frame_context"))
+        or bool(signals.get("has_frame_scope_phrase"))
+        or bool(signals.get("has_frame_editorial_scope_phrase"))
+        or bool(signals.get("has_statutory_scope_reference"))
+        or float(counts.get(ModalLogicFamily.FRAME.value, 0.0)) > 0.0
+    )
+    if not (has_temporal_competition or has_frame_competition):
+        return
+    overflow = deontic_count - _DEONTIC_COMPETING_SCOPE_SOFT_CAP
+    counts[deontic_family] = _DEONTIC_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
 
 
 def _is_generic_frame_cue_debias_context(

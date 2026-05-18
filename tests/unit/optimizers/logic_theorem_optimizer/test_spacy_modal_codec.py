@@ -479,6 +479,70 @@ def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues()
     assert logits["temporal"] > -0.25
 
 
+def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_temporal_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="47",
+        section="220",
+        text="Vendor shall and must and shall and must submit reports.",
+    )
+    competing = build_us_code_sample(
+        title="47",
+        section="221",
+        text=(
+            "Vendor shall and must and shall and must submit reports "
+            "before each annual review deadline."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["temporal"] > -0.25
+
+
+def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_frame_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="10",
+        section="1029",
+        text="Vendor shall and must and shall and must submit reports.",
+    )
+    competing = build_us_code_sample(
+        title="10",
+        section="1030",
+        text=(
+            "Vendor shall and must and shall and must submit reports "
+            "under this section."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["frame"] > -0.25
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
