@@ -177,6 +177,9 @@ _USCODE_46_60101_TEXT = (
     "1882 (22 Stat. 189)\" are omitted because that law was repealed by section 4(b) of Public Law "
     "98–89 (Aug. 26, 1983, 97 Stat. 600)."
 )
+_USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
+_USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
+_USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
 
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
@@ -516,6 +519,51 @@ def test_modal_compiler_replays_dataset_samples_for_478_1_6930_and_60101() -> No
                 fallback = compiled.modal_ir.formulas[-1]
                 assert fallback.operator.family == "frame"
                 assert fallback.metadata["fallback_rule"] == fallback_rule
+
+
+def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
+    cases = [
+        (
+            "us-code-25-422-f3f166961e45b585",
+            "25 U.S.C. 422",
+            _USCODE_25_422_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-48-1572.-8711c64e2d6b256c",
+            "48 U.S.C. 1572.",
+            _USCODE_48_1572_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-42-6323.-1c7e7d2f53c36e15",
+            "42 U.S.C. 6323.",
+            _USCODE_42_6323_HEADING_ONLY_TEXT,
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert fallback.provenance.citation == citation
 
 
 def test_modal_compiler_ignores_calendar_month_may_permission_noise() -> None:

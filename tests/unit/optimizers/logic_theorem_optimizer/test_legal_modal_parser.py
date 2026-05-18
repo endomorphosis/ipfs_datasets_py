@@ -82,6 +82,9 @@ _USCODE_7_7913_TEXT = (
     "crop year, and up to 22 percent of the direct payment for a covered "
     "commodity for the 2007 crop year,\" for \"2007 crop years\"."
 )
+_USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
+_USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
+_USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
 
 
 def test_parser_normalizes_and_segments_legal_text() -> None:
@@ -467,6 +470,43 @@ def test_parser_replays_dataset_zero_formula_cases_for_31a_2b_and_8906() -> None
         assert fallback.operator.family == "frame"
         assert fallback.metadata["cue"] == cue
         assert fallback.metadata["fallback_rule"] == fallback_rule
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-25-422-f3f166961e45b585",
+            "25 U.S.C. 422",
+            _USCODE_25_422_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-48-1572.-8711c64e2d6b256c",
+            "48 U.S.C. 1572.",
+            _USCODE_48_1572_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-42-6323.-1c7e7d2f53c36e15",
+            "42 U.S.C. 6323.",
+            _USCODE_42_6323_HEADING_ONLY_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
         assert fallback.provenance.citation == citation
 
 

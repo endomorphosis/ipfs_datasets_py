@@ -51,6 +51,26 @@ _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _USCODE_SECTION_REF_SUFFIX_RE = r"(?:\b|[.)\-:\u2012\u2013\u2014])"
 _USCODE_SECTION_HEADING_SHORT_MAX_TOKENS = 24
 _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS = 80
+_USCODE_HEADING_ONLY_MAX_TOKENS = 12
+_USCODE_HEADING_ONLY_VERB_HINT_RE = re.compile(
+    r"\b(?:shall|must|may|is|are|was|were|be|been|being|has|have|had|"
+    r"will|would|should|can|could|do|does|did)\b",
+    re.IGNORECASE,
+)
+_USCODE_HEADING_ONLY_LEADING_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "any",
+        "each",
+        "no",
+        "that",
+        "the",
+        "these",
+        "this",
+        "those",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -671,6 +691,11 @@ class LegalModalParser:
             if candidate_segment is None:
                 candidate_segment = embedded_heading_segment
         if candidate_segment is None:
+            for segment in segments:
+                if self._looks_like_heading_without_section_reference(segment.text):
+                    candidate_segment = segment
+                    break
+        if candidate_segment is None:
             return None
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
@@ -707,7 +732,18 @@ class LegalModalParser:
             exceptions=exceptions,
             metadata={
                 "cue": "__uscode_section_heading_fallback__",
-                "fallback_rule": "uscode_section_heading_v1",
+                "fallback_rule": (
+                    "uscode_section_heading_v1"
+                    if self._contains_citation_section_reference(
+                        candidate_segment.text,
+                        citation_section,
+                    )
+                    or self._starts_with_citation_section_reference(
+                        candidate_segment.text,
+                        citation_section,
+                    )
+                    else "uscode_heading_without_section_reference_v1"
+                ),
             },
         )
 
@@ -796,6 +832,28 @@ class LegalModalParser:
         if "there is established" in lowered or "there are established" in lowered:
             return "establishment_clause"
         return "declarative_clause"
+
+    def _looks_like_heading_without_section_reference(self, segment_text: str) -> bool:
+        normalized = self.normalize_text(segment_text)
+        if not normalized:
+            return False
+        lowered = normalized.lower()
+        tokens = _TOKEN_RE.findall(lowered)
+        if len(tokens) < 2 or len(tokens) > _USCODE_HEADING_ONLY_MAX_TOKENS:
+            return False
+        if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered):
+            return False
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        if any(punctuation in normalized for punctuation in ",:;()[]{}"):
+            return False
+        if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS:
+            return False
+        return True
 
 
 __all__ = [

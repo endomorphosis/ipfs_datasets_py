@@ -17,6 +17,10 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
 
 pytest.importorskip("spacy")
 
+_USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
+_USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
+_USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+
 
 def test_spacy_encoder_compiles_modal_ir_without_downloaded_model() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
@@ -278,6 +282,44 @@ def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases(
         assert fallback.metadata["cue"] == "__uscode_declarative_statement_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_declarative_statement_v1"
         assert fallback.metadata["statement_hint"] == statement_hint
+        assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-25-422-f3f166961e45b585",
+            "25 U.S.C. 422",
+            _USCODE_25_422_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-48-1572.-8711c64e2d6b256c",
+            "48 U.S.C. 1572.",
+            _USCODE_48_1572_HEADING_ONLY_TEXT,
+        ),
+        (
+            "us-code-42-6323.-1c7e7d2f53c36e15",
+            "42 U.S.C. 6323.",
+            _USCODE_42_6323_HEADING_ONLY_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
         assert fallback.provenance.citation == citation
 
 
