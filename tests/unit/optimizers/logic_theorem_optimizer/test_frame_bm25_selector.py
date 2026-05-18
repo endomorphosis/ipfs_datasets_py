@@ -653,6 +653,25 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_predicates() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "condition:unless written notice is provided",
+            "citation_section_component:430f",
+            "source_id_section_suffix:e",
+            "modal_family_count_ranked:1:frame:3",
+            "source_id:us-code-5-552-deadbeefdeadbeef",
+        ]
+    )
+
+    assert terms == [
+        "unless_written_notice_provided",
+        "430f",
+        "e",
+        "frame",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canonical_terms() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -918,6 +937,12 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True
     assert is_frame_ontology_feature_key(
         "slot:selected_ontology_term:final order"
+    ) is True
+    assert is_frame_ontology_feature_key(
+        "citation_section_component:430f"
+    ) is True
+    assert is_frame_ontology_feature_key(
+        "condition:unless written notice is provided"
     ) is True
     assert is_frame_ontology_feature_key(
         "flogic:source_id_citation_canonical:50 U.S.C. 2675"

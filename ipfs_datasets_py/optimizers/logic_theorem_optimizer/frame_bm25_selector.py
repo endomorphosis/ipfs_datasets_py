@@ -739,6 +739,13 @@ def _frame_ontology_value_from_feature(
             _predicate_allows_single_character_alpha_tokens(canonical_head_predicate),
             _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
+    if _is_contextual_frame_ontology_predicate(head):
+        return (
+            _normalized_frame_ontology_value(head, tail),
+            _predicate_allows_numeric_ontology_tokens(head),
+            _predicate_allows_single_character_alpha_tokens(head),
+            _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+        )
 
     namespace = head.strip().lower()
     if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
