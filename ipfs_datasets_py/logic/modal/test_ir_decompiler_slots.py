@@ -144,6 +144,34 @@ def _numeric_range_sample_document() -> ModalIRDocument:
     )
 
 
+def _range_connector_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-4605 to 4610.-d52505ec5c91561e"
+    formula = ModalIRFormula(
+        formula_id="f-range-connector-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_emergency_preparedness_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=27,
+            citation="50 U.S.C. 4605 through 4610.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "50 U.S.C. 4605 through 4610. Emergency preparedness records are retained."
+        ),
+        formulas=[formula],
+    )
+
+
 def _section_marker_sample_document() -> ModalIRDocument:
     source_id = "us-code-2-190l-01dd1648c5b1588c"
     formula = ModalIRFormula(
@@ -2713,6 +2741,12 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
             _provenance_alignment_trailing_punct_mismatch_sample_document()
         )
     )
+    range_aligned_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_numeric_range_sample_document())
+    )
+    range_connector_mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_connector_mismatch_sample_document())
+    )
 
     assert aligned_slot_map["citation_source_id_alignment"] == ["exact_match"]
     assert aligned_slot_map["citation_source_id_title_match"] == ["true"]
@@ -2881,6 +2915,91 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         ".|none"
     ]
 
+    assert range_aligned_slot_map["citation_source_id_section_is_range_pair"] == [
+        "true|true"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_is_range_match"] == [
+        "true"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_pair"] == [
+        "1381|1381"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_start_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_range_start_presence_match"]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_range_end_pair"] == [
+        "1398|1398"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_end_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_range_end_presence_match"]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_pair"] == [
+        "to|to"
+    ]
+    assert range_aligned_slot_map["citation_source_id_section_range_connector_match"] == [
+        "true"
+    ]
+    assert (
+        range_aligned_slot_map[
+            "citation_source_id_section_range_connector_presence_match"
+        ]
+        == ["true"]
+    )
+
+    assert range_connector_mismatch_slot_map["citation_source_id_alignment"] == [
+        "title_only_match"
+    ]
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_start_pair"
+        ]
+        == ["4605|4605"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_start_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_end_pair"
+        ]
+        == ["4610|4610"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_end_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_pair"
+        ]
+        == ["to|through"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_match"
+        ]
+        == ["false"]
+    )
+    assert (
+        range_connector_mismatch_slot_map[
+            "citation_source_id_section_range_connector_presence_match"
+        ]
+        == ["true"]
+    )
+
 
 def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
     aligned_triples = modal_ir_to_flogic_triples(_sample_document())
@@ -2889,6 +3008,10 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     )
     punct_mismatch_triples = modal_ir_to_flogic_triples(
         _provenance_alignment_trailing_punct_mismatch_sample_document()
+    )
+    range_aligned_triples = modal_ir_to_flogic_triples(_numeric_range_sample_document())
+    range_connector_mismatch_triples = modal_ir_to_flogic_triples(
+        _range_connector_mismatch_sample_document()
     )
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
@@ -3107,3 +3230,81 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         punct_mismatch_triples,
         "citation_source_id_section_trailing_punct_pair",
     ) == [".|none"]
+
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_is_range_pair",
+    ) == ["true|true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_is_range_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_pair",
+    ) == ["1381|1381"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_start_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_pair",
+    ) == ["1398|1398"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_end_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_pair",
+    ) == ["to|to"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_range_connector_presence_match",
+    ) == ["true"]
+
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_alignment",
+    ) == ["title_only_match"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_start_pair",
+    ) == ["4605|4605"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_start_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_end_pair",
+    ) == ["4610|4610"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_end_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_pair",
+    ) == ["to|through"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_match",
+    ) == ["false"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_range_connector_presence_match",
+    ) == ["true"]

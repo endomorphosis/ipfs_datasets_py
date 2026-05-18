@@ -1495,6 +1495,101 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
+    source_range_start = _clean_text(
+        source_slot_map.get("source_id_section_range_start") or ""
+    )
+    citation_range_start = _clean_text(
+        citation_slot_map.get("citation_section_range_start") or ""
+    )
+    source_range_end = _clean_text(
+        source_slot_map.get("source_id_section_range_end") or ""
+    )
+    citation_range_end = _clean_text(
+        citation_slot_map.get("citation_section_range_end") or ""
+    )
+    source_range_connector = _clean_text(
+        source_slot_map.get("source_id_section_range_connector") or ""
+    )
+    citation_range_connector = _clean_text(
+        citation_slot_map.get("citation_section_range_connector") or ""
+    )
+    if (
+        source_section_is_range == "true"
+        or citation_section_is_range == "true"
+        or source_range_start
+        or citation_range_start
+        or source_range_end
+        or citation_range_end
+        or source_range_connector
+        or citation_range_connector
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_range_start_pair",
+                f"{source_range_start or 'none'}|{citation_range_start or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_start_match",
+                "true"
+                if source_range_start.lower() == citation_range_start.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_start_presence_match",
+                "true"
+                if bool(source_range_start) == bool(citation_range_start)
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_end_pair",
+                f"{source_range_end or 'none'}|{citation_range_end or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_end_match",
+                "true"
+                if source_range_end.lower() == citation_range_end.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_end_presence_match",
+                "true"
+                if bool(source_range_end) == bool(citation_range_end)
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_connector_pair",
+                f"{source_range_connector or 'none'}|"
+                f"{citation_range_connector or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_connector_match",
+                "true"
+                if source_range_connector.lower() == citation_range_connector.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_range_connector_presence_match",
+                "true"
+                if bool(source_range_connector) == bool(citation_range_connector)
+                else "false",
+            )
+        )
     if not source_title or not citation_title or not source_section or not citation_section:
         slots.append(("citation_source_id_alignment", "unparsed"))
         return _unique_slot_values(slots)
