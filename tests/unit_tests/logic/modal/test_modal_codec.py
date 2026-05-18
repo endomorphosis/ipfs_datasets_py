@@ -4948,6 +4948,107 @@ def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     assert slot_texts["selected_frame"] == [compiled.selected_frame]
 
 
+def test_modal_decompiler_and_triples_surface_selected_frame_modal_family_count_slots() -> None:
+    formulas = [
+        ModalIRFormula(
+            formula_id="selected-frame-family-doc:f0001",
+            operator=ModalIROperator(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligatory",
+            ),
+            predicate=ModalIRPredicate(
+                name="must_provide_notice",
+                role="clause",
+            ),
+            provenance=ModalIRProvenance(
+                source_id="selected-frame-family-doc",
+                start_char=0,
+                end_char=24,
+                citation="5 U.S.C. 552",
+            ),
+        ),
+        ModalIRFormula(
+            formula_id="selected-frame-family-doc:f0002",
+            operator=ModalIROperator(
+                family="epistemic",
+                system="S5",
+                symbol="K",
+                label="known",
+            ),
+            predicate=ModalIRPredicate(
+                name="knows_compliance_status",
+                role="clause",
+            ),
+            provenance=ModalIRProvenance(
+                source_id="selected-frame-family-doc",
+                start_char=25,
+                end_char=58,
+                citation="5 U.S.C. 552",
+            ),
+        ),
+    ]
+    document = ModalIRDocument(
+        document_id="selected-frame-family-doc",
+        source="us_code",
+        normalized_text=(
+            "The agency must provide notice and knows compliance status."
+        ),
+        formulas=formulas,
+        metadata={"selected_frame": "administrative_notice_hearing"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_texts["selected_frame"] == ["administrative_notice_hearing"]
+    assert slot_texts["selected_frame_modal_family"] == ["deontic", "epistemic"]
+    assert slot_texts["selected_frame_modal_family_ranked"] == [
+        "1:deontic",
+        "2:epistemic",
+    ]
+    assert slot_texts["selected_frame_modal_family_count"] == [
+        "deontic:1",
+        "epistemic:1",
+    ]
+    assert slot_texts["selected_frame_modal_family_count_value"] == ["1"]
+    assert slot_texts["selected_frame_modal_family_count_value_digit_count_bucket"] == [
+        "1_digit"
+    ]
+    assert slot_texts["selected_frame_modal_family_count_value_parity"] == ["odd"]
+    assert slot_texts["selected_frame_modal_family_deontic"] == ["1"]
+    assert slot_texts["selected_frame_modal_family_epistemic"] == ["1"]
+
+    triple_values: dict[str, list[str]] = {}
+    for triple in modal_ir_to_flogic_triples(document):
+        predicate = str(triple.get("predicate", "")).strip()
+        value = str(triple.get("object", "")).strip()
+        if not predicate or not value:
+            continue
+        values = triple_values.setdefault(predicate, [])
+        if value not in values:
+            values.append(value)
+
+    assert triple_values["selected_ontology_frame"] == ["administrative_notice_hearing"]
+    assert triple_values["selected_frame_modal_family"] == ["deontic", "epistemic"]
+    assert triple_values["selected_frame_modal_family_ranked"] == [
+        "1:deontic",
+        "2:epistemic",
+    ]
+    assert triple_values["selected_frame_modal_family_count"] == [
+        "deontic:1",
+        "epistemic:1",
+    ]
+    assert triple_values["selected_frame_modal_family_count_value"] == ["1"]
+    assert triple_values["selected_frame_modal_family_count_value_digit_count_bucket"] == [
+        "1_digit"
+    ]
+    assert triple_values["selected_frame_modal_family_count_value_parity"] == ["odd"]
+    assert triple_values["selected_frame_modal_family_deontic"] == ["1"]
+    assert triple_values["selected_frame_modal_family_epistemic"] == ["1"]
+
+
 def test_modal_decompiler_surfaces_ranked_frame_candidate_slots() -> None:
     formula = ModalIRFormula(
         formula_id="frame-candidate-doc:f0001",

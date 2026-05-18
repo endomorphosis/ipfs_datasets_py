@@ -276,6 +276,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
                     provenance_only=True,
                 )
             )
+        phrases.extend(_selected_frame_modal_family_phrases(document))
 
     support_span = _support_span(document.formulas)
     parser_warnings = [
@@ -1040,6 +1041,67 @@ def _document_modal_family_count_phrases(
             )
         )
     return phrases
+
+
+def _selected_frame_modal_family_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    if not _selected_frame(document):
+        return []
+    phrases: List[DecodedModalPhrase] = []
+    for slot, value in _selected_frame_modal_family_slots(
+        document.metadata.get("modal_family_counts"),
+        formulas=document.formulas,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _selected_frame_modal_family_slots(
+    raw_counts: Any,
+    *,
+    formulas: Sequence[ModalIRFormula] = (),
+) -> List[Tuple[str, str]]:
+    slots: List[Tuple[str, str]] = []
+    for rank, (family, count) in enumerate(
+        _resolved_modal_family_counts(raw_counts, formulas=formulas),
+        start=1,
+    ):
+        safe_family = _slot_safe_family_key(family)
+        if not safe_family:
+            continue
+        slots.extend(
+            (
+                ("selected_frame_modal_family", safe_family),
+                ("selected_frame_modal_family_ranked", f"{rank}:{safe_family}"),
+                ("selected_frame_modal_family_count", f"{safe_family}:{count}"),
+                (
+                    "selected_frame_modal_family_count_ranked",
+                    f"{rank}:{safe_family}:{count}",
+                ),
+                ("selected_frame_modal_family_count_value", count),
+                (f"selected_frame_modal_family_{safe_family}", count),
+            )
+        )
+        slots.extend(
+            _numeric_signature_slots(
+                count,
+                slot_prefix="selected_frame_modal_family_count_value",
+            )
+        )
+        slots.extend(
+            _numeric_signature_slots(
+                count,
+                slot_prefix=f"selected_frame_modal_family_{safe_family}",
+            )
+        )
+    return _unique_slot_values(slots)
 
 
 def _modal_family_count_slots(

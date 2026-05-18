@@ -851,6 +851,14 @@ def modal_ir_to_flogic_triples(
                 "object": resolved_selected_frame,
             }
         )
+        for predicate, value in _selected_frame_modal_family_count_components(modal_ir):
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     selected_frame_terms: List[str] = []
     for frame_id in _ranked_candidate_frame_ids(
@@ -3170,6 +3178,45 @@ def _document_modal_family_count_components(
                 ("modal_family_count_value", count),
                 (f"modal_family_count_{_slot_safe_family_key(family)}", count),
             ]
+        )
+    return _unique_preserve_order_tuples(components)
+
+
+def _selected_frame_modal_family_count_components(
+    modal_ir: ModalIRDocument,
+) -> List[tuple[str, str]]:
+    components: List[tuple[str, str]] = []
+    for rank, (family, count) in enumerate(
+        _resolved_modal_family_counts(modal_ir),
+        start=1,
+    ):
+        safe_family = _slot_safe_family_key(family)
+        if not safe_family:
+            continue
+        components.extend(
+            [
+                ("selected_frame_modal_family", safe_family),
+                ("selected_frame_modal_family_ranked", f"{rank}:{safe_family}"),
+                ("selected_frame_modal_family_count", f"{safe_family}:{count}"),
+                (
+                    "selected_frame_modal_family_count_ranked",
+                    f"{rank}:{safe_family}:{count}",
+                ),
+                ("selected_frame_modal_family_count_value", count),
+                (f"selected_frame_modal_family_{safe_family}", count),
+            ]
+        )
+        components.extend(
+            _numeric_signature_components(
+                count,
+                slot_prefix="selected_frame_modal_family_count_value",
+            )
+        )
+        components.extend(
+            _numeric_signature_components(
+                count,
+                slot_prefix=f"selected_frame_modal_family_{safe_family}",
+            )
         )
     return _unique_preserve_order_tuples(components)
 
