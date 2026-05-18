@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from datetime import datetime, timezone
 import hashlib
 import importlib.util
 import json
@@ -633,6 +634,57 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     publish_to_hf = bool(args.publish_to_hf)
     startup_stale_sync = bool(getattr(args, "startup_stale_sync", bool(args.scrape)))
     incremental_state_publish = bool(getattr(args, "incremental_state_publish", bool(args.scrape)))
+
+    def _utc_now() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    progress_path = output_root / "state_refresh_progress.json"
+    progress_state: Dict[str, Any] = {
+        "schema": "ipfs_datasets_py.state_laws_refresh.progress.v1",
+        "status": "running",
+        "started_at": _utc_now(),
+        "updated_at": _utc_now(),
+        "states": states,
+        "states_total": len(states),
+        "state_results": {},
+        "states_completed": [],
+        "completed_count": 0,
+        "success_count": 0,
+        "error_count": 0,
+        "zero_statute_count": 0,
+    }
+
+    def _recompute_progress_counts() -> None:
+        results = progress_state.get("state_results") if isinstance(progress_state.get("state_results"), dict) else {}
+        completed_states = [state for state in states if state in results]
+        success_count = 0
+        error_count = 0
+        zero_statute_count = 0
+        for state in completed_states:
+            entry = results.get(state) if isinstance(results.get(state), dict) else {}
+            status = str(entry.get("status") or "").strip().lower()
+            if status == "success":
+                success_count += 1
+            elif status == "error":
+                error_count += 1
+            elif status == "zero_statutes":
+                zero_statute_count += 1
+        progress_state["states_completed"] = completed_states
+        progress_state["completed_count"] = len(completed_states)
+        progress_state["success_count"] = success_count
+        progress_state["error_count"] = error_count
+        progress_state["zero_statute_count"] = zero_statute_count
+        progress_state["updated_at"] = _utc_now()
+
+    def _write_progress_state() -> None:
+        progress_path.parent.mkdir(parents=True, exist_ok=True)
+        progress_path.write_text(
+            json.dumps(progress_state, indent=2, sort_keys=True, ensure_ascii=False, default=str),
+            encoding="utf-8",
+        )
+
+    _write_progress_state()
+
     if publish_to_hf and startup_stale_sync:
         # Reconcile stale HF state shards before the long scrape starts, but do
         # it one state at a time so a large local corpus does not have to be
@@ -653,13 +705,35 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     incremental_publish_lock = asyncio.Lock()
 
     async def _on_state_complete(state_result: Dict[str, Any]) -> None:
-        if not publish_to_hf or not incremental_state_publish:
-            return
-        state_code = str((state_result or {}).get("state_code") or "").strip().upper()
-        statute_data = (state_result or {}).get("statute_data") or {}
-        if not state_code or not isinstance(statute_data, dict):
-            return
         async with incremental_publish_lock:
+            state_code = str((state_result or {}).get("state_code") or "").strip().upper()
+            statute_data = (state_result or {}).get("statute_data") or {}
+            if state_code:
+                statutes_count = int((state_result or {}).get("statutes_count") or 0)
+                if statutes_count <= 0 and isinstance(statute_data, dict):
+                    statutes_count = len(list(statute_data.get("statutes") or []))
+                error_text = str((state_result or {}).get("error") or "").strip()
+                state_status = "error" if error_text else ("zero_statutes" if statutes_count <= 0 else "success")
+                state_name = str((state_result or {}).get("state_name") or (statute_data.get("state_name") if isinstance(statute_data, dict) else "") or "").strip()
+                state_entry = {
+                    "state_code": state_code,
+                    "state_name": state_name,
+                    "status": state_status,
+                    "statutes_count": statutes_count,
+                    "completed_at": _utc_now(),
+                }
+                if error_text:
+                    state_entry["error"] = error_text
+                results = progress_state.setdefault("state_results", {})
+                if isinstance(results, dict):
+                    results[state_code] = state_entry
+                _recompute_progress_counts()
+                _write_progress_state()
+
+            if not publish_to_hf or not incremental_state_publish:
+                return
+            if not state_code or not isinstance(statute_data, dict):
+                return
             jsonld_dir.mkdir(parents=True, exist_ok=True)
             written_paths = _write_state_jsonld_files([statute_data], jsonld_dir)
             state_jsonld_path = jsonld_dir / f"STATE-{state_code}.jsonld"
@@ -698,6 +772,12 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "publish": publish,
                     }
                 )
+                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
+                if isinstance(state_result_entry, dict):
+                    state_result_entry["incremental_publish_status"] = "success"
+                    state_result_entry["incremental_publish_at"] = _utc_now()
+                    _recompute_progress_counts()
+                    _write_progress_state()
                 print(f"[state_laws_refresh] incremental_publish state={state_code} stage=done", flush=True)
             except Exception as exc:
                 incremental_publish_results.append(
@@ -709,6 +789,13 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                         "error": str(exc),
                     }
                 )
+                state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
+                if isinstance(state_result_entry, dict):
+                    state_result_entry["incremental_publish_status"] = "error"
+                    state_result_entry["incremental_publish_error"] = str(exc)
+                    state_result_entry["incremental_publish_at"] = _utc_now()
+                    _recompute_progress_counts()
+                    _write_progress_state()
 
     scrape_result: Dict[str, Any] | None = None
     full_corpus_guard_audit: Dict[str, Any] | None = None
@@ -751,7 +838,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 per_state_retry_attempts=int(args.per_state_retry_attempts),
                 retry_zero_statute_states=True,
                 per_state_timeout_seconds=float(args.per_state_timeout_seconds),
-                state_completion_callback=_on_state_complete if (publish_to_hf and incremental_state_publish) else None,
+                state_completion_callback=_on_state_complete,
                 retain_state_data=not bool(publish_to_hf and incremental_state_publish),
             )
         finally:
@@ -800,6 +887,14 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             "detail": "Per-state startup sync and incremental completed-state publishes do not require complete all-state coverage.",
         }
 
+    progress_state["status"] = "success" if is_complete else "partial_success"
+    progress_state["finished_at"] = _utc_now()
+    progress_state["scrape_gap_states"] = list(scrape_gaps)
+    progress_state["build_gap_states"] = list(build_gaps)
+    progress_state["is_complete"] = bool(is_complete)
+    _recompute_progress_counts()
+    _write_progress_state()
+
     return {
         "status": "success" if is_complete else "partial_success",
         "plan": plan,
@@ -807,6 +902,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "build": build_result,
         "startup_sync": startup_sync_result,
         "full_corpus_guard_audit": full_corpus_guard_audit,
+        "progress_path": str(progress_path),
         "incremental_state_publish": {
             "enabled": bool(publish_to_hf and incremental_state_publish),
             "results": incremental_publish_results,
