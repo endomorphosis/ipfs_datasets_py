@@ -50,6 +50,15 @@ _FRAME_ONTOLOGY_FRAME_PREDICATES = frozenset(
 _FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
     set(_FRAME_ONTOLOGY_TERM_PREDICATES) | set(_FRAME_ONTOLOGY_FRAME_PREDICATES)
 )
+_FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
+    {
+        "modal_family",
+        "modal_operator",
+        "modal_system",
+        "predicate",
+        "predicate_role",
+    }
+)
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
     "candidate_term": "candidate_ontology_term",
@@ -62,6 +71,11 @@ _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "selected_term": "selected_ontology_term",
     "selected_frame_term": "selected_ontology_term",
 }
+_FRAME_FAMILY_FEATURE_PREFIXES: tuple[str, ...] = (
+    "family:frame",
+    "modal-family:frame",
+    "modal_family:frame",
+)
 _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
     "frame:",
     "selected-frame:",
@@ -347,8 +361,20 @@ def _canonical_frame_ontology_predicate(predicate: str) -> str:
     return ""
 
 
+def _is_contextual_frame_ontology_predicate(predicate: str) -> bool:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    return normalized in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES
+
+
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     lowered = feature.lower()
+
+    for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
+        if lowered == prefix or lowered.startswith(f"{prefix}:"):
+            return "frame"
 
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
@@ -375,7 +401,10 @@ def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     predicate, separator, value = tail.partition(":")
     if not separator:
         return ""
-    if not _canonical_frame_ontology_predicate(predicate):
+    if not (
+        _canonical_frame_ontology_predicate(predicate)
+        or (namespace == "flogic" and _is_contextual_frame_ontology_predicate(predicate))
+    ):
         return ""
     return value.strip()
 

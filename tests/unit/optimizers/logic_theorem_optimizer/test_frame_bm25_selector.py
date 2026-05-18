@@ -279,3 +279,38 @@ def test_frame_ontology_terms_from_feature_keys_ignore_unrelated_namespaces() ->
     )
 
     assert terms == ["administrative_notice_hearing"]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:modal_family:conditional_normative",
+            "flogic:modal_family:temporal",
+            "flogic:modal_system:LTL",
+            "flogic:predicate_role:temporal_scope",
+            "flogic:predicate:Pub",
+            "flogic:modal_operator:O",
+            "slot:modal_family:frame",
+        ]
+    )
+
+    assert terms == [
+        "conditional_normative",
+        "temporal",
+        "ltl",
+        "temporal_scope",
+        "pub",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "family:frame:1",
+            "modal-family:frame:3",
+            "modal_family:frame",
+            "family:deontic:2",
+        ]
+    )
+
+    assert terms == ["frame"]

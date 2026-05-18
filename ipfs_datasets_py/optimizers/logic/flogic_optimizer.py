@@ -191,6 +191,13 @@ class FLogicSemanticOptimizer:
         frame_ontology_terms_from_features = _sorted_unique_terms(
             frame_ontology_terms_from_feature_keys(frame_feature_keys or [])
         )
+        frame_feature_key_list = _sorted_unique_terms(
+            [
+                str(feature_key).strip()
+                for feature_key in (frame_feature_keys or [])
+                if str(feature_key or "").strip()
+            ]
+        )
         frame_ontology_terms_from_kg_triples = _sorted_unique_terms(
             frame_ontology_terms_from_triples(kg_triples or [])
         )
@@ -211,6 +218,8 @@ class FLogicSemanticOptimizer:
             metadata={
                 "source_text": source_text,
                 "decoded_text": decoded_text,
+                "frame_feature_key_count": len(frame_feature_key_list),
+                "frame_feature_keys": frame_feature_key_list,
                 "frame_ontology_term_count": len(frame_ontology_terms),
                 "frame_ontology_terms": frame_ontology_terms,
                 "frame_ontology_terms_from_feature_keys_count": len(
