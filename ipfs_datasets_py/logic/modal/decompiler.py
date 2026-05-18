@@ -20,6 +20,35 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRFormula,
 )
 
+_CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("provided that", "provided_that"),
+    ("subject to", "subject_to"),
+    ("in the case of", "in_the_case_of"),
+    ("in the event that", "in_the_event_that"),
+    ("notwithstanding", "notwithstanding"),
+    ("for the purposes of", "for_the_purposes_of"),
+    ("for purposes of", "for_purposes_of"),
+    ("with respect to", "with_respect_to"),
+    ("to the extent provided", "to_the_extent_provided"),
+    ("if", "if"),
+    ("when", "when"),
+    ("before", "before"),
+    ("upon", "upon"),
+)
+_EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("except as otherwise provided", "except_as_otherwise_provided"),
+    ("except to the extent", "except_to_the_extent"),
+    ("except that", "except_that"),
+    ("except as", "except_as"),
+    ("unless", "unless"),
+    ("except", "except"),
+)
+_USC_CITATION_RE = re.compile(
+    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
+    re.IGNORECASE,
+)
+_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+
 
 @dataclass(frozen=True)
 class DecodedModalPhrase:
@@ -183,12 +212,40 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             provenance_only=True,
         ),
         DecodedModalPhrase(
+            text=_clean_text(formula.operator.symbol),
+            slot="modal_operator",
+            spans=_span_from_values(cue_start, cue_end) or spans,
+            provenance_only=True,
+        ),
+        DecodedModalPhrase(
+            text=_clean_text(formula.operator.family),
+            slot="modal_family",
+            spans=_span_from_values(cue_start, cue_end) or spans,
+            provenance_only=True,
+        ),
+        DecodedModalPhrase(
+            text=_clean_text(formula.operator.system),
+            slot="modal_system",
+            spans=_span_from_values(cue_start, cue_end) or spans,
+            provenance_only=True,
+        ),
+        DecodedModalPhrase(
             text=_predicate_phrase(formula),
             slot="predicate",
             spans=spans,
             provenance_only=True,
         ),
     ]
+    operator_label = _clean_text(formula.operator.label)
+    if operator_label:
+        phrases.append(
+            DecodedModalPhrase(
+                text=operator_label,
+                slot="modal_operator_label",
+                spans=_span_from_values(cue_start, cue_end) or spans,
+                provenance_only=True,
+            )
+        )
     if cue:
         phrases.append(
             DecodedModalPhrase(
@@ -246,6 +303,7 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        phrases.extend(_typed_clause_phrases(condition, slot="condition", spans=spans))
     for exception in _phrase_values(formula.exceptions):
         phrases.append(
             DecodedModalPhrase(
@@ -255,6 +313,7 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        phrases.extend(_typed_clause_phrases(exception, slot="exception", spans=spans))
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     if fallback_rule:
         phrases.append(
@@ -285,6 +344,15 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for slot, value in _citation_slots(citation):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     return phrases
 
 
@@ -462,6 +530,71 @@ def _typed_argument_slot(argument: str) -> Tuple[str, str] | None:
     if not key:
         return None
     return f"argument_{key}", value
+
+
+def _typed_clause_phrases(
+    clause: str,
+    *,
+    slot: str,
+    spans: List[List[int]],
+) -> List[DecodedModalPhrase]:
+    parsed = _typed_clause_slot(clause, slot=slot)
+    if parsed is None:
+        return []
+    prefix_slot_value, scoped_slot, scoped_value = parsed
+    phrases = [
+        DecodedModalPhrase(
+            text=prefix_slot_value,
+            slot=f"{slot}_prefix",
+            spans=spans,
+            provenance_only=True,
+        )
+    ]
+    if scoped_value:
+        phrases.append(
+            DecodedModalPhrase(
+                text=scoped_value,
+                slot=scoped_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _typed_clause_slot(
+    clause: str,
+    *,
+    slot: str,
+) -> Tuple[str, str, str] | None:
+    normalized = _clean_text(clause).lower()
+    if not normalized:
+        return None
+    prefixes = _CONDITION_PREFIXES if slot == "condition" else _EXCEPTION_PREFIXES
+    for prefix_text, prefix_key in prefixes:
+        if not normalized.startswith(prefix_text):
+            continue
+        suffix = _clean_text(normalized[len(prefix_text) :].lstrip(",:;- "))
+        return prefix_text, f"{slot}_{prefix_key}", suffix
+    return None
+
+
+def _citation_slots(citation: str) -> List[Tuple[str, str]]:
+    cleaned = _clean_text(citation)
+    if not cleaned:
+        return []
+    match = _USC_CITATION_RE.match(cleaned)
+    if not match:
+        return []
+    title = _clean_text(match.group("title"))
+    section = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(match.group("section")))
+    slots: List[Tuple[str, str]] = []
+    if title:
+        slots.append(("citation_title", title))
+    slots.append(("citation_code", "U.S.C."))
+    if section:
+        slots.append(("citation_section", section))
+    return slots
 
 
 def _phrase_values(values: Sequence[str]) -> List[str]:

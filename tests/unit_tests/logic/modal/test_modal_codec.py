@@ -1542,7 +1542,14 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
 
     assert "if the application is complete" in slot_texts["condition"]
     assert "unless waived" in slot_texts["exception"]
+    assert slot_texts["condition_prefix"] == ["if"]
+    assert slot_texts["condition_if"] == ["the application is complete"]
+    assert slot_texts["exception_prefix"] == ["unless"]
+    assert slot_texts["exception_unless"] == ["waived"]
     assert slot_texts["citation"] == ["5 U.S.C. 552"]
+    assert slot_texts["citation_title"] == ["5"]
+    assert slot_texts["citation_code"] == ["U.S.C."]
+    assert slot_texts["citation_section"] == ["552"]
     assert any(
         triple["predicate"] == "condition"
         and triple["object"] == "if the application is complete"
@@ -1556,6 +1563,41 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert any(
         triple["predicate"] == "citation"
         and triple["object"] == "5 U.S.C. 552"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_prefix"
+        and triple["object"] == "if"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "condition_if"
+        and triple["object"] == "the application is complete"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception_prefix"
+        and triple["object"] == "unless"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "exception_unless"
+        and triple["object"] == "waived"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_title"
+        and triple["object"] == "5"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_code"
+        and triple["object"] == "U.S.C."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section"
+        and triple["object"] == "552"
         for triple in triples
     )
 
@@ -1660,6 +1702,10 @@ def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     feature_keys = codec.feature_keys_for_sample(sample)
     assert "frame:administrative_notice_hearing" in feature_keys
     assert any(feature.startswith("flogic:modal_family:") for feature in feature_keys)
+    assert "slot:modal_family" in feature_keys
+    assert "slot:modal_operator" in feature_keys
+    assert "slot:citation_title:5" in feature_keys
+    assert "slot:citation_section:552" in feature_keys
 
 
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:

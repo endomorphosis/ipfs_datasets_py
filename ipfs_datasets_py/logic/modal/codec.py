@@ -10,6 +10,7 @@ F-logic is used as a consistency check over the intermediate representation.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
@@ -53,12 +54,53 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyModalDecoder,
     SpaCyModalIRCompiler,
 )
-from .decompiler import DecodedModalText, decode_modal_ir_document
+from .decompiler import (
+    DecodedModalText,
+    decode_modal_ir_document,
+    decoded_modal_phrase_slot_text_map,
+)
 from .kg_bridge import (
     flogic_ontology_to_dict,
     flogic_triples_to_graph_data,
     flogic_triples_to_ontology,
 )
+
+_SLOT_FEATURE_EXCLUDED_SLOTS = frozenset(
+    {
+        "formula",
+        "modal_source_span",
+        "source_context_span",
+    }
+)
+_CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("provided that", "provided_that"),
+    ("subject to", "subject_to"),
+    ("in the case of", "in_the_case_of"),
+    ("in the event that", "in_the_event_that"),
+    ("notwithstanding", "notwithstanding"),
+    ("for the purposes of", "for_the_purposes_of"),
+    ("for purposes of", "for_purposes_of"),
+    ("with respect to", "with_respect_to"),
+    ("to the extent provided", "to_the_extent_provided"),
+    ("if", "if"),
+    ("when", "when"),
+    ("before", "before"),
+    ("upon", "upon"),
+)
+_EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("except as otherwise provided", "except_as_otherwise_provided"),
+    ("except to the extent", "except_to_the_extent"),
+    ("except that", "except_that"),
+    ("except as", "except_as"),
+    ("unless", "unless"),
+    ("except", "except"),
+)
+_USC_CITATION_RE = re.compile(
+    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
+    re.IGNORECASE,
+)
+_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_SLOT_FEATURE_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 
 @dataclass(frozen=True)
@@ -373,6 +415,7 @@ class DeterministicModalLogicCodec:
             source_embedding=sample.embedding_vector,
         )
         features: List[str] = list(self.decoder._feature_stream(codec_result.encoding))
+        features.extend(_slot_features(codec_result.decoded_modal_text))
         if codec_result.selected_frame:
             features.append(f"frame:{codec_result.selected_frame}")
         for candidate in codec_result.frame_candidates:
@@ -522,6 +565,8 @@ def modal_ir_to_flogic_triples(
             }
         )
     for formula in modal_ir.formulas:
+        condition_prefixes: set[str] = set()
+        exception_prefixes: set[str] = set()
         triples.extend(
             [
                 {
@@ -551,6 +596,15 @@ def modal_ir_to_flogic_triples(
                 },
             ]
         )
+        modal_operator_label = _clean_non_empty_string(formula.operator.label)
+        if modal_operator_label:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "modal_operator_label",
+                    "object": modal_operator_label,
+                }
+            )
         cue = _clean_non_empty_string(formula.metadata.get("cue"))
         if cue:
             triples.append(
@@ -619,6 +673,26 @@ def modal_ir_to_flogic_triples(
                     "object": condition,
                 }
             )
+            typed_condition = _typed_clause_key_value(condition, clause_type="condition")
+            if typed_condition is not None:
+                key, value = typed_condition
+                if key not in condition_prefixes:
+                    condition_prefixes.add(key)
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "condition_prefix",
+                            "object": key.replace("_", " "),
+                        }
+                    )
+                if value:
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": f"condition_{key}",
+                            "object": value,
+                        }
+                    )
         for exception in sorted({value for value in formula.exceptions if value}):
             triples.append(
                 {
@@ -627,6 +701,26 @@ def modal_ir_to_flogic_triples(
                     "object": exception,
                 }
             )
+            typed_exception = _typed_clause_key_value(exception, clause_type="exception")
+            if typed_exception is not None:
+                key, value = typed_exception
+                if key not in exception_prefixes:
+                    exception_prefixes.add(key)
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "exception_prefix",
+                            "object": key.replace("_", " "),
+                        }
+                    )
+                if value:
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": f"exception_{key}",
+                            "object": value,
+                        }
+                    )
         if formula.provenance.citation:
             triples.append(
                 {
@@ -635,6 +729,15 @@ def modal_ir_to_flogic_triples(
                     "object": formula.provenance.citation,
                 }
             )
+            citation_components = _citation_components(formula.provenance.citation)
+            for predicate, value in citation_components.items():
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         if selected_frame:
             triples.append(
                 {
@@ -693,6 +796,65 @@ def _typed_argument_key_value(argument: str) -> tuple[str, str] | None:
     if not key or not value:
         return None
     return key, value
+
+
+def _typed_clause_key_value(
+    clause: str,
+    *,
+    clause_type: str,
+) -> tuple[str, str] | None:
+    normalized = _clean_non_empty_string(clause).lower()
+    if not normalized:
+        return None
+    prefixes = _CONDITION_PREFIXES if clause_type == "condition" else _EXCEPTION_PREFIXES
+    for prefix_text, prefix_key in prefixes:
+        if not normalized.startswith(prefix_text):
+            continue
+        value = _clean_non_empty_string(normalized[len(prefix_text) :].lstrip(",:;- "))
+        return prefix_key, value
+    return None
+
+
+def _citation_components(citation: str) -> Dict[str, str]:
+    cleaned = _clean_non_empty_string(citation)
+    if not cleaned:
+        return {}
+    match = _USC_CITATION_RE.match(cleaned)
+    if not match:
+        return {}
+    title = _clean_non_empty_string(match.group("title"))
+    section = _TRAILING_SECTION_PUNCT_RE.sub(
+        "",
+        _clean_non_empty_string(match.group("section")),
+    )
+    components: Dict[str, str] = {}
+    if title:
+        components["citation_title"] = title
+    components["citation_code"] = "U.S.C."
+    if section:
+        components["citation_section"] = section
+    return components
+
+
+def _slot_features(decoded: DecodedModalText) -> List[str]:
+    features: List[str] = []
+    slot_text_map = decoded_modal_phrase_slot_text_map(decoded)
+    for slot, values in sorted(slot_text_map.items()):
+        if slot in _SLOT_FEATURE_EXCLUDED_SLOTS:
+            continue
+        features.append(f"slot:{slot}")
+        for value in values:
+            encoded_value = _slot_feature_value(value)
+            if encoded_value:
+                features.append(f"slot:{slot}:{encoded_value}")
+    return features
+
+
+def _slot_feature_value(value: str, *, max_tokens: int = 8) -> str:
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(_clean_non_empty_string(value).lower())
+    if not tokens:
+        return ""
+    return "_".join(tokens[:max_tokens])
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:
