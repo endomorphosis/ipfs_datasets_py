@@ -2694,6 +2694,8 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "60604." in slot_texts["citation_section_raw"]
     assert "60604" in slot_texts["citation_section_normalized"]
     assert slot_texts["citation_section_trailing_punct"] == ["."]
+    assert slot_texts["citation_section_has_trailing_punct"] == ["true"]
+    assert slot_texts["citation_section_trailing_punct_count"] == ["1"]
     assert "31a" in slot_texts["citation_section_primary"]
     assert "6050K" in slot_texts["citation_section_primary"]
     assert "2" in slot_texts["citation_section_component_count"]
@@ -2772,6 +2774,16 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_section_trailing_punct"
         and triple["object"] == "."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_has_trailing_punct"
+        and triple["object"] == "true"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_trailing_punct_count"
+        and triple["object"] == "1"
         for triple in triples
     )
     assert any(
@@ -2854,6 +2866,8 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "42 U.S.C. 2000e" in slot_texts["source_id_citation_canonical"]
     assert "10145" in slot_texts["source_id_section_normalized"]
     assert slot_texts["source_id_section_trailing_punct"] == ["."]
+    assert slot_texts["source_id_section_has_trailing_punct"] == ["true"]
+    assert slot_texts["source_id_section_trailing_punct_count"] == ["1"]
     assert "10145" in slot_texts["source_id_section_primary"]
     assert "2000e" in slot_texts["source_id_section_primary"]
     assert "10145" in slot_texts["source_id_section_number"]
@@ -2884,6 +2898,16 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert any(
         triple["predicate"] == "source_id_section_trailing_punct"
         and triple["object"] == "."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_has_trailing_punct"
+        and triple["object"] == "true"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_trailing_punct_count"
+        and triple["object"] == "1"
         for triple in triples
     )
     assert any(

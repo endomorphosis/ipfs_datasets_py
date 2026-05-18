@@ -92,6 +92,32 @@ def _single_component_sample_document() -> ModalIRDocument:
     )
 
 
+def _trailing_punct_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-60101.-6bea2346c1c5229c"
+    formula = ModalIRFormula(
+        formula_id="f-trailing-punct",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="board_arriving_vessels_before_inspection"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=29,
+            citation="46 U.S.C. 60101.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="46 U.S.C. 60101. Boarding arriving vessels before inspection.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -416,6 +442,36 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     ]
     assert objects("source_id_title_section_key") == ["45:228a to 228c"]
     assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
+
+
+def test_decode_modal_ir_document_emits_trailing_punct_presence_slots() -> None:
+    decoded = decode_modal_ir_document(_trailing_punct_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_trailing_punct"] == ["."]
+    assert slot_map["citation_section_has_trailing_punct"] == ["true"]
+    assert slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert slot_map["source_id_section_trailing_punct"] == ["."]
+    assert slot_map["source_id_section_has_trailing_punct"] == ["true"]
+    assert slot_map["source_id_section_trailing_punct_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_trailing_punct") == ["."]
+    assert objects("citation_section_has_trailing_punct") == ["true"]
+    assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section_trailing_punct") == ["."]
+    assert objects("source_id_section_has_trailing_punct") == ["true"]
+    assert objects("source_id_section_trailing_punct_count") == ["1"]
 
 
 def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:

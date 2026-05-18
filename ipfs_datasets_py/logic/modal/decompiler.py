@@ -826,6 +826,13 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
         slots.append(("source_id_section_normalized", normalized_section))
     if section_trailing_punct:
         slots.append(("source_id_section_trailing_punct", section_trailing_punct))
+        slots.append(("source_id_section_has_trailing_punct", "true"))
+        slots.append(
+            (
+                "source_id_section_trailing_punct_count",
+                str(len(section_trailing_punct)),
+            )
+        )
     section_for_slots = normalized_section or section
     source_id_canonical = _canonical_usc_citation(title, section_for_slots)
     if source_id_canonical:
@@ -1331,6 +1338,13 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
             slots.append(("citation_section_normalized", section))
         if section_trailing_punct:
             slots.append(("citation_section_trailing_punct", section_trailing_punct))
+            slots.append(("citation_section_has_trailing_punct", "true"))
+            slots.append(
+                (
+                    "citation_section_trailing_punct_count",
+                    str(len(section_trailing_punct)),
+                )
+            )
         slots.extend(_citation_section_slots(section))
         slots.extend(
             _typed_identifier_slots(

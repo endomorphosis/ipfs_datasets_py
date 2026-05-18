@@ -1202,6 +1202,13 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
             components.append(("citation_section_normalized", section))
         if section_trailing_punct:
             components.append(("citation_section_trailing_punct", section_trailing_punct))
+            components.append(("citation_section_has_trailing_punct", "true"))
+            components.append(
+                (
+                    "citation_section_trailing_punct_count",
+                    str(len(section_trailing_punct)),
+                )
+            )
         components.extend(_citation_section_components(section))
         components.extend(
             _typed_identifier_components(
@@ -1257,6 +1264,13 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
         components.append(("source_id_section_normalized", normalized_section))
     if section_trailing_punct:
         components.append(("source_id_section_trailing_punct", section_trailing_punct))
+        components.append(("source_id_section_has_trailing_punct", "true"))
+        components.append(
+            (
+                "source_id_section_trailing_punct_count",
+                str(len(section_trailing_punct)),
+            )
+        )
     source_id_canonical = _canonical_usc_citation(title, section_for_components)
     if source_id_canonical:
         components.append(("source_id_citation_canonical", source_id_canonical))
