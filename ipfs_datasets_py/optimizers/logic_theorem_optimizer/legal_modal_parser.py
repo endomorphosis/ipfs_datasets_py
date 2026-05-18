@@ -112,6 +112,13 @@ class LegalModalParser:
                 for cue in operator.cue_terms:
                     pattern = re.compile(rf"(?<!\w){re.escape(cue)}(?!\w)", re.IGNORECASE)
                     for match in pattern.finditer(normalized):
+                        if self._is_calendar_month_may_cue(
+                            normalized_text=normalized,
+                            cue=cue,
+                            start_char=match.start(),
+                            end_char=match.end(),
+                        ):
+                            continue
                         found.append(
                             ModalCueSpan(
                                 family=profile.family,
@@ -123,6 +130,22 @@ class LegalModalParser:
                             )
                         )
         return sorted(found, key=lambda cue: (cue.start_char, cue.end_char, cue.family.value, cue.operator.symbol))
+
+    def _is_calendar_month_may_cue(
+        self,
+        *,
+        normalized_text: str,
+        cue: str,
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat `May 13, 2002` date literals as temporal context, not deontic permission."""
+        if cue.lower() != "may":
+            return False
+        if start_char > 0 and normalized_text[start_char - 1].isalnum():
+            return False
+        trailing = normalized_text[end_char:]
+        return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
 
     def parse(
         self,

@@ -14,6 +14,76 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import LogicCritic
 
 
+_USCODE_2_31A_2B_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
+    "Title 2 - THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS "
+    "Sec. 31a-2b - Transferred From the U.S. Government Publishing Office, "
+    "www.gpo.gov §31a–2b. Transferred Editorial Notes Codification Section "
+    "31a–2b was editorially reclassified as section 6137 of this title."
+)
+_USCODE_46_8906_TEXT = (
+    "§8906. Penalty An owner, charterer, managing operator, agent, master, or "
+    "individual in charge of a vessel operated in violation of this chapter or "
+    "a regulation prescribed under this chapter is liable to the United States "
+    "Government for a civil penalty of not more than $25,000. The vessel also "
+    "is liable in rem for the penalty. (Pub. L. 98–89, Aug. 26, 1983, 97 Stat. "
+    "556; Pub. L. 104–324, title III, §306(b), Oct. 19, 1996, 110 Stat. 3918.) "
+    "Historical and Revision Notes Revised section Source section (U.S. Code) "
+    "8906 46:390d Section 8906 prescribes the penalties for violations of this "
+    "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
+    "\"not more than $25,000\" for \"$1,000\"."
+)
+_USCODE_7_7913_TEXT = (
+    "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
+    "Title 7 - AGRICULTURE CHAPTER 106 - COMMODITY PROGRAMS SUBCHAPTER I - "
+    "DIRECT PAYMENTS AND COUNTER-CYCLICAL PAYMENTS Sec. 7913 - Availability of "
+    "direct payments From the U.S. Government Publishing Office, www.gpo.gov "
+    "§7913. Availability of direct payments (a) Payment required For each of "
+    "the 2002 through 2007 crop years of each covered commodity, the Secretary "
+    "shall make direct payments to producers on farms for which payment yields "
+    "and base acres are established. (b) Payment rate The payment rates used "
+    "to make direct payments with respect to covered commodities for a crop "
+    "year are as follows: (1) Wheat, $0.52 per bushel. (2) Corn, $0.28 per "
+    "bushel. (3) Grain sorghum, $0.35 per bushel. (4) Barley, $0.24 per bushel. "
+    "(5) Oats, $0.024 per bushel. (6) Upland cotton, $0.0667 per pound. (7) "
+    "Rice, $2.35 per hundredweight. (8) Soybeans, $0.44 per bushel. (9) Other "
+    "oilseeds, $0.0080 per pound. (c) Payment amount The amount of the direct "
+    "payment to be paid to the producers on a farm for a covered commodity for "
+    "a crop year shall be equal to the product of the following: (1) The "
+    "payment rate specified in subsection (b). (2) The payment acres of the "
+    "covered commodity on the farm. (3) The payment yield for the covered "
+    "commodity for the farm. (d) Time for payment (1) In general The Secretary "
+    "shall make direct payments— (A) in the case of the 2002 crop year, as soon "
+    "as practicable after May 13, 2002; and (B) in the case of each of the 2003 "
+    "through 2007 crop years, not before October 1 of the calendar year in "
+    "which the crop of the covered commodity is harvested. (2) Advance payments "
+    "At the option of the producers on a farm, up to 50 percent of the direct "
+    "payment for a covered commodity for any of the 2003 through 2005 crop "
+    "years, up to 40 percent of the direct payment for a covered commodity for "
+    "the 2006 crop year, and up to 22 percent of the direct payment for a "
+    "covered commodity for the 2007 crop year, shall be paid to the producers "
+    "in advance. The producers shall select the month within which the advance "
+    "payment for a crop year will be made. The month selected may be any month "
+    "during the period beginning on December 1 of the calendar year before the "
+    "calendar year in which the crop of the covered commodity is harvested "
+    "through the month within which the direct payment would otherwise be made. "
+    "The producers may change the selected month for a subsequent advance pay "
+    "ment by providing advance notice to the Secretary. (3) Repayment of "
+    "advance payments If a producer on a farm that receives an advance direct "
+    "payment for a crop year ceases to be a producer on that farm, or the "
+    "extent to which the producer shares in the risk of producing a crop "
+    "changes, before the date the remainder of the direct payment is made, the "
+    "producer shall be responsible for repaying the Secretary the applicable "
+    "amount of the advance payment, as determined by the Secretary. (Pub. L. "
+    "107–171, title I, §1103, May 13, 2002, 116 Stat. 149; Pub. L. 109–171, "
+    "title I, §1102(a), Feb. 8, 2006, 120 Stat. 5.) Editorial Notes Amendments "
+    "2006 —Subsec. (d)(2). Pub. L. 109–171 substituted \"2005 crop years, up "
+    "to 40 percent of the direct payment for a covered commodity for the 2006 "
+    "crop year, and up to 22 percent of the direct payment for a covered "
+    "commodity for the 2007 crop year,\" for \"2007 crop years\"."
+)
+
+
 def test_parser_normalizes_and_segments_legal_text() -> None:
     parser = LegalModalParser()
     text = "  The agency   must provide notice. Unless waived, the applicant may appeal. "
@@ -362,6 +432,64 @@ def test_parser_replays_uscode_declarative_statement_zero_formula_cases() -> Non
         assert fallback.metadata["fallback_rule"] == "uscode_declarative_statement_v1"
         assert fallback.metadata["statement_hint"] == statement_hint
         assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_dataset_zero_formula_cases_for_31a_2b_and_8906() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-2-31a-2b-a99b26c5ad622cfe",
+            "2 U.S.C. 31a-2b",
+            _USCODE_2_31A_2B_TEXT,
+            "__uscode_codification_fallback__",
+            "uscode_transferred_heading_v1",
+        ),
+        (
+            "us-code-46-8906.-ebe08e6d737c3c40",
+            "46 U.S.C. 8906.",
+            _USCODE_46_8906_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+        ),
+    ]
+
+    for document_id, citation, text, cue, fallback_rule in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == cue
+        assert fallback.metadata["fallback_rule"] == fallback_rule
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_treats_may_date_literals_as_temporal_context_for_7_7913() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_7_7913_TEXT,
+        document_id="us-code-7-7913-1aaa3fd59c5ff146",
+        source="us_code",
+        citation="7 U.S.C. 7913",
+    )
+
+    assert document.document_id == "us-code-7-7913-1aaa3fd59c5ff146"
+    assert document.formulas
+    deontic_may_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.operator.family == "deontic"
+        and str(formula.metadata.get("cue", "")).lower() == "may"
+    ]
+    # `May 13, 2002` should not be parsed as permission cues.
+    assert len(deontic_may_formulas) == 2
+    assert all("be_any_month_during_the_period" in formula.predicate.name or "change_the_selected_month_for_a" in formula.predicate.name for formula in deontic_may_formulas)
 
 
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:

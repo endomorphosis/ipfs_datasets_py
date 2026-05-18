@@ -53,6 +53,21 @@ def test_spacy_compiler_extracts_condition_and_exception_slots() -> None:
     assert "unless waived" in deontic_formula.exceptions
 
 
+def test_spacy_encoder_ignores_calendar_month_may_as_permission_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall make the payment after May 13, 2002, and a producer may request review.",
+        document_id="sample-may-date-literal",
+    )
+
+    may_cues = [cue for cue in encoding.cues if cue.cue.lower() == "may"]
+
+    assert may_cues
+    assert len(may_cues) == 1
+    assert may_cues[0].family == "deontic"
+    assert any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
+
+
 def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

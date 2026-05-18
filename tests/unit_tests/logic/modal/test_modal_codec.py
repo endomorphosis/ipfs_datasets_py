@@ -44,6 +44,26 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import 
     LogicExtractor,
 )
 
+_USCODE_2_31A_2B_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
+    "Title 2 - THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS "
+    "Sec. 31a-2b - Transferred From the U.S. Government Publishing Office, "
+    "www.gpo.gov §31a–2b. Transferred Editorial Notes Codification Section "
+    "31a–2b was editorially reclassified as section 6137 of this title."
+)
+_USCODE_46_8906_TEXT = (
+    "§8906. Penalty An owner, charterer, managing operator, agent, master, or "
+    "individual in charge of a vessel operated in violation of this chapter or "
+    "a regulation prescribed under this chapter is liable to the United States "
+    "Government for a civil penalty of not more than $25,000. The vessel also "
+    "is liable in rem for the penalty. (Pub. L. 98–89, Aug. 26, 1983, 97 Stat. "
+    "556; Pub. L. 104–324, title III, §306(b), Oct. 19, 1996, 110 Stat. 3918.) "
+    "Historical and Revision Notes Revised section Source section (U.S. Code) "
+    "8906 46:390d Section 8906 prescribes the penalties for violations of this "
+    "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
+    "\"not more than $25,000\" for \"$1,000\"."
+)
+
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
     codec = DeterministicModalLogicCodec(
@@ -287,6 +307,61 @@ def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples()
         fallback = compiled.modal_ir.formulas[-1]
         assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_dataset_zero_formula_cases_for_31a_2b_and_8906() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = [
+        (
+            "us-code-2-31a-2b-a99b26c5ad622cfe",
+            "2 U.S.C. 31a-2b",
+            _USCODE_2_31A_2B_TEXT,
+            "uscode_transferred_heading_v1",
+        ),
+        (
+            "us-code-46-8906.-ebe08e6d737c3c40",
+            "46 U.S.C. 8906.",
+            _USCODE_46_8906_TEXT,
+            "uscode_section_heading_v1",
+        ),
+    ]
+
+    for document_id, citation, text, fallback_rule in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["fallback_rule"] == fallback_rule
+        assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_ignores_calendar_month_may_permission_noise() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "The Secretary shall make the payment after May 13, 2002, and a producer may request review.",
+        document_id="sample-calendar-may-cue",
+        citation="7 U.S.C. 7913",
+        source="us_code",
+    )
+
+    deontic_may_formulas = [
+        formula
+        for formula in compiled.modal_ir.formulas
+        if formula.operator.family == "deontic"
+        and str(formula.metadata.get("cue", "")).lower() == "may"
+    ]
+    assert len(deontic_may_formulas) == 1
+    assert "request_review" in deontic_may_formulas[0].predicate.name
 
 
 def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() -> None:
