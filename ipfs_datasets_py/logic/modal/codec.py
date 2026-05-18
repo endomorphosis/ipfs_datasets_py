@@ -1258,17 +1258,38 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         ("citation_section_primary", parts[0]),
         ("citation_section_component_count", str(len(parts))),
     ]
+    component_shapes: List[str] = []
+    numeric_component_count = 0
+    suffix_component_count = 0
     for part in parts:
         components.append(("citation_section_component", part))
         match = _CITATION_SECTION_PART_RE.fullmatch(part)
         if not match:
+            component_shapes.append("X")
+            components.append(("citation_section_component_kind", "other"))
             continue
         number = _clean_non_empty_string(match.group("number"))
         suffix = _clean_non_empty_string(match.group("suffix"))
+        numeric_component_count += 1
         if number:
             components.append(("citation_section_number", number))
+            components.append(("citation_section_number_digit_count", str(len(number))))
         if suffix:
+            component_shapes.append("NA")
+            suffix_component_count += 1
+            components.append(("citation_section_component_kind", "alphanumeric"))
             components.append(("citation_section_suffix", suffix))
+        else:
+            component_shapes.append("N")
+            components.append(("citation_section_component_kind", "numeric"))
+    if component_shapes:
+        components.append(("citation_section_shape", "-".join(component_shapes)))
+    components.append(
+        ("citation_section_numeric_component_count", str(numeric_component_count))
+    )
+    components.append(
+        ("citation_section_suffix_component_count", str(suffix_component_count))
+    )
     return components
 
 

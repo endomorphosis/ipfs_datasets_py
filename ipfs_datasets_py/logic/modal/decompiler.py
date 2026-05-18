@@ -1160,17 +1160,38 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         ("citation_section_primary", components[0]),
         ("citation_section_component_count", str(len(components))),
     ]
+    component_shapes: List[str] = []
+    numeric_component_count = 0
+    suffix_component_count = 0
     for component in components:
         slots.append(("citation_section_component", component))
         match = _CITATION_SECTION_PART_RE.fullmatch(component)
         if not match:
+            component_shapes.append("X")
+            slots.append(("citation_section_component_kind", "other"))
             continue
         number = _clean_text(match.group("number"))
         suffix = _clean_text(match.group("suffix"))
+        numeric_component_count += 1
         if number:
             slots.append(("citation_section_number", number))
+            slots.append(("citation_section_number_digit_count", str(len(number))))
         if suffix:
+            component_shapes.append("NA")
+            suffix_component_count += 1
+            slots.append(("citation_section_component_kind", "alphanumeric"))
             slots.append(("citation_section_suffix", suffix))
+        else:
+            component_shapes.append("N")
+            slots.append(("citation_section_component_kind", "numeric"))
+    if component_shapes:
+        slots.append(("citation_section_shape", "-".join(component_shapes)))
+    slots.append(
+        ("citation_section_numeric_component_count", str(numeric_component_count))
+    )
+    slots.append(
+        ("citation_section_suffix_component_count", str(suffix_component_count))
+    )
     return slots
 
 

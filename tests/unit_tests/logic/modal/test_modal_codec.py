@@ -2318,6 +2318,17 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "6050k" in slot_texts["citation_section_token_suffix"]
     assert "31a_2b" in slot_texts["citation_section_stem"]
     assert "6050k" in slot_texts["citation_section_stem"]
+    assert "NA-NA" in slot_texts["citation_section_shape"]
+    assert "NA" in slot_texts["citation_section_shape"]
+    assert "N" in slot_texts["citation_section_shape"]
+    assert slot_texts["citation_section_numeric_component_count"] == ["2", "1"]
+    assert slot_texts["citation_section_suffix_component_count"] == ["2", "1", "0"]
+    assert "alphanumeric" in slot_texts["citation_section_component_kind"]
+    assert "numeric" in slot_texts["citation_section_component_kind"]
+    assert "2" in slot_texts["citation_section_number_digit_count"]
+    assert "1" in slot_texts["citation_section_number_digit_count"]
+    assert "4" in slot_texts["citation_section_number_digit_count"]
+    assert "5" in slot_texts["citation_section_number_digit_count"]
     assert any(
         triple["predicate"] == "citation_section_component"
         and triple["object"] == "2b"
@@ -2346,6 +2357,16 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_canonical"
         and triple["object"] == "51 U.S.C. 60604"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_shape"
+        and triple["object"] == "NA-NA"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_number_digit_count"
+        and triple["object"] == "5"
         for triple in triples
     )
 
@@ -2418,6 +2439,13 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "10145" in slot_texts["source_id_section_number"]
     assert "2000" in slot_texts["source_id_section_number"]
     assert "e" in slot_texts["source_id_section_suffix"]
+    assert slot_texts["source_id_section_shape"] == ["N", "NA"]
+    assert slot_texts["source_id_section_numeric_component_count"] == ["1"]
+    assert slot_texts["source_id_section_suffix_component_count"] == ["0", "1"]
+    assert "numeric" in slot_texts["source_id_section_component_kind"]
+    assert "alphanumeric" in slot_texts["source_id_section_component_kind"]
+    assert "5" in slot_texts["source_id_section_number_digit_count"]
+    assert "4" in slot_texts["source_id_section_number_digit_count"]
     assert "cdf17e327d28e2de" in slot_texts["source_id_digest"]
     assert "87b0a223ec2f555f" in slot_texts["source_id_digest"]
     assert any(
@@ -2443,6 +2471,16 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert any(
         triple["predicate"] == "source_id_citation_canonical"
         and triple["object"] == "42 U.S.C. 10145"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_shape"
+        and triple["object"] == "NA"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_suffix_component_count"
+        and triple["object"] == "1"
         for triple in triples
     )
     assert any(
