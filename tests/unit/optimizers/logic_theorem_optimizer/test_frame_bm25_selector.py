@@ -303,6 +303,29 @@ def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_featur
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_and_scope_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section_component:430f",
+            "flogic:citation_section_suffix:f",
+            "flogic:citation_title:16",
+            "flogic:statutory_scope_target:552(a)(1)",
+            "flogic:predicate_argument_scope:pursuant_to_subsection_(b)",
+            "flogic:predicate_token_suffix:notice",
+            "flogic:condition_prefix:if",
+            "flogic:exception_prefix:except",
+        ]
+    )
+
+    assert terms == [
+        "430f",
+        "pursuant_subsection",
+        "notice",
+        "if",
+        "except",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

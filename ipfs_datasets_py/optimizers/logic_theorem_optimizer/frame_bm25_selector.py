@@ -59,6 +59,19 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
         "predicate_role",
     }
 )
+_FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
+    "citation_",
+    "condition_",
+    "exception_",
+    "fallback_rule_",
+    "predicate_argument_",
+    "predicate_stem",
+    "predicate_token_",
+    "section_heading_tail_",
+    "statement_hint_",
+    "statutory_scope_",
+    "status_keyword_",
+)
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
     "candidate_term": "candidate_ontology_term",
@@ -366,7 +379,13 @@ def _is_contextual_frame_ontology_predicate(predicate: str) -> bool:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
-    return normalized in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES
+    return (
+        normalized in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES
+        or any(
+            normalized.startswith(prefix)
+            for prefix in _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES
+        )
+    )
 
 
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
