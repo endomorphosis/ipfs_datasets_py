@@ -552,6 +552,42 @@ def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canon
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_section_trailing_punctuation() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section_trailing_punct:.",
+            "slot:source_id_section_trailing_punct:).",
+        ]
+    )
+
+    assert terms == [
+        "period",
+        "right_paren_period",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_section_trailing_punctuation() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_trailing_punct",
+                "object": ".",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_trailing_punct",
+                "object": ").",
+            },
+        ]
+    )
+
+    assert terms == [
+        "period",
+        "right_paren_period",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_fallback_surface_text_features() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

@@ -98,6 +98,25 @@ _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "source_id_",
     "statutory_scope_",
 )
+_FRAME_ONTOLOGY_TRAILING_PUNCT_PREDICATES = frozenset(
+    {
+        "citation_section_trailing_punct",
+        "source_id_section_trailing_punct",
+    }
+)
+_FRAME_ONTOLOGY_PUNCTUATION_TOKEN_ALIASES = {
+    ".": "period",
+    ",": "comma",
+    ";": "semicolon",
+    ":": "colon",
+    "-": "dash",
+    "(": "left_paren",
+    ")": "right_paren",
+    "[": "left_bracket",
+    "]": "right_bracket",
+    "{": "left_brace",
+    "}": "right_brace",
+}
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
     "candidate_term": "candidate_ontology_term",
@@ -519,6 +538,10 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
+    if normalized_predicate in _FRAME_ONTOLOGY_TRAILING_PUNCT_PREDICATES:
+        normalized_trailing_punct = _normalized_trailing_punct_ontology_value(raw_value)
+        if normalized_trailing_punct:
+            return normalized_trailing_punct
     if normalized_predicate.startswith("modal_family_count"):
         return _normalized_modal_family_count_value(
             normalized_predicate=normalized_predicate,
@@ -535,6 +558,23 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             if positioned_value:
                 return positioned_value
     return raw_value
+
+
+def _normalized_trailing_punct_ontology_value(raw_value: str) -> str:
+    compact = "".join(str(raw_value or "").strip().split())
+    if not compact:
+        return ""
+    tokens: List[str] = []
+    for character in compact:
+        mapped = _FRAME_ONTOLOGY_PUNCTUATION_TOKEN_ALIASES.get(character)
+        if not mapped:
+            continue
+        if tokens and tokens[-1] == mapped:
+            continue
+        tokens.append(mapped)
+    if tokens:
+        return "_".join(tokens)
+    return compact
 
 
 def _normalized_modal_family_count_value(
