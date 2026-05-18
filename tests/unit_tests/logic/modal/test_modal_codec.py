@@ -1899,6 +1899,80 @@ def test_modal_decompiler_and_triples_expand_statutory_scope_units_and_connector
     )
 
 
+def test_modal_decompiler_and_triples_capture_extended_statutory_scope_connectors() -> None:
+    formula = ModalIRFormula(
+        formula_id="statutory-connector-doc:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_as_described_in_section_552(a)(1)_comply",
+            arguments=[
+                "authority:as_defined_in_subsection_(b)",
+                "cross_ref:referred_to_in_paragraph_(1)",
+            ],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="statutory-connector-doc",
+            start_char=0,
+            end_char=160,
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["as set forth in subparagraph (A)"],
+        exceptions=["except as provided in clause (ii)"],
+    )
+    document = ModalIRDocument(
+        document_id="statutory-connector-doc",
+        source="us_code",
+        normalized_text="The agency must comply with the statutory cross-references.",
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "as described in section 552(a)(1)" in slot_texts["statutory_scope_reference"]
+    assert "as defined in subsection (b)" in slot_texts["statutory_scope_reference"]
+    assert "referred to in paragraph (1)" in slot_texts["statutory_scope_reference"]
+    assert "as set forth in subparagraph (a)" in slot_texts["statutory_scope_reference"]
+    assert "except as provided in clause (ii)" in slot_texts["statutory_scope_reference"]
+    assert "as described in" in slot_texts["statutory_scope_connector"]
+    assert "as defined in" in slot_texts["statutory_scope_connector"]
+    assert "referred to in" in slot_texts["statutory_scope_connector"]
+    assert "as set forth in" in slot_texts["statutory_scope_connector"]
+    assert "except as provided in" in slot_texts["statutory_scope_connector"]
+    assert "section" in slot_texts["statutory_scope_unit"]
+    assert "subsection" in slot_texts["statutory_scope_unit"]
+    assert "paragraph" in slot_texts["statutory_scope_unit"]
+    assert "subparagraph" in slot_texts["statutory_scope_unit"]
+    assert "clause" in slot_texts["statutory_scope_unit"]
+    assert "552(a)(1)" in slot_texts["statutory_scope_target"]
+    assert "(b)" in slot_texts["statutory_scope_target"]
+    assert "(1)" in slot_texts["statutory_scope_target"]
+    assert "(a)" in slot_texts["statutory_scope_target"]
+    assert "(ii)" in slot_texts["statutory_scope_target"]
+    assert any(
+        triple["predicate"] == "statutory_scope_connector"
+        and triple["object"] == "as described in"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_connector"
+        and triple["object"] == "referred to in"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_connector"
+        and triple["object"] == "except as provided in"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(

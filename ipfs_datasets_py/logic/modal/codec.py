@@ -125,10 +125,31 @@ _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "item",
 )
 _STATUTORY_SCOPE_UNIT_PATTERN = "|".join(f"{unit}s?" for unit in _STATUTORY_SCOPE_UNITS)
+_STATUTORY_SCOPE_CONNECTORS: tuple[str, ...] = (
+    "as otherwise provided in",
+    "except as provided in",
+    "in accordance with",
+    "as referred to in",
+    "as described in",
+    "as defined in",
+    "as set forth in",
+    "as provided in",
+    "referred to in",
+    "described in",
+    "defined in",
+    "pursuant to",
+    "under",
+    "within",
+    "in",
+)
+_STATUTORY_SCOPE_CONNECTOR_PATTERN = "|".join(
+    re.escape(connector)
+    for connector in _STATUTORY_SCOPE_CONNECTORS
+)
 _ROMAN_NUMERAL_RE = re.compile(r"^[ivxlcdm]+$", re.IGNORECASE)
 _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?<!\w)"
-    rf"(?P<connector>as provided in|in accordance with|pursuant to|under|within|in)"
+    rf"(?P<connector>{_STATUTORY_SCOPE_CONNECTOR_PATTERN})"
     rf"\s+"
     rf"(?:(?P<determiner>this|such)\s+)?"
     rf"(?P<unit>{_STATUTORY_SCOPE_UNIT_PATTERN})"
