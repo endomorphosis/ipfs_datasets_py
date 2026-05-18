@@ -332,6 +332,7 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
     terms = frame_ontology_terms_from_feature_keys(
         [
             "cue:frame:Frame:authority",
+            "cue:frame:Frame:is a",
             "cue:frame:Frame:part of",
             "cue:deontic:O:must",
         ]
@@ -339,7 +340,23 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
 
     assert terms == [
         "authority",
+        "isa",
         "part",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_legacy_frame_cues() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "cue:frame:transferred",
+            "cue:frame:is a",
+            "cue:frame:",
+        ]
+    )
+
+    assert terms == [
+        "transferred",
+        "isa",
     ]
 
 
@@ -357,6 +374,7 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
     )
 
     assert terms == [
+        "transferred",
         "frame",
         "unless_written_notice_provided",
         "5406",
@@ -529,6 +547,7 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -
 def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> None:
     assert is_frame_ontology_feature_key("family:frame:1") is True
     assert is_frame_ontology_feature_key("modal-family:frame") is True
+    assert is_frame_ontology_feature_key("cue:frame:transferred") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
     assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
     assert is_frame_ontology_feature_key(

@@ -152,6 +152,9 @@ _FRAME_ONTOLOGY_CONTEXTUAL_NAMESPACED_FEATURE_PREFIXES = frozenset(
     {"flogic", "slot"}
 )
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
+_FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
+    "is a": "isa",
+}
 
 
 @dataclass(frozen=True)
@@ -513,9 +516,10 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
         if not cue_tail:
             return "", False
         cue_symbol, separator, cue_value = cue_tail.partition(":")
-        if not separator:
+        resolved_cue_value = cue_value.strip() if separator else cue_symbol.strip()
+        if not resolved_cue_value:
             return "", False
-        return cue_value.strip(), False
+        return _normalized_frame_ontology_cue_value(resolved_cue_value), False
 
     for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
         if lowered.startswith(prefix):
@@ -565,6 +569,16 @@ def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:
     return any(
         canonical.startswith(prefix)
         for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
+    )
+
+
+def _normalized_frame_ontology_cue_value(value: str) -> str:
+    normalized = " ".join(str(value or "").strip().lower().split())
+    if not normalized:
+        return ""
+    return _FRAME_ONTOLOGY_CUE_VALUE_ALIASES.get(
+        normalized,
+        str(value or "").strip(),
     )
 
 
