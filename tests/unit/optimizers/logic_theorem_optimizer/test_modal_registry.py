@@ -10,6 +10,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalRegistry,
     ModalSystem,
     is_normative_modal_family,
+    signal_free_adaptive_ambiguity_targets,
+    supports_signal_free_adaptive_ambiguity_pair,
 )
 
 
@@ -53,3 +55,37 @@ def test_normative_modal_family_helper_handles_strings_and_enums() -> None:
     assert is_normative_modal_family("conditional_normative") is True
     assert is_normative_modal_family("temporal") is False
     assert is_normative_modal_family("unknown-family") is False
+
+
+def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs() -> None:
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        "deontic",
+        "conditional_normative",
+    )
+    assert supports_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
+    assert supports_signal_free_adaptive_ambiguity_pair("temporal", "frame")
+    assert (
+        supports_signal_free_adaptive_ambiguity_pair(
+            "conditional_normative",
+            "deontic",
+        )
+        is False
+    )
+    assert (
+        supports_signal_free_adaptive_ambiguity_pair("frame", "temporal") is False
+    )
+
+
+def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:
+    assert signal_free_adaptive_ambiguity_targets("temporal") == (
+        "conditional_normative",
+        "deontic",
+        "frame",
+    )
+    assert signal_free_adaptive_ambiguity_targets("deontic") == (
+        "conditional_normative",
+        "frame",
+        "temporal",
+    )
+    assert signal_free_adaptive_ambiguity_targets("hybrid") == ("frame",)
+    assert signal_free_adaptive_ambiguity_targets("epistemic") == ()

@@ -340,10 +340,22 @@ def supports_signal_free_adaptive_ambiguity_pair(
     target_family: ModalLogicFamily | str,
 ) -> bool:
     """Return whether an adaptive pair should emit ambiguity without target cues."""
-    return (
-        _resolve_modal_family_name(predicted_family),
-        _resolve_modal_family_name(target_family),
-    ) in SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    resolved_target_family = _resolve_modal_family_name(target_family)
+    return resolved_target_family in signal_free_adaptive_ambiguity_targets(
+        predicted_family
+    )
+
+
+def signal_free_adaptive_ambiguity_targets(
+    predicted_family: ModalLogicFamily | str,
+) -> Tuple[str, ...]:
+    """Return ordered adaptive-ambiguity targets requiring signal-free handling."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    return tuple(
+        target_family
+        for source_family, target_family in SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if source_family == resolved_predicted_family
+    )
 
 
 def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
@@ -370,5 +382,6 @@ __all__ = [
     "ModalSemanticsSpec",
     "ModalSystem",
     "is_normative_modal_family",
+    "signal_free_adaptive_ambiguity_targets",
     "supports_signal_free_adaptive_ambiguity_pair",
 ]

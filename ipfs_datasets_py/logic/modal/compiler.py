@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalLogicFamily,
     ModalRegistry,
     is_normative_modal_family,
+    signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
@@ -537,12 +538,6 @@ class DeterministicModalCompiler:
         if not ranking:
             return []
         predicted_family = str(ranking[0]["family"])
-        if predicted_family not in {
-            ModalLogicFamily.TEMPORAL.value,
-            ModalLogicFamily.DEONTIC.value,
-            ModalLogicFamily.HYBRID.value,
-        }:
-            return []
         predicted_share = float(ranking[0]["share"])
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
@@ -556,52 +551,45 @@ class DeterministicModalCompiler:
             or signals.get("has_statutory_scope_reference")
             or has_frame_bm25_support
         )
+        target_signal_by_family: Dict[str, bool]
         if predicted_family == ModalLogicFamily.DEONTIC.value:
-            target_specs = (
-                (
-                    ModalLogicFamily.FRAME.value,
-                    has_frame_scope,
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
                 ),
-                (
-                    ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-                    bool(signals.get("has_condition_or_exception_scope")),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
                 ),
-                (
-                    ModalLogicFamily.TEMPORAL.value,
-                    bool(signals.get("has_temporal_scope")),
+                ModalLogicFamily.ALETHIC.value: bool(
+                    signals.get("has_alethic_scope")
+                    or signals.get("has_alethic_cue")
                 ),
-                (
-                    ModalLogicFamily.ALETHIC.value,
-                    bool(
-                        signals.get("has_alethic_scope")
-                        or signals.get("has_alethic_cue")
-                    ),
-                ),
-            )
+            }
         elif predicted_family == ModalLogicFamily.TEMPORAL.value:
-            target_specs = (
-                (
-                    ModalLogicFamily.FRAME.value,
-                    has_frame_scope,
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
                 ),
-                (
-                    ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-                    bool(signals.get("has_condition_or_exception_scope")),
+                ModalLogicFamily.DEONTIC.value: bool(
+                    signals.get("has_deontic_scope")
                 ),
-                (
-                    ModalLogicFamily.DEONTIC.value,
-                    bool(signals.get("has_deontic_scope")),
-                ),
-            )
+            }
+        elif predicted_family == ModalLogicFamily.HYBRID.value:
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+            }
         else:
-            target_specs = (
-                (
-                    ModalLogicFamily.FRAME.value,
-                    has_frame_scope,
-                ),
-            )
+            target_signal_by_family = {}
+        for policy_target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        ):
+            target_signal_by_family.setdefault(policy_target_family, False)
+        if not target_signal_by_family:
+            return []
         ambiguities: List[ModalCompilationAmbiguity] = []
-        for target_family, has_signal in target_specs:
+        for target_family, has_signal in target_signal_by_family.items():
             if target_family == predicted_family:
                 continue
             target_share = float(family_shares.get(target_family, 0.0))
