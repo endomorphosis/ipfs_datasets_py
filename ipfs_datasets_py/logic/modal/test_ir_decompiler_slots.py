@@ -454,6 +454,40 @@ def _coarse_heading_tail_sample_document() -> ModalIRDocument:
     )
 
 
+def _procedural_keyword_fallback_sample_document() -> ModalIRDocument:
+    source_id = "us-code-10-1095c-95cb9940fa4690f6"
+    formula = ModalIRFormula(
+        formula_id="f-procedural-keyword",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_procedural_clause_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=82,
+            citation="10 U.S.C. 1095c",
+        ),
+        metadata={
+            "cue": "__uscode_procedural_clause_fallback__",
+            "fallback_rule": "uscode_procedural_clause_v1",
+            "procedural_keyword": "review",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "Administrative review procedures are established for health care "
+            "collection actions."
+        ),
+        formulas=[formula],
+    )
+
+
 def _zero_digit_signature_sample_document() -> ModalIRDocument:
     source_id = "us-code-43-1470.-845d9dceb9d264ab"
     formula = ModalIRFormula(
@@ -2405,6 +2439,34 @@ def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallba
     assert objects("section_heading_tail_token_suffix") == ["improvements"]
     assert objects("fallback_surface_text_token_count") == ["4"]
     assert objects("fallback_surface_text_token_suffix") == ["improvements"]
+
+
+def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
+    decoded = decode_modal_ir_document(_procedural_keyword_fallback_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["procedural_keyword"] == ["review"]
+    assert slot_map["procedural_keyword_token_count"] == ["1"]
+    assert slot_map["procedural_keyword_token_prefix"] == ["review"]
+    assert slot_map["procedural_keyword_token_suffix"] == ["review"]
+    assert slot_map["procedural_keyword_stem"] == ["review"]
+
+
+def test_modal_ir_to_flogic_triples_emits_procedural_keyword_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_procedural_keyword_fallback_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("procedural_keyword") == ["review"]
+    assert objects("procedural_keyword_token_count") == ["1"]
+    assert objects("procedural_keyword_token_prefix") == ["review"]
+    assert objects("procedural_keyword_token_suffix") == ["review"]
+    assert objects("procedural_keyword_stem") == ["review"]
 
 
 def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:

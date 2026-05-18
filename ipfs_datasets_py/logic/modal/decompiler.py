@@ -555,6 +555,28 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
+    procedural_keyword = _clean_text(formula.metadata.get("procedural_keyword") or "")
+    if procedural_keyword:
+        phrases.append(
+            DecodedModalPhrase(
+                text=procedural_keyword,
+                slot="procedural_keyword",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        for slot, value in _typed_identifier_slots(
+            procedural_keyword,
+            slot_prefix="procedural_keyword",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     source_id = _clean_text(formula.provenance.source_id or "")
     citation = _clean_text(formula.provenance.citation or "")
     citation_inferred_from_source_id = False

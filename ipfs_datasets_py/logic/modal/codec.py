@@ -1044,6 +1044,28 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+        procedural_keyword = _clean_non_empty_string(
+            formula.metadata.get("procedural_keyword")
+        )
+        if procedural_keyword:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "procedural_keyword",
+                    "object": procedural_keyword,
+                }
+            )
+            for predicate, value in _typed_identifier_components(
+                procedural_keyword,
+                slot_prefix="procedural_keyword",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         for condition in sorted({value for value in formula.conditions if value}):
             triples.append(
                 {
