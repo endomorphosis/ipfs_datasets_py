@@ -792,6 +792,8 @@ def build_paired_daemon_commands(
         str(args.max_items),
         "--learning-rate",
         str(args.learning_rate),
+        "--autoencoder-device",
+        str(getattr(args, "autoencoder_device", "auto")),
         "--test-every-cycles",
         str(args.test_every_cycles),
     ]
@@ -2102,6 +2104,14 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
+    parser.add_argument(
+        "--autoencoder-device",
+        default="auto",
+        help=(
+            "Vector math device for the adaptive autoencoder: auto, python, "
+            "cpu, cuda, or a specific CUDA device such as cuda:0."
+        ),
+    )
     parser.add_argument("--poll-seconds", type=float, default=5.0)
     parser.add_argument("--test-every-cycles", type=int, default=24)
     parser.add_argument("--worker-id", default=None)
@@ -2596,7 +2606,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             use_flogic=True,
         )
     )
-    autoencoder = AdaptiveModalAutoencoder(state=state, feature_codec=feature_codec)
+    autoencoder = AdaptiveModalAutoencoder(
+        state=state,
+        feature_codec=feature_codec,
+        compute_device=args.autoencoder_device,
+    )
+    summary.update(autoencoder.compute_backend_metadata())
+    save_summary(summary_path, summary)
     supervisor = ModalTodoSupervisor(queue=queue)
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
@@ -2678,6 +2694,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             )
             summary["cycles"] = cycle
             summary["latest_stop_reason"] = run.stopped_reason
+            summary.update(autoencoder.compute_backend_metadata())
             summary["latest_queue_counts"] = supervisor.queue.status_counts()
             summary["latest_role_queue_counts"] = supervisor.queue.role_status_counts()
             program_synthesis_status = update_program_synthesis_summary(
@@ -2775,6 +2792,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
             summary["stopped_by_signal"] = stop_signal
+        summary.update(autoencoder.compute_backend_metadata())
         summary["applied_todo_ids"] = len(autoencoder.state.applied_todo_ids)
         summary["decoded_embedding_entries"] = len(autoencoder.state.decoded_embeddings)
         summary["elapsed_seconds"] = round(time.time() - started_at, 3)

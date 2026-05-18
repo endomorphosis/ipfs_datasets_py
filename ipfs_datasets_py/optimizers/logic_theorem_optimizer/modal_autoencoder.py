@@ -552,6 +552,7 @@ class AdaptiveModalAutoencoder:
         feature_codec: Optional[Any] = None,
         feature_embedding_weight_scale: float = 0.5,
         feature_family_logit_scale: float = 0.0,
+        compute_device: str = "auto",
     ) -> None:
         self.state = state or ModalAutoencoderTrainingState()
         self.initial_embedding_scale = float(initial_embedding_scale)
@@ -562,6 +563,12 @@ class AdaptiveModalAutoencoder:
             float(feature_embedding_weight_scale),
         )
         self.feature_family_logit_scale = max(0.0, float(feature_family_logit_scale))
+        (
+            self.compute_device_request,
+            self.compute_backend,
+            self.compute_device,
+            self._torch,
+        ) = _resolve_vector_compute_backend(compute_device)
 
     def evaluate(
         self,
@@ -586,25 +593,38 @@ class AdaptiveModalAutoencoder:
         cosine_scores: List[float] = []
         cosine_losses: List[float] = []
         reconstruction_losses: List[float] = []
-        ce_losses: List[float] = []
+        probability_maps: List[Mapping[str, float]] = []
+        target_maps: List[Mapping[str, float]] = []
         frame_losses: List[float] = []
         symbolic_penalties: List[float] = []
         decoded_embeddings: Dict[str, List[float]] = {}
+        target_vectors: List[List[float]] = []
+        decoded_vectors: List[List[float]] = []
 
         for sample in sample_list:
             decoded = self.decode(self.encode(sample, use_sample_memory=use_sample_memory))
             decoded_embeddings[sample.sample_id] = decoded
-            cosine_scores.append(cosine_similarity(sample.embedding_vector, decoded))
-            cosine_losses.append(cosine_loss(sample.embedding_vector, decoded))
-            reconstruction_losses.append(mse_loss(sample.embedding_vector, decoded))
-            ce_losses.append(
-                cross_entropy_distribution_loss(
-                    self._family_distribution(sample, use_sample_memory=use_sample_memory),
-                    _observed_family_distribution(sample),
+            target_vectors.append(list(sample.embedding_vector))
+            decoded_vectors.append(decoded)
+            probability_maps.append(
+                self._family_distribution(
+                    sample,
+                    use_sample_memory=use_sample_memory,
                 )
             )
+            target_maps.append(_observed_family_distribution(sample))
             frame_losses.append(frame_ranking_loss(sample))
             symbolic_penalties.append(symbolic_validity_penalty(sample))
+
+        cosine_scores, reconstruction_losses = self._embedding_metrics(
+            target_vectors,
+            decoded_vectors,
+        )
+        cosine_losses = [1.0 - value for value in cosine_scores]
+        ce_losses = self._cross_entropy_distribution_losses(
+            probability_maps,
+            target_maps,
+        )
 
         return AutoencoderEvaluation(
             sample_count=len(sample_list),
@@ -939,14 +959,12 @@ class AdaptiveModalAutoencoder:
         current = self._decoded_for(sample)
         if len(current) != len(sample.embedding_vector):
             current = [0.0 for _ in sample.embedding_vector]
-        error = [
-            float(target_value) - current_value
-            for current_value, target_value in zip(current, sample.embedding_vector)
-        ]
-        self.state.decoded_embeddings[sample.sample_id] = [
-            current_value + step * (float(target_value) - current_value)
-            for current_value, target_value in zip(current, sample.embedding_vector)
-        ]
+        error = self._vector_difference(sample.embedding_vector, current)
+        self.state.decoded_embeddings[sample.sample_id] = self._blend_toward(
+            current,
+            sample.embedding_vector,
+            step=step,
+        )
         feature_keys = self._feature_keys_for(sample)
         if not feature_keys:
             return
@@ -958,8 +976,7 @@ class AdaptiveModalAutoencoder:
             )
             if len(weights) != len(sample.embedding_vector):
                 weights[:] = [0.0 for _ in sample.embedding_vector]
-            for index, value in enumerate(error):
-                weights[index] += feature_step * value
+            weights[:] = self._add_scaled_vector(weights, error, scale=feature_step)
 
     def _nudge_family_logits(self, sample: LegalSample, *, learning_rate: float) -> None:
         step = _clamp_learning_rate(learning_rate)
@@ -985,14 +1002,204 @@ class AdaptiveModalAutoencoder:
                     )
 
     def _feature_embedding_adjustment(self, sample: LegalSample, *, dimensions: int) -> List[float]:
+        vectors = [
+            weights
+            for feature in self._feature_keys_for(sample)
+            for weights in [self.state.feature_embedding_weights.get(feature)]
+            if weights is not None and len(weights) == dimensions
+        ]
+        if not vectors:
+            return [0.0 for _ in range(dimensions)]
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                tensor = self._torch.tensor(
+                    vectors,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                adjustment = tensor.sum(dim=0) * float(
+                    self.feature_embedding_weight_scale
+                )
+                return [float(value) for value in adjustment.detach().cpu().tolist()]
         adjustment = [0.0 for _ in range(dimensions)]
-        for feature in self._feature_keys_for(sample):
-            weights = self.state.feature_embedding_weights.get(feature)
-            if weights is None or len(weights) != dimensions:
-                continue
+        for weights in vectors:
             for index, value in enumerate(weights):
                 adjustment[index] += float(value) * self.feature_embedding_weight_scale
         return adjustment
+
+    def compute_backend_metadata(self) -> Dict[str, str]:
+        """Return the active vector math backend used by this autoencoder."""
+        return {
+            "autoencoder_compute_backend": self.compute_backend,
+            "autoencoder_compute_device": str(self.compute_device or "python"),
+            "autoencoder_compute_device_request": self.compute_device_request,
+        }
+
+    def _embedding_metrics(
+        self,
+        target_vectors: Sequence[Sequence[float]],
+        decoded_vectors: Sequence[Sequence[float]],
+    ) -> tuple[List[float], List[float]]:
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                targets = self._torch.tensor(
+                    target_vectors,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                decoded = self._torch.tensor(
+                    decoded_vectors,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                dot = (targets * decoded).sum(dim=1)
+                target_norm = self._torch.linalg.vector_norm(targets, dim=1)
+                decoded_norm = self._torch.linalg.vector_norm(decoded, dim=1)
+                denominator = target_norm * decoded_norm
+                cosine = self._torch.where(
+                    denominator > 0.0,
+                    dot / denominator,
+                    self._torch.zeros_like(denominator),
+                )
+                mse = ((targets - decoded) ** 2).mean(dim=1)
+                return (
+                    [float(value) for value in cosine.detach().cpu().tolist()],
+                    [float(value) for value in mse.detach().cpu().tolist()],
+                )
+        return (
+            [
+                cosine_similarity(target, decoded)
+                for target, decoded in zip(target_vectors, decoded_vectors)
+            ],
+            [
+                mse_loss(target, decoded)
+                for target, decoded in zip(target_vectors, decoded_vectors)
+            ],
+        )
+
+    def _cross_entropy_distribution_losses(
+        self,
+        probability_maps: Sequence[Mapping[str, float]],
+        target_maps: Sequence[Mapping[str, float]],
+    ) -> List[float]:
+        if self._torch is not None and self.compute_device is not None:
+            families = tuple(
+                dict.fromkeys(
+                    list(self.modal_families)
+                    + [
+                        str(family)
+                        for mapping in (*probability_maps, *target_maps)
+                        for family in mapping.keys()
+                    ]
+                )
+            )
+            with self._torch.no_grad():
+                probabilities = self._torch.tensor(
+                    [
+                        [float(mapping.get(family, 0.0)) for family in families]
+                        for mapping in probability_maps
+                    ],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                ).clamp_min(1e-12)
+                targets = self._torch.tensor(
+                    [
+                        [max(0.0, float(mapping.get(family, 0.0))) for family in families]
+                        for mapping in target_maps
+                    ],
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                totals = targets.sum(dim=1, keepdim=True)
+                normalized_targets = self._torch.where(
+                    totals > 0.0,
+                    targets / totals.clamp_min(1e-12),
+                    self._torch.zeros_like(targets),
+                )
+                losses = (normalized_targets * -self._torch.log(probabilities)).sum(dim=1)
+                return [float(value) for value in losses.detach().cpu().tolist()]
+        return [
+            cross_entropy_distribution_loss(probabilities, target)
+            for probabilities, target in zip(probability_maps, target_maps)
+        ]
+
+    def _vector_difference(
+        self,
+        target: Sequence[float],
+        current: Sequence[float],
+    ) -> List[float]:
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                target_tensor = self._torch.tensor(
+                    target,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                current_tensor = self._torch.tensor(
+                    current,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                return [
+                    float(value)
+                    for value in (target_tensor - current_tensor).detach().cpu().tolist()
+                ]
+        return [
+            float(target_value) - float(current_value)
+            for current_value, target_value in zip(current, target)
+        ]
+
+    def _blend_toward(
+        self,
+        current: Sequence[float],
+        target: Sequence[float],
+        *,
+        step: float,
+    ) -> List[float]:
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                current_tensor = self._torch.tensor(
+                    current,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                target_tensor = self._torch.tensor(
+                    target,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                updated = current_tensor + float(step) * (target_tensor - current_tensor)
+                return [float(value) for value in updated.detach().cpu().tolist()]
+        return [
+            float(current_value) + step * (float(target_value) - float(current_value))
+            for current_value, target_value in zip(current, target)
+        ]
+
+    def _add_scaled_vector(
+        self,
+        current: Sequence[float],
+        update: Sequence[float],
+        *,
+        scale: float,
+    ) -> List[float]:
+        if self._torch is not None and self.compute_device is not None:
+            with self._torch.no_grad():
+                current_tensor = self._torch.tensor(
+                    current,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                update_tensor = self._torch.tensor(
+                    update,
+                    dtype=self._torch.float64,
+                    device=self.compute_device,
+                )
+                updated = current_tensor + float(scale) * update_tensor
+                return [float(value) for value in updated.detach().cpu().tolist()]
+        return [
+            float(current_value) + float(scale) * float(update_value)
+            for current_value, update_value in zip(current, update)
+        ]
 
     def _feature_keys_for(self, sample: LegalSample) -> List[str]:
         if self.feature_codec is not None and hasattr(
@@ -1350,6 +1557,33 @@ def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
 
 def _clamp_learning_rate(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
+
+
+def _resolve_vector_compute_backend(
+    compute_device: str,
+) -> tuple[str, str, Any | None, Any | None]:
+    request = str(compute_device or "auto").strip().lower()
+    if request in {"", "auto"}:
+        request = "auto"
+    if request in {"python", "list", "lists", "none", "off"}:
+        return request, "python", None, None
+
+    try:
+        import torch  # type: ignore[import-not-found]
+    except Exception:
+        return request, "python", None, None
+
+    if request == "auto":
+        if bool(torch.cuda.is_available()):
+            return request, "torch_cuda", torch.device("cuda"), torch
+        return request, "python", None, None
+    if request.startswith("cuda"):
+        if bool(torch.cuda.is_available()):
+            return request, "torch_cuda", torch.device(request), torch
+        return request, "python_cuda_unavailable", None, None
+    if request == "cpu":
+        return request, "torch_cpu", torch.device("cpu"), torch
+    return request, "python_unknown_device", None, None
 
 
 def _mean(values: Sequence[float]) -> float:
