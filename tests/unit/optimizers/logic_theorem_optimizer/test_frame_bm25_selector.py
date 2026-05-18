@@ -259,6 +259,28 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
     ]
 
 
+def test_frame_ontology_terms_from_triples_preserve_modal_cue_stopwords_for_audits() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "modal_cue",
+                "object": "by",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_cue",
+                "object": "shall",
+            },
+        ]
+    )
+
+    assert terms == [
+        "by",
+        "shall",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_support_procedural_keyword_predicates() -> None:
     terms = frame_ontology_terms_from_triples(
         [
@@ -888,6 +910,21 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
         "permission",
         "may",
         "5_552",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_preserve_modal_cue_stopwords_for_audits() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:modal_cue:by",
+            "flogic:modal_cue:shall",
+            "token:agency",
+        ]
+    )
+
+    assert terms == [
+        "by",
+        "shall",
     ]
 
 

@@ -1387,7 +1387,8 @@ def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
         return False
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
     return (
-        canonical.startswith("condition_alnum_segment")
+        canonical == "modal_cue"
+        or canonical.startswith("condition_alnum_segment")
         or canonical.startswith("condition_scope_alnum_segment")
         or canonical.startswith("exception_alnum_segment")
         or canonical.startswith("exception_scope_alnum_segment")
