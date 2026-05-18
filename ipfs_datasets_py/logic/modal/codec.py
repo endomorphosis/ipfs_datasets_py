@@ -114,6 +114,10 @@ _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
+_USCODE_LEADING_SECTION_REF_RE = re.compile(
+    r"^\s*(?:(?:§\s*|sec\.?\s*|section\s+)\d[0-9A-Za-z.\-]*(?:\([^)]+\))*|\d[0-9A-Za-z.\-]*(?:\([^)]+\))*)\s*(?:[.:\-–—]+)?\s*",
+    re.IGNORECASE,
+)
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
@@ -860,6 +864,29 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+        fallback_surface_text = _fallback_surface_text(
+            modal_ir=modal_ir,
+            formula=formula,
+        )
+        if fallback_surface_text:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "fallback_surface_text",
+                    "object": fallback_surface_text,
+                }
+            )
+            for predicate, value in _typed_identifier_components(
+                fallback_surface_text,
+                slot_prefix="fallback_surface_text",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         status_keyword = _clean_non_empty_string(formula.metadata.get("status_keyword"))
         if status_keyword:
             triples.append(
@@ -1282,6 +1309,42 @@ def _fallback_section_heading_tail_text(
     if len(tokens) > max_tokens:
         return ""
     return heading_tail
+
+
+def _fallback_surface_text(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 24,
+) -> str:
+    fallback_rule = _clean_non_empty_string(formula.metadata.get("fallback_rule"))
+    if not fallback_rule:
+        return ""
+    heading_tail = _fallback_section_heading_tail_text(
+        modal_ir=modal_ir,
+        formula=formula,
+        max_tokens=max_tokens,
+    )
+    if heading_tail:
+        return heading_tail
+    source_text = str(modal_ir.normalized_text or "")
+    if not source_text:
+        return ""
+    start = max(0, min(len(source_text), int(formula.provenance.start_char)))
+    end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    span_text = _clean_non_empty_string(source_text[start:end])
+    if not span_text:
+        return ""
+    normalized = _clean_non_empty_string(
+        _USCODE_LEADING_SECTION_REF_RE.sub("", span_text)
+    )
+    normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
+    if not normalized:
+        return ""
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(normalized.lower())
+    if not tokens or len(tokens) > max_tokens:
+        return ""
+    return normalized
 
 
 def _append_statutory_scope_triples(

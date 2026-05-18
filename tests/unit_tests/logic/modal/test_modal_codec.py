@@ -2814,13 +2814,21 @@ def test_modal_decompiler_and_triples_surface_section_heading_tail_slots() -> No
     triples = modal_ir_to_flogic_triples(compiled.modal_ir)
 
     assert slot_texts["section_heading_tail"] == ["Definitions and purposes"]
+    assert slot_texts["fallback_surface_text"] == ["Definitions and purposes"]
     assert slot_texts["section_heading_tail_token_count"] == ["3"]
     assert slot_texts["section_heading_tail_token_prefix"] == ["definitions"]
     assert slot_texts["section_heading_tail_token_suffix"] == ["purposes"]
     assert slot_texts["section_heading_tail_stem"] == ["definitions_and_purposes"]
+    assert slot_texts["fallback_surface_text_token_count"] == ["3"]
+    assert slot_texts["fallback_surface_text_token_suffix"] == ["purposes"]
     assert "and" in slot_texts["section_heading_tail_token"]
     assert any(
         triple["predicate"] == "section_heading_tail"
+        and triple["object"] == "Definitions and purposes"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "fallback_surface_text"
         and triple["object"] == "Definitions and purposes"
         for triple in triples
     )
@@ -2832,6 +2840,43 @@ def test_modal_decompiler_and_triples_surface_section_heading_tail_slots() -> No
     assert any(
         triple["predicate"] == "section_heading_tail_token_suffix"
         and triple["object"] == "purposes"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_fallback_text_for_heading_without_section_reference() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "Housing voucher benefits and utility allowances.",
+        document_id="us-code-25-422-f3f166961e45b585",
+        citation="25 U.S.C. 422",
+        source="us_code",
+    )
+
+    fallback = compiled.modal_ir.formulas[-1]
+    assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert slot_texts["fallback_surface_text"] == ["Housing voucher benefits and utility allowances"]
+    assert slot_texts["fallback_surface_text_token_count"] == ["6"]
+    assert slot_texts["fallback_surface_text_token_prefix"] == ["housing"]
+    assert slot_texts["fallback_surface_text_token_suffix"] == ["allowances"]
+    assert (
+        slot_texts["fallback_surface_text_stem"]
+        == ["housing_voucher_benefits_and_utility_allowances"]
+    )
+    assert "voucher" in slot_texts["fallback_surface_text_token"]
+    assert any(
+        triple["predicate"] == "fallback_surface_text"
+        and triple["object"] == "Housing voucher benefits and utility allowances"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "fallback_surface_text_token_suffix"
+        and triple["object"] == "allowances"
         for triple in triples
     )
 

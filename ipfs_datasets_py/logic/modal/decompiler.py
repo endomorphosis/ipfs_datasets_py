@@ -56,6 +56,10 @@ _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
+_USCODE_LEADING_SECTION_REF_RE = re.compile(
+    r"^\s*(?:(?:§\s*|sec\.?\s*|section\s+)\d[0-9A-Za-z.\-]*(?:\([^)]+\))*|\d[0-9A-Za-z.\-]*(?:\([^)]+\))*)\s*(?:[.:\-–—]+)?\s*",
+    re.IGNORECASE,
+)
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
@@ -173,6 +177,12 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         phrases.extend(_decode_formula_phrases(formula))
         phrases.extend(
             _fallback_section_heading_tail_phrases(
+                document=document,
+                formula=formula,
+            )
+        )
+        phrases.extend(
+            _fallback_surface_text_phrases(
                 document=document,
                 formula=formula,
             )
@@ -542,6 +552,38 @@ def _fallback_section_heading_tail_phrases(
     return phrases
 
 
+def _fallback_surface_text_phrases(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[DecodedModalPhrase]:
+    surface_text = _fallback_surface_text(document=document, formula=formula)
+    if not surface_text:
+        return []
+    spans = [[formula.provenance.start_char, formula.provenance.end_char]]
+    phrases = [
+        DecodedModalPhrase(
+            text=surface_text,
+            slot="fallback_surface_text",
+            spans=spans,
+            provenance_only=True,
+        )
+    ]
+    for slot, value in _typed_identifier_slots(
+        surface_text,
+        slot_prefix="fallback_surface_text",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
 def _fallback_section_heading_tail_text(
     *,
     document: ModalIRDocument,
@@ -569,6 +611,40 @@ def _fallback_section_heading_tail_text(
     if len(_tokenize_for_similarity(heading_tail)) > max_tokens:
         return ""
     return heading_tail
+
+
+def _fallback_surface_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 24,
+) -> str:
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    if not fallback_rule:
+        return ""
+    heading_tail = _fallback_section_heading_tail_text(
+        document=document,
+        formula=formula,
+        max_tokens=max_tokens,
+    )
+    if heading_tail:
+        return heading_tail
+    source_text = str(document.normalized_text or "")
+    if not source_text:
+        return ""
+    start = max(0, min(len(source_text), int(formula.provenance.start_char)))
+    end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    span_text = _clean_text(source_text[start:end])
+    if not span_text:
+        return ""
+    normalized = _clean_text(_USCODE_LEADING_SECTION_REF_RE.sub("", span_text))
+    normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
+    if not normalized:
+        return ""
+    tokens = _tokenize_for_similarity(normalized)
+    if not tokens or len(tokens) > max_tokens:
+        return ""
+    return normalized
 
 
 def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
