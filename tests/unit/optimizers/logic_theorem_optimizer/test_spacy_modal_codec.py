@@ -261,6 +261,33 @@ def test_spacy_encoder_ignores_calendar_month_may_as_permission_cue() -> None:
     assert any(cue.family == "temporal" and cue.cue.lower() == "after" for cue in encoding.cues)
 
 
+def test_spacy_encoder_treats_non_deadline_by_as_non_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall provide notice by the Comptroller.",
+        document_id="sample-by-non-temporal",
+    )
+
+    assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall provide notice by January 1, 2030.",
+        document_id="sample-by-deadline",
+    )
+
+    assert any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

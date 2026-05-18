@@ -163,6 +163,61 @@ _CALENDAR_DATE_RE = re.compile(
     r"dec(?:ember)?)\s+\d{1,2}(?:,\s*|\s+)\d{4}\b",
     re.IGNORECASE,
 )
+_MONTH_NAME_TOKENS = frozenset(
+    {
+        "jan",
+        "january",
+        "feb",
+        "february",
+        "mar",
+        "march",
+        "apr",
+        "april",
+        "may",
+        "jun",
+        "june",
+        "jul",
+        "july",
+        "aug",
+        "august",
+        "sep",
+        "sept",
+        "september",
+        "oct",
+        "october",
+        "nov",
+        "november",
+        "dec",
+        "december",
+    }
+)
+_TEMPORAL_BY_CONTEXT_TOKENS = frozenset(
+    {
+        "date",
+        "dates",
+        "deadline",
+        "deadlines",
+        "expiration",
+        "period",
+        "periods",
+        "quarter",
+        "quarters",
+        "term",
+        "terms",
+        "today",
+        "tomorrow",
+        "yesterday",
+    }
+)
+_TEMPORAL_BY_PHRASE_RE = re.compile(
+    r"^\s+(?:"
+    r"\d{1,4}\b|"
+    r"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
+    r"(?:no|not)\s+later\s+than\b|"
+    r"(?:next|following)\b"
+    r")",
+    re.IGNORECASE,
+)
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
         "administrator",
@@ -425,6 +480,17 @@ class SpaCyLegalEncoder:
                             end_char=match.end(),
                         ):
                             continue
+                        if (
+                            profile.family == ModalLogicFamily.TEMPORAL
+                            and cue.lower() == "by"
+                            and not self._is_temporal_deadline_by_cue(
+                                normalized_text=normalized,
+                                tokens=tokens,
+                                start_char=match.start(),
+                                end_char=match.end(),
+                            )
+                        ):
+                            continue
                         token_indices = [
                             index
                             for index, start, end in token_spans
@@ -459,6 +525,38 @@ class SpaCyLegalEncoder:
             return False
         trailing = normalized_text[end_char:]
         return bool(re.match(r"^\s+\d{1,2}(?:,\s*|\s+)\d{4}\b", trailing))
+
+    def _is_temporal_deadline_by_cue(
+        self,
+        *,
+        normalized_text: str,
+        tokens: Sequence[SpaCyTokenFeature],
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat temporal `by` as a deadline cue only when local context is time-like."""
+        trailing = normalized_text[end_char : end_char + 64]
+        if _TEMPORAL_BY_PHRASE_RE.match(trailing):
+            return True
+        if _CALENDAR_DATE_RE.search(trailing):
+            return True
+        lookahead: List[SpaCyTokenFeature] = []
+        for token in tokens:
+            if token.start_char >= end_char:
+                lookahead.append(token)
+                if len(lookahead) >= 4:
+                    break
+        for token in lookahead:
+            normalized = token.normalized().lower()
+            if normalized in _TEMPORAL_SCOPE_TOKENS:
+                return True
+            if normalized in _TEMPORAL_BY_CONTEXT_TOKENS:
+                return True
+            if normalized in _MONTH_NAME_TOKENS:
+                return True
+            if re.fullmatch(r"\d{1,4}", token.text):
+                return True
+        return False
 
     def _cue_feature(
         self,
