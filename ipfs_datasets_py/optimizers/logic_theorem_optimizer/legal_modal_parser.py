@@ -108,11 +108,16 @@ _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
         "notice",
         "oath",
         "office",
+        "offices",
         "policy",
         "procedures",
         "proceeding",
         "proceedings",
         "provisions",
+        "commission",
+        "commissions",
+        "condition",
+        "conditions",
         "requirements",
         "reservation",
         "reservations",
@@ -140,6 +145,13 @@ _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS = frozenset(
     }
 )
 _USCODE_HEADING_ONLY_EXTENDED_MIN_SIGNAL_TOKENS = 2
+_USCODE_DECLARATIVE_STANDALONE_MAX_TOKENS = 56
+_USCODE_DECLARATIVE_STANDALONE_START_RE = re.compile(
+    r"^\s*(?:there\s+is\s+established|there\s+are\s+established|"
+    r"it\s+is\s+the\s+sense\s+of\s+the\s+congress|"
+    r"it\s+is\s+the\s+purpose\s+of\s+this\s+(?:chapter|subchapter|title|section))\b",
+    re.IGNORECASE,
+)
 _USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE = re.compile(
     r"\b(?:administrative|appeal|appeals|hearing|notice|petition|petitions|"
     r"procedure|procedures|review)\b",
@@ -731,11 +743,10 @@ class LegalModalParser:
         citation_section = self._citation_section_token(citation)
         if not citation_section:
             return None
-        if not self._contains_sec_heading_reference(
+        has_section_reference = self._contains_sec_heading_reference(
             normalized_text,
             citation_section=citation_section,
-        ):
-            return None
+        )
 
         candidate_segment: Optional[LegalSegment] = None
         statement_hint = ""
@@ -743,11 +754,14 @@ class LegalModalParser:
             lowered = self.normalize_text(segment.text).lower()
             if not _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered):
                 continue
-            if not self._segment_or_neighbor_has_citation_section_reference(
-                index=index,
-                segments=segments,
-                citation_section=citation_section,
-            ):
+            if has_section_reference:
+                if not self._segment_or_neighbor_has_citation_section_reference(
+                    index=index,
+                    segments=segments,
+                    citation_section=citation_section,
+                ):
+                    continue
+            elif not self._looks_like_standalone_declarative_segment(segment.text):
                 continue
             candidate_segment = segment
             statement_hint = self._uscode_statement_hint(lowered)
@@ -1205,10 +1219,33 @@ class LegalModalParser:
         body_tokens = list(tokens[1:])
         if len(body_tokens) < 2:
             return False
-        if body_tokens[0] in _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS:
+        if (
+            body_tokens[0] in _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS
+            and not self._looks_like_terms_conditions_heading(body_tokens)
+        ):
             return False
         token_set = set(body_tokens)
         return bool(token_set & _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS)
+
+    def _looks_like_terms_conditions_heading(self, body_tokens: Sequence[str]) -> bool:
+        """Allow `The terms and conditions ...` heading lines for citation-bound sections."""
+        if len(body_tokens) < 3:
+            return False
+        return (
+            body_tokens[0] == "terms"
+            and body_tokens[1] == "and"
+            and body_tokens[2] in {"condition", "conditions"}
+        )
+
+    def _looks_like_standalone_declarative_segment(self, segment_text: str) -> bool:
+        """Accept short `There is established ...` statements even without in-text section refs."""
+        normalized = self.normalize_text(segment_text)
+        if not normalized:
+            return False
+        if not _USCODE_DECLARATIVE_STANDALONE_START_RE.search(normalized):
+            return False
+        token_count = len(_TOKEN_RE.findall(normalized.lower()))
+        return token_count <= _USCODE_DECLARATIVE_STANDALONE_MAX_TOKENS
 
     def _coarse_citation_heading_segment(
         self,
