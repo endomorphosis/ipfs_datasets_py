@@ -1762,6 +1762,85 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     )
 
 
+def test_modal_decompiler_and_triples_expand_statutory_scope_units_and_connectors() -> None:
+    formula = ModalIRFormula(
+        formula_id="statutory-extended-doc:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_within_subchapter_ii_comply",
+            arguments=[
+                "scope:in_part_a",
+                "authority:under_this_subchapter_ii",
+                "cross_ref:as_provided_in_sections_552(a)(1)",
+            ],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="statutory-extended-doc",
+            start_char=0,
+            end_char=112,
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["under clause (i)"],
+        exceptions=["pursuant to subclause (ii)"],
+    )
+    document = ModalIRDocument(
+        document_id="statutory-extended-doc",
+        source="us_code",
+        normalized_text="The agency must within subchapter II comply.",
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "within subchapter ii" in slot_texts["statutory_scope_reference"]
+    assert "in part a" in slot_texts["statutory_scope_reference"]
+    assert "under this subchapter ii" in slot_texts["statutory_scope_reference"]
+    assert "as provided in sections 552(a)(1)" in slot_texts["statutory_scope_reference"]
+    assert "under clause (i)" in slot_texts["statutory_scope_reference"]
+    assert "pursuant to subclause (ii)" in slot_texts["statutory_scope_reference"]
+    assert "within" in slot_texts["statutory_scope_connector"]
+    assert "in" in slot_texts["statutory_scope_connector"]
+    assert "subchapter" in slot_texts["statutory_scope_unit"]
+    assert "part" in slot_texts["statutory_scope_unit"]
+    assert "section" in slot_texts["statutory_scope_unit"]
+    assert "clause" in slot_texts["statutory_scope_unit"]
+    assert "subclause" in slot_texts["statutory_scope_unit"]
+    assert "ii" in slot_texts["statutory_scope_target"]
+    assert "this ii" in slot_texts["statutory_scope_target"]
+    assert "a" in slot_texts["statutory_scope_target"]
+    assert "552(a)(1)" in slot_texts["statutory_scope_target"]
+    assert "(i)" in slot_texts["statutory_scope_target"]
+    assert "(ii)" in slot_texts["statutory_scope_target"]
+    assert any(
+        triple["predicate"] == "statutory_scope_reference"
+        and triple["object"] == "as provided in sections 552(a)(1)"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_connector"
+        and triple["object"] == "within"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_unit"
+        and triple["object"] == "subclause"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_target"
+        and triple["object"] == "this ii"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(

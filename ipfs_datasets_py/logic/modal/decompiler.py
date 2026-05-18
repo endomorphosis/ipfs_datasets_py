@@ -48,14 +48,35 @@ _USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
+    "subparagraph",
+    "subsection",
+    "subclause",
+    "subchapter",
+    "subdivision",
+    "subpart",
+    "subtitle",
+    "subitem",
+    "paragraph",
+    "section",
+    "chapter",
+    "clause",
+    "division",
+    "article",
+    "title",
+    "part",
+    "item",
+)
+_STATUTORY_SCOPE_UNIT_PATTERN = "|".join(f"{unit}s?" for unit in _STATUTORY_SCOPE_UNITS)
+_ROMAN_NUMERAL_RE = re.compile(r"^[ivxlcdm]+$", re.IGNORECASE)
 _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
-    r"(?<!\w)"
-    r"(?P<connector>as provided in|in accordance with|pursuant to|under)"
-    r"\s+"
-    r"(?:(?P<this>this)\s+)?"
-    r"(?P<unit>section|subsection|paragraph|subparagraph|chapter|title)"
-    r"(?:\s+(?P<target>(?:\([^)]+\))+|[0-9A-Za-z][0-9A-Za-z.\-]*(?:\([^)]+\))*))?"
-    r"(?!\w)",
+    rf"(?<!\w)"
+    rf"(?P<connector>as provided in|in accordance with|pursuant to|under|within|in)"
+    rf"\s+"
+    rf"(?:(?P<determiner>this|such)\s+)?"
+    rf"(?P<unit>{_STATUTORY_SCOPE_UNIT_PATTERN})"
+    rf"(?:\s+(?P<target>(?:\([^)]+\))+|[0-9A-Za-z][0-9A-Za-z.\-]*(?:\([^)]+\))*))?"
+    rf"(?!\w)",
     re.IGNORECASE,
 )
 
@@ -645,20 +666,32 @@ def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
     seen: set[Tuple[str, str]] = set()
     for match in _STATUTORY_SCOPE_REFERENCE_RE.finditer(normalized):
         connector = _clean_text(match.group("connector")).lower()
-        unit = _clean_text(match.group("unit")).lower()
-        has_this = bool(_clean_text(match.group("this")))
+        unit_surface = _clean_text(match.group("unit")).lower()
+        unit = _canonical_statutory_scope_unit(unit_surface)
+        determiner = _clean_text(match.group("determiner")).lower()
+        has_determiner = bool(determiner)
         target = _clean_text(match.group("target")).lower()
-        if has_this and target and not target.startswith("(") and not any(
-            character.isdigit() for character in target
+        if (
+            has_determiner
+            and target
+            and not target.startswith("(")
+            and not any(character.isdigit() for character in target)
+            and _ROMAN_NUMERAL_RE.fullmatch(target) is None
         ):
             target = ""
-        reference_parts = [connector, "this", unit] if has_this else [connector, unit]
+        reference_parts = (
+            [connector, determiner, unit_surface]
+            if has_determiner
+            else [connector, unit_surface]
+        )
         if target:
             reference_parts.append(target)
         reference = " ".join(reference_parts)
-        resolved_target = f"this {target}".strip() if has_this else target
-        if has_this and not target:
-            resolved_target = "this"
+        resolved_target = (
+            f"{determiner} {target}".strip() if has_determiner else target
+        )
+        if has_determiner and not target:
+            resolved_target = determiner
         values: List[Tuple[str, str]] = [
             ("statutory_scope_reference", reference),
             ("statutory_scope_connector", connector),
@@ -672,6 +705,15 @@ def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
             seen.add(slot)
             result.append(slot)
     return result
+
+
+def _canonical_statutory_scope_unit(unit: str) -> str:
+    normalized = _clean_text(unit).lower()
+    if normalized.endswith("s"):
+        singular = normalized[:-1]
+        if singular in _STATUTORY_SCOPE_UNITS:
+            return singular
+    return normalized
 
 
 def _citation_slots(citation: str) -> List[Tuple[str, str]]:
