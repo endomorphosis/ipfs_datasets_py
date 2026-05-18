@@ -248,6 +248,32 @@ def _noncanonical_romanlike_suffix_sample_document() -> ModalIRDocument:
     )
 
 
+def _repeat_roman_token_suffix_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-3797cc-445d9bb6c7d68792"
+    formula = ModalIRFormula(
+        formula_id="f-repeat-roman-token",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_federal_program_reporting"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 3797cc",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="42 U.S.C. 3797cc reporting requirements apply.",
+        formulas=[formula],
+    )
+
+
 def _zero_formula_sample_document() -> ModalIRDocument:
     source_id = "us-code-50-3091.-8130665c952dd22a"
     return ModalIRDocument(
@@ -900,6 +926,54 @@ def test_decode_modal_ir_document_does_not_misclassify_noncanonical_roman_suffix
 
 def test_modal_ir_to_flogic_triples_does_not_misclassify_noncanonical_roman_suffix() -> None:
     triples = modal_ir_to_flogic_triples(_noncanonical_romanlike_suffix_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["alpha"]
+    assert objects("citation_section_primary_suffix_kind") == ["alpha"]
+    assert objects("citation_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
+
+    assert objects("source_id_section_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_primary_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
+
+
+def test_decode_modal_ir_document_treats_repeat_roman_tokens_as_alpha_suffixes() -> None:
+    decoded = decode_modal_ir_document(_repeat_roman_token_suffix_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_treats_repeat_roman_tokens_as_alpha_suffixes() -> None:
+    triples = modal_ir_to_flogic_triples(_repeat_roman_token_suffix_sample_document())
 
     def objects(predicate: str) -> list[str]:
         return [

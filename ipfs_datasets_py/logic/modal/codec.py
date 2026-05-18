@@ -2245,11 +2245,23 @@ def _suffix_kind(value: str) -> str:
     cleaned = _clean_non_empty_string(value)
     if not cleaned:
         return ""
-    if len(cleaned) > 1 and _is_canonical_roman_numeral(cleaned):
+    if _is_probable_statutory_roman_suffix(cleaned):
         return "roman"
     if cleaned.isalpha():
         return "alpha"
     return "other"
+
+
+def _is_probable_statutory_roman_suffix(value: str) -> bool:
+    cleaned = _clean_non_empty_string(value)
+    if len(cleaned) <= 1:
+        return False
+    if not _is_canonical_roman_numeral(cleaned):
+        return False
+    lowered = cleaned.lower()
+    if len(set(lowered)) == 1 and lowered[0] != "i":
+        return False
+    return True
 
 
 def _is_canonical_roman_numeral(value: str) -> bool:
