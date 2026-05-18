@@ -4346,6 +4346,60 @@ def test_modal_codec_audits_matched_terms_metadata_without_key_noise() -> None:
     assert "matched_terms" not in selected_terms
 
 
+def test_modal_codec_audits_citation_and_sample_metadata_without_structural_key_noise() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-citation-sample-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: {
+                    "citations": [
+                        "43 U.S.C. 641.",
+                        "42 U.S.C. 295.",
+                    ],
+                    "sample_ids": [
+                        "us-code-21-619-6c53879113090cdf",
+                    ],
+                    "hint_ids": [
+                        "modal-synthesis-77aa1da71a3c8c76",
+                    ],
+                    "score": 0.99,
+                }
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "43_641" in selected_terms
+    assert "42_295" in selected_terms
+    assert "21_619" in selected_terms
+    assert "citations" not in selected_terms
+    assert "sample_ids" not in selected_terms
+    assert "hint_ids" not in selected_terms
+    assert not any(term.startswith("modal_synthesis") for term in selected_terms)
+
+
 def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

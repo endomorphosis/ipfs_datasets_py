@@ -245,9 +245,15 @@ _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
 )
 _FRAME_ONTOLOGY_METADATA_STRUCTURAL_KEYS = frozenset(
     {
+        "citation",
+        "citations",
         "confidence",
         "count",
         "counts",
+        "hint",
+        "hint_id",
+        "hint_ids",
+        "hints",
         "id",
         "ids",
         "metadata",
@@ -255,14 +261,24 @@ _FRAME_ONTOLOGY_METADATA_STRUCTURAL_KEYS = frozenset(
         "probability",
         "rank",
         "ranking",
+        "sample",
+        "sample_id",
+        "sample_ids",
+        "samples",
         "score",
         "scores",
+        "source_id",
+        "source_ids",
         "weight",
         "weights",
     }
 )
 _FRAME_ONTOLOGY_METADATA_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_METADATA_MAX_VALUES = 256
+_FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE = re.compile(
+    r"[0-9a-f]{12,}",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -3343,6 +3359,9 @@ def _frame_ontology_metadata_terms(value: Any) -> List[str]:
                 terms.append(source_coordinate)
         return _unique_preserve_order(terms)
 
+    if _is_probable_frame_ontology_metadata_identifier(raw_value):
+        return []
+
     normalized = normalize_frame_ontology_term(raw_value)
     if normalized:
         terms.append(normalized)
@@ -3455,10 +3474,37 @@ def _frame_ontology_metadata_key_is_term_like(
     ):
         return False
     if normalized_key.endswith(
-        ("_count", "_id", "_priority", "_probability", "_rank", "_score", "_weight")
+        (
+            "_count",
+            "_id",
+            "_ids",
+            "_key",
+            "_keys",
+            "_priority",
+            "_probability",
+            "_rank",
+            "_score",
+            "_weight",
+        )
     ):
         return False
     return True
+
+
+def _is_probable_frame_ontology_metadata_identifier(value: str) -> bool:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned or " " in cleaned:
+        return False
+    lowered = cleaned.lower()
+    if lowered.startswith("modal-synthesis-"):
+        return True
+    if lowered.startswith("program-"):
+        return True
+    if _USCODE_SOURCE_ID_RE.match(cleaned):
+        return False
+    if _FRAME_ONTOLOGY_METADATA_OPAQUE_ID_HEX_RE.search(cleaned) is None:
+        return False
+    return "-" in cleaned or "_" in cleaned
 
 
 def _frame_ontology_audit_feature_keys(
