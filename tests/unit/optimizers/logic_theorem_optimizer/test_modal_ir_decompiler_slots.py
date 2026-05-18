@@ -173,6 +173,59 @@ def test_modal_slots_emit_raw_and_normalized_section_values_without_trailing_pun
     assert values["triple_source_id_section_primary_terminal_pair"] == ["3902|3902"]
 
 
+def test_modal_slots_emit_alignment_profile_slots_for_todo_cluster_citations() -> None:
+    expected_by_section = {
+        ("49", "47126."): (
+            "raw_exact",
+            "punct_exact",
+            "exact_match_raw_exact_punct_exact",
+        ),
+        ("12", "639"): (
+            "raw_exact",
+            "punct_none",
+            "exact_match_raw_exact_punct_none",
+        ),
+        ("22", "127"): (
+            "raw_exact",
+            "punct_none",
+            "exact_match_raw_exact_punct_none",
+        ),
+        ("10", "10504"): (
+            "raw_exact",
+            "punct_none",
+            "exact_match_raw_exact_punct_none",
+        ),
+    }
+    predicates = (
+        "citation_source_id_alignment_raw_relation",
+        "citation_source_id_alignment_punctuation_relation",
+        "citation_source_id_alignment_profile",
+        "citation_source_id_alignment_profile_stem",
+        "citation_source_id_alignment_profile_token_count",
+    )
+
+    for (title, section), (
+        raw_relation,
+        punctuation_relation,
+        alignment_profile,
+    ) in expected_by_section.items():
+        expected = {
+            "citation_source_id_alignment_raw_relation": [raw_relation],
+            "citation_source_id_alignment_punctuation_relation": [punctuation_relation],
+            "citation_source_id_alignment_profile": [alignment_profile],
+            "citation_source_id_alignment_profile_stem": [alignment_profile],
+            "citation_source_id_alignment_profile_token_count": ["6"],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]
+
+
 def test_modal_slots_emit_numeric_magnitude_buckets_for_todo_cluster_sections() -> None:
     expected_by_section = {
         ("42", "665."): ("3_digit", "lt_1k"),

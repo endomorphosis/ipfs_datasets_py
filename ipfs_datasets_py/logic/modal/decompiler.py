@@ -2196,7 +2196,19 @@ def _provenance_alignment_slots(
             )
         )
     if not source_title or not citation_title or not source_section or not citation_section:
-        slots.append(("citation_source_id_alignment", "unparsed"))
+        alignment = "unparsed"
+        slots.append(("citation_source_id_alignment", alignment))
+        slots.extend(
+            _citation_source_id_alignment_profile_slots(
+                alignment=alignment,
+                source_section_raw=source_section_raw,
+                citation_section_raw=citation_section_raw,
+                source_has_trailing_punct=source_has_trailing_punct,
+                citation_has_trailing_punct=citation_has_trailing_punct,
+                source_section_trailing_punct=source_section_trailing_punct,
+                citation_section_trailing_punct=citation_section_trailing_punct,
+            )
+        )
         return _unique_slot_values(slots)
 
     title_match = source_title.lower() == citation_title.lower()
@@ -2232,6 +2244,88 @@ def _provenance_alignment_slots(
     else:
         alignment = "mismatch"
     slots.append(("citation_source_id_alignment", alignment))
+    slots.extend(
+        _citation_source_id_alignment_profile_slots(
+            alignment=alignment,
+            source_section_raw=source_section_raw,
+            citation_section_raw=citation_section_raw,
+            source_has_trailing_punct=source_has_trailing_punct,
+            citation_has_trailing_punct=citation_has_trailing_punct,
+            source_section_trailing_punct=source_section_trailing_punct,
+            citation_section_trailing_punct=citation_section_trailing_punct,
+        )
+    )
+    return _unique_slot_values(slots)
+
+
+def _citation_source_id_alignment_profile_slots(
+    *,
+    alignment: str,
+    source_section_raw: str,
+    citation_section_raw: str,
+    source_has_trailing_punct: str,
+    citation_has_trailing_punct: str,
+    source_section_trailing_punct: str,
+    citation_section_trailing_punct: str,
+) -> List[Tuple[str, str]]:
+    normalized_alignment = _clean_text(alignment).lower() or "unparsed"
+    normalized_source_raw = _clean_text(source_section_raw)
+    normalized_citation_raw = _clean_text(citation_section_raw)
+    normalized_source_punct = _clean_text(source_section_trailing_punct)
+    normalized_citation_punct = _clean_text(citation_section_trailing_punct)
+    normalized_source_has_punct = _clean_text(source_has_trailing_punct).lower()
+    normalized_citation_has_punct = _clean_text(citation_has_trailing_punct).lower()
+
+    if normalized_source_raw and normalized_citation_raw:
+        raw_relation = (
+            "raw_exact"
+            if normalized_source_raw.lower() == normalized_citation_raw.lower()
+            else "raw_mismatch"
+        )
+    elif normalized_source_raw or normalized_citation_raw:
+        raw_relation = "raw_partial"
+    else:
+        raw_relation = "raw_unknown"
+
+    source_has_punct_known = normalized_source_has_punct in {"true", "false"}
+    citation_has_punct_known = normalized_citation_has_punct in {"true", "false"}
+    if source_has_punct_known and citation_has_punct_known:
+        if (
+            normalized_source_has_punct == "false"
+            and normalized_citation_has_punct == "false"
+        ):
+            punctuation_relation = "punct_none"
+        elif (
+            normalized_source_has_punct == "true"
+            and normalized_citation_has_punct == "true"
+        ):
+            punctuation_relation = (
+                "punct_exact"
+                if normalized_source_punct == normalized_citation_punct
+                else "punct_variant"
+            )
+        else:
+            punctuation_relation = "punct_presence_mismatch"
+    elif normalized_source_punct or normalized_citation_punct:
+        punctuation_relation = "punct_partial"
+    else:
+        punctuation_relation = "punct_unknown"
+
+    profile = f"{normalized_alignment}_{raw_relation}_{punctuation_relation}"
+    slots: List[Tuple[str, str]] = [
+        ("citation_source_id_alignment_raw_relation", raw_relation),
+        (
+            "citation_source_id_alignment_punctuation_relation",
+            punctuation_relation,
+        ),
+        ("citation_source_id_alignment_profile", profile),
+    ]
+    slots.extend(
+        _typed_identifier_slots(
+            profile,
+            slot_prefix="citation_source_id_alignment_profile",
+        )
+    )
     return _unique_slot_values(slots)
 
 
