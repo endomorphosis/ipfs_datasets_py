@@ -1108,7 +1108,7 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
         for frame_id, values in metadata_terms.items():
             normalized_values = _unique_preserve_order(
                 normalize_frame_ontology_term(str(value))
-                for value in (values if isinstance(values, Sequence) and not isinstance(values, (str, bytes)) else [])
+                for value in _frame_ontology_metadata_values(values)
             )
             frame_key = _clean_non_empty_string(frame_id)
             if frame_key and normalized_values:
@@ -1136,6 +1136,20 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
         if terms:
             result[frame_key] = terms
     return result
+
+
+def _frame_ontology_metadata_values(values: Any) -> List[Any]:
+    if isinstance(values, Mapping):
+        extracted: List[Any] = []
+        for key, value in values.items():
+            extracted.append(key)
+            extracted.append(value)
+        return extracted
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        return list(values)
+    if values is None:
+        return []
+    return [values]
 
 
 def _frame_ontology_audit_feature_keys(

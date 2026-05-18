@@ -188,9 +188,15 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
+        frame_ontology_terms_from_features = list(
+            frame_ontology_terms_from_feature_keys(frame_feature_keys or [])
+        )
+        frame_ontology_terms_from_kg_triples = list(
+            frame_ontology_terms_from_triples(kg_triples or [])
+        )
         frame_ontology_terms = _unique_preserve_order(
-            list(frame_ontology_terms_from_feature_keys(frame_feature_keys or []))
-            + list(frame_ontology_terms_from_triples(kg_triples or []))
+            frame_ontology_terms_from_features
+            + frame_ontology_terms_from_kg_triples
         )
 
         passed = (
@@ -207,6 +213,14 @@ class FLogicSemanticOptimizer:
                 "decoded_text": decoded_text,
                 "frame_ontology_term_count": len(frame_ontology_terms),
                 "frame_ontology_terms": frame_ontology_terms,
+                "frame_ontology_terms_from_feature_keys_count": len(
+                    frame_ontology_terms_from_features
+                ),
+                "frame_ontology_terms_from_feature_keys": frame_ontology_terms_from_features,
+                "frame_ontology_terms_from_triples_count": len(
+                    frame_ontology_terms_from_kg_triples
+                ),
+                "frame_ontology_terms_from_triples": frame_ontology_terms_from_kg_triples,
                 "threshold": self.config.similarity_threshold,
             },
         )

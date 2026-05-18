@@ -2151,6 +2151,7 @@ def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
     )
     patched_modal_ir = replace(
         result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
         metadata={
             **result.modal_ir.metadata,
             "frame_ontology_terms": {
@@ -2172,6 +2173,61 @@ def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
 
     assert selected_frame in selected_terms
     assert "and" not in selected_terms
+
+
+def test_modal_codec_audits_frame_terms_when_metadata_contains_weight_maps() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-weighted-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+    assert len(result.modal_ir.frame_candidates) >= 2
+
+    selected_frame = result.selected_frame
+    alternate_frame = next(
+        frame.frame_id
+        for frame in result.modal_ir.frame_candidates
+        if frame.frame_id != selected_frame
+    )
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: {
+                    "hearing rights": 1.0,
+                    "and": 0.25,
+                },
+                alternate_frame: {
+                    "t-1": "final order",
+                },
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+    candidate_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "candidate_ontology_term"
+    }
+
+    assert "hearing_rights" in selected_terms
+    assert "and" not in selected_terms
+    assert "final_order" in candidate_terms
 
 
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:

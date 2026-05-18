@@ -52,28 +52,49 @@ _FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
 )
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
+    "candidate_term": "candidate_ontology_term",
     "candidate_frame_term": "candidate_ontology_term",
+    "frame": "selected_ontology_frame",
+    "frame_term": "candidate_ontology_term",
     "interpreted_frame": "interpreted_in_frame",
     "interpreted_frame_term": "interpreted_in_frame_term",
     "selected_frame": "selected_ontology_frame",
+    "selected_term": "selected_ontology_term",
     "selected_frame_term": "selected_ontology_term",
 }
 _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
     "frame:",
+    "selected-frame:",
+    "selected_frame:",
     "frame-candidate:",
     "frame_candidate:",
+    "candidate-frame:",
+    "candidate_frame:",
     "frame-term:",
     "frame_term:",
+    "frame-candidate-term:",
+    "frame_candidate_term:",
+    "candidate-frame-term:",
+    "candidate_frame_term:",
     "selected-frame-term:",
     "selected_frame_term:",
     "slot:selected_frame:",
     "slot:selected-frame:",
-    "slot:frame-candidate:",
-    "slot:frame_candidate:",
-    "slot:frame-term:",
-    "slot:frame_term:",
     "slot:selected-frame-term:",
     "slot:selected_frame_term:",
+    "slot:frame-candidate:",
+    "slot:frame_candidate:",
+    "slot:candidate-frame:",
+    "slot:candidate_frame:",
+    "slot:frame-term:",
+    "slot:frame_term:",
+    "slot:frame-candidate-term:",
+    "slot:frame_candidate_term:",
+    "slot:candidate-frame-term:",
+    "slot:candidate_frame_term:",
+)
+_ORDERED_FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = tuple(
+    sorted(_FRAME_LINKED_FEATURE_PREFIXES, key=lambda value: (-len(value), value))
 )
 
 
@@ -325,10 +346,11 @@ def _canonical_frame_ontology_predicate(predicate: str) -> str:
 
 
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
-    for prefix in _FRAME_LINKED_FEATURE_PREFIXES:
-        if feature.startswith(prefix):
+    lowered = feature.lower()
+    for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
+        if lowered.startswith(prefix):
             return feature[len(prefix) :].strip()
-    if not feature.startswith("flogic:"):
+    if not lowered.startswith("flogic:"):
         return ""
     parts = feature.split(":", 2)
     if len(parts) != 3:

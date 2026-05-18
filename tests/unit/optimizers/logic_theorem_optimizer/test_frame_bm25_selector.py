@@ -199,3 +199,37 @@ def test_frame_ontology_terms_from_triples_support_legacy_frame_predicates() -> 
     )
 
     assert terms == ["administrative_notice_hearing", "final_order"]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_aliases() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "selected-frame:administrative_notice_hearing",
+            "candidate-frame:criminal_penalty_enforcement",
+            "frame-candidate-term:hearing rights",
+            "slot:candidate-frame-term:final order",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "hearing_rights",
+        "final_order",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_are_case_insensitive_for_prefixes() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "FRAME:administrative_notice_hearing",
+            "SLOT:SELECTED_FRAME_TERM:final order",
+            "FLOGIC:SELECTED-TERM:hearing rights",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "final_order",
+        "hearing_rights",
+    ]

@@ -448,6 +448,14 @@ class TestFLogicSemanticOptimizer:
             "agency_notice",
             "final_order",
         ]
+        assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 3
+        assert result.metadata["frame_ontology_terms_from_feature_keys"] == [
+            "administrative_notice_hearing",
+            "agency_notice",
+            "final_order",
+        ]
+        assert result.metadata["frame_ontology_terms_from_triples_count"] == 0
+        assert result.metadata["frame_ontology_terms_from_triples"] == []
 
     def test_result_metadata_normalizes_frame_ontology_terms(self):
         opt = self._optimizer()
@@ -501,3 +509,9 @@ class TestFLogicSemanticOptimizer:
         )
         assert result.metadata["frame_ontology_term_count"] == 1
         assert result.metadata["frame_ontology_terms"] == ["administrative_notice_hearing"]
+        assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 0
+        assert result.metadata["frame_ontology_terms_from_feature_keys"] == []
+        assert result.metadata["frame_ontology_terms_from_triples_count"] == 1
+        assert result.metadata["frame_ontology_terms_from_triples"] == [
+            "administrative_notice_hearing"
+        ]
