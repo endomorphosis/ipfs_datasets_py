@@ -3341,12 +3341,28 @@ def test_decode_modal_ir_document_emits_section_structure_composite_slots() -> N
     assert single_slot_map["citation_title_section_profile"] == [
         "2:single_alphanumeric"
     ]
+    assert single_slot_map["citation_section_profile_signature_token_count"] == ["3"]
+    assert single_slot_map["citation_section_profile_signature_token_prefix"] == [
+        "single"
+    ]
+    assert single_slot_map["citation_title_section_signature_token_count"] == ["2"]
+    assert single_slot_map["citation_title_section_signature_has_mixed_token"] == [
+        "true"
+    ]
+    assert single_slot_map["citation_title_section_profile_token_suffix"] == [
+        "alphanumeric"
+    ]
     assert single_slot_map["source_id_section_profile_signature"] == [
         "single_alphanumeric:N3A1"
     ]
     assert single_slot_map["source_id_title_section_signature"] == ["2:N3A1"]
     assert single_slot_map["source_id_title_section_profile"] == [
         "2:single_alphanumeric"
+    ]
+    assert single_slot_map["source_id_section_profile_signature_token_count"] == ["3"]
+    assert single_slot_map["source_id_title_section_signature_token_count"] == ["2"]
+    assert single_slot_map["source_id_title_section_profile_token_suffix"] == [
+        "alphanumeric"
     ]
     assert single_slot_map["citation_source_id_section_signature_pair"] == [
         "N3A1|N3A1"
@@ -3377,11 +3393,22 @@ def test_decode_modal_ir_document_emits_section_structure_composite_slots() -> N
     ]
     assert compound_slot_map["citation_title_section_signature"] == ["16:N3A3-N1"]
     assert compound_slot_map["citation_title_section_profile"] == ["16:compound_mixed"]
+    assert compound_slot_map["citation_title_section_signature_token_count"] == ["3"]
+    assert compound_slot_map["citation_title_section_signature_token_suffix"] == [
+        "n1"
+    ]
+    assert compound_slot_map["citation_title_section_profile_token_suffix"] == [
+        "mixed"
+    ]
     assert compound_slot_map["source_id_section_profile_signature"] == [
         "compound_mixed:N3A3-N1"
     ]
     assert compound_slot_map["source_id_title_section_signature"] == ["16:N3A3-N1"]
     assert compound_slot_map["source_id_title_section_profile"] == ["16:compound_mixed"]
+    assert compound_slot_map["source_id_title_section_signature_token_count"] == ["3"]
+    assert compound_slot_map["source_id_title_section_profile_token_suffix"] == [
+        "mixed"
+    ]
 
 
 def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() -> None:
@@ -3406,12 +3433,36 @@ def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() ->
     assert objects(single_triples, "citation_title_section_profile") == [
         "2:single_alphanumeric"
     ]
+    assert objects(single_triples, "citation_section_profile_signature_token_count") == [
+        "3"
+    ]
+    assert objects(single_triples, "citation_section_profile_signature_token_prefix") == [
+        "single"
+    ]
+    assert objects(single_triples, "citation_title_section_signature_token_count") == [
+        "2"
+    ]
+    assert objects(single_triples, "citation_title_section_signature_has_mixed_token") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_title_section_profile_token_suffix") == [
+        "alphanumeric"
+    ]
     assert objects(single_triples, "source_id_section_profile_signature") == [
         "single_alphanumeric:N3A1"
     ]
     assert objects(single_triples, "source_id_title_section_signature") == ["2:N3A1"]
     assert objects(single_triples, "source_id_title_section_profile") == [
         "2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "source_id_section_profile_signature_token_count") == [
+        "3"
+    ]
+    assert objects(single_triples, "source_id_title_section_signature_token_count") == [
+        "2"
+    ]
+    assert objects(single_triples, "source_id_title_section_profile_token_suffix") == [
+        "alphanumeric"
     ]
     assert objects(single_triples, "citation_source_id_section_signature_pair") == [
         "N3A1|N3A1"
@@ -3445,6 +3496,15 @@ def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() ->
     assert objects(compound_triples, "citation_title_section_profile") == [
         "16:compound_mixed"
     ]
+    assert objects(compound_triples, "citation_title_section_signature_token_count") == [
+        "3"
+    ]
+    assert objects(compound_triples, "citation_title_section_signature_token_suffix") == [
+        "n1"
+    ]
+    assert objects(compound_triples, "citation_title_section_profile_token_suffix") == [
+        "mixed"
+    ]
     assert objects(compound_triples, "source_id_section_profile_signature") == [
         "compound_mixed:N3A3-N1"
     ]
@@ -3453,4 +3513,10 @@ def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() ->
     ]
     assert objects(compound_triples, "source_id_title_section_profile") == [
         "16:compound_mixed"
+    ]
+    assert objects(compound_triples, "source_id_title_section_signature_token_count") == [
+        "3"
+    ]
+    assert objects(compound_triples, "source_id_title_section_profile_token_suffix") == [
+        "mixed"
     ]

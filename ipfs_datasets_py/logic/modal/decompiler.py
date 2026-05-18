@@ -2450,6 +2450,12 @@ def _section_structure_slots(
                 profile_signature.lower(),
             )
         )
+        slots.extend(
+            _typed_identifier_slots(
+                profile_signature.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_section_profile_signature",
+            )
+        )
     if normalized_title and normalized_signature:
         title_section_signature = f"{normalized_title}:{normalized_signature}"
         slots.append(
@@ -2461,6 +2467,12 @@ def _section_structure_slots(
                 title_section_signature.lower(),
             )
         )
+        slots.extend(
+            _typed_identifier_slots(
+                title_section_signature.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_signature",
+            )
+        )
     if normalized_title and normalized_profile:
         title_section_profile = f"{normalized_title}:{normalized_profile}"
         slots.append((f"{normalized_namespace}_title_section_profile", title_section_profile))
@@ -2468,6 +2480,12 @@ def _section_structure_slots(
             (
                 f"{normalized_namespace}_title_section_profile_normalized",
                 title_section_profile.lower(),
+            )
+        )
+        slots.extend(
+            _typed_identifier_slots(
+                title_section_profile.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_profile",
             )
         )
     return slots

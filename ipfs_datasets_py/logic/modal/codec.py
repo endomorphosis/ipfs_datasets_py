@@ -3130,6 +3130,12 @@ def _section_structure_components(
                 profile_signature.lower(),
             )
         )
+        components.extend(
+            _typed_identifier_components(
+                profile_signature.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_section_profile_signature",
+            )
+        )
     if normalized_title and normalized_signature:
         title_section_signature = f"{normalized_title}:{normalized_signature}"
         components.append(
@@ -3141,6 +3147,12 @@ def _section_structure_components(
                 title_section_signature.lower(),
             )
         )
+        components.extend(
+            _typed_identifier_components(
+                title_section_signature.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_signature",
+            )
+        )
     if normalized_title and normalized_profile:
         title_section_profile = f"{normalized_title}:{normalized_profile}"
         components.append(
@@ -3150,6 +3162,12 @@ def _section_structure_components(
             (
                 f"{normalized_namespace}_title_section_profile_normalized",
                 title_section_profile.lower(),
+            )
+        )
+        components.extend(
+            _typed_identifier_components(
+                title_section_profile.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_profile",
             )
         )
     return components
