@@ -427,3 +427,32 @@ class TestFLogicSemanticOptimizer:
         )
         assert result.metadata["frame_ontology_term_count"] == 2
         assert result.metadata["frame_ontology_terms"] == ["agency", "notice"]
+
+    def test_result_metadata_normalizes_frame_ontology_terms(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            kg_triples=[
+                {
+                    "subject": "doc-1",
+                    "predicate": "candidate_ontology_term",
+                    "object": "Final Order",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "selected_ontology_term",
+                    "object": "final_order",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "interpreted_in_frame_term",
+                    "object": "and",
+                },
+            ],
+        )
+        assert result.metadata["frame_ontology_term_count"] == 1
+        assert result.metadata["frame_ontology_terms"] == ["final_order"]

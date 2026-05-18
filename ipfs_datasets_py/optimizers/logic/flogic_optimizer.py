@@ -45,6 +45,10 @@ import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    normalize_frame_ontology_term,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -184,14 +188,17 @@ class FLogicSemanticOptimizer:
             "selected_ontology_term",
             "interpreted_in_frame_term",
         }
-        frame_ontology_terms = sorted(
-            {
+        frame_ontology_terms_set: set[str] = set()
+        for triple in (kg_triples or []):
+            predicate = str(triple.get("predicate", "")).strip()
+            if predicate not in frame_term_predicates:
+                continue
+            normalized_term = normalize_frame_ontology_term(
                 str(triple.get("object", "")).strip()
-                for triple in (kg_triples or [])
-                if str(triple.get("predicate", "")).strip() in frame_term_predicates
-                and str(triple.get("object", "")).strip()
-            }
-        )
+            )
+            if normalized_term:
+                frame_ontology_terms_set.add(normalized_term)
+        frame_ontology_terms = sorted(frame_ontology_terms_set)
 
         passed = (
             similarity >= self.config.similarity_threshold and ontology_consistent

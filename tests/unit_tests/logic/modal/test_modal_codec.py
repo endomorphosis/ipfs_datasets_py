@@ -1860,6 +1860,51 @@ def test_modal_codec_emits_frame_ontology_term_triples() -> None:
     assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
 
 
+def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
+    frame_selector = BM25FrameSelector(
+        (
+            FrameCandidate(
+                frame_id="noisy_admin_frame",
+                label="The Notice and Hearing",
+                terms=("and", "the", "hearing rights", "agency"),
+                domain="general",
+            ),
+        )
+    )
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
+        frame_selector=frame_selector,
+    )
+    result = codec.encode(
+        "The agency must provide notice and hearing.",
+        document_id="frame-term-filter-doc",
+        source="us_code",
+    )
+
+    term_objects = {
+        triple["object"]
+        for triple in result.kg_triples
+        if triple["predicate"] in {
+            "candidate_ontology_term",
+            "selected_ontology_term",
+            "interpreted_in_frame_term",
+        }
+    }
+    assert "and" not in term_objects
+    assert "the" not in term_objects
+    assert "hearing_rights" in term_objects
+
+    sample = build_us_code_sample(
+        title="5",
+        section="555",
+        text="The agency must provide notice and hearing.",
+    )
+    feature_keys = codec.feature_keys_for_sample(sample)
+    assert "selected-frame-term:and" not in feature_keys
+    assert "selected-frame-term:the" not in feature_keys
+    assert "selected-frame-term:hearing_rights" in feature_keys
+
+
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:
     sample = build_us_code_sample(
         title="5",

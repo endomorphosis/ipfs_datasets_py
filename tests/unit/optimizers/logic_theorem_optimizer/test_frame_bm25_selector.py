@@ -71,3 +71,44 @@ def test_frame_ontology_terms_are_canonical_and_include_matched_terms() -> None:
     assert "administrative" in terms
     assert "notice" in terms
     assert "hearing_rights" in terms
+
+
+def test_frame_ontology_terms_filter_stopwords_and_numeric_tokens() -> None:
+    frame = FrameCandidate(
+        frame_id="administrative_notice_hearing",
+        label="The Administrative Notice and Hearing",
+        terms=("agency", "final order", "and", "42"),
+        domain="general",
+    )
+
+    terms = frame_ontology_terms(
+        frame,
+        matched_terms=("and", "the", "42", "hearing rights"),
+    )
+
+    assert "and" not in terms
+    assert "the" not in terms
+    assert "42" not in terms
+    assert "hearing_rights" in terms
+
+
+def test_frame_ontology_terms_prioritize_matched_terms_with_term_cap() -> None:
+    frame = FrameCandidate(
+        frame_id="administrative_notice_hearing",
+        label="Administrative notice and hearing",
+        terms=("agency", "final order", "appeal deadline"),
+        domain="administrative",
+    )
+
+    terms = frame_ontology_terms(
+        frame,
+        matched_terms=("hearing rights", "appeal"),
+        max_terms=4,
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "hearing_rights",
+        "hearing",
+        "rights",
+    ]

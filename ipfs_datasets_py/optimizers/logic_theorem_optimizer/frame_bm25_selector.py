@@ -10,6 +10,28 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _ONTOLOGY_TERM_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+_FRAME_ONTOLOGY_STOPWORDS = frozenset(
+    {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "in",
+        "is",
+        "of",
+        "on",
+        "or",
+        "the",
+        "to",
+        "with",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -140,39 +162,57 @@ def frame_ontology_terms(
     """
 
     raw_values = [
-        frame.frame_id,
-        frame.label,
-        frame.domain,
-        *frame.terms,
-        *matched_terms,
+        (frame.frame_id, False),
+        *((value, True) for value in matched_terms),
+        (frame.label, True),
+        (frame.domain, True),
+        *((value, True) for value in frame.terms),
     ]
     terms: List[str] = []
-    for raw in raw_values:
+    for raw, include_tokens in raw_values:
         text = str(raw or "").strip()
         if not text:
             continue
-        canonical = _canonical_ontology_term(text)
+        canonical = normalize_frame_ontology_term(text)
         if canonical and canonical not in terms:
             terms.append(canonical)
             if len(terms) >= max_terms:
                 break
-        for token in _ONTOLOGY_TERM_TOKEN_RE.findall(text.lower()):
-            if len(token) < 2:
-                continue
-            if token not in terms:
-                terms.append(token)
-                if len(terms) >= max_terms:
-                    break
+        if include_tokens:
+            for token in _informative_ontology_tokens(text):
+                if token not in terms:
+                    terms.append(token)
+                    if len(terms) >= max_terms:
+                        break
         if len(terms) >= max_terms:
             break
     return terms
 
 
-def _canonical_ontology_term(value: str, *, max_tokens: int = 8) -> str:
-    tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
+def normalize_frame_ontology_term(value: str, *, max_tokens: int = 8) -> str:
+    tokens = _informative_ontology_tokens(value)
     if not tokens:
         return ""
     return "_".join(tokens[:max_tokens])
+
+
+def _informative_ontology_tokens(value: str) -> List[str]:
+    tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
+    return [
+        token
+        for token in tokens
+        if _is_informative_ontology_token(token)
+    ]
+
+
+def _is_informative_ontology_token(token: str) -> bool:
+    if len(token) < 2:
+        return False
+    if token in _FRAME_ONTOLOGY_STOPWORDS:
+        return False
+    if token.isdigit():
+        return False
+    return any(character.isalpha() for character in token)
 
 
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (
@@ -206,4 +246,5 @@ __all__ = [
     "FrameCandidate",
     "FrameSelection",
     "frame_ontology_terms",
+    "normalize_frame_ontology_term",
 ]

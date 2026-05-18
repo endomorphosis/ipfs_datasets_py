@@ -25,6 +25,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     FrameCandidate,
     FrameSelection,
     frame_ontology_terms,
+    normalize_frame_ontology_term,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
     LegalModalParser,
@@ -1010,7 +1011,7 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
         result: Dict[str, List[str]] = {}
         for frame_id, values in metadata_terms.items():
             normalized_values = _unique_preserve_order(
-                _slot_feature_value(str(value))
+                normalize_frame_ontology_term(str(value))
                 for value in (values if isinstance(values, Sequence) and not isinstance(values, (str, bytes)) else [])
             )
             frame_key = _clean_non_empty_string(frame_id)
@@ -1028,7 +1029,7 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
             domain="general",
         )
         terms = _unique_preserve_order(
-            _slot_feature_value(term)
+            normalize_frame_ontology_term(term)
             for term in frame_ontology_terms(
                 candidate,
                 matched_terms=frame.matched_terms,
