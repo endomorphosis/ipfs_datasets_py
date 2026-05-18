@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     DEFAULT_MODAL_REGISTRY,
     ModalLogicFamily,
     ModalRegistry,
+    is_priority_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
@@ -603,6 +604,10 @@ class DeterministicModalCompiler:
                 predicted_family,
                 target_family,
             )
+            is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
             if (
                 not has_target_signal_evidence
                 and not supports_signal_free_pair_policy
@@ -611,7 +616,11 @@ class DeterministicModalCompiler:
             family_margin = target_share - predicted_share
             if family_margin > threshold:
                 continue
-            margin_direction = "outvoted" if family_margin < 0.0 else "contested"
+            margin_direction = "outvoted" if (
+                family_margin < 0.0
+                or (family_margin <= 0.0 and is_priority_policy_pair)
+            ) else "contested"
+            requires_rule = margin_direction == "outvoted"
             explicit_type = self._adaptive_margin_explicit_type(
                 predicted_family,
                 target_family,
@@ -632,6 +641,7 @@ class DeterministicModalCompiler:
                 "has_compiled_target_family_formula": has_compiled_target_family_formula,
                 "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
+                "is_priority_policy_pair": is_priority_policy_pair,
                 "predicted_family": predicted_family,
                 "predicted_share": round(predicted_share, 6),
                 "target_family": target_family,
@@ -646,7 +656,7 @@ class DeterministicModalCompiler:
                         "ambiguous."
                     ),
                     candidate_ids=[predicted_family, target_family],
-                    severity="requires_rule" if family_margin < 0.0 else "review",
+                    severity="requires_rule" if requires_rule else "review",
                     metadata=dict(base_metadata),
                 )
             )
@@ -658,7 +668,7 @@ class DeterministicModalCompiler:
                         "family and a competing legal family."
                     ),
                     candidate_ids=[predicted_family, target_family],
-                    severity="requires_rule" if family_margin < 0.0 else "review",
+                    severity="requires_rule" if requires_rule else "review",
                     metadata={
                         **base_metadata,
                         "adaptive_base_ambiguity_type": "adaptive_family_margin_low",

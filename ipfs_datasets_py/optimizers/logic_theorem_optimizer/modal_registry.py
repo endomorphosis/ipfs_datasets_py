@@ -61,6 +61,21 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
 )
 
+PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+)
+
 
 class ModalSystem(Enum):
     """Common modal systems and legal-parser profiles."""
@@ -358,6 +373,19 @@ def signal_free_adaptive_ambiguity_targets(
     )
 
 
+def is_priority_signal_free_adaptive_ambiguity_pair(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> bool:
+    """Return whether a pair is part of the highest-priority adaptive ambiguity policy."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(target_family)
+    return (
+        resolved_predicted_family,
+        resolved_target_family,
+    ) in PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+
+
 def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
     if isinstance(family, ModalLogicFamily):
         return family.value
@@ -374,7 +402,9 @@ __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
     "NORMATIVE_MODAL_FAMILIES",
+    "PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+    "is_priority_signal_free_adaptive_ambiguity_pair",
     "ModalLogicFamily",
     "ModalOperatorSpec",
     "ModalParseProfile",

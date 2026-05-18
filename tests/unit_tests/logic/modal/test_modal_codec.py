@@ -2149,6 +2149,96 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_frame_adaptive
     )
 
 
+def test_modal_compiler_treats_zero_margin_priority_pair_as_outvoted_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-zero-margin-temporal-frame-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-zero-margin-temporal-frame-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="temporal_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-zero-margin-temporal-frame-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="10 U.S.C. 649j",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "temporal", "count": 1, "share": 0.5},
+            {"family": "frame", "count": 1, "share": 0.5},
+        ],
+        family_shares={"temporal": 0.5, "frame": 0.5},
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "frame"]
+    )
+    assert adaptive_frame.metadata["family_margin"] == 0.0
+    assert adaptive_frame.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_frame.metadata["is_priority_policy_pair"] is True
+    assert adaptive_frame.metadata["explicit_ambiguity_type"] == (
+        "adaptive_temporal_frame_outvoted_margin_low"
+    )
+    assert adaptive_frame.severity == "requires_rule"
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_frame_outvoted_margin_low"
+        and ambiguity.metadata["family_margin"] == 0.0
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_signal_free_pair_policy_for_hybrid_frame_adaptive_ambiguity(
     monkeypatch,
 ) -> None:
