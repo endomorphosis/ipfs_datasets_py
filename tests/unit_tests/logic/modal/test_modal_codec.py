@@ -242,6 +242,68 @@ _USCODE_2_60A_2_TEXT = (
     "Office, www.gpo.gov §60a–2. Transferred Editorial Notes Codification Section "
     "60a–2 was editorially reclassified as section 4531 of this title."
 )
+_USCODE_2_130A_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition Title 2 - "
+    "THE CONGRESS CHAPTER 4 - OFFICERS AND EMPLOYEES OF SENATE AND HOUSE OF "
+    "REPRESENTATIVES Sec. 130a - Transferred From the U.S. Government Publishing "
+    "Office, www.gpo.gov §130a. Transferred Editorial Notes Codification Section 130a "
+    "was editorially reclassified as section 4504 of this title."
+)
+_USCODE_4_123_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 4 - FLAG AND SEAL, SEAT OF GOVERNMENT, AND THE STATES 4 U.S.C. United States Code, "
+    "2024 Edition Title 4 - FLAG AND SEAL, SEAT OF GOVERNMENT, AND THE STATES CHAPTER 4 - THE STATES "
+    "Sec. 123 - Scope; special rules From the U.S. Government Publishing Office, www.gpo.gov §123. "
+    "Scope; special rules (a) Act Does Not Supersede Customer's Liability to Taxing Jurisdiction "
+    ".—Nothing in sections 116 through 126 modifies, impairs, supersedes, or authorizes the "
+    "modification, impairment, or supersession of, any law allowing a taxing jurisdiction to collect "
+    "a tax, charge, or fee from a customer that has failed to provide its place of primary use. (b) "
+    "Additional Taxable Charges .—If a taxing jurisdiction does not otherwise subject charges for "
+    "mobile telecommunications services to taxation and if these charges are aggregated with and not "
+    "separately stated from charges that are subject to taxation, then the charges for nontaxable "
+    "mobile telecommunications services may be subject to taxation unless the home service provider "
+    "can reasonably identify charges not subject to such tax, charge, or fee from its books and "
+    "records that are kept in the regular course of business. (c) Nontaxable Charges .—If a taxing "
+    "jurisdiction does not subject charges for mobile telecommunications services to taxation, a "
+    "customer may not rely upon the nontaxability of charges for mobile telecommunications services "
+    "unless the customer's home service provider separately states the charges for nontaxable mobile "
+    "telecommunications services from taxable charges or the home service provider elects, after "
+    "receiving a written request from the customer in the form required by the provider, to provide "
+    "verifiable data based upon the home service provider's books and records that are kept in the "
+    "regular course of business that reasonably identifies the nontaxable charges. (Added Pub. L. "
+    "106–252, §2(a), July 28, 2000, 114 Stat. 630.)"
+)
+_USCODE_5_5564_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 5 - GOVERNMENT ORGANIZATION AND EMPLOYEES 5 U.S.C. United States Code, 2024 Edition "
+    "Title 5 - GOVERNMENT ORGANIZATION AND EMPLOYEES PART III - EMPLOYEES Subpart D - Pay and "
+    "Allowances CHAPTER 55 - PAY ADMINISTRATION SUBCHAPTER VII - PAYMENTS TO MISSING EMPLOYEES Sec. "
+    "5564 - Travel and transportation; dependents; household and personal effects; motor vehicles; "
+    "sale of bulky items; claims for proceeds; appropriation chargeable From the U.S. Government "
+    "Publishing Office, www.gpo.gov §5564. Travel and transportation; dependents; household and "
+    "personal effects; motor vehicles; sale of bulky items; claims for proceeds; appropriation "
+    "chargeable (a) For the purpose of this section, \"household and personal effects\" and "
+    "\"household effects\" may include, in addition to other authorized weight allowances, one "
+    "privately owned motor vehicle which may be shipped at United States expense. (b) Transportation "
+    "(including packing, crating, draying, temporarily storing, and unpacking of household and "
+    "personal effects) may be provided for the dependents and household and personal effects of an "
+    "employee in active service (without regard to pay grade) who is officially reported as dead, "
+    "injured, or absent for more than 29 days in a status listed in section 5561(5) (A)–(E) of this "
+    "title to— (1) the official residence of record for the employee; (2) the residence of his "
+    "dependent, next of kin, or other person entitled to the effects under regulations prescribed by "
+    "the head of the agency concerned; or (3) another location determined in advance or later "
+    "approved by the head of the agency concerned or his designee on request of the employee (if "
+    "injured) or his dependent, next of kin, or other person described in paragraph (2) of this "
+    "subsection. (c) When an employee described in subsection (b) of this section is in an injured "
+    "status, transportation of dependents and household and personal effects may be provided under "
+    "this section only when prolonged hospitalization or treatment is anticipated. (d) Transportation "
+    "on request of a dependent may be authorized under this section only when there is a reasonable "
+    "relationship between the circumstances of the dependent and the destination requested. (e) "
+    "Instead of providing transportation for dependents under this section, when the travel has been "
+    "completed the head of the agency concerned may authorize— (1) reimbursement for the commercial "
+    "cost of the transportation; or (2) a monetary allowance, instead of transportation, as "
+    "authorized by statute for the whole or that part of the travel for which transportation in kind "
+    "was not furnished. (i) This section does not amend or repeal— (1) section 2575, 2733, 4712, "
+    "6522, or 9712 of title 10; (2) section 507 1 of title 14; or (3) chapter 171 of title 28."
+)
 _USCODE_16_6808_SYMBOLIC_VALIDITY_TEXT = (
     "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition Title "
     "16 - CONSERVATION CHAPTER 87 - FEDERAL LANDS RECREATION ENHANCEMENT Sec. 6808 - "
@@ -571,9 +633,15 @@ def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples()
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_dataset_zero_formula_cases_for_31a_2b_60a_2_and_8906() -> None:
+def test_modal_compiler_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2_and_8906() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     cases = [
+        (
+            "us-code-2-130a-a14e984db7a8af87",
+            "2 U.S.C. 130a",
+            _USCODE_2_130A_TEXT,
+            "uscode_transferred_heading_v1",
+        ),
         (
             "us-code-2-31a-2b-a99b26c5ad622cfe",
             "2 U.S.C. 31a-2b",
@@ -911,8 +979,18 @@ def test_modal_compiler_replays_sec_prefixed_heading_samples_with_usc_citation_v
             assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
+def test_modal_compiler_replays_symbolic_validity_samples_for_4_123_5_5564_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
     cases = [
+        (
+            "us-code-4-123-d46eff3eecad7d48",
+            "4 U.S.C. 123",
+            _USCODE_4_123_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-5-5564-bdff7b035cd4f4cc",
+            "5 U.S.C. 5564",
+            _USCODE_5_5564_SYMBOLIC_VALIDITY_TEXT,
+        ),
         (
             "us-code-16-6410-7cc9d1ff88340f35",
             "16 U.S.C. 6410",
