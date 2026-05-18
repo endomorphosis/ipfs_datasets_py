@@ -1027,6 +1027,12 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
                 source_id_title_section_key.lower(),
             )
         )
+        slots.extend(
+            _typed_identifier_slots(
+                source_id_title_section_key.replace(":", "_"),
+                slot_prefix="source_id_title_section_key",
+            )
+        )
     if section_for_slots:
         slots.extend(_source_id_section_slots(section_for_slots))
         slots.extend(
@@ -1714,6 +1720,12 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
                 (
                     "citation_title_section_key_normalized",
                     citation_title_section_key.lower(),
+                )
+            )
+            slots.extend(
+                _typed_identifier_slots(
+                    citation_title_section_key.replace(":", "_"),
+                    slot_prefix="citation_title_section_key",
                 )
             )
         slots.append(("citation_section", section))

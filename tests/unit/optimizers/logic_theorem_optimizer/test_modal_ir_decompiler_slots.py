@@ -283,3 +283,79 @@ def test_modal_slots_emit_alpha_repeat_shape_for_todo_cluster_suffix_sections() 
             )
             assert slot_values == expected[predicate]
             assert triple_values == expected[predicate]
+
+
+def test_modal_slots_emit_typed_title_section_coordinate_slots_for_todo_cluster_sections() -> None:
+    expected_by_section = {
+        ("42", "300gg"): {
+            "section_normalized": "300gg",
+            "has_mixed_token": "true",
+            "mixed_token_count": "1",
+            "alnum_segment_count": "3",
+        },
+        ("46", "7109."): {
+            "section_normalized": "7109",
+            "has_mixed_token": "false",
+            "mixed_token_count": "0",
+            "alnum_segment_count": "2",
+        },
+        ("43", "950."): {
+            "section_normalized": "950",
+            "has_mixed_token": "false",
+            "mixed_token_count": "0",
+            "alnum_segment_count": "2",
+        },
+        ("10", "2512"): {
+            "section_normalized": "2512",
+            "has_mixed_token": "false",
+            "mixed_token_count": "0",
+            "alnum_segment_count": "2",
+        },
+    }
+    predicates = (
+        "citation_title_section_key",
+        "citation_title_section_key_token_count",
+        "citation_title_section_key_token_prefix",
+        "citation_title_section_key_token_suffix",
+        "citation_title_section_key_stem",
+        "citation_title_section_key_has_mixed_token",
+        "citation_title_section_key_mixed_token_count",
+        "citation_title_section_key_alnum_segment_count",
+        "source_id_title_section_key",
+        "source_id_title_section_key_token_count",
+        "source_id_title_section_key_token_prefix",
+        "source_id_title_section_key_token_suffix",
+        "source_id_title_section_key_stem",
+        "source_id_title_section_key_has_mixed_token",
+        "source_id_title_section_key_mixed_token_count",
+        "source_id_title_section_key_alnum_segment_count",
+    )
+
+    for (title, section), values in expected_by_section.items():
+        section_normalized = values["section_normalized"]
+        expected = {
+            "citation_title_section_key": [f"{title}:{section_normalized}"],
+            "citation_title_section_key_token_count": ["2"],
+            "citation_title_section_key_token_prefix": [title],
+            "citation_title_section_key_token_suffix": [section_normalized],
+            "citation_title_section_key_stem": [f"{title}_{section_normalized}"],
+            "citation_title_section_key_has_mixed_token": [values["has_mixed_token"]],
+            "citation_title_section_key_mixed_token_count": [values["mixed_token_count"]],
+            "citation_title_section_key_alnum_segment_count": [values["alnum_segment_count"]],
+            "source_id_title_section_key": [f"{title}:{section_normalized}"],
+            "source_id_title_section_key_token_count": ["2"],
+            "source_id_title_section_key_token_prefix": [title],
+            "source_id_title_section_key_token_suffix": [section_normalized],
+            "source_id_title_section_key_stem": [f"{title}_{section_normalized}"],
+            "source_id_title_section_key_has_mixed_token": [values["has_mixed_token"]],
+            "source_id_title_section_key_mixed_token_count": [values["mixed_token_count"]],
+            "source_id_title_section_key_alnum_segment_count": [values["alnum_segment_count"]],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]

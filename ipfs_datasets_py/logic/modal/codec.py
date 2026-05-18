@@ -1302,6 +1302,12 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
                     citation_title_section_key.lower(),
                 )
             )
+            components.extend(
+                _typed_identifier_components(
+                    citation_title_section_key.replace(":", "_"),
+                    slot_prefix="citation_title_section_key",
+                )
+            )
         components.append(("citation_section", section))
         if raw_section:
             components.append(("citation_section_raw", raw_section))
@@ -1406,6 +1412,12 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
             (
                 "source_id_title_section_key_normalized",
                 source_id_title_section_key.lower(),
+            )
+        )
+        components.extend(
+            _typed_identifier_components(
+                source_id_title_section_key.replace(":", "_"),
+                slot_prefix="source_id_title_section_key",
             )
         )
     if section_for_components:
