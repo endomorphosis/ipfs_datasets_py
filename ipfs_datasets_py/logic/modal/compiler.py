@@ -615,7 +615,9 @@ class DeterministicModalCompiler:
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
         has_frame_scope = bool(
-            signals.get("has_frame_context") or signals.get("has_frame_cue")
+            signals.get("has_frame_context")
+            or signals.get("has_frame_cue")
+            or signals.get("has_statutory_scope_reference")
         )
         if not has_frame_scope and target_share <= 0.0:
             return []

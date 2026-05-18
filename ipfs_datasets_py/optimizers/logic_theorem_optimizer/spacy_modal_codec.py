@@ -37,9 +37,18 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "except to the extent",
     "except as otherwise provided",
 )
+_STATUTORY_SCOPE_REFERENCE_PHRASES = (
+    "as provided in",
+    "in accordance with",
+    "pursuant to",
+    "under subsection",
+    "under paragraph",
+    "under subparagraph",
+)
 _CONDITIONAL_SCOPE_TOKENS = frozenset(
     {
         "notwithstanding",
+        "pursuant",
     }
 )
 _ALETHIC_SCOPE_TOKENS = frozenset(
@@ -115,13 +124,18 @@ _FRAME_CONTEXT_TOKENS = frozenset(
     {
         "administrator",
         "agency",
+        "attorney",
         "authority",
         "board",
         "bureau",
         "commission",
+        "court",
         "department",
         "director",
+        "intelligence",
+        "judge",
         "jurisdiction",
+        "justice",
         "officer",
         "secretary",
     }
@@ -592,6 +606,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     conditional_scope_phrase = _contains_scope_phrase(
         normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
+    statutory_scope_reference = _contains_scope_phrase(
+        normalized_text, _STATUTORY_SCOPE_REFERENCE_PHRASES
+    )
     conditional_scope_token = bool(token_terms & _CONDITIONAL_SCOPE_TOKENS)
     alethic_scope_phrase = _contains_scope_phrase(
         normalized_text, _ALETHIC_SCOPE_PHRASES
@@ -625,11 +642,13 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_condition_clause": condition_clauses,
         "has_conditional_scope_token": conditional_scope_token,
         "has_conditional_scope_phrase": conditional_scope_phrase,
+        "has_statutory_scope_reference": statutory_scope_reference,
         "has_exception_clause": exception_clauses,
         "has_condition_or_exception_scope": (
             condition_clauses
             or exception_clauses
             or conditional_scope_phrase
+            or statutory_scope_reference
             or conditional_scope_token
         ),
         "has_calendar_date_scope": calendar_date_scope,

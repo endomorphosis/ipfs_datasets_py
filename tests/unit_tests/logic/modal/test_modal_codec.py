@@ -375,6 +375,38 @@ def test_modal_compiler_treats_in_the_case_of_as_conditional_scope_ambiguity_sig
     )
 
 
+def test_modal_compiler_treats_as_provided_in_as_conditional_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_conditional_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must provide written notice as provided in subsection (b)."
+    )
+
+    conditional_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "conditional_scope_family_outvoted"
+    )
+    assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
+    assert conditional_scope.metadata["predicted_family"] == "deontic"
+    assert conditional_scope.metadata["target_family"] == "conditional_normative"
+    assert conditional_scope.metadata["target_share"] == 0.0
+    assert (
+        conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"]
+        is True
+    )
+    assert (
+        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+
+
 def test_modal_compiler_surfaces_temporal_frame_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -447,6 +479,31 @@ def test_modal_compiler_surfaces_frame_scope_family_outvote_ambiguity() -> None:
     assert frame_scope.metadata["predicted_family"] == "deontic"
     assert frame_scope.metadata["target_family"] == "frame"
     assert frame_scope.metadata["family_margin"] < 0.0
+    assert frame_scope.metadata["lexical_signals"]["has_frame_context"] is True
+
+
+def test_modal_compiler_treats_court_as_frame_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_frame_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The court shall and must issue the order."
+    )
+
+    frame_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "frame_scope_family_outvoted"
+    )
+    assert frame_scope.candidate_ids == ["deontic", "frame"]
+    assert frame_scope.metadata["predicted_family"] == "deontic"
+    assert frame_scope.metadata["target_family"] == "frame"
+    assert frame_scope.metadata["target_share"] == 0.0
     assert frame_scope.metadata["lexical_signals"]["has_frame_context"] is True
 
 
