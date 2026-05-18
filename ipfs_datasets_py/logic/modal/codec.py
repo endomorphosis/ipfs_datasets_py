@@ -1219,9 +1219,9 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
                 )
             )
         components.append(("citation_section", section))
-        if raw_section and raw_section != section:
+        if raw_section:
             components.append(("citation_section_raw", raw_section))
-            components.append(("citation_section_normalized", section))
+        components.append(("citation_section_normalized", section))
         if section_trailing_punct:
             components.append(("citation_section_trailing_punct", section_trailing_punct))
             components.append(("citation_section_has_trailing_punct", "true"))
@@ -1288,7 +1288,8 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
                 components.append(("source_id_title_suffix", title_suffix))
     if section:
         components.append(("source_id_section", section))
-    if normalized_section and normalized_section != section:
+        components.append(("source_id_section_raw", section))
+    if normalized_section:
         components.append(("source_id_section_normalized", normalized_section))
     if section_trailing_punct:
         components.append(("source_id_section_trailing_punct", section_trailing_punct))

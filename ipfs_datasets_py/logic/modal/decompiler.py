@@ -833,7 +833,8 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
 
     if section:
         slots.append(("source_id_section", section))
-    if normalized_section and normalized_section != section:
+        slots.append(("source_id_section_raw", section))
+    if normalized_section:
         slots.append(("source_id_section_normalized", normalized_section))
     if section_trailing_punct:
         slots.append(("source_id_section_trailing_punct", section_trailing_punct))
@@ -1368,9 +1369,9 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
                 )
             )
         slots.append(("citation_section", section))
-        if raw_section and raw_section != section:
+        if raw_section:
             slots.append(("citation_section_raw", raw_section))
-            slots.append(("citation_section_normalized", section))
+        slots.append(("citation_section_normalized", section))
         if section_trailing_punct:
             slots.append(("citation_section_trailing_punct", section_trailing_punct))
             slots.append(("citation_section_has_trailing_punct", "true"))
