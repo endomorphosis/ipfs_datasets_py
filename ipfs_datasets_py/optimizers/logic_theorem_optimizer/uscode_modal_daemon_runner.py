@@ -119,6 +119,7 @@ CODEX_SANDBOX_BLOCKER_PATTERNS = (
     "operation not permitted",
 )
 CODEX_COMPLETED_WORK_STATUSES = {"created", "applied_to_main"}
+CODEX_MERGE_REPAIR_MODES = ("off", "apply_3way")
 CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
@@ -396,6 +397,10 @@ def _build_codex_child_command(
         str(getattr(args, "codex_commit_mode", "none")),
         "--codex-bundle-mode",
         str(getattr(args, "codex_bundle_mode", "semantic")),
+        "--codex-merge-repair-mode",
+        str(getattr(args, "codex_merge_repair_mode", "apply_3way")),
+        "--codex-merge-repair-attempts",
+        str(getattr(args, "codex_merge_repair_attempts", 1)),
     ]
     if scope:
         command.extend(["--codex-scope", str(scope)])
@@ -799,6 +804,73 @@ def _run_git_apply_stdin(
     )
 
 
+def _repair_codex_worktree_diff_against_main(
+    *,
+    diff_content: str,
+    packet: Mapping[str, Any],
+    source_repo_root: Path,
+) -> Dict[str, Any]:
+    """Replay a stale packet diff into a fresh worktree from current main."""
+    packet_path_value = packet.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    packet_id = str(packet.get("packet_id") or packet_dir.name)
+    repair_id = _safe_artifact_name(f"{packet_id}-merge-repair")
+    repair_base = packet_dir / "merge-repair-worktrees"
+    repair_base.mkdir(parents=True, exist_ok=True)
+    repair_worktree: Optional[Path] = None
+    report: Dict[str, Any] = {
+        "mode": "apply_3way",
+        "status": "failed",
+    }
+    try:
+        manager = WorktreeManager(repo_path=source_repo_root, worktrees_base=repair_base)
+        repair_worktree = manager.create_worktree(repair_id, branch="HEAD")
+        report["worktree_path"] = str(repair_worktree)
+        apply_result = _run_git_apply_stdin(
+            repair_worktree,
+            diff_content,
+            "--3way",
+            timeout_seconds=120.0,
+        )
+        report["apply_3way"] = {
+            "exit_code": apply_result.returncode,
+            "stderr_tail": (apply_result.stderr or "")[-1000:],
+            "stdout_tail": (apply_result.stdout or "")[-1000:],
+        }
+        if apply_result.returncode != 0:
+            report["status"] = "apply_3way_failed"
+            return report
+
+        repaired_diff = _codex_worktree_diff(repair_worktree)
+        repaired_content = str(repaired_diff.get("diff_content") or "")
+        report["target_files"] = list(repaired_diff.get("target_files", []))
+        if not repaired_content.strip():
+            report["status"] = "no_repaired_diff"
+            return report
+        report["diff_content"] = repaired_content
+        report["status"] = "repaired"
+        return report
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        report["status"] = "repair_exception"
+        report["error"] = str(exc)
+        return report
+    finally:
+        if repair_worktree is not None:
+            cleanup = subprocess.run(
+                ["git", "worktree", "remove", str(repair_worktree), "--force"],
+                cwd=source_repo_root,
+                capture_output=True,
+                text=True,
+                timeout=60.0,
+            )
+            report["cleanup"] = {
+                "exit_code": cleanup.returncode,
+                "stderr_tail": (cleanup.stderr or "")[-500:],
+                "stdout_tail": (cleanup.stdout or "")[-500:],
+            }
+
+
 def _default_codex_apply_validation_commands(repo_root: Path) -> List[List[str]]:
     tests = [path for path in CODEX_APPLY_VALIDATION_TESTS if (repo_root / path).exists()]
     if not tests:
@@ -928,6 +1000,8 @@ def apply_codex_worktree_changes_to_main(
     packet: Mapping[str, Any],
     *,
     commit_mode: str = "none",
+    merge_repair_attempts: int = 1,
+    merge_repair_mode: str = "apply_3way",
     validation_commands: Optional[Sequence[Sequence[str]]] = None,
     validation_timeout_seconds: float = 300.0,
 ) -> Dict[str, Any]:
@@ -1010,17 +1084,58 @@ def apply_codex_worktree_changes_to_main(
         "stdout_tail": (check.stdout or "")[-500:],
     }
     if check.returncode != 0:
-        patch_path = _save_codex_packet_diff_patch(
-            updated,
-            diff_content=diff_content,
-            reason="apply-check-failed",
-        )
-        updated["patch_path"] = str(patch_path) if patch_path is not None else None
-        updated["patch_status"] = "main_apply_check_failed"
-        updated["patch_error"] = check.stderr or check.stdout or "git apply --check failed"
-        updated["main_apply_error"] = updated["patch_error"]
-        _save_packet_if_possible(updated, packet_path)
-        return updated
+        normalized_repair_mode = str(merge_repair_mode or "off").strip().lower()
+        if normalized_repair_mode == "apply_3way" and int(merge_repair_attempts) > 0:
+            repair = _repair_codex_worktree_diff_against_main(
+                diff_content=diff_content,
+                packet=updated,
+                source_repo_root=source_repo_root,
+            )
+            repaired_diff_content = str(repair.get("diff_content") or "")
+            repair.pop("diff_content", None)
+            updated["main_apply_merge_repair"] = dict(repair)
+            if repaired_diff_content.strip():
+                diff_content = repaired_diff_content
+                target_files = [
+                    str(path)
+                    for path in updated["main_apply_merge_repair"].get(
+                        "target_files",
+                        target_files,
+                    )
+                ]
+                updated["main_apply_target_files"] = target_files
+                check = _run_git_apply_stdin(source_repo_root, diff_content, "--check")
+                updated["main_apply_repaired_check"] = {
+                    "exit_code": check.returncode,
+                    "stderr_tail": (check.stderr or "")[-500:],
+                    "stdout_tail": (check.stdout or "")[-500:],
+                }
+        if check.returncode == 0:
+            updated["main_apply_repair_status"] = "repaired"
+        else:
+            repair_status = str(
+                dict(updated.get("main_apply_merge_repair", {})).get("status") or ""
+            )
+            reason = (
+                "apply-check-failed"
+                if not repair_status
+                else f"apply-check-failed-{repair_status}"
+            )
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason=reason,
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
+            updated["patch_status"] = (
+                "main_apply_check_failed"
+                if not repair_status
+                else "main_apply_check_failed_repair_failed"
+            )
+            updated["patch_error"] = check.stderr or check.stdout or "git apply --check failed"
+            updated["main_apply_error"] = updated["patch_error"]
+            _save_packet_if_possible(updated, packet_path)
+            return updated
 
     apply_result = _run_git_apply_stdin(source_repo_root, diff_content)
     updated["main_apply_result"] = {
@@ -1125,6 +1240,8 @@ def execute_codex_work_packet(
     apply_mode: str = "patch_only",
     commit_mode: str = "none",
     codex_command: str = "codex",
+    merge_repair_attempts: int = 1,
+    merge_repair_mode: str = "apply_3way",
     model: Optional[str] = None,
     sandbox: str = "workspace-write",
     timeout_seconds: float = 900.0,
@@ -1173,6 +1290,8 @@ def execute_codex_work_packet(
             refreshed = apply_codex_worktree_changes_to_main(
                 updated,
                 commit_mode=commit_mode,
+                merge_repair_attempts=merge_repair_attempts,
+                merge_repair_mode=merge_repair_mode,
                 validation_commands=validation_commands,
                 validation_timeout_seconds=validation_timeout_seconds,
             )
@@ -1210,6 +1329,8 @@ def execute_codex_work_packet(
                 refreshed = apply_codex_worktree_changes_to_main(
                     refreshed,
                     commit_mode=commit_mode,
+                    merge_repair_attempts=merge_repair_attempts,
+                    merge_repair_mode=merge_repair_mode,
                     validation_commands=validation_commands,
                     validation_timeout_seconds=validation_timeout_seconds,
                 )
@@ -1671,6 +1792,21 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "For Codex loops, either claim plain priority batches or bundle the "
             "top TODO with semantically similar TODOs from the same AST scope."
         ),
+    )
+    parser.add_argument(
+        "--codex-merge-repair-mode",
+        choices=CODEX_MERGE_REPAIR_MODES,
+        default="apply_3way",
+        help=(
+            "When apply-to-main check fails, optionally replay the packet diff "
+            "into a fresh current-main worktree with git apply --3way and retry once."
+        ),
+    )
+    parser.add_argument(
+        "--codex-merge-repair-attempts",
+        type=int,
+        default=1,
+        help="Maximum automatic merge-repair attempts for one packet apply.",
     )
     parser.add_argument(
         "--codex-sandbox",
@@ -2305,11 +2441,14 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_claimed_total": 0,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
+            "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
             "codex_main_apply_count": 0,
             "codex_main_apply_failure_count": 0,
+            "codex_main_apply_repair_count": 0,
             "codex_packet_count": 0,
             "codex_patch_count": 0,
             "codex_program_synthesis_execution_mode": execution_mode,
@@ -2332,9 +2471,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_apply_mode", args.codex_apply_mode)
     summary.setdefault("codex_bundle_mode", args.codex_bundle_mode)
     summary.setdefault("codex_commit_mode", args.codex_commit_mode)
+    summary.setdefault("codex_merge_repair_attempts", args.codex_merge_repair_attempts)
+    summary.setdefault("codex_merge_repair_mode", args.codex_merge_repair_mode)
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
+    summary.setdefault("codex_main_apply_repair_count", 0)
 
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
@@ -2347,6 +2489,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_bundle_mode": args.codex_bundle_mode,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
+            "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
             "codex_program_synthesis_execution_mode": execution_mode,
             "event": "codex_program_synthesis_runner_started",
@@ -2398,6 +2542,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                         apply_mode=args.codex_apply_mode,
                         commit_mode=args.codex_commit_mode,
                         codex_command=args.codex_command,
+                        merge_repair_attempts=args.codex_merge_repair_attempts,
+                        merge_repair_mode=args.codex_merge_repair_mode,
                         model=args.codex_model,
                         sandbox=args.codex_sandbox,
                         timeout_seconds=args.codex_timeout_seconds,
@@ -2450,6 +2596,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 summary["codex_main_apply_count"] = int(
                     summary.get("codex_main_apply_count", 0)
                 ) + 1
+                if str(packet.get("main_apply_repair_status", "")).strip().lower() == "repaired":
+                    summary["codex_main_apply_repair_count"] = int(
+                        summary.get("codex_main_apply_repair_count", 0)
+                    ) + 1
             elif main_apply_status and main_apply_status not in {"no_changes", "skipped"}:
                 summary["codex_main_apply_failure_count"] = int(
                     summary.get("codex_main_apply_failure_count", 0)
@@ -2483,6 +2633,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "codex_program_synthesis_cycle",
                     "main_apply_status": packet.get("main_apply_status"),
+                    "main_apply_repair_status": packet.get("main_apply_repair_status"),
                     "main_apply_target_repo_root": packet.get("main_apply_target_repo_root"),
                     "main_apply_validation_status": dict(
                         packet.get("main_apply_validation", {})
