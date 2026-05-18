@@ -1122,13 +1122,28 @@ def _modal_family_count_slots(
         _resolved_modal_family_counts(raw_counts, formulas=formulas),
         start=1,
     ):
+        safe_family = _slot_safe_family_key(family)
+        if not safe_family:
+            continue
         slots.extend(
             (
                 ("modal_family_count", f"{family}:{count}"),
                 ("modal_family_count_ranked", f"{rank}:{family}:{count}"),
                 ("modal_family_count_family", family),
                 ("modal_family_count_value", count),
-                (f"modal_family_count_{_slot_safe_family_key(family)}", count),
+                (f"modal_family_count_{safe_family}", count),
+            )
+        )
+        slots.extend(
+            _numeric_signature_slots(
+                count,
+                slot_prefix="modal_family_count_value",
+            )
+        )
+        slots.extend(
+            _numeric_signature_slots(
+                count,
+                slot_prefix=f"modal_family_count_{safe_family}",
             )
         )
     return _unique_slot_values(slots)
@@ -2259,6 +2274,17 @@ def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhra
                 provenance_only=True,
             )
         )
+        for slot, value in _numeric_signature_slots(
+            str(rank),
+            slot_prefix="frame_candidate_rank",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
         phrases.append(
             DecodedModalPhrase(
                 text=f"{rank}:{frame_id}",
@@ -2266,6 +2292,17 @@ def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhra
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            f"{rank}:{frame_id}",
+            slot_prefix="frame_candidate_ranked",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
         for slot, value in _typed_identifier_slots(
             frame_id,
             slot_prefix="frame_candidate",

@@ -2690,8 +2690,13 @@ def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> N
     ]
     assert slot_map["modal_family_count_family"] == ["deontic", "temporal"]
     assert slot_map["modal_family_count_value"] == ["2", "1"]
+    assert slot_map["modal_family_count_value_parity"] == ["even", "odd"]
+    assert slot_map["modal_family_count_value_digit_count_bucket"] == ["1_digit"]
+    assert slot_map["modal_family_count_value_has_zero_digit"] == ["false"]
     assert slot_map["modal_family_count_deontic"] == ["2"]
+    assert slot_map["modal_family_count_deontic_parity"] == ["even"]
     assert slot_map["modal_family_count_temporal"] == ["1"]
+    assert slot_map["modal_family_count_temporal_parity"] == ["odd"]
 
 
 def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() -> None:
@@ -2724,8 +2729,13 @@ def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() ->
     ]
     assert objects("modal_family_count_family") == ["deontic", "temporal"]
     assert objects("modal_family_count_value") == ["2", "1"]
+    assert objects("modal_family_count_value_parity") == ["even", "odd"]
+    assert objects("modal_family_count_value_digit_count_bucket") == ["1_digit"]
+    assert objects("modal_family_count_value_has_zero_digit") == ["false"]
     assert objects("modal_family_count_deontic") == ["2"]
+    assert objects("modal_family_count_deontic_parity") == ["even"]
     assert objects("modal_family_count_temporal") == ["1"]
+    assert objects("modal_family_count_temporal_parity") == ["odd"]
 
 
 def test_decode_modal_ir_document_derives_modal_family_count_slots_from_formulas() -> None:
@@ -2736,6 +2746,8 @@ def test_decode_modal_ir_document_derives_modal_family_count_slots_from_formulas
     assert slot_map["modal_family_count_ranked"] == ["1:temporal:1"]
     assert slot_map["modal_family_count_family"] == ["temporal"]
     assert slot_map["modal_family_count_value"] == ["1"]
+    assert slot_map["modal_family_count_value_parity"] == ["odd"]
+    assert slot_map["modal_family_count_temporal_parity"] == ["odd"]
     assert slot_map["modal_family_count_temporal"] == ["1"]
 
 
@@ -2753,6 +2765,8 @@ def test_modal_ir_to_flogic_triples_derives_modal_family_count_slots_from_formul
     assert objects("modal_family_count_ranked") == ["1:temporal:1"]
     assert objects("modal_family_count_family") == ["temporal"]
     assert objects("modal_family_count_value") == ["1"]
+    assert objects("modal_family_count_value_parity") == ["odd"]
+    assert objects("modal_family_count_temporal_parity") == ["odd"]
     assert objects("modal_family_count_temporal") == ["1"]
 
 
@@ -2771,6 +2785,23 @@ def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_me
         "administrative_notice_hearing",
         "criminal_penalty_enforcement",
         "housing_voucher_benefits",
+    ]
+    assert objects("candidate_ontology_frame_rank") == ["1", "2", "3"]
+    assert objects("candidate_ontology_frame_ranked") == [
+        "1:administrative_notice_hearing",
+        "2:criminal_penalty_enforcement",
+        "3:housing_voucher_benefits",
+    ]
+    assert objects("candidate_ontology_frame_rank_parity") == ["odd", "even", "odd"]
+    assert objects("candidate_ontology_frame_rank_digit_count_bucket") == [
+        "1_digit",
+        "1_digit",
+        "1_digit",
+    ]
+    assert objects("candidate_ontology_frame_ranked_token_prefix") == [
+        "1:administrative",
+        "2:criminal",
+        "3:housing",
     ]
     assert objects("candidate_ontology_term") == [
         "administrative",

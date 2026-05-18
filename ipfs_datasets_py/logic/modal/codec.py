@@ -869,10 +869,13 @@ def modal_ir_to_flogic_triples(
             )
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     selected_frame_terms: List[str] = []
-    for frame_id in _ranked_candidate_frame_ids(
-        modal_ir,
-        frame_terms_by_frame=frame_terms_by_frame,
-        selected_frame=resolved_selected_frame,
+    for rank, frame_id in enumerate(
+        _ranked_candidate_frame_ids(
+            modal_ir,
+            frame_terms_by_frame=frame_terms_by_frame,
+            selected_frame=resolved_selected_frame,
+        ),
+        start=1,
     ):
         triples.append(
             {
@@ -881,6 +884,42 @@ def modal_ir_to_flogic_triples(
                 "object": frame_id,
             }
         )
+        triples.append(
+            {
+                "subject": modal_ir.document_id,
+                "predicate": "candidate_ontology_frame_rank",
+                "object": str(rank),
+            }
+        )
+        triples.append(
+            {
+                "subject": modal_ir.document_id,
+                "predicate": "candidate_ontology_frame_ranked",
+                "object": f"{rank}:{frame_id}",
+            }
+        )
+        for predicate, value in _numeric_signature_components(
+            str(rank),
+            slot_prefix="candidate_ontology_frame_rank",
+        ):
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
+        for predicate, value in _typed_identifier_components(
+            f"{rank}:{frame_id}",
+            slot_prefix="candidate_ontology_frame_ranked",
+        ):
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
         candidate_terms = frame_terms_by_frame.get(frame_id, [])
         for term in candidate_terms:
             triples.append(
@@ -3199,14 +3238,29 @@ def _document_modal_family_count_components(
         _resolved_modal_family_counts(modal_ir),
         start=1,
     ):
+        safe_family = _slot_safe_family_key(family)
+        if not safe_family:
+            continue
         components.extend(
             [
                 ("modal_family_count", f"{family}:{count}"),
                 ("modal_family_count_ranked", f"{rank}:{family}:{count}"),
                 ("modal_family_count_family", family),
                 ("modal_family_count_value", count),
-                (f"modal_family_count_{_slot_safe_family_key(family)}", count),
+                (f"modal_family_count_{safe_family}", count),
             ]
+        )
+        components.extend(
+            _numeric_signature_components(
+                count,
+                slot_prefix="modal_family_count_value",
+            )
+        )
+        components.extend(
+            _numeric_signature_components(
+                count,
+                slot_prefix=f"modal_family_count_{safe_family}",
+            )
         )
     return _unique_preserve_order_tuples(components)
 
