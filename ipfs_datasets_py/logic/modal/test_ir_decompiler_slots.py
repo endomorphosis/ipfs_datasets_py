@@ -196,6 +196,19 @@ def _noncanonical_romanlike_suffix_sample_document() -> ModalIRDocument:
     )
 
 
+def _zero_formula_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-3091.-8130665c952dd22a"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="This section is transferred.",
+        formulas=[],
+        metadata={
+            "citation": "50 U.S.C. 3091.",
+        },
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -1018,6 +1031,28 @@ def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() ->
     assert objects("modal_family_count_value") == ["2", "1"]
     assert objects("modal_family_count_deontic") == ["2"]
     assert objects("modal_family_count_temporal") == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formulas() -> None:
+    triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["50 U.S.C. 3091."]
+    assert objects("citation_canonical") == ["50 U.S.C. 3091"]
+    assert objects("citation_section") == ["3091"]
+    assert objects("citation_section_trailing_punct") == ["."]
+    assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section") == ["3091."]
+    assert objects("source_id_section_normalized") == ["3091"]
+    assert objects("source_id_section_trailing_punct") == ["."]
+    assert objects("source_id_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_citation_canonical") == ["50 U.S.C. 3091"]
 
 
 def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:

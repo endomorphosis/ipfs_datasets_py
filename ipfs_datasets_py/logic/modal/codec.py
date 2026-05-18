@@ -701,6 +701,15 @@ def modal_ir_to_flogic_triples(
                 "object": value,
             }
         )
+    if not modal_ir.formulas:
+        for predicate, value in _document_source_context_components(modal_ir):
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
     if selected_frame:
         triples.append(
             {
@@ -1335,6 +1344,20 @@ def _document_modal_family_count_components(
                 (f"modal_family_count_{_slot_safe_family_key(family)}", count),
             ]
         )
+    return _unique_preserve_order_tuples(components)
+
+
+def _document_source_context_components(
+    modal_ir: ModalIRDocument,
+) -> List[tuple[str, str]]:
+    components: List[tuple[str, str]] = []
+    source_id = _clean_non_empty_string(modal_ir.document_id)
+    if source_id:
+        components.extend(_source_id_components(source_id))
+    citation = _clean_non_empty_string(modal_ir.metadata.get("citation"))
+    if citation:
+        components.append(("citation", citation))
+        components.extend(_citation_components(citation))
     return _unique_preserve_order_tuples(components)
 
 
