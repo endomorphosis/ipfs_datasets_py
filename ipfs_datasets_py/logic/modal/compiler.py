@@ -647,6 +647,13 @@ class DeterministicModalCompiler:
             target_signal_by_family = {
                 ModalLogicFamily.FRAME.value: has_frame_scope,
             }
+        elif predicted_family == ModalLogicFamily.FRAME.value:
+            target_signal_by_family = {
+                ModalLogicFamily.DEONTIC.value: bool(
+                    signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
+                ),
+            }
         else:
             target_signal_by_family = {}
         for policy_target_family in signal_free_adaptive_ambiguity_targets(

@@ -73,6 +73,7 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
     )
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "frame")
+    assert supports_signal_free_adaptive_ambiguity_pair("frame", "deontic")
     assert (
         supports_signal_free_adaptive_ambiguity_pair(
             "conditional_normative",
@@ -96,6 +97,7 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "frame",
         "temporal",
     )
+    assert signal_free_adaptive_ambiguity_targets("frame") == ("deontic",)
     assert signal_free_adaptive_ambiguity_targets("hybrid") == ("frame",)
     assert signal_free_adaptive_ambiguity_targets("epistemic") == ()
 
@@ -108,6 +110,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert is_priority_signal_free_adaptive_ambiguity_pair("hybrid", "frame")
+    assert is_priority_signal_free_adaptive_ambiguity_pair("frame", "deontic")
     assert (
         is_priority_signal_free_adaptive_ambiguity_pair("deontic", "frame")
         is False
