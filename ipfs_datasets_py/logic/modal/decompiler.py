@@ -1049,6 +1049,7 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
         ("source_id", cleaned),
         ("source_id_scheme", scheme),
     ]
+    title_number = ""
     if title:
         slots.append(("source_id_title", title))
         slots.extend(_typed_identifier_slots(title, slot_prefix="source_id_title"))
@@ -1120,6 +1121,13 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
                 section_profile=_clean_text(
                     section_slot_map.get("source_id_section_component_profile") or ""
                 ),
+            )
+        )
+        slots.extend(
+            _title_section_number_relation_slots(
+                slot_namespace="source_id",
+                title_number=title_number,
+                section_slot_map=section_slot_map,
             )
         )
         slots.extend(
@@ -2288,6 +2296,7 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         normalized_section=section,
     )
     slots: List[Tuple[str, str]] = []
+    title_number = ""
     if title:
         slots.append(("citation_title", title))
         slots.extend(_typed_identifier_slots(title, slot_prefix="citation_title"))
@@ -2357,6 +2366,13 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
                 section_profile=_clean_text(
                     section_slot_map.get("citation_section_component_profile") or ""
                 ),
+            )
+        )
+        slots.extend(
+            _title_section_number_relation_slots(
+                slot_namespace="citation",
+                title_number=title_number,
+                section_slot_map=section_slot_map,
             )
         )
         slots.extend(
@@ -2452,6 +2468,66 @@ def _section_structure_slots(
             (
                 f"{normalized_namespace}_title_section_profile_normalized",
                 title_section_profile.lower(),
+            )
+        )
+    return slots
+
+
+def _title_section_number_relation_slots(
+    *,
+    slot_namespace: str,
+    title_number: str,
+    section_slot_map: Dict[str, str],
+) -> List[Tuple[str, str]]:
+    normalized_namespace = _clean_text(slot_namespace)
+    normalized_title_number = _clean_text(title_number)
+    if not normalized_namespace or not normalized_title_number:
+        return []
+    primary_number = _clean_text(
+        section_slot_map.get(f"{normalized_namespace}_section_primary_number")
+        or section_slot_map.get(f"{normalized_namespace}_section_number")
+        or ""
+    )
+    terminal_number = _clean_text(
+        section_slot_map.get(f"{normalized_namespace}_section_terminal_number")
+        or section_slot_map.get(f"{normalized_namespace}_section_number")
+        or ""
+    )
+    slots: List[Tuple[str, str]] = []
+    primary_relation = _primary_terminal_number_relation(
+        primary_number=normalized_title_number,
+        terminal_number=primary_number,
+    )
+    if primary_relation is not None:
+        relation, span = primary_relation
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_primary_number_relation",
+                relation,
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_primary_number_span",
+                span,
+            )
+        )
+    terminal_relation = _primary_terminal_number_relation(
+        primary_number=normalized_title_number,
+        terminal_number=terminal_number,
+    )
+    if terminal_relation is not None:
+        relation, span = terminal_relation
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_terminal_number_relation",
+                relation,
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_terminal_number_span",
+                span,
             )
         )
     return slots

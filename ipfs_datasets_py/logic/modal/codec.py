@@ -1390,6 +1390,7 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
         normalized_section=section,
     )
     components: List[tuple[str, str]] = []
+    title_number = ""
     if title:
         components.append(("citation_title", title))
         components.extend(_typed_identifier_components(title, slot_prefix="citation_title"))
@@ -1462,6 +1463,13 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
             )
         )
         components.extend(
+            _title_section_number_relation_components(
+                slot_namespace="citation",
+                title_number=title_number,
+                section_component_map=section_component_map,
+            )
+        )
+        components.extend(
             _typed_identifier_components(
                 section,
                 slot_prefix="citation_section",
@@ -1493,6 +1501,7 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
         ("source_id", cleaned),
         ("source_id_scheme", scheme),
     ]
+    title_number = ""
     if title:
         components.append(("source_id_title", title))
         components.extend(
@@ -1575,6 +1584,13 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
                 section_profile=_clean_non_empty_string(
                     source_section_component_map.get("source_id_section_component_profile")
                 ),
+            )
+        )
+        components.extend(
+            _title_section_number_relation_components(
+                slot_namespace="source_id",
+                title_number=title_number,
+                section_component_map=source_section_component_map,
             )
         )
         components.extend(
@@ -3134,6 +3150,64 @@ def _section_structure_components(
             (
                 f"{normalized_namespace}_title_section_profile_normalized",
                 title_section_profile.lower(),
+            )
+        )
+    return components
+
+
+def _title_section_number_relation_components(
+    *,
+    slot_namespace: str,
+    title_number: str,
+    section_component_map: Dict[str, str],
+) -> List[tuple[str, str]]:
+    normalized_namespace = _clean_non_empty_string(slot_namespace)
+    normalized_title_number = _clean_non_empty_string(title_number)
+    if not normalized_namespace or not normalized_title_number:
+        return []
+    primary_number = _clean_non_empty_string(
+        section_component_map.get(f"{normalized_namespace}_section_primary_number")
+        or section_component_map.get(f"{normalized_namespace}_section_number")
+    )
+    terminal_number = _clean_non_empty_string(
+        section_component_map.get(f"{normalized_namespace}_section_terminal_number")
+        or section_component_map.get(f"{normalized_namespace}_section_number")
+    )
+    components: List[tuple[str, str]] = []
+    primary_relation = _primary_terminal_number_relation(
+        primary_number=normalized_title_number,
+        terminal_number=primary_number,
+    )
+    if primary_relation is not None:
+        relation, span = primary_relation
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_primary_number_relation",
+                relation,
+            )
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_primary_number_span",
+                span,
+            )
+        )
+    terminal_relation = _primary_terminal_number_relation(
+        primary_number=normalized_title_number,
+        terminal_number=terminal_number,
+    )
+    if terminal_relation is not None:
+        relation, span = terminal_relation
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_terminal_number_relation",
+                relation,
+            )
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_terminal_number_span",
+                span,
             )
         )
     return components

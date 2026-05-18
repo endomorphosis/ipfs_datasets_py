@@ -643,6 +643,10 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_trailing_punct_count"] == ["0"]
     assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
+    assert slot_map["citation_title_section_primary_number_relation"] == ["ascending"]
+    assert slot_map["citation_title_section_primary_number_span"] == ["339"]
+    assert slot_map["citation_title_section_terminal_number_relation"] == ["descending"]
+    assert slot_map["citation_title_section_terminal_number_span"] == ["21"]
 
     assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["source_id_section_has_mixed_token"] == ["true"]
@@ -706,6 +710,10 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_trailing_punct_count"] == ["0"]
     assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
+    assert slot_map["source_id_title_section_primary_number_relation"] == ["ascending"]
+    assert slot_map["source_id_title_section_primary_number_span"] == ["339"]
+    assert slot_map["source_id_title_section_terminal_number_relation"] == ["descending"]
+    assert slot_map["source_id_title_section_terminal_number_span"] == ["21"]
 
 
 def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> None:
@@ -783,6 +791,10 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_trailing_punct_count") == ["0"]
     assert objects("citation_title_section_key") == ["21:360bbb-0"]
     assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
+    assert objects("citation_title_section_primary_number_relation") == ["ascending"]
+    assert objects("citation_title_section_primary_number_span") == ["339"]
+    assert objects("citation_title_section_terminal_number_relation") == ["descending"]
+    assert objects("citation_title_section_terminal_number_span") == ["21"]
 
     assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("source_id_section_has_mixed_token") == ["true"]
@@ -846,6 +858,10 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_trailing_punct_count") == ["0"]
     assert objects("source_id_title_section_key") == ["21:360bbb-0"]
     assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
+    assert objects("source_id_title_section_primary_number_relation") == ["ascending"]
+    assert objects("source_id_title_section_primary_number_span") == ["339"]
+    assert objects("source_id_title_section_terminal_number_relation") == ["descending"]
+    assert objects("source_id_title_section_terminal_number_span") == ["21"]
 
 
 def test_decode_modal_ir_document_emits_single_component_section_role_slots() -> None:
