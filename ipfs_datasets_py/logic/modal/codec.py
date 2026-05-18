@@ -2353,8 +2353,9 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
     if isinstance(metadata_terms, Mapping):
         for frame_id, values in metadata_terms.items():
             normalized_values = _unique_preserve_order(
-                normalize_frame_ontology_term(str(value))
+                term
                 for value in _frame_ontology_metadata_values(values)
+                for term in _frame_ontology_metadata_terms(value)
             )
             frame_key = _clean_non_empty_string(frame_id)
             if frame_key and normalized_values:
@@ -2382,6 +2383,49 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
         if terms:
             result[frame_key] = terms
     return result
+
+
+def _frame_ontology_metadata_terms(value: Any) -> List[str]:
+    raw_value = _clean_non_empty_string(value)
+    if not raw_value:
+        return []
+    terms: List[str] = []
+
+    normalized = normalize_frame_ontology_term(raw_value)
+    if normalized:
+        terms.append(normalized)
+
+    citation_match = _USC_CITATION_RE.match(raw_value)
+    if citation_match:
+        citation_title = _clean_non_empty_string(citation_match.group("title"))
+        citation_section = _TRAILING_SECTION_PUNCT_RE.sub(
+            "",
+            _clean_non_empty_string(citation_match.group("section")),
+        )
+        if citation_title and citation_section:
+            citation_coordinate = normalize_frame_ontology_term(
+                f"{citation_title} {citation_section}",
+                keep_numeric_tokens=True,
+            )
+            if citation_coordinate:
+                terms.append(citation_coordinate)
+
+    source_id_match = _USCODE_SOURCE_ID_RE.match(raw_value)
+    if source_id_match:
+        source_title = _clean_non_empty_string(source_id_match.group("title"))
+        source_section = _TRAILING_SECTION_PUNCT_RE.sub(
+            "",
+            _clean_non_empty_string(source_id_match.group("section")),
+        )
+        if source_title and source_section:
+            source_coordinate = normalize_frame_ontology_term(
+                f"{source_title} {source_section}",
+                keep_numeric_tokens=True,
+            )
+            if source_coordinate:
+                terms.append(source_coordinate)
+
+    return _unique_preserve_order(terms)
 
 
 def _frame_ontology_metadata_values(values: Any) -> List[Any]:
