@@ -59,6 +59,7 @@ _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
 _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
 _USCODE_HEADING_ONLY_MAX_TOKENS = 12
+_USCODE_EMBEDDED_HEADING_WINDOW_MAX_CHARS = 260
 _USCODE_HEADING_ONLY_VERB_HINT_RE = re.compile(
     r"\b(?:shall|must|may|is|are|was|were|be|been|being|has|have|had|"
     r"will|would|should|can|could|do|does|did)\b",
@@ -478,6 +479,74 @@ class LegalModalParser:
             )
         )
 
+    def _embedded_citation_heading_segment(
+        self,
+        *,
+        normalized_text: str,
+        citation_section: str,
+    ) -> Optional[LegalSegment]:
+        """Extract a compact heading window anchored to an in-text section reference."""
+        if not citation_section:
+            return None
+
+        section_pattern = re.escape(citation_section)
+        reference_pattern = re.compile(
+            rf"(?<!\w)(?:§\s*|sec\.?\s*|section\s+)?{section_pattern}"
+            rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            re.IGNORECASE,
+        )
+        best_segment: Optional[LegalSegment] = None
+        best_score: Optional[tuple[int, int, int]] = None
+
+        for match in reference_pattern.finditer(normalized_text):
+            start = match.start()
+            window_end = min(
+                len(normalized_text),
+                start + _USCODE_EMBEDDED_HEADING_WINDOW_MAX_CHARS,
+            )
+            window = normalized_text[start:window_end]
+            lowered_window = window.lower()
+            cut = len(window)
+
+            for marker in (
+                " from the u.s. government publishing office",
+                " editorial notes ",
+                " historical and revision notes ",
+                " amendments ",
+            ):
+                marker_index = lowered_window.find(marker)
+                if marker_index != -1:
+                    cut = min(cut, marker_index)
+
+            subsection_match = _USCODE_SUBSECTION_MARKER_RE.search(
+                window,
+                pos=max(match.end() - start, 0),
+            )
+            if subsection_match is not None:
+                cut = min(cut, subsection_match.start())
+
+            candidate_text = self.normalize_text(window[:cut])
+            if not candidate_text:
+                continue
+            token_count = len(_TOKEN_RE.findall(candidate_text.lower()))
+            if token_count < 2 or token_count > _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS:
+                continue
+
+            has_prefixed_reference = candidate_text.lower().startswith(
+                ("§", "sec ", "sec.", "section ")
+            )
+            score = (0 if has_prefixed_reference else 1, token_count, start)
+            if best_score is None or score < best_score:
+                best_score = score
+                best_segment = LegalSegment(
+                    text=candidate_text,
+                    start_char=start,
+                    end_char=start + len(candidate_text),
+                    role="clause",
+                )
+
+        return best_segment
+
     def _uscode_editorial_status_fallback_formula(
         self,
         *,
@@ -702,6 +771,11 @@ class LegalModalParser:
                 if self._looks_like_heading_without_section_reference(segment.text):
                     candidate_segment = segment
                     break
+        if candidate_segment is None:
+            candidate_segment = self._embedded_citation_heading_segment(
+                normalized_text=normalized_text,
+                citation_section=citation_section,
+            )
         if candidate_segment is None:
             candidate_segment = self._subsection_heading_prefix_segment(
                 normalized_text=normalized_text,

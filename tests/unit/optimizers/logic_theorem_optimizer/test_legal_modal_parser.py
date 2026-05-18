@@ -176,6 +176,36 @@ _USCODE_7_7656_SYMBOLIC_VALIDITY_TEXT = (
     "Department, the Centers for Disease Control, and the Food and Drug "
     "Administration. (Pub. L. 105–185, title VI, §618, June 23, 1998, 112 Stat. 607.)"
 )
+_USCODE_8_1365B_SYMBOLIC_VALIDITY_TEXT = (
+    "U S C Title 8 ALIENS AND NATIONALITY 8 U S C United States Code 2024 Edition "
+    "Title 8 ALIENS AND NATIONALITY chapter reference register digest archive ledger "
+    "taxonomy matrix sec 1365b criminal penalty framework national enforcement "
+    "catalog profile record coordination protocol annex supplement schedule digest "
+    "index narrative glossary appendix mapping table registry ledger profile catalog "
+    "workflow archive coordination matrix record taxonomy annex supplement schedule "
+    "registry digest table profile catalog narrative appendix mapping index ledger "
+    "coordination protocol record workflow archive taxonomy matrix"
+)
+_USCODE_34_50108_SYMBOLIC_VALIDITY_TEXT = (
+    "U S C Title 34 CRIME CONTROL AND LAW ENFORCEMENT 34 U S C United States Code "
+    "2024 Edition Title 34 chapter reference digest archive ledger taxonomy matrix "
+    "section 50108 criminal penalty administration framework enforcement registry "
+    "catalog profile record coordination protocol annex supplement schedule digest "
+    "index narrative glossary appendix mapping table registry ledger profile catalog "
+    "workflow archive coordination matrix record taxonomy annex supplement schedule "
+    "registry digest table profile catalog narrative appendix mapping index ledger "
+    "coordination protocol record workflow archive taxonomy matrix"
+)
+_USCODE_19_3702_SYMBOLIC_VALIDITY_TEXT = (
+    "U S C Title 19 CUSTOMS DUTIES 19 U S C United States Code 2024 Edition Title 19 "
+    "chapter reference digest archive ledger taxonomy matrix sec 3702 congressional "
+    "statement of purpose policy coordination framework community alignment program "
+    "registry catalog profile record coordination protocol annex supplement schedule "
+    "digest index narrative glossary appendix mapping table registry ledger profile "
+    "catalog workflow archive coordination matrix record taxonomy annex supplement "
+    "schedule registry digest table profile catalog narrative appendix mapping index "
+    "ledger coordination protocol record workflow archive taxonomy matrix"
+)
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
@@ -677,6 +707,43 @@ def test_parser_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_6
             formula.provenance.citation == citation
             for formula in document.formulas
         )
+
+
+def test_parser_replays_long_embedded_section_heading_samples_for_8_1365b_34_50108_and_19_3702() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-8-1365b-a825991ce12b9ec4",
+            "8 U.S.C. 1365b",
+            _USCODE_8_1365B_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-34-50108-df98f803ad179a0b",
+            "34 U.S.C. 50108",
+            _USCODE_34_50108_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-19-3702-fb4c53c1694c688a",
+            "19 U.S.C. 3702",
+            _USCODE_19_3702_SYMBOLIC_VALIDITY_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
 
 
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:
