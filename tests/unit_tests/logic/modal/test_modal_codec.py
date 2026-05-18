@@ -30,6 +30,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
+    ModalIRFrame,
     ModalIRFrameLogic,
     ModalIROperator,
     ModalIRPredicate,
@@ -3231,6 +3232,72 @@ def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     slot_texts = decoded_modal_phrase_slot_text_map(decoded)
 
     assert slot_texts["selected_frame"] == [compiled.selected_frame]
+
+
+def test_modal_decompiler_surfaces_ranked_frame_candidate_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="frame-candidate-doc:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_provide_notice",
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="frame-candidate-doc",
+            start_char=0,
+            end_char=32,
+            citation="5 U.S.C. 552",
+        ),
+    )
+    document = ModalIRDocument(
+        document_id="frame-candidate-doc",
+        source="us_code",
+        normalized_text="The agency must provide notice.",
+        formulas=[formula],
+        frame_candidates=[
+            ModalIRFrame(
+                frame_id="criminal_penalty_enforcement",
+                score=0.61,
+                matched_terms=["criminal penalty", "enforcement"],
+            ),
+            ModalIRFrame(
+                frame_id="administrative_notice_hearing",
+                score=0.93,
+                matched_terms=["notice", "hearing"],
+            ),
+        ],
+        metadata={"selected_frame": "administrative_notice_hearing"},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_texts["frame_candidate"] == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+    ]
+    assert slot_texts["frame_candidate_rank"] == ["1", "2"]
+    assert slot_texts["frame_candidate_ranked"] == [
+        "1:administrative_notice_hearing",
+        "2:criminal_penalty_enforcement",
+    ]
+    assert "administrative" in slot_texts["frame_candidate_token"]
+    assert "penalty" in slot_texts["frame_candidate_token"]
+    assert slot_texts["frame_candidate_token_count"] == ["3"]
+    assert slot_texts["frame_candidate_term"] == [
+        "notice",
+        "hearing",
+        "criminal penalty",
+        "enforcement",
+    ]
+    assert "criminal" in slot_texts["frame_candidate_term_token"]
+    assert "administrative_notice_hearing" in slot_texts["selected_frame"]
+    assert slot_texts["selected_frame_stem"] == ["administrative_notice_hearing"]
 
 
 def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:

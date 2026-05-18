@@ -181,6 +181,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
         *_source_identifier_phrases(document),
+        *_frame_candidate_phrases(document),
     ]
     missing_slots: List[str] = []
     formulas: List[str] = []
@@ -225,6 +226,17 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            selected_frame,
+            slot_prefix="selected_frame",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
 
     support_span = _support_span(document.formulas)
     parser_warnings = [
@@ -764,6 +776,79 @@ def _source_id_section_slots(section: str) -> List[Tuple[str, str]]:
         if slot.startswith("citation_section"):
             slots.append((slot.replace("citation_section", "source_id_section", 1), value))
     return slots
+
+
+def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    ranked_candidates = sorted(
+        document.frame_candidates,
+        key=lambda candidate: _frame_candidate_sort_key(candidate),
+    )
+    for rank, candidate in enumerate(ranked_candidates, start=1):
+        frame_id = _clean_text(getattr(candidate, "frame_id", "") or "")
+        if not frame_id:
+            continue
+        phrases.append(
+            DecodedModalPhrase(
+                text=frame_id,
+                slot="frame_candidate",
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=str(rank),
+                slot="frame_candidate_rank",
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=f"{rank}:{frame_id}",
+                slot="frame_candidate_ranked",
+                provenance_only=True,
+            )
+        )
+        for slot, value in _typed_identifier_slots(
+            frame_id,
+            slot_prefix="frame_candidate",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
+        for term in _phrase_values(getattr(candidate, "matched_terms", ()) or ()):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=term,
+                    slot="frame_candidate_term",
+                    provenance_only=True,
+                )
+            )
+            for slot, value in _typed_identifier_slots(
+                term,
+                slot_prefix="frame_candidate_term",
+            ):
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=value,
+                        slot=slot,
+                        provenance_only=True,
+                    )
+                )
+    return phrases
+
+
+def _frame_candidate_sort_key(candidate: Any) -> Tuple[float, str]:
+    frame_id = _clean_text(getattr(candidate, "frame_id", "") or "")
+    try:
+        score = float(getattr(candidate, "score", 0.0))
+    except (TypeError, ValueError):
+        score = 0.0
+    return (-score, frame_id)
 
 
 def _operator_phrase(formula: ModalIRFormula) -> str:
