@@ -364,6 +364,7 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
         "jurisdiction",
     }
 )
+_GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
@@ -879,6 +880,10 @@ class SpaCyModalDecoder:
     ) -> Dict[str, float]:
         logits = {family: -0.25 for family in modal_families}
         signals = modal_ambiguity_signals(encoding)
+        generic_frame_debias_context = _is_generic_frame_cue_debias_context(
+            encoding,
+            signals,
+        )
         raw_counts = encoding.modal_family_counts()
         weighted_counts = _weighted_modal_family_counts(
             encoding,
@@ -886,7 +891,13 @@ class SpaCyModalDecoder:
         )
         for family, count in weighted_counts.items():
             if family in logits:
-                logits[family] = 2.0 + float(count)
+                base_logit = 2.0
+                if (
+                    family == ModalLogicFamily.FRAME.value
+                    and generic_frame_debias_context
+                ):
+                    base_logit = _GENERIC_FRAME_DEBIASED_LOGIT_BASE
+                logits[family] = float(base_logit) + float(count)
         scope_boosts = _scope_signal_family_logit_boosts(signals)
         for family, bonus in scope_boosts.items():
             if family not in logits:
@@ -895,7 +906,7 @@ class SpaCyModalDecoder:
                 continue
             logits[family] = max(float(logits[family]), 0.25) + float(bonus)
         frame_bonus = _frame_logit_bonus(signals)
-        if _is_generic_frame_cue_debias_context(encoding, signals):
+        if generic_frame_debias_context:
             frame_bonus = _debias_frame_bonus_for_generic_cues(signals)
         if ModalLogicFamily.FRAME.value in logits and frame_bonus > 0.0:
             logits[ModalLogicFamily.FRAME.value] = (
@@ -1141,7 +1152,8 @@ def _is_generic_frame_cue_debias_context(
     signals: Mapping[str, bool],
 ) -> bool:
     if not (
-        bool(signals.get("has_deontic_cue"))
+        bool(signals.get("has_deontic_scope"))
+        or bool(signals.get("has_temporal_scope"))
         or bool(signals.get("has_condition_or_exception_scope"))
     ):
         return False
