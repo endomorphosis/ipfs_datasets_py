@@ -1424,6 +1424,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         ("citation_section_component_count", str(len(components))),
     ]
     delimiter_tokens = _citation_section_delimiter_tokens(cleaned)
+    delimiter_pattern = ""
     if delimiter_tokens:
         slots.append(("citation_section_has_delimiter", "true"))
         slots.append(("citation_section_delimiter_count", str(len(delimiter_tokens))))
@@ -1453,8 +1454,9 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 )
             )
         if delimiter_kinds:
+            delimiter_pattern = "-".join(delimiter_kinds)
             slots.append(
-                ("citation_section_delimiter_pattern", "-".join(delimiter_kinds))
+                ("citation_section_delimiter_pattern", delimiter_pattern)
             )
             slots.append(
                 (
@@ -1483,6 +1485,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     terminal_has_suffix: bool | None = None
     primary_suffix_is_roman: bool | None = None
     terminal_suffix_is_roman: bool | None = None
+    primary_number = ""
+    terminal_number = ""
     total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
@@ -1523,6 +1527,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             slots.append(("citation_section_number_positioned", f"{position}:{number}"))
             if index == 1:
                 slots.append(("citation_section_primary_number", number))
+                primary_number = number
                 slots.append(
                     (
                         "citation_section_primary_number_digit_count",
@@ -1531,6 +1536,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 )
             if index == total_components:
                 slots.append(("citation_section_terminal_number", number))
+                terminal_number = number
                 slots.append(
                     (
                         "citation_section_terminal_number_digit_count",
@@ -1670,6 +1676,21 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         )
     if component_shapes:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
+    component_profile = _citation_section_component_profile(
+        component_count=total_components,
+        suffix_component_count=suffix_component_count,
+        is_range=bool(range_start and range_end and range_connector),
+    )
+    if component_profile:
+        slots.append(("citation_section_component_profile", component_profile))
+    numeric_relation = _primary_terminal_number_relation(
+        primary_number=primary_number,
+        terminal_number=terminal_number,
+    )
+    if numeric_relation is not None:
+        relation, span = numeric_relation
+        slots.append(("citation_section_primary_terminal_number_relation", relation))
+        slots.append(("citation_section_primary_terminal_number_span", span))
     slots.append(
         ("citation_section_numeric_component_count", str(numeric_component_count))
     )
@@ -1706,6 +1727,46 @@ def _citation_section_delimiter_kind(delimiter: str) -> str:
     if all(character in ".-" for character in cleaned):
         return "mixed"
     return "other"
+
+
+def _citation_section_component_profile(
+    *,
+    component_count: int,
+    suffix_component_count: int,
+    is_range: bool,
+) -> str:
+    if component_count <= 0:
+        return ""
+    if is_range:
+        return "range"
+    if component_count == 1:
+        return "single_alphanumeric" if suffix_component_count else "single_numeric"
+    if suffix_component_count == 0:
+        return "compound_numeric"
+    if suffix_component_count == component_count:
+        return "compound_alphanumeric"
+    return "compound_mixed"
+
+
+def _primary_terminal_number_relation(
+    *,
+    primary_number: str,
+    terminal_number: str,
+) -> Tuple[str, str] | None:
+    primary_text = _clean_text(primary_number)
+    terminal_text = _clean_text(terminal_number)
+    if not primary_text or not terminal_text:
+        return None
+    try:
+        primary_value = int(primary_text)
+        terminal_value = int(terminal_text)
+    except (TypeError, ValueError):
+        return None
+    if primary_value == terminal_value:
+        return ("equal", "0")
+    if primary_value < terminal_value:
+        return ("ascending", str(terminal_value - primary_value))
+    return ("descending", str(primary_value - terminal_value))
 
 
 def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:

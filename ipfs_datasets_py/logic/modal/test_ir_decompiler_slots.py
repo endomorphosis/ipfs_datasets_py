@@ -750,6 +750,140 @@ def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None
     assert objects("source_id_section_terminal_has_suffix") == ["false"]
 
 
+def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert mixed_slot_map["citation_section_component_profile"] == ["compound_mixed"]
+    assert mixed_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "descending"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_number_span"] == ["360"]
+    assert mixed_slot_map["source_id_section_component_profile"] == ["compound_mixed"]
+    assert mixed_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "descending"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_number_span"] == ["360"]
+
+    single_alnum_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_single_component_sample_document())
+    )
+    assert single_alnum_slot_map["citation_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
+    assert single_alnum_slot_map["source_id_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_terminal_number_span"] == [
+        "0"
+    ]
+
+    single_numeric_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+    assert single_numeric_slot_map["citation_section_component_profile"] == [
+        "single_numeric"
+    ]
+    assert single_numeric_slot_map["source_id_section_component_profile"] == [
+        "single_numeric"
+    ]
+
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    assert range_slot_map["citation_section_component_profile"] == ["range"]
+    assert range_slot_map["citation_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_number_span"] == ["0"]
+    assert range_slot_map["source_id_section_component_profile"] == ["range"]
+    assert range_slot_map["source_id_section_primary_terminal_number_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_number_span"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(_sample_document())
+    single_alnum_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+    single_numeric_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(mixed_triples, "citation_section_component_profile") == [
+        "compound_mixed"
+    ]
+    assert objects(mixed_triples, "citation_section_primary_terminal_number_relation") == [
+        "descending"
+    ]
+    assert objects(mixed_triples, "citation_section_primary_terminal_number_span") == [
+        "360"
+    ]
+    assert objects(mixed_triples, "source_id_section_component_profile") == [
+        "compound_mixed"
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_terminal_number_relation") == [
+        "descending"
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_terminal_number_span") == [
+        "360"
+    ]
+
+    assert objects(single_alnum_triples, "citation_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(single_alnum_triples, "citation_section_primary_terminal_number_span") == [
+        "0"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_span") == [
+        "0"
+    ]
+
+    assert objects(single_numeric_triples, "citation_section_component_profile") == [
+        "single_numeric"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_component_profile") == [
+        "single_numeric"
+    ]
+
+    assert objects(range_triples, "citation_section_component_profile") == ["range"]
+    assert objects(range_triples, "citation_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(range_triples, "citation_section_primary_terminal_number_span") == [
+        "0"
+    ]
+    assert objects(range_triples, "source_id_section_component_profile") == ["range"]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_relation") == [
+        "equal"
+    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_number_span") == [
+        "0"
+    ]
+
+
 def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:
     sample = _sample_document()
     document = ModalIRDocument(
