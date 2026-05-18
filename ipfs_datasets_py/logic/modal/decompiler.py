@@ -1982,6 +1982,37 @@ def _typed_identifier_slots(
     ]
     for token in tokens:
         slots.append((f"{slot_prefix}_token", token))
+    mixed_token_count = 0
+    alnum_segments: List[str] = []
+    for token in tokens:
+        if any(character.isdigit() for character in token) and any(
+            character.isalpha() for character in token
+        ):
+            mixed_token_count += 1
+        alnum_segments.extend(_alnum_segments(token))
+    slots.append(
+        (
+            f"{slot_prefix}_has_mixed_token",
+            "true" if mixed_token_count > 0 else "false",
+        )
+    )
+    slots.append((f"{slot_prefix}_mixed_token_count", str(mixed_token_count)))
+    slots.append((f"{slot_prefix}_alnum_segment_count", str(len(alnum_segments))))
+    if alnum_segments:
+        slots.append((f"{slot_prefix}_alnum_segment_prefix", alnum_segments[0]))
+        slots.append((f"{slot_prefix}_alnum_segment_suffix", alnum_segments[-1]))
+    for index, segment in enumerate(alnum_segments, start=1):
+        position = str(index)
+        segment_kind = _alnum_segment_kind(segment)
+        slots.append((f"{slot_prefix}_alnum_segment", segment))
+        slots.append((f"{slot_prefix}_alnum_segment_positioned", f"{position}:{segment}"))
+        slots.append((f"{slot_prefix}_alnum_segment_kind", segment_kind))
+        slots.append(
+            (
+                f"{slot_prefix}_alnum_segment_kind_positioned",
+                f"{position}:{segment_kind}",
+            )
+        )
     if re.fullmatch(r"v\d+", tokens[-1]):
         slots.append((f"{slot_prefix}_version", tokens[-1]))
         stem_tokens = tokens[:-1]
@@ -1999,6 +2030,24 @@ def _phrase_values(values: Sequence[str]) -> List[str]:
         if cleaned and cleaned not in result:
             result.append(cleaned)
     return result
+
+
+def _alnum_segments(token: str) -> List[str]:
+    cleaned = _clean_text(token).lower()
+    if not cleaned:
+        return []
+    return [segment for segment in re.findall(r"[a-z]+|\d+", cleaned) if segment]
+
+
+def _alnum_segment_kind(value: str) -> str:
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return "other"
+    if cleaned.isdigit():
+        return "numeric"
+    if cleaned.isalpha():
+        return "alpha"
+    return "other"
 
 
 def _selected_frame(document: ModalIRDocument) -> str:

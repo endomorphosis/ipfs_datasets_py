@@ -321,6 +321,21 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_title_number"] == ["21"]
     assert slot_map["citation_title_token_count"] == ["1"]
     assert slot_map["citation_title_stem"] == ["21"]
+    assert slot_map["citation_section_has_mixed_token"] == ["true"]
+    assert slot_map["citation_section_mixed_token_count"] == ["1"]
+    assert slot_map["citation_section_alnum_segment_count"] == ["3"]
+    assert slot_map["citation_section_alnum_segment_prefix"] == ["360"]
+    assert slot_map["citation_section_alnum_segment_suffix"] == ["0"]
+    assert slot_map["citation_section_alnum_segment_positioned"] == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert slot_map["citation_section_alnum_segment_kind_positioned"] == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
     assert slot_map["citation_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["citation_section_number_positioned"] == ["1:360", "2:0"]
     assert slot_map["citation_section_number_digit_count"] == ["3", "1"]
@@ -367,6 +382,21 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
 
     assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
+    assert slot_map["source_id_section_has_mixed_token"] == ["true"]
+    assert slot_map["source_id_section_mixed_token_count"] == ["1"]
+    assert slot_map["source_id_section_alnum_segment_count"] == ["3"]
+    assert slot_map["source_id_section_alnum_segment_prefix"] == ["360"]
+    assert slot_map["source_id_section_alnum_segment_suffix"] == ["0"]
+    assert slot_map["source_id_section_alnum_segment_positioned"] == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert slot_map["source_id_section_alnum_segment_kind_positioned"] == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
     assert slot_map["source_id_section_number_positioned"] == ["1:360", "2:0"]
     assert slot_map["source_id_section_number_digit_count"] == ["3", "1"]
     assert slot_map["source_id_section_number_digit_count_positioned"] == ["1:3", "2:1"]
@@ -425,6 +455,21 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_title_number") == ["21"]
     assert objects("citation_title_token_count") == ["1"]
     assert objects("citation_title_stem") == ["21"]
+    assert objects("citation_section_has_mixed_token") == ["true"]
+    assert objects("citation_section_mixed_token_count") == ["1"]
+    assert objects("citation_section_alnum_segment_count") == ["3"]
+    assert objects("citation_section_alnum_segment_prefix") == ["360"]
+    assert objects("citation_section_alnum_segment_suffix") == ["0"]
+    assert objects("citation_section_alnum_segment_positioned") == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert objects("citation_section_alnum_segment_kind_positioned") == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
     assert objects("citation_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("citation_section_number_positioned") == ["1:360", "2:0"]
     assert objects("citation_section_number_digit_count") == ["3", "1"]
@@ -471,6 +516,21 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
 
     assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
+    assert objects("source_id_section_has_mixed_token") == ["true"]
+    assert objects("source_id_section_mixed_token_count") == ["1"]
+    assert objects("source_id_section_alnum_segment_count") == ["3"]
+    assert objects("source_id_section_alnum_segment_prefix") == ["360"]
+    assert objects("source_id_section_alnum_segment_suffix") == ["0"]
+    assert objects("source_id_section_alnum_segment_positioned") == [
+        "1:360",
+        "2:bbb",
+        "3:0",
+    ]
+    assert objects("source_id_section_alnum_segment_kind_positioned") == [
+        "1:numeric",
+        "2:alpha",
+        "3:numeric",
+    ]
     assert objects("source_id_section_number_positioned") == ["1:360", "2:0"]
     assert objects("source_id_section_number_digit_count") == ["3", "1"]
     assert objects("source_id_section_number_digit_count_positioned") == ["1:3", "2:1"]

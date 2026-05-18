@@ -2010,6 +2010,39 @@ def _typed_identifier_components(
     ]
     for token in tokens:
         components.append((f"{slot_prefix}_token", token))
+    mixed_token_count = 0
+    alnum_segments: List[str] = []
+    for token in tokens:
+        if any(character.isdigit() for character in token) and any(
+            character.isalpha() for character in token
+        ):
+            mixed_token_count += 1
+        alnum_segments.extend(_alnum_segments(token))
+    components.append(
+        (
+            f"{slot_prefix}_has_mixed_token",
+            "true" if mixed_token_count > 0 else "false",
+        )
+    )
+    components.append((f"{slot_prefix}_mixed_token_count", str(mixed_token_count)))
+    components.append((f"{slot_prefix}_alnum_segment_count", str(len(alnum_segments))))
+    if alnum_segments:
+        components.append((f"{slot_prefix}_alnum_segment_prefix", alnum_segments[0]))
+        components.append((f"{slot_prefix}_alnum_segment_suffix", alnum_segments[-1]))
+    for index, segment in enumerate(alnum_segments, start=1):
+        position = str(index)
+        segment_kind = _alnum_segment_kind(segment)
+        components.append((f"{slot_prefix}_alnum_segment", segment))
+        components.append(
+            (f"{slot_prefix}_alnum_segment_positioned", f"{position}:{segment}")
+        )
+        components.append((f"{slot_prefix}_alnum_segment_kind", segment_kind))
+        components.append(
+            (
+                f"{slot_prefix}_alnum_segment_kind_positioned",
+                f"{position}:{segment_kind}",
+            )
+        )
     if re.fullmatch(r"v\d+", tokens[-1]):
         components.append((f"{slot_prefix}_version", tokens[-1]))
         stem_tokens = tokens[:-1]
@@ -2048,6 +2081,24 @@ def _fallback_section_heading_tail_text(
     if len(tokens) > max_tokens:
         return ""
     return heading_tail
+
+
+def _alnum_segments(token: str) -> List[str]:
+    cleaned = _clean_non_empty_string(token).lower()
+    if not cleaned:
+        return []
+    return [segment for segment in re.findall(r"[a-z]+|\d+", cleaned) if segment]
+
+
+def _alnum_segment_kind(value: str) -> str:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned:
+        return "other"
+    if cleaned.isdigit():
+        return "numeric"
+    if cleaned.isalpha():
+        return "alpha"
+    return "other"
 
 
 def _fallback_surface_text(
