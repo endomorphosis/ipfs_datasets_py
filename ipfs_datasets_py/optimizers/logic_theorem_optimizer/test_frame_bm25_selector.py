@@ -132,3 +132,23 @@ def test_frame_ontology_terms_support_source_id_citation_canonical_predicates() 
 
     assert triple_terms == ["50_2675"]
     assert feature_terms == ["50_2675", "16_460ff_1"]
+
+
+def test_frame_ontology_terms_normalize_range_connector_predicates() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "citation_section_range_connector", "object": "to"},
+            {"predicate": "source_id_section_range_connector", "object": "through"},
+            {"predicate": "citation_section_range_connector", "object": "thru"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section_range_connector:to",
+            "slot:source_id_section_range_connector:through",
+            "flogic:citation_section_range_connector:thru",
+        ]
+    )
+
+    assert triple_terms == ["through"]
+    assert feature_terms == ["through"]

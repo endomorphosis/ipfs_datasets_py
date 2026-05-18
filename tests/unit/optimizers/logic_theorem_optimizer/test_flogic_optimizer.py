@@ -244,6 +244,31 @@ def test_flogic_optimizer_tracks_source_id_citation_canonical_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_normalizes_range_connector_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "slot:citation_section_range_connector:to",
+            "flogic:source_id_section_range_connector:thru",
+        ],
+    )
+
+    assert result.metadata["frame_ontology_terms"] == [
+        "through",
+    ]
+
+
 def test_flogic_optimizer_tracks_legacy_bare_contextual_feature_terms() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

@@ -126,6 +126,11 @@ _FRAME_ONTOLOGY_PUNCTUATION_TOKEN_ALIASES = {
     "{": "left_brace",
     "}": "right_brace",
 }
+_FRAME_ONTOLOGY_RANGE_CONNECTOR_ALIASES = {
+    "thru": "through",
+    "through": "through",
+    "to": "through",
+}
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
     "candidate_term": "candidate_ontology_term",
@@ -620,6 +625,10 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             normalized_predicate=normalized_predicate,
             raw_value=raw_value,
         )
+    if normalized_predicate.endswith("_range_connector"):
+        normalized_range_connector = _normalized_range_connector_ontology_value(raw_value)
+        if normalized_range_connector:
+            return normalized_range_connector
     if normalized_predicate == "statutory_scope_target":
         scoped_target = raw_value.split("(", 1)[0].strip()
         if scoped_target:
@@ -657,6 +666,13 @@ def _normalized_trailing_punct_ontology_value(raw_value: str) -> str:
     if tokens:
         return "_".join(tokens)
     return compact
+
+
+def _normalized_range_connector_ontology_value(raw_value: str) -> str:
+    normalized = " ".join(str(raw_value or "").strip().lower().split())
+    if not normalized:
+        return ""
+    return _FRAME_ONTOLOGY_RANGE_CONNECTOR_ALIASES.get(normalized, normalized)
 
 
 def _normalized_modal_family_count_value(
