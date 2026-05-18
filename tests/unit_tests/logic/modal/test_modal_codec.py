@@ -3637,6 +3637,28 @@ def test_modal_codec_emits_frame_ontology_term_triples() -> None:
     assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
 
 
+def test_modal_codec_normalizes_legacy_slot_positioned_frame_audit_terms() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "Administrative notice and hearing.",
+        document_id="frame-term-positioned-slot-doc",
+        citation="48 U.S.C. 1572.",
+        source="us_code",
+    )
+
+    assert result.flogic_result is not None
+    feature_terms = result.flogic_result.metadata["frame_ontology_terms_from_feature_keys"]
+    merged_terms = result.flogic_result.metadata["frame_ontology_terms"]
+
+    assert "1572" in feature_terms
+    assert "numeric" in feature_terms
+    assert "4" in feature_terms
+    assert not any(term.startswith("1_") for term in feature_terms)
+    assert not any(term.startswith("1_") for term in merged_terms)
+
+
 def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

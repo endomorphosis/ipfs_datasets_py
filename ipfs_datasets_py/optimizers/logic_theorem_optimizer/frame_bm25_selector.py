@@ -14,6 +14,9 @@ _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 _FRAME_ONTOLOGY_POSITIONED_VALUE_RE = re.compile(
     r"^\s*\d+\s*:\s*(?P<value>.+?)\s*$"
 )
+_FRAME_ONTOLOGY_POSITIONED_VALUE_LEGACY_SLOT_RE = re.compile(
+    r"^\s*\d+\s*_\s*(?P<value>.+?)\s*$"
+)
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
         "a",
@@ -555,6 +558,15 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         match = _FRAME_ONTOLOGY_POSITIONED_VALUE_RE.match(raw_value)
         if match:
             positioned_value = str(match.group("value") or "").strip()
+            if positioned_value:
+                return positioned_value
+        legacy_slot_match = _FRAME_ONTOLOGY_POSITIONED_VALUE_LEGACY_SLOT_RE.match(
+            raw_value
+        )
+        if legacy_slot_match:
+            positioned_value = str(
+                legacy_slot_match.group("value") or ""
+            ).strip()
             if positioned_value:
                 return positioned_value
     return raw_value

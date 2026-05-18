@@ -692,6 +692,24 @@ def test_frame_ontology_terms_from_feature_keys_normalize_positioned_citation_va
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_normalize_legacy_slot_positioned_values() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:citation_section_component_positioned:1_360bbb",
+            "slot:citation_section_number_positioned:1_360",
+            "slot:citation_section_number_digit_count_positioned:1_3",
+            "slot:citation_section_component_kind_positioned:1_alphanumeric",
+        ]
+    )
+
+    assert terms == [
+        "360bbb",
+        "360",
+        "3",
+        "alphanumeric",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_normalize_positioned_citation_values() -> None:
     terms = frame_ontology_terms_from_triples(
         [
