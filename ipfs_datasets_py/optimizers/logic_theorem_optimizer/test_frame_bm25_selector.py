@@ -41,3 +41,27 @@ def test_frame_ontology_terms_from_feature_keys_keeps_flogic_citation_numbers() 
     assert "5406" in terms
     assert "frame" in terms
     assert "2" not in terms
+
+
+def test_frame_ontology_terms_from_triples_keeps_single_digit_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "citation_section", "object": "78u-3"},
+            {"predicate": "source_id_section", "object": "410r-1"},
+        ]
+    )
+
+    assert "78u_3" in terms
+    assert "410r_1" in terms
+
+
+def test_frame_ontology_terms_from_feature_keys_keeps_single_digit_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section:78u-3",
+            "flogic:source_id_section:410r-1",
+        ]
+    )
+
+    assert "78u_3" in terms
+    assert "410r_1" in terms

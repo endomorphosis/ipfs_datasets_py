@@ -432,12 +432,12 @@ def _is_informative_ontology_token(
     *,
     keep_numeric_tokens: bool = False,
 ) -> bool:
+    if token.isdigit():
+        return keep_numeric_tokens
     if len(token) < 2:
         return False
     if token in _FRAME_ONTOLOGY_STOPWORDS:
         return False
-    if token.isdigit():
-        return keep_numeric_tokens
     return any(character.isalpha() for character in token)
 
 
