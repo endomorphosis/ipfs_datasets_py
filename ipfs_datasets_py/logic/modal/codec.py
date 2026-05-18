@@ -1173,6 +1173,15 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
     components: List[tuple[str, str]] = []
     if title:
         components.append(("citation_title", title))
+        components.extend(_typed_identifier_components(title, slot_prefix="citation_title"))
+        title_match = _CITATION_SECTION_PART_RE.fullmatch(title)
+        if title_match:
+            title_number = _clean_non_empty_string(title_match.group("number"))
+            title_suffix = _clean_non_empty_string(title_match.group("suffix"))
+            if title_number:
+                components.append(("citation_title_number", title_number))
+            if title_suffix:
+                components.append(("citation_title_suffix", title_suffix))
     components.append(("citation_code", "U.S.C."))
     if section:
         citation_canonical = _canonical_usc_citation(title, section)
@@ -1393,6 +1402,23 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
             )
             components.append(("citation_section_suffix", suffix))
             components.append(("citation_section_suffix_positioned", f"{position}:{suffix}"))
+            suffix_char_count = str(len(suffix))
+            components.append(("citation_section_suffix_char_count", suffix_char_count))
+            components.append(
+                (
+                    "citation_section_suffix_char_count_positioned",
+                    f"{position}:{suffix_char_count}",
+                )
+            )
+            suffix_profile = _suffix_profile(suffix)
+            if suffix_profile:
+                components.append(("citation_section_suffix_profile", suffix_profile))
+                components.append(
+                    (
+                        "citation_section_suffix_profile_positioned",
+                        f"{position}:{suffix_profile}",
+                    )
+                )
             normalized_suffix = suffix.lower()
             if normalized_suffix:
                 components.append(("citation_section_suffix_normalized", normalized_suffix))
@@ -1415,9 +1441,15 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                     components.append(("citation_section_terminal_suffix_case", suffix_case))
             if index == 1:
                 components.append(("citation_section_primary_suffix", suffix))
+                components.append(("citation_section_primary_suffix_char_count", suffix_char_count))
+                if suffix_profile:
+                    components.append(("citation_section_primary_suffix_profile", suffix_profile))
                 components.append(("citation_section_primary_component_kind", "alphanumeric"))
             if index == total_parts:
                 components.append(("citation_section_terminal_suffix", suffix))
+                components.append(("citation_section_terminal_suffix_char_count", suffix_char_count))
+                if suffix_profile:
+                    components.append(("citation_section_terminal_suffix_profile", suffix_profile))
                 components.append(("citation_section_terminal_component_kind", "alphanumeric"))
         else:
             component_shapes.append("N")
@@ -1665,6 +1697,17 @@ def _alpha_case_kind(value: str) -> str:
         return "lower"
     if letters.isupper():
         return "upper"
+    return "mixed"
+
+
+def _suffix_profile(value: str) -> str:
+    cleaned = _clean_non_empty_string(value).lower()
+    if not cleaned:
+        return ""
+    if len(cleaned) == 1:
+        return "single"
+    if len(set(cleaned)) == 1:
+        return "repeat"
     return "mixed"
 
 

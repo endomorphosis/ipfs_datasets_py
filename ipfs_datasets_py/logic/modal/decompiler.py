@@ -1242,6 +1242,17 @@ def _alpha_case_kind(value: str) -> str:
     return "mixed"
 
 
+def _suffix_profile(value: str) -> str:
+    cleaned = _clean_text(value).lower()
+    if not cleaned:
+        return ""
+    if len(cleaned) == 1:
+        return "single"
+    if len(set(cleaned)) == 1:
+        return "repeat"
+    return "mixed"
+
+
 def _derived_status_keyword(
     *,
     formula: ModalIRFormula,
@@ -1282,6 +1293,15 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
     slots: List[Tuple[str, str]] = []
     if title:
         slots.append(("citation_title", title))
+        slots.extend(_typed_identifier_slots(title, slot_prefix="citation_title"))
+        title_match = _CITATION_SECTION_PART_RE.fullmatch(title)
+        if title_match:
+            title_number = _clean_text(title_match.group("number"))
+            title_suffix = _clean_text(title_match.group("suffix"))
+            if title_number:
+                slots.append(("citation_title_number", title_number))
+            if title_suffix:
+                slots.append(("citation_title_suffix", title_suffix))
     slots.append(("citation_code", "U.S.C."))
     if section:
         citation_canonical = _canonical_usc_citation(title, section)
@@ -1403,6 +1423,23 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             )
             slots.append(("citation_section_suffix", suffix))
             slots.append(("citation_section_suffix_positioned", f"{position}:{suffix}"))
+            suffix_char_count = str(len(suffix))
+            slots.append(("citation_section_suffix_char_count", suffix_char_count))
+            slots.append(
+                (
+                    "citation_section_suffix_char_count_positioned",
+                    f"{position}:{suffix_char_count}",
+                )
+            )
+            suffix_profile = _suffix_profile(suffix)
+            if suffix_profile:
+                slots.append(("citation_section_suffix_profile", suffix_profile))
+                slots.append(
+                    (
+                        "citation_section_suffix_profile_positioned",
+                        f"{position}:{suffix_profile}",
+                    )
+                )
             normalized_suffix = suffix.lower()
             if normalized_suffix:
                 slots.append(("citation_section_suffix_normalized", normalized_suffix))
@@ -1425,9 +1462,15 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                     slots.append(("citation_section_terminal_suffix_case", suffix_case))
             if index == 1:
                 slots.append(("citation_section_primary_suffix", suffix))
+                slots.append(("citation_section_primary_suffix_char_count", suffix_char_count))
+                if suffix_profile:
+                    slots.append(("citation_section_primary_suffix_profile", suffix_profile))
                 slots.append(("citation_section_primary_component_kind", "alphanumeric"))
             if index == total_components:
                 slots.append(("citation_section_terminal_suffix", suffix))
+                slots.append(("citation_section_terminal_suffix_char_count", suffix_char_count))
+                if suffix_profile:
+                    slots.append(("citation_section_terminal_suffix_profile", suffix_profile))
                 slots.append(("citation_section_terminal_component_kind", "alphanumeric"))
         else:
             component_shapes.append("N")
