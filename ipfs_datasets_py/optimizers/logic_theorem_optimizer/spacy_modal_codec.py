@@ -218,6 +218,9 @@ _TEMPORAL_BY_PHRASE_RE = re.compile(
     r")",
     re.IGNORECASE,
 )
+_NON_TEMPORAL_FOLLOWING_PREFIX_TOKENS = frozenset(
+    {"the", "these", "those", "such"}
+)
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
         "administrator",
@@ -480,17 +483,28 @@ class SpaCyLegalEncoder:
                             end_char=match.end(),
                         ):
                             continue
-                        if (
-                            profile.family == ModalLogicFamily.TEMPORAL
-                            and cue.lower() == "by"
-                            and not self._is_temporal_deadline_by_cue(
-                                normalized_text=normalized,
-                                tokens=tokens,
-                                start_char=match.start(),
-                                end_char=match.end(),
-                            )
-                        ):
-                            continue
+                        if profile.family == ModalLogicFamily.TEMPORAL:
+                            lowered_cue = cue.lower()
+                            if (
+                                lowered_cue == "by"
+                                and not self._is_temporal_deadline_by_cue(
+                                    normalized_text=normalized,
+                                    tokens=tokens,
+                                    start_char=match.start(),
+                                    end_char=match.end(),
+                                )
+                            ):
+                                continue
+                            if (
+                                lowered_cue == "following"
+                                and self._is_non_temporal_following_cue(
+                                    normalized_text=normalized,
+                                    tokens=tokens,
+                                    start_char=match.start(),
+                                    end_char=match.end(),
+                                )
+                            ):
+                                continue
                         token_indices = [
                             index
                             for index, start, end in token_spans
@@ -556,6 +570,50 @@ class SpaCyLegalEncoder:
                 return True
             if re.fullmatch(r"\d{1,4}", token.text):
                 return True
+        return False
+
+    def _is_non_temporal_following_cue(
+        self,
+        *,
+        normalized_text: str,
+        tokens: Sequence[SpaCyTokenFeature],
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat list-introducing `the following` as non-temporal context."""
+        preceding: Optional[SpaCyTokenFeature] = None
+        lookahead: List[SpaCyTokenFeature] = []
+        for token in tokens:
+            if token.end_char <= start_char:
+                preceding = token
+                continue
+            if token.start_char >= end_char:
+                lookahead.append(token)
+                if len(lookahead) >= 3:
+                    break
+        if preceding is None:
+            return False
+        preceding_normalized = preceding.normalized().lower()
+        if preceding_normalized not in _NON_TEMPORAL_FOLLOWING_PREFIX_TOKENS:
+            return False
+        if lookahead:
+            next_token = lookahead[0]
+            next_normalized = next_token.normalized().lower()
+            if (
+                next_normalized in _TEMPORAL_SCOPE_TOKENS
+                or next_normalized in _MONTH_NAME_TOKENS
+                or re.fullmatch(r"\d{1,4}", next_token.text)
+            ):
+                return False
+        trailing = normalized_text[end_char : end_char + 48]
+        if re.match(r"^\s*[:;,(\[]", trailing):
+            return True
+        if re.match(
+            r"^\s+(?:is|are|shall|must|may|include|includes|apply|applies|as)\b",
+            trailing,
+            re.IGNORECASE,
+        ):
+            return True
         return False
 
     def _cue_feature(

@@ -288,6 +288,47 @@ def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
     )
 
 
+def test_spacy_encoder_treats_the_following_as_non_temporal_list_intro() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The following shall apply: (1) recordkeeping requirements; (2) audit procedures.",
+        document_id="sample-following-list-intro",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "following"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Except as provided in subsection (b), the Secretary shall issue a determination.",
+        document_id="sample-except-as-provided-in",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "except as provided in"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_epistemic_cues_for_knowledge_and_belief() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "A person with knowledge of the violation has reason to believe the report is false.",
+        document_id="sample-knowledge-belief",
+    )
+
+    assert any(
+        cue.family == "epistemic"
+        and cue.cue.lower() in {"knowledge of", "has reason to believe"}
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()
