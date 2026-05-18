@@ -3285,6 +3285,94 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     )
 
 
+def test_modal_compiler_surfaces_frame_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-frame-self-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-frame-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-frame-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="42 U.S.C. 1395w",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "frame", "count": 2, "share": 0.53},
+            {"family": "temporal", "count": 2, "share": 0.47},
+        ],
+        family_shares={"frame": 0.53, "temporal": 0.47},
+    )
+
+    adaptive_frame_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame"]
+    )
+    assert adaptive_frame_self.metadata["predicted_family"] == "frame"
+    assert adaptive_frame_self.metadata["target_family"] == "frame"
+    assert adaptive_frame_self.metadata["is_self_pair"] is True
+    assert adaptive_frame_self.metadata["predicted_margin_to_runner_up"] == 0.06
+    assert adaptive_frame_self.metadata["family_margin"] == 0.0
+    assert adaptive_frame_self.metadata["adaptive_margin_direction"] == "contested"
+    assert (
+        adaptive_frame_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_frame_frame_contested_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_frame_frame_contested_margin_low"
+        and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
