@@ -96,6 +96,7 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("no later than", "no_later_than"),
     ("if", "if"),
     ("when", "when"),
+    ("until", "until"),
     ("after", "after"),
     ("before", "before"),
     ("by", "by"),
@@ -110,6 +111,7 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("except", "except"),
 )
 _TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
+    "until": "until",
     "after": "after",
     "before": "before",
     "by": "deadline",
@@ -1687,6 +1689,48 @@ def _operator_cue_terms(formula: ModalIRFormula) -> List[str]:
     return []
 
 
+def _canonical_cue_operator_symbol(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+) -> str:
+    family = _clean_non_empty_string(formula.operator.family).lower()
+    cue_value = _clean_non_empty_string(cue).lower()
+    if not family or not cue_value:
+        return ""
+    matching_symbols: List[str] = []
+    for profile in DEFAULT_MODAL_REGISTRY.all_profiles():
+        if _clean_non_empty_string(profile.family.value).lower() != family:
+            continue
+        for operator in profile.operators:
+            if any(
+                _cue_matches_registry_term(cue_value, cue_term)
+                for cue_term in operator.cue_terms
+            ):
+                symbol = _clean_non_empty_string(operator.symbol)
+                if symbol and symbol not in matching_symbols:
+                    matching_symbols.append(symbol)
+    if not matching_symbols:
+        return ""
+    formula_symbol = _clean_non_empty_string(formula.operator.symbol)
+    if formula_symbol and formula_symbol in matching_symbols:
+        return formula_symbol
+    return matching_symbols[0]
+
+
+def _cue_matches_registry_term(
+    cue_value: str,
+    cue_term: str,
+) -> bool:
+    normalized_cue_tokens = _CUE_TOKEN_RE.findall(
+        _clean_non_empty_string(cue_value).replace("_", " ").lower()
+    )
+    normalized_term_tokens = _CUE_TOKEN_RE.findall(
+        _clean_non_empty_string(cue_term).replace("_", " ").lower()
+    )
+    return bool(normalized_cue_tokens) and normalized_cue_tokens == normalized_term_tokens
+
+
 def _text_contains_cue_term(text: str, cue_term: str) -> bool:
     normalized_text = _clean_non_empty_string(text).lower()
     normalized_term = _clean_non_empty_string(cue_term).lower()
@@ -1741,6 +1785,23 @@ def _modal_lexeme_components(
         (f"{normalized_slot_prefix}_operator", symbol),
         (f"{normalized_slot_prefix}_lexeme", cue_value),
     ]
+    canonical_symbol = _canonical_cue_operator_symbol(formula, cue=cue_value)
+    if canonical_symbol:
+        components.append(
+            (f"{normalized_slot_prefix}_canonical_operator", canonical_symbol)
+        )
+        components.append(
+            (
+                f"{normalized_slot_prefix}_canonical_signature",
+                f"{family}:{canonical_symbol}:{cue_value}",
+            )
+        )
+        components.append(
+            (
+                f"{normalized_slot_prefix}_operator_alignment",
+                "aligned" if canonical_symbol == symbol else "divergent",
+            )
+        )
     if symbol == "O|":
         conditional_normative_value = f"{symbol}:{cue_value}"
         components.append(

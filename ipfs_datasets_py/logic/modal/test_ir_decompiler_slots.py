@@ -661,6 +661,35 @@ def _cue_signature_temporal_clause_sample_document() -> ModalIRDocument:
     )
 
 
+def _temporal_until_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-5-8123-1b66f2d0a8c10984"
+    normalized_text = "The agency shall maintain records until final review is complete."
+    formula = ModalIRFormula(
+        formula_id="f-temporal-until",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="maintain_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="5 U.S.C. 8123",
+        ),
+        conditions=["until final review is complete"],
+        metadata={"cue": "until"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _zero_digit_signature_sample_document() -> ModalIRDocument:
     source_id = "us-code-43-1470.-845d9dceb9d264ab"
     formula = ModalIRFormula(
@@ -3430,15 +3459,27 @@ def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
     assert slot_map["cue_modal_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["cue_modal_canonical_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+    ]
     assert slot_map["cue_modal_family"] == ["deontic", "temporal"]
     assert slot_map["cue_modal_operator"] == ["O", "F"]
+    assert slot_map["cue_modal_canonical_operator"] == ["O", "F"]
     assert slot_map["cue_modal_lexeme"] == ["shall", "by"]
+    assert slot_map["cue_modal_operator_alignment"] == ["aligned"]
     assert slot_map["cue_modal_temporal_relation"] == ["deadline"]
     assert slot_map["modal_cue"] == ["shall", "by"]
     assert slot_map["modal_cue_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["modal_cue_canonical_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+    ]
     assert slot_map["modal_cue_family"] == ["deontic", "temporal"]
     assert slot_map["modal_cue_operator"] == ["O", "F"]
+    assert slot_map["modal_cue_canonical_operator"] == ["O", "F"]
     assert slot_map["modal_cue_lexeme"] == ["shall", "by"]
+    assert slot_map["modal_cue_operator_alignment"] == ["aligned"]
     assert slot_map["modal_cue_temporal_relation"] == ["deadline"]
     assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
     assert slot_map["condition_modal_signature"] == [
@@ -3446,9 +3487,15 @@ def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_
         "temporal:F:after",
         "temporal:F:by",
     ]
+    assert slot_map["condition_modal_canonical_signature"] == [
+        "temporal:X:after",
+        "temporal:F:by",
+    ]
     assert slot_map["condition_modal_family"] == ["deontic", "temporal"]
     assert slot_map["condition_modal_operator"] == ["O", "F"]
+    assert slot_map["condition_modal_canonical_operator"] == ["X", "F"]
     assert slot_map["condition_modal_lexeme"] == ["if", "after", "by"]
+    assert slot_map["condition_modal_operator_alignment"] == ["divergent", "aligned"]
     assert slot_map["condition_modal_temporal_relation"] == ["after", "deadline"]
     assert slot_map["condition_after"] == ["the agency receives notice"]
     assert slot_map["condition_by"] == ["march 1"]
@@ -3467,15 +3514,27 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
         ]
 
     assert objects("cue_modal_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("cue_modal_canonical_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+    ]
     assert objects("cue_modal_family") == ["deontic", "temporal"]
     assert objects("cue_modal_operator") == ["O", "F"]
+    assert objects("cue_modal_canonical_operator") == ["O", "F"]
     assert objects("cue_modal_lexeme") == ["shall", "by"]
+    assert objects("cue_modal_operator_alignment") == ["aligned", "aligned"]
     assert objects("cue_modal_temporal_relation") == ["deadline"]
     assert objects("modal_cue") == ["shall", "by"]
     assert objects("modal_cue_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("modal_cue_canonical_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+    ]
     assert objects("modal_cue_family") == ["deontic", "temporal"]
     assert objects("modal_cue_operator") == ["O", "F"]
+    assert objects("modal_cue_canonical_operator") == ["O", "F"]
     assert objects("modal_cue_lexeme") == ["shall", "by"]
+    assert objects("modal_cue_operator_alignment") == ["aligned", "aligned"]
     assert objects("modal_cue_temporal_relation") == ["deadline"]
     assert objects("condition_prefix_key") == ["if", "after", "by"]
     assert objects("condition_modal_signature") == [
@@ -3483,14 +3542,62 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
         "temporal:F:after",
         "temporal:F:by",
     ]
+    assert objects("condition_modal_canonical_signature") == [
+        "temporal:X:after",
+        "temporal:F:by",
+    ]
     assert objects("condition_modal_family") == ["deontic", "temporal"]
     assert objects("condition_modal_operator") == ["O", "F"]
+    assert objects("condition_modal_canonical_operator") == ["X", "F"]
     assert objects("condition_modal_lexeme") == ["if", "after", "by"]
+    assert objects("condition_modal_operator_alignment") == ["divergent", "aligned"]
     assert objects("condition_modal_temporal_relation") == ["after", "deadline"]
     assert objects("condition_after") == ["the agency receives notice"]
     assert objects("condition_by") == ["march 1"]
     assert objects("condition_prefix_family") == ["temporal"]
     assert objects("condition_prefix_temporal_relation") == ["after", "deadline"]
+
+
+def test_decode_modal_ir_document_emits_temporal_until_canonical_slots() -> None:
+    decoded = decode_modal_ir_document(_temporal_until_clause_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition_prefix_key"] == ["until"]
+    assert slot_map["condition_prefix_temporal_relation"] == ["until"]
+    assert slot_map["condition_modal_signature"] == ["temporal:F:until"]
+    assert slot_map["condition_modal_canonical_signature"] == ["temporal:G:until"]
+    assert slot_map["condition_modal_operator"] == ["F"]
+    assert slot_map["condition_modal_canonical_operator"] == ["G"]
+    assert slot_map["condition_modal_operator_alignment"] == ["divergent"]
+    assert slot_map["cue_modal_signature"] == ["temporal:F:until"]
+    assert slot_map["cue_modal_canonical_signature"] == ["temporal:G:until"]
+    assert slot_map["cue_modal_operator"] == ["F"]
+    assert slot_map["cue_modal_canonical_operator"] == ["G"]
+    assert slot_map["cue_modal_operator_alignment"] == ["divergent"]
+
+
+def test_modal_ir_to_flogic_triples_emits_temporal_until_canonical_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_temporal_until_clause_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition_prefix_key") == ["until"]
+    assert objects("condition_prefix_temporal_relation") == ["until"]
+    assert objects("condition_modal_signature") == ["temporal:F:until"]
+    assert objects("condition_modal_canonical_signature") == ["temporal:G:until"]
+    assert objects("condition_modal_operator") == ["F"]
+    assert objects("condition_modal_canonical_operator") == ["G"]
+    assert objects("condition_modal_operator_alignment") == ["divergent"]
+    assert objects("cue_modal_signature") == ["temporal:F:until"]
+    assert objects("cue_modal_canonical_signature") == ["temporal:G:until"]
+    assert objects("cue_modal_operator") == ["F"]
+    assert objects("cue_modal_canonical_operator") == ["G"]
+    assert objects("cue_modal_operator_alignment") == ["divergent"]
 
 
 def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
