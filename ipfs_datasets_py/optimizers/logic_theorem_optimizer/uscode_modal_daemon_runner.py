@@ -377,6 +377,8 @@ def build_paired_daemon_commands(
         "--codex-commit-mode",
         str(getattr(args, "codex_commit_mode", "none")),
     ]
+    if getattr(args, "codex_scope", None):
+        codex_command.extend(["--codex-scope", str(args.codex_scope)])
     if getattr(args, "worker_id", None):
         codex_command.extend(["--worker-id", str(args.worker_id)])
     if getattr(args, "codex_model", None):
@@ -407,6 +409,13 @@ def create_codex_work_packet(
     packet_dir = work_dir / packet_id
     packet_dir.mkdir(parents=True, exist_ok=True)
     suggested_files = _suggested_target_files(todos)
+    program_synthesis_scopes = sorted(
+        {
+            str(todo.metadata.get("program_synthesis_scope") or "")
+            for todo in todos
+            if todo.metadata.get("program_synthesis_scope")
+        }
+    )
     todo_list_path = packet_dir / "TODO_LIST.jsonl"
     todo_markdown_path = packet_dir / "TODO_LIST.md"
     todo_list_path.write_text(
@@ -479,6 +488,7 @@ def create_codex_work_packet(
         "queue_run_id": queue_run_id,
         "repo_root": str(repo_root),
         "run_id": run_id,
+        "program_synthesis_scopes": program_synthesis_scopes,
         "suggested_target_files": suggested_files,
         "source_repo_root": str(source_repo_root),
         "task_source": "autoencoder_supervisor_program_synthesis_queue",
@@ -1329,6 +1339,7 @@ def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
         "Work only inside the packet worktree.",
         "Your worktree edits may be applied back to the source checkout and validated automatically when this packet finishes.",
         "Do not create changes.patch or other patch artifact files; leave source and test edits directly in the worktree.",
+        "Treat the packet's program_synthesis_scope metadata as the AST/write-scope boundary; keep edits inside that lane unless a test requires a small adjacent change.",
         "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
         "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
         "Use local repository files and tests only; do not use web search for this packet.",
@@ -1515,6 +1526,18 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         choices=("none", "commit_applied"),
         default="none",
         help="Optionally commit successfully validated apply_to_main packet edits.",
+    )
+    parser.add_argument(
+        "--codex-scope",
+        choices=(
+            "compiler_parser",
+            "compiler_registry",
+            "compiler_ambiguity",
+            "ir_decompiler",
+            "frame_logic",
+        ),
+        default=None,
+        help="Restrict the Codex worker to one AST/write-scope lane for parallel runs.",
     )
     parser.add_argument(
         "--codex-sandbox",
@@ -1908,6 +1931,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     supervisor.queue,
                     preserve_claimed_role=supervisor.policy.program_synthesis_role,
                 )
+                semantic_deduped_count = latest_queue.deduplicate_semantic(
+                    optimizer_role=supervisor.policy.program_synthesis_role,
+                    near_duplicate_jaccard=supervisor.policy.program_synthesis_near_duplicate_jaccard,
+                )
                 latest_queue.save_jsonl(queue_path)
                 supervisor.queue = latest_queue
                 queue = latest_queue
@@ -1933,6 +1960,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
             ) + sum(step.program_synthesis_seeded_count for step in run.steps)
+            summary["program_synthesis_semantic_deduped"] = int(
+                summary.get("program_synthesis_semantic_deduped", 0)
+            ) + int(semantic_deduped_count)
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
@@ -1996,6 +2026,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "program_synthesis_seeded_count": sum(
                         step.program_synthesis_seeded_count for step in run.steps
                     ),
+                    "program_synthesis_semantic_deduped_count": semantic_deduped_count,
                     "train_cosine_delta": round(train_cos_delta, 9),
                     "train_cross_entropy_delta": round(train_ce_delta, 9),
                     "train_indices": train_indices,
@@ -2077,6 +2108,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_claimed_total": 0,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_scope": args.codex_scope,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
             "codex_main_apply_count": 0,
@@ -2102,6 +2134,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         save_summary(summary_path, summary)
     summary.setdefault("codex_apply_mode", args.codex_apply_mode)
     summary.setdefault("codex_commit_mode", args.codex_commit_mode)
+    summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
 
@@ -2115,6 +2148,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_apply_mode": args.codex_apply_mode,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_scope": args.codex_scope,
             "codex_program_synthesis_execution_mode": execution_mode,
             "event": "codex_program_synthesis_runner_started",
             "queue_run_id": queue_run_id,
@@ -2133,6 +2167,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 claimed = supervisor.claim_program_synthesis_batch(
                     worker_id=worker_id,
                     max_items=args.max_items,
+                    program_synthesis_scope=getattr(args, "codex_scope", None),
                 )
                 if claimed:
                     queue.save_jsonl(queue_path)
@@ -2240,6 +2275,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "claimed_count": len(claimed),
                     "cycle": cycle,
                     "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
+                    "codex_scope": getattr(args, "codex_scope", None),
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "codex_program_synthesis_cycle",
                     "main_apply_status": packet.get("main_apply_status"),

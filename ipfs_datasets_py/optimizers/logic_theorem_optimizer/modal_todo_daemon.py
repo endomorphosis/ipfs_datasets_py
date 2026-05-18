@@ -33,6 +33,19 @@ TODO_STATUS_RANK = {
     "completed": 2,
     "failed_validation": 2,
 }
+PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD = 0.8
+PROGRAM_SYNTHESIS_ACTION_TARGETS = {
+    "add_deterministic_parser_rule": "modal.compiler",
+    "add_or_review_modal_ambiguity_policy": "modal.compiler.ambiguity",
+    "audit_frame_logic_terms": "modal.frame_logic",
+    "improve_bm25_frame_selector": "modal.frame_logic",
+    "improve_flogic_frame_alignment": "modal.frame_logic",
+    "increase_modal_ir_span_coverage": "modal.compiler",
+    "refine_modal_family_cue_rules": "modal.compiler.registry",
+    "refine_semantic_decompiler_reconstruction": "modal.ir_decompiler",
+    "refine_typed_ir_or_decompiler_slots": "modal.ir_decompiler",
+    "repair_flogic_ontology_constraints": "modal.frame_logic",
+}
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
     "improve_encoder_decoder_reconstruction",
@@ -54,6 +67,7 @@ class ModalOptimizerPolicy:
     program_synthesis_min_support: int = 2
     enable_program_synthesis_todos: bool = True
     max_program_synthesis_pending: int = 512
+    program_synthesis_near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD
 
     def role_for(self, *, action: str, loss_name: str = "") -> str:
         if (
@@ -447,6 +461,24 @@ class ModalLossTodoGenerator:
     ) -> ModalTodo:
         priority = round((loss_value * 100.0) + snapshot.total_loss(), 6)
         todo_id = _todo_id(action, snapshot.sample_id, loss_name, loss_value)
+        target_component = PROGRAM_SYNTHESIS_ACTION_TARGETS.get(action)
+        metadata = {
+            **self.policy.metadata_for(action=action, loss_name=loss_name),
+            "selected_frame": snapshot.selected_frame,
+            "source": "modal_loss_todo_generator_v1",
+        }
+        if target_component:
+            metadata["target_component"] = target_component
+        if metadata.get("optimizer_role") == PROGRAM_SYNTHESIS_ROLE:
+            metadata["program_synthesis_scope"] = _program_synthesis_scope(
+                action=action,
+                target_component=str(target_component or ""),
+            )
+            metadata["dedupe_signature"] = _program_todo_signature(
+                action=action,
+                target_component=str(target_component or ""),
+                sample_ids=[snapshot.sample_id],
+            )
         return ModalTodo(
             todo_id=todo_id,
             action=action,
@@ -456,11 +488,7 @@ class ModalLossTodoGenerator:
             loss_name=loss_name,
             loss_value=round(loss_value, 12),
             priority=priority,
-            metadata={
-                **self.policy.metadata_for(action=action, loss_name=loss_name),
-                "selected_frame": snapshot.selected_frame,
-                "source": "modal_loss_todo_generator_v1",
-            },
+            metadata=metadata,
         )
 
 
@@ -520,6 +548,11 @@ class ModalProgramSynthesisTodoGenerator:
             )
             priority = sum(float(hint.priority) for hint in cluster) / len(cluster)
             representative = max(cluster, key=lambda hint: (hint.priority, hint.hint_id))
+            dedupe_signature = _program_todo_signature(
+                action=action,
+                target_component=target_component,
+                sample_ids=sample_ids,
+            )
             todo = ModalTodo(
                 todo_id=_program_todo_id(
                     action=action,
@@ -539,6 +572,11 @@ class ModalProgramSynthesisTodoGenerator:
                         loss_name="autoencoder_residual_cluster",
                     ),
                     "hint_ids": sorted(hint.hint_id for hint in cluster),
+                    "dedupe_signature": dedupe_signature,
+                    "program_synthesis_scope": _program_synthesis_scope(
+                        action=action,
+                        target_component=target_component,
+                    ),
                     "hint_evidence": [
                         _compact_hint_evidence(hint)
                         for hint in sorted(cluster, key=lambda hint: hint.hint_id)
@@ -566,6 +604,8 @@ class ModalTodoQueue:
         for todo in todos:
             if todo.todo_id in self._todos:
                 continue
+            if self.has_semantic_duplicate(todo):
+                continue
             self._todos[todo.todo_id] = todo
             added += 1
         return added
@@ -589,6 +629,69 @@ class ModalTodoQueue:
             ):
                 continue
             self._todos[todo.todo_id] = todo
+
+    def has_semantic_duplicate(
+        self,
+        todo: ModalTodo,
+        *,
+        optimizer_role: Optional[str] = None,
+        near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD,
+    ) -> bool:
+        """Return whether a queue item already covers the same synthesis work."""
+        role = optimizer_role or _todo_optimizer_role(todo)
+        if role != PROGRAM_SYNTHESIS_ROLE:
+            return False
+        for existing in self._todos.values():
+            if _todo_optimizer_role(existing) != role:
+                continue
+            if existing.todo_id == todo.todo_id:
+                return True
+            if _program_todos_near_duplicate(
+                existing,
+                todo,
+                jaccard_threshold=near_duplicate_jaccard,
+            ):
+                return True
+        return False
+
+    def deduplicate_semantic(
+        self,
+        *,
+        optimizer_role: str = PROGRAM_SYNTHESIS_ROLE,
+        near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD,
+    ) -> int:
+        """Remove exact and near-duplicate program-synthesis TODOs."""
+        kept: List[ModalTodo] = []
+        removed_ids: List[str] = []
+        for todo in sorted(
+            self._todos.values(),
+            key=lambda item: (
+                -TODO_STATUS_RANK.get(item.status, 0),
+                -item.priority,
+                item.created_at,
+                item.todo_id,
+            ),
+        ):
+            if _todo_optimizer_role(todo) != optimizer_role:
+                kept.append(todo)
+                continue
+            duplicate = any(
+                _program_todos_near_duplicate(
+                    existing,
+                    todo,
+                    jaccard_threshold=near_duplicate_jaccard,
+                )
+                for existing in kept
+                if _todo_optimizer_role(existing) == optimizer_role
+            )
+            if duplicate:
+                removed_ids.append(todo.todo_id)
+            else:
+                kept.append(todo)
+        if not removed_ids:
+            return 0
+        self._todos = {todo.todo_id: todo for todo in kept}
+        return len(removed_ids)
 
     def pending(self, *, optimizer_role: Optional[str] = None) -> List[ModalTodo]:
         return self._by_priority(status="pending", optimizer_role=optimizer_role)
@@ -634,6 +737,7 @@ class ModalTodoQueue:
         worker_id: str,
         max_items: int,
         optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
     ) -> List[ModalTodo]:
         """Claim up to ``max_items`` pending TODOs for one worker."""
         if max_items < 1:
@@ -642,6 +746,7 @@ class ModalTodoQueue:
         for todo in self._top_by_priority(
             status="pending",
             optimizer_role=optimizer_role,
+            metadata_filter=metadata_filter,
             max_items=max_items,
         ):
             todo.claim(worker_id)
@@ -672,24 +777,32 @@ class ModalTodoQueue:
         source = Path(path)
         if not source.exists():
             return cls()
-        todos = [
-            ModalTodo.from_dict(json.loads(line))
-            for line in source.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
-        return cls(todos)
+        queue = cls()
+        for line in source.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            todo = ModalTodo.from_dict(json.loads(line))
+            if todo.todo_id not in queue._todos:
+                queue._todos[todo.todo_id] = todo
+        return queue
 
     def _by_priority(
         self,
         *,
         status: str,
         optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
     ) -> List[ModalTodo]:
         return sorted(
             (
                 todo
                 for todo in self._todos.values()
-                if _todo_matches(todo, status=status, optimizer_role=optimizer_role)
+                if _todo_matches(
+                    todo,
+                    status=status,
+                    optimizer_role=optimizer_role,
+                    metadata_filter=metadata_filter,
+                )
             ),
             key=_todo_priority_key,
         )
@@ -700,11 +813,17 @@ class ModalTodoQueue:
         status: str,
         optimizer_role: Optional[str],
         max_items: int,
+        metadata_filter: Optional[Mapping[str, str]] = None,
     ) -> List[ModalTodo]:
         candidates = (
             todo
             for todo in self._todos.values()
-            if _todo_matches(todo, status=status, optimizer_role=optimizer_role)
+            if _todo_matches(
+                todo,
+                status=status,
+                optimizer_role=optimizer_role,
+                metadata_filter=metadata_filter,
+            )
         )
         return heapq.nsmallest(max_items, candidates, key=_todo_priority_key)
 
@@ -776,6 +895,22 @@ class ModalTodoSupervisor:
             if self.queue.get(todo.todo_id) is not None:
                 continue
             if _todo_optimizer_role(todo) == self.policy.program_synthesis_role:
+                if self.queue.has_semantic_duplicate(
+                    todo,
+                    optimizer_role=self.policy.program_synthesis_role,
+                    near_duplicate_jaccard=self.policy.program_synthesis_near_duplicate_jaccard,
+                ):
+                    continue
+                if any(
+                    _program_todos_near_duplicate(
+                        existing,
+                        todo,
+                        jaccard_threshold=self.policy.program_synthesis_near_duplicate_jaccard,
+                    )
+                    for existing in selected
+                    if _todo_optimizer_role(existing) == self.policy.program_synthesis_role
+                ):
+                    continue
                 if program_capacity < 1:
                     continue
                 program_capacity -= 1
@@ -788,11 +923,13 @@ class ModalTodoSupervisor:
         worker_id: str,
         max_items: int,
         optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
     ) -> List[ModalTodo]:
         return self.queue.claim_batch(
             worker_id=worker_id,
             max_items=max_items,
             optimizer_role=optimizer_role,
+            metadata_filter=metadata_filter,
         )
 
     def claim_program_synthesis_batch(
@@ -800,12 +937,19 @@ class ModalTodoSupervisor:
         *,
         worker_id: str,
         max_items: int,
+        program_synthesis_scope: Optional[str] = None,
     ) -> List[ModalTodo]:
         """Claim reviewable deterministic repair TODOs for an external Codex worker."""
+        metadata_filter = (
+            {"program_synthesis_scope": program_synthesis_scope}
+            if program_synthesis_scope
+            else None
+        )
         return self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
             optimizer_role=self.policy.program_synthesis_role,
+            metadata_filter=metadata_filter,
         )
 
     def role_status(
@@ -1129,15 +1273,90 @@ def _program_todo_id(
     target_component: str,
     sample_ids: Sequence[str],
 ) -> str:
-    payload = {
-        "action": action,
-        "sample_ids": sorted(sample_ids),
-        "target_component": target_component,
-    }
+    payload = _program_todo_signature_payload(
+        action=action,
+        target_component=target_component,
+        sample_ids=sample_ids,
+    )
     digest = hashlib.sha256(
         json.dumps(payload, ensure_ascii=True, sort_keys=True).encode("utf-8")
     ).hexdigest()[:16]
     return f"program-{digest}"
+
+
+def _program_todo_signature(
+    *,
+    action: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> str:
+    payload = _program_todo_signature_payload(
+        action=action,
+        target_component=target_component,
+        sample_ids=sample_ids,
+    )
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _program_todo_signature_payload(
+    *,
+    action: str,
+    target_component: str,
+    sample_ids: Sequence[str],
+) -> Dict[str, Any]:
+    return {
+        "action": action,
+        "sample_ids": sorted(sample_ids),
+        "target_component": target_component,
+    }
+
+
+def _program_todos_near_duplicate(
+    existing: ModalTodo,
+    candidate: ModalTodo,
+    *,
+    jaccard_threshold: float,
+) -> bool:
+    if existing.action != candidate.action:
+        return False
+    if _todo_target_component(existing) != _todo_target_component(candidate):
+        return False
+    existing_signature = str(existing.metadata.get("dedupe_signature") or "")
+    candidate_signature = str(candidate.metadata.get("dedupe_signature") or "")
+    if existing_signature and candidate_signature and existing_signature == candidate_signature:
+        return True
+    existing_samples = set(existing.sample_ids)
+    candidate_samples = set(candidate.sample_ids)
+    if not existing_samples or not candidate_samples:
+        return False
+    intersection = len(existing_samples & candidate_samples)
+    union = len(existing_samples | candidate_samples)
+    if union == 0:
+        return False
+    return (intersection / union) >= float(jaccard_threshold)
+
+
+def _todo_target_component(todo: ModalTodo) -> str:
+    return str(
+        todo.metadata.get("target_component")
+        or PROGRAM_SYNTHESIS_ACTION_TARGETS.get(todo.action)
+        or ""
+    )
+
+
+def _program_synthesis_scope(*, action: str, target_component: str) -> str:
+    target = target_component or PROGRAM_SYNTHESIS_ACTION_TARGETS.get(action, "")
+    if target.startswith("modal.frame_logic"):
+        return "frame_logic"
+    if target.startswith("modal.ir_decompiler"):
+        return "ir_decompiler"
+    if target.startswith("modal.compiler.ambiguity"):
+        return "compiler_ambiguity"
+    if target.startswith("modal.compiler.registry"):
+        return "compiler_registry"
+    if target.startswith("modal.compiler"):
+        return "compiler_parser"
+    return action.replace("-", "_").replace(".", "_")
 
 
 def _sample_id_from_hint(hint: ModalProgramSynthesisHint) -> str:
@@ -1184,10 +1403,17 @@ def _todo_matches(
     *,
     status: str,
     optimizer_role: Optional[str] = None,
+    metadata_filter: Optional[Mapping[str, str]] = None,
 ) -> bool:
     if todo.status != status:
         return False
-    return optimizer_role is None or _todo_optimizer_role(todo) == optimizer_role
+    if optimizer_role is not None and _todo_optimizer_role(todo) != optimizer_role:
+        return False
+    if metadata_filter:
+        for key, value in metadata_filter.items():
+            if str(todo.metadata.get(key) or "") != str(value):
+                return False
+    return True
 
 
 def _todo_priority_key(todo: ModalTodo) -> tuple[float, str, str]:

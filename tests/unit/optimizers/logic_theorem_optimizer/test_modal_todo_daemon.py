@@ -20,6 +20,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalLossTodoGenerator,
     ModalOptimizerPolicy,
     ModalProgramSynthesisTodoGenerator,
+    ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
 )
@@ -231,6 +232,110 @@ def test_queue_merge_preserves_externally_completed_program_synthesis_todos() ->
     assert completed is not None
     assert completed.status == "completed"
     assert completed.claimed_by == "codex-program-worker"
+
+
+def test_queue_semantic_dedupe_collapses_program_synthesis_loss_duplicates() -> None:
+    snapshot = LossSnapshot(
+        sample_id="sample-1",
+        citation="1 U.S.C. 1",
+        losses={"symbolic_validity_penalty": 1.0},
+        parser_formula_count=0,
+    )
+    todos = ModalLossTodoGenerator().generate([snapshot])
+    assert len([todo for todo in todos if todo.action == "add_deterministic_parser_rule"]) == 2
+
+    queue = ModalTodoQueue()
+    added = queue.add_many(todos)
+
+    assert added == 1
+    [todo] = queue.pending(optimizer_role="program_synthesis")
+    assert todo.metadata["target_component"] == "modal.compiler"
+    assert todo.metadata["dedupe_signature"]
+    assert todo.metadata["program_synthesis_scope"] == "compiler_parser"
+
+
+def test_queue_semantic_dedupe_removes_near_duplicate_program_synthesis_items() -> None:
+    base_metadata = {
+        "dedupe_signature": "custom",
+        "optimizer_role": "program_synthesis",
+        "target_component": "modal.ir_decompiler",
+    }
+    first = ModalTodo(
+        todo_id="program-a",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="first",
+        sample_ids=["a", "b", "c", "d"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata=dict(base_metadata),
+    )
+    second = ModalTodo(
+        todo_id="program-b",
+        action="refine_typed_ir_or_decompiler_slots",
+        objective="second",
+        sample_ids=["a", "b", "c", "e"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=5.0,
+        metadata={**base_metadata, "dedupe_signature": "custom-2"},
+    )
+    queue = ModalTodoQueue([first, second])
+
+    removed = queue.deduplicate_semantic(
+        optimizer_role="program_synthesis",
+        near_duplicate_jaccard=0.6,
+    )
+
+    assert removed == 1
+    assert queue.get("program-a") is not None
+    assert queue.get("program-b") is None
+
+
+def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
+    compiler = ModalTodo(
+        todo_id="program-compiler",
+        action="add_deterministic_parser_rule",
+        objective="compiler",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=5.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_parser",
+            "target_component": "modal.compiler",
+        },
+    )
+    frame = ModalTodo(
+        todo_id="program-frame",
+        action="audit_frame_logic_terms",
+        objective="frame",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "frame_logic",
+            "target_component": "modal.frame_logic",
+        },
+    )
+    supervisor = ModalTodoSupervisor(queue=ModalTodoQueue([compiler, frame]))
+
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id="frame-worker",
+        max_items=2,
+        program_synthesis_scope="frame_logic",
+    )
+
+    assert [todo.todo_id for todo in claimed] == ["program-frame"]
+    assert supervisor.queue.get("program-compiler").status == "pending"
+    assert supervisor.queue.get("program-frame").status == "claimed"
 
 
 def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
@@ -633,6 +738,7 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
         codex_model=None,
         codex_apply_mode="apply_to_main",
         codex_commit_mode="commit_applied",
+        codex_scope="frame_logic",
         codex_sandbox="workspace-write",
         codex_timeout_seconds=30.0,
         warm_start_run_id=["warm-a", "warm-b"],
@@ -656,6 +762,8 @@ def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     assert paired["codex_command"][apply_index + 1] == "apply_to_main"
     commit_index = paired["codex_command"].index("--codex-commit-mode")
     assert paired["codex_command"][commit_index + 1] == "commit_applied"
+    scope_index = paired["codex_command"].index("--codex-scope")
+    assert paired["codex_command"][scope_index + 1] == "frame_logic"
     assert paired["autoencoder_command"].count("--warm-start-run-id") == 2
     assert paired["autoencoder_command"].count("--warm-start-state") == 1
 
@@ -679,6 +787,7 @@ def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -
         codex_model="gpt-5.5",
         codex_apply_mode="patch_only",
         codex_commit_mode="none",
+        codex_scope=None,
         codex_sandbox="workspace-write",
         codex_timeout_seconds=45.0,
         warm_start_run_id=[],
@@ -806,6 +915,7 @@ def test_codex_work_packet_creates_git_worktree_and_patch_slot(tmp_path) -> None
     assert packet["worktree_path"]
     assert packet["patch_path"] is None
     assert packet["patch_status"] == "awaiting_codex_changes"
+    assert packet["program_synthesis_scopes"]
     assert packet["suggested_target_files"]
     assert (tmp_path / "codex-work" / "packet-000001" / "packet.json").exists()
     assert (tmp_path / "codex-work" / "packet-000001" / "TODO_LIST.jsonl").exists()
