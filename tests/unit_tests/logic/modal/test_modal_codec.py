@@ -850,6 +850,66 @@ def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_f
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
 
 
+def test_modal_compiler_replays_sec_prefixed_heading_samples_with_usc_citation_variants() -> None:
+    cases = [
+        (
+            "us-code-7-473a-02a85f2b18cfe8ee",
+            "7 U.S.C. §473a",
+            "Sec. 473a - Cotton classification services.",
+        ),
+        (
+            "us-code-7-473a-02a85f2b18cfe8ee",
+            "7 USC 473a",
+            "Sec. 473a - Cotton classification services.",
+        ),
+        (
+            "us-code-20-1067j-13aeda303003f5af",
+            "20 U.S.C. §1067j",
+            "Sec. 1067j - Administrative provisions.",
+        ),
+        (
+            "us-code-20-1067j-13aeda303003f5af",
+            "20 USC 1067j",
+            "Sec. 1067j - Administrative provisions.",
+        ),
+        (
+            "us-code-15-2501-eb4a7816e81bb710",
+            "15 U.S.C. §2501",
+            "Sec. 2501 - Congressional findings and policy.",
+        ),
+        (
+            "us-code-15-2501-eb4a7816e81bb710",
+            "15 USC 2501",
+            "Sec. 2501 - Congressional findings and policy.",
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for index, (document_id, citation, text) in enumerate(cases, start=1):
+            compiled = compiler.compile(
+                text,
+                document_id=f"{document_id}:citation-variant-{index}",
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+            assert fallback.provenance.citation == citation
+
+
 def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
     cases = [
         (

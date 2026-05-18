@@ -20,6 +20,9 @@ pytest.importorskip("spacy")
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_7_473A_SEC_HEADING_TEXT = "Sec. 473a - Cotton classification services."
+_USCODE_20_1067J_SEC_HEADING_TEXT = "Sec. 1067j - Administrative provisions."
+_USCODE_15_2501_SEC_HEADING_TEXT = "Sec. 2501 - Congressional findings and policy."
 
 
 def test_spacy_encoder_compiles_modal_ir_without_downloaded_model() -> None:
@@ -161,6 +164,59 @@ def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_
     assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
+
+
+def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-7-473a-02a85f2b18cfe8ee",
+            "7 U.S.C. §473a",
+            _USCODE_7_473A_SEC_HEADING_TEXT,
+        ),
+        (
+            "us-code-7-473a-02a85f2b18cfe8ee",
+            "7 USC 473a",
+            _USCODE_7_473A_SEC_HEADING_TEXT,
+        ),
+        (
+            "us-code-20-1067j-13aeda303003f5af",
+            "20 U.S.C. §1067j",
+            _USCODE_20_1067J_SEC_HEADING_TEXT,
+        ),
+        (
+            "us-code-20-1067j-13aeda303003f5af",
+            "20 USC 1067j",
+            _USCODE_20_1067J_SEC_HEADING_TEXT,
+        ),
+        (
+            "us-code-15-2501-eb4a7816e81bb710",
+            "15 U.S.C. §2501",
+            _USCODE_15_2501_SEC_HEADING_TEXT,
+        ),
+        (
+            "us-code-15-2501-eb4a7816e81bb710",
+            "15 USC 2501",
+            _USCODE_15_2501_SEC_HEADING_TEXT,
+        ),
+    ]
+
+    for index, (document_id, citation, text) in enumerate(cases, start=1):
+        encoding = encoder.encode(
+            text,
+            document_id=f"{document_id}:citation-variant-{index}",
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
 
 
 def test_spacy_compiler_replays_embedded_sec_heading_zero_formula_cases() -> None:

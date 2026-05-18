@@ -43,8 +43,12 @@ _USCODE_EDITORIAL_STATUS_HINT_RE = re.compile(
     r"\b(?:repealed|omitted|reserved|vacant|renumbered|terminated)\b",
     re.IGNORECASE,
 )
+_USCODE_CITATION_MARKER_RE = re.compile(
+    r"\bU\.?\s*S\.?\s*C\.?(?!\w)",
+    re.IGNORECASE,
+)
 _USCODE_CITATION_SECTION_RE = re.compile(
-    r"\bU\.S\.C\.\s*([0-9A-Za-z.\-]+)\b",
+    r"\bU\.?\s*S\.?\s*C\.?(?!\w)\s*(?:§\s*)?([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
 )
 _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
@@ -367,7 +371,7 @@ class LegalModalParser:
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
-        if citation is None or "u.s.c." not in citation.lower():
+        if not self._is_uscode_citation(citation):
             return None
         if self.extract_cues(normalized_text):
             return None
@@ -443,6 +447,11 @@ class LegalModalParser:
             return ""
         token = match.group(1).strip().lower()
         return _USCODE_TRAILING_SECTION_PUNCT_RE.sub("", token)
+
+    def _is_uscode_citation(self, citation: Optional[str]) -> bool:
+        if not citation:
+            return False
+        return bool(_USCODE_CITATION_MARKER_RE.search(citation))
 
     def _contains_citation_section_reference(self, text: str, citation_section: str) -> bool:
         if not citation_section:
@@ -558,7 +567,7 @@ class LegalModalParser:
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
-        if citation is None or "u.s.c." not in citation.lower():
+        if not self._is_uscode_citation(citation):
             return None
         if self.extract_cues(normalized_text):
             return None
@@ -636,7 +645,7 @@ class LegalModalParser:
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
-        if citation is None or "u.s.c." not in citation.lower():
+        if not self._is_uscode_citation(citation):
             return None
         if self.extract_cues(normalized_text):
             return None
@@ -719,7 +728,7 @@ class LegalModalParser:
         """Emit frame IR for compact U.S.C. section-heading lines with no modal cues."""
         if not normalized_text.strip():
             return None
-        if citation is None or "u.s.c." not in citation.lower():
+        if not self._is_uscode_citation(citation):
             return None
         if self.extract_cues(normalized_text):
             return None
