@@ -458,12 +458,57 @@ def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_an
 
     assert terms == [
         "430f",
+        "f",
         "16",
         "552",
         "pursuant_subsection",
         "notice",
         "if",
         "except",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_keep_single_letter_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section_suffix:i",
+            "flogic:source_id_section_suffix:e",
+            "slot:citation_section_suffix:a",
+        ]
+    )
+
+    assert terms == [
+        "i",
+        "e",
+        "a",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_keep_single_letter_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_suffix",
+                "object": "i",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_suffix",
+                "object": "e",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_suffix",
+                "object": "a",
+            },
+        ]
+    )
+
+    assert terms == [
+        "i",
+        "e",
+        "a",
     ]
 
 

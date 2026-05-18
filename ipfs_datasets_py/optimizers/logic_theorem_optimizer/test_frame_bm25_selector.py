@@ -65,3 +65,27 @@ def test_frame_ontology_terms_from_feature_keys_keeps_single_digit_citation_suff
 
     assert "78u_3" in terms
     assert "410r_1" in terms
+
+
+def test_frame_ontology_terms_from_triples_keeps_single_letter_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "citation_section_suffix", "object": "i"},
+            {"predicate": "source_id_section_suffix", "object": "e"},
+        ]
+    )
+
+    assert "i" in terms
+    assert "e" in terms
+
+
+def test_frame_ontology_terms_from_feature_keys_keeps_single_letter_citation_suffixes() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_section_suffix:i",
+            "flogic:source_id_section_suffix:e",
+        ]
+    )
+
+    assert "i" in terms
+    assert "e" in terms
