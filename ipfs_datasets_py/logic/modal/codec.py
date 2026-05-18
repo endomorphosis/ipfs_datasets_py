@@ -211,6 +211,49 @@ _USCODE_SECTION_HEADING_TAIL_RULES = frozenset(
 )
 _FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS = 1024
 _FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
+_FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
+    {
+        "candidate_term",
+        "candidate_terms",
+        "frame",
+        "frame_term",
+        "frame_terms",
+        "frames",
+        "items",
+        "label",
+        "labels",
+        "name",
+        "names",
+        "selected_term",
+        "selected_terms",
+        "term",
+        "terms",
+        "text",
+        "texts",
+        "value",
+        "values",
+    }
+)
+_FRAME_ONTOLOGY_METADATA_STRUCTURAL_KEYS = frozenset(
+    {
+        "confidence",
+        "count",
+        "counts",
+        "id",
+        "ids",
+        "metadata",
+        "priority",
+        "probability",
+        "rank",
+        "ranking",
+        "score",
+        "scores",
+        "weight",
+        "weights",
+    }
+)
+_FRAME_ONTOLOGY_METADATA_MAX_DEPTH = 6
+_FRAME_ONTOLOGY_METADATA_MAX_VALUES = 256
 
 
 @dataclass(frozen=True)
@@ -2161,17 +2204,100 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
 
 
 def _frame_ontology_metadata_values(values: Any) -> List[Any]:
+    extracted: List[Any] = []
+    _collect_frame_ontology_metadata_values(
+        values,
+        extracted,
+        depth=0,
+    )
+    return extracted
+
+
+def _collect_frame_ontology_metadata_values(
+    values: Any,
+    extracted: List[Any],
+    *,
+    depth: int,
+) -> None:
+    if (
+        values is None
+        or depth >= _FRAME_ONTOLOGY_METADATA_MAX_DEPTH
+        or len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES
+    ):
+        return
     if isinstance(values, Mapping):
-        extracted: List[Any] = []
-        for key, value in values.items():
-            extracted.append(key)
-            extracted.append(value)
-        return extracted
+        normalized_items = [
+            (_frame_ontology_metadata_key(key), key, value)
+            for key, value in values.items()
+        ]
+        preferred_values = [
+            value
+            for normalized_key, _original_key, value in normalized_items
+            if normalized_key in _FRAME_ONTOLOGY_METADATA_VALUE_KEYS
+        ]
+        if preferred_values:
+            for value in preferred_values:
+                _collect_frame_ontology_metadata_values(
+                    value,
+                    extracted,
+                    depth=depth + 1,
+                )
+                if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                    return
+            return
+        for normalized_key, original_key, value in normalized_items:
+            if _frame_ontology_metadata_key_is_term_like(
+                normalized_key,
+                original_key,
+            ):
+                extracted.append(original_key)
+                if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                    return
+            _collect_frame_ontology_metadata_values(
+                value,
+                extracted,
+                depth=depth + 1,
+            )
+            if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                return
+        return
     if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
-        return list(values)
-    if values is None:
-        return []
-    return [values]
+        for value in values:
+            _collect_frame_ontology_metadata_values(
+                value,
+                extracted,
+                depth=depth + 1,
+            )
+            if len(extracted) >= _FRAME_ONTOLOGY_METADATA_MAX_VALUES:
+                return
+        return
+    extracted.append(values)
+
+
+def _frame_ontology_metadata_key(value: Any) -> str:
+    return re.sub(
+        r"[^a-z0-9]+",
+        "_",
+        _clean_non_empty_string(value).lower(),
+    ).strip("_")
+
+
+def _frame_ontology_metadata_key_is_term_like(
+    normalized_key: str,
+    original_key: Any,
+) -> bool:
+    if not normalized_key:
+        return False
+    if normalized_key in (
+        _FRAME_ONTOLOGY_METADATA_VALUE_KEYS
+        | _FRAME_ONTOLOGY_METADATA_STRUCTURAL_KEYS
+    ):
+        return False
+    if normalized_key.endswith(
+        ("_count", "_id", "_priority", "_probability", "_rank", "_score", "_weight")
+    ):
+        return False
+    return True
 
 
 def _frame_ontology_audit_feature_keys(

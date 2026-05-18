@@ -3910,6 +3910,68 @@ def test_modal_codec_audits_frame_terms_when_metadata_contains_weight_maps() -> 
     assert "final_order" in candidate_terms
 
 
+def test_modal_codec_audits_frame_terms_when_metadata_contains_structured_entries() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-structured-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+    assert len(result.modal_ir.frame_candidates) >= 2
+
+    selected_frame = result.selected_frame
+    alternate_frame = next(
+        frame.frame_id
+        for frame in result.modal_ir.frame_candidates
+        if frame.frame_id != selected_frame
+    )
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: [
+                    {"term": "hearing rights", "weight": 1.0},
+                    {"text": "final order", "confidence": 0.9},
+                ],
+                alternate_frame: {
+                    "terms": [
+                        {"label": "housing voucher benefits"},
+                        {"value": "and"},
+                    ],
+                    "weights": {"t-1": "administrative notice"},
+                },
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+    candidate_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "candidate_ontology_term"
+    }
+
+    assert "hearing_rights" in selected_terms
+    assert "final_order" in selected_terms
+    assert "housing_voucher_benefits" in candidate_terms
+    assert "and" not in candidate_terms
+    assert "term_hearing_rights_weight" not in candidate_terms
+    assert "text_final_order_confidence" not in candidate_terms
+
+
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     frame_selector = BM25FrameSelector(
         (
