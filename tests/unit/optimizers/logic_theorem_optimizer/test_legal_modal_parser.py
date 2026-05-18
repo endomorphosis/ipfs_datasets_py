@@ -254,6 +254,45 @@ _USCODE_19_3702_SYMBOLIC_VALIDITY_TEXT = (
     "schedule registry digest table profile catalog narrative appendix mapping index "
     "ledger coordination protocol record workflow archive taxonomy matrix"
 )
+_USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
+    "Title 2 - THE CONGRESS CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
+    "ADMINISTRATION SUBCHAPTER VIII - SERGEANT AT ARMS Sec. 5602 - Tenure of "
+    "office of Sergeant at Arms From the U.S. Government Publishing Office, "
+    "www.gpo.gov §5602. Tenure of office of Sergeant at Arms Any person duly "
+    "elected and qualified as Sergeant at Arms of the House of Representatives "
+    "shall continue in said office until his successor is chosen and qualified, "
+    "subject however, to removal by the House of Representatives. (Oct. 1, "
+    "1890, ch. 1256, §6, 26 Stat. 646.) Editorial Notes Codification Section "
+    "was formerly classified to section 83 of this title prior to editorial "
+    "reclassification and renumbering as this section."
+)
+_USCODE_5_5348_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "U.S.C. Title 5 - GOVERNMENT ORGANIZATION AND EMPLOYEES 5 U.S.C. United "
+    "States Code, 2024 Edition Title 5 - GOVERNMENT ORGANIZATION AND EMPLOYEES "
+    "PART III - EMPLOYEES Subpart D - Pay and Allowances CHAPTER 53 - PAY RATES "
+    "AND SYSTEMS SUBCHAPTER IV - PREVAILING RATE SYSTEMS Sec. 5348 - Crews of "
+    "vessels From the U.S. Government Publishing Office, www.gpo.gov §5348. "
+    "Crews of vessels (a) Except as provided by subsection (b) of this section, "
+    "the pay of officers and members of crews of vessels excepted from chapter "
+    "51 of this title by section 5102(c)(8) of this title shall be fixed and "
+    "adjusted from time to time as nearly as is consistent with the public "
+    "interest in accordance with prevailing rates and practices in the maritime "
+    "industry. (b) Vessel employees in an area where inadequate maritime "
+    "industry practice exists and vessel employees of the Corps of Engineers "
+    "shall have their pay fixed and adjusted under the provisions of this "
+    "subchapter other than this section, as appropriate. Statutory Notes and "
+    "Related Subsidiaries Effective Date of 1972 Amendment Amendment by Pub. L. "
+    "92–392 effective on first day of first applicable pay period beginning on "
+    "or after 90th day after Aug. 19, 1972, see section 15(a) of Pub. L. "
+    "92–392, set out as an Effective Date note under section 5341 of this "
+    "title."
+)
+_USCODE_42_15251_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "§15251. Transferred Editorial Notes Codification Section 15251 was "
+    "editorially reclassified as section 50321 of Title 34, Crime Control and "
+    "Law Enforcement."
+)
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
@@ -1058,6 +1097,44 @@ def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_headi
         assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_section_heading_coarse_v1"
         assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_symbolic_validity_todo_samples_for_2_5602_5_5348_and_42_15251() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-2-5602-ed23b79794b2e0a4",
+            "2 U.S.C. 5602",
+            _USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+        (
+            "us-code-5-5348-f0250f870668e53f",
+            "5 U.S.C. 5348",
+            _USCODE_5_5348_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+        (
+            "us-code-42-15251.-c8bc40200627c975",
+            "42 U.S.C. 15251.",
+            _USCODE_42_15251_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        assert all(formula.provenance.citation == citation for formula in document.formulas)
+        if citation == "42 U.S.C. 15251.":
+            fallback = document.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
 
 
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:
