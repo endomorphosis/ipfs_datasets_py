@@ -32,9 +32,15 @@ _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _CONDITIONAL_SCOPE_PHRASES = (
     "in the case of",
     "in the event that",
+    "notwithstanding",
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
+)
+_CONDITIONAL_SCOPE_TOKENS = frozenset(
+    {
+        "notwithstanding",
+    }
 )
 _ALETHIC_SCOPE_TOKENS = frozenset(
     {
@@ -119,6 +125,27 @@ _FRAME_CONTEXT_TOKENS = frozenset(
         "officer",
         "secretary",
     }
+)
+_DEONTIC_SCOPE_TOKENS = frozenset(
+    {
+        "duty",
+        "duties",
+        "liable",
+        "liability",
+        "mandatory",
+        "obligation",
+        "obligations",
+        "prohibited",
+        "unlawful",
+    }
+)
+_DEONTIC_SCOPE_PHRASES = (
+    "has a duty to",
+    "have a duty to",
+    "is liable for",
+    "is prohibited from",
+    "is required to",
+    "under an obligation to",
 )
 
 
@@ -565,8 +592,12 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     conditional_scope_phrase = _contains_scope_phrase(
         normalized_text, _CONDITIONAL_SCOPE_PHRASES
     )
+    conditional_scope_token = bool(token_terms & _CONDITIONAL_SCOPE_TOKENS)
     alethic_scope_phrase = _contains_scope_phrase(
         normalized_text, _ALETHIC_SCOPE_PHRASES
+    )
+    deontic_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DEONTIC_SCOPE_PHRASES
     )
     temporal_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_SCOPE_PHRASES
@@ -581,19 +612,30 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         or bool(temporal_scope_phrase)
         or calendar_date_scope
     )
+    deontic_scope = (
+        bool(token_terms & _DEONTIC_SCOPE_TOKENS)
+        or bool(deontic_scope_phrase)
+        or ModalLogicFamily.DEONTIC.value in cue_families
+    )
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
         "has_alethic_cue": ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope_phrase": bool(alethic_scope_phrase),
         "has_condition_clause": condition_clauses,
+        "has_conditional_scope_token": conditional_scope_token,
         "has_conditional_scope_phrase": conditional_scope_phrase,
         "has_exception_clause": exception_clauses,
         "has_condition_or_exception_scope": (
-            condition_clauses or exception_clauses or conditional_scope_phrase
+            condition_clauses
+            or exception_clauses
+            or conditional_scope_phrase
+            or conditional_scope_token
         ),
         "has_calendar_date_scope": calendar_date_scope,
         "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
+        "has_deontic_scope": deontic_scope,
+        "has_deontic_scope_phrase": bool(deontic_scope_phrase),
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_frame_context": frame_context,

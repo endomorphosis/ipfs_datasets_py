@@ -704,7 +704,7 @@ class DeterministicModalCompiler:
         predicted_share = float(ranking[0]["share"])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
-        has_deontic_scope = bool(signals.get("has_deontic_cue"))
+        has_deontic_scope = bool(signals.get("has_deontic_scope"))
         if not has_deontic_scope and target_share <= 0.0:
             return []
         family_margin = target_share - predicted_share

@@ -308,6 +308,42 @@ def test_modal_compiler_surfaces_temporal_conditional_family_outvote_ambiguity()
     assert temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"] is True
 
 
+def test_modal_compiler_treats_notwithstanding_as_temporal_conditional_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Notwithstanding subsection (b), within 30 days after review the agency publishes the report."
+    )
+
+    temporal_conditional = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_conditional_normative_family_outvoted"
+    )
+    assert temporal_conditional.candidate_ids == ["temporal", "conditional_normative"]
+    assert temporal_conditional.metadata["predicted_family"] == "temporal"
+    assert temporal_conditional.metadata["target_family"] == "conditional_normative"
+    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
+        is True
+    )
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_token"]
+        is True
+    )
+
+
 def test_modal_compiler_treats_in_the_case_of_as_conditional_scope_ambiguity_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -442,6 +478,36 @@ def test_modal_compiler_surfaces_conditional_scope_family_outvote_ambiguity() ->
     )
 
 
+def test_modal_compiler_treats_notwithstanding_as_conditional_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_conditional_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Notwithstanding subsection (b), the agency shall issue written notice."
+    )
+
+    conditional_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "conditional_scope_family_outvoted"
+    )
+    assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
+    assert conditional_scope.metadata["predicted_family"] == "deontic"
+    assert conditional_scope.metadata["target_family"] == "conditional_normative"
+    assert conditional_scope.metadata["target_share"] == 0.0
+    assert (
+        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+    assert conditional_scope.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
+    assert conditional_scope.metadata["lexical_signals"]["has_conditional_scope_token"] is True
+
+
 def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -465,6 +531,33 @@ def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> Non
     assert deontic_scope.metadata["target_family"] == "deontic"
     assert deontic_scope.metadata["family_margin"] < 0.0
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is True
+
+
+def test_modal_compiler_treats_deontic_scope_phrase_as_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_deontic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the agency is under an obligation to file the report."
+    )
+
+    deontic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "deontic_scope_family_outvoted"
+    )
+    assert deontic_scope.candidate_ids == ["temporal", "deontic"]
+    assert deontic_scope.metadata["predicted_family"] == "temporal"
+    assert deontic_scope.metadata["target_family"] == "deontic"
+    assert deontic_scope.metadata["target_share"] == 0.0
+    assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is False
+    assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope"] is True
+    assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
 
 
 def test_modal_compiler_surfaces_alethic_scope_family_outvote_ambiguity() -> None:
