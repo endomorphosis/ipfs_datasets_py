@@ -374,6 +374,29 @@ def test_frame_ontology_terms_from_feature_keys_prioritize_direct_terms_when_ter
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> None:
+    structural_features = [
+        f"flogic:citation_section_component_count:{index}"
+        for index in range(12)
+    ]
+    terms = frame_ontology_terms_from_feature_keys(
+        structural_features
+        + [
+            "flogic:citation_section_component_kind:alphanumeric",
+            "flogic:citation_section_shape:NA-NA",
+            "flogic:status_keyword:transferred",
+            "flogic:statement_hint:purpose_clause",
+        ],
+        max_terms=3,
+    )
+
+    assert terms == [
+        "transferred",
+        "purpose_clause",
+        "alphanumeric",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_are_case_insensitive_for_prefixes() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -665,6 +688,49 @@ def test_frame_ontology_terms_from_triples_prioritize_direct_terms_when_term_cap
         "1000",
         "1001",
         "1002",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_deprioritize_structural_contextual_terms_when_term_cap_is_exceeded() -> None:
+    structural_triples = [
+        {
+            "subject": "doc-1",
+            "predicate": "citation_section_component_count",
+            "object": str(index),
+        }
+        for index in range(12)
+    ]
+    terms = frame_ontology_terms_from_triples(
+        structural_triples
+        + [
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_component_kind",
+                "object": "alphanumeric",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_shape",
+                "object": "NA-NA",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "status_keyword",
+                "object": "transferred",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "statement_hint",
+                "object": "purpose_clause",
+            },
+        ],
+        max_terms=3,
+    )
+
+    assert terms == [
+        "transferred",
+        "purpose_clause",
+        "alphanumeric",
     ]
 
 

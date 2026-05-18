@@ -220,8 +220,9 @@ _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
     "selected_frame",
 )
 _FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
-_FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 1
-_FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT = 2
+_FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL = 1
+_FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 2
+_FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT = 3
 _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS = frozenset(
     {
         "equal",
@@ -232,6 +233,31 @@ _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS = frozenset(
     }
 )
 _FRAME_ONTOLOGY_AUDIT_MIN_NUMERIC_TERM_LENGTH = 3
+_FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
+    "_alignment",
+    "_bucket",
+    "_char_count",
+    "_count",
+    "_digit_count",
+    "_has_delimiter",
+    "_has_suffix",
+    "_has_trailing_punct",
+    "_is_range",
+    "_kind",
+    "_match",
+    "_pair",
+    "_parity",
+    "_positioned",
+    "_presence_match",
+    "_profile",
+    "_relation",
+    "_repeat_kind",
+    "_shape",
+    "_signature",
+    "_span",
+    "_token_count",
+    "_unique_char_count",
+)
 
 
 @dataclass(frozen=True)
@@ -424,7 +450,7 @@ def frame_ontology_terms_from_triples(
         priority = (
             _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT
             if canonical_predicate
-            else _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL
+            else _contextual_frame_ontology_priority(predicate)
         )
         allow_numeric_tokens = _predicate_allows_numeric_ontology_tokens(
             canonical_predicate or predicate
@@ -443,7 +469,9 @@ def frame_ontology_terms_from_triples(
         )
         if not normalized:
             continue
-        term_entries.append((normalized, priority))
+        term_entries.append(
+            (normalized, _priority_for_frame_ontology_term(priority, normalized))
+        )
     return _bounded_ontology_values(
         term_entries,
         max_items=max_terms,
@@ -478,7 +506,9 @@ def frame_ontology_terms_from_feature_keys(
         )
         if not normalized:
             continue
-        term_entries.append((normalized, priority))
+        term_entries.append(
+            (normalized, _priority_for_frame_ontology_term(priority, normalized))
+        )
     return _bounded_ontology_values(
         term_entries,
         max_items=max_terms,
@@ -572,6 +602,7 @@ def _bounded_ontology_values(
     for priority in (
         _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+        _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL,
         _FRAME_ONTOLOGY_TERM_PRIORITY_NONE,
     ):
         for value, entry_priority in deduplicated:
@@ -855,7 +886,7 @@ def _frame_ontology_value_from_feature(
             _normalized_frame_ontology_value(head, tail),
             _predicate_allows_numeric_ontology_tokens(head),
             _predicate_allows_single_character_alpha_tokens(head),
-            _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            _contextual_frame_ontology_priority(head),
         )
 
     namespace = head.strip().lower()
@@ -892,7 +923,7 @@ def _frame_ontology_value_from_feature(
             _normalized_frame_ontology_value(predicate, value),
             _predicate_allows_numeric_ontology_tokens(predicate),
             _predicate_allows_single_character_alpha_tokens(predicate),
-            _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+            _contextual_frame_ontology_priority(predicate),
         )
     if namespace == "slot" and _is_slot_frame_ontology_predicate(predicate):
         return (
@@ -976,6 +1007,33 @@ def _normalized_frame_ontology_cue_value(value: str) -> str:
         normalized,
         str(value or "").strip(),
     )
+
+
+def _contextual_frame_ontology_priority(predicate: str) -> int:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized:
+        return _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL
+    if any(
+        normalized.endswith(suffix)
+        for suffix in _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES
+    ):
+        return _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL
+    return _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL
+
+
+def _priority_for_frame_ontology_term(priority: int, term: str) -> int:
+    if priority >= _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT:
+        return int(priority)
+    normalized = str(term or "").strip().lower()
+    if normalized in _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS:
+        return min(
+            int(priority),
+            _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL,
+        )
+    return int(priority)
 
 
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (
