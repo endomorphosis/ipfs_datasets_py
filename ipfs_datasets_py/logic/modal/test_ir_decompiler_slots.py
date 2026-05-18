@@ -278,3 +278,65 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+
+
+def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:
+    sample = _sample_document()
+    document = ModalIRDocument(
+        document_id=sample.document_id,
+        source=sample.source,
+        normalized_text=sample.normalized_text,
+        formulas=list(sample.formulas),
+        metadata={
+            "modal_family_counts": {
+                "deontic": 2,
+                "temporal": 1,
+            }
+        },
+    )
+    decoded = decode_modal_ir_document(document)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_family_count"] == ["deontic:2", "temporal:1"]
+    assert slot_map["modal_family_count_ranked"] == [
+        "1:deontic:2",
+        "2:temporal:1",
+    ]
+    assert slot_map["modal_family_count_family"] == ["deontic", "temporal"]
+    assert slot_map["modal_family_count_value"] == ["2", "1"]
+    assert slot_map["modal_family_count_deontic"] == ["2"]
+    assert slot_map["modal_family_count_temporal"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() -> None:
+    sample = _sample_document()
+    document = ModalIRDocument(
+        document_id=sample.document_id,
+        source=sample.source,
+        normalized_text=sample.normalized_text,
+        formulas=list(sample.formulas),
+        metadata={
+            "modal_family_counts": {
+                "deontic": 2,
+                "temporal": 1,
+            }
+        },
+    )
+    triples = modal_ir_to_flogic_triples(document)
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_family_count") == ["deontic:2", "temporal:1"]
+    assert objects("modal_family_count_ranked") == [
+        "1:deontic:2",
+        "2:temporal:1",
+    ]
+    assert objects("modal_family_count_family") == ["deontic", "temporal"]
+    assert objects("modal_family_count_value") == ["2", "1"]
+    assert objects("modal_family_count_deontic") == ["2"]
+    assert objects("modal_family_count_temporal") == ["1"]

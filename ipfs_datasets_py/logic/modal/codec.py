@@ -686,6 +686,14 @@ def modal_ir_to_flogic_triples(
         {"subject": modal_ir.document_id, "predicate": "type", "object": "legal_modal_document"},
         {"subject": modal_ir.document_id, "predicate": "source", "object": modal_ir.source},
     ]
+    for predicate, value in _document_modal_family_count_components(modal_ir):
+        triples.append(
+            {
+                "subject": modal_ir.document_id,
+                "predicate": predicate,
+                "object": value,
+            }
+        )
     if selected_frame:
         triples.append(
             {
@@ -1248,6 +1256,63 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
     if digest:
         components.append(("source_id_digest", digest))
     return _unique_preserve_order_tuples(components)
+
+
+def _document_modal_family_count_components(
+    modal_ir: ModalIRDocument,
+) -> List[tuple[str, str]]:
+    components: List[tuple[str, str]] = []
+    for rank, (family, count) in enumerate(
+        _normalized_modal_family_counts(modal_ir.metadata.get("modal_family_counts")),
+        start=1,
+    ):
+        components.extend(
+            [
+                ("modal_family_count", f"{family}:{count}"),
+                ("modal_family_count_ranked", f"{rank}:{family}:{count}"),
+                ("modal_family_count_family", family),
+                ("modal_family_count_value", count),
+                (f"modal_family_count_{_slot_safe_family_key(family)}", count),
+            ]
+        )
+    return _unique_preserve_order_tuples(components)
+
+
+def _normalized_modal_family_counts(raw_counts: Any) -> List[tuple[str, str]]:
+    if not isinstance(raw_counts, Mapping):
+        return []
+    normalized: Dict[str, str] = {}
+    for raw_family, raw_count in raw_counts.items():
+        family = _slot_safe_family_key(_clean_non_empty_string(raw_family).lower())
+        if not family:
+            continue
+        count = _coerce_non_negative_int(raw_count)
+        if count is None:
+            continue
+        normalized[family] = str(count)
+    return sorted(normalized.items(), key=lambda item: item[0])
+
+
+def _coerce_non_negative_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        try:
+            float_value = float(value)
+        except (TypeError, ValueError):
+            return None
+        if not float_value.is_integer():
+            return None
+        number = int(float_value)
+    if number < 0:
+        return None
+    return number
+
+
+def _slot_safe_family_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9_]+", "_", str(value or "").lower()).strip("_")
 
 
 def _citation_section_components(section: str) -> List[tuple[str, str]]:

@@ -181,6 +181,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
         *_source_identifier_phrases(document),
+        *_document_modal_family_count_phrases(document),
         *_frame_candidate_phrases(document),
     ]
     missing_slots: List[str] = []
@@ -699,6 +700,79 @@ def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPh
                 )
             )
     return phrases
+
+
+def _document_modal_family_count_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    for slot, value in _modal_family_count_slots(
+        document.metadata.get("modal_family_counts")
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _modal_family_count_slots(raw_counts: Any) -> List[Tuple[str, str]]:
+    slots: List[Tuple[str, str]] = []
+    for rank, (family, count) in enumerate(
+        _normalized_modal_family_counts(raw_counts),
+        start=1,
+    ):
+        slots.extend(
+            (
+                ("modal_family_count", f"{family}:{count}"),
+                ("modal_family_count_ranked", f"{rank}:{family}:{count}"),
+                ("modal_family_count_family", family),
+                ("modal_family_count_value", count),
+                (f"modal_family_count_{_slot_safe_family_key(family)}", count),
+            )
+        )
+    return _unique_slot_values(slots)
+
+
+def _normalized_modal_family_counts(raw_counts: Any) -> List[Tuple[str, str]]:
+    if not isinstance(raw_counts, dict):
+        return []
+    normalized: Dict[str, str] = {}
+    for raw_family, raw_count in raw_counts.items():
+        family = _slot_safe_family_key(_clean_text(raw_family).lower())
+        if not family:
+            continue
+        count = _coerce_non_negative_int(raw_count)
+        if count is None:
+            continue
+        normalized[family] = str(count)
+    return sorted(normalized.items(), key=lambda item: item[0])
+
+
+def _coerce_non_negative_int(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        try:
+            float_value = float(value)
+        except (TypeError, ValueError):
+            return None
+        if not float_value.is_integer():
+            return None
+        number = int(float_value)
+    if number < 0:
+        return None
+    return number
+
+
+def _slot_safe_family_key(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9_]+", "_", str(value or "").lower()).strip("_")
+    return normalized
 
 
 def _document_source_ids(document: ModalIRDocument) -> List[str]:
