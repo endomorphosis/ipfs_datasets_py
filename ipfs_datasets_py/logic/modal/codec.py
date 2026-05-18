@@ -1108,7 +1108,19 @@ def modal_ir_to_flogic_triples(
                         }
                     )
         citation = _clean_non_empty_string(formula.provenance.citation)
+        citation_inferred_from_source_id = False
+        if not citation:
+            citation = _source_id_inferred_citation(source_id)
+            citation_inferred_from_source_id = bool(citation)
         if citation:
+            if citation_inferred_from_source_id:
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "citation_derivation",
+                        "object": "source_id_inferred",
+                    }
+                )
             triples.append(
                 {
                     "subject": formula.formula_id,
@@ -1613,6 +1625,18 @@ def _document_source_context_components(
                     citation=citation,
                 )
             )
+    elif not modal_ir.formulas:
+        for inferred_citation in _inferred_citations_from_source_ids(source_ids):
+            components.append(("citation", inferred_citation))
+            components.append(("citation_derivation", "source_id_inferred"))
+            components.extend(_citation_components(inferred_citation))
+            for source_id in source_ids:
+                components.extend(
+                    _provenance_alignment_components(
+                        source_id=source_id,
+                        citation=inferred_citation,
+                    )
+                )
     return _unique_preserve_order_tuples(components)
 
 
@@ -1626,6 +1650,39 @@ def _document_source_ids(modal_ir: ModalIRDocument) -> List[str]:
         if source_id and source_id not in source_ids:
             source_ids.append(source_id)
     return source_ids
+
+
+def _inferred_citations_from_source_ids(source_ids: Sequence[str]) -> List[str]:
+    citations: List[str] = []
+    for source_id in source_ids:
+        citation = _source_id_inferred_citation(source_id)
+        if citation and citation not in citations:
+            citations.append(citation)
+    return citations
+
+
+def _source_id_inferred_citation(source_id: str) -> str:
+    normalized_source_id = _clean_non_empty_string(source_id)
+    if not normalized_source_id:
+        return ""
+    source_component_map = _component_value_map(_source_id_components(normalized_source_id))
+    title = _clean_non_empty_string(source_component_map.get("source_id_title"))
+    raw_section = _clean_non_empty_string(
+        source_component_map.get("source_id_section_raw")
+        or source_component_map.get("source_id_section")
+    )
+    if title and raw_section:
+        return f"{title} U.S.C. {raw_section}"
+    canonical = _clean_non_empty_string(
+        source_component_map.get("source_id_citation_canonical")
+    )
+    if canonical:
+        return canonical
+    normalized_section = _clean_non_empty_string(
+        source_component_map.get("source_id_section_normalized")
+        or source_component_map.get("source_id_section")
+    )
+    return _canonical_usc_citation(title, normalized_section)
 
 
 def _normalized_modal_family_counts(raw_counts: Any) -> List[tuple[str, str]]:

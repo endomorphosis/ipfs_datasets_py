@@ -391,6 +391,42 @@ def _zero_formula_sample_document() -> ModalIRDocument:
     )
 
 
+def _zero_formula_source_id_only_sample_document() -> ModalIRDocument:
+    source_id = "us-code-22-7636-27b6423bb5340be0"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="State Department reporting requirement.",
+        formulas=[],
+    )
+
+
+def _formula_missing_citation_sample_document() -> ModalIRDocument:
+    source_id = "us-code-18-1719-6841cc7ab2076858"
+    formula = ModalIRFormula(
+        formula_id="f-missing-citation",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_mailing_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation=None,
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="18 U.S.C. 1719 mailing records requirement.",
+        formulas=[formula],
+    )
+
+
 def _coarse_heading_tail_sample_document() -> ModalIRDocument:
     source_id = "us-code-20-741-d9743e9c6ae8213e"
     formula = ModalIRFormula(
@@ -1749,6 +1785,66 @@ def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_sl
     assert slot_map["citation_source_id_section_trailing_punct_presence_match"] == ["true"]
     assert slot_map["citation_source_id_section_trailing_punct_match"] == ["true"]
     assert slot_map["citation_source_id_section_trailing_punct_pair"] == [".|."]
+
+
+def test_decode_modal_ir_document_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_source_id_only_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation"] == ["22 U.S.C. 7636"]
+    assert slot_map["citation_derivation"] == ["source_id_inferred"]
+    assert slot_map["citation_canonical"] == ["22 U.S.C. 7636"]
+    assert slot_map["citation_section"] == ["7636"]
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["7636|7636"]
+
+
+def test_modal_ir_to_flogic_triples_infers_document_citation_slots_from_source_id_without_metadata() -> None:
+    triples = modal_ir_to_flogic_triples(_zero_formula_source_id_only_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["22 U.S.C. 7636"]
+    assert objects("citation_derivation") == ["source_id_inferred"]
+    assert objects("citation_canonical") == ["22 U.S.C. 7636"]
+    assert objects("citation_section") == ["7636"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_section_raw_pair") == ["7636|7636"]
+
+
+def test_decode_modal_ir_document_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+    decoded = decode_modal_ir_document(_formula_missing_citation_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation"] == ["18 U.S.C. 1719"]
+    assert slot_map["citation_derivation"] == ["source_id_inferred"]
+    assert slot_map["citation_canonical"] == ["18 U.S.C. 1719"]
+    assert slot_map["citation_section"] == ["1719"]
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["1719|1719"]
+
+
+def test_modal_ir_to_flogic_triples_infers_formula_citation_slots_from_source_id_when_missing() -> None:
+    triples = modal_ir_to_flogic_triples(_formula_missing_citation_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation") == ["18 U.S.C. 1719"]
+    assert objects("citation_derivation") == ["source_id_inferred"]
+    assert objects("citation_canonical") == ["18 U.S.C. 1719"]
+    assert objects("citation_section") == ["1719"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_section_raw_pair") == ["1719|1719"]
 
 
 def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:

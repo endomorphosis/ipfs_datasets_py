@@ -557,7 +557,20 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             )
     source_id = _clean_text(formula.provenance.source_id or "")
     citation = _clean_text(formula.provenance.citation or "")
+    citation_inferred_from_source_id = False
+    if not citation:
+        citation = _source_id_inferred_citation(source_id)
+        citation_inferred_from_source_id = bool(citation)
     if citation:
+        if citation_inferred_from_source_id:
+            phrases.append(
+                DecodedModalPhrase(
+                    text="source_id_inferred",
+                    slot="citation_derivation",
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         phrases.append(
             DecodedModalPhrase(
                 text=citation,
@@ -734,7 +747,38 @@ def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPh
 def _document_citation_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
     citation = _clean_text(document.metadata.get("citation") or "")
     if not citation:
-        return []
+        if document.formulas:
+            return []
+        inferred_citations = _inferred_citations_from_source_ids(
+            _document_source_ids(document)
+        )
+        if not inferred_citations:
+            return []
+        phrases: List[DecodedModalPhrase] = []
+        for inferred_citation in inferred_citations:
+            phrases.append(
+                DecodedModalPhrase(
+                    text=inferred_citation,
+                    slot="citation",
+                    provenance_only=True,
+                )
+            )
+            phrases.append(
+                DecodedModalPhrase(
+                    text="source_id_inferred",
+                    slot="citation_derivation",
+                    provenance_only=True,
+                )
+            )
+            for slot, value in _citation_slots(inferred_citation):
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=value,
+                        slot=slot,
+                        provenance_only=True,
+                    )
+                )
+        return phrases
     formula_citations = {
         _clean_text(formula.provenance.citation or "")
         for formula in document.formulas
@@ -764,6 +808,12 @@ def _document_provenance_alignment_phrases(
     document: ModalIRDocument,
 ) -> List[DecodedModalPhrase]:
     citation = _clean_text(document.metadata.get("citation") or "")
+    if not citation and not document.formulas:
+        inferred_citations = _inferred_citations_from_source_ids(
+            _document_source_ids(document)
+        )
+        if inferred_citations:
+            citation = inferred_citations[0]
     if not citation:
         return []
     phrases: List[DecodedModalPhrase] = []
@@ -870,6 +920,39 @@ def _document_source_ids(document: ModalIRDocument) -> List[str]:
         if source_id and source_id not in source_ids:
             source_ids.append(source_id)
     return source_ids
+
+
+def _inferred_citations_from_source_ids(source_ids: Sequence[str]) -> List[str]:
+    citations: List[str] = []
+    for source_id in source_ids:
+        citation = _source_id_inferred_citation(source_id)
+        if citation and citation not in citations:
+            citations.append(citation)
+    return citations
+
+
+def _source_id_inferred_citation(source_id: str) -> str:
+    normalized_source_id = _clean_text(source_id)
+    if not normalized_source_id:
+        return ""
+    source_slot_map = _slot_value_map(_source_id_slots(normalized_source_id))
+    title = _clean_text(source_slot_map.get("source_id_title") or "")
+    raw_section = _clean_text(
+        source_slot_map.get("source_id_section_raw")
+        or source_slot_map.get("source_id_section")
+        or ""
+    )
+    if title and raw_section:
+        return f"{title} U.S.C. {raw_section}"
+    canonical = _clean_text(source_slot_map.get("source_id_citation_canonical") or "")
+    if canonical:
+        return canonical
+    normalized_section = _clean_text(
+        source_slot_map.get("source_id_section_normalized")
+        or source_slot_map.get("source_id_section")
+        or ""
+    )
+    return _canonical_usc_citation(title, normalized_section)
 
 
 def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
