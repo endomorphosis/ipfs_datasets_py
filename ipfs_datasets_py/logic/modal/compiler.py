@@ -710,6 +710,10 @@ class DeterministicModalCompiler:
             ),
             (
                 ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            ),
+            (
+                ModalLogicFamily.TEMPORAL.value,
                 ModalLogicFamily.DEONTIC.value,
             ),
         }
