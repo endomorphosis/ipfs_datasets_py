@@ -1160,6 +1160,9 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
         components.append(("citation_title", title))
     components.append(("citation_code", "U.S.C."))
     if section:
+        citation_canonical = _canonical_usc_citation(title, section)
+        if citation_canonical:
+            components.append(("citation_canonical", citation_canonical))
         components.append(("citation_section", section))
         if raw_section and raw_section != section:
             components.append(("citation_section_raw", raw_section))
@@ -1221,6 +1224,9 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
         components.append(("source_id_section_normalized", normalized_section))
     if section_trailing_punct:
         components.append(("source_id_section_trailing_punct", section_trailing_punct))
+    source_id_canonical = _canonical_usc_citation(title, section_for_components)
+    if source_id_canonical:
+        components.append(("source_id_citation_canonical", source_id_canonical))
     if section_for_components:
         for predicate, value in _citation_section_components(section_for_components):
             if predicate.startswith("citation_section"):
@@ -1278,6 +1284,16 @@ def _section_trailing_punct(
     if not raw.startswith(normalized):
         return ""
     return _clean_non_empty_string(raw[len(normalized) :])
+
+
+def _canonical_usc_citation(title: str, section: str) -> str:
+    normalized_title = _clean_non_empty_string(title)
+    normalized_section = _clean_non_empty_string(
+        _TRAILING_SECTION_PUNCT_RE.sub("", section)
+    )
+    if not normalized_title or not normalized_section:
+        return ""
+    return f"{normalized_title} U.S.C. {normalized_section}"
 
 
 def _unique_preserve_order_tuples(

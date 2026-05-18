@@ -2127,6 +2127,7 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert slot_texts["exception_prefix"] == ["unless"]
     assert slot_texts["exception_unless"] == ["waived"]
     assert slot_texts["citation"] == ["5 U.S.C. 552"]
+    assert slot_texts["citation_canonical"] == ["5 U.S.C. 552"]
     assert slot_texts["citation_title"] == ["5"]
     assert slot_texts["citation_code"] == ["U.S.C."]
     assert slot_texts["citation_section"] == ["552"]
@@ -2146,6 +2147,11 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     )
     assert any(
         triple["predicate"] == "citation"
+        and triple["object"] == "5 U.S.C. 552"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_canonical"
         and triple["object"] == "5 U.S.C. 552"
         for triple in triples
     )
@@ -2285,6 +2291,9 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "31a-2b" in slot_texts["citation_section"]
     assert "6050K" in slot_texts["citation_section"]
     assert "60604" in slot_texts["citation_section"]
+    assert "2 U.S.C. 31a-2b" in slot_texts["citation_canonical"]
+    assert "26 U.S.C. 6050K" in slot_texts["citation_canonical"]
+    assert "51 U.S.C. 60604" in slot_texts["citation_canonical"]
     assert "60604." in slot_texts["citation_section_raw"]
     assert "60604" in slot_texts["citation_section_normalized"]
     assert slot_texts["citation_section_trailing_punct"] == ["."]
@@ -2332,6 +2341,11 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_section_trailing_punct"
         and triple["object"] == "."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_canonical"
+        and triple["object"] == "51 U.S.C. 60604"
         for triple in triples
     )
 
@@ -2395,6 +2409,8 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert slot_texts["source_id_title_number"] == ["42"]
     assert "10145." in slot_texts["source_id_section"]
     assert "2000e" in slot_texts["source_id_section"]
+    assert "42 U.S.C. 10145" in slot_texts["source_id_citation_canonical"]
+    assert "42 U.S.C. 2000e" in slot_texts["source_id_citation_canonical"]
     assert "10145" in slot_texts["source_id_section_normalized"]
     assert slot_texts["source_id_section_trailing_punct"] == ["."]
     assert "10145" in slot_texts["source_id_section_primary"]
@@ -2422,6 +2438,11 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert any(
         triple["predicate"] == "source_id_section_suffix"
         and triple["object"] == "e"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_citation_canonical"
+        and triple["object"] == "42 U.S.C. 10145"
         for triple in triples
     )
     assert any(

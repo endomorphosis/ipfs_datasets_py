@@ -734,6 +734,9 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
     if section_trailing_punct:
         slots.append(("source_id_section_trailing_punct", section_trailing_punct))
     section_for_slots = normalized_section or section
+    source_id_canonical = _canonical_usc_citation(title, section_for_slots)
+    if source_id_canonical:
+        slots.append(("source_id_citation_canonical", source_id_canonical))
     if section_for_slots:
         slots.extend(_source_id_section_slots(section_for_slots))
         slots.extend(
@@ -1101,6 +1104,9 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         slots.append(("citation_title", title))
     slots.append(("citation_code", "U.S.C."))
     if section:
+        citation_canonical = _canonical_usc_citation(title, section)
+        if citation_canonical:
+            slots.append(("citation_canonical", citation_canonical))
         slots.append(("citation_section", section))
         if raw_section and raw_section != section:
             slots.append(("citation_section_raw", raw_section))
@@ -1129,6 +1135,14 @@ def _section_trailing_punct(
     if not raw.startswith(normalized):
         return ""
     return _clean_text(raw[len(normalized) :])
+
+
+def _canonical_usc_citation(title: str, section: str) -> str:
+    normalized_title = _clean_text(title)
+    normalized_section = _clean_text(_TRAILING_SECTION_PUNCT_RE.sub("", section))
+    if not normalized_title or not normalized_section:
+        return ""
+    return f"{normalized_title} U.S.C. {normalized_section}"
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
