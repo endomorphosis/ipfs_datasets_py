@@ -4441,6 +4441,37 @@ def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:
     assert hints[0].to_dict()["status"] == "proposed"
 
 
+def test_autoencoder_synthesis_hint_extracts_frame_linked_feature_variants() -> None:
+    hints = synthesis_hints_from_autoencoder_introspection(
+        {
+            "sample_id": "us-code-5-552-deadbeefdeadbeef",
+            "synthesis_focus": ["audit_frame_logic_terms"],
+            "reconstruction_loss": 0.42,
+            "family_margin": 0.5,
+            "top_family_contributions": [
+                {"feature": "slot:selected_frame:administrative_notice_hearing"},
+                {"feature": "selected-frame-term:final_order"},
+                {"feature": "family:selected_frame:deontic"},
+                {"feature": "token:agency"},
+            ],
+            "top_embedding_contributions": [
+                {"feature": "cue:frame:Frame:transferred"},
+                {"feature": "flogic:source_id:us-code-5-552-deadbeefdeadbeef"},
+                {"feature": "lemma:notice"},
+            ],
+        }
+    )
+
+    audit_hint = next(hint for hint in hints if hint.action == "audit_frame_logic_terms")
+    assert audit_hint.evidence["frame_features"] == [
+        "slot:selected_frame:administrative_notice_hearing",
+        "selected-frame-term:final_order",
+        "family:selected_frame:deontic",
+        "cue:frame:Frame:transferred",
+        "flogic:source_id:us-code-5-552-deadbeefdeadbeef",
+    ]
+
+
 def test_logic_extractor_uses_logic_layer_modal_codec_without_llm() -> None:
     class FailingBackend:
         def generate(self, request):  # pragma: no cover - should never be called

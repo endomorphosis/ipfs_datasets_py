@@ -13,6 +13,10 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_feature_keys,
+)
+
 
 @dataclass(frozen=True)
 class ModalProgramSynthesisHint:
@@ -186,13 +190,9 @@ def _frame_features(introspection: Mapping[str, Any]) -> List[str]:
     features: List[str] = []
     for key in ("top_family_contributions", "top_embedding_contributions"):
         for feature in _feature_names(introspection.get(key, [])):
-            if (
-                feature.startswith("frame:")
-                or feature.startswith("frame-candidate:")
-                or feature.startswith("flogic:")
-            ) and feature not in features:
+            if feature and feature not in features:
                 features.append(feature)
-    return features
+    return frame_ontology_feature_keys(features)
 
 
 def _priority_from_probability_gap(introspection: Mapping[str, Any]) -> float:
