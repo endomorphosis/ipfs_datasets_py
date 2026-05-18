@@ -569,6 +569,7 @@ class AdaptiveModalAutoencoder:
             self.compute_device,
             self._torch,
         ) = _resolve_vector_compute_backend(compute_device)
+        self._sample_feature_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
 
     def evaluate(
         self,
@@ -905,6 +906,11 @@ class AdaptiveModalAutoencoder:
         ]
 
     def _base_decoded_for(self, sample: LegalSample) -> List[float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("base_decoded")
+        if isinstance(cached, list) and len(cached) == len(sample.embedding_vector):
+            return [float(value) for value in cached]
+
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "decode_sample_embedding",
@@ -914,8 +920,12 @@ class AdaptiveModalAutoencoder:
                 dimensions=len(sample.embedding_vector),
             )
             if len(decoded) == len(sample.embedding_vector):
-                return [float(value) for value in decoded]
-        return [self.initial_embedding_scale * float(value) for value in sample.embedding_vector]
+                result = [float(value) for value in decoded]
+                cache["base_decoded"] = list(result)
+                return result
+        result = [self.initial_embedding_scale * float(value) for value in sample.embedding_vector]
+        cache["base_decoded"] = list(result)
+        return result
 
     def _family_distribution(
         self,
@@ -931,6 +941,27 @@ class AdaptiveModalAutoencoder:
         *,
         use_sample_memory: bool = True,
     ) -> Dict[str, float]:
+        logits = self._base_logits_for(sample)
+        for feature in self._feature_keys_for(sample):
+            for family, value in self.state.feature_family_logits.get(feature, {}).items():
+                if family in logits:
+                    logits[family] += float(value) * self.feature_family_logit_scale
+        if use_sample_memory:
+            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                if family in logits:
+                    logits[family] += float(value)
+        return logits
+
+    def _base_logits_for(self, sample: LegalSample) -> Dict[str, float]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("base_logits")
+        if isinstance(cached, dict):
+            logits = {
+                family: float(cached.get(family, 0.0))
+                for family in self.modal_families
+            }
+            return logits
+
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "family_logits_for_sample",
@@ -944,15 +975,12 @@ class AdaptiveModalAutoencoder:
             logits = {family: 0.0 for family in self.modal_families}
         for family in self.modal_families:
             logits.setdefault(family, 0.0)
-        for feature in self._feature_keys_for(sample):
-            for family, value in self.state.feature_family_logits.get(feature, {}).items():
-                if family in logits:
-                    logits[family] += float(value) * self.feature_family_logit_scale
-        if use_sample_memory:
-            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
-                if family in logits:
-                    logits[family] += float(value)
-        return logits
+        result = {
+            family: float(logits.get(family, 0.0))
+            for family in self.modal_families
+        }
+        cache["base_logits"] = dict(result)
+        return result
 
     def _nudge_decoded_embedding(self, sample: LegalSample, *, learning_rate: float) -> None:
         step = _clamp_learning_rate(learning_rate)
@@ -1202,14 +1230,21 @@ class AdaptiveModalAutoencoder:
         ]
 
     def _feature_keys_for(self, sample: LegalSample) -> List[str]:
+        cache = self._sample_cache_for(sample)
+        cached = cache.get("feature_keys")
+        if isinstance(cached, list):
+            return [str(value) for value in cached]
+
         if self.feature_codec is not None and hasattr(
             self.feature_codec,
             "feature_keys_for_sample",
         ):
-            return _unique_preserve_order(
+            keys = _unique_preserve_order(
                 str(value)
                 for value in self.feature_codec.feature_keys_for_sample(sample)
             )
+            cache["feature_keys"] = list(keys)
+            return keys
         keys: List[str] = []
         if sample.selected_frame:
             keys.append(f"frame:{sample.selected_frame}")
@@ -1220,7 +1255,15 @@ class AdaptiveModalAutoencoder:
             if cue:
                 keys.append(f"modal-cue:{str(cue).lower()}")
         keys.extend(f"token:{token}" for token in _token_features(sample.normalized_text))
-        return _unique_preserve_order(keys)
+        result = _unique_preserve_order(keys)
+        cache["feature_keys"] = list(result)
+        return result
+
+    def _sample_cache_for(self, sample: LegalSample) -> Dict[str, Any]:
+        return self._sample_feature_cache.setdefault(
+            (sample.sample_id, len(sample.embedding_vector)),
+            {},
+        )
 
     def _family_contributions_for(
         self,
