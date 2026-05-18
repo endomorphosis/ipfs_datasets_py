@@ -392,6 +392,8 @@ _USCODE_16_6808_SYMBOLIC_VALIDITY_TEXT = (
     "recommendations for changes in the overall fee system. (Pub. L. 108–447, div. J, "
     "title VIII, §809, Dec. 8, 2004, 118 Stat. 3389.)"
 )
+_USCODE_16_773B_SYMBOLIC_VALIDITY_TODO_TEXT = "Sec. 773b - Transferred."
+_USCODE_16_460VV_17_SYMBOLIC_VALIDITY_TODO_TEXT = "Sec. 460vv–17 - Transferred."
 _USCODE_7_7656_SYMBOLIC_VALIDITY_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition Title 7 - "
     "AGRICULTURE CHAPTER 103 - AGRICULTURAL RESEARCH, EXTENSION, AND EDUCATION REFORM "
@@ -1323,6 +1325,46 @@ def test_modal_compiler_replays_sec_prefixed_heading_samples_with_usc_citation_v
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+            assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_symbolic_validity_samples_for_16_773b_and_16_460vv_17() -> None:
+    cases = [
+        (
+            "us-code-16-773b-d418534f697a23b1",
+            "16 U.S.C. 773b",
+            _USCODE_16_773B_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+        (
+            "us-code-16-460vv-17-9b754fd1c1a1e8a7",
+            "16 U.S.C. 460vv-17",
+            _USCODE_16_460VV_17_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
             assert fallback.provenance.citation == citation
 
 

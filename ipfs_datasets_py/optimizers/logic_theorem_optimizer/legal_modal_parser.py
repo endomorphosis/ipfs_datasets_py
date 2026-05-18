@@ -54,6 +54,8 @@ _USCODE_CITATION_SECTION_RE = re.compile(
     re.IGNORECASE,
 )
 _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_USCODE_SECTION_DASH_VARIANT_RE = re.compile(r"[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]")
+_USCODE_SECTION_DASH_PATTERN = r"\s*(?:-|[\u2010\u2011\u2012\u2013\u2014\u2015\u2212])\s*"
 _USCODE_SECTION_REF_SUFFIX_RE = r"(?:\b|[.)\-:\u2012\u2013\u2014])"
 _USCODE_SECTION_HEADING_SHORT_MAX_TOKENS = 24
 _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS = 80
@@ -503,7 +505,16 @@ class LegalModalParser:
         if not match:
             return ""
         token = match.group(1).strip().lower()
-        return _USCODE_TRAILING_SECTION_PUNCT_RE.sub("", token)
+        token = _USCODE_TRAILING_SECTION_PUNCT_RE.sub("", token)
+        return self._normalized_citation_section_token(token)
+
+    def _normalized_citation_section_token(self, token: str) -> str:
+        normalized = _USCODE_SECTION_DASH_VARIANT_RE.sub("-", token.lower())
+        return re.sub(r"\s*-\s*", "-", normalized)
+
+    def _citation_section_pattern(self, citation_section: str) -> str:
+        escaped = re.escape(self._normalized_citation_section_token(citation_section))
+        return escaped.replace(r"\-", _USCODE_SECTION_DASH_PATTERN)
 
     def _is_uscode_citation(self, citation: Optional[str]) -> bool:
         if not citation:
@@ -514,7 +525,7 @@ class LegalModalParser:
         if not citation_section:
             return False
         normalized = self.normalize_text(text).lower()
-        section_pattern = re.escape(citation_section)
+        section_pattern = self._citation_section_pattern(citation_section)
         if re.search(
             rf"{_USCODE_SECTION_REF_PREFIX_RE}{section_pattern}"
             rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
@@ -527,7 +538,7 @@ class LegalModalParser:
         if not citation_section:
             return False
         normalized = self.normalize_text(text).lower()
-        section_pattern = re.escape(citation_section)
+        section_pattern = self._citation_section_pattern(citation_section)
         return bool(
             re.match(
                 rf"^{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
@@ -546,7 +557,7 @@ class LegalModalParser:
         if not citation_section:
             return None
 
-        section_pattern = re.escape(citation_section)
+        section_pattern = self._citation_section_pattern(citation_section)
         reference_pattern = re.compile(
             rf"(?<!\w){_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
             rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
@@ -1174,7 +1185,7 @@ class LegalModalParser:
         if not citation_section:
             return None
 
-        section_pattern = re.escape(citation_section)
+        section_pattern = self._citation_section_pattern(citation_section)
         reference_pattern = re.compile(
             rf"(?<!\w){_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
             rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
