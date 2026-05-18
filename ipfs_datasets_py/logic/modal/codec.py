@@ -105,6 +105,10 @@ _USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
+_CITATION_SECTION_PART_RE = re.compile(
+    r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
+)
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
     "subsection",
@@ -887,7 +891,7 @@ def modal_ir_to_flogic_triples(
                 }
             )
             citation_components = _citation_components(formula.provenance.citation)
-            for predicate, value in citation_components.items():
+            for predicate, value in citation_components:
                 triples.append(
                     {
                         "subject": formula.formula_id,
@@ -980,25 +984,68 @@ def _typed_clause_key_value(
     return None
 
 
-def _citation_components(citation: str) -> Dict[str, str]:
+def _citation_components(citation: str) -> List[tuple[str, str]]:
     cleaned = _clean_non_empty_string(citation)
     if not cleaned:
-        return {}
+        return []
     match = _USC_CITATION_RE.match(cleaned)
     if not match:
-        return {}
+        return []
     title = _clean_non_empty_string(match.group("title"))
     section = _TRAILING_SECTION_PUNCT_RE.sub(
         "",
         _clean_non_empty_string(match.group("section")),
     )
-    components: Dict[str, str] = {}
+    components: List[tuple[str, str]] = []
     if title:
-        components["citation_title"] = title
-    components["citation_code"] = "U.S.C."
+        components.append(("citation_title", title))
+    components.append(("citation_code", "U.S.C."))
     if section:
-        components["citation_section"] = section
+        components.append(("citation_section", section))
+        components.extend(_citation_section_components(section))
+    return _unique_preserve_order_tuples(components)
+
+
+def _citation_section_components(section: str) -> List[tuple[str, str]]:
+    cleaned = _clean_non_empty_string(section)
+    if not cleaned:
+        return []
+    parts = [
+        _clean_non_empty_string(part)
+        for part in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
+        if _clean_non_empty_string(part)
+    ]
+    if not parts:
+        return []
+    components: List[tuple[str, str]] = [
+        ("citation_section_primary", parts[0]),
+        ("citation_section_component_count", str(len(parts))),
+    ]
+    for part in parts:
+        components.append(("citation_section_component", part))
+        match = _CITATION_SECTION_PART_RE.fullmatch(part)
+        if not match:
+            continue
+        number = _clean_non_empty_string(match.group("number"))
+        suffix = _clean_non_empty_string(match.group("suffix"))
+        if number:
+            components.append(("citation_section_number", number))
+        if suffix:
+            components.append(("citation_section_suffix", suffix))
     return components
+
+
+def _unique_preserve_order_tuples(
+    values: Iterable[tuple[str, str]],
+) -> List[tuple[str, str]]:
+    seen: set[tuple[str, str]] = set()
+    result: List[tuple[str, str]] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 def _append_statutory_scope_triples(

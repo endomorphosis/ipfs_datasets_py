@@ -1691,6 +1691,10 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert slot_texts["citation_title"] == ["5"]
     assert slot_texts["citation_code"] == ["U.S.C."]
     assert slot_texts["citation_section"] == ["552"]
+    assert slot_texts["citation_section_primary"] == ["552"]
+    assert slot_texts["citation_section_component_count"] == ["1"]
+    assert slot_texts["citation_section_component"] == ["552"]
+    assert slot_texts["citation_section_number"] == ["552"]
     assert any(
         triple["predicate"] == "condition"
         and triple["object"] == "if the application is complete"
@@ -1739,6 +1743,105 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     assert any(
         triple["predicate"] == "citation_section"
         and triple["object"] == "552"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_primary"
+        and triple["object"] == "552"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_component_count"
+        and triple["object"] == "1"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_component"
+        and triple["object"] == "552"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_number"
+        and triple["object"] == "552"
+        for triple in triples
+    )
+
+
+def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="citation-shape-doc:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="F",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(
+            name="section_heading_example",
+            role="frame",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="citation-shape-doc",
+            start_char=0,
+            end_char=28,
+            citation="2 U.S.C. 31a-2b",
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_v1"},
+    )
+    secondary_formula = ModalIRFormula(
+        formula_id="citation-shape-doc:f0002",
+        operator=ModalIROperator(
+            family="frame",
+            system="F",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(
+            name="section_heading_example_two",
+            role="frame",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="citation-shape-doc",
+            start_char=29,
+            end_char=57,
+            citation="26 U.S.C. 6050K",
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_v1"},
+    )
+    document = ModalIRDocument(
+        document_id="citation-shape-doc",
+        source="us_code",
+        normalized_text="Sec. 31a-2b. Example heading. Sec. 6050K. Another heading.",
+        formulas=[formula, secondary_formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "31a-2b" in slot_texts["citation_section"]
+    assert "6050K" in slot_texts["citation_section"]
+    assert "31a" in slot_texts["citation_section_primary"]
+    assert "6050K" in slot_texts["citation_section_primary"]
+    assert "2" in slot_texts["citation_section_component_count"]
+    assert "1" in slot_texts["citation_section_component_count"]
+    assert "31a" in slot_texts["citation_section_component"]
+    assert "2b" in slot_texts["citation_section_component"]
+    assert "6050K" in slot_texts["citation_section_component"]
+    assert "31" in slot_texts["citation_section_number"]
+    assert "2" in slot_texts["citation_section_number"]
+    assert "6050" in slot_texts["citation_section_number"]
+    assert "a" in slot_texts["citation_section_suffix"]
+    assert "b" in slot_texts["citation_section_suffix"]
+    assert "K" in slot_texts["citation_section_suffix"]
+    assert any(
+        triple["predicate"] == "citation_section_component"
+        and triple["object"] == "2b"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_suffix"
+        and triple["object"] == "K"
         for triple in triples
     )
 

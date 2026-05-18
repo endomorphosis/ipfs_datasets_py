@@ -48,6 +48,10 @@ _USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
+_CITATION_SECTION_PART_RE = re.compile(
+    r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
+)
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
     "subsection",
@@ -762,7 +766,48 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
     slots.append(("citation_code", "U.S.C."))
     if section:
         slots.append(("citation_section", section))
+        slots.extend(_citation_section_slots(section))
+    return _unique_slot_values(slots)
+
+
+def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
+    cleaned = _clean_text(section)
+    if not cleaned:
+        return []
+    components = [
+        _clean_text(component)
+        for component in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
+        if _clean_text(component)
+    ]
+    if not components:
+        return []
+    slots: List[Tuple[str, str]] = [
+        ("citation_section_primary", components[0]),
+        ("citation_section_component_count", str(len(components))),
+    ]
+    for component in components:
+        slots.append(("citation_section_component", component))
+        match = _CITATION_SECTION_PART_RE.fullmatch(component)
+        if not match:
+            continue
+        number = _clean_text(match.group("number"))
+        suffix = _clean_text(match.group("suffix"))
+        if number:
+            slots.append(("citation_section_number", number))
+        if suffix:
+            slots.append(("citation_section_suffix", suffix))
     return slots
+
+
+def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:
+    result: List[Tuple[str, str]] = []
+    seen: set[Tuple[str, str]] = set()
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 def _phrase_values(values: Sequence[str]) -> List[str]:
