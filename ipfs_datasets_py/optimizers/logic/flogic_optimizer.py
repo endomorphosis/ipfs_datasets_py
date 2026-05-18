@@ -188,13 +188,13 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
-        frame_ontology_terms_from_features = list(
+        frame_ontology_terms_from_features = _sorted_unique_terms(
             frame_ontology_terms_from_feature_keys(frame_feature_keys or [])
         )
-        frame_ontology_terms_from_kg_triples = list(
+        frame_ontology_terms_from_kg_triples = _sorted_unique_terms(
             frame_ontology_terms_from_triples(kg_triples or [])
         )
-        frame_ontology_terms = _unique_preserve_order(
+        frame_ontology_terms = _sorted_unique_terms(
             frame_ontology_terms_from_features
             + frame_ontology_terms_from_kg_triples
         )
@@ -352,6 +352,10 @@ def _unique_preserve_order(values: Sequence[str]) -> List[str]:
         seen.add(value)
         result.append(value)
     return result
+
+
+def _sorted_unique_terms(values: Sequence[str]) -> List[str]:
+    return sorted(_unique_preserve_order(values))
 
 
 __all__ = [

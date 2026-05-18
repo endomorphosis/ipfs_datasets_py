@@ -233,3 +233,34 @@ def test_frame_ontology_terms_from_feature_keys_are_case_insensitive_for_prefixe
         "final_order",
         "hearing_rights",
     ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_direct_ontology_predicates() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "selected_ontology_frame:administrative_notice_hearing",
+            "candidate-ontology-term:agency notice",
+            "slot:selected_ontology_term:final order",
+            "flogic:interpreted-in-frame-term:hearing rights",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "agency_notice",
+        "final_order",
+        "hearing_rights",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_ignore_unrelated_namespaces() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "cue:frame:transferred",
+            "family:selected_frame:deontic",
+            "slot:modal_family:frame",
+            "selected_ontology_frame:administrative_notice_hearing",
+        ]
+    )
+
+    assert terms == ["administrative_notice_hearing"]

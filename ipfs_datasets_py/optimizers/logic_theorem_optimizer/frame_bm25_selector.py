@@ -96,6 +96,7 @@ _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
 _ORDERED_FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = tuple(
     sorted(_FRAME_LINKED_FEATURE_PREFIXES, key=lambda value: (-len(value), value))
 )
+_FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES = frozenset({"flogic", "slot"})
 
 
 @dataclass(frozen=True)
@@ -350,14 +351,22 @@ def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
         if lowered.startswith(prefix):
             return feature[len(prefix) :].strip()
-    if not lowered.startswith("flogic:"):
+
+    head, separator, tail = feature.partition(":")
+    if not separator:
         return ""
-    parts = feature.split(":", 2)
-    if len(parts) != 3:
+    if _canonical_frame_ontology_predicate(head):
+        return tail.strip()
+
+    namespace = head.strip().lower()
+    if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
         return ""
-    if not _canonical_frame_ontology_predicate(parts[1]):
+    predicate, separator, value = tail.partition(":")
+    if not separator:
         return ""
-    return parts[2].strip()
+    if not _canonical_frame_ontology_predicate(predicate):
+        return ""
+    return value.strip()
 
 
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (

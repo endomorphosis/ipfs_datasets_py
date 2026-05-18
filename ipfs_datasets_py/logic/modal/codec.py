@@ -1297,10 +1297,10 @@ def _frame_ontology_audit_terms(
     frame_feature_keys: Sequence[str],
     kg_triples: Sequence[Mapping[str, str]],
 ) -> List[str]:
-    return _unique_preserve_order(
+    return sorted(_unique_preserve_order(
         list(frame_ontology_terms_from_feature_keys(frame_feature_keys))
         + list(frame_ontology_terms_from_triples(kg_triples))
-    )
+    ))
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:
