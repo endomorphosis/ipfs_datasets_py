@@ -14,12 +14,14 @@ The backlog is designed so both humans and automated supervisors can use it:
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import signal
+import shlex
 import subprocess
 import sys
 import time
@@ -62,6 +64,21 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return float(value)
     except Exception:
         return default
+
+
+def _safe_iso_to_epoch(value: Any) -> Optional[float]:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        parsed = datetime.fromisoformat(text)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return float(parsed.timestamp())
+    except Exception:
+        return None
 
 
 def _read_json(path: Path) -> Dict[str, Any]:
@@ -606,7 +623,26 @@ def _run_watch_script(log_path: Path, phase_path: Path, pid: Optional[int]) -> D
     return {"status": "watch_invalid_json", "stdout": proc.stdout[:500]}
 
 
-def _find_legal_scraper_daemon_pid() -> Optional[int]:
+def _extract_flag_value(tokens: List[str], flag: str) -> str:
+    for index, token in enumerate(tokens):
+        if token == flag and index + 1 < len(tokens):
+            return tokens[index + 1]
+        if token.startswith(flag + "="):
+            return token.split("=", 1)[1]
+    return ""
+
+
+def _norm_path(path_text: str) -> str:
+    value = str(path_text or "").strip()
+    if not value:
+        return ""
+    try:
+        return str(Path(value).expanduser().resolve())
+    except Exception:
+        return str(Path(value).expanduser())
+
+
+def _list_legal_scraper_daemons() -> List[Dict[str, Any]]:
     try:
         proc = subprocess.run(
             ["ps", "-eo", "pid=,args="],
@@ -616,8 +652,9 @@ def _find_legal_scraper_daemon_pid() -> Optional[int]:
             check=False,
         )
     except Exception:
-        return None
+        return []
     this_pid = os.getpid()
+    daemons: List[Dict[str, Any]] = []
     for line in proc.stdout.splitlines():
         stripped = line.strip()
         if not stripped:
@@ -640,8 +677,196 @@ def _find_legal_scraper_daemon_pid() -> Optional[int]:
         if "grep" in args and "run_legal_scraper_daemon.py" in args:
             continue
         if "run_legal_scraper_daemon.py" in args or "processors.legal_scrapers.legal_scraper_daemon" in args:
-            return pid
+            try:
+                tokens = shlex.split(args)
+            except Exception:
+                tokens = args.split()
+            output_dir = _extract_flag_value(tokens, "--output-dir")
+            states = _extract_flag_value(tokens, "--states")
+            daemons.append(
+                {
+                    "pid": pid,
+                    "args": args,
+                    "output_dir": _norm_path(output_dir),
+                    "states": _normalize_states(states.split(",")) if states else [],
+                    "include_dc": "--include-dc" in tokens,
+                }
+            )
+    return sorted(daemons, key=lambda row: int(row.get("pid") or 0))
+
+
+def _find_legal_scraper_daemon_pids() -> List[int]:
+    return [int(row.get("pid") or 0) for row in _list_legal_scraper_daemons() if int(row.get("pid") or 0) > 0]
+
+
+def _find_legal_scraper_daemon_pid() -> Optional[int]:
+    pids = _find_legal_scraper_daemon_pids()
+    return pids[0] if pids else None
+
+
+def _latest_phase_path(output_dir: Path, phase_filename: str) -> Optional[Path]:
+    cycles_dir = output_dir / "cycles"
+    cycle_dirs = sorted(cycles_dir.glob("cycle_*"), reverse=True) if cycles_dir.exists() else []
+    for cycle_dir in cycle_dirs:
+        phase_path = cycle_dir / phase_filename
+        if phase_path.exists():
+            return phase_path
+    fallback = output_dir / phase_filename
+    if fallback.exists():
+        return fallback
     return None
+
+
+def _collect_parallel_watch_payload(
+    *,
+    parallel_run_dir: Path,
+    parallel_output_glob: str,
+    phase_filename: str,
+    stale_after_seconds: float,
+) -> Dict[str, Any]:
+    run_dir = parallel_run_dir.expanduser().resolve()
+    if not run_dir.exists():
+        return {
+            "mode": "parallel",
+            "status": "missing_parallel_run_dir",
+            "parallel_run_dir": str(run_dir),
+            "shards": [],
+            "shard_count": 0,
+            "healthy_shard_count": 0,
+            "stale_shard_count": 0,
+            "dead_shard_count": 0,
+            "missing_phase_shard_count": 0,
+            "daemon_pids": [],
+            "pid_alive": False,
+            "heartbeat_age_seconds": -1.0,
+        }
+
+    daemon_rows = _list_legal_scraper_daemons()
+    daemon_by_output = {
+        str(row.get("output_dir") or "").strip(): row
+        for row in daemon_rows
+        if str(row.get("output_dir") or "").strip()
+    }
+    now = time.time()
+    shards: List[Dict[str, Any]] = []
+    max_age = -1.0
+
+    for output_dir in sorted(run_dir.glob(parallel_output_glob)):
+        if not output_dir.is_dir():
+            continue
+        shard_name = output_dir.parent.name if output_dir.name == "output" else output_dir.name
+        phase_path = _latest_phase_path(output_dir, phase_filename)
+        phase_payload = _read_json(phase_path) if phase_path else {}
+        resume = phase_payload.get("_resume_context") if isinstance(phase_payload.get("_resume_context"), dict) else {}
+        states = _normalize_states(resume.get("states") or [])
+        updated_at = str(phase_payload.get("updated_at") or "")
+        phase_status = str(phase_payload.get("status") or "")
+        heartbeat_count = (
+            _safe_int(phase_payload.get("heartbeat_count"), 0)
+            if "heartbeat_count" in phase_payload
+            else None
+        )
+
+        heartbeat_age = None
+        if phase_path and phase_path.exists():
+            try:
+                heartbeat_age = max(0.0, now - float(phase_path.stat().st_mtime))
+            except Exception:
+                heartbeat_age = None
+        if heartbeat_age is None:
+            updated_epoch = _safe_iso_to_epoch(updated_at)
+            if updated_epoch is not None:
+                heartbeat_age = max(0.0, now - updated_epoch)
+        if heartbeat_age is not None:
+            max_age = max(max_age, float(heartbeat_age))
+
+        output_key = _norm_path(str(output_dir))
+        daemon_row = daemon_by_output.get(output_key, {})
+        shard_pid = _safe_int(daemon_row.get("pid"), 0) or None
+        pid_alive = _pid_alive(shard_pid) if shard_pid else None
+
+        if not phase_path:
+            shard_status = "missing_phase"
+        elif shard_pid and pid_alive is False:
+            shard_status = "dead_pid"
+        elif heartbeat_age is not None and heartbeat_age > stale_after_seconds:
+            shard_status = "stale"
+        elif phase_status.lower() in {"success", "complete"}:
+            shard_status = "complete"
+        elif phase_status:
+            shard_status = "running"
+        else:
+            shard_status = "unknown"
+
+        shards.append(
+            {
+                "shard": shard_name,
+                "output_dir": str(output_dir.resolve()),
+                "phase_path": str(phase_path) if phase_path else "",
+                "phase_status": phase_status,
+                "status": shard_status,
+                "heartbeat_count": heartbeat_count,
+                "heartbeat_age_seconds": round(float(heartbeat_age), 1) if heartbeat_age is not None else -1.0,
+                "updated_at": updated_at,
+                "pid": shard_pid,
+                "pid_alive": pid_alive,
+                "states": states,
+            }
+        )
+
+    stale_shards = [row for row in shards if str(row.get("status")) == "stale"]
+    dead_shards = [row for row in shards if str(row.get("status")) == "dead_pid"]
+    missing_phase_shards = [row for row in shards if str(row.get("status")) == "missing_phase"]
+    healthy_shards = [
+        row
+        for row in shards
+        if str(row.get("status")) in {"running", "complete"}
+        and _safe_float(row.get("heartbeat_age_seconds"), -1.0) <= stale_after_seconds
+    ]
+    daemon_pids = [int(row.get("pid")) for row in shards if int(row.get("pid") or 0) > 0]
+
+    if not shards:
+        status = "no_shards"
+    elif missing_phase_shards or dead_shards:
+        status = "degraded"
+    elif stale_shards:
+        status = "stale"
+    else:
+        status = "ok"
+
+    return {
+        "mode": "parallel",
+        "status": status,
+        "parallel_run_dir": str(run_dir),
+        "phase_status": "running" if healthy_shards else status,
+        "heartbeat_age_seconds": round(max_age, 1) if max_age >= 0 else -1.0,
+        "pid_alive": bool(daemon_pids) and all(_pid_alive(pid) for pid in daemon_pids),
+        "pid": None,
+        "daemon_pids": daemon_pids,
+        "shards": shards,
+        "shard_count": len(shards),
+        "healthy_shard_count": len(healthy_shards),
+        "stale_shard_count": len(stale_shards),
+        "dead_shard_count": len(dead_shards),
+        "missing_phase_shard_count": len(missing_phase_shards),
+    }
+
+
+def _collect_watch_payload(args: argparse.Namespace) -> Dict[str, Any]:
+    stale_after_seconds = max(1.0, float(args.stale_heartbeat_seconds))
+    parallel_run_dir_text = str(getattr(args, "parallel_run_dir", "") or "").strip()
+    if parallel_run_dir_text:
+        return _collect_parallel_watch_payload(
+            parallel_run_dir=Path(parallel_run_dir_text),
+            parallel_output_glob=str(getattr(args, "parallel_output_glob", "shard*/output") or "shard*/output"),
+            phase_filename=str(getattr(args, "parallel_phase_filename", "state_refresh_phase.json") or "state_refresh_phase.json"),
+            stale_after_seconds=stale_after_seconds,
+        )
+
+    daemon_log_path = Path(args.daemon_log_path).expanduser().resolve()
+    daemon_phase_path = Path(args.daemon_phase_json_path).expanduser().resolve()
+    daemon_pid = _find_legal_scraper_daemon_pid()
+    return _run_watch_script(daemon_log_path, daemon_phase_path, daemon_pid)
 
 
 def _terminate_pid(pid: int, *, grace_seconds: float = 10.0) -> Dict[str, Any]:
@@ -683,6 +908,120 @@ def _ingest_watch_status(
     stale_after_seconds: float,
     reopen_complete: bool,
 ) -> Dict[str, Any]:
+    mode = str(watch_payload.get("mode") or "single").strip().lower()
+    if mode == "parallel":
+        status = str(watch_payload.get("status") or "")
+        shard_count = _safe_int(watch_payload.get("shard_count"), 0)
+        healthy_count = _safe_int(watch_payload.get("healthy_shard_count"), 0)
+        stale_count = _safe_int(watch_payload.get("stale_shard_count"), 0)
+        dead_count = _safe_int(watch_payload.get("dead_shard_count"), 0)
+        missing_phase_count = _safe_int(watch_payload.get("missing_phase_shard_count"), 0)
+        heartbeat_age = _safe_float(watch_payload.get("heartbeat_age_seconds"), -1.0)
+        shards = list(watch_payload.get("shards") or [])
+        daemon_pids = [int(pid) for pid in list(watch_payload.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
+
+        for shard in shards:
+            if not isinstance(shard, dict):
+                continue
+            shard_name = str(shard.get("shard") or "unknown")
+            shard_status = str(shard.get("status") or "")
+            shard_states = _normalize_states(shard.get("states") or [])
+            shard_age = _safe_float(shard.get("heartbeat_age_seconds"), -1.0)
+            shard_phase_status = str(shard.get("phase_status") or "")
+            if shard_status == "stale":
+                _upsert_task(
+                    backlog,
+                    {
+                        "task_id": f"ops:stale-daemon-heartbeat:{shard_name}",
+                        "title": f"Resolve stale legal-scraper heartbeat for {shard_name}.",
+                        "status": "blocked",
+                        "priority": 7,
+                        "category": "ops",
+                        "source": "watch_status",
+                        "states": shard_states,
+                        "evidence": [
+                            f"shard={shard_name}",
+                            f"heartbeat_age_seconds={shard_age:.1f}",
+                            f"phase_status={shard_phase_status}",
+                            f"phase_path={shard.get('phase_path')}",
+                        ],
+                    },
+                    reopen_complete=reopen_complete,
+                )
+            elif shard_status == "dead_pid":
+                _upsert_task(
+                    backlog,
+                    {
+                        "task_id": f"ops:daemon-pid-dead:{shard_name}",
+                        "title": f"Restart dead legal-scraper shard daemon for {shard_name}.",
+                        "status": "blocked",
+                        "priority": 8,
+                        "category": "ops",
+                        "source": "watch_status",
+                        "states": shard_states,
+                        "evidence": [
+                            f"shard={shard_name}",
+                            f"pid={shard.get('pid')}",
+                            "pid_alive=false",
+                        ],
+                    },
+                    reopen_complete=reopen_complete,
+                )
+            elif shard_status == "missing_phase":
+                _upsert_task(
+                    backlog,
+                    {
+                        "task_id": f"ops:missing-phase:{shard_name}",
+                        "title": f"Restore phase checkpoint emission for {shard_name}.",
+                        "status": "blocked",
+                        "priority": 8,
+                        "category": "ops",
+                        "source": "watch_status",
+                        "states": shard_states,
+                        "evidence": [
+                            f"shard={shard_name}",
+                            f"output_dir={shard.get('output_dir')}",
+                            "phase checkpoint missing",
+                        ],
+                    },
+                    reopen_complete=reopen_complete,
+                )
+
+        if status in {"missing_parallel_run_dir", "no_shards"}:
+            _upsert_task(
+                backlog,
+                {
+                    "task_id": "ops:parallel-run-not-detected",
+                    "title": "Parallel legal-scraper run directory is missing or has no shard outputs.",
+                    "status": "blocked",
+                    "priority": 8,
+                    "category": "ops",
+                    "source": "watch_status",
+                    "evidence": [
+                        f"status={status}",
+                        f"parallel_run_dir={watch_payload.get('parallel_run_dir')}",
+                    ],
+                },
+                reopen_complete=reopen_complete,
+            )
+
+        return {
+            "mode": "parallel",
+            "status": status,
+            "phase_status": str(watch_payload.get("phase_status") or ""),
+            "heartbeat_age_seconds": heartbeat_age,
+            "pid_alive": bool(watch_payload.get("pid_alive")),
+            "pid": None,
+            "daemon_pids": daemon_pids,
+            "shard_count": shard_count,
+            "healthy_shard_count": healthy_count,
+            "stale_shard_count": stale_count,
+            "dead_shard_count": dead_count,
+            "missing_phase_shard_count": missing_phase_count,
+            "parallel_run_dir": str(watch_payload.get("parallel_run_dir") or ""),
+            "shards": shards,
+        }
+
     status = str(watch_payload.get("status") or "")
     phase_status = str(watch_payload.get("phase_status") or "")
     heartbeat_age = _safe_float(watch_payload.get("heartbeat_age_seconds"), -1.0)
@@ -690,6 +1029,7 @@ def _ingest_watch_status(
     daemon_pid = _safe_int(watch_payload.get("pid"), 0)
 
     output = {
+        "mode": "single",
         "status": status,
         "phase_status": phase_status,
         "heartbeat_age_seconds": heartbeat_age,
@@ -937,6 +1277,7 @@ def _collect_metrics(
     admin_deep: Dict[str, Any],
     watch_status: Dict[str, Any],
 ) -> Dict[str, Any]:
+    daemon_pids = [int(pid) for pid in list(watch_status.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
     return {
         "retry_phase_count": _safe_int(retry.get("retry_phase_count"), 0),
         "retry_state_count": len(_normalize_states(retry.get("retry_states") or [])),
@@ -950,9 +1291,16 @@ def _collect_metrics(
         "admin_candidate_substantive_pages_total": _safe_int(admin_page_gaps.get("candidate_substantive_pages_total"), 0),
         "admin_deep_gap_state_count": len(_normalize_states(admin_deep.get("gap_states") or [])),
         "daemon_status": str(watch_status.get("status") or ""),
+        "daemon_mode": str(watch_status.get("mode") or "single"),
         "daemon_phase_status": str(watch_status.get("phase_status") or ""),
         "daemon_heartbeat_age_seconds": _safe_float(watch_status.get("heartbeat_age_seconds"), -1.0),
         "daemon_pid_alive": bool(watch_status.get("pid_alive")),
+        "daemon_pid_count": len(daemon_pids),
+        "parallel_shard_count": _safe_int(watch_status.get("shard_count"), 0),
+        "parallel_healthy_shard_count": _safe_int(watch_status.get("healthy_shard_count"), 0),
+        "parallel_stale_shard_count": _safe_int(watch_status.get("stale_shard_count"), 0),
+        "parallel_dead_shard_count": _safe_int(watch_status.get("dead_shard_count"), 0),
+        "parallel_missing_phase_shard_count": _safe_int(watch_status.get("missing_phase_shard_count"), 0),
     }
 
 
@@ -995,10 +1343,7 @@ def update_backlog_once(args: argparse.Namespace) -> Dict[str, Any]:
         else {"found": False}
     )
 
-    daemon_log_path = Path(args.daemon_log_path).expanduser().resolve()
-    daemon_phase_path = Path(args.daemon_phase_json_path).expanduser().resolve()
-    daemon_pid = _find_legal_scraper_daemon_pid()
-    watch_payload = _run_watch_script(daemon_log_path, daemon_phase_path, daemon_pid)
+    watch_payload = _collect_watch_payload(args)
     watch_status = _ingest_watch_status(
         payload,
         watch_payload,
@@ -1065,8 +1410,10 @@ def supervise_loop(args: argparse.Namespace) -> int:
     while True:
         iteration += 1
 
-        running_pid = _find_legal_scraper_daemon_pid()
-        if running_pid is None and daemon_command and bool(args.start_daemon_if_missing):
+        running_pids = _find_legal_scraper_daemon_pids()
+        running_pid = running_pids[0] if running_pids else None
+        is_parallel_mode = bool(str(getattr(args, "parallel_run_dir", "") or "").strip())
+        if running_pid is None and daemon_command and bool(args.start_daemon_if_missing) and not is_parallel_mode:
             launch = _spawn_daemon_command(
                 daemon_command,
                 cwd=REPO_ROOT,
@@ -1080,6 +1427,7 @@ def supervise_loop(args: argparse.Namespace) -> int:
         metrics = status_payload.get("metrics") if isinstance(status_payload.get("metrics"), dict) else {}
         stale_age = _safe_float(metrics.get("daemon_heartbeat_age_seconds"), -1.0)
         stale_cutoff = max(1.0, float(args.stale_heartbeat_seconds))
+        daemon_mode = str(metrics.get("daemon_mode") or "single").strip().lower()
 
         if (
             running_pid
@@ -1087,6 +1435,7 @@ def supervise_loop(args: argparse.Namespace) -> int:
             and stale_age > stale_cutoff
             and daemon_command
             and bool(args.restart_stale_daemon)
+            and daemon_mode != "parallel"
         ):
             _terminate_pid(running_pid, grace_seconds=max(1.0, float(args.stop_grace_seconds)))
             launch = _spawn_daemon_command(
@@ -1104,6 +1453,8 @@ def supervise_loop(args: argparse.Namespace) -> int:
             print(
                 f"[legal_scraper_todo_supervisor] iteration={iteration} "
                 f"task_counts={json.dumps(counts, sort_keys=True)} "
+                f"daemon_mode={metrics.get('daemon_mode')} "
+                f"shards={metrics.get('parallel_shard_count')} "
                 f"heartbeat_age={metrics.get('daemon_heartbeat_age_seconds')} "
                 f"daemon_pid_alive={metrics.get('daemon_pid_alive')}"
             )
@@ -1126,6 +1477,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     def add_common_args(p: argparse.ArgumentParser) -> None:
         p.add_argument("--daemon-output-dir", default=default_daemon_dir, help="Directory with legal scraper daemon artifacts.")
+        p.add_argument(
+            "--parallel-run-dir",
+            default="",
+            help="Optional parallel run directory; when set, monitor shard outputs under this directory instead of a single daemon log.",
+        )
+        p.add_argument(
+            "--parallel-output-glob",
+            default="shard*/output",
+            help="Glob under --parallel-run-dir that resolves shard output directories.",
+        )
+        p.add_argument(
+            "--parallel-phase-filename",
+            default="state_refresh_phase.json",
+            help="Phase filename to resolve under each shard cycle directory.",
+        )
         p.add_argument("--backlog-json", default=f"{default_supervisor_dir}/legal_scraper_todo.json")
         p.add_argument("--backlog-markdown", default=f"{default_supervisor_dir}/legal_scraper_todo.md")
         p.add_argument("--status-json", default=f"{default_supervisor_dir}/legal_scraper_todo_supervisor.status.json")

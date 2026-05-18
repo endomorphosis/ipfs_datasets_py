@@ -20,8 +20,10 @@ def repair_common_typescript_text_damage(content: str) -> str:
         "Record": "Record<string, unknown>",
         "Map": "Map<string, unknown>",
         "Set": "Set<unknown>",
+        "ReadonlyArray": "ReadonlyArray<unknown>",
         "ReadonlySet": "ReadonlySet<unknown>",
         "Promise": "Promise<unknown>",
+        "Pick": "Pick<Record<string, unknown>, string>",
     }
     for name, replacement in generic_defaults.items():
         repaired = re.sub(rf"\b{name}\s*>(?!>)", replacement, repaired)
@@ -43,6 +45,18 @@ def repair_common_typescript_text_damage(content: str) -> str:
     repaired = re.sub(
         r"!\((?P<var>[A-Za-z_$][\w$]*)\s+(?P<bound>[A-Z_$][A-Z0-9_$]*)\)",
         r"!(\g<var> > \g<bound>)",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<left>\b[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\(\))*\.length)\s{2,}"
+        r"(?P<bound>MAX_[A-Z0-9_$]+)\b",
+        r"\g<left> > \g<bound>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<left>\b[A-Za-z_$][\w$]*(?:Count|count|Limit|limit|Length|length|Size|size))\s{2,}"
+        r"(?P<bound>MAX_[A-Z0-9_$]+)\b",
+        r"\g<left> > \g<bound>",
         repaired,
     )
     repaired = re.sub(
@@ -114,8 +128,20 @@ def repair_common_typescript_text_damage(content: str) -> str:
     )
     repaired = re.sub(
         r"(?P<prefix>\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*:\s*)"
+        r"ReadonlyArray<unknown>(?P<suffix>\s*=\s*\[(?:\s*['\"][^'\"]*['\"]\s*,?)*\s*\])",
+        r"\g<prefix>ReadonlyArray<string>\g<suffix>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<prefix>\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*:\s*)"
         r"Array<unknown>(?P<suffix>\s*=\s*Object\.keys\()",
         r"\g<prefix>Array<string>\g<suffix>",
+        repaired,
+    )
+    repaired = re.sub(
+        r"(?P<prefix>\b(?:const|let)\s+[A-Za-z_$][\w$]*\s*:\s*)"
+        r"ReadonlyArray<unknown>(?P<suffix>\s*=\s*Object\.keys\()",
+        r"\g<prefix>ReadonlyArray<string>\g<suffix>",
         repaired,
     )
     return repaired
@@ -203,7 +229,15 @@ def obvious_typescript_text_damage(content: str) -> List[str]:
         ),
         (
             "bare TypeScript generic alias",
-            re.compile(r"\b(?:Record|Array|Promise|Omit|Pick|Map|Set|ReadonlySet)\s*(?=[=;,){}]|$)"),
+            re.compile(r"\b(?:Record|Array|ReadonlyArray|Promise|Omit|Pick|Map|Set|ReadonlySet)\s*(?=[=;,){}]|$)"),
+        ),
+        (
+            "missing comparison operator before an uppercase bound",
+            re.compile(
+                r"\b(?:[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\(\))*\.length|"
+                r"[A-Za-z_$][\w$]*(?:Count|count|Limit|limit|Length|length|Size|size))"
+                r"\s{2,}MAX_[A-Z0-9_$]+\b"
+            ),
         ),
     )
     for line_number, line in enumerate(content.splitlines(), start=1):

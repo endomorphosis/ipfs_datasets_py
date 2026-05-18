@@ -144,6 +144,36 @@
     ],
     "ts": 1774084161.388235
   },
+  "042a1df26479366c45f3ecd6627b959f806e9bdfb24e034dd874c38d9463cbb8": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779112752.046067
+  },
   "05f433fcbe7794ea1acb6c6a380dcf385aaa38c79a60d56a0f9eec1e36b820e5": {
     "items": [
       {
@@ -427,14 +457,14 @@
         "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
-        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
-        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
-        "url": "https://help.archive.org/help/using-the-wayback-machine/"
-      },
-      {
         "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
         "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
         "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
         "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
@@ -442,7 +472,7 @@
         "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
       }
     ],
-    "ts": 1778936416.0343006
+    "ts": 1779091024.8660605
   },
   "13219849c7c949c1116157f743ed96e02475f0c6cdfb8a932f2ff3b6d8f54af4": {
     "items": [
@@ -564,6 +594,36 @@
     ],
     "ts": 1774072442.7007859
   },
+  "16c5436a8debb587fbaa78441f07249911c8d98bc3b85d301480ae092a1dcb81": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Capture a web page as it appears now for use as a trusted citation in the future.",
+        "title": "Save Page Now - Wayback Machine - Internet Archive",
+        "url": "https://web.archive.org/save"
+      }
+    ],
+    "ts": 1779081599.5989757
+  },
   "18f0fb79d98b2a70c83c6b1252d0042286975e09e46527e239f34b01ed96a56f": {
     "items": [
       {
@@ -593,6 +653,36 @@
       }
     ],
     "ts": 1774073432.677266
+  },
+  "193ba10ee413c65f98b1b766e4936ed10353c04a435d001b2dd4077a162c2d7f": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      }
+    ],
+    "ts": 1779083609.4179394
   },
   "1a4da4438ece9848dc6c57d8abec9383eb550234b789143854a647409eba22b4": {
     "items": [
@@ -804,6 +894,36 @@
     ],
     "ts": 1774115783.1853993
   },
+  "1ecf803f5cd222331e8f021e8fbe18514b6d76ce2ac325d474dbe2d060642af5": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Capture a web page as it appears now for use as a trusted citation in the future.",
+        "title": "Save Page Now - Wayback Machine - Internet Archive",
+        "url": "https://web.archive.org/save"
+      },
+      {
+        "description": "The Wayback Machine (web.archive.org) is <strong>a digital archive of the World Wide Web</strong>.",
+        "title": "What is Internet Archive? - Internet Archive and the Wayback Machine - Guides at Middlebury College",
+        "url": "https://middlebury.libguides.com/internetarchive"
+      }
+    ],
+    "ts": 1779090744.547068
+  },
   "20339830fbf57eaf109975b11ed5da0c0d7fecbb3066701de7698f7f42ca1392": {
     "items": [
       {
@@ -892,17 +1012,17 @@
         "url": "https://www.cga.ct.gov/tra/"
       },
       {
-        "description": "<strong>The Appropriations Committee is one of the joint standing committees of the Connecticut General Assembly</strong>. It is composed of 53 members - 14 Senators and 39 Representatives. The committee has cognizance of all matters relating to appropriations and the budgets of state agencies.",
-        "title": "Appropriations Committee - Connecticut General Assembly",
-        "url": "https://www.cga.ct.gov/app/"
-      },
-      {
         "description": "<strong>Connecticut General Assembly State Capitol</strong> | Hartford, Connecticut 06106-1562 ... For your convenience, the following CGA website features have been made mobile-friendly.",
         "title": "https://www.cga.ct.gov/asp/menu/cgawebapps.asp",
         "url": "https://www.cga.ct.gov/asp/menu/cgawebapps.asp"
+      },
+      {
+        "description": "Depending upon the information you supply, this may reveal some or all of the following: Email address, physical address, phone number, name, age, and other personal information. All submissions are uploaded and linked on the <strong>Connecticut General Assembly</strong> website. All public hearing testimony, ...",
+        "title": "Education Committee - C G A - Connecticut General Assembly",
+        "url": "https://www.cga.ct.gov/ed/"
       }
     ],
-    "ts": 1778926345.8715444
+    "ts": 1779106070.4171095
   },
   "23efc0191a1bed47000b03fc9d1a9f9962fd34744c89ea52432d20c43511674c": {
     "items": [
@@ -1184,11 +1304,41 @@
     ],
     "ts": 1774082975.731989
   },
-  "2b20ac8561c93ae599b8f2dfaa2cbf50aa5940a858125e14e6f30766fc82ea1d": {
+  "29e49152c2c40259621f89b729460fd680fff8164cf9c353cc9240815556e3ac": {
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779081140.3305757
+  },
+  "2b1072813ea9d26a38179973ff3095d99bf8f0632464e89cefc1a0248397284e": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -1207,12 +1357,42 @@
         "url": "https://archive.org/"
       },
       {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779112533.3244903
+  },
+  "2b20ac8561c93ae599b8f2dfaa2cbf50aa5940a858125e14e6f30766fc82ea1d": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
         "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
         "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
         "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
       }
     ],
-    "ts": 1778943020.1777186
+    "ts": 1779097223.3841574
   },
   "2bdcd98b681f99583fa61c5345914c6e216fe9fa054f4ca43e90304b3365d74c": {
     "items": [
@@ -1284,6 +1464,36 @@
     ],
     "ts": 1774116307.2824752
   },
+  "2f42da1352ef97a18e2c7d3cfc59066db5e7fb88d44387985e1979955f0b56e0": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779112783.9493022
+  },
   "2f611f0b3f264061fc65fac07f643997b388d09ae0dab69a044c561775b6961d": {
     "items": [
       {
@@ -1307,12 +1517,12 @@
         "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
-        "description": "We cannot provide a description for this page right now",
-        "title": "web- archive.org",
-        "url": "https://www.web-archive.org/"
+        "description": "Can anyone help me fix it or contact archive.org? ... The Wayback Machine started working for me again but everytime I try to access large captured sites like YouTube or Roblox it throws a 429 error then it shows ERR_CONNECTION_TIMED_OUT message for 10-30 minutes \ud83d\udc80 ... I can access the rest of IA just fine at home, it&#x27;s the web archiving page that refuses to connect.",
+        "title": "r/internetarchive on Reddit: Why is Web.archive.org not working?",
+        "url": "https://www.reddit.com/r/internetarchive/comments/1rh6t0h/why_is_webarchiveorg_not_working/"
       }
     ],
-    "ts": 1778938069.6019745
+    "ts": 1779092792.9397495
   },
   "305f1681bf8cf30093e72e1b00d84e4a65c49d29cccf6dffb2f3b384d951ec7c": {
     "items": [
@@ -1408,7 +1618,7 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -1427,12 +1637,12 @@
         "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
-        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine",
-        "url": "https://archive.org/web/"
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
       }
     ],
-    "ts": 1778943642.4614367
+    "ts": 1779098726.0672123
   },
   "334c02ea0200c4dafaf4f2b560e830668c829ea6a4fba5640045095bbc546f64": {
     "items": [
@@ -1468,7 +1678,7 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -1492,7 +1702,7 @@
         "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
       }
     ],
-    "ts": 1778943805.7735882
+    "ts": 1779098299.0863862
   },
   "34a0fe075fb460d439c6b79e379cb7a7192fe88b7ffb4c44a2574c6829e135db": {
     "items": [
@@ -1523,6 +1733,36 @@
       }
     ],
     "ts": 1774074528.8690336
+  },
+  "34efede5917bb389b7018355ed4d191fd1e1a323aeea1ecaa6e1cfa86e7828de": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "There appear to be some bug trackers at: https://webarchive.jira.com/secure/Dashboard.jspa although they seem to have little activity as of 2020. ... As you mentioned, some of the source code is available on https://github.com/internetarchive. This is mainly for projects such as the OpenLibrary. For the actual code that runs the Internet Archive and the catalog system, it is not open source.",
+        "title": "Is the source code for the Internet Archive website (archive.org, Wayback Machine) open source and if yes where is the source? - Web Applications Stack Exchange",
+        "url": "https://webapps.stackexchange.com/questions/137992/is-the-source-code-for-the-internet-archive-website-archive-org-wayback-machin"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      },
+      {
+        "description": "It enables longitudinal studies of the web, the recovery of lost content, and the creation of massive datasets for Natural Language Processing (NLP) and machine learning models. Discover the business value and use cases for extracting data from Archive.org. Scraping the Wayback Machine allows you to track the evolution of a brand&#x27;s messaging, product offerings, and pricing over several decades. Retrieve articles, code...",
+        "title": "How to Scrape Archive.org | Internet Archive Web Scraper | Automatio",
+        "url": "https://automatio.ai/how-to-scrape/archive-org"
+      }
+    ],
+    "ts": 1779086444.9784842
   },
   "387e55516baf3151f49c9d06791f45738131dd36e3be0637b6364b6022127ae8": {
     "items": [
@@ -1614,6 +1854,36 @@
     ],
     "ts": 1774073970.7124498
   },
+  "39f23a0b707caca56c8e926847e3997c3a932652e986222a552b96880c87f71b": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      }
+    ],
+    "ts": 1779108022.1551683
+  },
   "3bcaa43dded082aeb925a74887d8deea0040ef9431b41059f909bf33ce865beb": {
     "items": [
       {
@@ -1653,6 +1923,36 @@
       }
     ],
     "ts": 1777258938.9549396
+  },
+  "3c43dd148cd94445ec52f3ea769b0591446a7694d9283647189f9b83540650f5": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779079945.3795125
   },
   "3e622c75dc9ea641a595be414b9d6901c7abbaaf2d8328fc320d4ee6f1f00b71": {
     "items": [
@@ -1713,6 +2013,36 @@
       }
     ],
     "ts": 1774084164.2164927
+  },
+  "3fcf04a8ed4ff9d8383d93785c9c0bf3be8346ade34ffebc52ee3c12dec8862a": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine - Internet Archive",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      }
+    ],
+    "ts": 1779089554.8671687
   },
   "41555915850a21dbaa0736452a2b4e80e4af8b09ce494093bb6002cde2c6588b": {
     "items": [
@@ -1957,14 +2287,14 @@
         "url": "https://web.archive.org/"
       },
       {
-        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
-        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
-        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
-      },
-      {
         "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
         "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
         "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
         "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
@@ -1972,12 +2302,12 @@
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
-        "description": "We cannot provide a description for this page right now",
-        "title": "web- archive.org",
-        "url": "https://www.web-archive.org/"
+        "description": "I know, but at the moment it sends me back to archives.org, that&#x27;s why I definitely think it&#x27;s a legal measure, otherwize I can&#x27;t justify that redirected link. There&#x27;s no way for me to reach Archive.org at the moment, whatever I do.",
+        "title": "r/internetarchive on Reddit: Why is Web.archive.org not working?",
+        "url": "https://www.reddit.com/r/internetarchive/comments/1rh6t0h/why_is_webarchiveorg_not_working/"
       }
     ],
-    "ts": 1778935628.718067
+    "ts": 1779089855.0231018
   },
   "4dac6db7a37ffbe584a36a0f4dc456bad7cd2cdb35b13ed1fa2b47ba7a2f80c9": {
     "items": [
@@ -2013,8 +2343,13 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
       },
       {
         "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
@@ -2027,17 +2362,12 @@
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
-        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
-        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
-        "url": "https://archive.org/"
-      },
-      {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
         "title": "Internet Archive: Wayback Machine",
         "url": "https://archive.org/web/web-advancedsearch.php"
       }
     ],
-    "ts": 1778941753.3635454
+    "ts": 1779097129.1284137
   },
   "4f327be8f3edbb4f14285e3cc86b2ca88ebb47ff95eaf46dc582e9dc5e5d061e": {
     "items": [
@@ -2109,6 +2439,36 @@
     ],
     "ts": 1774085609.3833864
   },
+  "529415304b1cf9dac52c213dfb3bdc549940104b11ba132c0770b60456d1890d": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      }
+    ],
+    "ts": 1779109065.620591
+  },
   "52c72d2d6427fe612e9b3c985a22183707a34dbd9006c42b9ede329bef386a26": {
     "items": [
       {
@@ -2168,6 +2528,36 @@
       }
     ],
     "ts": 1778946195.077087
+  },
+  "536074102c9300d8c93bf12fd4c18675c85a4ef41ad5d2be95fa594d51da2b23": {
+    "items": [
+      {
+        "description": "The Wayback Machine - <strong>https://web.archive.org/web/20200118141220/http://www.efnh.org:80/</strong> Welcome to the WWW Home Page of Electronic Frontiers New Hampshire. We are a public interest advocacy group concerned about protection of civil liberties in the online world.",
+        "title": "Electronic Frontiers New Hampshire",
+        "url": "https://web.archive.org/web/20200118141220/http://www.efnh.org/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://archive.org/web/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "<strong>The Internet Archive is an American non-profit library founded in 1996 by Brewster Kahle that runs a digital library website, archive.org</strong>. It provides free access to collections of digitized media including websites, software applications, music, ...",
+        "title": "Internet Archive - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Internet_Archive"
+      },
+      {
+        "description": "The Wayback Machine (web.archive.org) is <strong>a digital archive of the World Wide Web</strong>.",
+        "title": "What is Internet Archive? - Internet Archive and the Wayback Machine - Guides at Middlebury College",
+        "url": "https://middlebury.libguides.com/internetarchive"
+      }
+    ],
+    "ts": 1779112257.4113972
   },
   "53d2873899ebab5ab8d6269e569bf979f87b558c3437cf14773d41ff788345aa": {
     "items": [
@@ -2499,6 +2889,36 @@
     ],
     "ts": 1774083339.9201338
   },
+  "5f6711ca6e697d4e3ec768766c67ec132fc2d1e5e42b17b3c676cf2296f90d76": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779101858.9087615
+  },
   "60f8e95fafe8c9a71e4d73c809653a1d02266bb8813ea10e04e16eb442340a4f": {
     "items": [
       {
@@ -2557,7 +2977,7 @@
         "url": "https://www.web-archive.org/"
       }
     ],
-    "ts": 1778936794.8583634
+    "ts": 1779090435.1178722
   },
   "637623d556fbed2b94c00a1339554840f43d01d18c5aa63e0a933e3a71dbf45d": {
     "items": [
@@ -2794,6 +3214,36 @@
     ],
     "ts": 1774083975.149271
   },
+  "6bfe13eda00d54845c90f88b0bcf7f1ef25f2635e74425a6629d4ff1901340ac": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Can anyone help me fix it or contact archive.org? ... The Wayback Machine started working for me again but everytime I try to access large captured sites like YouTube or Roblox it throws a 429 error then it shows ERR_CONNECTION_TIMED_OUT message for 10-30 minutes \ud83d\udc80 ... I can access the rest of IA just fine at home, it&#x27;s the web archiving page that refuses to connect.",
+        "title": "r/internetarchive on Reddit: Why is Web.archive.org not working?",
+        "url": "https://www.reddit.com/r/internetarchive/comments/1rh6t0h/why_is_webarchiveorg_not_working/"
+      },
+      {
+        "description": "Is web.archive.org down? r/ArchiveDotOrg \u2022 \u00b7 upvotes \u00b7 \u00b7 comments \u00b7 FBI subpoenas the web registrar behind Archive_is and its mirrors \u00b7 r/technology \u2022 \u00b7 theverge \u00b7 upvotes \u00b7 \u00b7 comments \u00b7 Why is Web.archive.org not working? r/internetarchive \u2022 \u00b7",
+        "title": "r/theinternetarchive on Reddit: Web.archive.org doesn't work",
+        "url": "https://www.reddit.com/r/theinternetarchive/comments/1s2iucy/webarchiveorg_doesnt_work/"
+      }
+    ],
+    "ts": 1779103341.0396693
+  },
   "6c779eef49fb7cbe69f18472141083411417a822e7717aef1bea0c603f3088a2": {
     "items": [
       {
@@ -2944,6 +3394,36 @@
     ],
     "ts": 1774073939.6190028
   },
+  "73091a662ea56095aaf7eb2a125513e2e0710faf4ca28a337cd679e7ea8414ce": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779079883.778391
+  },
   "73e7edbdddde41603820ad7880683cf76f06f560e768f87cc6b14177391387c0": {
     "items": [
       {
@@ -3063,6 +3543,36 @@
       }
     ],
     "ts": 1777257768.3590775
+  },
+  "771b1ea2a7d5497ab10d2fc651203a3e4a3c2a72e3ab1ad976b4035bfb984cff": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779095473.9086745
   },
   "7833fa79d75f7f95ee7b35a5e350a4bf9be8bd0c8ae3e95d23d8547772644a85": {
     "items": [
@@ -3194,6 +3704,36 @@
     ],
     "ts": 1774074842.628776
   },
+  "79d1b94dde3b4a3cfea7761d8849f6313b5ada66937bd5ae8edf2c31309e1ec1": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      }
+    ],
+    "ts": 1779079258.004724
+  },
   "7ad2d72cf9af611aa9bd12efdf0c244dcc91078bc8d3e47ba94db7af2aeadcde": {
     "items": [
       {
@@ -3223,6 +3763,36 @@
       }
     ],
     "ts": 1774074418.924103
+  },
+  "7b5b70754e56b1d1ac7b71bdfd916c0959be63d99bf7f4aa2c336add6a3639ad": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      }
+    ],
+    "ts": 1779112464.3769355
   },
   "7b8080db6f7a6bc10bd1494f6128342547179f664f4fb93fe0afb925bc83b1d5": {
     "items": [
@@ -3299,7 +3869,7 @@
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
         "title": "Wayback Machine",
-        "url": "http://web.archive.org/"
+        "url": "https://web.archive.org/"
       },
       {
         "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
@@ -3307,14 +3877,14 @@
         "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
-        "description": "We cannot provide a description for this page right now",
-        "title": "web- archive.org",
-        "url": "https://www.web-archive.org/"
-      },
-      {
         "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
         "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
       },
       {
         "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
@@ -3322,7 +3892,7 @@
         "url": "https://archive.org/"
       }
     ],
-    "ts": 1778945781.60633
+    "ts": 1779100910.3702137
   },
   "7cc07fd2247d6e89024436e2075745747b198e18ec6f1f463dfd5ac42c5634f3": {
     "items": [
@@ -3358,7 +3928,7 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -3367,14 +3937,14 @@
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
-        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
-        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
-        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
-      },
-      {
         "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
         "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
         "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
       },
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
@@ -3382,7 +3952,7 @@
         "url": "https://archive.org/web/web-advancedsearch.php"
       }
     ],
-    "ts": 1778943491.0152225
+    "ts": 1779098262.5643551
   },
   "7f7021a827ec21080ffa2dc2449c174d2c38abad76376ba3ffa517984e47532a": {
     "items": [
@@ -3413,6 +3983,36 @@
       }
     ],
     "ts": 1774074971.2076204
+  },
+  "7feed1822fa2ff588b24fb653135cb62060a8cf91dc859f83c03d27e2973f0c9": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine - Internet Archive",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779089445.0914695
   },
   "7ffe62a6b3dd03ef56c235ae6a26e39b1326532434a625bb07bea6dbb064a9df": {
     "items": [
@@ -3734,6 +4334,36 @@
     ],
     "ts": 1774083469.400072
   },
+  "9343eccd5fc9a215067e3adb96f961eaaf0884f015c41fe8615c1e8be045d44f": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779109688.8643434
+  },
   "9394a2412eed7f4f41d2ad9e53a0975b6f60ebc6ffd3816339c81817ebf44229": {
     "items": [
       {
@@ -3793,6 +4423,36 @@
       }
     ],
     "ts": 1774082860.887406
+  },
+  "96edcadba6b0fa04e5a6c970d10aa7b73f0700288045be65805376fa7f3d7665": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779100946.839333
   },
   "9905adad6a00a2b17daacce9d83c87f0b005a2e4b5124495b03ad861135d7951": {
     "items": [
@@ -4023,6 +4683,36 @@
       }
     ],
     "ts": 1774084038.4086413
+  },
+  "9ed5f0b92525fcb2ae54ff36b1e3980f16ad39e37376e9b3978f1ccba48d6a9f": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      }
+    ],
+    "ts": 1779092293.996979
   },
   "9ee2851897185341429d9e18d26081b4fac95e9afcdc321d14963d955c2bec02": {
     "items": [
@@ -4374,6 +5064,36 @@
     ],
     "ts": 1774075157.7516036
   },
+  "a954530b67eb9968c0a079096e73ca39184bbe9dd0d957f6ca1088748da65496": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "<strong>The Internet Archive is an American non-profit library founded in 1996 by Brewster Kahle that runs a digital library website, archive.org</strong>. It provides free access to collections of digitized media including websites, software applications, music, ...",
+        "title": "Internet Archive - Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/Internet_Archive"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "At the heart of this vast repository is the Wayback Machine on archive.org, <strong>a free and powerful tool that allows users to enter a website URL and view older versions of the page over time</strong>.",
+        "title": "Archive.org: how to explore the web's past - negg Blog",
+        "url": "https://negg.blog/en/archive-org-how-to-explore-the-webs-past/"
+      }
+    ],
+    "ts": 1779090323.2742271
+  },
   "abc0576499331c770d5044a1ca29fa5493e8b439649223c94b6b7ee2f5577682": {
     "items": [
       {
@@ -4523,6 +5243,96 @@
       }
     ],
     "ts": 1777258782.1833897
+  },
+  "b260537accd947a2eed5da5a614da9bb26acb6c6dc8ec372c0cf5f4637a876c5": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      }
+    ],
+    "ts": 1779112959.268583
+  },
+  "b2c01a6f5158aac50301bc389475e217e037ba3c5c9eb193fa169ddb6215b662": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779108026.8454916
+  },
+  "b390e1e70aa90a8d4597efacf6664e8e12924f4081b1cf1b9a070ea9ade50f56": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      }
+    ],
+    "ts": 1779090981.2607937
   },
   "b4222ef1ddc3aff2ff0b0b19b70414dc5ed10a1a6b12bfe3574e199d2d662fe5": {
     "items": [
@@ -4674,6 +5484,36 @@
     ],
     "ts": 1774084037.0494962
   },
+  "b86d3f9c4e1018f56b930abf4331c973ad7ffcfdeddd8e743687e979d9920ecf": {
+    "items": [
+      {
+        "description": "<strong>A CDX file consists of individual lines of text, each of which summarizes a single web document</strong>. The first line in the file is a legend for interpreting the data, and the following lines contain the data for referencing the corresponding pages within the host.",
+        "title": "Internet Archive",
+        "url": "https://archive.org/web/researcher/cdx_file_format.php"
+      },
+      {
+        "description": "If you would prefer to get the original page back (without the Wayback Machine rewriting URLs on the page to point into the Archive), you should use this formatting: http://web.archive.org/web/&lt;/TIMESTAMP&gt;id_/&lt;/URL&gt;. Sweet! Now that we have the data model (namely, the Snapshot class) set up, we can make the request to the CDX API and create instances of the Snapshot class with the response.",
+        "title": "Guide to Handling Internet Archive\u2019s CDX Server API Response | by Aurum Linh | HackerNoon.com | Medium",
+        "url": "https://medium.com/hackernoon/guide-to-handling-internet-archives-cdx-server-api-response-c469df5b81f4"
+      },
+      {
+        "description": "The last update I can find is from 2013: \ud83d\udd17 Wayback CDX API Docs (2013) I specifically need a way to search the API using wildcards. For example, I&#x27;d like to search for all public posts saved from: ... Thanks in advance. \ud83d\ude4f ... The example you gave looks like the implicit &#x27;prefix&#x27; matchType using an asterisk &#x27;*&#x27; in the targetUrl: ... const fullUrlString = `https://web.archive.org/cdx/search/cdx?url=${targetUrlString}&amp;output=json&amp;limit=100000`;",
+        "title": "r/WaybackMachine on Reddit: Searching With API for Recent Wayback Machine CDX Docs?",
+        "url": "https://www.reddit.com/r/WaybackMachine/comments/1idwtuq/searching_with_api_for_recent_wayback_machine_cdx/"
+      },
+      {
+        "description": "The CDX server is deployed as part of web.archive.org Wayback Machine and the usage below reference this deployment.",
+        "title": "wayback/wayback-cdx-server/README.md at master \u00b7 internetarchive/wayback",
+        "url": "https://github.com/internetarchive/wayback/blob/master/wayback-cdx-server/README.md"
+      },
+      {
+        "description": "(It\u2019s named CDX because that\u2019s the name of the file format used in the index.) This is precisely the API I wanted \u2013 you give it a URL, and it returns a list of captures. I wrapped this API in a Python function for ease of use: import datetime import httpx def get_wayback_machine_captures(url: str): &quot;&quot;&quot; Get a list of all the captures for a given URL in the Wayback Machine. &quot;&quot;&quot; resp = httpx.get( &quot;http://web.archive.org/cdx/search/cdx&quot;, params={&quot;url&quot;: url, &quot;output&quot;: &quot;json&quot;}, timeout=30 ) resp.raise_for_status() # What if we don&#x27;t get any results?",
+        "title": "How to get a list of captures from the Wayback Machine \u2013 alexwlchan",
+        "url": "https://alexwlchan.net/til/2024/get-a-list-of-captures-from-the-wayback-machine/"
+      }
+    ],
+    "ts": 1779104947.142874
+  },
   "ba56b21fca39918f8d5dae16058df0356ee96cb5986ad9830c1ad761041f378b": {
     "items": [
       {
@@ -4809,6 +5649,36 @@
     ],
     "ts": 1774086003.942118
   },
+  "c041c171dc938b25cdea7022fb4120038718498c99aacafa82fd06528cd9c736": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      }
+    ],
+    "ts": 1779100491.3842385
+  },
   "c1184c30c2d162d4a6b3d346e9a904d8d29d8f10f8bf527d91da75cc5009f512": {
     "items": [
       {
@@ -4853,7 +5723,7 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -4877,7 +5747,7 @@
         "url": "https://archive.org/web/web-advancedsearch.php"
       }
     ],
-    "ts": 1778939916.6740146
+    "ts": 1779095199.7617495
   },
   "c3d7e08d374dff36fa270283f54c44ddd346d4319c14cccc0625e243e624e0ff": {
     "items": [
@@ -4908,6 +5778,36 @@
       }
     ],
     "ts": 1773893064.30811
+  },
+  "c56349606fb339024de1942941a264303407c050e1191bbcbf7b046f2115d382": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "We cannot provide a description for this page right now",
+        "title": "web- archive.org",
+        "url": "https://www.web-archive.org/"
+      }
+    ],
+    "ts": 1779101928.7639425
   },
   "c591e784f1c98b0b735196bc935c0c8a3bc3be7ee2e1aa9227a76d2b9035d3bf": {
     "items": [
@@ -4999,6 +5899,36 @@
     ],
     "ts": 1778944048.3140388
   },
+  "c7645a020905583a93a3e9ac507a46c0d402a661d410c123ce5fcf10845128e6": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      }
+    ],
+    "ts": 1779104597.5884364
+  },
   "c8a2d02fe22a64987c0cd5df48832a59132cfff0501f825d71db3479b168078f": {
     "items": [
       {
@@ -5059,6 +5989,36 @@
     ],
     "ts": 1774083095.435914
   },
+  "c9a9968e5f65133c6c4967739566428f1d1e93ed72a8461ff0cf534b0dc7b9b1": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779103835.021105
+  },
   "ca0c9cb142ed1f513d305437c296afe06bf4d8f529baf9918c355f270e9afe4e": {
     "items": [
       {
@@ -5073,8 +6033,13 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine",
+        "title": "Wayback Machine - Internet Archive",
         "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
       },
       {
         "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
@@ -5087,17 +6052,12 @@
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
-        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
-        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
-        "url": "https://archive.org/"
-      },
-      {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Internet Archive: Wayback Machine",
-        "url": "https://archive.org/web/web-advancedsearch.php"
+        "title": "Wayback Machine",
+        "url": "https://archive.org/web/"
       }
     ],
-    "ts": 1778935005.3891642
+    "ts": 1779089819.0297842
   },
   "cab4817411ea23967bdc6b73f4f9cc39611d5a53f7f111acc3d61ec3aafb4f72": {
     "items": [
@@ -5517,7 +6477,7 @@
         "url": "https://archive.org/web/web-advancedsearch.php"
       }
     ],
-    "ts": 1778937691.995693
+    "ts": 1779092009.7396574
   },
   "db4b383ecadfbf6bc170009c11e0f0f5bb770f3abb9343809dd1ca16ba090d7f": {
     "items": [
@@ -5773,6 +6733,36 @@
       }
     ],
     "ts": 1774073796.7810843
+  },
+  "e3fbe23c92eae20759b838b53039185dc4b74e20189e080f36d6b577a0caf0ea": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Pay attention to the date code embedded in the archived url. This is the list of numbers in the middle; it translates as yyyymmddhhmmss. For example in this url http://web.archive.org/web/20000229123340/http://www.yahoo.com/ the date the site was crawled was Feb 29, 2000 at 12:33 and 40 seconds.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
+      }
+    ],
+    "ts": 1779104973.0841236
   },
   "e5842eaf6eca8033392e3f383ad24a67f5ed8113b58497c90389afeb28896006": {
     "items": [
@@ -6199,6 +7189,36 @@
     ],
     "ts": 1773989737.5976167
   },
+  "f4806514a6282b3bea581703ba3963bf2d089727bcc6513e1c543abb80975e1d": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine - Internet Archive",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Web Archive online parser. Download a website from the Wayback Machine web.archive.org",
+        "title": "r/DataHoarder on Reddit: web.archive.org download specific website/domain",
+        "url": "https://www.reddit.com/r/DataHoarder/comments/1kv511o/webarchiveorg_download_specific_websitedomain/"
+      }
+    ],
+    "ts": 1779089888.6341748
+  },
   "f544202d9ff18c5dc7117e09d45459ec31782f97a1e1b160d5ec479b4579856d": {
     "items": [
       {
@@ -6289,6 +7309,36 @@
     ],
     "ts": 1774073536.18162
   },
+  "fa1fd39661d3ce04ff4ff1a64b18ca5cd42ec79432ae4e6193f3cdcb58133146": {
+    "items": [
+      {
+        "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
+        "title": "Wayback Machine",
+        "url": "https://web.archive.org/"
+      },
+      {
+        "description": "How can I get a copy of the pages on my Web site? If my site got hacked or damaged, could I get a backup from the Archive? Our terms of use do not cover backups for the general public. However, you may use the Internet Archive Wayback Machine to locate and access archived versions of a site to which you own the rights. We can\u2019t guarantee that your site has been or will be archived. We can no longer offer the service to pack up sites that have been lost. ... On https://archive.org/web you can use the \u201cSave Page Now\u201d feature to save a specific page one time.",
+        "title": "Using the Wayback Machine \u2013 Internet Archive Help Center",
+        "url": "https://help.archive.org/help/using-the-wayback-machine/"
+      },
+      {
+        "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
+        "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
+        "url": "https://archive.org/"
+      },
+      {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
+        "description": "Can anyone help me fix it or contact archive.org? ... The Wayback Machine started working for me again but everytime I try to access large captured sites like YouTube or Roblox it throws a 429 error then it shows ERR_CONNECTION_TIMED_OUT message for 10-30 minutes \ud83d\udc80 ... I can access the rest of IA just fine at home, it&#x27;s the web archiving page that refuses to connect.",
+        "title": "r/internetarchive on Reddit: Why is Web.archive.org not working?",
+        "url": "https://www.reddit.com/r/internetarchive/comments/1rh6t0h/why_is_webarchiveorg_not_working/"
+      }
+    ],
+    "ts": 1779102159.1462674
+  },
   "fb2690a39b1040b9fa8dc746c32f8224814201562767eeccd0b5895c558a3544": {
     "items": [
       {
@@ -6353,7 +7403,7 @@
     "items": [
       {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine - Internet Archive",
+        "title": "Wayback Machine",
         "url": "https://web.archive.org/"
       },
       {
@@ -6362,22 +7412,22 @@
         "url": "https://help.archive.org/help/using-the-wayback-machine/"
       },
       {
-        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
-        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
-        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
-      },
-      {
         "description": "Javascript is required for this site. Consider enabling Javascript or upgrading to a modern browser",
         "title": "Internet Archive: Digital Library of Free & Borrowable Texts, Movies, Music & Wayback Machine",
         "url": "https://archive.org/"
       },
       {
+        "description": "Since it has such a large presence it uses both formats of organization? the url.com/thing format as well as the thing.url.com format just to cast a broader net when people are looking or possibly they updated to the newer format and forgot to update every link or kept the older format working so bookmarks and stuff don&#x27;t break? Noticed interestingly, if you click the big WayBack button on the homepage, you get the web.archive version, but if you go to the top bar, go to web, and click the Wayback button there, you get the /web version.",
+        "title": "r/NoStupidQuestions on Reddit: Archive.org vs web.archive.org",
+        "url": "https://www.reddit.com/r/NoStupidQuestions/comments/t867h8/archiveorg_vs_webarchiveorg/"
+      },
+      {
         "description": "Ask the publishers to restore access to 500,000+ books \u00b7 Search the history of more than 1 trillion web pages",
-        "title": "Wayback Machine",
-        "url": "https://archive.org/web/"
+        "title": "Internet Archive: Wayback Machine",
+        "url": "https://archive.org/web/web-advancedsearch.php"
       }
     ],
-    "ts": 1778939534.8472285
+    "ts": 1779094668.6573606
   },
   "fdd816beb5a602099630a039b4e9c3ca275459c033299e812f1e8e7c3cea36c6": {
     "items": [

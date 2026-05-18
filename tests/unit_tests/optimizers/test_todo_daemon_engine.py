@@ -1233,15 +1233,21 @@ def test_typescript_repair_helpers_are_reusable() -> None:
     damaged = "\n".join(
         [
             "const tokens: Array = [];",
+            "const flags: ReadonlyArray = ['strict'];",
             "for (let index = 0; index = tokens.length; index += 1) {",
             "  console.log(tokens[index]);",
+            "}",
+            "if (query.text.trim().length  MAX_QUERY_LIMIT) {",
+            "  console.log(flags[0]);",
             "}",
         ]
     )
     repaired = repair_common_typescript_text_damage(damaged)
 
     assert "const tokens: Array<string> = [];" in repaired
+    assert "const flags: ReadonlyArray<string> = ['strict'];" in repaired
     assert "index < tokens.length" in repaired
+    assert "query.text.trim().length > MAX_QUERY_LIMIT" in repaired
     assert repair_common_typescript_file_edits(
         [
             {"path": "src/example.ts", "content": damaged},
@@ -1251,9 +1257,12 @@ def test_typescript_repair_helpers_are_reusable() -> None:
         {"path": "src/example.ts", "content": repaired},
         {"path": "README.md", "content": "const values: Array = [];"},
     ]
-    assert obvious_typescript_text_damage("if (index  values.length) {\nconst x: Promise = y;") == [
+    assert obvious_typescript_text_damage(
+        "if (index  values.length) {\nconst x: Promise = y;\nif (query.text.length  MAX_QUERY_LIMIT) {"
+    ) == [
         "line 1: missing comparison operator before .length: if (index  values.length) {",
         "line 2: bare TypeScript generic alias: const x: Promise = y;",
+        "line 3: missing comparison operator before an uppercase bound: if (query.text.length  MAX_QUERY_LIMIT) {",
     ]
 
     calls: list[tuple[tuple[str, ...], Path, int]] = []

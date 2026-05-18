@@ -908,6 +908,7 @@ export function scan(input: string): string {
 def test_repair_common_typescript_text_damage_recovers_integer_upper_bounds():
     damaged = """
 const MAX_ARITY = 64;
+const MAX_QUERY_LIMIT = 25;
 
 export function validateArity(arity: number): boolean {
   return Number.isInteger(arity) && arity >= 0 && !(arity  MAX_ARITY);
@@ -918,12 +919,40 @@ export function assertArity(arity: number): void {
     throw new Error('bad arity');
   }
 }
+
+export function validateQuery(document: { text: string }, documentCount: number): void {
+  if (!document.text || document.text.trim().length  MAX_QUERY_LIMIT) {
+    throw new Error('query too large');
+  }
+  if (documentCount  MAX_QUERY_LIMIT) {
+    throw new Error('too many documents');
+  }
+}
 """
 
     repaired = _repair_common_typescript_text_damage(damaged)
 
     assert "arity > MAX_ARITY" in repaired
     assert "if (!Number.isInteger(arity) || arity > MAX_ARITY)" in repaired
+    assert "document.text.trim().length > MAX_QUERY_LIMIT" in repaired
+    assert "if (documentCount > MAX_QUERY_LIMIT)" in repaired
+
+
+def test_repair_common_typescript_text_damage_recovers_readonly_array_generics():
+    damaged = """
+const PYTHON_VALIDATION_FLAG_KEYS: ReadonlyArray = ['strict', 'browserNative'];
+
+export interface CheckResult {
+  readonly errors?: ReadonlyArray;
+  readonly picked?: Pick;
+}
+"""
+
+    repaired = _repair_common_typescript_text_damage(damaged)
+
+    assert "const PYTHON_VALIDATION_FLAG_KEYS: ReadonlyArray<string>" in repaired
+    assert "readonly errors?: ReadonlyArray<unknown>;" in repaired
+    assert "readonly picked?: Pick<Record<string, unknown>, string>;" in repaired
 
 
 def test_obvious_typescript_text_damage_detects_stripped_operator_artifacts():
@@ -931,6 +960,10 @@ def test_obvious_typescript_text_damage_detects_stripped_operator_artifacts():
 export function validateArity(arity: number): void {
   if (arity  'Entity');
   const metadata: Record = {};
+  const flags: ReadonlyArray = [];
+  if (document.text.trim().length  MAX_QUERY_LIMIT) {
+    return;
+  }
   for (let index = 0; index  state.budget.maxSteps) {
     return;
   }
@@ -942,6 +975,60 @@ export function validateArity(arity: number): void {
     assert any("missing comparison operator before a string literal" in finding for finding in findings)
     assert any("missing comparison operator before a dotted bound" in finding for finding in findings)
     assert any("bare TypeScript generic alias" in finding for finding in findings)
+    assert any("missing comparison operator before an uppercase bound" in finding for finding in findings)
+
+
+def test_router_transport_escalates_to_worktree_after_repeated_preflight_failures(tmp_path, monkeypatch):
+    task_label = "Task checkbox-484: Port temporal deontic RAG store."
+    task_board = tmp_path / "TASKS.md"
+    result_log = tmp_path / "results.jsonl"
+    task_board.write_text("### Task checkbox-484: Port temporal deontic RAG store.\n\nStatus: needed\n", encoding="utf-8")
+    with result_log.open("w", encoding="utf-8") as handle:
+        for _ in range(3):
+            handle.write(
+                json.dumps(
+                    {
+                        "pid": 1,
+                        "results": [
+                            {
+                                "valid": False,
+                                "artifact": {
+                                    "target_task": task_label,
+                                    "failure_kind": "preflight",
+                                    "errors": ["stripped TypeScript operator"],
+                                },
+                            }
+                        ],
+                    }
+                )
+                + "\n"
+            )
+    config = LogicPortDaemonConfig(
+        repo_root=tmp_path,
+        proposal_transport="llm_router",
+        result_log_path=result_log,
+        task_board_doc=task_board,
+        adaptive_worktree_after_preflight_failures=3,
+    )
+    optimizer = LogicPortDaemonOptimizer(config, llm_router=FailingRouter())
+
+    def fake_worktree_artifact(*, input_data, context):
+        return LogicPortArtifact(
+            summary="worktree proposal",
+            target_task=task_label,
+            proposal_transport="worktree",
+            files=[{"path": "src/lib/logic/example.ts", "content": "export const ok = true;\n"}],
+        )
+
+    monkeypatch.setattr(optimizer, "_generate_worktree_artifact", fake_worktree_artifact)
+
+    artifact = optimizer.generate(
+        {},
+        OptimizationContext(session_id="adaptive-worktree", input_data={}, domain="logic"),
+    )
+
+    assert artifact.proposal_transport == "worktree"
+    assert artifact.files[0]["path"] == "src/lib/logic/example.ts"
 
 
 def test_extract_plan_tasks_reads_status_from_markdown():

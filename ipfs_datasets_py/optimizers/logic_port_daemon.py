@@ -345,6 +345,7 @@ class LogicPortDaemonConfig:
     preflight_repair_attempts: int = 1
     validation_repair_attempts: int = 1
     validation_repair_failure_budget: int = 2
+    adaptive_worktree_after_preflight_failures: int = 3
     auto_commit: bool = False
     auto_commit_branch: str = "main"
     auto_commit_startup_dirty: bool = False
@@ -693,6 +694,8 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
 
     def generate(self, input_data: Any, context: OptimizationContext) -> LogicPortArtifact:
         transport_mode = self.daemon_config.proposal_transport_mode()
+        selected_task = self._current_plan_task()
+        target_label = selected_task.label if selected_task else ""
         if transport_mode == "worktree":
             return self._generate_worktree_artifact(input_data=input_data, context=context)
         if transport_mode == "hybrid":
@@ -704,10 +707,17 @@ class LogicPortDaemonOptimizer(BaseOptimizer):
                 artifact=worktree_artifact.to_dict(),
                 selected_task=worktree_artifact.target_task,
             )
+        if transport_mode == "llm_router" and self._should_escalate_router_task_to_worktree(selected_task):
+            worktree_artifact = self._generate_worktree_artifact(input_data=input_data, context=context)
+            if (worktree_artifact.files or worktree_artifact.patch.strip()) and not worktree_artifact.errors:
+                return worktree_artifact
+            self._write_status(
+                "adaptive_worktree_fallback_to_router",
+                artifact=worktree_artifact.to_dict(),
+                selected_task=worktree_artifact.target_task or target_label,
+            )
 
         prompt = self._build_prompt(input_data=input_data, context=context)
-        selected_task = self._current_plan_task()
-        target_label = selected_task.label if selected_task else ""
         attempts = max(1, int(self.daemon_config.proposal_attempts))
         previous_feedback = ""
         artifact = LogicPortArtifact(summary="No proposal generated.")
@@ -2905,6 +2915,18 @@ PLANNING CONTEXT:
         rows = _read_daemon_results(self.daemon_config.resolve(self.daemon_config.result_log_path))
         return _current_task_failure_counts(rows, selected_task.label)
 
+    def _should_escalate_router_task_to_worktree(self, selected_task: Optional[PlanTask]) -> bool:
+        threshold = max(0, int(self.daemon_config.adaptive_worktree_after_preflight_failures))
+        if threshold <= 0 or selected_task is None:
+            return False
+        counts = self._selected_task_failure_counts(selected_task)
+        by_kind = counts.get("by_kind_since_success", {}) if isinstance(counts, dict) else {}
+        preflightish_failures = sum(
+            int(by_kind.get(kind, 0) or 0)
+            for kind in ("preflight", "file_repair_preflight", "validation_repair_preflight")
+        )
+        return preflightish_failures >= threshold
+
     def _relevant_file_context(self, selected_task: Optional[PlanTask], tracked_files: str) -> str:
         return _shared_render_relevant_file_context(
             repo_root=self.daemon_config.repo_root,
@@ -3760,6 +3782,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=2,
         help="Skip validation-repair LLM calls for a task after this many validation-repair failures since its last accepted round; 0 disables the adaptive skip.",
     )
+    parser.add_argument(
+        "--adaptive-worktree-after-preflight-failures",
+        type=int,
+        default=3,
+        help=(
+            "When using llm_router transport, try an isolated-worktree Codex edit after this many "
+            "preflight-style failures for the selected task since its last accepted round; 0 disables."
+        ),
+    )
     parser.add_argument("--proposal-attempts", type=int, default=3, help="LLM proposal attempts per daemon cycle before logging a failed round.")
     parser.add_argument("--revisit-blocked-tasks", action="store_true", help="When no needed/in-progress tasks remain, intentionally select blocked port-plan tasks for another autonomous attempt.")
     parser.add_argument("--blocked-backlog-limit", type=int, default=10, help="Number of blocked tasks to summarize in progress, prompts, and the generated task board.")
@@ -3823,6 +3854,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         preflight_repair_attempts=max(0, args.preflight_repair_attempts),
         validation_repair_attempts=max(0, args.validation_repair_attempts),
         validation_repair_failure_budget=max(0, args.validation_repair_failure_budget),
+        adaptive_worktree_after_preflight_failures=max(0, args.adaptive_worktree_after_preflight_failures),
         proposal_attempts=max(1, args.proposal_attempts),
         revisit_blocked_tasks=bool(args.revisit_blocked_tasks),
         blocked_backlog_limit=max(0, args.blocked_backlog_limit),
