@@ -42,8 +42,17 @@ from __future__ import annotations
 
 import logging
 import math
+import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
+
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_feature_keys,
+    frame_ontology_feature_keys_from_values,
+    frame_ontology_high_signal_terms,
+    frame_ontology_terms_from_feature_keys,
+    frame_ontology_terms_from_triples,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +161,8 @@ class FLogicSemanticOptimizer:
         source_embedding: Sequence[float],
         decoded_embedding: Sequence[float],
         kg_triples: Optional[List[Dict[str, str]]] = None,
+        *,
+        frame_feature_keys: Optional[Sequence[str]] = None,
     ) -> FLogicOptimizerResult:
         """
         Evaluate semantic preservation between *source_text* and *decoded_text*.
@@ -164,6 +175,9 @@ class FLogicSemanticOptimizer:
             kg_triples: Optional list of ``{"subject": …, "predicate": …,
                 "object": …}`` dicts representing the encoded knowledge-graph
                 triples.  Used for F-logic consistency checking.
+            frame_feature_keys: Optional modal/frame-logic audit features from
+                the deterministic modal codec. These are recorded as diagnostics
+                and do not alter the F-logic consistency decision.
 
         Returns:
             :class:`FLogicOptimizerResult` with similarity score, pass/fail
@@ -183,6 +197,11 @@ class FLogicSemanticOptimizer:
             similarity >= self.config.similarity_threshold and ontology_consistent
         )
 
+        frame_metadata = _frame_ontology_metadata(
+            kg_triples=kg_triples or [],
+            frame_feature_keys=frame_feature_keys or [],
+        )
+
         return FLogicOptimizerResult(
             similarity_score=similarity,
             passed=passed,
@@ -192,6 +211,7 @@ class FLogicSemanticOptimizer:
                 "source_text": source_text,
                 "decoded_text": decoded_text,
                 "threshold": self.config.similarity_threshold,
+                **frame_metadata,
             },
         )
 
@@ -311,6 +331,228 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
     if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
     return dot / (norm_a * norm_b)
+
+
+def _frame_ontology_metadata(
+    *,
+    kg_triples: Sequence[Mapping[str, Any]],
+    frame_feature_keys: Sequence[Any],
+) -> Dict[str, Any]:
+    feature_keys = _normalized_frame_feature_keys(frame_feature_keys)
+    audit_feature_keys = sorted(
+        frame_ontology_feature_keys(
+            feature_keys
+            + frame_ontology_feature_keys_from_values(frame_feature_keys)
+        )
+    )
+    feature_terms = sorted(
+        frame_ontology_terms_from_feature_keys(audit_feature_keys)
+    )
+    triple_terms = sorted(
+        frame_ontology_terms_from_triples(kg_triples)
+    )
+    ontology_terms = sorted(set(feature_terms) | set(triple_terms))
+    feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
+    triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
+    high_signal_terms = frame_ontology_high_signal_terms(ontology_terms)
+
+    return {
+        "frame_feature_key_count": len(feature_keys),
+        "frame_feature_keys": feature_keys,
+        "frame_audit_feature_key_count": len(audit_feature_keys),
+        "frame_audit_feature_keys": audit_feature_keys,
+        "frame_ontology_terms_from_feature_keys_count": len(feature_terms),
+        "frame_ontology_terms_from_feature_keys": feature_terms,
+        "frame_ontology_terms_from_triples_count": len(triple_terms),
+        "frame_ontology_terms_from_triples": triple_terms,
+        "frame_ontology_term_count": len(ontology_terms),
+        "frame_ontology_terms": ontology_terms,
+        "frame_ontology_high_signal_terms_from_feature_keys_count": len(
+            feature_high_signal_terms
+        ),
+        "frame_ontology_high_signal_terms_from_feature_keys": feature_high_signal_terms,
+        "frame_ontology_high_signal_terms_from_triples_count": len(
+            triple_high_signal_terms
+        ),
+        "frame_ontology_high_signal_terms_from_triples": triple_high_signal_terms,
+        "frame_ontology_high_signal_term_count": len(high_signal_terms),
+        "frame_ontology_high_signal_terms": high_signal_terms,
+    }
+
+
+def _normalized_frame_feature_keys(values: Sequence[Any]) -> List[str]:
+    collected: List[str] = []
+    _collect_frame_feature_key_values(values, collected)
+    collected.extend(frame_ontology_feature_keys_from_values(values))
+    return sorted(
+        {
+            str(value or "").strip()
+            for value in collected
+            if str(value or "").strip()
+        }
+    )
+
+
+def _collect_frame_feature_key_values(
+    value: Any,
+    collected: List[str],
+    *,
+    depth: int = 0,
+    max_depth: int = 6,
+    max_values: int = 2048,
+) -> None:
+    if depth >= max_depth or len(collected) >= max_values or value is None:
+        return
+
+    if isinstance(value, Mapping):
+        for key, nested_value in value.items():
+            if len(collected) >= max_values:
+                return
+            key_text = str(key or "").strip()
+            synthetic_values = _synthetic_frame_feature_values(
+                key_text,
+                nested_value,
+            )
+            if synthetic_values:
+                collected.extend(synthetic_values[: max_values - len(collected)])
+                if isinstance(nested_value, (Mapping, list, tuple)):
+                    _collect_frame_feature_key_values(
+                        nested_value,
+                        collected,
+                        depth=depth + 1,
+                        max_depth=max_depth,
+                        max_values=max_values,
+                    )
+                continue
+            if _should_recurse_frame_feature_field(key_text, nested_value):
+                _collect_frame_feature_key_values(
+                    nested_value,
+                    collected,
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                    max_values=max_values,
+                )
+        return
+
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            if len(collected) >= max_values:
+                return
+            _collect_frame_feature_key_values(
+                item,
+                collected,
+                depth=depth + 1,
+                max_depth=max_depth,
+                max_values=max_values,
+            )
+        return
+
+    text = str(value or "").strip()
+    if not text:
+        return
+    parsed = _parsed_frame_feature_json(text)
+    if parsed is not None:
+        _collect_frame_feature_key_values(
+            parsed,
+            collected,
+            depth=depth + 1,
+            max_depth=max_depth,
+            max_values=max_values,
+        )
+        return
+    collected.append(text)
+
+
+def _synthetic_frame_feature_values(key: str, value: Any) -> List[str]:
+    if isinstance(value, Mapping):
+        return []
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return []
+    text = str(value or "").strip()
+    if not text:
+        return []
+    normalized_key = key.strip().lower().replace("-", "_")
+    prefix_by_key = {
+        "candidate_frame": "frame-candidate:",
+        "candidate_ontology_frame": "frame-candidate:",
+        "candidate_frame_term": "frame-term:",
+        "candidate_ontology_term": "frame-term:",
+        "frame_id": "frame:",
+        "frame_term": "frame-term:",
+        "modal_family": "family:selected_frame:",
+        "predicted_family": "family:selected_frame:",
+        "selected_frame": "frame:",
+        "selected_ontology_frame": "frame:",
+        "selected_frame_term": "selected-frame-term:",
+        "selected_ontology_term": "selected-frame-term:",
+        "target_family": "family:selected_frame:",
+    }
+    prefix = prefix_by_key.get(normalized_key)
+    if prefix:
+        return [f"{prefix}{text}"]
+    if normalized_key in {
+        "citation",
+        "document_id",
+        "sample_id",
+        "source_id",
+        "source_id_citation_canonical",
+    } and _looks_like_frame_feature_value(text):
+        return [text]
+    return []
+
+
+def _should_recurse_frame_feature_field(key: str, value: Any) -> bool:
+    if isinstance(value, (Mapping, list, tuple)):
+        return True
+    normalized_key = key.strip().lower().replace("-", "_")
+    if normalized_key in {
+        "feature",
+        "feature_key",
+        "feature_keys",
+        "features",
+        "frame_feature",
+        "frame_feature_key",
+        "frame_feature_keys",
+        "frame_features",
+        "hint_evidence",
+        "top_embedding_features",
+        "top_family_features",
+    }:
+        return True
+    return _looks_like_frame_feature_value(str(value or ""))
+
+
+def _looks_like_frame_feature_value(value: str) -> bool:
+    text = str(value or "").strip()
+    if not text:
+        return False
+    lowered = text.lower()
+    return (
+        ":" in text
+        or lowered.startswith("us-code-")
+        or lowered.startswith("us_code_")
+        or " u.s.c. " in f" {lowered} "
+    )
+
+
+def _parsed_frame_feature_json(text: str) -> Any | None:
+    stripped = str(text or "").strip()
+    if not stripped or len(stripped) > 4096:
+        return None
+    if not (
+        stripped.startswith("{")
+        and stripped.endswith("}")
+        or stripped.startswith("[")
+        and stripped.endswith("]")
+    ):
+        return None
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(parsed, (Mapping, list, tuple)):
+        return parsed
+    return None
 
 
 __all__ = [
