@@ -52,11 +52,22 @@ _FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
     {
+        "citation",
+        "condition",
+        "exception",
+        "fallback_rule",
         "modal_family",
+        "modal_cue",
         "modal_operator",
+        "modal_operator_label",
         "modal_system",
         "predicate",
+        "predicate_argument",
         "predicate_role",
+        "predicate_token",
+        "section_heading_tail",
+        "statement_hint",
+        "status_keyword",
     }
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
@@ -297,10 +308,13 @@ def frame_ontology_terms_from_triples(
     """Extract canonical frame ontology terms from frame-linked triples."""
     terms: List[str] = []
     for triple in triples:
-        predicate = _canonical_frame_ontology_predicate(
-            str(triple.get("predicate", "")).strip()
-        )
+        predicate = str(triple.get("predicate", "")).strip()
         if not predicate:
+            continue
+        if not (
+            _canonical_frame_ontology_predicate(predicate)
+            or _is_contextual_frame_ontology_predicate(predicate)
+        ):
             continue
         normalized = normalize_frame_ontology_term(
             str(triple.get("object", "")).strip()

@@ -203,6 +203,57 @@ def test_frame_ontology_terms_from_triples_support_legacy_frame_predicates() -> 
     assert terms == ["administrative_notice_hearing", "final_order"]
 
 
+def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "condition",
+                "object": "unless written notice is provided",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "exception",
+                "object": "except as provided in subsection (b)",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_argument",
+                "object": "actor:agency",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_token",
+                "object": "authority",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_operator_label",
+                "object": "permission",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_cue",
+                "object": "may",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id",
+                "object": "us-code-5-552-deadbeefdeadbeef",
+            },
+        ]
+    )
+
+    assert terms == [
+        "unless_written_notice_provided",
+        "except_provided_subsection",
+        "actor_agency",
+        "authority",
+        "permission",
+        "may",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_aliases() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -305,6 +356,29 @@ def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_featur
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_predicates() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition:unless written notice is provided",
+            "flogic:exception:except as provided in subsection (b)",
+            "flogic:predicate_argument:actor:agency",
+            "flogic:predicate_token:authority",
+            "flogic:modal_operator_label:permission",
+            "flogic:modal_cue:may",
+            "flogic:source_id:us-code-5-552-deadbeefdeadbeef",
+        ]
+    )
+
+    assert terms == [
+        "unless_written_notice_provided",
+        "except_provided_subsection",
+        "actor_agency",
+        "authority",
+        "permission",
+        "may",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_and_scope_features() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -350,6 +424,8 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     ) is True
     assert is_frame_ontology_feature_key("token:agency") is False
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
+    assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
+    assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is False
     assert is_frame_ontology_feature_key("") is False
 
 

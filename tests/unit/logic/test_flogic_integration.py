@@ -540,3 +540,49 @@ class TestFLogicSemanticOptimizer:
         assert result.metadata["frame_ontology_terms_from_triples"] == [
             "administrative_notice_hearing"
         ]
+
+    def test_result_metadata_tracks_contextual_flogic_terms_from_triples(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            kg_triples=[
+                {
+                    "subject": "doc-1",
+                    "predicate": "condition",
+                    "object": "unless written notice is provided",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "predicate_argument",
+                    "object": "actor:agency",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "modal_cue",
+                    "object": "may",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "source_id",
+                    "object": "us-code-5-552-deadbeefdeadbeef",
+                },
+            ],
+        )
+        assert result.metadata["frame_ontology_term_count"] == 3
+        assert result.metadata["frame_ontology_terms"] == [
+            "actor_agency",
+            "may",
+            "unless_written_notice_provided",
+        ]
+        assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 0
+        assert result.metadata["frame_ontology_terms_from_feature_keys"] == []
+        assert result.metadata["frame_ontology_terms_from_triples_count"] == 3
+        assert result.metadata["frame_ontology_terms_from_triples"] == [
+            "actor_agency",
+            "may",
+            "unless_written_notice_provided",
+        ]
