@@ -1268,7 +1268,21 @@ class LegalModalParser:
             cutoff = token_matches[_USCODE_SECTION_HEADING_SHORT_MAX_TOKENS - 1].end()
             candidate_text = self.normalize_text(candidate_text[:cutoff])
         if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(candidate_text):
-            return None
+            procedural_heading_keywords = {
+                keyword_match.group(0).lower()
+                for keyword_match in _USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE.finditer(
+                    candidate_text.lower()
+                )
+            }
+            has_procedural_heading_signature = (
+                len(procedural_heading_keywords) >= 2
+                and bool(
+                    {"appeal", "appeals", "hearing", "notice", "review"}
+                    & procedural_heading_keywords
+                )
+            )
+            if not has_procedural_heading_signature:
+                return None
 
         return LegalSegment(
             text=candidate_text,

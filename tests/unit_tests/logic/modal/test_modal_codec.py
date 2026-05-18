@@ -478,6 +478,15 @@ _USCODE_19_3702_SYMBOLIC_VALIDITY_TEXT = (
 )
 
 
+def _coarse_uscode_procedural_heading_noise_text(section: str, heading: str) -> str:
+    noise_tokens = " ".join(chr(ord("k") + (index % 10)) for index in range(180))
+    return (
+        "U S C title archive register digest taxonomy index chapter crosswalk "
+        f"sec {section} {heading} is archive "
+        f"{noise_tokens}"
+    )
+
+
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
@@ -1545,6 +1554,54 @@ def test_modal_compiler_replays_long_embedded_section_heading_samples_for_8_1365
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+            assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> None:
+    heading = (
+        "administrative notice and hearing procedures for eligibility review and petition records"
+    )
+    cases = [
+        (
+            "us-code-7-425-90644d368be3f381",
+            "7 U.S.C. 425",
+            "425",
+        ),
+        (
+            "us-code-10-2639-47081112474a8f75",
+            "10 U.S.C. 2639",
+            "2639",
+        ),
+        (
+            "us-code-20-107e-1-43ac50498bf68122",
+            "20 U.S.C. 107e-1",
+            "107e-1",
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, section in cases:
+            compiled = compiler.compile(
+                _coarse_uscode_procedural_heading_noise_text(section, heading),
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_section_heading_coarse_v1"
             assert fallback.provenance.citation == citation
 
 

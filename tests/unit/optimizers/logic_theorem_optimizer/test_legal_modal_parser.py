@@ -414,6 +414,15 @@ def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
     )
 
 
+def _coarse_uscode_procedural_heading_noise_text(section: str, heading: str) -> str:
+    noise_tokens = " ".join(chr(ord("k") + (index % 10)) for index in range(180))
+    return (
+        "U S C title archive register digest taxonomy index chapter crosswalk "
+        f"sec {section} {heading} is archive "
+        f"{noise_tokens}"
+    )
+
+
 def test_parser_normalizes_and_segments_legal_text() -> None:
     parser = LegalModalParser()
     text = "  The agency   must provide notice. Unless waived, the applicant may appeal. "
@@ -1255,6 +1264,46 @@ def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_headi
     for document_id, citation, section, heading in cases:
         document = parser.parse(
             _coarse_uscode_heading_noise_text(section, heading),
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_coarse_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_packet_todo_samples_for_7_425_10_2639_and_20_107e_1_with_coarse_procedural_headings() -> None:
+    parser = LegalModalParser()
+    heading = (
+        "administrative notice and hearing procedures for eligibility review and petition records"
+    )
+    cases = [
+        (
+            "us-code-7-425-90644d368be3f381",
+            "7 U.S.C. 425",
+            "425",
+        ),
+        (
+            "us-code-10-2639-47081112474a8f75",
+            "10 U.S.C. 2639",
+            "2639",
+        ),
+        (
+            "us-code-20-107e-1-43ac50498bf68122",
+            "20 U.S.C. 107e-1",
+            "107e-1",
+        ),
+    ]
+
+    for document_id, citation, section in cases:
+        document = parser.parse(
+            _coarse_uscode_procedural_heading_noise_text(section, heading),
             document_id=document_id,
             source="us_code",
             citation=citation,
