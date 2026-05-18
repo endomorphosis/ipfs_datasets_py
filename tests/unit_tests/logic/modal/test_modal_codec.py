@@ -588,6 +588,15 @@ def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> Non
     assert deontic_scope.metadata["target_family"] == "deontic"
     assert deontic_scope.metadata["family_margin"] < 0.0
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is True
+    temporal_deontic = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_deontic_scope_family_outvoted"
+    )
+    assert temporal_deontic.candidate_ids == ["temporal", "deontic"]
+    assert temporal_deontic.metadata["predicted_family"] == "temporal"
+    assert temporal_deontic.metadata["target_family"] == "deontic"
+    assert temporal_deontic.metadata["family_margin"] < 0.0
 
 
 def test_modal_compiler_treats_deontic_scope_phrase_as_ambiguity_signal() -> None:
@@ -746,6 +755,15 @@ def test_modal_compiler_treats_not_later_than_scope_as_temporal_ambiguity_signal
     assert temporal_scope.metadata["family_margin"] < 0.0
     assert temporal_scope.metadata["target_share"] == 0.0
     assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
+    temporal_deontic = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_deontic_scope_family_outvoted"
+    )
+    assert temporal_deontic.candidate_ids == ["deontic", "temporal"]
+    assert temporal_deontic.metadata["predicted_family"] == "deontic"
+    assert temporal_deontic.metadata["target_family"] == "temporal"
+    assert temporal_deontic.metadata["family_margin"] < 0.0
 
 
 def test_modal_compiler_treats_period_beginning_with_calendar_date_as_temporal_scope_signal() -> None:

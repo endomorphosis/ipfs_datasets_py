@@ -369,6 +369,13 @@ class DeterministicModalCompiler:
             )
         )
         ambiguities.extend(
+            self._temporal_deontic_scope_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
+        ambiguities.extend(
             self._dynamic_scope_target_family_ambiguities(
                 encoding,
                 ranking=ranking,
@@ -780,6 +787,66 @@ class DeterministicModalCompiler:
                     "family_ranking": list(ranking),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_alethic_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _temporal_deontic_scope_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        if predicted_family not in {
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.DEONTIC.value,
+        }:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        target_family = (
+            ModalLogicFamily.DEONTIC.value
+            if predicted_family == ModalLogicFamily.TEMPORAL.value
+            else ModalLogicFamily.TEMPORAL.value
+        )
+        target_share = float(family_shares.get(target_family, 0.0))
+        signals = modal_ambiguity_signals(encoding)
+        has_target_scope = bool(
+            signals.get("has_deontic_scope")
+            if target_family == ModalLogicFamily.DEONTIC.value
+            else signals.get("has_temporal_scope")
+        )
+        if not has_target_scope and target_share <= 0.0:
+            return []
+        family_margin = target_share - predicted_share
+        outvote_margin_threshold = (
+            self.config.modal_deontic_target_family_outvote_margin
+            if target_family == ModalLogicFamily.DEONTIC.value
+            else self.config.modal_temporal_target_family_outvote_margin
+        )
+        if family_margin >= outvote_margin_threshold:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="temporal_deontic_scope_family_outvoted",
+                message=(
+                    "Temporal-scope and deontic-force evidence compete; the top modal family "
+                    "outvotes the opposite family and requires review."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": outvote_margin_threshold,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,
