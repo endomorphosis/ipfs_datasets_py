@@ -157,7 +157,11 @@ class DeterministicModalCompiler:
         selected_frame = str(frame_candidates[0]["frame_id"]) if frame_candidates else None
         ambiguities = [
             *self._formula_ambiguities(modal_ir),
-            *self._family_ambiguities(encoding, modal_ir=modal_ir),
+            *self._family_ambiguities(
+                encoding,
+                modal_ir=modal_ir,
+                frame_selections=frame_selections,
+            ),
             *self._frame_ambiguities(frame_selections),
         ]
         if normalized_text and not modal_ir.formulas:
@@ -257,6 +261,7 @@ class DeterministicModalCompiler:
         encoding: SpaCyLegalEncoding,
         *,
         modal_ir: ModalIRDocument,
+        frame_selections: Sequence[FrameSelection] = (),
     ) -> List[ModalCompilationAmbiguity]:
         ranking = ranked_modal_families(encoding)
         if not ranking:
@@ -395,6 +400,7 @@ class DeterministicModalCompiler:
                 encoding,
                 ranking=ranking,
                 family_shares=family_shares,
+                frame_selections=frame_selections,
             )
         )
         if len(ranking) < 2:
@@ -522,6 +528,7 @@ class DeterministicModalCompiler:
         *,
         ranking: Sequence[Dict[str, Any]],
         family_shares: Dict[str, float],
+        frame_selections: Sequence[FrameSelection] = (),
     ) -> List[ModalCompilationAmbiguity]:
         """Surface explicit ambiguities when strong legal families compete."""
         if not ranking:
@@ -535,10 +542,12 @@ class DeterministicModalCompiler:
         predicted_share = float(ranking[0]["share"])
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
+        has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
         has_frame_scope = bool(
             signals.get("has_frame_context")
             or signals.get("has_frame_cue")
             or signals.get("has_statutory_scope_reference")
+            or has_frame_bm25_support
         )
         if predicted_family == ModalLogicFamily.DEONTIC.value:
             target_specs = (
@@ -595,6 +604,7 @@ class DeterministicModalCompiler:
                 "explicit_ambiguity_type": explicit_type,
                 "family_margin": round(family_margin, 6),
                 "family_ranking": list(ranking),
+                "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
                 "predicted_family": predicted_family,
                 "predicted_share": round(predicted_share, 6),
@@ -630,6 +640,17 @@ class DeterministicModalCompiler:
                 )
             )
         return ambiguities
+
+    def _has_frame_bm25_support(
+        self,
+        frame_selections: Sequence[FrameSelection],
+    ) -> bool:
+        if not frame_selections:
+            return False
+        return any(
+            bool(selection.matched_terms) and float(selection.score) > 0.0
+            for selection in frame_selections
+        )
 
     def _adaptive_margin_explicit_type(
         self,

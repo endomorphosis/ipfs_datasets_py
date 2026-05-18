@@ -369,6 +369,33 @@ def test_modal_compiler_treats_transferred_as_frame_scope_ambiguity_signal() -> 
     assert adaptive_frame.metadata["lexical_signals"]["has_frame_scope_phrase"] is True
 
 
+def test_modal_compiler_uses_bm25_frame_support_for_temporal_adaptive_frame_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the offense penalty applies."
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "frame"]
+    )
+    assert adaptive_frame.metadata["lexical_signals"]["has_frame_context"] is False
+    assert adaptive_frame.metadata["has_frame_bm25_support"] is True
+    assert (
+        adaptive_frame.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_frame_outvoted_margin_low"
+    )
+
+
 def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -590,6 +617,37 @@ def test_modal_compiler_treats_as_provided_in_as_conditional_scope_ambiguity_sig
     )
     assert (
         conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+
+
+def test_modal_compiler_treats_for_purposes_of_as_conditional_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "For purposes of this section, the agency publishes the annual report within 30 days after review."
+    )
+
+    temporal_conditional = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_conditional_normative_family_outvoted"
+    )
+    assert temporal_conditional.metadata["predicted_family"] == "temporal"
+    assert temporal_conditional.metadata["target_family"] == "conditional_normative"
+    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
         is True
     )
 

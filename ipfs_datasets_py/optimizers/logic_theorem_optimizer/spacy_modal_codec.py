@@ -33,6 +33,8 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "in the case of",
     "in the event that",
     "notwithstanding",
+    "for purposes of",
+    "for the purposes of",
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
