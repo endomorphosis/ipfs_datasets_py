@@ -4181,6 +4181,87 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     ]
 
 
+def test_decode_modal_ir_document_emits_number_distance_profile_slots() -> None:
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+
+    assert slot_map["citation_title_section_primary_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["citation_title_section_terminal_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["source_id_title_section_primary_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["source_id_title_section_terminal_number_distance_profile"] == [
+        "ascending_10k_to_99k"
+    ]
+    assert slot_map["citation_source_id_title_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_section_primary_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_section_terminal_number_distance_profile"] == [
+        "equal_lt_1k"
+    ]
+    assert slot_map["citation_source_id_title_number_span_digit_count_bucket"] == [
+        "1_digit"
+    ]
+    assert (
+        slot_map["citation_source_id_section_primary_number_span_digit_count_bucket"]
+        == ["1_digit"]
+    )
+    assert (
+        slot_map["citation_source_id_section_terminal_number_span_digit_count_bucket"]
+        == ["1_digit"]
+    )
+
+
+def test_modal_ir_to_flogic_triples_emits_number_distance_profile_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_title_section_primary_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("citation_title_section_terminal_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("source_id_title_section_primary_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("source_id_title_section_terminal_number_distance_profile") == [
+        "ascending_10k_to_99k"
+    ]
+    assert objects("citation_source_id_title_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_section_primary_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_section_terminal_number_distance_profile") == [
+        "equal_lt_1k"
+    ]
+    assert objects("citation_source_id_title_number_span_digit_count_bucket") == [
+        "1_digit"
+    ]
+    assert objects(
+        "citation_source_id_section_primary_number_span_digit_count_bucket"
+    ) == ["1_digit"]
+    assert objects(
+        "citation_source_id_section_terminal_number_span_digit_count_bucket"
+    ) == ["1_digit"]
+
+
 def test_decode_modal_ir_document_emits_span_metric_slots() -> None:
     decoded = decode_modal_ir_document(_span_metrics_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)

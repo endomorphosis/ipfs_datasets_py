@@ -2012,8 +2012,25 @@ def _provenance_alignment_components(
     )
     if title_number_relation is not None:
         relation, span = title_number_relation
+        span_component = "citation_source_id_title_number_span"
+        profile_component = "citation_source_id_title_number_distance_profile"
         components.append(("citation_source_id_title_number_relation", relation))
-        components.append(("citation_source_id_title_number_span", span))
+        components.append((span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=span_component,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=profile_component,
+                )
+            )
     source_section_primary_number = _clean_non_empty_string(
         source_component_map.get("source_id_section_primary_number")
         or source_component_map.get("source_id_section_number")
@@ -2028,8 +2045,25 @@ def _provenance_alignment_components(
     )
     if section_number_relation is not None:
         relation, span = section_number_relation
+        span_component = "citation_source_id_section_primary_number_span"
+        profile_component = "citation_source_id_section_primary_number_distance_profile"
         components.append(("citation_source_id_section_primary_number_relation", relation))
-        components.append(("citation_source_id_section_primary_number_span", span))
+        components.append((span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=span_component,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=profile_component,
+                )
+            )
     source_section_terminal_number = _clean_non_empty_string(
         source_component_map.get("source_id_section_terminal_number")
         or source_component_map.get("source_id_section_number")
@@ -2044,8 +2078,25 @@ def _provenance_alignment_components(
     )
     if section_terminal_number_relation is not None:
         relation, span = section_terminal_number_relation
+        span_component = "citation_source_id_section_terminal_number_span"
+        profile_component = "citation_source_id_section_terminal_number_distance_profile"
         components.append(("citation_source_id_section_terminal_number_relation", relation))
-        components.append(("citation_source_id_section_terminal_number_span", span))
+        components.append((span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=span_component,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=profile_component,
+                )
+            )
     source_section_primary_suffix = _clean_non_empty_string(
         source_component_map.get("source_id_section_primary_suffix_normalized")
         or source_component_map.get("source_id_section_primary_suffix")
@@ -3360,6 +3411,20 @@ def _numeric_magnitude_bucket(value: int) -> str:
     return "1m_plus"
 
 
+def _relation_span_profile(
+    *,
+    relation: str,
+    span: str,
+) -> str:
+    normalized_relation = _clean_non_empty_string(relation).lower()
+    normalized_span = _clean_non_empty_string(span)
+    if not normalized_relation:
+        return ""
+    if not normalized_span.isdigit():
+        return normalized_relation
+    return f"{normalized_relation}_{_numeric_magnitude_bucket(int(normalized_span))}"
+
+
 def _alpha_signature_components(
     value: str,
     *,
@@ -3579,6 +3644,9 @@ def _title_section_number_relation_components(
     if primary_relation is not None:
         relation, span = primary_relation
         span_component = f"{normalized_namespace}_title_section_primary_number_span"
+        profile_component = (
+            f"{normalized_namespace}_title_section_primary_number_distance_profile"
+        )
         components.append(
             (
                 f"{normalized_namespace}_title_section_primary_number_relation",
@@ -3592,6 +3660,15 @@ def _title_section_number_relation_components(
                 span=span,
             )
         )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=profile_component,
+                )
+            )
     terminal_relation = _primary_terminal_number_relation(
         primary_number=normalized_title_number,
         terminal_number=terminal_number,
@@ -3599,6 +3676,9 @@ def _title_section_number_relation_components(
     if terminal_relation is not None:
         relation, span = terminal_relation
         span_component = f"{normalized_namespace}_title_section_terminal_number_span"
+        profile_component = (
+            f"{normalized_namespace}_title_section_terminal_number_distance_profile"
+        )
         components.append(
             (
                 f"{normalized_namespace}_title_section_terminal_number_relation",
@@ -3612,6 +3692,15 @@ def _title_section_number_relation_components(
                 span=span,
             )
         )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            components.append((profile_component, relation_profile))
+            components.extend(
+                _typed_identifier_components(
+                    relation_profile,
+                    slot_prefix=profile_component,
+                )
+            )
     return components
 
 

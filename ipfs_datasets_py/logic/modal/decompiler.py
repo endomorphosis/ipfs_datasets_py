@@ -1537,8 +1537,25 @@ def _provenance_alignment_slots(
     )
     if title_number_relation is not None:
         relation, span = title_number_relation
+        span_slot = "citation_source_id_title_number_span"
+        profile_slot = "citation_source_id_title_number_distance_profile"
         slots.append(("citation_source_id_title_number_relation", relation))
-        slots.append(("citation_source_id_title_number_span", span))
+        slots.append((span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=span_slot,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=profile_slot,
+                )
+            )
     source_section_primary_number = _clean_text(
         source_slot_map.get("source_id_section_primary_number")
         or source_slot_map.get("source_id_section_number")
@@ -1555,8 +1572,25 @@ def _provenance_alignment_slots(
     )
     if section_number_relation is not None:
         relation, span = section_number_relation
+        span_slot = "citation_source_id_section_primary_number_span"
+        profile_slot = "citation_source_id_section_primary_number_distance_profile"
         slots.append(("citation_source_id_section_primary_number_relation", relation))
-        slots.append(("citation_source_id_section_primary_number_span", span))
+        slots.append((span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=span_slot,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=profile_slot,
+                )
+            )
     source_section_terminal_number = _clean_text(
         source_slot_map.get("source_id_section_terminal_number")
         or source_slot_map.get("source_id_section_number")
@@ -1573,8 +1607,25 @@ def _provenance_alignment_slots(
     )
     if section_terminal_number_relation is not None:
         relation, span = section_terminal_number_relation
+        span_slot = "citation_source_id_section_terminal_number_span"
+        profile_slot = "citation_source_id_section_terminal_number_distance_profile"
         slots.append(("citation_source_id_section_terminal_number_relation", relation))
-        slots.append(("citation_source_id_section_terminal_number_span", span))
+        slots.append((span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=span_slot,
+                span=span,
+            )
+        )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=profile_slot,
+                )
+            )
     source_section_primary_suffix = _clean_text(
         source_slot_map.get("source_id_section_primary_suffix_normalized")
         or source_slot_map.get("source_id_section_primary_suffix")
@@ -2753,6 +2804,7 @@ def _title_section_number_relation_slots(
     if primary_relation is not None:
         relation, span = primary_relation
         span_slot = f"{normalized_namespace}_title_section_primary_number_span"
+        profile_slot = f"{normalized_namespace}_title_section_primary_number_distance_profile"
         slots.append(
             (
                 f"{normalized_namespace}_title_section_primary_number_relation",
@@ -2766,6 +2818,15 @@ def _title_section_number_relation_slots(
                 span=span,
             )
         )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=profile_slot,
+                )
+            )
     terminal_relation = _primary_terminal_number_relation(
         primary_number=normalized_title_number,
         terminal_number=terminal_number,
@@ -2773,6 +2834,7 @@ def _title_section_number_relation_slots(
     if terminal_relation is not None:
         relation, span = terminal_relation
         span_slot = f"{normalized_namespace}_title_section_terminal_number_span"
+        profile_slot = f"{normalized_namespace}_title_section_terminal_number_distance_profile"
         slots.append(
             (
                 f"{normalized_namespace}_title_section_terminal_number_relation",
@@ -2786,6 +2848,15 @@ def _title_section_number_relation_slots(
                 span=span,
             )
         )
+        relation_profile = _relation_span_profile(relation=relation, span=span)
+        if relation_profile:
+            slots.append((profile_slot, relation_profile))
+            slots.extend(
+                _typed_identifier_slots(
+                    relation_profile,
+                    slot_prefix=profile_slot,
+                )
+            )
     return slots
 
 
@@ -3544,6 +3615,20 @@ def _numeric_magnitude_bucket(value: int) -> str:
     if value < 1_000_000:
         return "100k_to_999k"
     return "1m_plus"
+
+
+def _relation_span_profile(
+    *,
+    relation: str,
+    span: str,
+) -> str:
+    normalized_relation = _clean_text(relation).lower()
+    normalized_span = _clean_text(span)
+    if not normalized_relation:
+        return ""
+    if not normalized_span.isdigit():
+        return normalized_relation
+    return f"{normalized_relation}_{_numeric_magnitude_bucket(int(normalized_span))}"
 
 
 def _alpha_signature_slots(
