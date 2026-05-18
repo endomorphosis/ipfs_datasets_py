@@ -227,6 +227,10 @@ _USCODE_46_60101_TEXT = (
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_43_2430_PACKET_143_TODO_TEXT = (
+    "The administrative notice and hearing procedures for offshore mineral leasing "
+    "adjustments and adjudications."
+)
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
@@ -1132,6 +1136,33 @@ def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_15
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
             assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_long_heading_sample_for_43_2430() -> None:
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        compiled = compiler.compile(
+            _USCODE_43_2430_PACKET_143_TODO_TEXT,
+            document_id="us-code-43-2430.-7bfbe56b01b9ee78",
+            citation="43 U.S.C. 2430.",
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+        assert fallback.provenance.citation == "43 U.S.C. 2430."
 
 
 def test_modal_compiler_replays_long_subsection_heading_zero_formula_cases_for_15362_3201_and_3796ff() -> None:

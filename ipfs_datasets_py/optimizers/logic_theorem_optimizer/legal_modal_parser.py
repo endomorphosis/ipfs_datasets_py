@@ -67,6 +67,7 @@ _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
 _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
 _USCODE_HEADING_ONLY_MAX_TOKENS = 12
+_USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS = 18
 _USCODE_HEADING_ONLY_MIN_TOKENS = 1
 _USCODE_EMBEDDED_HEADING_WINDOW_MAX_CHARS = 260
 _USCODE_HEADING_ONLY_VERB_HINT_RE = re.compile(
@@ -121,6 +122,24 @@ _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
         "withdrawals",
     }
 )
+_USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS = frozenset(
+    {
+        *_USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS,
+        "administrative",
+        "adjudication",
+        "adjudications",
+        "appeal",
+        "appeals",
+        "certification",
+        "compliance",
+        "enforcement",
+        "implementation",
+        "procedural",
+        "procedure",
+        "procedures",
+    }
+)
+_USCODE_HEADING_ONLY_EXTENDED_MIN_SIGNAL_TOKENS = 2
 _USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE = re.compile(
     r"\b(?:administrative|appeal|appeals|hearing|notice|petition|petitions|"
     r"procedure|procedures|review)\b",
@@ -1141,10 +1160,10 @@ class LegalModalParser:
             return False
         lowered = normalized.lower()
         tokens = _TOKEN_RE.findall(lowered)
-        if (
-            len(tokens) < _USCODE_HEADING_ONLY_MIN_TOKENS
-            or len(tokens) > _USCODE_HEADING_ONLY_MAX_TOKENS
-        ):
+        token_count = len(tokens)
+        if token_count < _USCODE_HEADING_ONLY_MIN_TOKENS:
+            return False
+        if token_count > _USCODE_HEADING_ONLY_MAX_TOKENS and not self._looks_like_extended_heading_without_section_reference(tokens):
             return False
         if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered):
             return False
@@ -1162,6 +1181,18 @@ class LegalModalParser:
             if not self._looks_like_article_prefixed_heading(tokens):
                 return False
         return True
+
+    def _looks_like_extended_heading_without_section_reference(self, tokens: Sequence[str]) -> bool:
+        """Allow longer heading-only fragments when they carry strong legal-heading noun signals."""
+        token_count = len(tokens)
+        if token_count <= _USCODE_HEADING_ONLY_MAX_TOKENS:
+            return True
+        if token_count > _USCODE_HEADING_ONLY_EXTENDED_MAX_TOKENS:
+            return False
+        if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS and not self._looks_like_article_prefixed_heading(tokens):
+            return False
+        signal_count = len(set(tokens) & _USCODE_HEADING_ONLY_EXTENDED_NOUN_HINTS)
+        return signal_count >= _USCODE_HEADING_ONLY_EXTENDED_MIN_SIGNAL_TOKENS
 
     def _looks_like_article_prefixed_heading(self, tokens: Sequence[str]) -> bool:
         """Allow compact article-prefixed heading lines such as `The oath of office`."""

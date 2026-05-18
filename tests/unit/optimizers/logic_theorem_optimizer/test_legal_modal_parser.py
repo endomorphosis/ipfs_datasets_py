@@ -309,6 +309,10 @@ _USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT = (
 _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "The administrative notice and hearing procedures for certification."
 )
+_USCODE_43_2430_PACKET_143_TODO_TEXT = (
+    "The administrative notice and hearing procedures for offshore mineral leasing "
+    "adjustments and adjudications."
+)
 _USCODE_2_453_PACKET_39_TEXT = "The oath of office."
 _USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
 _USCODE_43_1656_PACKET_39_TEXT = "The withdrawal and reservation of lands."
@@ -1232,6 +1236,24 @@ def test_parser_replays_packet_todo_samples_for_2_88b_5_42_18431_and_42_12313() 
         assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
         assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_packet_todo_long_heading_sample_for_43_2430() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_43_2430_PACKET_143_TODO_TEXT,
+        document_id="us-code-43-2430.-7bfbe56b01b9ee78",
+        source="us_code",
+        citation="43 U.S.C. 2430.",
+    )
+
+    assert document.document_id == "us-code-43-2430.-7bfbe56b01b9ee78"
+    assert document.formulas
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+    assert fallback.provenance.citation == "43 U.S.C. 2430."
 
 
 def test_parser_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
