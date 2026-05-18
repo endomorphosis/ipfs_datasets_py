@@ -606,6 +606,13 @@ class DeterministicModalCompiler:
             return []
         predicted_family = str(ranking[0]["family"])
         predicted_share = self._ranking_share(ranking[0])
+        runner_up_family: Optional[str] = None
+        runner_up_share = 0.0
+        predicted_margin_to_runner_up: Optional[float] = None
+        if len(ranking) > 1:
+            runner_up_family = str(ranking[1]["family"])
+            runner_up_share = self._ranking_share(ranking[1])
+            predicted_margin_to_runner_up = predicted_share - runner_up_share
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
         has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
@@ -676,7 +683,11 @@ class DeterministicModalCompiler:
             return []
         ambiguities: List[ModalCompilationAmbiguity] = []
         for target_family, has_signal in target_signal_by_family.items():
-            if target_family == predicted_family:
+            is_self_pair = target_family == predicted_family
+            if is_self_pair and (
+                predicted_margin_to_runner_up is None
+                or predicted_margin_to_runner_up > threshold
+            ):
                 continue
             target_share = float(family_shares.get(target_family, 0.0))
             has_compiled_target_family_formula = target_family in compiled_modal_families
@@ -717,6 +728,11 @@ class DeterministicModalCompiler:
                 target_share_display - predicted_share_display,
                 6,
             )
+            candidate_ids = (
+                [predicted_family]
+                if is_self_pair
+                else [predicted_family, target_family]
+            )
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
@@ -735,21 +751,52 @@ class DeterministicModalCompiler:
                 "lexical_signals": dict(sorted(signals.items())),
                 "is_priority_policy_pair": is_priority_policy_pair,
                 "predicted_family": predicted_family,
+                "predicted_margin_to_runner_up_raw": predicted_margin_to_runner_up,
+                "predicted_margin_to_runner_up": (
+                    round(predicted_margin_to_runner_up, 6)
+                    if predicted_margin_to_runner_up is not None
+                    else None
+                ),
+                "runner_up_family": runner_up_family,
+                "runner_up_share_raw": (
+                    runner_up_share if runner_up_family is not None else None
+                ),
+                "runner_up_share": (
+                    round(runner_up_share, 6)
+                    if runner_up_family is not None
+                    else None
+                ),
                 "predicted_share_raw": predicted_share,
                 "predicted_share": predicted_share_display,
                 "target_family": target_family,
                 "target_share_raw": target_share,
                 "target_share": target_share_display,
+                "is_self_pair": is_self_pair,
             }
+            base_message = (
+                "A predicted modal family has a low lead over competing legal "
+                "families; family selection is ambiguous."
+                if is_self_pair
+                else (
+                    "A dominant modal family outvotes another legal modal family "
+                    "despite competing scope/context evidence; family selection is "
+                    "ambiguous."
+                )
+            )
+            explicit_message = (
+                "Explicit adaptive low-margin ambiguity for the predicted modal "
+                "family against close competing families."
+                if is_self_pair
+                else (
+                    "Explicit adaptive modal-family conflict between the predicted "
+                    "family and a competing legal family."
+                )
+            )
             ambiguities.append(
                 ModalCompilationAmbiguity(
                     ambiguity_type="adaptive_family_margin_low",
-                    message=(
-                        "A dominant modal family outvotes another legal modal family "
-                        "despite competing scope/context evidence; family selection is "
-                        "ambiguous."
-                    ),
-                    candidate_ids=[predicted_family, target_family],
+                    message=base_message,
+                    candidate_ids=candidate_ids,
                     severity="requires_rule" if requires_rule else "review",
                     metadata=dict(base_metadata),
                 )
@@ -757,11 +804,8 @@ class DeterministicModalCompiler:
             ambiguities.append(
                 ModalCompilationAmbiguity(
                     ambiguity_type=explicit_type,
-                    message=(
-                        "Explicit adaptive modal-family conflict between the predicted "
-                        "family and a competing legal family."
-                    ),
-                    candidate_ids=[predicted_family, target_family],
+                    message=explicit_message,
+                    candidate_ids=candidate_ids,
                     severity="requires_rule" if requires_rule else "review",
                     metadata={
                         **base_metadata,

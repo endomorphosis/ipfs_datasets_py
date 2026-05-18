@@ -146,6 +146,53 @@ def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pair
         predicted_family=ModalLogicFamily.FRAME.value,
         target_family=ModalLogicFamily.TEMPORAL.value,
     )
+    assert _has_adaptive_explicit_pair(
+        temporal_result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+    )
+
+
+def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    frame_result = compiler.compile(
+        "The agency shall administer this program under section 3 of this title.",
+        document_id="compiler-ambiguity-deontic-frame",
+    )
+    assert _has_adaptive_explicit_pair(
+        frame_result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.FRAME.value,
+    )
+
+    temporal_result = compiler.compile(
+        "The Secretary shall submit the report by June 1, 2030.",
+        document_id="compiler-ambiguity-deontic-temporal",
+    )
+    assert _has_adaptive_explicit_pair(
+        temporal_result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.TEMPORAL.value,
+    )
+
+
+def test_compiler_emits_explicit_conditional_normative_to_frame_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "In the event that the authority under section 5 applies, the Administrator acts.",
+        document_id="compiler-ambiguity-conditional-frame",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.FRAME.value,
+    )
 
 
 def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pair() -> None:
@@ -161,4 +208,20 @@ def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pai
         result,
         predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         target_family=ModalLogicFamily.EPISTEMIC.value,
+    )
+
+
+def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "The Secretary shall submit the report by June 1, 2030.",
+        document_id="compiler-ambiguity-deontic-self",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
     )
