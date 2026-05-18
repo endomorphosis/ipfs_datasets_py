@@ -1560,6 +1560,70 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     )
 
 
+def test_modal_flogic_triples_and_decompiler_slots_include_typed_predicate_arguments() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide written notice within 30 days.",
+        document_id="typed-argument-doc",
+        citation="5 U.S.C. 552",
+        source="us_code",
+    )
+
+    slot_texts = decoded_modal_phrase_slot_text_map(result.decoded_modal_text)
+
+    assert "argument" in slot_texts
+    assert any(text.startswith("actor:") for text in slot_texts["argument"])
+    assert any(text.startswith("scope:") for text in slot_texts["argument"])
+    assert "argument_actor" in slot_texts
+    assert "argument_scope" in slot_texts
+    assert any(
+        triple["predicate"] == "predicate_argument"
+        and triple["object"].startswith("actor:")
+        for triple in result.kg_triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_argument_actor"
+        for triple in result.kg_triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_argument_scope"
+        for triple in result.kg_triples
+    )
+    assert any(
+        triple["predicate"] == "modal_cue"
+        for triple in result.kg_triples
+    )
+
+
+def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "\u00a73008. Repealed.",
+        document_id="us-code-18-3008-62db8e945327b1ec",
+        citation="18 U.S.C. 3008",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert slot_texts["fallback_rule"] == ["uscode_editorial_status_heading_v1"]
+    assert slot_texts["status_keyword"] == ["repealed"]
+    assert any(
+        triple["predicate"] == "fallback_rule"
+        and triple["object"] == "uscode_editorial_status_heading_v1"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "status_keyword"
+        and triple["object"] == "repealed"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile("The agency must provide notice.")

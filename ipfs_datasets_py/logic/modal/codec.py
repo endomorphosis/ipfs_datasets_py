@@ -551,12 +551,64 @@ def modal_ir_to_flogic_triples(
                 },
             ]
         )
+        cue = _clean_non_empty_string(formula.metadata.get("cue"))
+        if cue:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "modal_cue",
+                    "object": cue,
+                }
+            )
         if formula.predicate.role:
             triples.append(
                 {
                     "subject": formula.formula_id,
                     "predicate": "predicate_role",
                     "object": formula.predicate.role,
+                }
+            )
+        for argument in sorted(
+            {
+                str(value).strip()
+                for value in formula.predicate.arguments
+                if str(value or "").strip()
+            }
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "predicate_argument",
+                    "object": argument,
+                }
+            )
+            typed_argument = _typed_argument_key_value(argument)
+            if typed_argument is None:
+                continue
+            key, value = typed_argument
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": f"predicate_argument_{key}",
+                    "object": value,
+                }
+            )
+        fallback_rule = _clean_non_empty_string(formula.metadata.get("fallback_rule"))
+        if fallback_rule:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "fallback_rule",
+                    "object": fallback_rule,
+                }
+            )
+        status_keyword = _clean_non_empty_string(formula.metadata.get("status_keyword"))
+        if status_keyword:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "status_keyword",
+                    "object": status_keyword,
                 }
             )
         for condition in sorted({value for value in formula.conditions if value}):
@@ -622,6 +674,25 @@ def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
         uniform = 1.0 / len(exponentials)
         return {name: uniform for name in sorted(exponentials)}
     return {name: exponentials[name] / total for name in sorted(exponentials)}
+
+
+def _clean_non_empty_string(value: Any) -> str:
+    cleaned = str(value or "").strip()
+    return cleaned if cleaned else ""
+
+
+def _typed_argument_key_value(argument: str) -> tuple[str, str] | None:
+    if ":" not in argument:
+        return None
+    raw_key, raw_value = argument.split(":", 1)
+    key = "".join(
+        character.lower() if character.isalnum() else "_"
+        for character in raw_key.strip()
+    ).strip("_")
+    value = raw_value.strip()
+    if not key or not value:
+        return None
+    return key, value
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:

@@ -168,6 +168,7 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
     cue = str(formula.metadata.get("cue") or "").strip()
     cue_start = formula.metadata.get("cue_start_char")
     cue_end = formula.metadata.get("cue_end_char")
+    argument_values = _phrase_values(formula.predicate.arguments)
     phrases = [
         DecodedModalPhrase(
             text=modal_formula_to_text(formula),
@@ -197,11 +198,32 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
-    if formula.predicate.arguments:
+    if argument_values:
         phrases.append(
             DecodedModalPhrase(
-                text=", ".join(formula.predicate.arguments),
+                text=", ".join(argument_values),
                 slot="arguments",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for argument in argument_values:
+        phrases.append(
+            DecodedModalPhrase(
+                text=argument,
+                slot="argument",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        typed_argument_slot = _typed_argument_slot(argument)
+        if typed_argument_slot is None:
+            continue
+        slot, value = typed_argument_slot
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
                 spans=spans,
                 provenance_only=True,
             )
@@ -229,6 +251,26 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             DecodedModalPhrase(
                 text=exception,
                 slot="exception",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    if fallback_rule:
+        phrases.append(
+            DecodedModalPhrase(
+                text=fallback_rule,
+                slot="fallback_rule",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    status_keyword = _clean_text(formula.metadata.get("status_keyword") or "")
+    if status_keyword:
+        phrases.append(
+            DecodedModalPhrase(
+                text=status_keyword,
+                slot="status_keyword",
                 spans=spans,
                 provenance_only=True,
             )
@@ -406,6 +448,20 @@ def _span_from_values(start: Any, end: Any) -> List[List[int]]:
 
 def _clean_text(text: str) -> str:
     return " ".join(str(text or "").split()).strip()
+
+
+def _typed_argument_slot(argument: str) -> Tuple[str, str] | None:
+    if ":" not in argument:
+        return None
+    key, value = argument.split(":", 1)
+    key = _clean_text(key).lower()
+    value = _clean_text(value).replace("_", " ")
+    if not key or not value:
+        return None
+    key = re.sub(r"[^a-z0-9_]+", "_", key).strip("_")
+    if not key:
+        return None
+    return f"argument_{key}", value
 
 
 def _phrase_values(values: Sequence[str]) -> List[str]:
