@@ -6346,6 +6346,68 @@ def test_modal_codec_frame_ontology_audit_feature_keys_include_evidence_payloads
     assert "token:agency" not in keys
 
 
+def test_modal_codec_frame_ontology_audit_feature_keys_include_autoencoder_contributions() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="frame-audit-contrib-doc",
+        source="us_code",
+        normalized_text="The agency may issue a final order.",
+        frame_logic=ModalIRFrameLogic(
+            metadata={
+                "top_family_contributions": [
+                    {
+                        "feature": "family:selected_frame:deontic",
+                        "magnitude": 0.82,
+                        "value": 0.91,
+                    },
+                    {
+                        "feature": "token:agency",
+                        "magnitude": 0.11,
+                        "value": 0.12,
+                    },
+                ]
+            }
+        ),
+        metadata={
+            "top_embedding_contributions": [
+                {
+                    "feature": "slot:selected_frame:administrative_notice_hearing",
+                    "magnitude": 0.73,
+                    "value": 0.66,
+                },
+                {
+                    "feature": "flogic:source_id:us-code-49-47126.-2322d39a63b9ba2d",
+                    "magnitude": 0.45,
+                    "value": 0.42,
+                },
+                {
+                    "feature": "lemma:notice",
+                    "magnitude": 0.09,
+                    "value": 0.11,
+                },
+            ]
+        },
+    )
+
+    keys = _frame_ontology_audit_feature_keys(
+        modal_ir=modal_ir,
+        selected_frame=None,
+        kg_triples=[],
+    )
+    terms = _frame_ontology_audit_terms(
+        frame_feature_keys=keys,
+        kg_triples=[],
+    )
+
+    assert "family:selected_frame:deontic" in keys
+    assert "slot:selected_frame:administrative_notice_hearing" in keys
+    assert "flogic:source_id:us-code-49-47126.-2322d39a63b9ba2d" in keys
+    assert "token:agency" not in keys
+    assert "lemma:notice" not in keys
+    assert "deontic" in terms
+    assert "administrative_notice_hearing" in terms
+    assert "49_47126" in terms
+
+
 def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

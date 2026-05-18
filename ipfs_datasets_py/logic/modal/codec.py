@@ -274,12 +274,14 @@ _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
         "selected_terms",
         "source_id",
         "source_ids",
+        "top_embedding_contributions",
         "term",
         "terms",
         "text",
         "texts",
         "hint_evidence",
         "top_embedding_features",
+        "top_family_contributions",
         "top_family_features",
         "value",
         "values",
@@ -5353,7 +5355,9 @@ def _frame_ontology_audit_metadata_feature_keys(
         metadata.get("source_id"),
         metadata.get("source_ids"),
         metadata.get("hint_evidence"),
+        metadata.get("top_embedding_contributions"),
         metadata.get("top_embedding_features"),
+        metadata.get("top_family_contributions"),
         metadata.get("top_family_features"),
     ]
     frame_logic_metadata = (
@@ -5381,7 +5385,9 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("frame_feature_keys"),
             frame_logic_metadata.get("frame_features"),
             frame_logic_metadata.get("hint_evidence"),
+            frame_logic_metadata.get("top_embedding_contributions"),
             frame_logic_metadata.get("top_embedding_features"),
+            frame_logic_metadata.get("top_family_contributions"),
             frame_logic_metadata.get("top_family_features"),
         ]
     )
