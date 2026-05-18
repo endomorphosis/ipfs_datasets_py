@@ -118,6 +118,32 @@ def _trailing_punct_sample_document() -> ModalIRDocument:
     )
 
 
+def _dot_delimited_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1396.1-8fb22f17ff2a43cd"
+    formula = ModalIRFormula(
+        formula_id="f-dot-delimited",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_healthcare_rule_update"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=20,
+            citation="42 U.S.C. 1396.1",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="42 U.S.C. 1396.1 publication rule update applies.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -153,6 +179,16 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_terminal_number"] == ["0"]
     assert slot_map["citation_section_terminal_number_digit_count"] == ["1"]
     assert slot_map["citation_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["citation_section_has_delimiter"] == ["true"]
+    assert slot_map["citation_section_delimiter"] == ["hyphen"]
+    assert slot_map["citation_section_delimiter_positioned"] == ["1:hyphen"]
+    assert slot_map["citation_section_delimiter_token"] == ["-"]
+    assert slot_map["citation_section_delimiter_token_positioned"] == ["1:-"]
+    assert slot_map["citation_section_delimiter_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["citation_section_delimiter_pattern"] == ["hyphen"]
+    assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
     assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -184,6 +220,16 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_terminal_number"] == ["0"]
     assert slot_map["source_id_section_terminal_number_digit_count"] == ["1"]
     assert slot_map["source_id_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["source_id_section_has_delimiter"] == ["true"]
+    assert slot_map["source_id_section_delimiter"] == ["hyphen"]
+    assert slot_map["source_id_section_delimiter_positioned"] == ["1:hyphen"]
+    assert slot_map["source_id_section_delimiter_token"] == ["-"]
+    assert slot_map["source_id_section_delimiter_token_positioned"] == ["1:-"]
+    assert slot_map["source_id_section_delimiter_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["source_id_section_delimiter_pattern"] == ["hyphen"]
+    assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
     assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -229,6 +275,16 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_terminal_number") == ["0"]
     assert objects("citation_section_terminal_number_digit_count") == ["1"]
     assert objects("citation_section_terminal_component_kind") == ["numeric"]
+    assert objects("citation_section_has_delimiter") == ["true"]
+    assert objects("citation_section_delimiter") == ["hyphen"]
+    assert objects("citation_section_delimiter_positioned") == ["1:hyphen"]
+    assert objects("citation_section_delimiter_token") == ["-"]
+    assert objects("citation_section_delimiter_token_positioned") == ["1:-"]
+    assert objects("citation_section_delimiter_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("citation_section_delimiter_pattern") == ["hyphen"]
+    assert objects("citation_section_delimiter_distinct_count") == ["1"]
     assert objects("citation_title_section_key") == ["21:360bbb-0"]
     assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -260,6 +316,16 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_terminal_number") == ["0"]
     assert objects("source_id_section_terminal_number_digit_count") == ["1"]
     assert objects("source_id_section_terminal_component_kind") == ["numeric"]
+    assert objects("source_id_section_has_delimiter") == ["true"]
+    assert objects("source_id_section_delimiter") == ["hyphen"]
+    assert objects("source_id_section_delimiter_positioned") == ["1:hyphen"]
+    assert objects("source_id_section_delimiter_token") == ["-"]
+    assert objects("source_id_section_delimiter_token_positioned") == ["1:-"]
+    assert objects("source_id_section_delimiter_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("source_id_section_delimiter_pattern") == ["hyphen"]
+    assert objects("source_id_section_delimiter_distinct_count") == ["1"]
     assert objects("source_id_title_section_key") == ["21:360bbb-0"]
     assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -381,6 +447,8 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert slot_map["citation_section_has_delimiter"] == ["false"]
+    assert slot_map["citation_section_delimiter_count"] == ["0"]
     assert slot_map["citation_title_section_key"] == ["45:228a to 228c"]
     assert slot_map["citation_title_section_key_normalized"] == ["45:228a to 228c"]
 
@@ -409,6 +477,8 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert slot_map["source_id_section_has_delimiter"] == ["false"]
+    assert slot_map["source_id_section_delimiter_count"] == ["0"]
     assert slot_map["source_id_title_section_key"] == ["45:228a to 228c"]
     assert slot_map["source_id_title_section_key_normalized"] == ["45:228a to 228c"]
 
@@ -448,6 +518,8 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert objects("citation_section_has_delimiter") == ["false"]
+    assert objects("citation_section_delimiter_count") == ["0"]
     assert objects("citation_title_section_key") == ["45:228a to 228c"]
     assert objects("citation_title_section_key_normalized") == ["45:228a to 228c"]
 
@@ -476,8 +548,70 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert objects("source_id_section_has_delimiter") == ["false"]
+    assert objects("source_id_section_delimiter_count") == ["0"]
     assert objects("source_id_title_section_key") == ["45:228a to 228c"]
     assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
+
+
+def test_decode_modal_ir_document_emits_dot_delimiter_slots() -> None:
+    decoded = decode_modal_ir_document(_dot_delimited_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_has_delimiter"] == ["true"]
+    assert slot_map["citation_section_delimiter"] == ["dot"]
+    assert slot_map["citation_section_delimiter_positioned"] == ["1:dot"]
+    assert slot_map["citation_section_delimiter_token"] == ["."]
+    assert slot_map["citation_section_delimiter_token_positioned"] == ["1:."]
+    assert slot_map["citation_section_delimiter_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count"] == ["1"]
+    assert slot_map["citation_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["citation_section_delimiter_pattern"] == ["dot"]
+    assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
+
+    assert slot_map["source_id_section_has_delimiter"] == ["true"]
+    assert slot_map["source_id_section_delimiter"] == ["dot"]
+    assert slot_map["source_id_section_delimiter_positioned"] == ["1:dot"]
+    assert slot_map["source_id_section_delimiter_token"] == ["."]
+    assert slot_map["source_id_section_delimiter_token_positioned"] == ["1:."]
+    assert slot_map["source_id_section_delimiter_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count"] == ["1"]
+    assert slot_map["source_id_section_delimiter_char_count_positioned"] == ["1:1"]
+    assert slot_map["source_id_section_delimiter_pattern"] == ["dot"]
+    assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_dot_delimiter_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_has_delimiter") == ["true"]
+    assert objects("citation_section_delimiter") == ["dot"]
+    assert objects("citation_section_delimiter_positioned") == ["1:dot"]
+    assert objects("citation_section_delimiter_token") == ["."]
+    assert objects("citation_section_delimiter_token_positioned") == ["1:."]
+    assert objects("citation_section_delimiter_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count") == ["1"]
+    assert objects("citation_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("citation_section_delimiter_pattern") == ["dot"]
+    assert objects("citation_section_delimiter_distinct_count") == ["1"]
+
+    assert objects("source_id_section_has_delimiter") == ["true"]
+    assert objects("source_id_section_delimiter") == ["dot"]
+    assert objects("source_id_section_delimiter_positioned") == ["1:dot"]
+    assert objects("source_id_section_delimiter_token") == ["."]
+    assert objects("source_id_section_delimiter_token_positioned") == ["1:."]
+    assert objects("source_id_section_delimiter_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count") == ["1"]
+    assert objects("source_id_section_delimiter_char_count_positioned") == ["1:1"]
+    assert objects("source_id_section_delimiter_pattern") == ["dot"]
+    assert objects("source_id_section_delimiter_distinct_count") == ["1"]
 
 
 def test_decode_modal_ir_document_emits_trailing_punct_presence_slots() -> None:

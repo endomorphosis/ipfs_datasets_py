@@ -112,6 +112,7 @@ _USCODE_SOURCE_ID_RE = re.compile(
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
+_CITATION_SECTION_DELIMITER_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_RANGE_RE = re.compile(
     r"^\s*(?P<start>[0-9A-Za-z.\-]+)\s+"
     r"(?P<connector>to|through|thru)\s+"
@@ -1382,6 +1383,48 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         ("citation_section_primary", parts[0]),
         ("citation_section_component_count", str(len(parts))),
     ]
+    delimiter_tokens = _citation_section_delimiter_tokens(cleaned)
+    if delimiter_tokens:
+        components.append(("citation_section_has_delimiter", "true"))
+        components.append(("citation_section_delimiter_count", str(len(delimiter_tokens))))
+        delimiter_kinds: List[str] = []
+        for index, delimiter_token in enumerate(delimiter_tokens, start=1):
+            position = str(index)
+            kind = _citation_section_delimiter_kind(delimiter_token)
+            if kind:
+                delimiter_kinds.append(kind)
+                components.append(("citation_section_delimiter", kind))
+                components.append(
+                    ("citation_section_delimiter_positioned", f"{position}:{kind}")
+                )
+            components.append(("citation_section_delimiter_token", delimiter_token))
+            components.append(
+                (
+                    "citation_section_delimiter_token_positioned",
+                    f"{position}:{delimiter_token}",
+                )
+            )
+            char_count = str(len(delimiter_token))
+            components.append(("citation_section_delimiter_char_count", char_count))
+            components.append(
+                (
+                    "citation_section_delimiter_char_count_positioned",
+                    f"{position}:{char_count}",
+                )
+            )
+        if delimiter_kinds:
+            components.append(
+                ("citation_section_delimiter_pattern", "-".join(delimiter_kinds))
+            )
+            components.append(
+                (
+                    "citation_section_delimiter_distinct_count",
+                    str(len(set(delimiter_kinds))),
+                )
+            )
+    else:
+        components.append(("citation_section_has_delimiter", "false"))
+        components.append(("citation_section_delimiter_count", "0"))
     if range_start and range_end and range_connector:
         components.extend(
             [
@@ -1550,6 +1593,30 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         ("citation_section_suffix_component_count", str(suffix_component_count))
     )
     return components
+
+
+def _citation_section_delimiter_tokens(section: str) -> List[str]:
+    return [
+        delimiter
+        for delimiter in (
+            _clean_non_empty_string(token)
+            for token in _CITATION_SECTION_DELIMITER_RE.findall(section)
+        )
+        if delimiter
+    ]
+
+
+def _citation_section_delimiter_kind(delimiter: str) -> str:
+    cleaned = _clean_non_empty_string(delimiter)
+    if not cleaned:
+        return ""
+    if all(character == "." for character in cleaned):
+        return "dot"
+    if all(character == "-" for character in cleaned):
+        return "hyphen"
+    if all(character in ".-" for character in cleaned):
+        return "mixed"
+    return "other"
 
 
 def _section_trailing_punct(
