@@ -2567,6 +2567,36 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert aligned_slot_map["citation_source_id_section_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_title_section_key_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_title_pair"] == ["21|21"]
+    assert aligned_slot_map["citation_source_id_section_pair"] == ["360bbb-0|360bbb-0"]
+    assert aligned_slot_map["citation_source_id_title_section_key_pair"] == [
+        "21:360bbb-0|21:360bbb-0"
+    ]
+    assert aligned_slot_map["citation_source_id_canonical_pair"] == [
+        "21 U.S.C. 360bbb-0|21 U.S.C. 360bbb-0"
+    ]
+    assert aligned_slot_map["citation_source_id_title_number_relation"] == ["equal"]
+    assert aligned_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert aligned_slot_map["citation_source_id_section_primary_number_relation"] == [
+        "equal"
+    ]
+    assert aligned_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "bbb|bbb"
+    ]
+    assert aligned_slot_map["citation_source_id_section_primary_suffix_match"] == ["true"]
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_suffix_presence_match"]
+        == ["true"]
+    )
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_component_signature_match"]
+        == ["true"]
+    )
+    assert (
+        aligned_slot_map["citation_source_id_section_primary_component_signature_pair"]
+        == ["N3A3|N3A3"]
+    )
     assert aligned_slot_map["citation_source_id_section_raw_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_section_raw_pair"] == [
         "360bbb-0|360bbb-0"
@@ -2587,6 +2617,38 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert mismatch_slot_map["citation_source_id_section_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_title_section_key_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_canonical_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_title_pair"] == ["20|20"]
+    assert mismatch_slot_map["citation_source_id_section_pair"] == ["1131d|1131e"]
+    assert mismatch_slot_map["citation_source_id_title_section_key_pair"] == [
+        "20:1131d|20:1131e"
+    ]
+    assert mismatch_slot_map["citation_source_id_canonical_pair"] == [
+        "20 U.S.C. 1131d|20 U.S.C. 1131e"
+    ]
+    assert mismatch_slot_map["citation_source_id_title_number_relation"] == ["equal"]
+    assert mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert mismatch_slot_map["citation_source_id_section_primary_number_relation"] == [
+        "equal"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "d|e"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
+        "false"
+    ]
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_suffix_presence_match"]
+        == ["true"]
+    )
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_component_signature_match"]
+        == ["true"]
+    )
+    assert (
+        mismatch_slot_map["citation_source_id_section_primary_component_signature_pair"]
+        == ["N4A1|N4A1"]
+    )
     assert mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_section_raw_pair"] == ["1131d|1131e"]
     assert (
@@ -2607,6 +2669,49 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         "true"
     ]
     assert punct_mismatch_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_title_pair"] == ["46|46"]
+    assert punct_mismatch_slot_map["citation_source_id_section_pair"] == ["10318|10318"]
+    assert punct_mismatch_slot_map["citation_source_id_title_section_key_pair"] == [
+        "46:10318|46:10318"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_canonical_pair"] == [
+        "46 U.S.C. 10318|46 U.S.C. 10318"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_title_number_relation"] == [
+        "equal"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_primary_number_relation"]
+        == ["equal"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_number_span"] == [
+        "0"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
+        "none|none"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_match"] == [
+        "true"
+    ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_suffix_presence_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_component_signature_match"
+        ]
+        == ["true"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_component_signature_pair"
+        ]
+        == ["N5|N5"]
+    )
     assert punct_mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
     assert punct_mismatch_slot_map["citation_source_id_section_raw_pair"] == [
         "10318.|10318"
@@ -2648,6 +2753,45 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "true"
     ]
     assert objects(aligned_triples, "citation_source_id_canonical_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_title_pair") == ["21|21"]
+    assert objects(aligned_triples, "citation_source_id_section_pair") == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_section_key_pair") == [
+        "21:360bbb-0|21:360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_canonical_pair") == [
+        "21 U.S.C. 360bbb-0|21 U.S.C. 360bbb-0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_number_relation") == [
+        "equal"
+    ]
+    assert objects(aligned_triples, "citation_source_id_title_number_span") == ["0"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(aligned_triples, "citation_source_id_section_primary_number_span") == [
+        "0"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_pair") == [
+        "bbb|bbb"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_primary_suffix_match") == [
+        "true"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N3A3|N3A3"]
     assert objects(aligned_triples, "citation_source_id_section_raw_match") == ["true"]
     assert objects(aligned_triples, "citation_source_id_section_raw_pair") == [
         "360bbb-0|360bbb-0"
@@ -2673,6 +2817,49 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_title_section_key_match",
     ) == ["false"]
     assert objects(mismatch_triples, "citation_source_id_canonical_match") == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_title_pair") == ["20|20"]
+    assert objects(mismatch_triples, "citation_source_id_section_pair") == [
+        "1131d|1131e"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_section_key_pair",
+    ) == ["20:1131d|20:1131e"]
+    assert objects(mismatch_triples, "citation_source_id_canonical_pair") == [
+        "20 U.S.C. 1131d|20 U.S.C. 1131e"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_number_relation") == [
+        "equal"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_number_span") == ["0"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_span",
+    ) == ["0"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_pair",
+    ) == ["d|e"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_match",
+    ) == ["false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N4A1|N4A1"]
     assert objects(mismatch_triples, "citation_source_id_section_raw_match") == ["false"]
     assert objects(mismatch_triples, "citation_source_id_section_raw_pair") == [
         "1131d|1131e"
@@ -2702,6 +2889,52 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(punct_mismatch_triples, "citation_source_id_canonical_match") == [
         "true"
     ]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_pair") == ["46|46"]
+    assert objects(punct_mismatch_triples, "citation_source_id_section_pair") == [
+        "10318|10318"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_section_key_pair",
+    ) == ["46:10318|46:10318"]
+    assert objects(punct_mismatch_triples, "citation_source_id_canonical_pair") == [
+        "46 U.S.C. 10318|46 U.S.C. 10318"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_number_relation",
+    ) == ["equal"]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_number_span") == [
+        "0"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_relation",
+    ) == ["equal"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_span",
+    ) == ["0"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_pair",
+    ) == ["none|none"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_component_signature_pair",
+    ) == ["N5|N5"]
     assert objects(
         punct_mismatch_triples,
         "citation_source_id_section_raw_match",

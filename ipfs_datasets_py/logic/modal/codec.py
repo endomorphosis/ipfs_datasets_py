@@ -1645,6 +1645,128 @@ def _provenance_alignment_components(
                 f"{citation_section_trailing_punct or 'none'}",
             )
         )
+    if source_title and citation_title:
+        components.append(
+            (
+                "citation_source_id_title_pair",
+                f"{source_title}|{citation_title}",
+            )
+        )
+    if source_section and citation_section:
+        components.append(
+            (
+                "citation_source_id_section_pair",
+                f"{source_section}|{citation_section}",
+            )
+        )
+    if source_key and citation_key:
+        components.append(
+            (
+                "citation_source_id_title_section_key_pair",
+                f"{source_key}|{citation_key}",
+            )
+        )
+    if source_canonical and citation_canonical:
+        components.append(
+            (
+                "citation_source_id_canonical_pair",
+                f"{source_canonical}|{citation_canonical}",
+            )
+        )
+    source_title_number = _clean_non_empty_string(
+        source_component_map.get("source_id_title_number")
+    )
+    citation_title_number = _clean_non_empty_string(
+        citation_component_map.get("citation_title_number")
+    )
+    title_number_relation = _primary_terminal_number_relation(
+        primary_number=source_title_number,
+        terminal_number=citation_title_number,
+    )
+    if title_number_relation is not None:
+        relation, span = title_number_relation
+        components.append(("citation_source_id_title_number_relation", relation))
+        components.append(("citation_source_id_title_number_span", span))
+    source_section_primary_number = _clean_non_empty_string(
+        source_component_map.get("source_id_section_primary_number")
+        or source_component_map.get("source_id_section_number")
+    )
+    citation_section_primary_number = _clean_non_empty_string(
+        citation_component_map.get("citation_section_primary_number")
+        or citation_component_map.get("citation_section_number")
+    )
+    section_number_relation = _primary_terminal_number_relation(
+        primary_number=source_section_primary_number,
+        terminal_number=citation_section_primary_number,
+    )
+    if section_number_relation is not None:
+        relation, span = section_number_relation
+        components.append(("citation_source_id_section_primary_number_relation", relation))
+        components.append(("citation_source_id_section_primary_number_span", span))
+    source_section_primary_suffix = _clean_non_empty_string(
+        source_component_map.get("source_id_section_primary_suffix_normalized")
+        or source_component_map.get("source_id_section_primary_suffix")
+    )
+    citation_section_primary_suffix = _clean_non_empty_string(
+        citation_component_map.get("citation_section_primary_suffix_normalized")
+        or citation_component_map.get("citation_section_primary_suffix")
+    )
+    if (
+        source_section_primary_suffix
+        or citation_section_primary_suffix
+        or (
+            source_section_primary_number
+            and citation_section_primary_number
+        )
+    ):
+        components.append(
+            (
+                "citation_source_id_section_primary_suffix_pair",
+                f"{source_section_primary_suffix or 'none'}|"
+                f"{citation_section_primary_suffix or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_primary_suffix_match",
+                "true"
+                if source_section_primary_suffix.lower()
+                == citation_section_primary_suffix.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_primary_suffix_presence_match",
+                "true"
+                if bool(source_section_primary_suffix)
+                == bool(citation_section_primary_suffix)
+                else "false",
+            )
+        )
+    source_primary_component_signature = _clean_non_empty_string(
+        source_component_map.get("source_id_section_primary_component_signature")
+    )
+    citation_primary_component_signature = _clean_non_empty_string(
+        citation_component_map.get("citation_section_primary_component_signature")
+    )
+    if source_primary_component_signature and citation_primary_component_signature:
+        components.append(
+            (
+                "citation_source_id_section_primary_component_signature_match",
+                "true"
+                if source_primary_component_signature
+                == citation_primary_component_signature
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_primary_component_signature_pair",
+                f"{source_primary_component_signature}|"
+                f"{citation_primary_component_signature}",
+            )
+        )
     if not source_title or not citation_title or not source_section or not citation_section:
         components.append(("citation_source_id_alignment", "unparsed"))
         return _unique_preserve_order_tuples(components)

@@ -1213,6 +1213,130 @@ def _provenance_alignment_slots(
                 f"{citation_section_trailing_punct or 'none'}",
             )
         )
+    if source_title and citation_title:
+        slots.append(
+            (
+                "citation_source_id_title_pair",
+                f"{source_title}|{citation_title}",
+            )
+        )
+    if source_section and citation_section:
+        slots.append(
+            (
+                "citation_source_id_section_pair",
+                f"{source_section}|{citation_section}",
+            )
+        )
+    if source_key and citation_key:
+        slots.append(
+            (
+                "citation_source_id_title_section_key_pair",
+                f"{source_key}|{citation_key}",
+            )
+        )
+    if source_canonical and citation_canonical:
+        slots.append(
+            (
+                "citation_source_id_canonical_pair",
+                f"{source_canonical}|{citation_canonical}",
+            )
+        )
+    source_title_number = _clean_text(source_slot_map.get("source_id_title_number") or "")
+    citation_title_number = _clean_text(
+        citation_slot_map.get("citation_title_number") or ""
+    )
+    title_number_relation = _primary_terminal_number_relation(
+        primary_number=source_title_number,
+        terminal_number=citation_title_number,
+    )
+    if title_number_relation is not None:
+        relation, span = title_number_relation
+        slots.append(("citation_source_id_title_number_relation", relation))
+        slots.append(("citation_source_id_title_number_span", span))
+    source_section_primary_number = _clean_text(
+        source_slot_map.get("source_id_section_primary_number")
+        or source_slot_map.get("source_id_section_number")
+        or ""
+    )
+    citation_section_primary_number = _clean_text(
+        citation_slot_map.get("citation_section_primary_number")
+        or citation_slot_map.get("citation_section_number")
+        or ""
+    )
+    section_number_relation = _primary_terminal_number_relation(
+        primary_number=source_section_primary_number,
+        terminal_number=citation_section_primary_number,
+    )
+    if section_number_relation is not None:
+        relation, span = section_number_relation
+        slots.append(("citation_source_id_section_primary_number_relation", relation))
+        slots.append(("citation_source_id_section_primary_number_span", span))
+    source_section_primary_suffix = _clean_text(
+        source_slot_map.get("source_id_section_primary_suffix_normalized")
+        or source_slot_map.get("source_id_section_primary_suffix")
+        or ""
+    )
+    citation_section_primary_suffix = _clean_text(
+        citation_slot_map.get("citation_section_primary_suffix_normalized")
+        or citation_slot_map.get("citation_section_primary_suffix")
+        or ""
+    )
+    if (
+        source_section_primary_suffix
+        or citation_section_primary_suffix
+        or (
+            source_section_primary_number
+            and citation_section_primary_number
+        )
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_pair",
+                f"{source_section_primary_suffix or 'none'}|"
+                f"{citation_section_primary_suffix or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_match",
+                "true"
+                if source_section_primary_suffix.lower()
+                == citation_section_primary_suffix.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_presence_match",
+                "true"
+                if bool(source_section_primary_suffix)
+                == bool(citation_section_primary_suffix)
+                else "false",
+            )
+        )
+    source_primary_component_signature = _clean_text(
+        source_slot_map.get("source_id_section_primary_component_signature") or ""
+    )
+    citation_primary_component_signature = _clean_text(
+        citation_slot_map.get("citation_section_primary_component_signature") or ""
+    )
+    if source_primary_component_signature and citation_primary_component_signature:
+        slots.append(
+            (
+                "citation_source_id_section_primary_component_signature_match",
+                "true"
+                if source_primary_component_signature
+                == citation_primary_component_signature
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_primary_component_signature_pair",
+                f"{source_primary_component_signature}|"
+                f"{citation_primary_component_signature}",
+            )
+        )
     if not source_title or not citation_title or not source_section or not citation_section:
         slots.append(("citation_source_id_alignment", "unparsed"))
         return _unique_slot_values(slots)
