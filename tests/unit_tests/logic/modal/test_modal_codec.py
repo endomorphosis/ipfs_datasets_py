@@ -3106,6 +3106,94 @@ def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity(
     )
 
 
+def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-temporal-self-doc",
+        text="Within 30 days after review, the filing deadline applies.",
+        normalized_text="Within 30 days after review, the filing deadline applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-temporal-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="file_report",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-temporal-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="5 U.S.C. 552",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "temporal", "count": 2, "share": 0.52},
+            {"family": "frame", "count": 2, "share": 0.48},
+        ],
+        family_shares={"temporal": 0.52, "frame": 0.48},
+    )
+
+    adaptive_temporal_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal"]
+    )
+    assert adaptive_temporal_self.metadata["predicted_family"] == "temporal"
+    assert adaptive_temporal_self.metadata["target_family"] == "temporal"
+    assert adaptive_temporal_self.metadata["is_self_pair"] is True
+    assert adaptive_temporal_self.metadata["predicted_margin_to_runner_up"] == 0.04
+    assert adaptive_temporal_self.metadata["family_margin"] == 0.0
+    assert adaptive_temporal_self.metadata["adaptive_margin_direction"] == "contested"
+    assert (
+        adaptive_temporal_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_temporal_contested_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_temporal_contested_margin_low"
+        and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
