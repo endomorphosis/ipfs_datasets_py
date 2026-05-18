@@ -180,6 +180,44 @@ def test_modal_compiler_handles_transferred_heading_for_uscode_15_688() -> None:
     assert fallback.provenance.citation == "15 U.S.C. 688"
 
 
+def test_modal_compiler_handles_spaced_transferred_headings_for_known_uscode_samples() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = [
+        (
+            "us-code-48-2169.-816da61b9d4f3363",
+            "48 U.S.C. 2169.",
+            "\u00a7 2169 Transferred.",
+        ),
+        (
+            "us-code-3-21-4ce508fff75e0824",
+            "3 U.S.C. 21",
+            "\u00a7 21 Transferred.",
+        ),
+        (
+            "us-code-16-469i-bc1e2d2974a2257d",
+            "16 U.S.C. 469i",
+            "\u00a7 469i Transferred.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
     frame_selector = BM25FrameSelector(
         (

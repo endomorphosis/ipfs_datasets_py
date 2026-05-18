@@ -138,6 +138,43 @@ def test_parser_replays_transferred_heading_zero_formula_sample_for_10_7082() ->
     assert fallback.provenance.citation == "10 U.S.C. 7082"
 
 
+def test_parser_replays_spaced_transferred_heading_zero_formula_samples() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-48-2169.-816da61b9d4f3363",
+            "48 U.S.C. 2169.",
+            "\u00a7 2169 Transferred.",
+        ),
+        (
+            "us-code-3-21-4ce508fff75e0824",
+            "3 U.S.C. 21",
+            "\u00a7 21 Transferred.",
+        ),
+        (
+            "us-code-16-469i-bc1e2d2974a2257d",
+            "16 U.S.C. 469i",
+            "\u00a7 469i Transferred.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
 def test_parser_replays_editorial_status_zero_formula_sample_for_18_3008() -> None:
     parser = LegalModalParser()
     document = parser.parse(

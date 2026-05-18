@@ -41,6 +41,7 @@ _USCODE_CITATION_SECTION_RE = re.compile(
     r"\bU\.S\.C\.\s*([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
 )
+_USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 
 
 @dataclass(frozen=True)
@@ -337,7 +338,28 @@ class LegalModalParser:
         match = _USCODE_CITATION_SECTION_RE.search(citation)
         if not match:
             return ""
-        return match.group(1).strip().lower()
+        token = match.group(1).strip().lower()
+        return _USCODE_TRAILING_SECTION_PUNCT_RE.sub("", token)
+
+    def _contains_citation_section_reference(self, text: str, citation_section: str) -> bool:
+        if not citation_section:
+            return False
+        normalized = self.normalize_text(text).lower()
+        section_pattern = re.escape(citation_section)
+        if re.search(rf"§\s*{section_pattern}(?:\b|[.)])", normalized):
+            return True
+        if re.search(rf"\bsection\s+{section_pattern}(?:\b|[.)])", normalized):
+            return True
+        return False
+
+    def _starts_with_citation_section_reference(self, text: str, citation_section: str) -> bool:
+        if not citation_section:
+            return False
+        normalized = self.normalize_text(text).lower()
+        section_pattern = re.escape(citation_section)
+        return bool(
+            re.match(rf"^(?:§\s*)?{section_pattern}(?:\b|[.)])", normalized)
+        )
 
     def _uscode_editorial_status_fallback_formula(
         self,
@@ -428,12 +450,13 @@ class LegalModalParser:
             return False
         if normalized.startswith("transferred"):
             return True
-        if citation_section:
-            if f"\u00a7{citation_section}" in normalized:
-                return True
-            if f"section {citation_section}" in normalized:
-                return True
-        return False
+        return self._contains_citation_section_reference(
+            normalized,
+            citation_section,
+        ) or self._starts_with_citation_section_reference(
+            normalized,
+            citation_section,
+        )
 
     def _looks_like_editorial_status_heading(
         self,
@@ -445,23 +468,15 @@ class LegalModalParser:
         normalized = self.normalize_text(segment_text).lower()
         if not _USCODE_EDITORIAL_STATUS_HINT_RE.search(normalized):
             return False
-        if f"\u00a7{citation_section}" in normalized:
+        if self._contains_citation_section_reference(normalized, citation_section):
             return True
-        if f"section {citation_section}" in normalized:
-            return True
-        if normalized.startswith(f"{citation_section}."):
-            return True
-        if normalized.startswith(f"{citation_section} "):
+        if self._starts_with_citation_section_reference(normalized, citation_section):
             return True
         if normalized.startswith("repealed") or normalized.startswith("omitted") or normalized.startswith("reserved"):
             previous = self.normalize_text(previous_segment_text).lower()
-            if f"\u00a7{citation_section}" in previous:
+            if self._contains_citation_section_reference(previous, citation_section):
                 return True
-            if f"section {citation_section}" in previous:
-                return True
-            if previous.startswith(f"{citation_section}."):
-                return True
-            if previous.startswith(f"{citation_section} "):
+            if self._starts_with_citation_section_reference(previous, citation_section):
                 return True
             if len(_TOKEN_RE.findall(normalized)) <= 6:
                 return True
