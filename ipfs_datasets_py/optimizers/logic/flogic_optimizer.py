@@ -43,10 +43,11 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     frame_ontology_feature_keys,
+    frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
@@ -54,6 +55,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
 
 logger = logging.getLogger(__name__)
 _FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
+_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS = 1024
 
 
 # ---------------------------------------------------------------------------
@@ -192,11 +194,7 @@ class FLogicSemanticOptimizer:
             ontology_consistent = len(violations) == 0
 
         frame_feature_key_ordered_list = _unique_preserve_order(
-            [
-                str(feature_key).strip()
-                for feature_key in (frame_feature_keys or [])
-                if str(feature_key or "").strip()
-            ]
+            _normalized_frame_feature_keys(frame_feature_keys or [])
         )
         frame_feature_key_list = _sorted_unique_terms(frame_feature_key_ordered_list)
         frame_audit_feature_key_ordered_list = frame_ontology_feature_keys(
@@ -382,6 +380,41 @@ class FLogicSemanticOptimizer:
 # ---------------------------------------------------------------------------
 # Utility
 # ---------------------------------------------------------------------------
+
+
+def _normalized_frame_feature_keys(
+    frame_feature_keys: Sequence[object],
+) -> List[str]:
+    normalized: List[str] = []
+    for feature_key in frame_feature_keys:
+        if isinstance(feature_key, str):
+            text = feature_key.strip()
+            if text:
+                normalized.append(text)
+            continue
+        if isinstance(feature_key, Mapping):
+            normalized.extend(
+                frame_ontology_feature_keys_from_values(
+                    feature_key,
+                    max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
+                )
+            )
+            continue
+        if isinstance(feature_key, Sequence) and not isinstance(
+            feature_key,
+            (str, bytes),
+        ):
+            normalized.extend(
+                frame_ontology_feature_keys_from_values(
+                    feature_key,
+                    max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
+                )
+            )
+            continue
+        text = str(feature_key or "").strip()
+        if text:
+            normalized.append(text)
+    return normalized
 
 
 def _cosine_similarity(a: List[float], b: List[float]) -> float:

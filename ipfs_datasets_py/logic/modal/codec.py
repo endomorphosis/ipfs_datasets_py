@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     FrameSelection,
     frame_ontology_feature_value,
     frame_ontology_feature_keys,
+    frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms,
     frame_ontology_terms_from_feature_keys,
@@ -3820,6 +3821,9 @@ def _frame_ontology_audit_feature_keys(
 ) -> List[str]:
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     feature_keys: List[str] = []
+    feature_keys.extend(
+        _frame_ontology_audit_metadata_feature_keys(modal_ir)
+    )
     if selected_frame:
         feature_keys.append(f"frame:{selected_frame}")
         for family in _selected_frame_modal_families(modal_ir):
@@ -3840,6 +3844,39 @@ def _frame_ontology_audit_feature_keys(
             feature_keys.append(f"flogic:{predicate}:{obj}")
     return frame_ontology_feature_keys(
         _unique_preserve_order(feature_keys),
+        max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
+    )
+
+
+def _frame_ontology_audit_metadata_feature_keys(
+    modal_ir: ModalIRDocument,
+) -> List[str]:
+    """Extract frame-linked audit features from compact metadata evidence."""
+    metadata = modal_ir.metadata if isinstance(modal_ir.metadata, Mapping) else {}
+    metadata_values: List[Any] = [
+        modal_ir.document_id,
+        metadata.get("sample_id"),
+        metadata.get("sample_ids"),
+        metadata.get("source_id"),
+        metadata.get("source_ids"),
+        metadata.get("hint_evidence"),
+    ]
+    frame_logic_metadata = (
+        modal_ir.frame_logic.metadata
+        if isinstance(modal_ir.frame_logic.metadata, Mapping)
+        else {}
+    )
+    metadata_values.extend(
+        [
+            frame_logic_metadata.get("sample_id"),
+            frame_logic_metadata.get("sample_ids"),
+            frame_logic_metadata.get("source_id"),
+            frame_logic_metadata.get("source_ids"),
+            frame_logic_metadata.get("hint_evidence"),
+        ]
+    )
+    return frame_ontology_feature_keys_from_values(
+        metadata_values,
         max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,
     )
 

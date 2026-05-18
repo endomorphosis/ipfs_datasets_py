@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Mapping, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
@@ -289,6 +289,8 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_token_count",
     "_unique_char_count",
 )
+_FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
+_FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048
 
 
 @dataclass(frozen=True)
@@ -582,6 +584,76 @@ def frame_ontology_feature_keys(
         key_entries,
         max_items=max_keys,
     )
+
+
+def frame_ontology_feature_keys_from_values(
+    values: Any,
+    *,
+    max_keys: int = 1024,
+    max_depth: int = _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH,
+    max_values: int = _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES,
+) -> List[str]:
+    """Extract frame-linked feature keys from nested evidence payloads."""
+    extracted_values: List[str] = []
+    _collect_frame_ontology_feature_value_candidates(
+        values,
+        extracted_values,
+        depth=0,
+        max_depth=max_depth,
+        max_values=max_values,
+    )
+    return frame_ontology_feature_keys(
+        extracted_values,
+        max_keys=max_keys,
+    )
+
+
+def _collect_frame_ontology_feature_value_candidates(
+    values: Any,
+    extracted: List[str],
+    *,
+    depth: int,
+    max_depth: int,
+    max_values: int,
+) -> None:
+    if (
+        values is None
+        or depth >= max(max_depth, 1)
+        or len(extracted) >= max(max_values, 1)
+    ):
+        return
+    if isinstance(values, Mapping):
+        for key, value in values.items():
+            if len(extracted) >= max(max_values, 1):
+                return
+            key_text = str(key or "").strip()
+            if key_text and is_frame_ontology_feature_key(key_text):
+                extracted.append(key_text)
+                if len(extracted) >= max(max_values, 1):
+                    return
+            _collect_frame_ontology_feature_value_candidates(
+                value,
+                extracted,
+                depth=depth + 1,
+                max_depth=max_depth,
+                max_values=max_values,
+            )
+        return
+    if isinstance(values, Sequence) and not isinstance(values, (str, bytes)):
+        for value in values:
+            if len(extracted) >= max(max_values, 1):
+                return
+            _collect_frame_ontology_feature_value_candidates(
+                value,
+                extracted,
+                depth=depth + 1,
+                max_depth=max_depth,
+                max_values=max_values,
+            )
+        return
+    text = str(values or "").strip()
+    if text:
+        extracted.append(text)
 
 
 def is_high_signal_frame_ontology_term(
@@ -1228,6 +1300,7 @@ __all__ = [
     "FrameSelection",
     "frame_ontology_feature_value",
     "frame_ontology_feature_keys",
+    "frame_ontology_feature_keys_from_values",
     "frame_ontology_high_signal_terms",
     "frame_ontology_terms_from_feature_keys",
     "frame_ontology_terms_from_triples",

@@ -8,6 +8,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     FrameCandidate,
     frame_ontology_feature_value,
     frame_ontology_feature_keys,
+    frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
@@ -1399,6 +1400,36 @@ def test_frame_ontology_feature_keys_prioritize_direct_signals_when_key_cap_is_e
         "flogic:citation_section_component:1000",
         "flogic:citation_section_component:1001",
         "flogic:citation_section_component:1002",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_extracts_nested_hint_evidence() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "hint_evidence": [
+                {
+                    "hint_id": "modal-synthesis-248e6f537d1662f7",
+                    "priority": 0.795075535022,
+                    "sample_id": "us-code-26-307-c04b9c0813def639",
+                    "frame_features": [
+                        "selected-frame-term:26 U.S.C. 307",
+                        "token:agency",
+                    ],
+                }
+            ],
+            "metadata": {
+                "sample_ids": [
+                    "us-code-42-300i-0102d16fb9d986ee",
+                    "sample-without-source-shape",
+                ]
+            },
+        }
+    )
+
+    assert keys == [
+        "us-code-26-307-c04b9c0813def639",
+        "selected-frame-term:26 U.S.C. 307",
+        "us-code-42-300i-0102d16fb9d986ee",
     ]
 
 

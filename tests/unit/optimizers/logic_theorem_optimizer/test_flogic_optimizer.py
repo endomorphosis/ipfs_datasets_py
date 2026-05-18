@@ -491,3 +491,45 @@ def test_flogic_optimizer_reports_high_signal_frame_ontology_terms() -> None:
     ]
     assert result.metadata["frame_ontology_high_signal_terms_from_triples_count"] == 0
     assert result.metadata["frame_ontology_high_signal_terms_from_triples"] == []
+
+
+def test_flogic_optimizer_extracts_frame_features_from_structured_hint_evidence() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "hint_id": "modal-synthesis-248e6f537d1662f7",
+                "priority": 0.795075535022,
+                "sample_id": "us-code-26-307-c04b9c0813def639",
+                "frame_features": [
+                    "selected-frame-term:26 U.S.C. 307",
+                    "token:agency",
+                ],
+            },
+            "token:agency",
+        ],
+    )
+
+    assert result.metadata["frame_feature_keys"] == [
+        "selected-frame-term:26 U.S.C. 307",
+        "token:agency",
+        "us-code-26-307-c04b9c0813def639",
+    ]
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "selected-frame-term:26 U.S.C. 307",
+        "us-code-26-307-c04b9c0813def639",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "26_307",
+    ]
