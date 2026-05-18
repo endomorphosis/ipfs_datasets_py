@@ -181,6 +181,25 @@ _USCODE_46_60101_TEXT = (
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_LONG_SUBSECTION_BODY = (
+    "general program coordination reporting documentation verification auditing review "
+    "management data cataloging compliance mapping operations planning record indexing "
+    "partner communication protocol tracking archive retention intake routing portfolio "
+    "monitoring case reconciliation metrics alignment oversight administration workflow "
+    "continuity guidance taxonomy harmonization standards integration"
+)
+_USCODE_42_15362_LONG_SUBSECTION_HEADING_TEXT = (
+    "Section 15362 Administrative notice and hearing procedures (a) "
+    + _USCODE_LONG_SUBSECTION_BODY
+)
+_USCODE_26_3201_LONG_SUBSECTION_HEADING_TEXT = (
+    "Section 3201 Lien for taxes and related enforcement administration (a) "
+    + _USCODE_LONG_SUBSECTION_BODY
+)
+_USCODE_42_3796FF_LONG_SUBSECTION_HEADING_TEXT = (
+    "Section 3796ff Public safety officer benefit administration and definitions (a) "
+    + _USCODE_LONG_SUBSECTION_BODY
+)
 
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
@@ -564,6 +583,51 @@ def test_modal_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_15
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_long_subsection_heading_zero_formula_cases_for_15362_3201_and_3796ff() -> None:
+    cases = [
+        (
+            "us-code-42-15362.-c7a145faec5f2ad6",
+            "42 U.S.C. 15362.",
+            _USCODE_42_15362_LONG_SUBSECTION_HEADING_TEXT,
+        ),
+        (
+            "us-code-26-3201-bd4f34df4d869df4",
+            "26 U.S.C. 3201",
+            _USCODE_26_3201_LONG_SUBSECTION_HEADING_TEXT,
+        ),
+        (
+            "us-code-42-3796ff-59f170d1c742e9af",
+            "42 U.S.C. 3796ff",
+            _USCODE_42_3796FF_LONG_SUBSECTION_HEADING_TEXT,
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
             assert fallback.provenance.citation == citation
 
 

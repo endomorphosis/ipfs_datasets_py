@@ -51,6 +51,13 @@ _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _USCODE_SECTION_REF_SUFFIX_RE = r"(?:\b|[.)\-:\u2012\u2013\u2014])"
 _USCODE_SECTION_HEADING_SHORT_MAX_TOKENS = 24
 _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS = 80
+_USCODE_SUBSECTION_MARKER_RE = re.compile(
+    r"\s+\((?:[a-z]{1,3}|[0-9]{1,3}|[ivxlcdm]{1,6})\)\s+",
+    re.IGNORECASE,
+)
+_USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
+_USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
+_USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
 _USCODE_HEADING_ONLY_MAX_TOKENS = 12
 _USCODE_HEADING_ONLY_VERB_HINT_RE = re.compile(
     r"\b(?:shall|must|may|is|are|was|were|be|been|being|has|have|had|"
@@ -696,6 +703,11 @@ class LegalModalParser:
                     candidate_segment = segment
                     break
         if candidate_segment is None:
+            candidate_segment = self._subsection_heading_prefix_segment(
+                normalized_text=normalized_text,
+                citation_section=citation_section,
+            )
+        if candidate_segment is None:
             return None
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
@@ -832,6 +844,52 @@ class LegalModalParser:
         if "there is established" in lowered or "there are established" in lowered:
             return "establishment_clause"
         return "declarative_clause"
+
+    def _subsection_heading_prefix_segment(
+        self,
+        *,
+        normalized_text: str,
+        citation_section: str,
+    ) -> Optional[LegalSegment]:
+        """Extract leading heading text before a long ``(a)``-style subsection body."""
+        marker = _USCODE_SUBSECTION_MARKER_RE.search(normalized_text)
+        if marker is None:
+            return None
+        if marker.start() > _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS:
+            return None
+
+        heading_prefix = self.normalize_text(normalized_text[: marker.start()])
+        if not heading_prefix:
+            return None
+        prefix_tokens = _TOKEN_RE.findall(heading_prefix.lower())
+        if (
+            len(prefix_tokens) < 2
+            or len(prefix_tokens) > _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS
+        ):
+            return None
+        if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(heading_prefix):
+            return None
+
+        if not (
+            self._contains_citation_section_reference(heading_prefix, citation_section)
+            or self._starts_with_citation_section_reference(
+                heading_prefix,
+                citation_section,
+            )
+        ):
+            return None
+
+        body_text = self.normalize_text(normalized_text[marker.start() :])
+        body_token_count = len(_TOKEN_RE.findall(body_text.lower()))
+        if body_token_count < _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS:
+            return None
+
+        return LegalSegment(
+            text=heading_prefix,
+            start_char=0,
+            end_char=marker.start(),
+            role="clause",
+        )
 
     def _looks_like_heading_without_section_reference(self, segment_text: str) -> bool:
         normalized = self.normalize_text(segment_text)
