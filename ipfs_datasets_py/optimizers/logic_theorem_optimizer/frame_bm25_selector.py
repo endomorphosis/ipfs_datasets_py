@@ -113,6 +113,14 @@ _FRAME_FAMILY_FEATURE_PREFIXES: tuple[str, ...] = (
     "modal-family:frame",
     "modal_family:frame",
 )
+_FRAME_SCOPED_FAMILY_FEATURE_PREFIXES: tuple[str, ...] = (
+    "family:selected_frame",
+    "family:selected-frame",
+    "modal-family:selected_frame",
+    "modal-family:selected-frame",
+    "modal_family:selected_frame",
+    "modal_family:selected-frame",
+)
 _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
     "frame:",
     "selected-frame:",
@@ -533,6 +541,9 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
             return "frame", False, False
+    for prefix in _FRAME_SCOPED_FAMILY_FEATURE_PREFIXES:
+        if lowered.startswith(f"{prefix}:"):
+            return feature[len(prefix) + 1 :].strip(), False, False
 
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()

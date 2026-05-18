@@ -375,6 +375,7 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
 
     assert terms == [
         "transferred",
+        "deontic",
         "frame",
         "unless_written_notice_provided",
         "5406",
@@ -620,11 +621,29 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -
     assert terms == ["frame"]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_selected_frame_family_signals() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "family:selected_frame:deontic",
+            "modal-family:selected-frame:temporal",
+            "modal_family:selected_frame:frame",
+            "family:selected_frame:2",
+        ]
+    )
+
+    assert terms == [
+        "deontic",
+        "temporal",
+        "frame",
+    ]
+
+
 def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> None:
     assert is_frame_ontology_feature_key("family:frame:1") is True
     assert is_frame_ontology_feature_key("modal-family:frame") is True
     assert is_frame_ontology_feature_key("cue:frame:transferred") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
+    assert is_frame_ontology_feature_key("family:selected_frame:deontic") is True
     assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
     assert is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing") is True
     assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True

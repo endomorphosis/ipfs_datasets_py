@@ -114,3 +114,32 @@ def test_flogic_optimizer_tracks_slot_contextual_frame_terms() -> None:
         "frame",
         "unless_written_notice_provided",
     ]
+
+
+def test_flogic_optimizer_tracks_selected_frame_family_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "family:selected_frame:deontic",
+            "modal-family:selected-frame:temporal",
+            "family:selected_frame:2",
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_key_count"] == 3
+    assert result.metadata["frame_ontology_term_count"] == 2
+    assert result.metadata["frame_ontology_terms"] == [
+        "deontic",
+        "temporal",
+    ]
