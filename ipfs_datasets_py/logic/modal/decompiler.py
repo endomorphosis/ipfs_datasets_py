@@ -1258,6 +1258,25 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
                 has_trailing_punct=bool(section_trailing_punct),
             )
         )
+        source_style_map = _slot_value_map(
+            [
+                slot
+                for slot in slots
+                if slot[0] in {"source_id_section_style", "source_id_section_style_canonical"}
+            ]
+        )
+        slots.extend(
+            _title_section_style_slots(
+                slot_namespace="source_id",
+                title=title,
+                section_style=_clean_text(
+                    source_style_map.get("source_id_section_style") or ""
+                ),
+                section_style_canonical=_clean_text(
+                    source_style_map.get("source_id_section_style_canonical") or ""
+                ),
+            )
+        )
         slots.extend(
             _section_structure_slots(
                 slot_namespace="source_id",
@@ -3158,6 +3177,25 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
                 has_trailing_punct=bool(section_trailing_punct),
             )
         )
+        citation_style_map = _slot_value_map(
+            [
+                slot
+                for slot in slots
+                if slot[0] in {"citation_section_style", "citation_section_style_canonical"}
+            ]
+        )
+        slots.extend(
+            _title_section_style_slots(
+                slot_namespace="citation",
+                title=title,
+                section_style=_clean_text(
+                    citation_style_map.get("citation_section_style") or ""
+                ),
+                section_style_canonical=_clean_text(
+                    citation_style_map.get("citation_section_style_canonical") or ""
+                ),
+            )
+        )
         slots.extend(
             _section_structure_slots(
                 slot_namespace="citation",
@@ -3291,6 +3329,63 @@ def _section_structure_slots(
             )
         )
     return slots
+
+
+def _title_section_style_slots(
+    *,
+    slot_namespace: str,
+    title: str,
+    section_style: str,
+    section_style_canonical: str,
+) -> List[Tuple[str, str]]:
+    normalized_namespace = _clean_text(slot_namespace)
+    normalized_title = _clean_text(title)
+    normalized_section_style = _clean_text(section_style)
+    normalized_section_style_canonical = _clean_text(section_style_canonical)
+    if not normalized_namespace or not normalized_title:
+        return []
+    slots: List[Tuple[str, str]] = []
+
+    if normalized_section_style:
+        title_section_style = f"{normalized_title}:{normalized_section_style}"
+        slots.append((f"{normalized_namespace}_title_section_style", title_section_style))
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_style_normalized",
+                title_section_style.lower(),
+            )
+        )
+        slots.extend(
+            _typed_identifier_slots(
+                title_section_style.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_style",
+            )
+        )
+
+    if normalized_section_style_canonical:
+        title_section_style_canonical = (
+            f"{normalized_title}:{normalized_section_style_canonical}"
+        )
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_style_canonical",
+                title_section_style_canonical,
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_style_canonical_normalized",
+                title_section_style_canonical.lower(),
+            )
+        )
+        slots.extend(
+            _typed_identifier_slots(
+                title_section_style_canonical.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_style_canonical",
+            )
+        )
+
+    return _unique_slot_values(slots)
 
 
 def _title_section_number_relation_slots(

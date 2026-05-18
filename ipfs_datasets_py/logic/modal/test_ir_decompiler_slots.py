@@ -4538,10 +4538,22 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     assert lower_slot_map["citation_section_style"] == [
         "single_alphanumeric_alpha_lower_clean"
     ]
+    assert lower_slot_map["citation_title_section_style"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["citation_title_section_style_canonical"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
     assert lower_slot_map["citation_section_suffix_style"] == ["alpha_lower"]
     assert lower_slot_map["citation_section_punctuation_style"] == ["clean"]
     assert lower_slot_map["source_id_section_style"] == [
         "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["source_id_title_section_style"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert lower_slot_map["source_id_title_section_style_canonical"] == [
+        "2:single_alphanumeric_alpha_lower_clean"
     ]
     assert lower_slot_map["source_id_section_suffix_style"] == ["alpha_lower"]
     assert lower_slot_map["source_id_section_punctuation_style"] == ["clean"]
@@ -4549,18 +4561,42 @@ def test_decode_modal_ir_document_emits_section_style_slots() -> None:
     assert upper_slot_map["citation_section_style"] == [
         "single_alphanumeric_alpha_upper_clean"
     ]
+    assert upper_slot_map["citation_title_section_style"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["citation_title_section_style_canonical"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
     assert upper_slot_map["citation_section_suffix_style"] == ["alpha_upper"]
     assert upper_slot_map["citation_section_punctuation_style"] == ["clean"]
     assert upper_slot_map["source_id_section_style"] == [
         "single_alphanumeric_alpha_upper_clean"
     ]
+    assert upper_slot_map["source_id_title_section_style"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert upper_slot_map["source_id_title_section_style_canonical"] == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
     assert upper_slot_map["source_id_section_suffix_style"] == ["alpha_upper"]
     assert upper_slot_map["source_id_section_punctuation_style"] == ["clean"]
 
     assert punct_slot_map["citation_section_style"] == ["single_numeric_trailing_punct"]
+    assert punct_slot_map["citation_title_section_style"] == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert punct_slot_map["citation_title_section_style_canonical"] == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
     assert punct_slot_map["citation_section_suffix_style"] == ["none"]
     assert punct_slot_map["citation_section_punctuation_style"] == ["trailing_punct"]
     assert punct_slot_map["source_id_section_style"] == ["single_numeric_trailing_punct"]
+    assert punct_slot_map["source_id_title_section_style"] == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert punct_slot_map["source_id_title_section_style_canonical"] == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
     assert punct_slot_map["source_id_section_suffix_style"] == ["none"]
     assert punct_slot_map["source_id_section_punctuation_style"] == ["trailing_punct"]
 
@@ -4580,10 +4616,22 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(lower_triples, "citation_section_style") == [
         "single_alphanumeric_alpha_lower_clean"
     ]
+    assert objects(lower_triples, "citation_title_section_style") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "citation_title_section_style_canonical") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
     assert objects(lower_triples, "citation_section_suffix_style") == ["alpha_lower"]
     assert objects(lower_triples, "citation_section_punctuation_style") == ["clean"]
     assert objects(lower_triples, "source_id_section_style") == [
         "single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "source_id_title_section_style") == [
+        "2:single_alphanumeric_alpha_lower_clean"
+    ]
+    assert objects(lower_triples, "source_id_title_section_style_canonical") == [
+        "2:single_alphanumeric_alpha_lower_clean"
     ]
     assert objects(lower_triples, "source_id_section_suffix_style") == ["alpha_lower"]
     assert objects(lower_triples, "source_id_section_punctuation_style") == ["clean"]
@@ -4591,10 +4639,22 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(upper_triples, "citation_section_style") == [
         "single_alphanumeric_alpha_upper_clean"
     ]
+    assert objects(upper_triples, "citation_title_section_style") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "citation_title_section_style_canonical") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
     assert objects(upper_triples, "citation_section_suffix_style") == ["alpha_upper"]
     assert objects(upper_triples, "citation_section_punctuation_style") == ["clean"]
     assert objects(upper_triples, "source_id_section_style") == [
         "single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "source_id_title_section_style") == [
+        "26:single_alphanumeric_alpha_upper_clean"
+    ]
+    assert objects(upper_triples, "source_id_title_section_style_canonical") == [
+        "26:single_alphanumeric_alpha_upper_clean"
     ]
     assert objects(upper_triples, "source_id_section_suffix_style") == ["alpha_upper"]
     assert objects(upper_triples, "source_id_section_punctuation_style") == ["clean"]
@@ -4602,12 +4662,24 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(punct_triples, "citation_section_style") == [
         "single_numeric_trailing_punct"
     ]
+    assert objects(punct_triples, "citation_title_section_style") == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "citation_title_section_style_canonical") == [
+        "46:single_numeric_none_none_trailing_punct"
+    ]
     assert objects(punct_triples, "citation_section_suffix_style") == ["none"]
     assert objects(punct_triples, "citation_section_punctuation_style") == [
         "trailing_punct"
     ]
     assert objects(punct_triples, "source_id_section_style") == [
         "single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_title_section_style") == [
+        "46:single_numeric_trailing_punct"
+    ]
+    assert objects(punct_triples, "source_id_title_section_style_canonical") == [
+        "46:single_numeric_none_none_trailing_punct"
     ]
     assert objects(punct_triples, "source_id_section_suffix_style") == ["none"]
     assert objects(punct_triples, "source_id_section_punctuation_style") == [

@@ -1941,6 +1941,26 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
                 has_trailing_punct=bool(section_trailing_punct),
             )
         )
+        citation_style_map = _component_value_map(
+            [
+                component
+                for component in components
+                if component[0]
+                in {"citation_section_style", "citation_section_style_canonical"}
+            ]
+        )
+        components.extend(
+            _title_section_style_components(
+                slot_namespace="citation",
+                title=title,
+                section_style=_clean_non_empty_string(
+                    citation_style_map.get("citation_section_style")
+                ),
+                section_style_canonical=_clean_non_empty_string(
+                    citation_style_map.get("citation_section_style_canonical")
+                ),
+            )
+        )
         components.extend(
             _section_structure_components(
                 slot_namespace="citation",
@@ -2070,6 +2090,26 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
                 slot_namespace="source_id",
                 section_component_map=source_section_component_map,
                 has_trailing_punct=bool(section_trailing_punct),
+            )
+        )
+        source_style_map = _component_value_map(
+            [
+                component
+                for component in components
+                if component[0]
+                in {"source_id_section_style", "source_id_section_style_canonical"}
+            ]
+        )
+        components.extend(
+            _title_section_style_components(
+                slot_namespace="source_id",
+                title=title,
+                section_style=_clean_non_empty_string(
+                    source_style_map.get("source_id_section_style")
+                ),
+                section_style_canonical=_clean_non_empty_string(
+                    source_style_map.get("source_id_section_style_canonical")
+                ),
             )
         )
         components.extend(
@@ -4133,6 +4173,63 @@ def _section_structure_components(
             )
         )
     return components
+
+
+def _title_section_style_components(
+    *,
+    slot_namespace: str,
+    title: str,
+    section_style: str,
+    section_style_canonical: str,
+) -> List[tuple[str, str]]:
+    normalized_namespace = _clean_non_empty_string(slot_namespace)
+    normalized_title = _clean_non_empty_string(title)
+    normalized_section_style = _clean_non_empty_string(section_style)
+    normalized_section_style_canonical = _clean_non_empty_string(section_style_canonical)
+    if not normalized_namespace or not normalized_title:
+        return []
+    components: List[tuple[str, str]] = []
+
+    if normalized_section_style:
+        title_section_style = f"{normalized_title}:{normalized_section_style}"
+        components.append((f"{normalized_namespace}_title_section_style", title_section_style))
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_style_normalized",
+                title_section_style.lower(),
+            )
+        )
+        components.extend(
+            _typed_identifier_components(
+                title_section_style.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_style",
+            )
+        )
+
+    if normalized_section_style_canonical:
+        title_section_style_canonical = (
+            f"{normalized_title}:{normalized_section_style_canonical}"
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_style_canonical",
+                title_section_style_canonical,
+            )
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_style_canonical_normalized",
+                title_section_style_canonical.lower(),
+            )
+        )
+        components.extend(
+            _typed_identifier_components(
+                title_section_style_canonical.replace(":", "_"),
+                slot_prefix=f"{normalized_namespace}_title_section_style_canonical",
+            )
+        )
+
+    return _unique_preserve_order_tuples(components)
 
 
 def _title_section_number_relation_components(
