@@ -30,6 +30,37 @@ NORMATIVE_MODAL_FAMILIES: Tuple[ModalLogicFamily, ...] = (
     ModalLogicFamily.CONDITIONAL_NORMATIVE,
 )
 
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.HYBRID.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+)
+
 
 class ModalSystem(Enum):
     """Common modal systems and legal-parser profiles."""
@@ -286,6 +317,26 @@ def is_normative_modal_family(family: ModalLogicFamily | str) -> bool:
     return resolved in NORMATIVE_MODAL_FAMILIES
 
 
+def supports_signal_free_adaptive_ambiguity_pair(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> bool:
+    """Return whether an adaptive pair should emit ambiguity without target cues."""
+    return (
+        _resolve_modal_family_name(predicted_family),
+        _resolve_modal_family_name(target_family),
+    ) in SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+
+
+def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
+    if isinstance(family, ModalLogicFamily):
+        return family.value
+    try:
+        return ModalLogicFamily(str(family)).value
+    except ValueError:
+        return str(family).strip().lower()
+
+
 DEFAULT_MODAL_REGISTRY = ModalRegistry()
 
 
@@ -293,6 +344,7 @@ __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
     "NORMATIVE_MODAL_FAMILIES",
+    "SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "ModalLogicFamily",
     "ModalOperatorSpec",
     "ModalParseProfile",
@@ -300,4 +352,5 @@ __all__ = [
     "ModalSemanticsSpec",
     "ModalSystem",
     "is_normative_modal_family",
+    "supports_signal_free_adaptive_ambiguity_pair",
 ]

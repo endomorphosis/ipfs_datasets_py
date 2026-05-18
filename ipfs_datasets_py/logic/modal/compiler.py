@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalLogicFamily,
     ModalRegistry,
     is_normative_modal_family,
+    supports_signal_free_adaptive_ambiguity_pair,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoder,
@@ -711,28 +712,10 @@ class DeterministicModalCompiler:
         target_family: str,
     ) -> bool:
         """Return whether this pair must surface adaptive ambiguity without lexical support."""
-        return (predicted_family, target_family) in {
-            (
-                ModalLogicFamily.DEONTIC.value,
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-            ),
-            (
-                ModalLogicFamily.TEMPORAL.value,
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-            ),
-            (
-                ModalLogicFamily.TEMPORAL.value,
-                ModalLogicFamily.DEONTIC.value,
-            ),
-            (
-                ModalLogicFamily.TEMPORAL.value,
-                ModalLogicFamily.FRAME.value,
-            ),
-            (
-                ModalLogicFamily.HYBRID.value,
-                ModalLogicFamily.FRAME.value,
-            ),
-        }
+        return supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
     def _temporal_target_family_ambiguities(
         self,
