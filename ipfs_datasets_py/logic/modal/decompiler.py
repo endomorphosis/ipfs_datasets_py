@@ -2099,6 +2099,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     terminal_has_suffix: bool | None = None
     primary_suffix_is_roman: bool | None = None
     terminal_suffix_is_roman: bool | None = None
+    primary_component_kind = ""
+    terminal_component_kind = ""
     primary_number = ""
     terminal_number = ""
     total_components = len(components)
@@ -2132,8 +2134,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             )
             if index == 1:
                 slots.append(("citation_section_primary_component_kind", "other"))
+                primary_component_kind = "other"
             if index == total_components:
                 slots.append(("citation_section_terminal_component_kind", "other"))
+                terminal_component_kind = "other"
             continue
         number = _clean_text(match.group("number"))
         suffix = _clean_text(match.group("suffix"))
@@ -2327,6 +2331,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                     )
                 )
                 slots.append(("citation_section_primary_component_kind", "alphanumeric"))
+                primary_component_kind = "alphanumeric"
             if index == total_components:
                 slots.append(("citation_section_terminal_suffix", suffix))
                 slots.append(("citation_section_terminal_suffix_char_count", suffix_char_count))
@@ -2339,6 +2344,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                     )
                 )
                 slots.append(("citation_section_terminal_component_kind", "alphanumeric"))
+                terminal_component_kind = "alphanumeric"
         else:
             component_shapes.append("N")
             slots.append(("citation_section_component_kind", "numeric"))
@@ -2347,8 +2353,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             )
             if index == 1:
                 slots.append(("citation_section_primary_component_kind", "numeric"))
+                primary_component_kind = "numeric"
             if index == total_components:
                 slots.append(("citation_section_terminal_component_kind", "numeric"))
+                terminal_component_kind = "numeric"
     if parsed_component_count:
         slots.append(
             (
@@ -2394,6 +2402,33 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
     if component_signatures:
         slots.append(("citation_section_signature", "-".join(component_signatures)))
+        primary_signature = component_signatures[0]
+        terminal_signature = component_signatures[-1]
+        slots.append(
+            (
+                "citation_section_primary_terminal_component_signature_pair",
+                f"{primary_signature}|{terminal_signature}",
+            )
+        )
+        slots.append(
+            (
+                "citation_section_primary_terminal_component_signature_match",
+                "true" if primary_signature == terminal_signature else "false",
+            )
+        )
+    if primary_component_kind and terminal_component_kind:
+        slots.append(
+            (
+                "citation_section_primary_terminal_component_kind_pair",
+                f"{primary_component_kind}|{terminal_component_kind}",
+            )
+        )
+        slots.append(
+            (
+                "citation_section_primary_terminal_component_kind_match",
+                "true" if primary_component_kind == terminal_component_kind else "false",
+            )
+        )
     component_profile = _citation_section_component_profile(
         component_count=total_components,
         suffix_component_count=suffix_component_count,

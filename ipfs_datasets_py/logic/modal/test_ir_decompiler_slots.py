@@ -844,6 +844,16 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["citation_section_terminal_suffix"] == ["l"]
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert slot_map["citation_section_primary_terminal_component_kind_match"] == ["true"]
 
     assert slot_map["source_id_section_terminal"] == ["190l"]
     assert slot_map["source_id_section_primary_equals_terminal"] == ["true"]
@@ -865,6 +875,16 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["source_id_section_terminal_suffix"] == ["l"]
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert slot_map["source_id_section_primary_terminal_component_kind_match"] == ["true"]
 
 
 def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() -> None:
@@ -897,6 +917,16 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("citation_section_terminal_suffix") == ["l"]
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_primary_terminal_component_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects("citation_section_primary_terminal_component_signature_match") == [
+        "true"
+    ]
+    assert objects("citation_section_primary_terminal_component_kind_pair") == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert objects("citation_section_primary_terminal_component_kind_match") == ["true"]
 
     assert objects("source_id_section_terminal") == ["190l"]
     assert objects("source_id_section_primary_equals_terminal") == ["true"]
@@ -918,6 +948,16 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("source_id_section_terminal_suffix") == ["l"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_primary_terminal_component_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects("source_id_section_primary_terminal_component_signature_match") == [
+        "true"
+    ]
+    assert objects("source_id_section_primary_terminal_component_kind_pair") == [
+        "alphanumeric|alphanumeric"
+    ]
+    assert objects("source_id_section_primary_terminal_component_kind_match") == ["true"]
 
 
 def test_decode_modal_ir_document_emits_roman_suffix_slots() -> None:
@@ -984,7 +1024,31 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
     assert mixed_slot_map["citation_section_primary_component_signature"] == ["N3A3"]
     assert mixed_slot_map["citation_section_terminal_component_signature"] == ["N1"]
     assert mixed_slot_map["citation_section_signature"] == ["N3A3-N1"]
+    assert mixed_slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N3A3|N1"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "false"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|numeric"
+    ]
+    assert mixed_slot_map["citation_section_primary_terminal_component_kind_match"] == [
+        "false"
+    ]
     assert mixed_slot_map["source_id_section_signature"] == ["N3A3-N1"]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N3A3|N1"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "false"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "alphanumeric|numeric"
+    ]
+    assert mixed_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
+        "false"
+    ]
 
     roman_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
@@ -1002,7 +1066,31 @@ def test_decode_modal_ir_document_emits_section_component_signature_slots() -> N
         decode_modal_ir_document(_trailing_punct_sample_document())
     )
     assert numeric_slot_map["citation_section_signature"] == ["N5"]
+    assert numeric_slot_map["citation_section_primary_terminal_component_signature_pair"] == [
+        "N5|N5"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_kind_pair"] == [
+        "numeric|numeric"
+    ]
+    assert numeric_slot_map["citation_section_primary_terminal_component_kind_match"] == [
+        "true"
+    ]
     assert numeric_slot_map["source_id_section_signature"] == ["N5"]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_signature_pair"] == [
+        "N5|N5"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_signature_match"] == [
+        "true"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_pair"] == [
+        "numeric|numeric"
+    ]
+    assert numeric_slot_map["source_id_section_primary_terminal_component_kind_match"] == [
+        "true"
+    ]
 
 
 def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() -> None:
@@ -1032,7 +1120,39 @@ def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() ->
         "N1"
     ]
     assert objects(mixed_triples, "citation_section_signature") == ["N3A3-N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_signature_pair",
+    ) == ["N3A3|N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_signature_match",
+    ) == ["false"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_kind_pair",
+    ) == ["alphanumeric|numeric"]
+    assert objects(
+        mixed_triples,
+        "citation_section_primary_terminal_component_kind_match",
+    ) == ["false"]
     assert objects(mixed_triples, "source_id_section_signature") == ["N3A3-N1"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_signature_pair",
+    ) == ["N3A3|N1"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_signature_match",
+    ) == ["false"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_kind_pair",
+    ) == ["alphanumeric|numeric"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_primary_terminal_component_kind_match",
+    ) == ["false"]
 
     assert objects(roman_triples, "citation_section_signature") == ["N3R3-N1"]
     assert objects(roman_triples, "source_id_section_signature") == ["N3R3-N1"]
@@ -1041,7 +1161,39 @@ def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() ->
     assert objects(todo_cluster_triples, "source_id_section_signature") == ["N3A3-N1"]
 
     assert objects(numeric_triples, "citation_section_signature") == ["N5"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_signature_pair",
+    ) == ["N5|N5"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_kind_pair",
+    ) == ["numeric|numeric"]
+    assert objects(
+        numeric_triples,
+        "citation_section_primary_terminal_component_kind_match",
+    ) == ["true"]
     assert objects(numeric_triples, "source_id_section_signature") == ["N5"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_signature_pair",
+    ) == ["N5|N5"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_signature_match",
+    ) == ["true"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_kind_pair",
+    ) == ["numeric|numeric"]
+    assert objects(
+        numeric_triples,
+        "source_id_section_primary_terminal_component_kind_match",
+    ) == ["true"]
 
 
 def test_decode_modal_ir_document_emits_suffix_alpha_signature_slots() -> None:
