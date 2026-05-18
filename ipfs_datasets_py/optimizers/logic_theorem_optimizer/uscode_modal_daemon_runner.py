@@ -1394,6 +1394,7 @@ def _path_is_git_worktree(path: Path) -> bool:
 
 def run_tests(root: Path, report_dir: Path, cycle: int) -> Dict[str, Any]:
     xml_path = report_dir / f"cycle-{cycle}.xml"
+    test_root = resolve_codex_worktree_repo_root(root)
     cmd = [
         "pytest",
         "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
@@ -1406,13 +1407,14 @@ def run_tests(root: Path, report_dir: Path, cycle: int) -> Dict[str, Any]:
         str(xml_path),
     ]
     started = time.time()
-    result = subprocess.run(cmd, cwd=root, text=True, capture_output=True)
+    result = subprocess.run(cmd, cwd=test_root, text=True, capture_output=True)
     return {
         "cycle": cycle,
         "duration_seconds": round(time.time() - started, 3),
         "event": "tests",
         "exit_code": result.returncode,
         "junitxml": str(xml_path),
+        "test_root": str(test_root),
         "stderr_tail": result.stderr[-500:],
         "stdout_tail": result.stdout[-500:],
     }

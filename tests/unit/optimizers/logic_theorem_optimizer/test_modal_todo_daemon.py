@@ -32,6 +32,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_run
     program_synthesis_status_block,
     refresh_codex_work_packet_patch,
     resolve_codex_worktree_repo_root,
+    run_tests,
 )
 
 
@@ -677,6 +678,41 @@ def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path)
 
     assert resolve_codex_worktree_repo_root(parent) == nested.resolve()
     assert resolve_codex_worktree_repo_root(nested) == nested.resolve()
+
+
+def test_run_tests_uses_nested_ipfs_dataset_checkout(tmp_path, monkeypatch) -> None:
+    parent = tmp_path / "site"
+    nested = parent / "ipfs_datasets_py"
+    test_dir = nested / "tests" / "unit" / "optimizers" / "logic_theorem_optimizer"
+    modal_test_dir = nested / "tests" / "unit_tests" / "logic" / "modal"
+    test_dir.mkdir(parents=True)
+    modal_test_dir.mkdir(parents=True)
+    (nested / "ipfs_datasets_py" / "logic" / "modal").mkdir(parents=True)
+    for path in [
+        test_dir / "test_modal_autoencoder.py",
+        test_dir / "test_modal_todo_daemon.py",
+        test_dir / "test_uscode_dataset.py",
+        test_dir / "test_spacy_modal_codec.py",
+        modal_test_dir / "test_modal_codec.py",
+    ]:
+        path.write_text("def test_placeholder():\n    assert True\n", encoding="utf-8")
+    subprocess.run(["git", "init"], cwd=parent, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "init"], cwd=nested, check=True, capture_output=True, text=True)
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        if list(cmd[:1]) != ["pytest"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout="true\n", stderr="")
+        captured["cwd"] = kwargs["cwd"]
+        return subprocess.CompletedProcess(cmd, 0, stdout="passed\n", stderr="")
+
+    with monkeypatch.context() as context:
+        context.setattr(subprocess, "run", fake_run)
+        report = run_tests(parent, tmp_path / "reports", 1)
+
+    assert captured["cwd"] == nested.resolve()
+    assert report["test_root"] == str(nested.resolve())
+    assert report["exit_code"] == 0
 
 
 def _create_git_repo_with_program_synthesis_packet(tmp_path):
