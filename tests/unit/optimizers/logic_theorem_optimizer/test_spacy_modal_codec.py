@@ -385,6 +385,59 @@ def test_spacy_decoder_promotes_frame_logits_over_temporal_for_editorial_scope_t
     assert logits["frame"] > logits["temporal"]
 
 
+def test_spacy_codec_debiases_generic_frame_cues_when_deontic_force_is_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="247b",
+        text=(
+            "Authority under this section and jurisdiction under this chapter "
+            "shall apply."
+        ),
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+
+    assert ranking[0]["family"] == "deontic"
+    assert any(item["family"] == "frame" and item["count"] >= 1 for item in ranking)
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert deontic_share > frame_share
+
+
+def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_force_is_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="1395w",
+        text=(
+            "Authority under this section and jurisdiction under this chapter "
+            "shall apply."
+        ),
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+
+    assert logits["deontic"] > logits["frame"]
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

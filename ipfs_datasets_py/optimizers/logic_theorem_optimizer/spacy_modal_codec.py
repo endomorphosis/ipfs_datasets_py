@@ -358,6 +358,13 @@ _FRAME_EDITORIAL_SCOPE_PHRASES = (
     "reclassified as section",
     "transferred to section",
 )
+_GENERIC_FRAME_CUE_TERMS = frozenset(
+    {
+        "authority",
+        "jurisdiction",
+    }
+)
+_GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -869,17 +876,23 @@ class SpaCyModalDecoder:
         modal_families: Sequence[str],
     ) -> Dict[str, float]:
         logits = {family: -0.25 for family in modal_families}
-        counts = encoding.modal_family_counts()
-        for family, count in counts.items():
+        signals = modal_ambiguity_signals(encoding)
+        raw_counts = encoding.modal_family_counts()
+        weighted_counts = _weighted_modal_family_counts(
+            encoding,
+            signals=signals,
+        )
+        for family, count in weighted_counts.items():
             if family in logits:
                 logits[family] = 2.0 + float(count)
-        signals = modal_ambiguity_signals(encoding)
         frame_bonus = _frame_logit_bonus(signals)
+        if _is_generic_frame_cue_debias_context(encoding, signals):
+            frame_bonus = 0.0
         if ModalLogicFamily.FRAME.value in logits and frame_bonus > 0.0:
             logits[ModalLogicFamily.FRAME.value] = (
                 max(logits[ModalLogicFamily.FRAME.value], 0.5) + frame_bonus
             )
-        if not counts and ModalLogicFamily.HYBRID.value in logits:
+        if not raw_counts and ModalLogicFamily.HYBRID.value in logits:
             if frame_bonus <= 0.0:
                 logits[ModalLogicFamily.HYBRID.value] = 1.0
         return logits
@@ -1032,19 +1045,72 @@ def _lookahead_tokens(
 def ranked_modal_families(encoding: SpaCyLegalEncoding) -> List[Dict[str, float]]:
     """Rank modal families by deterministic cue count and normalized share."""
     counts = encoding.modal_family_counts()
-    total = sum(counts.values())
+    weighted_counts = _weighted_modal_family_counts(encoding)
+    total = sum(float(value) for value in weighted_counts.values())
     if total <= 0:
         return []
     ranking: List[Dict[str, float]] = []
-    for family, count in sorted(counts.items(), key=lambda item: (-item[1], item[0])):
+    for family, count in sorted(
+        counts.items(),
+        key=lambda item: (
+            -float(weighted_counts.get(item[0], 0.0)),
+            item[0],
+        ),
+    ):
+        share_raw = float(weighted_counts.get(family, 0.0)) / float(total)
         ranking.append(
             {
                 "family": family,
                 "count": int(count),
-                "share": round(float(count) / float(total), 6),
+                "share_raw": share_raw,
+                "share": round(share_raw, 6),
             }
         )
     return ranking
+
+
+def _weighted_modal_family_counts(
+    encoding: SpaCyLegalEncoding,
+    *,
+    signals: Optional[Mapping[str, bool]] = None,
+) -> Dict[str, float]:
+    counts = {
+        family: float(count)
+        for family, count in encoding.modal_family_counts().items()
+    }
+    if not counts:
+        return {}
+    resolved_signals: Mapping[str, bool]
+    if signals is None:
+        resolved_signals = modal_ambiguity_signals(encoding)
+    else:
+        resolved_signals = signals
+    if not _is_generic_frame_cue_debias_context(encoding, resolved_signals):
+        return counts
+    frame_family = ModalLogicFamily.FRAME.value
+    if frame_family in counts:
+        counts[frame_family] *= _GENERIC_FRAME_CUE_DEBIAS_FACTOR
+    return counts
+
+
+def _is_generic_frame_cue_debias_context(
+    encoding: SpaCyLegalEncoding,
+    signals: Mapping[str, bool],
+) -> bool:
+    if not bool(signals.get("has_deontic_cue")):
+        return False
+    if bool(signals.get("has_frame_scope_phrase")):
+        return False
+    if bool(signals.get("has_frame_editorial_scope_phrase")):
+        return False
+    frame_cues = [
+        str(cue.cue).strip().lower()
+        for cue in encoding.cues
+        if cue.family == ModalLogicFamily.FRAME.value
+    ]
+    if not frame_cues:
+        return False
+    return all(cue in _GENERIC_FRAME_CUE_TERMS for cue in frame_cues)
 
 
 def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
