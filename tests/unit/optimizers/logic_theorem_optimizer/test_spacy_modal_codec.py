@@ -144,6 +144,44 @@ def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
 
 
+def test_spacy_compiler_replays_embedded_sec_heading_zero_formula_cases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-10-2672-8dd80f359cdc8c51",
+            "10 U.S.C. 2672",
+            "Title 10 Armed Forces chapter heading Sec. 2672\u2014 Housing voucher benefits and utility allowances.",
+        ),
+        (
+            "us-code-26-45N-50d302a360db7728",
+            "26 U.S.C. 45N",
+            "Title 26 Internal Revenue Code chapter heading Sec. 45N\u2014 Clean fuel production credit.",
+        ),
+        (
+            "us-code-12-548-2c44bdc47b86c5f0",
+            "12 U.S.C. 548",
+            "Title 12 Banks and Banking chapter heading Sec. 548\u2014 State taxation of national banking associations.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
 def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

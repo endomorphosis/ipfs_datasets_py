@@ -48,6 +48,9 @@ _USCODE_CITATION_SECTION_RE = re.compile(
     re.IGNORECASE,
 )
 _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_USCODE_SECTION_REF_SUFFIX_RE = r"(?:\b|[.)\-:\u2012\u2013\u2014])"
+_USCODE_SECTION_HEADING_SHORT_MAX_TOKENS = 24
+_USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS = 80
 
 
 @dataclass(frozen=True)
@@ -395,11 +398,20 @@ class LegalModalParser:
             return False
         normalized = self.normalize_text(text).lower()
         section_pattern = re.escape(citation_section)
-        if re.search(rf"§\s*{section_pattern}(?:\b|[.)])", normalized):
+        if re.search(
+            rf"§\s*{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            normalized,
+        ):
             return True
-        if re.search(rf"\bsection\s+{section_pattern}(?:\b|[.)])", normalized):
+        if re.search(
+            rf"\bsection\s+{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            normalized,
+        ):
             return True
-        if re.search(rf"\bsec\.\s*{section_pattern}(?:\b|[.)-])", normalized):
+        if re.search(
+            rf"\bsec\.?\s*{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            normalized,
+        ):
             return True
         return False
 
@@ -409,7 +421,11 @@ class LegalModalParser:
         normalized = self.normalize_text(text).lower()
         section_pattern = re.escape(citation_section)
         return bool(
-            re.match(rf"^(?:§\s*|sec\.\s*|section\s+)?{section_pattern}(?:\b|[.)-])", normalized)
+            re.match(
+                rf"^(?:§\s*|sec\.?\s*|section\s+)?{section_pattern}"
+                rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+                normalized,
+            )
         )
 
     def _uscode_editorial_status_fallback_formula(
@@ -581,7 +597,7 @@ class LegalModalParser:
         segments: Sequence[LegalSegment],
         start_index: int,
     ) -> Optional[ModalIRFormula]:
-        """Emit frame IR for short U.S.C. section-heading lines with no modal cues."""
+        """Emit frame IR for compact U.S.C. section-heading lines with no modal cues."""
         if not normalized_text.strip():
             return None
         if citation is None or "u.s.c." not in citation.lower():
@@ -594,16 +610,43 @@ class LegalModalParser:
             return None
 
         candidate_segment: Optional[LegalSegment] = None
+        long_heading_segment: Optional[LegalSegment] = None
         for segment in segments:
             if not self._starts_with_citation_section_reference(
                 segment.text,
                 citation_section,
             ):
                 continue
-            if len(_TOKEN_RE.findall(segment.text)) > 24:
-                continue
-            candidate_segment = segment
-            break
+            token_count = len(_TOKEN_RE.findall(segment.text))
+            if token_count <= _USCODE_SECTION_HEADING_SHORT_MAX_TOKENS:
+                candidate_segment = segment
+                break
+            if (
+                long_heading_segment is None
+                and token_count <= _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS
+            ):
+                long_heading_segment = segment
+        if candidate_segment is None:
+            candidate_segment = long_heading_segment
+        if candidate_segment is None:
+            embedded_heading_segment: Optional[LegalSegment] = None
+            for segment in segments:
+                if not self._contains_citation_section_reference(
+                    segment.text,
+                    citation_section,
+                ):
+                    continue
+                token_count = len(_TOKEN_RE.findall(segment.text))
+                if token_count <= _USCODE_SECTION_HEADING_SHORT_MAX_TOKENS:
+                    candidate_segment = segment
+                    break
+                if (
+                    embedded_heading_segment is None
+                    and token_count <= _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS
+                ):
+                    embedded_heading_segment = segment
+            if candidate_segment is None:
+                candidate_segment = embedded_heading_segment
         if candidate_segment is None:
             return None
 

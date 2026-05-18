@@ -251,6 +251,44 @@ def test_modal_compiler_handles_sec_prefixed_transferred_headings_for_known_usco
         assert fallback.provenance.citation == citation
 
 
+def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = [
+        (
+            "us-code-10-2672-8dd80f359cdc8c51",
+            "10 U.S.C. 2672",
+            "Title 10 Armed Forces chapter heading Sec. 2672\u2014 Housing voucher benefits and utility allowances.",
+        ),
+        (
+            "us-code-26-45N-50d302a360db7728",
+            "26 U.S.C. 45N",
+            "Title 26 Internal Revenue Code chapter heading Sec. 45N\u2014 Clean fuel production credit.",
+        ),
+        (
+            "us-code-12-548-2c44bdc47b86c5f0",
+            "12 U.S.C. 548",
+            "Title 12 Banks and Banking chapter heading Sec. 548\u2014 State taxation of national banking associations.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
 def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
