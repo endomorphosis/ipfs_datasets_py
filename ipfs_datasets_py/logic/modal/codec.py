@@ -872,9 +872,11 @@ def modal_ir_to_flogic_triples(
         condition_prefixes: set[str] = set()
         condition_prefix_families: set[str] = set()
         condition_prefix_temporal_relations: set[str] = set()
+        condition_modal_entries: set[tuple[str, str]] = set()
         exception_prefixes: set[str] = set()
         exception_prefix_families: set[str] = set()
         exception_prefix_temporal_relations: set[str] = set()
+        exception_modal_entries: set[tuple[str, str]] = set()
         statutory_scope_entries: set[tuple[str, str]] = set()
         triples.extend(
             [
@@ -1165,6 +1167,22 @@ def modal_ir_to_flogic_triples(
             typed_condition = _typed_clause_key_value(condition, clause_type="condition")
             if typed_condition is not None:
                 key, scoped_value = typed_condition
+                for predicate_name, predicate_value in _modal_lexeme_components(
+                    formula,
+                    cue=key,
+                    slot_prefix="condition_modal",
+                ):
+                    marker = (predicate_name, predicate_value)
+                    if marker in condition_modal_entries:
+                        continue
+                    condition_modal_entries.add(marker)
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": predicate_name,
+                            "object": predicate_value,
+                        }
+                    )
                 if key not in condition_prefixes:
                     condition_prefixes.add(key)
                     triples.append(
@@ -1255,6 +1273,22 @@ def modal_ir_to_flogic_triples(
             typed_exception = _typed_clause_key_value(exception, clause_type="exception")
             if typed_exception is not None:
                 key, scoped_value = typed_exception
+                for predicate_name, predicate_value in _modal_lexeme_components(
+                    formula,
+                    cue=key,
+                    slot_prefix="exception_modal",
+                ):
+                    marker = (predicate_name, predicate_value)
+                    if marker in exception_modal_entries:
+                        continue
+                    exception_modal_entries.add(marker)
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": predicate_name,
+                            "object": predicate_value,
+                        }
+                    )
                 if key not in exception_prefixes:
                     exception_prefixes.add(key)
                     triples.append(
@@ -1448,18 +1482,38 @@ def _cue_modal_components(
     *,
     cue: str,
 ) -> List[tuple[str, str]]:
+    return _modal_lexeme_components(
+        formula,
+        cue=cue,
+        slot_prefix="cue_modal",
+    )
+
+
+def _modal_lexeme_components(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
     cue_value = _clean_non_empty_string(cue).lower()
     family = _clean_non_empty_string(formula.operator.family).lower()
     symbol = _clean_non_empty_string(formula.operator.symbol)
-    if not cue_value or not family or not symbol:
+    normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
+    if not cue_value or not family or not symbol or not normalized_slot_prefix:
         return []
     signature = f"{family}:{symbol}:{cue_value}"
-    return [
-        ("cue_modal_signature", signature),
-        ("cue_modal_family", family),
-        ("cue_modal_operator", symbol),
-        ("cue_modal_lexeme", cue_value),
+    components: List[tuple[str, str]] = [
+        (f"{normalized_slot_prefix}_signature", signature),
+        (f"{normalized_slot_prefix}_family", family),
+        (f"{normalized_slot_prefix}_operator", symbol),
+        (f"{normalized_slot_prefix}_lexeme", cue_value),
     ]
+    temporal_relation = _temporal_clause_prefix_relation(cue_value)
+    if temporal_relation:
+        components.append(
+            (f"{normalized_slot_prefix}_temporal_relation", temporal_relation)
+        )
+    return components
 
 
 def _temporal_clause_prefix_relation(prefix_key: str) -> str:

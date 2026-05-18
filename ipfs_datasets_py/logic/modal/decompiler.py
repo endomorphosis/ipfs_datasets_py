@@ -501,7 +501,14 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
-        phrases.extend(_typed_clause_phrases(condition, slot="condition", spans=spans))
+        phrases.extend(
+            _typed_clause_phrases(
+                condition,
+                slot="condition",
+                spans=spans,
+                formula=formula,
+            )
+        )
         _append_statutory_scope_phrases(
             phrases,
             condition,
@@ -529,7 +536,14 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
-        phrases.extend(_typed_clause_phrases(exception, slot="exception", spans=spans))
+        phrases.extend(
+            _typed_clause_phrases(
+                exception,
+                slot="exception",
+                spans=spans,
+                formula=formula,
+            )
+        )
         _append_statutory_scope_phrases(
             phrases,
             exception,
@@ -2354,6 +2368,7 @@ def _typed_clause_phrases(
     *,
     slot: str,
     spans: List[List[int]],
+    formula: ModalIRFormula,
 ) -> List[DecodedModalPhrase]:
     parsed = _typed_clause_slot(clause, slot=slot)
     if parsed is None:
@@ -2388,6 +2403,19 @@ def _typed_clause_phrases(
             DecodedModalPhrase(
                 text=temporal_relation,
                 slot=f"{slot}_prefix_temporal_relation",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    for modal_slot, modal_value in _modal_lexeme_slots(
+        formula,
+        cue=prefix_key,
+        slot_prefix=f"{slot}_modal",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=modal_value,
+                slot=modal_slot,
                 spans=spans,
                 provenance_only=True,
             )
@@ -2446,18 +2474,36 @@ def _cue_modal_slots(
     *,
     cue: str,
 ) -> List[Tuple[str, str]]:
+    return _modal_lexeme_slots(
+        formula,
+        cue=cue,
+        slot_prefix="cue_modal",
+    )
+
+
+def _modal_lexeme_slots(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
     cue_value = _clean_text(cue).lower()
     family = _clean_text(formula.operator.family).lower()
     symbol = _clean_text(formula.operator.symbol)
-    if not cue_value or not family or not symbol:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    if not cue_value or not family or not symbol or not normalized_slot_prefix:
         return []
     signature = f"{family}:{symbol}:{cue_value}"
-    return [
-        ("cue_modal_signature", signature),
-        ("cue_modal_family", family),
-        ("cue_modal_operator", symbol),
-        ("cue_modal_lexeme", cue_value),
+    slots: List[Tuple[str, str]] = [
+        (f"{normalized_slot_prefix}_signature", signature),
+        (f"{normalized_slot_prefix}_family", family),
+        (f"{normalized_slot_prefix}_operator", symbol),
+        (f"{normalized_slot_prefix}_lexeme", cue_value),
     ]
+    temporal_relation = _temporal_clause_prefix_relation(cue_value)
+    if temporal_relation:
+        slots.append((f"{normalized_slot_prefix}_temporal_relation", temporal_relation))
+    return slots
 
 
 def _temporal_clause_prefix_relation(prefix_key: str) -> str:

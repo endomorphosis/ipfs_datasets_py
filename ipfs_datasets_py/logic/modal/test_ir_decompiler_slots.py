@@ -3103,6 +3103,10 @@ def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> Non
     assert slot_map["condition_token_count"] == ["7"]
     assert slot_map["condition_prefix"] == ["provided that"]
     assert slot_map["condition_prefix_key"] == ["provided_that"]
+    assert slot_map["condition_modal_signature"] == ["deontic:O:provided_that"]
+    assert slot_map["condition_modal_family"] == ["deontic"]
+    assert slot_map["condition_modal_operator"] == ["O"]
+    assert slot_map["condition_modal_lexeme"] == ["provided_that"]
     assert slot_map["condition_provided_that"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope"] == ["the applicant submits annual reports"]
     assert slot_map["condition_scope_token_suffix"] == ["reports"]
@@ -3110,6 +3114,12 @@ def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> Non
     assert slot_map["exception_token_count"] == ["7"]
     assert slot_map["exception_prefix"] == ["except as otherwise provided"]
     assert slot_map["exception_prefix_key"] == ["except_as_otherwise_provided"]
+    assert slot_map["exception_modal_signature"] == [
+        "deontic:O:except_as_otherwise_provided"
+    ]
+    assert slot_map["exception_modal_family"] == ["deontic"]
+    assert slot_map["exception_modal_operator"] == ["O"]
+    assert slot_map["exception_modal_lexeme"] == ["except_as_otherwise_provided"]
     assert slot_map["exception_except_as_otherwise_provided"] == ["in subsection (b)"]
     assert slot_map["exception_scope"] == ["in subsection (b)"]
     assert slot_map["exception_scope_token_count"] == ["3"]
@@ -3130,6 +3140,10 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("condition_token_count") == ["7"]
     assert objects("condition_prefix") == ["provided that"]
     assert objects("condition_prefix_key") == ["provided_that"]
+    assert objects("condition_modal_signature") == ["deontic:O:provided_that"]
+    assert objects("condition_modal_family") == ["deontic"]
+    assert objects("condition_modal_operator") == ["O"]
+    assert objects("condition_modal_lexeme") == ["provided_that"]
     assert objects("condition_provided_that") == ["the applicant submits annual reports"]
     assert objects("condition_scope") == ["the applicant submits annual reports"]
     assert objects("condition_scope_token_suffix") == ["reports"]
@@ -3137,6 +3151,12 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("exception_token_count") == ["7"]
     assert objects("exception_prefix") == ["except as otherwise provided"]
     assert objects("exception_prefix_key") == ["except_as_otherwise_provided"]
+    assert objects("exception_modal_signature") == [
+        "deontic:O:except_as_otherwise_provided"
+    ]
+    assert objects("exception_modal_family") == ["deontic"]
+    assert objects("exception_modal_operator") == ["O"]
+    assert objects("exception_modal_lexeme") == ["except_as_otherwise_provided"]
     assert objects("exception_except_as_otherwise_provided") == ["in subsection (b)"]
     assert objects("exception_scope") == ["in subsection (b)"]
     assert objects("exception_scope_token_count") == ["3"]
@@ -3151,7 +3171,17 @@ def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_
     assert slot_map["cue_modal_family"] == ["deontic", "temporal"]
     assert slot_map["cue_modal_operator"] == ["O", "F"]
     assert slot_map["cue_modal_lexeme"] == ["shall", "by"]
+    assert slot_map["cue_modal_temporal_relation"] == ["deadline"]
     assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
+    assert slot_map["condition_modal_signature"] == [
+        "deontic:O:if",
+        "temporal:F:after",
+        "temporal:F:by",
+    ]
+    assert slot_map["condition_modal_family"] == ["deontic", "temporal"]
+    assert slot_map["condition_modal_operator"] == ["O", "F"]
+    assert slot_map["condition_modal_lexeme"] == ["if", "after", "by"]
+    assert slot_map["condition_modal_temporal_relation"] == ["after", "deadline"]
     assert slot_map["condition_after"] == ["the agency receives notice"]
     assert slot_map["condition_by"] == ["march 1"]
     assert slot_map["condition_prefix_family"] == ["temporal"]
@@ -3172,7 +3202,17 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
     assert objects("cue_modal_family") == ["deontic", "temporal"]
     assert objects("cue_modal_operator") == ["O", "F"]
     assert objects("cue_modal_lexeme") == ["shall", "by"]
+    assert objects("cue_modal_temporal_relation") == ["deadline"]
     assert objects("condition_prefix_key") == ["if", "after", "by"]
+    assert objects("condition_modal_signature") == [
+        "deontic:O:if",
+        "temporal:F:after",
+        "temporal:F:by",
+    ]
+    assert objects("condition_modal_family") == ["deontic", "temporal"]
+    assert objects("condition_modal_operator") == ["O", "F"]
+    assert objects("condition_modal_lexeme") == ["if", "after", "by"]
+    assert objects("condition_modal_temporal_relation") == ["after", "deadline"]
     assert objects("condition_after") == ["the agency receives notice"]
     assert objects("condition_by") == ["march 1"]
     assert objects("condition_prefix_family") == ["temporal"]
