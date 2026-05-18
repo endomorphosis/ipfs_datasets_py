@@ -1462,7 +1462,8 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         range_start = _clean_non_empty_string(range_match.group("start"))
         range_end = _clean_non_empty_string(range_match.group("end"))
         range_connector = _clean_non_empty_string(range_match.group("connector")).lower()
-    if range_start and range_end and range_connector:
+    is_range = bool(range_start and range_end and range_connector)
+    if is_range:
         parts = [range_start, range_end]
     else:
         parts = [
@@ -1475,6 +1476,7 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     components: List[tuple[str, str]] = [
         ("citation_section_primary", parts[0]),
         ("citation_section_component_count", str(len(parts))),
+        ("citation_section_is_range", "true" if is_range else "false"),
     ]
     delimiter_tokens = _citation_section_delimiter_tokens(cleaned)
     delimiter_pattern = ""
@@ -1520,7 +1522,7 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     else:
         components.append(("citation_section_has_delimiter", "false"))
         components.append(("citation_section_delimiter_count", "0"))
-    if range_start and range_end and range_connector:
+    if is_range:
         components.extend(
             [
                 ("citation_section_range", f"{range_start} {range_connector} {range_end}"),
@@ -1778,7 +1780,7 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     component_profile = _citation_section_component_profile(
         component_count=total_parts,
         suffix_component_count=suffix_component_count,
-        is_range=bool(range_start and range_end and range_connector),
+        is_range=is_range,
     )
     if component_profile:
         components.append(("citation_section_component_profile", component_profile))
@@ -1790,6 +1792,16 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         relation, span = numeric_relation
         components.append(("citation_section_primary_terminal_number_relation", relation))
         components.append(("citation_section_primary_terminal_number_span", span))
+        if is_range:
+            components.append(("citation_section_range_number_relation", relation))
+            components.append(("citation_section_range_number_span", span))
+    if is_range:
+        components.append(
+            (
+                "citation_section_range_has_suffix",
+                "true" if suffix_component_count > 0 else "false",
+            )
+        )
     components.append(
         ("citation_section_numeric_component_count", str(numeric_component_count))
     )

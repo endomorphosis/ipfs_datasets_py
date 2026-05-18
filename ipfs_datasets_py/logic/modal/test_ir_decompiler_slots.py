@@ -66,6 +66,32 @@ def _range_sample_document() -> ModalIRDocument:
     )
 
 
+def _numeric_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-50-1381 to 1398.-83310e751ed0d7a2"
+    formula = ModalIRFormula(
+        formula_id="f-numeric-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_homeland_security_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=24,
+            citation="50 U.S.C. 1381 to 1398.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="50 U.S.C. 1381 to 1398. Homeland security records are retained.",
+        formulas=[formula],
+    )
+
+
 def _section_marker_sample_document() -> ModalIRDocument:
     source_id = "us-code-2-190l-01dd1648c5b1588c"
     formula = ModalIRFormula(
@@ -404,6 +430,7 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_delimiter_char_count_positioned"] == ["1:1"]
     assert slot_map["citation_section_delimiter_pattern"] == ["hyphen"]
     assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
+    assert slot_map["citation_section_is_range"] == ["false"]
     assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -464,6 +491,7 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_delimiter_char_count_positioned"] == ["1:1"]
     assert slot_map["source_id_section_delimiter_pattern"] == ["hyphen"]
     assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
+    assert slot_map["source_id_section_is_range"] == ["false"]
     assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -538,6 +566,7 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_delimiter_char_count_positioned") == ["1:1"]
     assert objects("citation_section_delimiter_pattern") == ["hyphen"]
     assert objects("citation_section_delimiter_distinct_count") == ["1"]
+    assert objects("citation_section_is_range") == ["false"]
     assert objects("citation_title_section_key") == ["21:360bbb-0"]
     assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -598,6 +627,7 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_delimiter_char_count_positioned") == ["1:1"]
     assert objects("source_id_section_delimiter_pattern") == ["hyphen"]
     assert objects("source_id_section_delimiter_distinct_count") == ["1"]
+    assert objects("source_id_section_is_range") == ["false"]
     assert objects("source_id_title_section_key") == ["21:360bbb-0"]
     assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -1007,6 +1037,10 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
     assert slot_map["citation_section_range_start"] == ["228a"]
     assert slot_map["citation_section_range_end"] == ["228c"]
     assert slot_map["citation_section_range_connector"] == ["to"]
+    assert slot_map["citation_section_is_range"] == ["true"]
+    assert slot_map["citation_section_range_has_suffix"] == ["true"]
+    assert slot_map["citation_section_range_number_relation"] == ["equal"]
+    assert slot_map["citation_section_range_number_span"] == ["0"]
     assert slot_map["citation_section_component_positioned"] == ["1:228a", "2:228c"]
     assert slot_map["citation_section_number_positioned"] == ["1:228", "2:228"]
     assert slot_map["citation_section_number_digit_count"] == ["3"]
@@ -1037,6 +1071,10 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
     assert slot_map["source_id_section_range_start"] == ["228a"]
     assert slot_map["source_id_section_range_end"] == ["228c"]
     assert slot_map["source_id_section_range_connector"] == ["to"]
+    assert slot_map["source_id_section_is_range"] == ["true"]
+    assert slot_map["source_id_section_range_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_range_number_relation"] == ["equal"]
+    assert slot_map["source_id_section_range_number_span"] == ["0"]
     assert slot_map["source_id_section_component_positioned"] == ["1:228a", "2:228c"]
     assert slot_map["source_id_section_number_positioned"] == ["1:228", "2:228"]
     assert slot_map["source_id_section_number_digit_count"] == ["3"]
@@ -1078,6 +1116,10 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     assert objects("citation_section_range_start") == ["228a"]
     assert objects("citation_section_range_end") == ["228c"]
     assert objects("citation_section_range_connector") == ["to"]
+    assert objects("citation_section_is_range") == ["true"]
+    assert objects("citation_section_range_has_suffix") == ["true"]
+    assert objects("citation_section_range_number_relation") == ["equal"]
+    assert objects("citation_section_range_number_span") == ["0"]
     assert objects("citation_section_component_positioned") == ["1:228a", "2:228c"]
     assert objects("citation_section_number_positioned") == ["1:228", "2:228"]
     assert objects("citation_section_number_digit_count") == ["3"]
@@ -1108,6 +1150,10 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     assert objects("source_id_section_range_start") == ["228a"]
     assert objects("source_id_section_range_end") == ["228c"]
     assert objects("source_id_section_range_connector") == ["to"]
+    assert objects("source_id_section_is_range") == ["true"]
+    assert objects("source_id_section_range_has_suffix") == ["true"]
+    assert objects("source_id_section_range_number_relation") == ["equal"]
+    assert objects("source_id_section_range_number_span") == ["0"]
     assert objects("source_id_section_component_positioned") == ["1:228a", "2:228c"]
     assert objects("source_id_section_number_positioned") == ["1:228", "2:228"]
     assert objects("source_id_section_number_digit_count") == ["3"]
@@ -1133,6 +1179,44 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     assert objects("source_id_section_delimiter_count") == ["0"]
     assert objects("source_id_title_section_key") == ["45:228a to 228c"]
     assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
+
+
+def test_decode_modal_ir_document_emits_numeric_section_range_relation_slots() -> None:
+    decoded = decode_modal_ir_document(_numeric_range_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_range"] == ["1381 to 1398"]
+    assert slot_map["citation_section_is_range"] == ["true"]
+    assert slot_map["citation_section_range_has_suffix"] == ["false"]
+    assert slot_map["citation_section_range_number_relation"] == ["ascending"]
+    assert slot_map["citation_section_range_number_span"] == ["17"]
+    assert slot_map["source_id_section_range"] == ["1381 to 1398"]
+    assert slot_map["source_id_section_is_range"] == ["true"]
+    assert slot_map["source_id_section_range_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_range_number_relation"] == ["ascending"]
+    assert slot_map["source_id_section_range_number_span"] == ["17"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_section_range_relation_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_numeric_range_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_range") == ["1381 to 1398"]
+    assert objects("citation_section_is_range") == ["true"]
+    assert objects("citation_section_range_has_suffix") == ["false"]
+    assert objects("citation_section_range_number_relation") == ["ascending"]
+    assert objects("citation_section_range_number_span") == ["17"]
+    assert objects("source_id_section_range") == ["1381 to 1398"]
+    assert objects("source_id_section_is_range") == ["true"]
+    assert objects("source_id_section_range_has_suffix") == ["false"]
+    assert objects("source_id_section_range_number_relation") == ["ascending"]
+    assert objects("source_id_section_range_number_span") == ["17"]
 
 
 def test_decode_modal_ir_document_emits_dot_delimiter_slots() -> None:
