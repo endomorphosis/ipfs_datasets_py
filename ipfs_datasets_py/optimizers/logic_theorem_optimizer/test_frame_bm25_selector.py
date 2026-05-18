@@ -2,6 +2,7 @@
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     frame_ontology_feature_keys_from_values,
+    frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
     normalize_frame_ontology_term,
@@ -271,6 +272,27 @@ def test_frame_ontology_terms_support_predicate_alnum_segment_predicates() -> No
 
     assert triple_terms == ["391", "a"]
     assert feature_terms == ["1790", "b"]
+
+
+def test_frame_ontology_terms_preserve_condition_stopword_segments_for_audits() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "condition_alnum_segment", "object": "if"},
+            {"predicate": "condition_alnum_segment", "object": "of"},
+            {"predicate": "condition_alnum_segment", "object": "the"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_alnum_segment:if",
+            "flogic:condition_alnum_segment:of",
+            "flogic:condition_alnum_segment:the",
+        ]
+    )
+
+    assert triple_terms == ["if", "of", "the"]
+    assert feature_terms == ["if", "of", "the"]
+    assert frame_ontology_high_signal_terms(feature_terms) == ["if"]
 
 
 def test_frame_ontology_terms_canonicalize_repeated_pair_values() -> None:

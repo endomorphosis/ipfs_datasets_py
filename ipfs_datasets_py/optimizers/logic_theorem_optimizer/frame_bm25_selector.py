@@ -473,11 +473,13 @@ def normalize_frame_ontology_term(
     max_tokens: int = 8,
     keep_numeric_tokens: bool = False,
     keep_single_char_alpha_tokens: bool = False,
+    keep_stopword_tokens: bool = False,
 ) -> str:
     tokens = _informative_ontology_tokens(
         value,
         keep_numeric_tokens=keep_numeric_tokens,
         keep_single_char_alpha_tokens=keep_single_char_alpha_tokens,
+        keep_stopword_tokens=keep_stopword_tokens,
     )
     if not tokens:
         return ""
@@ -510,6 +512,9 @@ def frame_ontology_terms_from_triples(
         allow_single_char_alpha_tokens = _predicate_allows_single_character_alpha_tokens(
             canonical_predicate or predicate
         )
+        allow_stopword_tokens = _predicate_allows_stopword_ontology_tokens(
+            canonical_predicate or predicate
+        )
         raw_value = _normalized_frame_ontology_value(
             canonical_predicate or predicate,
             str(triple.get("object", "")),
@@ -522,6 +527,7 @@ def frame_ontology_terms_from_triples(
             raw_value,
             keep_numeric_tokens=allow_numeric_tokens,
             keep_single_char_alpha_tokens=allow_single_char_alpha_tokens,
+            keep_stopword_tokens=allow_stopword_tokens,
         )
         if not normalized:
             continue
@@ -554,6 +560,7 @@ def frame_ontology_terms_from_feature_keys(
         ) = _frame_ontology_value_from_feature(feature)
         if not raw_value:
             continue
+        allow_stopword_tokens = _feature_allows_stopword_ontology_tokens(feature)
 
         coordinate_value = _frame_ontology_coordinate_value(raw_value)
         if coordinate_value:
@@ -563,6 +570,7 @@ def frame_ontology_terms_from_feature_keys(
             raw_value,
             keep_numeric_tokens=allow_numeric_tokens,
             keep_single_char_alpha_tokens=allow_single_char_alpha_tokens,
+            keep_stopword_tokens=allow_stopword_tokens,
         )
         if not normalized:
             continue
@@ -757,6 +765,8 @@ def is_high_signal_frame_ontology_term(
         return False
     if normalized in _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS:
         return False
+    if normalized in _FRAME_ONTOLOGY_STOPWORDS:
+        return False
     if normalized.isdigit() and len(normalized) < max(min_numeric_length, 1):
         return False
     return True
@@ -842,6 +852,7 @@ def _informative_ontology_tokens(
     *,
     keep_numeric_tokens: bool = False,
     keep_single_char_alpha_tokens: bool = False,
+    keep_stopword_tokens: bool = False,
 ) -> List[str]:
     tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
     return [
@@ -851,6 +862,7 @@ def _informative_ontology_tokens(
             token,
             keep_numeric_tokens=keep_numeric_tokens,
             keep_single_char_alpha_tokens=keep_single_char_alpha_tokens,
+            keep_stopword_tokens=keep_stopword_tokens,
         )
     ]
 
@@ -860,6 +872,7 @@ def _is_informative_ontology_token(
     *,
     keep_numeric_tokens: bool = False,
     keep_single_char_alpha_tokens: bool = False,
+    keep_stopword_tokens: bool = False,
 ) -> bool:
     if token.isdigit():
         return keep_numeric_tokens
@@ -869,7 +882,7 @@ def _is_informative_ontology_token(
             and len(token) == 1
             and token.isalpha()
         )
-    if token in _FRAME_ONTOLOGY_STOPWORDS:
+    if token in _FRAME_ONTOLOGY_STOPWORDS and not keep_stopword_tokens:
         return False
     return any(character.isalpha() for character in token)
 
@@ -1319,6 +1332,45 @@ def _predicate_allows_single_character_alpha_tokens(predicate: str) -> bool:
     ):
         return False
     return "_suffix" in canonical
+
+
+def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized:
+        return False
+    canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    return (
+        canonical.startswith("condition_alnum_segment")
+        or canonical.startswith("condition_scope_alnum_segment")
+        or canonical.startswith("exception_alnum_segment")
+        or canonical.startswith("exception_scope_alnum_segment")
+    )
+
+
+def _feature_allows_stopword_ontology_tokens(feature: str) -> bool:
+    head, separator, tail = str(feature or "").partition(":")
+    if not separator:
+        return False
+    canonical_head_predicate = _canonical_frame_ontology_predicate(head)
+    if canonical_head_predicate:
+        return _predicate_allows_stopword_ontology_tokens(canonical_head_predicate)
+    if _is_contextual_frame_ontology_predicate(head):
+        return _predicate_allows_stopword_ontology_tokens(head)
+    namespace = head.strip().lower()
+    if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
+        return False
+    predicate, separator, _value = tail.partition(":")
+    if not separator:
+        return False
+    canonical_predicate = _canonical_frame_ontology_predicate(predicate)
+    if canonical_predicate:
+        return _predicate_allows_stopword_ontology_tokens(canonical_predicate)
+    if _is_contextual_frame_ontology_predicate(predicate):
+        return _predicate_allows_stopword_ontology_tokens(predicate)
+    return False
 
 
 def _normalized_frame_ontology_cue_value(value: str) -> str:

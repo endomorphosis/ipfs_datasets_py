@@ -323,6 +323,34 @@ def test_frame_ontology_terms_from_triples_support_predicate_alnum_segment_predi
     ]
 
 
+def test_frame_ontology_terms_from_triples_preserve_condition_stopword_segments_for_audits() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "condition_alnum_segment",
+                "object": "if",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "condition_alnum_segment",
+                "object": "of",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "condition_alnum_segment",
+                "object": "the",
+            },
+        ]
+    )
+
+    assert terms == [
+        "if",
+        "of",
+        "the",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_keep_single_letter_modal_symbols() -> None:
     terms = frame_ontology_terms_from_triples(
         [
@@ -892,6 +920,22 @@ def test_frame_ontology_terms_from_feature_keys_support_predicate_alnum_segment_
     assert terms == [
         "1790",
         "b",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segments_for_audits() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_alnum_segment:if",
+            "flogic:condition_alnum_segment:of",
+            "flogic:condition_alnum_segment:the",
+        ]
+    )
+
+    assert terms == [
+        "if",
+        "of",
+        "the",
     ]
 
 
@@ -1529,5 +1573,21 @@ def test_frame_ontology_high_signal_terms_preserve_order_and_filter_noise() -> N
     assert terms == [
         "291",
         "42_291",
+        "final_order",
+    ]
+
+
+def test_frame_ontology_high_signal_terms_filter_stopword_noise() -> None:
+    terms = frame_ontology_high_signal_terms(
+        [
+            "if",
+            "of",
+            "the",
+            "final_order",
+        ]
+    )
+
+    assert terms == [
+        "if",
         "final_order",
     ]
