@@ -26,6 +26,28 @@ _USCODE_15_2501_SEC_HEADING_TEXT = "Sec. 2501 - Congressional findings and polic
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
+_USCODE_46_55318_TODO_TEXT = (
+    "§55318. Effect on other law This subchapter does not affect chapter 5 of title 5. "
+    "(Pub. L. 109–304, §8(c), Oct. 6, 2006, 120 Stat. 1648.) Historical and Revision "
+    "Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 55318 46 "
+    "App.:1241p. Pub. L. 99–198, title XI, §1143, Dec. 23, 1985, 99 Stat. 1496. The "
+    "words \"section 1707a(b)(8) of title 7\" are omitted because the provision referred "
+    "to has been repealed."
+)
+_USCODE_8_606_TODO_TEXT = (
+    "U.S.C. Title 8 - ALIENS AND NATIONALITY 8 U.S.C. United States Code, 2024 Edition "
+    "Title 8 - ALIENS AND NATIONALITY CHAPTER 11 - NATIONALITY SUBCHAPTER II - NATIONALITY "
+    "AT BIRTH Sec. 606 - Transferred From the U.S. Government Publishing Office, www.gpo.gov "
+    "§606. Transferred Editorial Notes Codification Section transferred to section 1421l of "
+    "Title 48, Territories and Insular Possessions. That section was later repealed. See "
+    "section 1407 of this title."
+)
+_USCODE_46_115_TODO_TEXT = (
+    "§115. Vessel In this title, the term \"vessel\" has the meaning given that term in "
+    "section 3 of title 1. (Pub. L. 109–304, §4, Oct. 6, 2006, 120 Stat. 1487.) Historical "
+    "and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 115 "
+    "46:2101(45)."
+)
 
 
 def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
@@ -224,6 +246,50 @@ def test_spacy_compiler_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to
         assert fallback.metadata["fallback_rule"] == fallback_rule
         if status_keyword:
             assert fallback.metadata["status_keyword"] == status_keyword
+        assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_replays_packet_todo_samples_for_46_55318_8_606_and_46_115() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-46-55318.-a7002ab697067d67",
+            "46 U.S.C. 55318.",
+            _USCODE_46_55318_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+        ),
+        (
+            "us-code-8-606-f7dcbbfb006072f7",
+            "8 U.S.C. 606",
+            _USCODE_8_606_TODO_TEXT,
+            "__uscode_codification_fallback__",
+            "uscode_transferred_heading_v1",
+        ),
+        (
+            "us-code-46-115.-286a747a33fe04bb",
+            "46 U.S.C. 115.",
+            _USCODE_46_115_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+        ),
+    ]
+
+    for document_id, citation, text, cue, fallback_rule in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == cue
+        assert fallback.metadata["fallback_rule"] == fallback_rule
         assert fallback.provenance.citation == citation
 
 
