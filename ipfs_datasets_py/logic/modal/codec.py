@@ -227,6 +227,15 @@ _USCODE_SECTION_HEADING_TAIL_RULES = frozenset(
 )
 _FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS = 1024
 _FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
+_FRAME_ONTOLOGY_AUDIT_CONTEXTUAL_FEATURE_NAMESPACES = frozenset({"flogic", "slot"})
+_FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_VALUE_TERMS = frozenset(
+    {
+        "even",
+        "odd",
+        "true",
+        "false",
+    }
+)
 _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
     {
         "candidate_term",
@@ -4697,20 +4706,107 @@ def _frame_ontology_audit_terms(
     frame_feature_keys: Sequence[str],
     kg_triples: Sequence[Mapping[str, str]],
 ) -> List[str]:
+    feature_terms = list(
+        frame_ontology_terms_from_feature_keys(
+            frame_feature_keys,
+            max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+        )
+    )
+    triple_terms = list(
+        frame_ontology_terms_from_triples(
+            kg_triples,
+            max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
+        )
+    )
+    contextualized_low_signal_terms = _frame_ontology_contextualized_low_signal_terms(
+        frame_feature_keys=frame_feature_keys,
+        kg_triples=kg_triples,
+    )
     return sorted(_unique_preserve_order(
-        list(
-            frame_ontology_terms_from_feature_keys(
-                frame_feature_keys,
-                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
-            )
-        )
-        + list(
-            frame_ontology_terms_from_triples(
-                kg_triples,
-                max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
-            )
-        )
+        feature_terms
+        + triple_terms
+        + contextualized_low_signal_terms
     ))
+
+
+def _frame_ontology_contextualized_low_signal_terms(
+    *,
+    frame_feature_keys: Sequence[str],
+    kg_triples: Sequence[Mapping[str, str]],
+) -> List[str]:
+    terms: List[str] = []
+    for feature_key in frame_feature_keys:
+        contextualized = _contextualized_low_signal_frame_term_from_feature(
+            str(feature_key or "").strip()
+        )
+        if contextualized:
+            terms.append(contextualized)
+    for triple in kg_triples:
+        predicate = _clean_non_empty_string(triple.get("predicate"))
+        obj = _clean_non_empty_string(triple.get("object"))
+        if not predicate or not obj:
+            continue
+        contextualized = _contextualized_low_signal_frame_term_from_feature(
+            f"flogic:{predicate}:{obj}"
+        )
+        if contextualized:
+            terms.append(contextualized)
+    return _unique_preserve_order(terms)
+
+
+def _contextualized_low_signal_frame_term_from_feature(feature_key: str) -> str:
+    feature = _clean_non_empty_string(feature_key)
+    if not feature:
+        return ""
+    raw_value = frame_ontology_feature_value(feature)
+    if not raw_value:
+        return ""
+    predicate = _frame_ontology_predicate_from_feature_key(feature)
+    if not predicate:
+        return ""
+    normalized_value = normalize_frame_ontology_term(
+        raw_value,
+        keep_numeric_tokens=True,
+        keep_single_char_alpha_tokens=True,
+        keep_stopword_tokens=True,
+    )
+    if not _is_frame_ontology_low_signal_value_term(normalized_value):
+        return ""
+    return normalize_frame_ontology_term(
+        f"{predicate}_{normalized_value}",
+        max_tokens=24,
+        keep_numeric_tokens=True,
+        keep_single_char_alpha_tokens=True,
+        keep_stopword_tokens=True,
+    )
+
+
+def _frame_ontology_predicate_from_feature_key(feature_key: str) -> str:
+    head, separator, tail = str(feature_key or "").partition(":")
+    if not separator:
+        return ""
+    namespace = head.strip().lower()
+    if namespace not in _FRAME_ONTOLOGY_AUDIT_CONTEXTUAL_FEATURE_NAMESPACES:
+        return ""
+    raw_predicate, separator, _value = tail.partition(":")
+    if not separator:
+        return ""
+    return re.sub(
+        r"[^a-z0-9]+",
+        "_",
+        str(raw_predicate or "").strip().lower(),
+    ).strip("_")
+
+
+def _is_frame_ontology_low_signal_value_term(term: str) -> bool:
+    normalized = _clean_non_empty_string(term).lower()
+    if not normalized:
+        return False
+    if normalized in _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_VALUE_TERMS:
+        return True
+    if normalized.isdigit():
+        return len(normalized) <= 2
+    return len(normalized) == 1 and normalized.isalpha()
 
 
 def _selected_frame_modal_families(modal_ir: ModalIRDocument) -> List[str]:
