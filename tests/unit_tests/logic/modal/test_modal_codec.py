@@ -63,6 +63,120 @@ _USCODE_46_8906_TEXT = (
     "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
     "\"not more than $25,000\" for \"$1,000\"."
 )
+_USCODE_25_478_1_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS "
+    "CHAPTER 14 - MISCELLANEOUS SUBCHAPTER V - PROTECTION OF INDIANS AND CONSERVATION OF "
+    "RESOURCES Sec. 478-1 - Transferred From the U.S. Government Publishing Office, www.gpo.gov "
+    "§478–1. Transferred Editorial Notes Codification Section 478–1 was editorially reclassified "
+    "as section 5126 of this title."
+)
+_USCODE_42_6930_TEXT = (
+    "§6930. Effective date (a) Preliminary notification Not later than ninety days after "
+    "promulgation of regulations under section 6921 of this title identifying by its "
+    "characteristics or listing any substance as hazardous waste subject to this subchapter, any "
+    "person generating or transporting such substance or owning or operating a facility for "
+    "treatment, storage, or disposal of such substance shall file with the Administrator (or with "
+    "States having authorized hazardous waste permit programs under section 6926 of this title) a "
+    "notification stating the location and general description of such activity and the "
+    "identified or listed hazardous wastes handled by such person. Not later than fifteen months "
+    "after November 8, 1984— (1) the owner or operator of any facility which produces a fuel (A) "
+    "from any hazardous waste identified or listed under section 6921 of this title, (B) from "
+    "such hazardous waste identified or listed under section 6921 of this title and any other "
+    "material, (C) from used oil, or (D) from used oil and any other material; (2) the owner or "
+    "operator of any facility (other than a single- or two-family residence) which burns for "
+    "purposes of energy recovery any fuel produced as provided in paragraph (1) or any fuel which "
+    "otherwise contains used oil or any hazardous waste identified or listed under section 6921 "
+    "of this title; and (3) any person who distributes or markets any fuel which is produced as "
+    "provided in paragraph (1) or any fuel which otherwise contains used oil or any hazardous "
+    "waste identified or listed under section 6921 of this title 1 shall file with the "
+    "Administrator (and with the State in the case of a State with an authorized hazardous waste "
+    "program) a notification stating the location and general description of the facility, "
+    "together with a description of the identified or listed hazardous waste involved and, in the "
+    "case of a facility referred to in paragraph (1) or (2), a description of the production or "
+    "energy recovery activity carried out at the facility and such other information as the "
+    "Administrator deems necessary. For purposes of the preceding provisions, the term \"hazardous "
+    "waste listed under section 6921 of this title\" also includes any commercial chemical product "
+    "which is listed under section 6921 of this title and which, in lieu of its original intended "
+    "use, is (i) produced for use as (or as a component of) a fuel, (ii) distributed for use as a "
+    "fuel, or (iii) burned as a fuel. Notification shall not be required under the second "
+    "sentence of this subsection in the case of facilities (such as residential boilers) where "
+    "the Administrator determines that such notification is not necessary in order for the "
+    "Administrator to obtain sufficient information respecting current practices of facilities "
+    "using hazardous waste for energy recovery. Nothing in this subsection shall be construed to "
+    "affect or impair the provisions of section 6921(b)(3) of this title. Nothing in this "
+    "subsection shall affect regulatory determinations under section 6935 of this title. In "
+    "revising any regulation under section 6921 of this title identifying additional "
+    "characteristics of hazardous waste or listing any additional substance as hazardous waste "
+    "subject to this subchapter, the Administrator may require any person referred to in the "
+    "preceding provisions to file with the Administrator (or with States having authorized "
+    "hazardous waste permit programs under section 6926 of this title) the notification described "
+    "in the preceding provisions. Not more than one such notification shall be required to be "
+    "filed with respect to the same substance. No identified or listed hazardous waste subject to "
+    "this subchapter may be transported, treated, stored, or disposed of unless notification has "
+    "been given as required under this subsection. (b) Effective date of regulation The "
+    "regulations under this subchapter respecting requirements applicable to the generation, "
+    "transportation, treatment, storage, or disposal of hazardous waste (including requirements "
+    "respecting permits for such treatment, storage, or disposal) shall take effect on the date "
+    "six months after the date of promulgation thereof (or six months after the date of revision "
+    "in the case of any regulation which is revised after the date required for promulgation "
+    "thereof). At the time a regulation is promulgated, the Administrator may provide for a "
+    "shorter period prior to the effective date, or an immediate effective date for: (1) a "
+    "regulation with which the Administrator finds the regulated community does not need six "
+    "months to come into compliance; (2) a regulation which responds to an emergency situation; "
+    "or (3) other good cause found and published with the regulation. (Pub. L. 89–272, title II, "
+    "§3010, as added Pub. L. 94–580, §2, Oct. 21, 1976, 90 Stat. 2812; amended Pub. L. 96–482, "
+    "§15, Oct. 21, 1980, 94 Stat. 2342; Pub. L. 98–616, title II, §§204(a), 234, Nov. 8, 1984, 98 "
+    "Stat. 3235, 3258.) Editorial Notes Amendments 1984 —Subsec. (a). Pub. L. 98–616, §204(a), "
+    "inserted provisions after first sentence relating to burning and blending of hazardous "
+    "wastes and substituted \"the preceding provisions\" for \"the preceding sentence\" in three "
+    "places. Subsec. (b). Pub. L. 98–616, §234, inserted provision that at the time a regulation "
+    "is promulgated, the Administrator may provide for a shorter period prior to the effective "
+    "date, or an immediate effective date for a regulation with which the Administrator finds the "
+    "regulated community does not need six months to come into compliance, a regulation which "
+    "responds to an emergency situation, or other good cause found and published with the "
+    "regulation. 1980 —Subsec. (a). Pub. L. 96–482 struck out \"or revision\" after \"after "
+    "promulgation or revision of regulations\" and inserted provision for filing of notification "
+    "when revising any regulation identifying additional characteristics of hazardous waste or "
+    "listing any additional substance as hazardous waste subject to this subchapter. Executive "
+    "Documents Transfer of Functions For transfer of certain enforcement functions of "
+    "Administrator or other official of Environmental Protection Agency under this chapter to "
+    "Federal Inspector, Office of Federal Inspector for the Alaska Natural Gas Transportation "
+    "System, and subsequent transfer to Secretary of Energy, then to Federal Coordinator for "
+    "Alaska Natural Gas Transportation Projects, see note set out under section 6903 of this "
+    "title. 1 So in original. Probably should be followed by a semicolon."
+)
+_USCODE_46_60101_TEXT = (
+    "§60101. Boarding arriving vessels before inspection (a) Regulations .—The Secretary of "
+    "Homeland Security shall prescribe and enforce regulations on the boarding of a vessel "
+    "arriving at a port of the United States before the vessel has been inspected and secured. "
+    "(b) Criminal Penalty .—A person violating a regulation prescribed under this section shall "
+    "be fined under title 18, imprisoned for not more than 6 months, or both. (c) Relationship to "
+    "Other law .—This section shall be construed as supplementary to section 2279 of title 18. "
+    "(Pub. L. 109–304, §9(b), Oct. 6, 2006, 120 Stat. 1674.) Historical and Revision Notes "
+    "Revised Section Source (U.S. Code) Source (Statutes at Large) 60101 46 App.:163. Mar. 31, "
+    "1900, ch. 120, §§1–3, 31 Stat. 58. In subsection (a), the Secretary of Homeland Security is "
+    "substituted for the Commissioner of Customs because the functions of the Customs Service and "
+    "of the Secretary of the Treasury relating thereto were transferred to the Secretary of "
+    "Homeland Security by section 403(1) of the Homeland Security Act of 2002 (Pub. L. 107–296, "
+    "116 Stat. 2178). The functions of the Commissioner of Customs previously were vested in the "
+    "Secretary of the Treasury under section 321(c) of title 31. For prior related transfers of "
+    "functions, see the transfer of functions note under 46 App. U.S.C. 163. The word \"shall\" is "
+    "substituted for \"is authorized and directed to\" for consistency in the revised title and to "
+    "eliminate unnecessary words. The word \"port\" is substituted for \"seaports\" for consistency "
+    "in the revised title. The word \"secured\" is substituted for \"placed in security\" to "
+    "eliminate unnecessary words. The words \"from time to time\", \"properly\", and \"and for that "
+    "purpose to employ any of the officers of the United States Customs Service\" are omitted as "
+    "unnecessary. In subsection (b), the words \"fined under title 18, imprisoned for not more "
+    "than 6 months, or both\" are substituted for \"subject to a penalty of not more than $100 or "
+    "imprisonment not to exceed six months, or both\" because of chapter 227 of title 18. The "
+    "words \"in the discretion of the court\" are omitted as unnecessary. In subsection (c), the "
+    "words \"section 2279 of title 18\" are substituted for \"section forty-six hundred and six of "
+    "the Revised Statutes\" in the Act of Mar. 31, 1900, because R.S. §4606 (formerly classified "
+    "to 46 U.S.C. 708 (1946 ed.)) was replaced by 18 U.S.C. 2279 in the codification of title 18 "
+    "by the Act of June 25, 1948 (ch. 645, 62 Stat. 683). The words \"section 9 of act August 2, "
+    "1882 (22 Stat. 189)\" are omitted because that law was repealed by section 4(b) of Public Law "
+    "98–89 (Aug. 26, 1983, 97 Stat. 600)."
+)
 
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
@@ -343,6 +457,65 @@ def test_modal_compiler_replays_dataset_zero_formula_cases_for_31a_2b_and_8906()
         assert fallback.operator.family == "frame"
         assert fallback.metadata["fallback_rule"] == fallback_rule
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_dataset_samples_for_478_1_6930_and_60101() -> None:
+    cases = [
+        (
+            "us-code-25-478-1-c2fe462e0462e875",
+            "25 U.S.C. 478-1",
+            _USCODE_25_478_1_TEXT,
+            "uscode_transferred_heading_v1",
+            {"frame"},
+        ),
+        (
+            "us-code-42-6930.-5842e7569af665c8",
+            "42 U.S.C. 6930.",
+            _USCODE_42_6930_TEXT,
+            None,
+            {"deontic", "temporal"},
+        ),
+        (
+            "us-code-46-60101.-6bea2346c1c5229c",
+            "46 U.S.C. 60101.",
+            _USCODE_46_60101_TEXT,
+            None,
+            {"deontic", "temporal"},
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text, fallback_rule, expected_families in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            assert all(
+                formula.provenance.citation == citation
+                for formula in compiled.modal_ir.formulas
+            )
+            modal_families = {
+                formula.operator.family
+                for formula in compiled.modal_ir.formulas
+            }
+            assert expected_families.issubset(modal_families)
+            if fallback_rule is not None:
+                fallback = compiled.modal_ir.formulas[-1]
+                assert fallback.operator.family == "frame"
+                assert fallback.metadata["fallback_rule"] == fallback_rule
 
 
 def test_modal_compiler_ignores_calendar_month_may_permission_noise() -> None:
