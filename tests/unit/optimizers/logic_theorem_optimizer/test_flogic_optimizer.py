@@ -102,15 +102,17 @@ def test_flogic_optimizer_tracks_slot_contextual_frame_terms() -> None:
     )
 
     assert result.metadata["frame_feature_key_count"] == 4
-    assert result.metadata["frame_audit_feature_key_count"] == 3
+    assert result.metadata["frame_audit_feature_key_count"] == 4
     assert result.metadata["frame_audit_feature_keys"] == [
         "slot:citation_section_number:5406",
         "slot:condition:unless written notice is provided",
         "slot:modal_family:frame",
+        "slot:source_id:us-code-5-552-deadbeefdeadbeef",
     ]
-    assert result.metadata["frame_ontology_term_count"] == 3
+    assert result.metadata["frame_ontology_term_count"] == 4
     assert result.metadata["frame_ontology_terms"] == [
         "5406",
+        "5_552",
         "frame",
         "unless_written_notice_provided",
     ]
@@ -294,10 +296,12 @@ def test_flogic_optimizer_tracks_legacy_bare_contextual_feature_terms() -> None:
     assert result.metadata["frame_audit_feature_keys"] == [
         "citation_section_component:430f",
         "condition:unless written notice is provided",
+        "source_id:us-code-5-552-deadbeefdeadbeef",
         "source_id_section_suffix:e",
     ]
     assert result.metadata["frame_ontology_terms"] == [
         "430f",
+        "5_552",
         "e",
         "unless_written_notice_provided",
     ]

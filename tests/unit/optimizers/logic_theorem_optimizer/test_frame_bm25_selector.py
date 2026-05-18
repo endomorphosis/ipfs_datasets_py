@@ -251,6 +251,7 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
         "authority",
         "permission",
         "may",
+        "5_552",
     ]
 
 
@@ -456,6 +457,7 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
         "frame",
         "unless_written_notice_provided",
         "5406",
+        "5_552",
         "administrative_notice_hearing",
     ]
 
@@ -703,6 +705,7 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
         "authority",
         "permission",
         "may",
+        "5_552",
     ]
 
 
@@ -722,6 +725,7 @@ def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_p
         "430f",
         "e",
         "frame",
+        "5_552",
     ]
 
 
@@ -1009,8 +1013,9 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("token:agency") is False
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
     assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
-    assert is_frame_ontology_feature_key("slot:source_id:us-code-5-552-deadbeefdeadbeef") is False
-    assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is False
+    assert is_frame_ontology_feature_key("slot:source_id:us-code-5-552-deadbeefdeadbeef") is True
+    assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
+    assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
     assert is_frame_ontology_feature_key("") is False
 
 

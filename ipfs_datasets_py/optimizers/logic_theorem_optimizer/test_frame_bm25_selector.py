@@ -152,3 +152,21 @@ def test_frame_ontology_terms_normalize_range_connector_predicates() -> None:
 
     assert triple_terms == ["through"]
     assert feature_terms == ["through"]
+
+
+def test_frame_ontology_terms_extract_source_id_coordinate_terms() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "source_id", "object": "us-code-43-945a.-deadbeefdeadbeef"},
+            {"predicate": "source_id", "object": "not-a-uscode-source-id"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:source_id:us-code-43-945a.-deadbeefdeadbeef",
+            "slot:source_id:not-a-uscode-source-id",
+        ]
+    )
+
+    assert triple_terms == ["43_945a"]
+    assert feature_terms == ["43_945a"]

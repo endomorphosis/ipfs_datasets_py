@@ -17,6 +17,11 @@ _FRAME_ONTOLOGY_POSITIONED_VALUE_RE = re.compile(
 _FRAME_ONTOLOGY_POSITIONED_VALUE_LEGACY_SLOT_RE = re.compile(
     r"^\s*\d+\s*_\s*(?P<value>.+?)\s*$"
 )
+_FRAME_ONTOLOGY_SOURCE_ID_RE = re.compile(
+    r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
+    re.IGNORECASE,
+)
+_FRAME_ONTOLOGY_SOURCE_ID_SECTION_TRAILING_PUNCT_RE = re.compile(r"[.;:]+$")
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
         "a",
@@ -73,6 +78,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
         "predicate_role",
         "predicate_token",
         "section_heading_tail",
+        "source_id",
         "statement_hint",
         "status_keyword",
     }
@@ -98,6 +104,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
 _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "citation",
     "citation_",
+    "source_id",
     "source_id_",
     "statutory_scope_",
 )
@@ -616,6 +623,11 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
+    if normalized_predicate == "source_id":
+        normalized_source_id = _normalized_source_id_ontology_value(raw_value)
+        if normalized_source_id:
+            return normalized_source_id
+        return ""
     if normalized_predicate in _FRAME_ONTOLOGY_TRAILING_PUNCT_PREDICATES:
         normalized_trailing_punct = _normalized_trailing_punct_ontology_value(raw_value)
         if normalized_trailing_punct:
@@ -649,6 +661,23 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             if positioned_value:
                 return positioned_value
     return raw_value
+
+
+def _normalized_source_id_ontology_value(raw_value: str) -> str:
+    match = _FRAME_ONTOLOGY_SOURCE_ID_RE.match(str(raw_value or "").strip())
+    if not match:
+        return ""
+    title = str(match.group("title") or "").strip()
+    section = str(match.group("section") or "").strip()
+    if not title or not section:
+        return ""
+    normalized_section = _FRAME_ONTOLOGY_SOURCE_ID_SECTION_TRAILING_PUNCT_RE.sub(
+        "",
+        section,
+    ).strip()
+    if normalized_section:
+        section = normalized_section
+    return f"{title} {section}"
 
 
 def _normalized_trailing_punct_ontology_value(raw_value: str) -> str:
