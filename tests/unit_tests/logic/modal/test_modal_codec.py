@@ -4263,6 +4263,88 @@ def test_modal_codec_audits_citation_coordinates_from_frame_term_metadata() -> N
     assert "us_code_564m_dee77e626d5d85a3" not in selected_terms
 
 
+def test_modal_codec_audits_slot_normalized_source_ids_from_frame_term_metadata() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-slot-normalized-source-id-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: [
+                    "us_code_54_101920_2a8a1acc9abc25ac",
+                    "us_code_38_1720d_93b4ea776e53aa1a",
+                ]
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "54_101920" in selected_terms
+    assert "38_1720d" in selected_terms
+    assert not any(term.startswith("us_code_") for term in selected_terms)
+
+
+def test_modal_codec_audits_matched_terms_metadata_without_key_noise() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-matched-terms-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: {
+                    "matched_terms": ["hearing rights", "final order"],
+                    "score": 0.99,
+                }
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "hearing_rights" in selected_terms
+    assert "final_order" in selected_terms
+    assert "matched_terms" not in selected_terms
+
+
 def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

@@ -229,6 +229,8 @@ _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
         "items",
         "label",
         "labels",
+        "matched_term",
+        "matched_terms",
         "name",
         "names",
         "selected_term",
@@ -2830,6 +2832,16 @@ def _frame_ontology_metadata_terms(value: Any) -> List[str]:
         if feature_terms:
             return _unique_preserve_order(feature_terms)
         raw_value = frame_feature_value
+
+    # Metadata payloads often carry slot-normalized source IDs
+    # (`us_code_<title>_<section>_<digest>`) without an explicit feature-key
+    # prefix. Resolve them through the canonical frame-feature parser so audits
+    # keep stable `<title>_<section>` coordinates and drop digest noise.
+    source_id_terms = frame_ontology_terms_from_feature_keys(
+        [f"slot:source_id:{raw_value}"],
+    )
+    if source_id_terms:
+        return _unique_preserve_order(source_id_terms)
 
     citation_match = _USC_CITATION_RE.match(raw_value)
     source_id_match = _USCODE_SOURCE_ID_RE.match(raw_value)
