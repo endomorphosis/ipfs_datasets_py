@@ -2435,6 +2435,16 @@ def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_am
     assert adaptive_frame.metadata["predicted_family"] == "hybrid"
     assert adaptive_frame.metadata["target_family"] == "frame"
     assert adaptive_frame.metadata["family_margin"] == -0.216733
+    assert abs(adaptive_frame.metadata["family_margin_raw"] + 0.216733561973) < 1e-12
+    assert adaptive_frame.metadata["predicted_share_raw"] > adaptive_frame.metadata["target_share_raw"]
+    assert adaptive_frame.metadata["predicted_share"] == round(
+        adaptive_frame.metadata["predicted_share_raw"],
+        6,
+    )
+    assert adaptive_frame.metadata["target_share"] == round(
+        adaptive_frame.metadata["target_share_raw"],
+        6,
+    )
     assert adaptive_frame.metadata["adaptive_margin_direction"] == "outvoted"
     assert adaptive_frame.metadata["is_priority_policy_pair"] is True
     assert adaptive_frame.metadata["family_ranking"][0]["source"] == "logit_softmax_fallback"
@@ -2445,6 +2455,7 @@ def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_am
     assert any(
         ambiguity.ambiguity_type == "adaptive_hybrid_frame_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == -0.216733
+        and abs(ambiguity.metadata["family_margin_raw"] + 0.216733561973) < 1e-12
         for ambiguity in compiled.ambiguities
     )
 

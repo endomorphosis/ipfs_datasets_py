@@ -262,6 +262,15 @@ class DeterministicModalCompiler:
                 )
         return ambiguities
 
+    @staticmethod
+    def _ranking_share(candidate: Dict[str, Any]) -> float:
+        """Return share value, preferring unrounded values when present."""
+        raw_share = candidate.get("share_raw", candidate.get("share", 0.0))
+        try:
+            return float(raw_share)
+        except (TypeError, ValueError):
+            return 0.0
+
     def _family_ambiguities(
         self,
         encoding: SpaCyLegalEncoding,
@@ -277,7 +286,7 @@ class DeterministicModalCompiler:
             if not adaptive_ranking:
                 return []
             adaptive_family_shares = {
-                str(candidate["family"]): float(candidate["share"])
+                str(candidate["family"]): self._ranking_share(candidate)
                 for candidate in adaptive_ranking
             }
             return self._adaptive_family_margin_ambiguities(
@@ -290,14 +299,14 @@ class DeterministicModalCompiler:
 
         ambiguities: List[ModalCompilationAmbiguity] = []
         family_shares = {
-            str(candidate["family"]): float(candidate["share"])
+            str(candidate["family"]): self._ranking_share(candidate)
             for candidate in ranking
         }
         if modal_ir.formulas:
             primary_family = str(modal_ir.formulas[0].operator.family)
             primary_share = next(
                 (
-                    float(candidate["share"])
+                    self._ranking_share(candidate)
                     for candidate in ranking
                     if str(candidate["family"]) == primary_family
                 ),
@@ -310,14 +319,14 @@ class DeterministicModalCompiler:
                     if str(candidate["family"]) != primary_family
                 ),
                 key=lambda candidate: (
-                    float(candidate["share"]),
+                    self._ranking_share(candidate),
                     str(candidate["family"]),
                 ),
                 default=None,
             )
             if best_other is not None:
                 best_other_family = str(best_other["family"])
-                best_other_share = float(best_other["share"])
+                best_other_share = self._ranking_share(best_other)
                 family_margin = primary_share - best_other_share
                 if family_margin < self.config.modal_primary_family_outvote_margin:
                     ambiguities.append(
@@ -429,7 +438,7 @@ class DeterministicModalCompiler:
             return ambiguities
 
         top, runner_up = ranking[0], ranking[1]
-        share_margin = float(top["share"]) - float(runner_up["share"])
+        share_margin = self._ranking_share(top) - self._ranking_share(runner_up)
         if share_margin <= self.config.modal_family_share_margin:
             ambiguities.append(
                 ModalCompilationAmbiguity(
@@ -459,14 +468,14 @@ class DeterministicModalCompiler:
                     if str(candidate["family"]) != ModalLogicFamily.FRAME.value
                 ),
                 key=lambda candidate: (
-                    float(candidate["share"]),
+                    self._ranking_share(candidate),
                     str(candidate["family"]),
                 ),
                 default=None,
             )
             if best_non_frame is not None:
                 competing_family = str(best_non_frame["family"])
-                competing_share = float(best_non_frame["share"])
+                competing_share = self._ranking_share(best_non_frame)
                 frame_margin = frame_share - competing_share
                 if frame_margin < self.config.modal_primary_family_outvote_margin:
                     ambiguities.append(
@@ -511,7 +520,8 @@ class DeterministicModalCompiler:
         strong_contenders = [
             candidate
             for candidate in ranking
-            if float(candidate["share"]) >= self.config.modal_family_secondary_share_floor
+            if self._ranking_share(candidate)
+            >= self.config.modal_family_secondary_share_floor
         ]
         contender_families = {
             str(candidate["family"]) for candidate in strong_contenders
@@ -521,7 +531,7 @@ class DeterministicModalCompiler:
             is_normative_modal_family(str(candidate["family"]))
             for candidate in strong_contenders
         )
-        runner_share = float(runner_up["share"])
+        runner_share = self._ranking_share(runner_up)
         if (
             has_temporal
             and has_normative
@@ -569,12 +579,14 @@ class DeterministicModalCompiler:
             exp_by_family,
             key=lambda key: (-exp_by_family[key], key),
         ):
+            share_raw = exp_by_family[family] / total
             ranking.append(
                 {
                     "family": family,
                     "count": 0,
                     "logit": round(float(logits[family]), 6),
-                    "share": round(exp_by_family[family] / total, 6),
+                    "share_raw": share_raw,
+                    "share": round(share_raw, 6),
                     "source": "logit_softmax_fallback",
                 }
             )
@@ -593,7 +605,7 @@ class DeterministicModalCompiler:
         if not ranking:
             return []
         predicted_family = str(ranking[0]["family"])
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
         has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
@@ -680,11 +692,18 @@ class DeterministicModalCompiler:
                 target_family,
                 margin_direction,
             )
+            predicted_share_display = round(predicted_share, 6)
+            target_share_display = round(target_share, 6)
+            family_margin_display = round(
+                target_share_display - predicted_share_display,
+                6,
+            )
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
                 "explicit_ambiguity_type": explicit_type,
-                "family_margin": round(family_margin, 6),
+                "family_margin_raw": family_margin,
+                "family_margin": family_margin_display,
                 "family_ranking": list(ranking),
                 "compiled_modal_families": sorted(compiled_modal_families),
                 "has_target_signal_evidence": has_target_signal_evidence,
@@ -697,9 +716,11 @@ class DeterministicModalCompiler:
                 "lexical_signals": dict(sorted(signals.items())),
                 "is_priority_policy_pair": is_priority_policy_pair,
                 "predicted_family": predicted_family,
-                "predicted_share": round(predicted_share, 6),
+                "predicted_share_raw": predicted_share,
+                "predicted_share": predicted_share_display,
                 "target_family": target_family,
-                "target_share": round(target_share, 6),
+                "target_share_raw": target_share,
+                "target_share": target_share_display,
             }
             ambiguities.append(
                 ModalCompilationAmbiguity(
@@ -781,7 +802,7 @@ class DeterministicModalCompiler:
         top_family = str(ranking[0]["family"])
         if top_family != ModalLogicFamily.TEMPORAL.value:
             return []
-        temporal_share = float(ranking[0]["share"])
+        temporal_share = self._ranking_share(ranking[0])
         signals = modal_ambiguity_signals(encoding)
         target_specs = (
             (
@@ -843,7 +864,7 @@ class DeterministicModalCompiler:
         predicted_family = str(ranking[0]["family"])
         if predicted_family == ModalLogicFamily.TEMPORAL.value:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_family = ModalLogicFamily.TEMPORAL.value
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
@@ -886,7 +907,7 @@ class DeterministicModalCompiler:
         predicted_family = str(ranking[0]["family"])
         if predicted_family in {ModalLogicFamily.TEMPORAL.value, ModalLogicFamily.FRAME.value}:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_family = ModalLogicFamily.FRAME.value
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
@@ -935,7 +956,7 @@ class DeterministicModalCompiler:
         target_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
         if predicted_family == target_family:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
         has_condition_scope = bool(signals.get("has_condition_or_exception_scope"))
@@ -979,7 +1000,7 @@ class DeterministicModalCompiler:
         target_family = ModalLogicFamily.DEONTIC.value
         if predicted_family == target_family:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
         has_deontic_scope = bool(signals.get("has_deontic_scope"))
@@ -1023,7 +1044,7 @@ class DeterministicModalCompiler:
         target_family = ModalLogicFamily.ALETHIC.value
         if predicted_family == target_family:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
         has_alethic_scope = bool(
@@ -1071,7 +1092,7 @@ class DeterministicModalCompiler:
             ModalLogicFamily.DEONTIC.value,
         }:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_family = (
             ModalLogicFamily.DEONTIC.value
             if predicted_family == ModalLogicFamily.TEMPORAL.value
@@ -1129,7 +1150,7 @@ class DeterministicModalCompiler:
         target_family = ModalLogicFamily.DYNAMIC.value
         if predicted_family == target_family:
             return []
-        predicted_share = float(ranking[0]["share"])
+        predicted_share = self._ranking_share(ranking[0])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
         has_dynamic_scope = bool(
