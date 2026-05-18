@@ -16,7 +16,7 @@ import signal
 import subprocess
 import sys
 import time
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
@@ -56,6 +56,14 @@ LAW_COLUMNS = [
     "citation_text",
     "normalized_citation",
 ]
+
+CODEX_AST_SCOPES = (
+    "compiler_parser",
+    "compiler_registry",
+    "compiler_ambiguity",
+    "ir_decompiler",
+    "frame_logic",
+)
 
 
 CODEX_TARGET_FILE_HINTS = {
@@ -140,6 +148,29 @@ def queue_file_lock(queue_path: Path) -> Iterator[None]:
     import fcntl
 
     lock_path = queue_path.with_suffix(queue_path.suffix + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("w", encoding="utf-8") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
+@contextmanager
+def codex_main_apply_lock(packet: Mapping[str, Any]) -> Iterator[None]:
+    """Serialize apply/validate/commit for parallel Codex worktree packets."""
+    import fcntl
+
+    source_root_value = packet.get("source_repo_root") or packet.get("repo_root")
+    if not source_root_value:
+        yield
+        return
+
+    source_repo_root = Path(str(source_root_value)).resolve()
+    git_dir = source_repo_root / ".git"
+    lock_dir = git_dir if git_dir.is_dir() else source_repo_root
+    lock_path = lock_dir / "codex-main-apply.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("w", encoding="utf-8") as handle:
         fcntl.flock(handle, fcntl.LOCK_EX)
@@ -307,6 +338,74 @@ def codex_loop_execution_mode(args: argparse.Namespace) -> str:
     return "queued_for_external_codex_worker"
 
 
+def _codex_parallel_scope_values(args: argparse.Namespace) -> List[str]:
+    raw = str(getattr(args, "codex_parallel_scopes", "") or "").strip()
+    if not raw:
+        return []
+    if raw.lower() == "all":
+        return list(CODEX_AST_SCOPES)
+    scopes = [scope.strip() for scope in raw.split(",") if scope.strip()]
+    invalid = [scope for scope in scopes if scope not in CODEX_AST_SCOPES]
+    if invalid:
+        raise ValueError(
+            "unknown codex parallel scope(s): "
+            + ", ".join(invalid)
+            + "; expected one of "
+            + ", ".join(CODEX_AST_SCOPES)
+        )
+    return list(dict.fromkeys(scopes))
+
+
+def _build_codex_child_command(
+    args: argparse.Namespace,
+    *,
+    child_run_id: str,
+    codex_duration_seconds: float,
+    module_name: str,
+    queue_run_id: str,
+    scope: Optional[str],
+    worker_id: Optional[str],
+) -> List[str]:
+    command = [
+        sys.executable,
+        "-m",
+        module_name,
+        "--loop-role",
+        "codex",
+        "--run-id",
+        child_run_id,
+        "--queue-run-id",
+        queue_run_id,
+        "--duration-seconds",
+        str(codex_duration_seconds),
+        "--max-items",
+        str(args.max_items),
+        "--poll-seconds",
+        str(args.poll_seconds),
+        "--codex-exec-mode",
+        str(args.codex_exec_mode),
+        "--codex-command",
+        str(args.codex_command),
+        "--codex-sandbox",
+        str(args.codex_sandbox),
+        "--codex-timeout-seconds",
+        str(args.codex_timeout_seconds),
+        "--codex-apply-mode",
+        str(getattr(args, "codex_apply_mode", "patch_only")),
+        "--codex-commit-mode",
+        str(getattr(args, "codex_commit_mode", "none")),
+        "--codex-bundle-mode",
+        str(getattr(args, "codex_bundle_mode", "semantic")),
+    ]
+    if scope:
+        command.extend(["--codex-scope", str(scope)])
+    if worker_id:
+        command.extend(["--worker-id", str(worker_id)])
+    if getattr(args, "codex_model", None):
+        command.extend(["--codex-model", str(args.codex_model)])
+    return command
+
+
 def build_paired_daemon_commands(
     args: argparse.Namespace,
     *,
@@ -348,41 +447,48 @@ def build_paired_daemon_commands(
     for warm_start_state in getattr(args, "warm_start_state", []):
         autoencoder_command.extend(["--warm-start-state", str(warm_start_state)])
 
-    codex_command = [
-        sys.executable,
-        "-m",
-        module_name,
-        "--loop-role",
-        "codex",
-        "--run-id",
-        codex_run_id,
-        "--queue-run-id",
-        queue_run_id,
-        "--duration-seconds",
-        str(codex_duration_seconds),
-        "--max-items",
-        str(args.max_items),
-        "--poll-seconds",
-        str(args.poll_seconds),
-        "--codex-exec-mode",
-        str(args.codex_exec_mode),
-        "--codex-command",
-        str(args.codex_command),
-        "--codex-sandbox",
-        str(args.codex_sandbox),
-        "--codex-timeout-seconds",
-        str(args.codex_timeout_seconds),
-        "--codex-apply-mode",
-        str(getattr(args, "codex_apply_mode", "patch_only")),
-        "--codex-commit-mode",
-        str(getattr(args, "codex_commit_mode", "none")),
-    ]
-    if getattr(args, "codex_scope", None):
-        codex_command.extend(["--codex-scope", str(args.codex_scope)])
-    if getattr(args, "worker_id", None):
-        codex_command.extend(["--worker-id", str(args.worker_id)])
-    if getattr(args, "codex_model", None):
-        codex_command.extend(["--codex-model", str(args.codex_model)])
+    parallel_scopes = _codex_parallel_scope_values(args)
+    if parallel_scopes:
+        codex_children = []
+        for scope in parallel_scopes:
+            child_run_id = f"{codex_run_id}-{scope}"
+            child_worker_id = (
+                f"{args.worker_id}-{scope}" if getattr(args, "worker_id", None) else f"codex-{scope}"
+            )
+            codex_children.append(
+                {
+                    "command": _build_codex_child_command(
+                        args,
+                        child_run_id=child_run_id,
+                        codex_duration_seconds=codex_duration_seconds,
+                        module_name=module_name,
+                        queue_run_id=queue_run_id,
+                        scope=scope,
+                        worker_id=child_worker_id,
+                    ),
+                    "run_id": child_run_id,
+                    "scope": scope,
+                    "worker_id": child_worker_id,
+                }
+            )
+    else:
+        codex_children = [
+            {
+                "command": _build_codex_child_command(
+                    args,
+                    child_run_id=codex_run_id,
+                    codex_duration_seconds=codex_duration_seconds,
+                    module_name=module_name,
+                    queue_run_id=queue_run_id,
+                    scope=getattr(args, "codex_scope", None),
+                    worker_id=getattr(args, "worker_id", None),
+                ),
+                "run_id": codex_run_id,
+                "scope": getattr(args, "codex_scope", None),
+                "worker_id": getattr(args, "worker_id", None),
+            }
+        ]
+    codex_command = list(codex_children[0]["command"])
 
     return {
         "autoencoder_run_id": autoencoder_run_id,
@@ -390,6 +496,7 @@ def build_paired_daemon_commands(
         "queue_run_id": queue_run_id,
         "autoencoder_command": autoencoder_command,
         "codex_command": codex_command,
+        "codex_children": codex_children,
     }
 
 
@@ -414,6 +521,13 @@ def create_codex_work_packet(
             str(todo.metadata.get("program_synthesis_scope") or "")
             for todo in todos
             if todo.metadata.get("program_synthesis_scope")
+        }
+    )
+    semantic_bundle_keys = sorted(
+        {
+            str(todo.metadata.get("semantic_bundle_key") or "")
+            for todo in todos
+            if todo.metadata.get("semantic_bundle_key")
         }
     )
     todo_list_path = packet_dir / "TODO_LIST.jsonl"
@@ -489,6 +603,7 @@ def create_codex_work_packet(
         "repo_root": str(repo_root),
         "run_id": run_id,
         "program_synthesis_scopes": program_synthesis_scopes,
+        "semantic_bundle_keys": semantic_bundle_keys,
         "suggested_target_files": suggested_files,
         "source_repo_root": str(source_repo_root),
         "task_source": "autoencoder_supervisor_program_synthesis_queue",
@@ -1054,12 +1169,13 @@ def execute_codex_work_packet(
     _save_packet_if_possible(updated, packet_path)
     normalized_apply_mode = str(apply_mode).strip().lower()
     if normalized_apply_mode == "apply_to_main":
-        refreshed = apply_codex_worktree_changes_to_main(
-            updated,
-            commit_mode=commit_mode,
-            validation_commands=validation_commands,
-            validation_timeout_seconds=validation_timeout_seconds,
-        )
+        with codex_main_apply_lock(updated):
+            refreshed = apply_codex_worktree_changes_to_main(
+                updated,
+                commit_mode=commit_mode,
+                validation_commands=validation_commands,
+                validation_timeout_seconds=validation_timeout_seconds,
+            )
     else:
         refreshed = refresh_codex_work_packet_patch(updated)
     exec_result["attempt_count"] = 1
@@ -1090,12 +1206,13 @@ def execute_codex_work_packet(
         refreshed["codex_exec"] = fallback_result
         _save_packet_if_possible(refreshed, packet_path)
         if normalized_apply_mode == "apply_to_main":
-            refreshed = apply_codex_worktree_changes_to_main(
-                refreshed,
-                commit_mode=commit_mode,
-                validation_commands=validation_commands,
-                validation_timeout_seconds=validation_timeout_seconds,
-            )
+            with codex_main_apply_lock(refreshed):
+                refreshed = apply_codex_worktree_changes_to_main(
+                    refreshed,
+                    commit_mode=commit_mode,
+                    validation_commands=validation_commands,
+                    validation_timeout_seconds=validation_timeout_seconds,
+                )
         else:
             refreshed = refresh_codex_work_packet_patch(refreshed)
     return refreshed
@@ -1267,6 +1384,8 @@ def _todo_list_markdown(
                 f"  action: `{todo.action}`",
                 f"  role: `{todo.metadata.get('optimizer_role', '')}`",
                 f"  target: `{todo.metadata.get('target_component', '')}`",
+                f"  scope: `{todo.metadata.get('program_synthesis_scope', '')}`",
+                f"  bundle: `{todo.metadata.get('semantic_bundle_key', '')}`",
                 f"  loss: `{todo.loss_name}` = `{todo.loss_value}`",
                 f"  objective: {todo.objective}",
                 f"  samples: `{', '.join(todo.sample_ids)}`",
@@ -1313,6 +1432,8 @@ def _codex_task_markdown(
             [
                 f"- `{todo.todo_id}` `{todo.action}`",
                 f"  target: `{todo.metadata.get('target_component', '')}`",
+                f"  scope: `{todo.metadata.get('program_synthesis_scope', '')}`",
+                f"  bundle: `{todo.metadata.get('semantic_bundle_key', '')}`",
                 f"  objective: {todo.objective}",
                 f"  support: {todo.metadata.get('support_count', '')}",
             ]
@@ -1340,6 +1461,7 @@ def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
         "Your worktree edits may be applied back to the source checkout and validated automatically when this packet finishes.",
         "Do not create changes.patch or other patch artifact files; leave source and test edits directly in the worktree.",
         "Treat the packet's program_synthesis_scope metadata as the AST/write-scope boundary; keep edits inside that lane unless a test requires a small adjacent change.",
+        "When multiple TODOs are present, they share a semantic_bundle_key; prefer one generalized compiler/decompiler/frame improvement over one-off sample fixes.",
         "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
         "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
         "Use local repository files and tests only; do not use web search for this packet.",
@@ -1529,15 +1651,26 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--codex-scope",
-        choices=(
-            "compiler_parser",
-            "compiler_registry",
-            "compiler_ambiguity",
-            "ir_decompiler",
-            "frame_logic",
-        ),
+        choices=CODEX_AST_SCOPES,
         default=None,
         help="Restrict the Codex worker to one AST/write-scope lane for parallel runs.",
+    )
+    parser.add_argument(
+        "--codex-parallel-scopes",
+        default=None,
+        help=(
+            "For paired runs, launch one Codex child per comma-separated AST scope "
+            "or use 'all'. Each child claims only its scope."
+        ),
+    )
+    parser.add_argument(
+        "--codex-bundle-mode",
+        choices=("priority", "semantic"),
+        default="semantic",
+        help=(
+            "For Codex loops, either claim plain priority batches or bundle the "
+            "top TODO with semantically similar TODOs from the same AST scope."
+        ),
     )
     parser.add_argument(
         "--codex-sandbox",
@@ -1610,8 +1743,31 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     )
     auto_stdout_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stdout.log"
     auto_stderr_path = log_dir / f"{paired['autoencoder_run_id']}.orchestrator.stderr.log"
-    codex_stdout_path = log_dir / f"{paired['codex_run_id']}.orchestrator.stdout.log"
-    codex_stderr_path = log_dir / f"{paired['codex_run_id']}.orchestrator.stderr.log"
+    codex_children = list(paired.get("codex_children") or [])
+    if not codex_children:
+        codex_children = [
+            {
+                "command": list(paired["codex_command"]),
+                "run_id": paired["codex_run_id"],
+                "scope": getattr(args, "codex_scope", None),
+                "worker_id": getattr(args, "worker_id", None),
+            }
+        ]
+    codex_child_summaries: List[Dict[str, Any]] = []
+    for child in codex_children:
+        child_run_id = str(child["run_id"])
+        codex_child_summaries.append(
+            {
+                "command": list(child["command"]),
+                "run_id": child_run_id,
+                "scope": child.get("scope"),
+                "stderr_path": str(log_dir / f"{child_run_id}.orchestrator.stderr.log"),
+                "stdout_path": str(log_dir / f"{child_run_id}.orchestrator.stdout.log"),
+                "worker_id": child.get("worker_id"),
+            }
+        )
+    codex_stdout_path = Path(str(codex_child_summaries[0]["stdout_path"]))
+    codex_stderr_path = Path(str(codex_child_summaries[0]["stderr_path"]))
 
     summary: Dict[str, Any] = {
         "autoencoder_command": list(paired["autoencoder_command"]),
@@ -1619,6 +1775,8 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         "autoencoder_stderr_path": str(auto_stderr_path),
         "autoencoder_stdout_path": str(auto_stdout_path),
         "codex_command": list(paired["codex_command"]),
+        "codex_children": codex_child_summaries,
+        "codex_child_count": len(codex_child_summaries),
         "codex_run_id": paired["codex_run_id"],
         "codex_stderr_path": str(codex_stderr_path),
         "codex_stdout_path": str(codex_stdout_path),
@@ -1653,6 +1811,11 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         {
             "event": "paired_runner_started",
             "autoencoder_run_id": paired["autoencoder_run_id"],
+            "codex_child_count": len(codex_child_summaries),
+            "codex_children": [
+                {"run_id": child["run_id"], "scope": child.get("scope")}
+                for child in codex_child_summaries
+            ],
             "codex_run_id": paired["codex_run_id"],
             "queue_run_id": paired["queue_run_id"],
         },
@@ -1660,16 +1823,16 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
     started = time.time()
     auto_process: Optional[subprocess.Popen[str]] = None
-    codex_process: Optional[subprocess.Popen[str]] = None
+    codex_processes: Dict[str, subprocess.Popen[str]] = {}
     auto_exit_code: Optional[int] = None
-    codex_exit_code: Optional[int] = None
+    codex_exit_codes: Dict[str, Optional[int]] = {
+        str(child["run_id"]): None for child in codex_child_summaries
+    }
 
     try:
-        with auto_stdout_path.open("a", encoding="utf-8") as auto_stdout, auto_stderr_path.open(
-            "a", encoding="utf-8"
-        ) as auto_stderr, codex_stdout_path.open("a", encoding="utf-8") as codex_stdout, codex_stderr_path.open(
-            "a", encoding="utf-8"
-        ) as codex_stderr:
+        with ExitStack() as stack:
+            auto_stdout = stack.enter_context(auto_stdout_path.open("a", encoding="utf-8"))
+            auto_stderr = stack.enter_context(auto_stderr_path.open("a", encoding="utf-8"))
             auto_process = subprocess.Popen(
                 list(paired["autoencoder_command"]),
                 cwd=root,
@@ -1692,41 +1855,63 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             if launch_delay > 0.0:
                 time.sleep(launch_delay)
 
-            codex_process = subprocess.Popen(
-                list(paired["codex_command"]),
-                cwd=root,
-                stdout=codex_stdout,
-                stderr=codex_stderr,
-                text=True,
-            )
-            append_event(
-                log_path,
-                args.run_id,
-                {
-                    "event": "paired_child_started",
-                    "child_role": "codex",
-                    "child_pid": codex_process.pid,
-                    "child_run_id": paired["codex_run_id"],
-                },
-            )
+            for child in codex_child_summaries:
+                child_run_id = str(child["run_id"])
+                child_stdout = stack.enter_context(
+                    Path(str(child["stdout_path"])).open("a", encoding="utf-8")
+                )
+                child_stderr = stack.enter_context(
+                    Path(str(child["stderr_path"])).open("a", encoding="utf-8")
+                )
+                process = subprocess.Popen(
+                    list(child["command"]),
+                    cwd=root,
+                    stdout=child_stdout,
+                    stderr=child_stderr,
+                    text=True,
+                )
+                codex_processes[child_run_id] = process
+                append_event(
+                    log_path,
+                    args.run_id,
+                    {
+                        "event": "paired_child_started",
+                        "child_role": "codex",
+                        "child_pid": process.pid,
+                        "child_run_id": child_run_id,
+                        "codex_scope": child.get("scope"),
+                    },
+                )
 
             poll_seconds = max(0.2, float(args.paired_poll_seconds))
             max_wait = float(args.duration_seconds) + max(0.0, float(args.paired_grace_seconds))
             while True:
                 auto_exit_code = auto_process.poll()
-                codex_exit_code = codex_process.poll()
+                codex_exit_codes = {
+                    run_id: process.poll()
+                    for run_id, process in codex_processes.items()
+                }
                 summary["elapsed_seconds"] = round(time.time() - started, 3)
                 summary["autoencoder_pid"] = auto_process.pid
-                summary["codex_pid"] = codex_process.pid
+                summary["codex_pids"] = {
+                    run_id: process.pid for run_id, process in codex_processes.items()
+                }
+                summary["codex_pid"] = next(iter(summary["codex_pids"].values()), None)
                 summary["autoencoder_exit_code"] = auto_exit_code
-                summary["codex_exit_code"] = codex_exit_code
+                summary["codex_exit_codes"] = codex_exit_codes
+                summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
                 summary["child_status"] = {
                     "autoencoder": "running" if auto_exit_code is None else "exited",
-                    "codex": "running" if codex_exit_code is None else "exited",
+                    "codex": {
+                        run_id: "running" if exit_code is None else "exited"
+                        for run_id, exit_code in codex_exit_codes.items()
+                    },
                 }
                 save_summary(summary_path, summary)
 
-                if auto_exit_code is not None and codex_exit_code is not None:
+                if auto_exit_code is not None and all(
+                    exit_code is not None for exit_code in codex_exit_codes.values()
+                ):
                     break
                 if stop_requested:
                     break
@@ -1735,7 +1920,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     break
                 time.sleep(poll_seconds)
     finally:
-        for process in (auto_process, codex_process):
+        for process in [auto_process, *codex_processes.values()]:
             if process is None or process.poll() is not None:
                 continue
             process.terminate()
@@ -1744,7 +1929,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             10.0,
             float(args.paired_grace_seconds),
         )
-        for process in (auto_process, codex_process):
+        for process in [auto_process, *codex_processes.values()]:
             if process is None or process.poll() is not None:
                 continue
             try:
@@ -1755,23 +1940,32 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
         if auto_process is not None:
             auto_exit_code = auto_process.poll()
-        if codex_process is not None:
-            codex_exit_code = codex_process.poll()
+        codex_exit_codes = {
+            run_id: process.poll()
+            for run_id, process in codex_processes.items()
+        }
 
         if stop_requested:
             summary["latest_stop_reason"] = f"signal_{stop_signal}"
             summary["stopped_by_signal"] = stop_signal
         summary["elapsed_seconds"] = round(time.time() - started, 3)
         summary["autoencoder_exit_code"] = auto_exit_code
-        summary["codex_exit_code"] = codex_exit_code
+        summary["codex_exit_codes"] = codex_exit_codes
+        summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
         summary["child_status"] = {
             "autoencoder": "running" if auto_exit_code is None else "exited",
-            "codex": "running" if codex_exit_code is None else "exited",
+            "codex": {
+                run_id: "running" if exit_code is None else "exited"
+                for run_id, exit_code in codex_exit_codes.items()
+            },
         }
         summary["finished_at"] = utc_now()
+        codex_success = bool(codex_exit_codes) and all(
+            exit_code == 0 for exit_code in codex_exit_codes.values()
+        )
         summary["status"] = (
             "succeeded"
-            if auto_exit_code == 0 and codex_exit_code == 0
+            if auto_exit_code == 0 and codex_success
             else "failed"
         )
         save_summary(summary_path, summary, final=True)
@@ -1782,14 +1976,16 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "event": "paired_runner_finished",
                 "status": summary["status"],
                 "autoencoder_exit_code": auto_exit_code,
-                "codex_exit_code": codex_exit_code,
+                "codex_exit_codes": codex_exit_codes,
                 "elapsed_seconds": summary["elapsed_seconds"],
             },
         )
         for signum, handler in previous_signal_handlers.items():
             signal.signal(signum, handler)
 
-    return 0 if auto_exit_code == 0 and codex_exit_code == 0 else 1
+    return 0 if auto_exit_code == 0 and all(
+        exit_code == 0 for exit_code in codex_exit_codes.values()
+    ) else 1
 
 
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
@@ -2105,6 +2301,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     else:
         summary = {
             "codex_apply_mode": args.codex_apply_mode,
+            "codex_bundle_mode": args.codex_bundle_mode,
             "codex_claimed_total": 0,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
@@ -2133,6 +2330,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         }
         save_summary(summary_path, summary)
     summary.setdefault("codex_apply_mode", args.codex_apply_mode)
+    summary.setdefault("codex_bundle_mode", args.codex_bundle_mode)
     summary.setdefault("codex_commit_mode", args.codex_commit_mode)
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_main_apply_count", 0)
@@ -2146,6 +2344,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         args.run_id,
         {
             "codex_apply_mode": args.codex_apply_mode,
+            "codex_bundle_mode": args.codex_bundle_mode,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
             "codex_scope": args.codex_scope,
@@ -2168,6 +2367,10 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     worker_id=worker_id,
                     max_items=args.max_items,
                     program_synthesis_scope=getattr(args, "codex_scope", None),
+                    semantic_bundle=(
+                        str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
+                        == "semantic"
+                    ),
                 )
                 if claimed:
                     queue.save_jsonl(queue_path)
@@ -2276,6 +2479,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "cycle": cycle,
                     "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
                     "codex_scope": getattr(args, "codex_scope", None),
+                    "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "codex_program_synthesis_cycle",
                     "main_apply_status": packet.get("main_apply_status"),

@@ -338,6 +338,81 @@ def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
     assert supervisor.queue.get("program-frame").status == "claimed"
 
 
+def test_supervisor_can_claim_semantic_program_synthesis_bundle_by_ast_scope() -> None:
+    shared_metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "compiler_ambiguity",
+        "target_component": "modal.compiler.ambiguity",
+        "semantic_bundle_key": "ambiguity:temporal->deontic",
+    }
+    anchor = ModalTodo(
+        todo_id="program-anchor",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="ambiguity",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata=dict(shared_metadata),
+    )
+    sibling = ModalTodo(
+        todo_id="program-sibling",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="ambiguity",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=8.0,
+        metadata=dict(shared_metadata),
+    )
+    different_family = ModalTodo(
+        todo_id="program-different-family",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="ambiguity",
+        sample_ids=["c"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        metadata={
+            **shared_metadata,
+            "semantic_bundle_key": "ambiguity:deontic->conditional_normative",
+        },
+    )
+    frame = ModalTodo(
+        todo_id="program-frame",
+        action="audit_frame_logic_terms",
+        objective="frame",
+        sample_ids=["d"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=12.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "frame_logic",
+            "target_component": "modal.frame_logic",
+            "semantic_bundle_key": "frame",
+        },
+    )
+    supervisor = ModalTodoSupervisor(
+        queue=ModalTodoQueue([anchor, sibling, different_family, frame])
+    )
+
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id="compiler-worker",
+        max_items=3,
+        program_synthesis_scope="compiler_ambiguity",
+        semantic_bundle=True,
+    )
+
+    assert [todo.todo_id for todo in claimed] == ["program-anchor", "program-sibling"]
+    assert supervisor.queue.get("program-different-family").status == "pending"
+    assert supervisor.queue.get("program-frame").status == "pending"
+
+
 def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
     todo = ModalLossTodoGenerator().generate(
         [
@@ -808,6 +883,52 @@ def test_build_paired_daemon_commands_respect_custom_child_run_ids_and_model() -
     assert "--worker-id" not in paired["codex_command"]
 
 
+def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children() -> None:
+    args = SimpleNamespace(
+        run_id="parallel-root",
+        autoencoder_run_id=None,
+        codex_run_id=None,
+        duration_seconds=60.0,
+        train_count=2,
+        validation_count=1,
+        max_inner_iterations=1,
+        max_items=3,
+        learning_rate=0.1,
+        test_every_cycles=50,
+        poll_seconds=2.0,
+        worker_id="codex-worker",
+        codex_exec_mode="codex_cli",
+        codex_command="codex",
+        codex_model="gpt-5.3-codex",
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
+        codex_scope=None,
+        codex_parallel_scopes="compiler_ambiguity,frame_logic",
+        codex_bundle_mode="semantic",
+        codex_sandbox="workspace-write",
+        codex_timeout_seconds=45.0,
+        paired_grace_seconds=120.0,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+
+    children = paired["codex_children"]
+    assert [child["scope"] for child in children] == ["compiler_ambiguity", "frame_logic"]
+    assert [child["run_id"] for child in children] == [
+        "parallel-root-codex-compiler_ambiguity",
+        "parallel-root-codex-frame_logic",
+    ]
+    assert all("--codex-bundle-mode" in child["command"] for child in children)
+    assert all("--codex-scope" in child["command"] for child in children)
+    assert "--codex-scope" in paired["codex_command"]
+    assert paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1] == "compiler_ambiguity"
+
+
 def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path) -> None:
     parent = tmp_path / "site"
     nested = parent / "ipfs_datasets_py"
@@ -916,6 +1037,7 @@ def test_codex_work_packet_creates_git_worktree_and_patch_slot(tmp_path) -> None
     assert packet["patch_path"] is None
     assert packet["patch_status"] == "awaiting_codex_changes"
     assert packet["program_synthesis_scopes"]
+    assert packet["semantic_bundle_keys"]
     assert packet["suggested_target_files"]
     assert (tmp_path / "codex-work" / "packet-000001" / "packet.json").exists()
     assert (tmp_path / "codex-work" / "packet-000001" / "TODO_LIST.jsonl").exists()

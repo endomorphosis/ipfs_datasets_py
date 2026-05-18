@@ -479,6 +479,12 @@ class ModalLossTodoGenerator:
                 target_component=str(target_component or ""),
                 sample_ids=[snapshot.sample_id],
             )
+            metadata["semantic_bundle_key"] = _program_todo_bundle_signature(
+                action=action,
+                target_component=str(target_component or ""),
+                program_synthesis_scope=str(metadata["program_synthesis_scope"]),
+                family_pairs=[],
+            )
         return ModalTodo(
             todo_id=todo_id,
             action=action,
@@ -553,6 +559,33 @@ class ModalProgramSynthesisTodoGenerator:
                 target_component=target_component,
                 sample_ids=sample_ids,
             )
+            hint_evidence = [
+                _compact_hint_evidence(hint)
+                for hint in sorted(cluster, key=lambda hint: hint.hint_id)
+            ]
+            program_synthesis_scope = _program_synthesis_scope(
+                action=action,
+                target_component=target_component,
+            )
+            metadata = {
+                **self.policy.metadata_for(
+                    action=action,
+                    loss_name="autoencoder_residual_cluster",
+                ),
+                "hint_ids": sorted(hint.hint_id for hint in cluster),
+                "dedupe_signature": dedupe_signature,
+                "program_synthesis_scope": program_synthesis_scope,
+                "hint_evidence": hint_evidence,
+                "source": "modal_program_synthesis_todo_generator_v1",
+                "support_count": len(sample_ids),
+                "target_component": target_component,
+            }
+            metadata["semantic_bundle_key"] = _program_todo_bundle_signature(
+                action=action,
+                target_component=target_component,
+                program_synthesis_scope=program_synthesis_scope,
+                family_pairs=_program_todo_family_pairs_from_evidence(hint_evidence),
+            )
             todo = ModalTodo(
                 todo_id=_program_todo_id(
                     action=action,
@@ -566,25 +599,7 @@ class ModalProgramSynthesisTodoGenerator:
                 loss_name="autoencoder_residual_cluster",
                 loss_value=round(priority, 12),
                 priority=round((priority * 100.0) + len(sample_ids), 6),
-                metadata={
-                    **self.policy.metadata_for(
-                        action=action,
-                        loss_name="autoencoder_residual_cluster",
-                    ),
-                    "hint_ids": sorted(hint.hint_id for hint in cluster),
-                    "dedupe_signature": dedupe_signature,
-                    "program_synthesis_scope": _program_synthesis_scope(
-                        action=action,
-                        target_component=target_component,
-                    ),
-                    "hint_evidence": [
-                        _compact_hint_evidence(hint)
-                        for hint in sorted(cluster, key=lambda hint: hint.hint_id)
-                    ],
-                    "source": "modal_program_synthesis_todo_generator_v1",
-                    "support_count": len(sample_ids),
-                    "target_component": target_component,
-                },
+                metadata=metadata,
             )
             todos.append(todo)
         return sorted(todos, key=lambda todo: (-todo.priority, todo.todo_id))
@@ -751,6 +766,39 @@ class ModalTodoQueue:
         ):
             todo.claim(worker_id)
             claimed.append(todo)
+        return claimed
+
+    def claim_semantic_bundle(
+        self,
+        *,
+        worker_id: str,
+        max_items: int,
+        optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
+    ) -> List[ModalTodo]:
+        """Claim a priority anchor plus semantically similar pending TODOs."""
+        if max_items < 1:
+            return []
+        candidates = self._by_priority(
+            status="pending",
+            optimizer_role=optimizer_role,
+            metadata_filter=metadata_filter,
+        )
+        if not candidates:
+            return []
+
+        anchor = candidates[0]
+        anchor_key = _program_todo_semantic_bundle_key(anchor)
+        claimed = [anchor]
+        for todo in candidates[1:]:
+            if len(claimed) >= max_items:
+                break
+            if _program_todo_semantic_bundle_key(todo) != anchor_key:
+                continue
+            claimed.append(todo)
+
+        for todo in claimed:
+            todo.claim(worker_id)
         return claimed
 
     def complete(self, todo_id: str) -> bool:
@@ -938,6 +986,7 @@ class ModalTodoSupervisor:
         worker_id: str,
         max_items: int,
         program_synthesis_scope: Optional[str] = None,
+        semantic_bundle: bool = False,
     ) -> List[ModalTodo]:
         """Claim reviewable deterministic repair TODOs for an external Codex worker."""
         metadata_filter = (
@@ -945,6 +994,13 @@ class ModalTodoSupervisor:
             if program_synthesis_scope
             else None
         )
+        if semantic_bundle:
+            return self.queue.claim_semantic_bundle(
+                worker_id=worker_id,
+                max_items=max_items,
+                optimizer_role=self.policy.program_synthesis_role,
+                metadata_filter=metadata_filter,
+            )
         return self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
@@ -1309,6 +1365,56 @@ def _program_todo_signature_payload(
         "sample_ids": sorted(sample_ids),
         "target_component": target_component,
     }
+
+
+def _program_todo_bundle_signature(
+    *,
+    action: str,
+    target_component: str,
+    program_synthesis_scope: str,
+    family_pairs: Sequence[str],
+) -> str:
+    payload = {
+        "action": action,
+        "family_pairs": sorted(set(str(pair) for pair in family_pairs if str(pair))),
+        "program_synthesis_scope": program_synthesis_scope,
+        "target_component": target_component,
+    }
+    return json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def _program_todo_semantic_bundle_key(todo: ModalTodo) -> str:
+    stored_key = str(todo.metadata.get("semantic_bundle_key") or "").strip()
+    if stored_key:
+        return stored_key
+    target_component = _todo_target_component(todo)
+    scope = str(todo.metadata.get("program_synthesis_scope") or "").strip()
+    if not scope:
+        scope = _program_synthesis_scope(
+            action=todo.action,
+            target_component=target_component,
+        )
+    hint_evidence = todo.metadata.get("hint_evidence", [])
+    return _program_todo_bundle_signature(
+        action=todo.action,
+        target_component=target_component,
+        program_synthesis_scope=scope,
+        family_pairs=_program_todo_family_pairs_from_evidence(hint_evidence),
+    )
+
+
+def _program_todo_family_pairs_from_evidence(value: Any) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    pairs: List[str] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            continue
+        predicted = str(item.get("predicted_family") or "").strip()
+        target = str(item.get("target_family") or "").strip()
+        if predicted and target:
+            pairs.append(f"{predicted}->{target}")
+    return sorted(set(pairs))
 
 
 def _program_todos_near_duplicate(
