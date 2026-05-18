@@ -33,9 +33,27 @@ def _predicate_values(sample_section: str, *, title: str) -> dict[str, list[str]
     return {
         "citation_section_raw": slot_map.get("citation_section_raw", []),
         "citation_section_normalized": slot_map.get("citation_section_normalized", []),
+        "citation_section_terminal": slot_map.get("citation_section_terminal", []),
+        "citation_section_primary_equals_terminal": slot_map.get(
+            "citation_section_primary_equals_terminal",
+            [],
+        ),
+        "citation_section_primary_terminal_pair": slot_map.get(
+            "citation_section_primary_terminal_pair",
+            [],
+        ),
         "source_id_section_raw": slot_map.get("source_id_section_raw", []),
         "source_id_section_normalized": slot_map.get(
             "source_id_section_normalized",
+            [],
+        ),
+        "source_id_section_terminal": slot_map.get("source_id_section_terminal", []),
+        "source_id_section_primary_equals_terminal": slot_map.get(
+            "source_id_section_primary_equals_terminal",
+            [],
+        ),
+        "source_id_section_primary_terminal_pair": slot_map.get(
+            "source_id_section_primary_terminal_pair",
             [],
         ),
         "triple_citation_section_raw": predicate_values.get("citation_section_raw", []),
@@ -43,9 +61,33 @@ def _predicate_values(sample_section: str, *, title: str) -> dict[str, list[str]
             "citation_section_normalized",
             [],
         ),
+        "triple_citation_section_terminal": predicate_values.get(
+            "citation_section_terminal",
+            [],
+        ),
+        "triple_citation_section_primary_equals_terminal": predicate_values.get(
+            "citation_section_primary_equals_terminal",
+            [],
+        ),
+        "triple_citation_section_primary_terminal_pair": predicate_values.get(
+            "citation_section_primary_terminal_pair",
+            [],
+        ),
         "triple_source_id_section_raw": predicate_values.get("source_id_section_raw", []),
         "triple_source_id_section_normalized": predicate_values.get(
             "source_id_section_normalized",
+            [],
+        ),
+        "triple_source_id_section_terminal": predicate_values.get(
+            "source_id_section_terminal",
+            [],
+        ),
+        "triple_source_id_section_primary_equals_terminal": predicate_values.get(
+            "source_id_section_primary_equals_terminal",
+            [],
+        ),
+        "triple_source_id_section_primary_terminal_pair": predicate_values.get(
+            "source_id_section_primary_terminal_pair",
             [],
         ),
     }
@@ -56,13 +98,25 @@ def test_modal_slots_emit_raw_and_normalized_section_values_for_trailing_punct()
 
     assert values["citation_section_raw"] == ["1437q."]
     assert values["citation_section_normalized"] == ["1437q"]
+    assert values["citation_section_terminal"] == ["1437q"]
+    assert values["citation_section_primary_equals_terminal"] == ["true"]
+    assert values["citation_section_primary_terminal_pair"] == ["1437q|1437q"]
     assert values["source_id_section_raw"] == ["1437q."]
     assert values["source_id_section_normalized"] == ["1437q"]
+    assert values["source_id_section_terminal"] == ["1437q"]
+    assert values["source_id_section_primary_equals_terminal"] == ["true"]
+    assert values["source_id_section_primary_terminal_pair"] == ["1437q|1437q"]
 
     assert values["triple_citation_section_raw"] == ["1437q."]
     assert values["triple_citation_section_normalized"] == ["1437q"]
+    assert values["triple_citation_section_terminal"] == ["1437q"]
+    assert values["triple_citation_section_primary_equals_terminal"] == ["true"]
+    assert values["triple_citation_section_primary_terminal_pair"] == ["1437q|1437q"]
     assert values["triple_source_id_section_raw"] == ["1437q."]
     assert values["triple_source_id_section_normalized"] == ["1437q"]
+    assert values["triple_source_id_section_terminal"] == ["1437q"]
+    assert values["triple_source_id_section_primary_equals_terminal"] == ["true"]
+    assert values["triple_source_id_section_primary_terminal_pair"] == ["1437q|1437q"]
 
 
 def test_modal_slots_emit_raw_and_normalized_section_values_without_trailing_punct() -> None:
@@ -70,10 +124,22 @@ def test_modal_slots_emit_raw_and_normalized_section_values_without_trailing_pun
 
     assert values["citation_section_raw"] == ["3902"]
     assert values["citation_section_normalized"] == ["3902"]
+    assert values["citation_section_terminal"] == ["3902"]
+    assert values["citation_section_primary_equals_terminal"] == ["true"]
+    assert values["citation_section_primary_terminal_pair"] == ["3902|3902"]
     assert values["source_id_section_raw"] == ["3902"]
     assert values["source_id_section_normalized"] == ["3902"]
+    assert values["source_id_section_terminal"] == ["3902"]
+    assert values["source_id_section_primary_equals_terminal"] == ["true"]
+    assert values["source_id_section_primary_terminal_pair"] == ["3902|3902"]
 
     assert values["triple_citation_section_raw"] == ["3902"]
     assert values["triple_citation_section_normalized"] == ["3902"]
+    assert values["triple_citation_section_terminal"] == ["3902"]
+    assert values["triple_citation_section_primary_equals_terminal"] == ["true"]
+    assert values["triple_citation_section_primary_terminal_pair"] == ["3902|3902"]
     assert values["triple_source_id_section_raw"] == ["3902"]
     assert values["triple_source_id_section_normalized"] == ["3902"]
+    assert values["triple_source_id_section_terminal"] == ["3902"]
+    assert values["triple_source_id_section_primary_equals_terminal"] == ["true"]
+    assert values["triple_source_id_section_primary_terminal_pair"] == ["3902|3902"]

@@ -644,6 +644,9 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     decoded = decode_modal_ir_document(_single_component_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
+    assert slot_map["citation_section_terminal"] == ["190l"]
+    assert slot_map["citation_section_primary_equals_terminal"] == ["true"]
+    assert slot_map["citation_section_primary_terminal_pair"] == ["190l|190l"]
     assert slot_map["citation_section_primary_number"] == ["190"]
     assert slot_map["citation_section_primary_number_digit_count"] == ["3"]
     assert slot_map["citation_section_terminal_number"] == ["190"]
@@ -662,6 +665,9 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
 
+    assert slot_map["source_id_section_terminal"] == ["190l"]
+    assert slot_map["source_id_section_primary_equals_terminal"] == ["true"]
+    assert slot_map["source_id_section_primary_terminal_pair"] == ["190l|190l"]
     assert slot_map["source_id_section_primary_number"] == ["190"]
     assert slot_map["source_id_section_primary_number_digit_count"] == ["3"]
     assert slot_map["source_id_section_terminal_number"] == ["190"]
@@ -691,6 +697,9 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
             if triple.get("predicate") == predicate
         ]
 
+    assert objects("citation_section_terminal") == ["190l"]
+    assert objects("citation_section_primary_equals_terminal") == ["true"]
+    assert objects("citation_section_primary_terminal_pair") == ["190l|190l"]
     assert objects("citation_section_primary_number") == ["190"]
     assert objects("citation_section_primary_number_digit_count") == ["3"]
     assert objects("citation_section_terminal_number") == ["190"]
@@ -709,6 +718,9 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
 
+    assert objects("source_id_section_terminal") == ["190l"]
+    assert objects("source_id_section_primary_equals_terminal") == ["true"]
+    assert objects("source_id_section_primary_terminal_pair") == ["190l|190l"]
     assert objects("source_id_section_primary_number") == ["190"]
     assert objects("source_id_section_primary_number_digit_count") == ["3"]
     assert objects("source_id_section_terminal_number") == ["190"]
@@ -1041,6 +1053,9 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
     decoded = decode_modal_ir_document(_range_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
+    assert slot_map["citation_section_terminal"] == ["228c"]
+    assert slot_map["citation_section_primary_equals_terminal"] == ["false"]
+    assert slot_map["citation_section_primary_terminal_pair"] == ["228a|228c"]
     assert slot_map["citation_section_range"] == ["228a to 228c"]
     assert slot_map["citation_section_range_start"] == ["228a"]
     assert slot_map["citation_section_range_end"] == ["228c"]
@@ -1075,6 +1090,9 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
     assert slot_map["citation_title_section_key"] == ["45:228a to 228c"]
     assert slot_map["citation_title_section_key_normalized"] == ["45:228a to 228c"]
 
+    assert slot_map["source_id_section_terminal"] == ["228c"]
+    assert slot_map["source_id_section_primary_equals_terminal"] == ["false"]
+    assert slot_map["source_id_section_primary_terminal_pair"] == ["228a|228c"]
     assert slot_map["source_id_section_range"] == ["228a to 228c"]
     assert slot_map["source_id_section_range_start"] == ["228a"]
     assert slot_map["source_id_section_range_end"] == ["228c"]
@@ -1120,6 +1138,9 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
             if triple.get("predicate") == predicate
         ]
 
+    assert objects("citation_section_terminal") == ["228c"]
+    assert objects("citation_section_primary_equals_terminal") == ["false"]
+    assert objects("citation_section_primary_terminal_pair") == ["228a|228c"]
     assert objects("citation_section_range") == ["228a to 228c"]
     assert objects("citation_section_range_start") == ["228a"]
     assert objects("citation_section_range_end") == ["228c"]
@@ -1154,6 +1175,9 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     assert objects("citation_title_section_key") == ["45:228a to 228c"]
     assert objects("citation_title_section_key_normalized") == ["45:228a to 228c"]
 
+    assert objects("source_id_section_terminal") == ["228c"]
+    assert objects("source_id_section_primary_equals_terminal") == ["false"]
+    assert objects("source_id_section_primary_terminal_pair") == ["228a|228c"]
     assert objects("source_id_section_range") == ["228a to 228c"]
     assert objects("source_id_section_range_start") == ["228a"]
     assert objects("source_id_section_range_end") == ["228c"]

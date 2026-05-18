@@ -1485,8 +1485,19 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         ]
     if not parts:
         return []
+    primary_part = parts[0]
+    terminal_part = parts[-1]
     components: List[tuple[str, str]] = [
-        ("citation_section_primary", parts[0]),
+        ("citation_section_primary", primary_part),
+        ("citation_section_terminal", terminal_part),
+        (
+            "citation_section_primary_equals_terminal",
+            "true" if primary_part == terminal_part else "false",
+        ),
+        (
+            "citation_section_primary_terminal_pair",
+            f"{primary_part}|{terminal_part}",
+        ),
         ("citation_section_component_count", str(len(parts))),
         ("citation_section_is_range", "true" if is_range else "false"),
     ]

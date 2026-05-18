@@ -1519,8 +1519,19 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         ]
     if not components:
         return []
+    primary_component = components[0]
+    terminal_component = components[-1]
     slots: List[Tuple[str, str]] = [
-        ("citation_section_primary", components[0]),
+        ("citation_section_primary", primary_component),
+        ("citation_section_terminal", terminal_component),
+        (
+            "citation_section_primary_equals_terminal",
+            "true" if primary_component == terminal_component else "false",
+        ),
+        (
+            "citation_section_primary_terminal_pair",
+            f"{primary_component}|{terminal_component}",
+        ),
         ("citation_section_component_count", str(len(components))),
         ("citation_section_is_range", "true" if is_range else "false"),
     ]
