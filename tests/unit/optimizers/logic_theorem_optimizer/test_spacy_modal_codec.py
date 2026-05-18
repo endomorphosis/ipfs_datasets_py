@@ -92,6 +92,90 @@ def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> 
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-22-2688-83d45528085ab9e0",
+            "22 U.S.C. 2688",
+            (
+                "U.S.C. Title 22 - FOREIGN RELATIONS AND INTERCOURSE 22 U.S.C. "
+                "United States Code, 2024 Edition Title 22 - FOREIGN RELATIONS "
+                "AND INTERCOURSE CHAPTER 38 - DEPARTMENT OF STATE Sec. 2688 - "
+                "Ambassadors; criteria regarding selection and confirmation From the "
+                "U.S. Government Publishing Office, www.gpo.gov \u00a72688. Ambassadors; "
+                "criteria regarding selection and confirmation It is the sense of "
+                "the Congress that the position of United States ambassador to a "
+                "foreign country should be accorded to men and women possessing "
+                "clearly demonstrated competence to perform ambassadorial duties. "
+                "No individual should be accorded the position of United States "
+                "ambassador to a foreign country primarily because of financial "
+                "contributions to political campaigns. (Aug. 1, 1956, ch. 841, "
+                "title I, \u00a718, as added Pub. L. 94\u2013141, title I, \u00a7104, Nov. 29, "
+                "1975, 89 Stat. 757; renumbered title I, Pub. L. 97\u2013241, title II, "
+                "\u00a7202(a), Aug. 24, 1982, 96 Stat. 282.)"
+            ),
+            "sense_of_congress",
+        ),
+        (
+            "us-code-7-7311-017c4d8b52982ca1",
+            "7 U.S.C. 7311",
+            (
+                "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 "
+                "Edition Title 7 - AGRICULTURE CHAPTER 100 - AGRICULTURAL MARKET "
+                "TRANSITION SUBCHAPTER VII - COMMISSION ON 21st CENTURY PRODUCTION "
+                "AGRICULTURE Sec. 7311 - Establishment From the U.S. Government "
+                "Publishing Office, www.gpo.gov \u00a77311. Establishment There is "
+                "established a commission to be known as the \"Commission on 21st "
+                "Century Production Agriculture\" (in this subchapter referred to as "
+                "the \"Commission\"). (Pub. L. 104\u2013127, title I, \u00a7181, Apr. 4, "
+                "1996, 110 Stat. 938.)"
+            ),
+            "establishment_clause",
+        ),
+        (
+            "us-code-15-2402-7e27f5e59f9ba39e",
+            "15 U.S.C. 2402",
+            (
+                "U.S.C. Title 15 - COMMERCE AND TRADE 15 U.S.C. United States "
+                "Code, 2024 Edition Title 15 - COMMERCE AND TRADE CHAPTER 51 - "
+                "NATIONAL PRODUCTIVITY AND QUALITY OF WORKING LIFE SUBCHAPTER I - "
+                "FINDINGS, PURPOSE, AND POLICY; DEFINITIONS Sec. 2402 - "
+                "Congressional statement of purpose From the U.S. Government "
+                "Publishing Office, www.gpo.gov \u00a72402. Congressional statement of "
+                "purpose It is the purpose of this chapter\u2014 (1) to establish a "
+                "national policy which will encourage productivity growth "
+                "consistent with needs of the economy, the natural environment, "
+                "and the needs, rights, and best interests of management, the "
+                "work force, and consumers; and (2) to establish as an independent "
+                "establishment of the executive branch a National Center for "
+                "Productivity and Quality of Working Life to focus, coordinate, "
+                "and promote efforts to improve the rate of productivity growth. "
+                "(Pub. L. 94\u2013136, title I, \u00a7102, Nov. 28, 1975, 89 Stat. 734.)"
+            ),
+            "purpose_clause",
+        ),
+    ]
+
+    for document_id, citation, text, statement_hint in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_declarative_statement_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_declarative_statement_v1"
+        assert fallback.metadata["statement_hint"] == statement_hint
+        assert fallback.provenance.citation == citation
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

@@ -33,6 +33,12 @@ _USCODE_CODIFICATION_HINT_RE = re.compile(
     r"\b(?:transferred|editorially reclassified|codification)\b",
     re.IGNORECASE,
 )
+_USCODE_DECLARATIVE_STATEMENT_HINT_RE = re.compile(
+    r"\b(?:it\s+is\s+the\s+sense\s+of\s+the\s+congress|"
+    r"it\s+is\s+the\s+purpose\s+of\s+this\s+(?:chapter|subchapter|title|section)|"
+    r"there\s+is\s+established|there\s+are\s+established)\b",
+    re.IGNORECASE,
+)
 _USCODE_EDITORIAL_STATUS_HINT_RE = re.compile(
     r"\b(?:repealed|omitted|reserved|vacant|renumbered|terminated)\b",
     re.IGNORECASE,
@@ -213,7 +219,16 @@ class LegalModalParser:
         )
         if fallback_formula is not None:
             return fallback_formula
-        return self._uscode_editorial_status_fallback_formula(
+        fallback_formula = self._uscode_editorial_status_fallback_formula(
+            resolved_document_id=document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=candidate_segments,
+            start_index=start_index,
+        )
+        if fallback_formula is not None:
+            return fallback_formula
+        return self._uscode_declarative_statement_fallback_formula(
             resolved_document_id=document_id,
             normalized_text=normalized,
             citation=citation,
@@ -464,6 +479,88 @@ class LegalModalParser:
             },
         )
 
+    def _uscode_declarative_statement_fallback_formula(
+        self,
+        *,
+        resolved_document_id: str,
+        normalized_text: str,
+        citation: Optional[str],
+        segments: Sequence[LegalSegment],
+        start_index: int,
+    ) -> Optional[ModalIRFormula]:
+        if not normalized_text.strip():
+            return None
+        if citation is None or "u.s.c." not in citation.lower():
+            return None
+        if self.extract_cues(normalized_text):
+            return None
+
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return None
+        if not self._contains_sec_heading_reference(
+            normalized_text,
+            citation_section=citation_section,
+        ):
+            return None
+
+        candidate_segment: Optional[LegalSegment] = None
+        statement_hint = ""
+        for index, segment in enumerate(segments):
+            lowered = self.normalize_text(segment.text).lower()
+            if not _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered):
+                continue
+            if not self._segment_or_neighbor_has_citation_section_reference(
+                index=index,
+                segments=segments,
+                citation_section=citation_section,
+            ):
+                continue
+            candidate_segment = segment
+            statement_hint = self._uscode_statement_hint(lowered)
+            break
+        if candidate_segment is None:
+            return None
+
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return None
+        operator = profile.operators[0]
+        predicate = self._predicate_from_segment(
+            candidate_segment.text,
+            "__uscode_declarative_statement_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(
+            candidate_segment.text
+        )
+        return ModalIRFormula(
+            formula_id=f"{resolved_document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role="frame",
+            ),
+            provenance=ModalIRProvenance(
+                source_id=resolved_document_id,
+                start_char=candidate_segment.start_char,
+                end_char=candidate_segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_declarative_statement_fallback__",
+                "fallback_rule": "uscode_declarative_statement_v1",
+                "statement_hint": statement_hint,
+            },
+        )
+
     def _looks_like_transferred_section_heading(
         self,
         segment_text: str,
@@ -508,6 +605,46 @@ class LegalModalParser:
         if normalized.startswith("\u00a7") and len(normalized) <= 240:
             return True
         return False
+
+    def _contains_sec_heading_reference(
+        self,
+        text: str,
+        *,
+        citation_section: str,
+    ) -> bool:
+        if not citation_section:
+            return False
+        normalized = self.normalize_text(text).lower()
+        section_pattern = re.escape(citation_section)
+        return bool(re.search(rf"\bsec\.\s*{section_pattern}(?:\b|[.)-])", normalized))
+
+    def _segment_or_neighbor_has_citation_section_reference(
+        self,
+        *,
+        index: int,
+        segments: Sequence[LegalSegment],
+        citation_section: str,
+    ) -> bool:
+        for offset in (-2, -1, 0, 1, 2):
+            position = index + offset
+            if position < 0 or position >= len(segments):
+                continue
+            segment_text = segments[position].text
+            if self._contains_citation_section_reference(segment_text, citation_section):
+                return True
+            if self._starts_with_citation_section_reference(segment_text, citation_section):
+                return True
+        return False
+
+    def _uscode_statement_hint(self, normalized_segment_text: str) -> str:
+        lowered = normalized_segment_text.lower()
+        if "sense of the congress" in lowered:
+            return "sense_of_congress"
+        if "purpose of this" in lowered:
+            return "purpose_clause"
+        if "there is established" in lowered or "there are established" in lowered:
+            return "establishment_clause"
+        return "declarative_clause"
 
 
 __all__ = [
