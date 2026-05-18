@@ -146,6 +146,9 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_primary_suffix"] == ["bbb"]
     assert slot_map["citation_section_primary_suffix_char_count"] == ["3"]
     assert slot_map["citation_section_primary_suffix_profile"] == ["repeat"]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_number"] == ["0"]
     assert slot_map["citation_section_terminal_number_digit_count"] == ["1"]
@@ -174,6 +177,9 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_primary_suffix"] == ["bbb"]
     assert slot_map["source_id_section_primary_suffix_char_count"] == ["3"]
     assert slot_map["source_id_section_primary_suffix_profile"] == ["repeat"]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_number"] == ["0"]
     assert slot_map["source_id_section_terminal_number_digit_count"] == ["1"]
@@ -216,6 +222,9 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_primary_suffix") == ["bbb"]
     assert objects("citation_section_primary_suffix_char_count") == ["3"]
     assert objects("citation_section_primary_suffix_profile") == ["repeat"]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_has_suffix") == ["false"]
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_number") == ["0"]
     assert objects("citation_section_terminal_number_digit_count") == ["1"]
@@ -244,6 +253,9 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_primary_suffix") == ["bbb"]
     assert objects("source_id_section_primary_suffix_char_count") == ["3"]
     assert objects("source_id_section_primary_suffix_profile") == ["repeat"]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_has_suffix") == ["false"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_number") == ["0"]
     assert objects("source_id_section_terminal_number_digit_count") == ["1"]
@@ -267,6 +279,9 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["citation_section_suffix_profile"] == ["single"]
     assert slot_map["citation_section_primary_suffix_profile"] == ["single"]
     assert slot_map["citation_section_terminal_suffix_profile"] == ["single"]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["true"]
     assert slot_map["citation_section_terminal_suffix"] == ["l"]
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
@@ -282,6 +297,9 @@ def test_decode_modal_ir_document_emits_single_component_section_role_slots() ->
     assert slot_map["source_id_section_suffix_profile"] == ["single"]
     assert slot_map["source_id_section_primary_suffix_profile"] == ["single"]
     assert slot_map["source_id_section_terminal_suffix_profile"] == ["single"]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["true"]
     assert slot_map["source_id_section_terminal_suffix"] == ["l"]
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_component_kind"] == ["alphanumeric"]
@@ -308,6 +326,9 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("citation_section_suffix_profile") == ["single"]
     assert objects("citation_section_primary_suffix_profile") == ["single"]
     assert objects("citation_section_terminal_suffix_profile") == ["single"]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_has_suffix") == ["true"]
     assert objects("citation_section_terminal_suffix") == ["l"]
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
@@ -323,6 +344,9 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("source_id_section_suffix_profile") == ["single"]
     assert objects("source_id_section_primary_suffix_profile") == ["single"]
     assert objects("source_id_section_terminal_suffix_profile") == ["single"]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_has_suffix") == ["true"]
     assert objects("source_id_section_terminal_suffix") == ["l"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
@@ -350,6 +374,9 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:single",
         "2:single",
     ]
+    assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["true"]
     assert slot_map["citation_section_component_kind_positioned"] == [
         "1:alphanumeric",
         "2:alphanumeric",
@@ -375,6 +402,9 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:single",
         "2:single",
     ]
+    assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["true"]
     assert slot_map["source_id_section_component_kind_positioned"] == [
         "1:alphanumeric",
         "2:alphanumeric",
@@ -411,6 +441,9 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:single",
         "2:single",
     ]
+    assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_terminal_has_suffix") == ["true"]
     assert objects("citation_section_component_kind_positioned") == [
         "1:alphanumeric",
         "2:alphanumeric",
@@ -436,6 +469,9 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:single",
         "2:single",
     ]
+    assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_terminal_has_suffix") == ["true"]
     assert objects("source_id_section_component_kind_positioned") == [
         "1:alphanumeric",
         "2:alphanumeric",
@@ -451,9 +487,15 @@ def test_decode_modal_ir_document_emits_trailing_punct_presence_slots() -> None:
     assert slot_map["citation_section_trailing_punct"] == ["."]
     assert slot_map["citation_section_has_trailing_punct"] == ["true"]
     assert slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert slot_map["citation_section_has_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_has_suffix"] == ["false"]
+    assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
     assert slot_map["source_id_section_trailing_punct"] == ["."]
     assert slot_map["source_id_section_has_trailing_punct"] == ["true"]
     assert slot_map["source_id_section_trailing_punct_count"] == ["1"]
+    assert slot_map["source_id_section_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
 
 
 def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None:
@@ -469,9 +511,15 @@ def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None
     assert objects("citation_section_trailing_punct") == ["."]
     assert objects("citation_section_has_trailing_punct") == ["true"]
     assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("citation_section_has_suffix") == ["false"]
+    assert objects("citation_section_primary_has_suffix") == ["false"]
+    assert objects("citation_section_terminal_has_suffix") == ["false"]
     assert objects("source_id_section_trailing_punct") == ["."]
     assert objects("source_id_section_has_trailing_punct") == ["true"]
     assert objects("source_id_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section_has_suffix") == ["false"]
+    assert objects("source_id_section_primary_has_suffix") == ["false"]
+    assert objects("source_id_section_terminal_has_suffix") == ["false"]
 
 
 def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:

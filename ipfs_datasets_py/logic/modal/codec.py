@@ -1394,6 +1394,9 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
+    parsed_component_count = 0
+    primary_has_suffix: bool | None = None
+    terminal_has_suffix: bool | None = None
     total_parts = len(parts)
     for index, part in enumerate(parts, start=1):
         position = str(index)
@@ -1414,6 +1417,11 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         number = _clean_non_empty_string(match.group("number"))
         suffix = _clean_non_empty_string(match.group("suffix"))
         numeric_component_count += 1
+        parsed_component_count += 1
+        if index == 1:
+            primary_has_suffix = bool(suffix)
+        if index == total_parts:
+            terminal_has_suffix = bool(suffix)
         if number:
             components.append(("citation_section_number", number))
             number_digit_count = str(len(number))
@@ -1512,6 +1520,27 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 components.append(("citation_section_primary_component_kind", "numeric"))
             if index == total_parts:
                 components.append(("citation_section_terminal_component_kind", "numeric"))
+    if parsed_component_count:
+        components.append(
+            (
+                "citation_section_has_suffix",
+                "true" if suffix_component_count > 0 else "false",
+            )
+        )
+    if primary_has_suffix is not None:
+        components.append(
+            (
+                "citation_section_primary_has_suffix",
+                "true" if primary_has_suffix else "false",
+            )
+        )
+    if terminal_has_suffix is not None:
+        components.append(
+            (
+                "citation_section_terminal_has_suffix",
+                "true" if terminal_has_suffix else "false",
+            )
+        )
     if component_shapes:
         components.append(("citation_section_shape", "-".join(component_shapes)))
     components.append(

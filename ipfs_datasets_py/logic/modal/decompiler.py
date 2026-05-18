@@ -1423,6 +1423,9 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
+    parsed_component_count = 0
+    primary_has_suffix: bool | None = None
+    terminal_has_suffix: bool | None = None
     total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
@@ -1443,6 +1446,11 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         number = _clean_text(match.group("number"))
         suffix = _clean_text(match.group("suffix"))
         numeric_component_count += 1
+        parsed_component_count += 1
+        if index == 1:
+            primary_has_suffix = bool(suffix)
+        if index == total_components:
+            terminal_has_suffix = bool(suffix)
         if number:
             slots.append(("citation_section_number", number))
             number_digit_count = str(len(number))
@@ -1541,6 +1549,27 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 slots.append(("citation_section_primary_component_kind", "numeric"))
             if index == total_components:
                 slots.append(("citation_section_terminal_component_kind", "numeric"))
+    if parsed_component_count:
+        slots.append(
+            (
+                "citation_section_has_suffix",
+                "true" if suffix_component_count > 0 else "false",
+            )
+        )
+    if primary_has_suffix is not None:
+        slots.append(
+            (
+                "citation_section_primary_has_suffix",
+                "true" if primary_has_suffix else "false",
+            )
+        )
+    if terminal_has_suffix is not None:
+        slots.append(
+            (
+                "citation_section_terminal_has_suffix",
+                "true" if terminal_has_suffix else "false",
+            )
+        )
     if component_shapes:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
     slots.append(
