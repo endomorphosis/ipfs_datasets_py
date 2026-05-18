@@ -30,9 +30,13 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("for purposes of", "for_purposes_of"),
     ("with respect to", "with_respect_to"),
     ("to the extent provided", "to_the_extent_provided"),
+    ("not later than", "not_later_than"),
+    ("no later than", "no_later_than"),
     ("if", "if"),
     ("when", "when"),
+    ("after", "after"),
     ("before", "before"),
+    ("by", "by"),
     ("upon", "upon"),
 )
 _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
@@ -43,6 +47,14 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("unless", "unless"),
     ("except", "except"),
 )
+_TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
+    "after": "after",
+    "before": "before",
+    "by": "deadline",
+    "no_later_than": "deadline",
+    "not_later_than": "deadline",
+    "upon": "after",
+}
 _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
     "reclassified",
     "transferred",
@@ -405,14 +417,24 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             )
         )
     if cue:
+        cue_spans = _span_from_values(cue_start, cue_end) or spans
         phrases.append(
             DecodedModalPhrase(
                 text=cue,
                 slot="cue",
-                spans=_span_from_values(cue_start, cue_end) or spans,
+                spans=cue_spans,
                 provenance_only=True,
             )
         )
+        for cue_slot, cue_value in _cue_modal_slots(formula, cue=cue):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=cue_value,
+                    slot=cue_slot,
+                    spans=cue_spans,
+                    provenance_only=True,
+                )
+            )
     if argument_values:
         phrases.append(
             DecodedModalPhrase(
@@ -2352,6 +2374,24 @@ def _typed_clause_phrases(
             provenance_only=True,
         ),
     ]
+    temporal_relation = _temporal_clause_prefix_relation(prefix_key)
+    if temporal_relation:
+        phrases.append(
+            DecodedModalPhrase(
+                text="temporal",
+                slot=f"{slot}_prefix_family",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=temporal_relation,
+                slot=f"{slot}_prefix_temporal_relation",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     if scoped_value:
         phrases.append(
             DecodedModalPhrase(
@@ -2394,11 +2434,50 @@ def _typed_clause_slot(
         return None
     prefixes = _CONDITION_PREFIXES if slot == "condition" else _EXCEPTION_PREFIXES
     for prefix_text, prefix_key in prefixes:
-        if not normalized.startswith(prefix_text):
+        if not _text_has_prefix(normalized, prefix_text):
             continue
         suffix = _clean_text(normalized[len(prefix_text) :].lstrip(",:;- "))
         return prefix_text, prefix_key, suffix
     return None
+
+
+def _cue_modal_slots(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+) -> List[Tuple[str, str]]:
+    cue_value = _clean_text(cue).lower()
+    family = _clean_text(formula.operator.family).lower()
+    symbol = _clean_text(formula.operator.symbol)
+    if not cue_value or not family or not symbol:
+        return []
+    signature = f"{family}:{symbol}:{cue_value}"
+    return [
+        ("cue_modal_signature", signature),
+        ("cue_modal_family", family),
+        ("cue_modal_operator", symbol),
+        ("cue_modal_lexeme", cue_value),
+    ]
+
+
+def _temporal_clause_prefix_relation(prefix_key: str) -> str:
+    normalized_key = _clean_text(prefix_key).lower()
+    if not normalized_key:
+        return ""
+    return _TEMPORAL_CLAUSE_PREFIX_RELATIONS.get(normalized_key, "")
+
+
+def _text_has_prefix(text: str, prefix: str) -> bool:
+    normalized_text = _clean_text(text).lower()
+    normalized_prefix = _clean_text(prefix).lower()
+    if not normalized_text or not normalized_prefix:
+        return False
+    if not normalized_text.startswith(normalized_prefix):
+        return False
+    if len(normalized_text) == len(normalized_prefix):
+        return True
+    suffix_char = normalized_text[len(normalized_prefix)]
+    return not suffix_char.isalnum()
 
 
 def _append_statutory_scope_phrases(

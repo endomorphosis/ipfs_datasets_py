@@ -576,6 +576,59 @@ def _typed_clause_scope_sample_document() -> ModalIRDocument:
     )
 
 
+def _cue_signature_temporal_clause_sample_document() -> ModalIRDocument:
+    source_id = "us-code-10-864-47dfb7b7e13861a9"
+    sentence_one = "The applicant shall submit a report if requested."
+    sentence_two = "By March 1 the agency shall publish findings after review."
+    normalized_text = f"{sentence_one} {sentence_two}"
+    deontic_formula = ModalIRFormula(
+        formula_id="f-cue-1",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="submit_report"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(sentence_one),
+            citation="10 U.S.C. 864",
+        ),
+        conditions=["if requested"],
+        metadata={"cue": "shall"},
+    )
+    temporal_start = len(sentence_one) + 1
+    temporal_formula = ModalIRFormula(
+        formula_id="f-cue-2",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_findings"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=temporal_start,
+            end_char=len(normalized_text),
+            citation="10 U.S.C. 864",
+        ),
+        conditions=[
+            "after the agency receives notice",
+            "by march 1",
+        ],
+        metadata={"cue": "by"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[deontic_formula, temporal_formula],
+    )
+
+
 def _zero_digit_signature_sample_document() -> ModalIRDocument:
     source_id = "us-code-43-1470.-845d9dceb9d264ab"
     formula = ModalIRFormula(
@@ -3088,6 +3141,42 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("exception_scope") == ["in subsection (b)"]
     assert objects("exception_scope_token_count") == ["3"]
     assert objects("exception_scope_token_suffix") == ["(b)"]
+
+
+def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_slots() -> None:
+    decoded = decode_modal_ir_document(_cue_signature_temporal_clause_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["cue_modal_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["cue_modal_family"] == ["deontic", "temporal"]
+    assert slot_map["cue_modal_operator"] == ["O", "F"]
+    assert slot_map["cue_modal_lexeme"] == ["shall", "by"]
+    assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
+    assert slot_map["condition_after"] == ["the agency receives notice"]
+    assert slot_map["condition_by"] == ["march 1"]
+    assert slot_map["condition_prefix_family"] == ["temporal"]
+    assert slot_map["condition_prefix_temporal_relation"] == ["after", "deadline"]
+
+
+def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefix_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_cue_signature_temporal_clause_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("cue_modal_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("cue_modal_family") == ["deontic", "temporal"]
+    assert objects("cue_modal_operator") == ["O", "F"]
+    assert objects("cue_modal_lexeme") == ["shall", "by"]
+    assert objects("condition_prefix_key") == ["if", "after", "by"]
+    assert objects("condition_after") == ["the agency receives notice"]
+    assert objects("condition_by") == ["march 1"]
+    assert objects("condition_prefix_family") == ["temporal"]
+    assert objects("condition_prefix_temporal_relation") == ["after", "deadline"]
 
 
 def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:

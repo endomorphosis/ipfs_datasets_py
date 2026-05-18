@@ -91,9 +91,13 @@ _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("for purposes of", "for_purposes_of"),
     ("with respect to", "with_respect_to"),
     ("to the extent provided", "to_the_extent_provided"),
+    ("not later than", "not_later_than"),
+    ("no later than", "no_later_than"),
     ("if", "if"),
     ("when", "when"),
+    ("after", "after"),
     ("before", "before"),
+    ("by", "by"),
     ("upon", "upon"),
 )
 _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
@@ -104,6 +108,14 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("unless", "unless"),
     ("except", "except"),
 )
+_TEMPORAL_CLAUSE_PREFIX_RELATIONS: dict[str, str] = {
+    "after": "after",
+    "before": "before",
+    "by": "deadline",
+    "no_later_than": "deadline",
+    "not_later_than": "deadline",
+    "upon": "after",
+}
 _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
     r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
@@ -858,7 +870,11 @@ def modal_ir_to_flogic_triples(
                 )
     for formula in modal_ir.formulas:
         condition_prefixes: set[str] = set()
+        condition_prefix_families: set[str] = set()
+        condition_prefix_temporal_relations: set[str] = set()
         exception_prefixes: set[str] = set()
+        exception_prefix_families: set[str] = set()
+        exception_prefix_temporal_relations: set[str] = set()
         statutory_scope_entries: set[tuple[str, str]] = set()
         triples.extend(
             [
@@ -928,6 +944,17 @@ def modal_ir_to_flogic_triples(
                     "object": cue,
                 }
             )
+            for predicate, value in _cue_modal_components(
+                formula,
+                cue=cue,
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         if formula.predicate.role:
             triples.append(
                 {
@@ -1154,6 +1181,26 @@ def modal_ir_to_flogic_triples(
                             "object": key,
                         }
                     )
+                    temporal_relation = _temporal_clause_prefix_relation(key)
+                    if temporal_relation:
+                        if "temporal" not in condition_prefix_families:
+                            condition_prefix_families.add("temporal")
+                            triples.append(
+                                {
+                                    "subject": formula.formula_id,
+                                    "predicate": "condition_prefix_family",
+                                    "object": "temporal",
+                                }
+                            )
+                        if temporal_relation not in condition_prefix_temporal_relations:
+                            condition_prefix_temporal_relations.add(temporal_relation)
+                            triples.append(
+                                {
+                                    "subject": formula.formula_id,
+                                    "predicate": "condition_prefix_temporal_relation",
+                                    "object": temporal_relation,
+                                }
+                            )
                 if scoped_value:
                     triples.append(
                         {
@@ -1224,6 +1271,26 @@ def modal_ir_to_flogic_triples(
                             "object": key,
                         }
                     )
+                    temporal_relation = _temporal_clause_prefix_relation(key)
+                    if temporal_relation:
+                        if "temporal" not in exception_prefix_families:
+                            exception_prefix_families.add("temporal")
+                            triples.append(
+                                {
+                                    "subject": formula.formula_id,
+                                    "predicate": "exception_prefix_family",
+                                    "object": "temporal",
+                                }
+                            )
+                        if temporal_relation not in exception_prefix_temporal_relations:
+                            exception_prefix_temporal_relations.add(temporal_relation)
+                            triples.append(
+                                {
+                                    "subject": formula.formula_id,
+                                    "predicate": "exception_prefix_temporal_relation",
+                                    "object": temporal_relation,
+                                }
+                            )
                 if scoped_value:
                     triples.append(
                         {
@@ -1369,11 +1436,50 @@ def _typed_clause_key_value(
         return None
     prefixes = _CONDITION_PREFIXES if clause_type == "condition" else _EXCEPTION_PREFIXES
     for prefix_text, prefix_key in prefixes:
-        if not normalized.startswith(prefix_text):
+        if not _text_has_prefix(normalized, prefix_text):
             continue
         value = _clean_non_empty_string(normalized[len(prefix_text) :].lstrip(",:;- "))
         return prefix_key, value
     return None
+
+
+def _cue_modal_components(
+    formula: ModalIRFormula,
+    *,
+    cue: str,
+) -> List[tuple[str, str]]:
+    cue_value = _clean_non_empty_string(cue).lower()
+    family = _clean_non_empty_string(formula.operator.family).lower()
+    symbol = _clean_non_empty_string(formula.operator.symbol)
+    if not cue_value or not family or not symbol:
+        return []
+    signature = f"{family}:{symbol}:{cue_value}"
+    return [
+        ("cue_modal_signature", signature),
+        ("cue_modal_family", family),
+        ("cue_modal_operator", symbol),
+        ("cue_modal_lexeme", cue_value),
+    ]
+
+
+def _temporal_clause_prefix_relation(prefix_key: str) -> str:
+    normalized_key = _clean_non_empty_string(prefix_key).lower()
+    if not normalized_key:
+        return ""
+    return _TEMPORAL_CLAUSE_PREFIX_RELATIONS.get(normalized_key, "")
+
+
+def _text_has_prefix(text: str, prefix: str) -> bool:
+    normalized_text = _clean_non_empty_string(text).lower()
+    normalized_prefix = _clean_non_empty_string(prefix).lower()
+    if not normalized_text or not normalized_prefix:
+        return False
+    if not normalized_text.startswith(normalized_prefix):
+        return False
+    if len(normalized_text) == len(normalized_prefix):
+        return True
+    suffix_char = normalized_text[len(normalized_prefix)]
+    return not suffix_char.isalnum()
 
 
 def _status_keyword_value(
