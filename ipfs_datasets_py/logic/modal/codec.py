@@ -104,6 +104,10 @@ _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
     re.IGNORECASE,
 )
+_USCODE_SOURCE_ID_RE = re.compile(
+    r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
+    re.IGNORECASE,
+)
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
@@ -722,6 +726,16 @@ def modal_ir_to_flogic_triples(
                 },
             ]
         )
+        source_id = _clean_non_empty_string(formula.provenance.source_id)
+        if source_id:
+            for predicate, value in _source_id_components(source_id):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         for predicate_name, predicate_value in _typed_identifier_components(
             formula.predicate.name,
             slot_prefix="predicate",
@@ -1080,6 +1094,61 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
                 slot_prefix="citation_section",
             )
         )
+    return _unique_preserve_order_tuples(components)
+
+
+def _source_id_components(source_id: str) -> List[tuple[str, str]]:
+    cleaned = _clean_non_empty_string(source_id)
+    if not cleaned:
+        return []
+    match = _USCODE_SOURCE_ID_RE.match(cleaned)
+    if not match:
+        return [("source_id", cleaned)]
+
+    scheme = _clean_non_empty_string(match.group("scheme")).lower()
+    title = _clean_non_empty_string(match.group("title"))
+    section = _clean_non_empty_string(match.group("section"))
+    digest = _clean_non_empty_string(match.group("digest")).lower()
+    normalized_section = _TRAILING_SECTION_PUNCT_RE.sub("", section)
+    section_for_components = normalized_section or section
+
+    components: List[tuple[str, str]] = [
+        ("source_id", cleaned),
+        ("source_id_scheme", scheme),
+    ]
+    if title:
+        components.append(("source_id_title", title))
+        components.extend(
+            _typed_identifier_components(
+                title,
+                slot_prefix="source_id_title",
+            )
+        )
+        title_match = _CITATION_SECTION_PART_RE.fullmatch(title)
+        if title_match:
+            title_number = _clean_non_empty_string(title_match.group("number"))
+            title_suffix = _clean_non_empty_string(title_match.group("suffix"))
+            if title_number:
+                components.append(("source_id_title_number", title_number))
+            if title_suffix:
+                components.append(("source_id_title_suffix", title_suffix))
+    if section:
+        components.append(("source_id_section", section))
+    if normalized_section and normalized_section != section:
+        components.append(("source_id_section_normalized", normalized_section))
+    if section_for_components:
+        for predicate, value in _citation_section_components(section_for_components):
+            if predicate.startswith("citation_section"):
+                mapped = predicate.replace("citation_section", "source_id_section", 1)
+                components.append((mapped, value))
+        components.extend(
+            _typed_identifier_components(
+                section_for_components,
+                slot_prefix="source_id_section",
+            )
+        )
+    if digest:
+        components.append(("source_id_digest", digest))
     return _unique_preserve_order_tuples(components)
 
 

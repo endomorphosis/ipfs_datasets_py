@@ -2155,6 +2155,95 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     )
 
 
+def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
+    primary_source_id = "us-code-42-10145.-cdf17e327d28e2de"
+    secondary_source_id = "us-code-42-2000e-87b0a223ec2f555f"
+    formula = ModalIRFormula(
+        formula_id="source-id-doc:f0001",
+        operator=ModalIROperator(
+            family="frame",
+            system="F",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(
+            name="section_heading_example",
+            role="frame",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=primary_source_id,
+            start_char=0,
+            end_char=16,
+            citation=None,
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_v1"},
+    )
+    secondary_formula = ModalIRFormula(
+        formula_id="source-id-doc:f0002",
+        operator=ModalIROperator(
+            family="frame",
+            system="F",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(
+            name="section_heading_example_two",
+            role="frame",
+        ),
+        provenance=ModalIRProvenance(
+            source_id=secondary_source_id,
+            start_char=17,
+            end_char=38,
+            citation=None,
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_v1"},
+    )
+    document = ModalIRDocument(
+        document_id=primary_source_id,
+        source="us_code",
+        normalized_text="Sec. 10145. Repealed. Sec. 2000e. Definitions.",
+        formulas=[formula, secondary_formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert slot_texts["source_id_scheme"] == ["us-code"]
+    assert slot_texts["source_id_title"] == ["42"]
+    assert slot_texts["source_id_title_number"] == ["42"]
+    assert "10145." in slot_texts["source_id_section"]
+    assert "2000e" in slot_texts["source_id_section"]
+    assert "10145" in slot_texts["source_id_section_normalized"]
+    assert "10145" in slot_texts["source_id_section_primary"]
+    assert "2000e" in slot_texts["source_id_section_primary"]
+    assert "10145" in slot_texts["source_id_section_number"]
+    assert "2000" in slot_texts["source_id_section_number"]
+    assert "e" in slot_texts["source_id_section_suffix"]
+    assert "cdf17e327d28e2de" in slot_texts["source_id_digest"]
+    assert "87b0a223ec2f555f" in slot_texts["source_id_digest"]
+    assert any(
+        triple["predicate"] == "source_id_section"
+        and triple["object"] == "10145."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_normalized"
+        and triple["object"] == "10145"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_suffix"
+        and triple["object"] == "e"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_digest"
+        and triple["object"] == "87b0a223ec2f555f"
+        for triple in triples
+    )
+
+
 def test_modal_flogic_triples_and_decompiler_slots_include_typed_predicate_arguments() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

@@ -47,6 +47,10 @@ _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
     re.IGNORECASE,
 )
+_USCODE_SOURCE_ID_RE = re.compile(
+    r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
+    re.IGNORECASE,
+)
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
@@ -145,7 +149,10 @@ class DecodedModalText:
 def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     """Reconstruct source semantics while preserving formula audit metadata."""
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
-    phrases: List[DecodedModalPhrase] = list(source_phrases)
+    phrases: List[DecodedModalPhrase] = [
+        *source_phrases,
+        *_source_identifier_phrases(document),
+    ]
     missing_slots: List[str] = []
     formulas: List[str] = []
 
@@ -562,6 +569,88 @@ def _fallback_section_heading_tail_text(
     if len(_tokenize_for_similarity(heading_tail)) > max_tokens:
         return ""
     return heading_tail
+
+
+def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
+    phrases: List[DecodedModalPhrase] = []
+    for source_id in _document_source_ids(document):
+        for slot, value in _source_id_slots(source_id):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
+    return phrases
+
+
+def _document_source_ids(document: ModalIRDocument) -> List[str]:
+    source_ids: List[str] = []
+    document_id = _clean_text(document.document_id)
+    if document_id:
+        source_ids.append(document_id)
+    for formula in document.formulas:
+        source_id = _clean_text(formula.provenance.source_id)
+        if source_id and source_id not in source_ids:
+            source_ids.append(source_id)
+    return source_ids
+
+
+def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
+    cleaned = _clean_text(source_id)
+    if not cleaned:
+        return []
+    match = _USCODE_SOURCE_ID_RE.match(cleaned)
+    if not match:
+        return [("source_id", cleaned)]
+    scheme = _clean_text(match.group("scheme")).lower()
+    title = _clean_text(match.group("title"))
+    section = _clean_text(match.group("section"))
+    digest = _clean_text(match.group("digest")).lower()
+    normalized_section = _TRAILING_SECTION_PUNCT_RE.sub("", section)
+
+    slots: List[Tuple[str, str]] = [
+        ("source_id", cleaned),
+        ("source_id_scheme", scheme),
+    ]
+    if title:
+        slots.append(("source_id_title", title))
+        slots.extend(_typed_identifier_slots(title, slot_prefix="source_id_title"))
+        title_match = _CITATION_SECTION_PART_RE.fullmatch(title)
+        if title_match:
+            title_number = _clean_text(title_match.group("number"))
+            title_suffix = _clean_text(title_match.group("suffix"))
+            if title_number:
+                slots.append(("source_id_title_number", title_number))
+            if title_suffix:
+                slots.append(("source_id_title_suffix", title_suffix))
+
+    if section:
+        slots.append(("source_id_section", section))
+    if normalized_section and normalized_section != section:
+        slots.append(("source_id_section_normalized", normalized_section))
+    section_for_slots = normalized_section or section
+    if section_for_slots:
+        slots.extend(_source_id_section_slots(section_for_slots))
+        slots.extend(
+            _typed_identifier_slots(
+                section_for_slots,
+                slot_prefix="source_id_section",
+            )
+        )
+
+    if digest:
+        slots.append(("source_id_digest", digest))
+    return _unique_slot_values(slots)
+
+
+def _source_id_section_slots(section: str) -> List[Tuple[str, str]]:
+    slots: List[Tuple[str, str]] = []
+    for slot, value in _citation_section_slots(section):
+        if slot.startswith("citation_section"):
+            slots.append((slot.replace("citation_section", "source_id_section", 1), value))
+    return slots
 
 
 def _operator_phrase(formula: ModalIRFormula) -> str:
