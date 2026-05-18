@@ -770,10 +770,37 @@ def _fallback_surface_text(
     normalized = _TRAILING_SECTION_PUNCT_RE.sub("", normalized)
     if not normalized:
         return ""
+    status_surface = _status_heading_surface_text(
+        normalized,
+        status_keyword=_derived_status_keyword(
+            formula=formula,
+            fallback_rule=fallback_rule,
+        ),
+    )
+    if status_surface:
+        return status_surface
     tokens = _tokenize_for_similarity(normalized)
     if not tokens or len(tokens) > max_tokens:
         return ""
     return normalized
+
+
+def _status_heading_surface_text(text: str, *, status_keyword: str) -> str:
+    normalized_text = _clean_text(text)
+    normalized_keyword = _clean_text(status_keyword).lower()
+    if not normalized_text or not normalized_keyword:
+        return ""
+    lowered_text = normalized_text.lower()
+    if not lowered_text.startswith(normalized_keyword):
+        return ""
+    if lowered_text == normalized_keyword:
+        return normalized_text
+    if re.match(
+        rf"^{re.escape(normalized_keyword)}\s+from\s+the\s+u(?:\b|\s)",
+        lowered_text,
+    ):
+        return normalized_text.split(maxsplit=1)[0]
+    return ""
 
 
 def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from ipfs_datasets_py.logic.modal import (
+    DeterministicModalCompiler,
+    ModalCompilerConfig,
     decode_modal_ir_document,
     decoded_modal_phrase_slot_text_map,
     modal_ir_to_flogic_triples,
@@ -414,3 +416,29 @@ def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_
             )
             assert slot_values == expected[predicate]
             assert triple_values == expected[predicate]
+
+
+def test_modal_slots_compact_status_surface_text_when_us_abbreviation_truncates_span() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "Sec. 606 - Transferred From the U.S. Government Publishing Office.",
+        document_id="us-code-8-606-cdf17e327d28e2de",
+        citation="8 U.S.C. 606",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    triple_values: list[str] = []
+    for triple in modal_ir_to_flogic_triples(compiled.modal_ir):
+        if str(triple.get("predicate", "")).strip() != "fallback_surface_text":
+            continue
+        value = str(triple.get("object", "")).strip()
+        if value and value not in triple_values:
+            triple_values.append(value)
+
+    assert slot_map["fallback_rule"] == ["uscode_transferred_heading_v1"]
+    assert slot_map["status_keyword"] == ["transferred"]
+    assert slot_map["fallback_surface_text"] == ["Transferred"]
+    assert triple_values == ["Transferred"]
