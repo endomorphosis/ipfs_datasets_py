@@ -1076,6 +1076,17 @@ def modal_ir_to_flogic_triples(
                     "object": condition,
                 }
             )
+            for predicate_name, predicate_value in _typed_identifier_components(
+                condition,
+                slot_prefix="condition",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate_name,
+                        "object": predicate_value,
+                    }
+                )
             _append_statutory_scope_triples(
                 triples,
                 subject=formula.formula_id,
@@ -1084,7 +1095,7 @@ def modal_ir_to_flogic_triples(
             )
             typed_condition = _typed_clause_key_value(condition, clause_type="condition")
             if typed_condition is not None:
-                key, value = typed_condition
+                key, scoped_value = typed_condition
                 if key not in condition_prefixes:
                     condition_prefixes.add(key)
                     triples.append(
@@ -1094,14 +1105,39 @@ def modal_ir_to_flogic_triples(
                             "object": key.replace("_", " "),
                         }
                     )
-                if value:
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "condition_prefix_key",
+                            "object": key,
+                        }
+                    )
+                if scoped_value:
                     triples.append(
                         {
                             "subject": formula.formula_id,
                             "predicate": f"condition_{key}",
-                            "object": value,
+                            "object": scoped_value,
                         }
                     )
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "condition_scope",
+                            "object": scoped_value,
+                        }
+                    )
+                    for predicate_name, predicate_value in _typed_identifier_components(
+                        scoped_value,
+                        slot_prefix="condition_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
         for exception in sorted({value for value in formula.exceptions if value}):
             triples.append(
                 {
@@ -1110,6 +1146,17 @@ def modal_ir_to_flogic_triples(
                     "object": exception,
                 }
             )
+            for predicate_name, predicate_value in _typed_identifier_components(
+                exception,
+                slot_prefix="exception",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate_name,
+                        "object": predicate_value,
+                    }
+                )
             _append_statutory_scope_triples(
                 triples,
                 subject=formula.formula_id,
@@ -1118,7 +1165,7 @@ def modal_ir_to_flogic_triples(
             )
             typed_exception = _typed_clause_key_value(exception, clause_type="exception")
             if typed_exception is not None:
-                key, value = typed_exception
+                key, scoped_value = typed_exception
                 if key not in exception_prefixes:
                     exception_prefixes.add(key)
                     triples.append(
@@ -1128,14 +1175,39 @@ def modal_ir_to_flogic_triples(
                             "object": key.replace("_", " "),
                         }
                     )
-                if value:
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "exception_prefix_key",
+                            "object": key,
+                        }
+                    )
+                if scoped_value:
                     triples.append(
                         {
                             "subject": formula.formula_id,
                             "predicate": f"exception_{key}",
-                            "object": value,
+                            "object": scoped_value,
                         }
                     )
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": "exception_scope",
+                            "object": scoped_value,
+                        }
+                    )
+                    for predicate_name, predicate_value in _typed_identifier_components(
+                        scoped_value,
+                        slot_prefix="exception_scope",
+                    ):
+                        triples.append(
+                            {
+                                "subject": formula.formula_id,
+                                "predicate": predicate_name,
+                                "object": predicate_value,
+                            }
+                        )
         citation = _clean_non_empty_string(formula.provenance.citation)
         citation_inferred_from_source_id = False
         if not citation:

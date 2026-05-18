@@ -463,6 +463,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            condition,
+            slot_prefix="condition",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         phrases.extend(_typed_clause_phrases(condition, slot="condition", spans=spans))
         _append_statutory_scope_phrases(
             phrases,
@@ -479,6 +491,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            exception,
+            slot_prefix="exception",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
         phrases.extend(_typed_clause_phrases(exception, slot="exception", spans=spans))
         _append_statutory_scope_phrases(
             phrases,
@@ -1502,14 +1526,21 @@ def _typed_clause_phrases(
     parsed = _typed_clause_slot(clause, slot=slot)
     if parsed is None:
         return []
-    prefix_slot_value, scoped_slot, scoped_value = parsed
+    prefix_slot_value, prefix_key, scoped_value = parsed
+    scoped_slot = f"{slot}_{prefix_key}"
     phrases = [
         DecodedModalPhrase(
             text=prefix_slot_value,
             slot=f"{slot}_prefix",
             spans=spans,
             provenance_only=True,
-        )
+        ),
+        DecodedModalPhrase(
+            text=prefix_key,
+            slot=f"{slot}_prefix_key",
+            spans=spans,
+            provenance_only=True,
+        ),
     ]
     if scoped_value:
         phrases.append(
@@ -1520,6 +1551,26 @@ def _typed_clause_phrases(
                 provenance_only=True,
             )
         )
+        phrases.append(
+            DecodedModalPhrase(
+                text=scoped_value,
+                slot=f"{slot}_scope",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+        for typed_slot, typed_value in _typed_identifier_slots(
+            scoped_value,
+            slot_prefix=f"{slot}_scope",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=typed_value,
+                    slot=typed_slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     return phrases
 
 
@@ -1536,7 +1587,7 @@ def _typed_clause_slot(
         if not normalized.startswith(prefix_text):
             continue
         suffix = _clean_text(normalized[len(prefix_text) :].lstrip(",:;- "))
-        return prefix_text, f"{slot}_{prefix_key}", suffix
+        return prefix_text, prefix_key, suffix
     return None
 
 

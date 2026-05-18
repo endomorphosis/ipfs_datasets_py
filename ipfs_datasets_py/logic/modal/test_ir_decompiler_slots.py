@@ -488,6 +488,38 @@ def _procedural_keyword_fallback_sample_document() -> ModalIRDocument:
     )
 
 
+def _typed_clause_scope_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-6409-502d7cea35400f08"
+    normalized_text = (
+        "Provided that the applicant submits annual reports, assistance is "
+        "available, except as otherwise provided in subsection (b)."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-typed-clause-scope",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_assistance"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="7 U.S.C. 6409",
+        ),
+        conditions=["provided that the applicant submits annual reports"],
+        exceptions=["except as otherwise provided in subsection (b)"],
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _zero_digit_signature_sample_document() -> ModalIRDocument:
     source_id = "us-code-43-1470.-845d9dceb9d264ab"
     formula = ModalIRFormula(
@@ -2467,6 +2499,54 @@ def test_modal_ir_to_flogic_triples_emits_procedural_keyword_slots() -> None:
     assert objects("procedural_keyword_token_prefix") == ["review"]
     assert objects("procedural_keyword_token_suffix") == ["review"]
     assert objects("procedural_keyword_stem") == ["review"]
+
+
+def test_decode_modal_ir_document_emits_condition_exception_scope_slots() -> None:
+    decoded = decode_modal_ir_document(_typed_clause_scope_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["provided that the applicant submits annual reports"]
+    assert slot_map["condition_token_count"] == ["7"]
+    assert slot_map["condition_prefix"] == ["provided that"]
+    assert slot_map["condition_prefix_key"] == ["provided_that"]
+    assert slot_map["condition_provided_that"] == ["the applicant submits annual reports"]
+    assert slot_map["condition_scope"] == ["the applicant submits annual reports"]
+    assert slot_map["condition_scope_token_suffix"] == ["reports"]
+    assert slot_map["exception"] == ["except as otherwise provided in subsection (b)"]
+    assert slot_map["exception_token_count"] == ["7"]
+    assert slot_map["exception_prefix"] == ["except as otherwise provided"]
+    assert slot_map["exception_prefix_key"] == ["except_as_otherwise_provided"]
+    assert slot_map["exception_except_as_otherwise_provided"] == ["in subsection (b)"]
+    assert slot_map["exception_scope"] == ["in subsection (b)"]
+    assert slot_map["exception_scope_token_count"] == ["3"]
+    assert slot_map["exception_scope_token_suffix"] == ["(b)"]
+
+
+def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_typed_clause_scope_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["provided that the applicant submits annual reports"]
+    assert objects("condition_token_count") == ["7"]
+    assert objects("condition_prefix") == ["provided that"]
+    assert objects("condition_prefix_key") == ["provided_that"]
+    assert objects("condition_provided_that") == ["the applicant submits annual reports"]
+    assert objects("condition_scope") == ["the applicant submits annual reports"]
+    assert objects("condition_scope_token_suffix") == ["reports"]
+    assert objects("exception") == ["except as otherwise provided in subsection (b)"]
+    assert objects("exception_token_count") == ["7"]
+    assert objects("exception_prefix") == ["except as otherwise provided"]
+    assert objects("exception_prefix_key") == ["except_as_otherwise_provided"]
+    assert objects("exception_except_as_otherwise_provided") == ["in subsection (b)"]
+    assert objects("exception_scope") == ["in subsection (b)"]
+    assert objects("exception_scope_token_count") == ["3"]
+    assert objects("exception_scope_token_suffix") == ["(b)"]
 
 
 def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:
