@@ -193,6 +193,10 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     source_phrases, modal_span_coverage = _source_reconstruction_phrases(document)
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
+        *_document_span_metric_phrases(
+            document=document,
+            modal_span_coverage=modal_span_coverage,
+        ),
         *_source_identifier_phrases(document),
         *_document_citation_phrases(document),
         *_document_modal_family_count_phrases(document),
@@ -1965,6 +1969,129 @@ def _source_reconstruction_phrases(
 
     coverage = covered_chars / len(source_text) if source_text else 0.0
     return phrases, round(min(1.0, max(0.0, coverage)), 6)
+
+
+def _document_span_metric_phrases(
+    *,
+    document: ModalIRDocument,
+    modal_span_coverage: float,
+) -> List[DecodedModalPhrase]:
+    source_text = _clean_text(document.normalized_text)
+    source_length = len(source_text)
+    modal_spans = _merged_formula_spans(document.formulas, source_length)
+    modal_span_count = len(modal_spans)
+    modal_span_char_count = sum(
+        max(0, span_end - span_start)
+        for span_start, span_end in modal_spans
+    )
+    source_context_span_count = _source_context_span_count(
+        modal_spans=modal_spans,
+        source_length=source_length,
+    )
+    source_context_span_char_count = max(0, source_length - modal_span_char_count)
+    support_start, support_end = _support_span(document.formulas)
+    support_width = max(0, support_end - support_start)
+    coverage_percent = str(int(round(max(0.0, min(1.0, modal_span_coverage)) * 100.0)))
+
+    metric_slots: List[Tuple[str, str]] = [
+        ("modal_formula_count", str(len(document.formulas))),
+        ("source_text_char_count", str(source_length)),
+        ("modal_span_count", str(modal_span_count)),
+        ("modal_span_char_count", str(modal_span_char_count)),
+        ("source_context_span_count", str(source_context_span_count)),
+        ("source_context_span_char_count", str(source_context_span_char_count)),
+        ("support_span_start_char", str(support_start)),
+        ("support_span_end_char", str(support_end)),
+        ("support_span_width", str(support_width)),
+        ("modal_span_coverage_percent", coverage_percent),
+    ]
+    phrases: List[DecodedModalPhrase] = []
+    for slot, value in metric_slots:
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+        for signature_slot, signature_value in _numeric_signature_slots(
+            value,
+            slot_prefix=slot,
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=signature_value,
+                    slot=signature_slot,
+                    provenance_only=True,
+                )
+            )
+
+    coverage_bucket = _modal_span_coverage_bucket(
+        modal_span_coverage=modal_span_coverage,
+        source_length=source_length,
+        modal_span_count=modal_span_count,
+    )
+    phrases.append(
+        DecodedModalPhrase(
+            text=coverage_bucket,
+            slot="modal_span_coverage_bucket",
+            provenance_only=True,
+        )
+    )
+    for slot, value in _typed_identifier_slots(
+        coverage_bucket,
+        slot_prefix="modal_span_coverage_bucket",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _source_context_span_count(
+    *,
+    modal_spans: Sequence[Tuple[int, int]],
+    source_length: int,
+) -> int:
+    if source_length <= 0:
+        return 0
+    if not modal_spans:
+        return 1
+    count = 0
+    cursor = 0
+    for start, end in modal_spans:
+        if cursor < start:
+            count += 1
+        cursor = max(cursor, end)
+    if cursor < source_length:
+        count += 1
+    return count
+
+
+def _modal_span_coverage_bucket(
+    *,
+    modal_span_coverage: float,
+    source_length: int,
+    modal_span_count: int,
+) -> str:
+    if source_length <= 0:
+        return "no_source_text"
+    if modal_span_count <= 0:
+        return "no_modal_span"
+    normalized_coverage = max(0.0, min(1.0, float(modal_span_coverage)))
+    if normalized_coverage < 0.25:
+        return "sparse_coverage"
+    if normalized_coverage < 0.5:
+        return "partial_coverage"
+    if normalized_coverage < 0.75:
+        return "majority_coverage"
+    if normalized_coverage < 1.0:
+        return "high_coverage"
+    return "full_coverage"
 
 
 def _append_source_phrase(

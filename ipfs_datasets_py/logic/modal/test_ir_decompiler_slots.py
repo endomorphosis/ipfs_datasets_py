@@ -600,6 +600,50 @@ def _upper_alpha_suffix_sample_document() -> ModalIRDocument:
     )
 
 
+def _span_metrics_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-12782.-01f3026e32e90a63"
+    source_text = "ABCDEFGHIJKLMNOPQRST"
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=source_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-span-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="first_span"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=0,
+                    end_char=6,
+                    citation="42 U.S.C. 12782.",
+                ),
+            ),
+            ModalIRFormula(
+                formula_id="f-span-2",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="kd",
+                    symbol="O",
+                    label="obligatory",
+                ),
+                predicate=ModalIRPredicate(name="second_span"),
+                provenance=ModalIRProvenance(
+                    source_id=source_id,
+                    start_char=9,
+                    end_char=14,
+                    citation="42 U.S.C. 12782.",
+                ),
+            ),
+        ],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -3637,3 +3681,74 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(punct_triples, "source_id_section_punctuation_style") == [
         "trailing_punct"
     ]
+
+
+def test_decode_modal_ir_document_emits_span_metric_slots() -> None:
+    decoded = decode_modal_ir_document(_span_metrics_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_formula_count"] == ["2"]
+    assert slot_map["source_text_char_count"] == ["20"]
+    assert slot_map["modal_span_count"] == ["2"]
+    assert slot_map["modal_span_char_count"] == ["11"]
+    assert slot_map["source_context_span_count"] == ["2"]
+    assert slot_map["source_context_span_char_count"] == ["9"]
+    assert slot_map["support_span_start_char"] == ["0"]
+    assert slot_map["support_span_end_char"] == ["14"]
+    assert slot_map["support_span_width"] == ["14"]
+    assert slot_map["modal_span_coverage_percent"] == ["55"]
+    assert slot_map["modal_span_coverage_bucket"] == ["majority_coverage"]
+    assert slot_map["modal_span_char_count_digit_count_bucket"] == ["2_digit"]
+    assert slot_map["modal_span_coverage_percent_prefix_two_digits"] == ["55"]
+    assert slot_map["source_context_span_count_parity"] == ["even"]
+
+
+def test_modal_ir_to_flogic_triples_emits_span_metric_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_span_metrics_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_formula_count") == ["2"]
+    assert objects("source_text_char_count") == ["20"]
+    assert objects("modal_span_count") == ["2"]
+    assert objects("modal_span_char_count") == ["11"]
+    assert objects("source_context_span_count") == ["2"]
+    assert objects("source_context_span_char_count") == ["9"]
+    assert objects("support_span_start_char") == ["0"]
+    assert objects("support_span_end_char") == ["14"]
+    assert objects("support_span_width") == ["14"]
+    assert objects("modal_span_coverage_percent") == ["55"]
+    assert objects("modal_span_coverage_bucket") == ["majority_coverage"]
+    assert objects("modal_span_char_count_digit_count_bucket") == ["2_digit"]
+    assert objects("modal_span_coverage_percent_prefix_two_digits") == ["55"]
+    assert objects("source_context_span_count_parity") == ["even"]
+
+
+def test_decode_and_triples_emit_no_modal_span_bucket_for_zero_formula_documents() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(_zero_formula_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert slot_map["modal_formula_count"] == ["0"]
+    assert slot_map["modal_span_count"] == ["0"]
+    assert slot_map["source_context_span_count"] == ["1"]
+    assert slot_map["modal_span_coverage_percent"] == ["0"]
+    assert slot_map["modal_span_coverage_bucket"] == ["no_modal_span"]
+
+    assert objects("modal_formula_count") == ["0"]
+    assert objects("modal_span_count") == ["0"]
+    assert objects("source_context_span_count") == ["1"]
+    assert objects("modal_span_coverage_percent") == ["0"]
+    assert objects("modal_span_coverage_bucket") == ["no_modal_span"]

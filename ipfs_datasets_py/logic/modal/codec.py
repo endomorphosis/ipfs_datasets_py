@@ -802,6 +802,14 @@ def modal_ir_to_flogic_triples(
                 "object": value,
             }
         )
+    for predicate, value in _document_span_components(modal_ir):
+        triples.append(
+            {
+                "subject": modal_ir.document_id,
+                "predicate": predicate,
+                "object": value,
+            }
+        )
     if not modal_ir.formulas:
         for predicate, value in _document_source_context_components(modal_ir):
             triples.append(
@@ -2268,6 +2276,145 @@ def _component_value_map(components: Sequence[tuple[str, str]]) -> Dict[str, str
             continue
         values[normalized_component] = normalized_value
     return values
+
+
+def _document_span_components(modal_ir: ModalIRDocument) -> List[tuple[str, str]]:
+    source_text = _collapse_whitespace_text(modal_ir.normalized_text)
+    source_length = len(source_text)
+    modal_spans = _merged_formula_spans(modal_ir.formulas, source_length)
+    modal_span_count = len(modal_spans)
+    modal_span_char_count = sum(
+        max(0, span_end - span_start)
+        for span_start, span_end in modal_spans
+    )
+    source_context_span_count = _source_context_span_count(
+        modal_spans=modal_spans,
+        source_length=source_length,
+    )
+    source_context_span_char_count = max(0, source_length - modal_span_char_count)
+    support_start, support_end = _support_span(modal_ir.formulas)
+    support_width = max(0, support_end - support_start)
+    modal_span_coverage = (
+        (modal_span_char_count / source_length)
+        if source_length > 0
+        else 0.0
+    )
+    coverage_percent = str(int(round(max(0.0, min(1.0, modal_span_coverage)) * 100.0)))
+
+    components: List[tuple[str, str]] = []
+    metric_components: List[tuple[str, str]] = [
+        ("modal_formula_count", str(len(modal_ir.formulas))),
+        ("source_text_char_count", str(source_length)),
+        ("modal_span_count", str(modal_span_count)),
+        ("modal_span_char_count", str(modal_span_char_count)),
+        ("source_context_span_count", str(source_context_span_count)),
+        ("source_context_span_char_count", str(source_context_span_char_count)),
+        ("support_span_start_char", str(support_start)),
+        ("support_span_end_char", str(support_end)),
+        ("support_span_width", str(support_width)),
+        ("modal_span_coverage_percent", coverage_percent),
+    ]
+    for predicate, value in metric_components:
+        components.append((predicate, value))
+        components.extend(
+            _numeric_signature_components(
+                value,
+                slot_prefix=predicate,
+            )
+        )
+
+    coverage_bucket = _modal_span_coverage_bucket(
+        modal_span_coverage=modal_span_coverage,
+        source_length=source_length,
+        modal_span_count=modal_span_count,
+    )
+    components.append(("modal_span_coverage_bucket", coverage_bucket))
+    components.extend(
+        _typed_identifier_components(
+            coverage_bucket,
+            slot_prefix="modal_span_coverage_bucket",
+        )
+    )
+    return _unique_preserve_order_tuples(components)
+
+
+def _collapse_whitespace_text(value: Any) -> str:
+    return " ".join(str(value or "").split()).strip()
+
+
+def _merged_formula_spans(
+    formulas: Sequence[ModalIRFormula],
+    source_length: int,
+) -> List[tuple[int, int]]:
+    spans: List[tuple[int, int]] = []
+    for formula in formulas:
+        start = max(0, min(source_length, int(formula.provenance.start_char)))
+        end = max(start, min(source_length, int(formula.provenance.end_char)))
+        if end > start:
+            spans.append((start, end))
+    if not spans:
+        return []
+    spans.sort()
+    merged: List[tuple[int, int]] = []
+    current_start, current_end = spans[0]
+    for start, end in spans[1:]:
+        if start <= current_end:
+            current_end = max(current_end, end)
+            continue
+        merged.append((current_start, current_end))
+        current_start, current_end = start, end
+    merged.append((current_start, current_end))
+    return merged
+
+
+def _source_context_span_count(
+    *,
+    modal_spans: Sequence[tuple[int, int]],
+    source_length: int,
+) -> int:
+    if source_length <= 0:
+        return 0
+    if not modal_spans:
+        return 1
+    count = 0
+    cursor = 0
+    for start, end in modal_spans:
+        if cursor < start:
+            count += 1
+        cursor = max(cursor, end)
+    if cursor < source_length:
+        count += 1
+    return count
+
+
+def _modal_span_coverage_bucket(
+    *,
+    modal_span_coverage: float,
+    source_length: int,
+    modal_span_count: int,
+) -> str:
+    if source_length <= 0:
+        return "no_source_text"
+    if modal_span_count <= 0:
+        return "no_modal_span"
+    normalized_coverage = max(0.0, min(1.0, float(modal_span_coverage)))
+    if normalized_coverage < 0.25:
+        return "sparse_coverage"
+    if normalized_coverage < 0.5:
+        return "partial_coverage"
+    if normalized_coverage < 0.75:
+        return "majority_coverage"
+    if normalized_coverage < 1.0:
+        return "high_coverage"
+    return "full_coverage"
+
+
+def _support_span(formulas: Sequence[ModalIRFormula]) -> tuple[int, int]:
+    if not formulas:
+        return (0, 0)
+    starts = [int(formula.provenance.start_char) for formula in formulas]
+    ends = [int(formula.provenance.end_char) for formula in formulas]
+    return (min(starts), max(ends))
 
 
 def _document_modal_family_count_components(
