@@ -800,6 +800,41 @@ def frame_ontology_high_signal_terms(
     )
 
 
+def frame_ontology_contextualized_terms(
+    *,
+    feature_keys: Iterable[str] = (),
+    triples: Iterable[Mapping[str, object]] = (),
+    max_terms: int = 256,
+    include_positioned_terms: bool = True,
+) -> List[str]:
+    """Return contextualized frame terms for low-signal and positioned values."""
+    term_entries: List[tuple[str, int]] = []
+    for feature_key in feature_keys:
+        contextualized = _contextualized_frame_ontology_term_from_feature(
+            feature_key,
+            include_positioned_terms=include_positioned_terms,
+        )
+        if not contextualized:
+            continue
+        term_entries.append((contextualized, _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT))
+    for triple in triples:
+        predicate = str(triple.get("predicate", "")).strip()
+        obj = str(triple.get("object", "")).strip()
+        if not predicate or not obj:
+            continue
+        contextualized = _contextualized_frame_ontology_term_from_feature(
+            f"flogic:{predicate}:{obj}",
+            include_positioned_terms=include_positioned_terms,
+        )
+        if not contextualized:
+            continue
+        term_entries.append((contextualized, _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT))
+    return _bounded_ontology_values(
+        term_entries,
+        max_items=max_terms,
+    )
+
+
 def _bounded_ontology_values(
     entries: Iterable[tuple[str, int]],
     *,
@@ -1419,6 +1454,89 @@ def _priority_for_frame_ontology_term(priority: int, term: str) -> int:
     return int(priority)
 
 
+def _contextualized_frame_ontology_term_from_feature(
+    feature_key: str,
+    *,
+    include_positioned_terms: bool,
+) -> str:
+    feature = str(feature_key or "").strip()
+    if not feature:
+        return ""
+    raw_value = _raw_frame_ontology_value_from_feature(feature)
+    if not raw_value:
+        return ""
+    predicate = _frame_ontology_contextual_predicate_from_feature(feature)
+    if not predicate:
+        return ""
+    normalized_value = normalize_frame_ontology_term(
+        raw_value,
+        keep_numeric_tokens=True,
+        keep_single_char_alpha_tokens=True,
+        keep_stopword_tokens=True,
+    )
+    if not normalized_value:
+        return ""
+    if not _should_contextualize_frame_ontology_value(
+        predicate=predicate,
+        normalized_value=normalized_value,
+        include_positioned_terms=include_positioned_terms,
+    ):
+        return ""
+    return normalize_frame_ontology_term(
+        f"{predicate}_{normalized_value}",
+        max_tokens=24,
+        keep_numeric_tokens=True,
+        keep_single_char_alpha_tokens=True,
+        keep_stopword_tokens=True,
+    )
+
+
+def _frame_ontology_contextual_predicate_from_feature(feature_key: str) -> str:
+    head, separator, tail = str(feature_key or "").partition(":")
+    if not separator:
+        return ""
+    if _is_contextual_frame_ontology_predicate(head):
+        return _normalized_frame_ontology_predicate(head)
+    namespace = head.strip().lower()
+    if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
+        return ""
+    raw_predicate, separator, _value = tail.partition(":")
+    if not separator or not _is_contextual_frame_ontology_predicate(raw_predicate):
+        return ""
+    return _normalized_frame_ontology_predicate(raw_predicate)
+
+
+def _normalized_frame_ontology_predicate(value: str) -> str:
+    return _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(value or "").strip().lower(),
+    ).strip("_")
+
+
+def _should_contextualize_frame_ontology_value(
+    *,
+    predicate: str,
+    normalized_value: str,
+    include_positioned_terms: bool,
+) -> bool:
+    if _is_frame_ontology_contextual_low_signal_value(normalized_value):
+        return True
+    if include_positioned_terms and predicate.endswith("_positioned"):
+        return True
+    return False
+
+
+def _is_frame_ontology_contextual_low_signal_value(value: str) -> bool:
+    normalized = str(value or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized in _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS:
+        return True
+    if normalized.isdigit():
+        return len(normalized) <= 2
+    return len(normalized) == 1 and normalized.isalpha()
+
+
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (
     FrameCandidate(
         frame_id="housing_voucher_benefits",
@@ -1453,6 +1571,7 @@ __all__ = [
     "frame_ontology_feature_keys",
     "frame_ontology_feature_keys_from_values",
     "frame_ontology_high_signal_terms",
+    "frame_ontology_contextualized_terms",
     "frame_ontology_terms_from_feature_keys",
     "frame_ontology_terms_from_triples",
     "frame_ontology_terms",

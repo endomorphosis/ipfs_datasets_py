@@ -47,6 +47,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_contextualized_terms,
     frame_ontology_feature_keys,
     frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
@@ -351,9 +352,20 @@ def _frame_ontology_metadata(
     triple_terms = sorted(
         frame_ontology_terms_from_triples(kg_triples)
     )
-    ontology_terms = sorted(set(feature_terms) | set(triple_terms))
+    contextualized_terms = sorted(
+        frame_ontology_contextualized_terms(
+            feature_keys=audit_feature_keys,
+            triples=kg_triples,
+        )
+    )
+    ontology_terms = sorted(
+        set(feature_terms) | set(triple_terms) | set(contextualized_terms)
+    )
     feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
     triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
+    contextualized_high_signal_terms = frame_ontology_high_signal_terms(
+        contextualized_terms
+    )
     high_signal_terms = frame_ontology_high_signal_terms(ontology_terms)
 
     return {
@@ -365,6 +377,8 @@ def _frame_ontology_metadata(
         "frame_ontology_terms_from_feature_keys": feature_terms,
         "frame_ontology_terms_from_triples_count": len(triple_terms),
         "frame_ontology_terms_from_triples": triple_terms,
+        "frame_ontology_contextualized_term_count": len(contextualized_terms),
+        "frame_ontology_contextualized_terms": contextualized_terms,
         "frame_ontology_term_count": len(ontology_terms),
         "frame_ontology_terms": ontology_terms,
         "frame_ontology_high_signal_terms_from_feature_keys_count": len(
@@ -375,6 +389,10 @@ def _frame_ontology_metadata(
             triple_high_signal_terms
         ),
         "frame_ontology_high_signal_terms_from_triples": triple_high_signal_terms,
+        "frame_ontology_high_signal_terms_from_contextualized_count": len(
+            contextualized_high_signal_terms
+        ),
+        "frame_ontology_high_signal_terms_from_contextualized": contextualized_high_signal_terms,
         "frame_ontology_high_signal_term_count": len(high_signal_terms),
         "frame_ontology_high_signal_terms": high_signal_terms,
     }

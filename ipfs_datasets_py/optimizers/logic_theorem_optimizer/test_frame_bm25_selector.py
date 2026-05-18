@@ -1,6 +1,7 @@
 """Tests for frame ontology feature/term extraction helpers."""
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_contextualized_terms,
     frame_ontology_feature_keys_from_values,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
@@ -340,3 +341,61 @@ def test_frame_ontology_feature_keys_from_values_parses_serialized_json_payloads
         "3_4",
         "42_1437q",
     ]
+
+
+def test_frame_ontology_contextualized_terms_keep_low_signal_frame_features() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_section_has_trailing_punct:false",
+            "flogic:citation_section_number_has_zero_digit:false",
+            "flogic:citation_section_number_has_zero_digit_positioned:1:false",
+            "flogic:citation_section_number_zero_digit_count:0",
+            "flogic:citation_section_number_zero_digit_count_positioned:1:0",
+            "flogic:citation_section_primary_number_has_zero_digit:false",
+            "flogic:citation_section_primary_number_zero_digit_count:0",
+            "flogic:citation_section_number_parity:odd",
+            "flogic:citation_section_number_parity_positioned:1:odd",
+            "flogic:source_id_section_primary_number_parity:odd",
+            "flogic:condition_alnum_segment:a",
+            "flogic:condition_scope_alnum_segment:a",
+            "flogic:condition_alnum_segment:such",
+            "family:selected_frame:epistemic",
+        ]
+    )
+
+    assert "citation_section_has_trailing_punct_false" in terms
+    assert "citation_section_number_has_zero_digit_false" in terms
+    assert "citation_section_number_has_zero_digit_positioned_false" in terms
+    assert "citation_section_number_zero_digit_count_0" in terms
+    assert "citation_section_number_zero_digit_count_positioned_0" in terms
+    assert "citation_section_number_parity_odd" in terms
+    assert "citation_section_number_parity_positioned_odd" in terms
+    assert "source_id_section_primary_number_parity_odd" in terms
+    assert "condition_alnum_segment_a" in terms
+    assert "condition_scope_alnum_segment_a" in terms
+    assert "odd" not in terms
+    assert "false" not in terms
+    assert "0" not in terms
+
+
+def test_frame_ontology_contextualized_terms_keep_positioned_structural_features() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_section_component_signature:N4",
+            "flogic:citation_section_component_signature_positioned:1:N4",
+            "flogic:citation_section_number_digit_count_bucket:4_digit",
+            "flogic:citation_section_number_digit_count_bucket_positioned:1:4_digit",
+            "flogic:citation_section_number_magnitude_bucket:1k_to_9k",
+            "flogic:citation_section_number_magnitude_bucket_positioned:1:1k_to_9k",
+        ],
+        triples=[
+            {"predicate": "source_id_section_number_parity_positioned", "object": "1:odd"},
+        ],
+    )
+
+    assert "citation_section_component_signature_positioned_n4" in terms
+    assert "citation_section_number_digit_count_bucket_positioned_4_digit" in terms
+    assert "citation_section_number_magnitude_bucket_positioned_1k_to_9k" in terms
+    assert "source_id_section_number_parity_positioned_odd" in terms
+    assert "citation_section_component_signature_n4" not in terms
+    assert "citation_section_number_digit_count_bucket_4_digit" not in terms
