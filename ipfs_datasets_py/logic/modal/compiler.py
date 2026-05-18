@@ -7,6 +7,7 @@ to decide the canonical IR.
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field, replace
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -34,6 +35,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoder,
     SpaCyLegalEncoding,
+    SpaCyModalDecoder,
     SpaCyModalIRCompiler,
     modal_ambiguity_signals,
     ranked_modal_families,
@@ -119,6 +121,7 @@ class DeterministicModalCompiler:
             model_name=self.config.spacy_model_name,
             registry=registry,
         )
+        self.decoder = SpaCyModalDecoder()
         self.ir_compiler = SpaCyModalIRCompiler()
         self.frame_selector = frame_selector or BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
 
@@ -268,7 +271,22 @@ class DeterministicModalCompiler:
     ) -> List[ModalCompilationAmbiguity]:
         ranking = ranked_modal_families(encoding)
         if not ranking:
-            return []
+            if not encoding.normalized_text:
+                return []
+            adaptive_ranking = self._adaptive_family_ranking_from_logits(encoding)
+            if not adaptive_ranking:
+                return []
+            adaptive_family_shares = {
+                str(candidate["family"]): float(candidate["share"])
+                for candidate in adaptive_ranking
+            }
+            return self._adaptive_family_margin_ambiguities(
+                encoding,
+                modal_ir=modal_ir,
+                ranking=adaptive_ranking,
+                family_shares=adaptive_family_shares,
+                frame_selections=frame_selections,
+            )
 
         ambiguities: List[ModalCompilationAmbiguity] = []
         family_shares = {
@@ -525,6 +543,42 @@ class DeterministicModalCompiler:
                 )
             )
         return ambiguities
+
+    def _adaptive_family_ranking_from_logits(
+        self,
+        encoding: SpaCyLegalEncoding,
+    ) -> List[Dict[str, float]]:
+        """Build fallback family ranking from deterministic decoder logits."""
+        modal_families = [family.value for family in ModalLogicFamily]
+        logits = self.decoder.family_logits(
+            encoding,
+            modal_families=modal_families,
+        )
+        if not logits:
+            return []
+        max_logit = max(float(value) for value in logits.values())
+        exp_by_family = {
+            family: math.exp(float(logit) - max_logit)
+            for family, logit in logits.items()
+        }
+        total = sum(exp_by_family.values())
+        if total <= 0.0:
+            return []
+        ranking: List[Dict[str, float]] = []
+        for family in sorted(
+            exp_by_family,
+            key=lambda key: (-exp_by_family[key], key),
+        ):
+            ranking.append(
+                {
+                    "family": family,
+                    "count": 0,
+                    "logit": round(float(logits[family]), 6),
+                    "share": round(exp_by_family[family] / total, 6),
+                    "source": "logit_softmax_fallback",
+                }
+            )
+        return ranking
 
     def _adaptive_family_margin_ambiguities(
         self,
