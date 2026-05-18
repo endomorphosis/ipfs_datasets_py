@@ -1013,6 +1013,24 @@ def test_frame_ontology_contextualized_terms_explicitly_contextualize_distance_p
     assert "condition_conditional_normative_subject_to" in terms
 
 
+def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_magnitude_bucket_values() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:predicate_alnum_segment:pub",
+            "flogic:predicate_token:pub",
+            "flogic:predicate_token_suffix:pub",
+            "flogic:citation_section_number_magnitude_bucket:lt_1k",
+            "flogic:citation_section_primary_number_magnitude_bucket:lt_1k",
+        ]
+    )
+
+    assert "predicate_alnum_segment_pub" in terms
+    assert "predicate_token_pub" in terms
+    assert "predicate_token_suffix_pub" in terms
+    assert "citation_section_number_magnitude_bucket_lt_1k" in terms
+    assert "citation_section_primary_number_magnitude_bucket_lt_1k" in terms
+
+
 def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_predicates() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

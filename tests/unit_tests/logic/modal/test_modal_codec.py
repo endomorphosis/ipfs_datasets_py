@@ -6480,6 +6480,8 @@ def test_frame_ontology_audit_terms_contextualize_low_signal_frame_features() ->
             "flogic:citation_title_section_primary_number_span_trailing_zero_count:0",
             "flogic:modal_cue:by",
             "flogic:predicate_token:c",
+            "flogic:predicate_token:pub",
+            "flogic:citation_section_number_magnitude_bucket:lt_1k",
         ],
         kg_triples=[
             {
@@ -6498,6 +6500,8 @@ def test_frame_ontology_audit_terms_contextualize_low_signal_frame_features() ->
     )
     assert "by" in frame_terms
     assert "predicate_token_c" in frame_terms
+    assert "predicate_token_pub" in frame_terms
+    assert "citation_section_number_magnitude_bucket_lt_1k" in frame_terms
     assert "source_id_title_number_parity_odd" in frame_terms
 
 

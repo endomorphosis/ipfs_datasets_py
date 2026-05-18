@@ -331,6 +331,10 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
     "_conditional_normative",
     "_distance_profile",
+    "_magnitude_bucket",
+    "_thousands_block",
+    "predicate_alnum_segment",
+    "predicate_token",
     "_terminal_number_digit_count_bucket",
     "_terminal_number_span_digit_count_bucket",
 )
