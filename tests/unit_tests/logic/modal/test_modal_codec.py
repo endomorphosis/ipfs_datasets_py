@@ -1684,6 +1684,84 @@ def test_modal_flogic_triples_and_decompiler_slots_include_typed_predicate_argum
     )
 
 
+def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() -> None:
+    formula = ModalIRFormula(
+        formula_id="statutory-doc:f0001",
+        operator=ModalIROperator(
+            family="deontic",
+            system="D",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(
+            name="must_under_this_section_provide_notice",
+            arguments=[
+                "scope:pursuant_to_subsection_(b)",
+                "authority:as_provided_in_paragraph_(1)",
+            ],
+            role="clause",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="statutory-doc",
+            start_char=0,
+            end_char=86,
+            citation="5 U.S.C. 552",
+        ),
+        conditions=["under section 552(a)(1)"],
+    )
+    document = ModalIRDocument(
+        document_id="statutory-doc",
+        source="us_code",
+        normalized_text="The agency must under this section provide notice.",
+        formulas=[formula],
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert "under this section" in slot_texts["statutory_scope_reference"]
+    assert "pursuant to subsection (b)" in slot_texts["statutory_scope_reference"]
+    assert "as provided in paragraph (1)" in slot_texts["statutory_scope_reference"]
+    assert "under section 552(a)(1)" in slot_texts["statutory_scope_reference"]
+    assert slot_texts["statutory_scope_connector"] == [
+        "under",
+        "pursuant to",
+        "as provided in",
+    ]
+    assert slot_texts["statutory_scope_unit"] == [
+        "section",
+        "subsection",
+        "paragraph",
+    ]
+    assert slot_texts["statutory_scope_target"] == ["this", "(b)", "(1)", "552(a)(1)"]
+    assert any(
+        triple["predicate"] == "statutory_scope_reference"
+        and triple["object"] == "under this section"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_reference"
+        and triple["object"] == "pursuant to subsection (b)"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_connector"
+        and triple["object"] == "as provided in"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_unit"
+        and triple["object"] == "paragraph"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statutory_scope_target"
+        and triple["object"] == "552(a)(1)"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(

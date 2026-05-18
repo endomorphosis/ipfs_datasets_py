@@ -102,6 +102,16 @@ _USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_STATUTORY_SCOPE_REFERENCE_RE = re.compile(
+    r"(?<!\w)"
+    r"(?P<connector>as provided in|in accordance with|pursuant to|under)"
+    r"\s+"
+    r"(?:(?P<this>this)\s+)?"
+    r"(?P<unit>section|subsection|paragraph|subparagraph|chapter|title)"
+    r"(?:\s+(?P<target>(?:\([^)]+\))+|[0-9A-Za-z][0-9A-Za-z.\-]*(?:\([^)]+\))*))?"
+    r"(?!\w)",
+    re.IGNORECASE,
+)
 _SLOT_FEATURE_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 
@@ -607,6 +617,7 @@ def modal_ir_to_flogic_triples(
     for formula in modal_ir.formulas:
         condition_prefixes: set[str] = set()
         exception_prefixes: set[str] = set()
+        statutory_scope_entries: set[tuple[str, str]] = set()
         triples.extend(
             [
                 {
@@ -662,6 +673,12 @@ def modal_ir_to_flogic_triples(
                     "object": formula.predicate.role,
                 }
             )
+        _append_statutory_scope_triples(
+            triples,
+            subject=formula.formula_id,
+            text=formula.predicate.name,
+            emitted=statutory_scope_entries,
+        )
         for argument in sorted(
             {
                 str(value).strip()
@@ -678,6 +695,12 @@ def modal_ir_to_flogic_triples(
             )
             typed_argument = _typed_argument_key_value(argument)
             if typed_argument is None:
+                _append_statutory_scope_triples(
+                    triples,
+                    subject=formula.formula_id,
+                    text=argument,
+                    emitted=statutory_scope_entries,
+                )
                 continue
             key, value = typed_argument
             triples.append(
@@ -686,6 +709,12 @@ def modal_ir_to_flogic_triples(
                     "predicate": f"predicate_argument_{key}",
                     "object": value,
                 }
+            )
+            _append_statutory_scope_triples(
+                triples,
+                subject=formula.formula_id,
+                text=value,
+                emitted=statutory_scope_entries,
             )
         fallback_rule = _clean_non_empty_string(formula.metadata.get("fallback_rule"))
         if fallback_rule:
@@ -712,6 +741,12 @@ def modal_ir_to_flogic_triples(
                     "predicate": "condition",
                     "object": condition,
                 }
+            )
+            _append_statutory_scope_triples(
+                triples,
+                subject=formula.formula_id,
+                text=condition,
+                emitted=statutory_scope_entries,
             )
             typed_condition = _typed_clause_key_value(condition, clause_type="condition")
             if typed_condition is not None:
@@ -740,6 +775,12 @@ def modal_ir_to_flogic_triples(
                     "predicate": "exception",
                     "object": exception,
                 }
+            )
+            _append_statutory_scope_triples(
+                triples,
+                subject=formula.formula_id,
+                text=exception,
+                emitted=statutory_scope_entries,
             )
             typed_exception = _typed_clause_key_value(exception, clause_type="exception")
             if typed_exception is not None:
@@ -882,6 +923,64 @@ def _citation_components(citation: str) -> Dict[str, str]:
     if section:
         components["citation_section"] = section
     return components
+
+
+def _append_statutory_scope_triples(
+    triples: List[Dict[str, str]],
+    *,
+    subject: str,
+    text: str,
+    emitted: set[tuple[str, str]],
+) -> None:
+    for predicate, value in _statutory_scope_entries(text):
+        marker = (predicate, value)
+        if marker in emitted:
+            continue
+        emitted.add(marker)
+        triples.append(
+            {
+                "subject": subject,
+                "predicate": predicate,
+                "object": value,
+            }
+        )
+
+
+def _statutory_scope_entries(text: str) -> List[tuple[str, str]]:
+    normalized = _clean_non_empty_string(text).replace("_", " ").lower()
+    if not normalized:
+        return []
+    entries: List[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for match in _STATUTORY_SCOPE_REFERENCE_RE.finditer(normalized):
+        connector = _clean_non_empty_string(match.group("connector")).lower()
+        unit = _clean_non_empty_string(match.group("unit")).lower()
+        has_this = bool(_clean_non_empty_string(match.group("this")))
+        target = _clean_non_empty_string(match.group("target")).lower()
+        if has_this and target and not target.startswith("(") and not any(
+            character.isdigit() for character in target
+        ):
+            target = ""
+        reference_parts = [connector, "this", unit] if has_this else [connector, unit]
+        if target:
+            reference_parts.append(target)
+        reference = " ".join(reference_parts)
+        resolved_target = f"this {target}".strip() if has_this else target
+        if has_this and not target:
+            resolved_target = "this"
+        values: List[tuple[str, str]] = [
+            ("statutory_scope_reference", reference),
+            ("statutory_scope_connector", connector),
+            ("statutory_scope_unit", unit),
+        ]
+        if resolved_target:
+            values.append(("statutory_scope_target", resolved_target))
+        for entry in values:
+            if entry in seen:
+                continue
+            seen.add(entry)
+            entries.append(entry)
+    return entries
 
 
 def _slot_features(decoded: DecodedModalText) -> List[str]:

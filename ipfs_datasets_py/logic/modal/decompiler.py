@@ -48,6 +48,16 @@ _USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
+_STATUTORY_SCOPE_REFERENCE_RE = re.compile(
+    r"(?<!\w)"
+    r"(?P<connector>as provided in|in accordance with|pursuant to|under)"
+    r"\s+"
+    r"(?:(?P<this>this)\s+)?"
+    r"(?P<unit>section|subsection|paragraph|subparagraph|chapter|title)"
+    r"(?:\s+(?P<target>(?:\([^)]+\))+|[0-9A-Za-z][0-9A-Za-z.\-]*(?:\([^)]+\))*))?"
+    r"(?!\w)",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -198,6 +208,8 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
     cue_start = formula.metadata.get("cue_start_char")
     cue_end = formula.metadata.get("cue_end_char")
     argument_values = _phrase_values(formula.predicate.arguments)
+    statutory_scope_emissions: set[Tuple[str, str]] = set()
+    predicate_text = _predicate_phrase(formula)
     phrases = [
         DecodedModalPhrase(
             text=modal_formula_to_text(formula),
@@ -230,12 +242,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             provenance_only=True,
         ),
         DecodedModalPhrase(
-            text=_predicate_phrase(formula),
+            text=predicate_text,
             slot="predicate",
             spans=spans,
             provenance_only=True,
         ),
     ]
+    _append_statutory_scope_phrases(
+        phrases,
+        predicate_text,
+        spans=spans,
+        emitted=statutory_scope_emissions,
+    )
     operator_label = _clean_text(formula.operator.label)
     if operator_label:
         phrases.append(
@@ -273,6 +291,12 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        _append_statutory_scope_phrases(
+            phrases,
+            argument,
+            spans=spans,
+            emitted=statutory_scope_emissions,
+        )
         typed_argument_slot = _typed_argument_slot(argument)
         if typed_argument_slot is None:
             continue
@@ -304,6 +328,12 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             )
         )
         phrases.extend(_typed_clause_phrases(condition, slot="condition", spans=spans))
+        _append_statutory_scope_phrases(
+            phrases,
+            condition,
+            spans=spans,
+            emitted=statutory_scope_emissions,
+        )
     for exception in _phrase_values(formula.exceptions):
         phrases.append(
             DecodedModalPhrase(
@@ -314,6 +344,12 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             )
         )
         phrases.extend(_typed_clause_phrases(exception, slot="exception", spans=spans))
+        _append_statutory_scope_phrases(
+            phrases,
+            exception,
+            spans=spans,
+            emitted=statutory_scope_emissions,
+        )
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     if fallback_rule:
         phrases.append(
@@ -577,6 +613,65 @@ def _typed_clause_slot(
         suffix = _clean_text(normalized[len(prefix_text) :].lstrip(",:;- "))
         return prefix_text, f"{slot}_{prefix_key}", suffix
     return None
+
+
+def _append_statutory_scope_phrases(
+    phrases: List[DecodedModalPhrase],
+    text: str,
+    *,
+    spans: List[List[int]],
+    emitted: set[Tuple[str, str]],
+) -> None:
+    for slot, value in _statutory_scope_slots(text):
+        marker = (slot, value)
+        if marker in emitted:
+            continue
+        emitted.add(marker)
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+
+
+def _statutory_scope_slots(text: str) -> List[Tuple[str, str]]:
+    normalized = _clean_text(text).replace("_", " ").lower()
+    if not normalized:
+        return []
+    result: List[Tuple[str, str]] = []
+    seen: set[Tuple[str, str]] = set()
+    for match in _STATUTORY_SCOPE_REFERENCE_RE.finditer(normalized):
+        connector = _clean_text(match.group("connector")).lower()
+        unit = _clean_text(match.group("unit")).lower()
+        has_this = bool(_clean_text(match.group("this")))
+        target = _clean_text(match.group("target")).lower()
+        if has_this and target and not target.startswith("(") and not any(
+            character.isdigit() for character in target
+        ):
+            target = ""
+        reference_parts = [connector, "this", unit] if has_this else [connector, unit]
+        if target:
+            reference_parts.append(target)
+        reference = " ".join(reference_parts)
+        resolved_target = f"this {target}".strip() if has_this else target
+        if has_this and not target:
+            resolved_target = "this"
+        values: List[Tuple[str, str]] = [
+            ("statutory_scope_reference", reference),
+            ("statutory_scope_connector", connector),
+            ("statutory_scope_unit", unit),
+        ]
+        if resolved_target:
+            values.append(("statutory_scope_target", resolved_target))
+        for slot in values:
+            if slot in seen:
+                continue
+            seen.add(slot)
+            result.append(slot)
+    return result
 
 
 def _citation_slots(citation: str) -> List[Tuple[str, str]]:
