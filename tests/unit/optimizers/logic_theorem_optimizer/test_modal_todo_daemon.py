@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodoQueue,
     ModalTodoSupervisor,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
     apply_codex_worktree_changes_to_main,
     build_paired_daemon_commands,
@@ -411,6 +412,83 @@ def test_supervisor_can_claim_semantic_program_synthesis_bundle_by_ast_scope() -
     assert [todo.todo_id for todo in claimed] == ["program-anchor", "program-sibling"]
     assert supervisor.queue.get("program-different-family").status == "pending"
     assert supervisor.queue.get("program-frame").status == "pending"
+
+
+def test_queue_can_claim_vector_program_synthesis_bundle_by_ast_scope() -> None:
+    shared_metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "compiler_ambiguity",
+        "target_component": "modal.compiler.ambiguity",
+    }
+    anchor = ModalTodo(
+        todo_id="program-anchor",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="temporal deontic modal ambiguity",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={**shared_metadata, "semantic_bundle_key": "ambiguity:temporal->deontic"},
+    )
+    vector_sibling = ModalTodo(
+        todo_id="program-vector-sibling",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="deadline obligation ambiguity",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=8.0,
+        metadata={**shared_metadata, "semantic_bundle_key": "ambiguity:deadline->obligation"},
+    )
+    distant_same_scope = ModalTodo(
+        todo_id="program-distant",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="unrelated registry issue",
+        sample_ids=["c"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        metadata={**shared_metadata, "semantic_bundle_key": "ambiguity:unrelated"},
+    )
+    different_scope = ModalTodo(
+        todo_id="program-frame",
+        action="audit_frame_logic_terms",
+        objective="temporal deontic frame issue",
+        sample_ids=["d"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=12.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "frame_logic",
+            "target_component": "modal.frame_logic",
+        },
+    )
+    queue = ModalTodoQueue([anchor, vector_sibling, distant_same_scope, different_scope])
+
+    claimed = queue.claim_vector_bundle(
+        worker_id="compiler-worker",
+        max_items=3,
+        optimizer_role="program_synthesis",
+        metadata_filter={"program_synthesis_scope": "compiler_ambiguity"},
+        vectors_by_todo_id={
+            "program-anchor": [1.0, 0.0],
+            "program-vector-sibling": [0.95, 0.05],
+            "program-distant": [0.0, 1.0],
+            "program-frame": [1.0, 0.0],
+        },
+        min_similarity=0.9,
+    )
+
+    assert [todo.todo_id for todo in claimed] == ["program-anchor", "program-vector-sibling"]
+    assert queue.get("program-distant").status == "pending"
+    assert queue.get("program-frame").status == "pending"
+    assert claimed[1].metadata["vector_bundle_anchor_id"] == "program-anchor"
+    assert claimed[1].metadata["vector_bundle_similarity"] >= 0.9
 
 
 def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
@@ -927,6 +1005,113 @@ def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children(
     assert all("--codex-scope" in child["command"] for child in children)
     assert "--codex-scope" in paired["codex_command"]
     assert paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1] == "compiler_ambiguity"
+
+
+def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -> None:
+    args = SimpleNamespace(
+        run_id="vector-root",
+        autoencoder_run_id=None,
+        codex_run_id=None,
+        duration_seconds=60.0,
+        train_count=2,
+        validation_count=1,
+        max_inner_iterations=1,
+        max_items=3,
+        learning_rate=0.1,
+        test_every_cycles=50,
+        poll_seconds=2.0,
+        worker_id="codex-worker",
+        codex_exec_mode="codex_cli",
+        codex_command="codex",
+        codex_model="gpt-5.3-codex",
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
+        codex_scope=None,
+        codex_parallel_scopes="compiler_parser,ir_decompiler,frame_logic",
+        codex_bundle_mode="vector",
+        codex_vector_min_similarity=0.81,
+        codex_vector_index_path="/tmp/codex-task-vectors.json",
+        codex_task_embeddings_provider="local_adapter",
+        codex_task_embeddings_model="thenlper/gte-small",
+        codex_task_embeddings_device="cpu",
+        codex_task_embeddings_batch_size=16,
+        codex_vector_fallback_mode="hash",
+        codex_merge_repair_mode="apply_3way",
+        codex_merge_repair_attempts=1,
+        codex_sandbox="workspace-write",
+        codex_timeout_seconds=45.0,
+        paired_grace_seconds=120.0,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+
+    children = paired["codex_children"]
+    assert len(children) == 3
+    for child in children:
+        command = child["command"]
+        assert command[command.index("--codex-bundle-mode") + 1] == "vector"
+        assert command[command.index("--codex-vector-min-similarity") + 1] == "0.81"
+        assert command[command.index("--codex-task-embeddings-provider") + 1] == "local_adapter"
+        assert command[command.index("--codex-task-embeddings-model") + 1] == "thenlper/gte-small"
+        assert command[command.index("--codex-task-embeddings-device") + 1] == "cpu"
+        assert command[command.index("--codex-task-embeddings-batch-size") + 1] == "16"
+        assert command[command.index("--codex-vector-index-path") + 1] == "/tmp/codex-task-vectors.json"
+
+
+def test_codex_task_vector_index_uses_embeddings_router_and_cache(tmp_path, monkeypatch) -> None:
+    calls = []
+
+    def fake_router_embeddings(texts, *, args):
+        calls.append(list(texts))
+        return [[1.0, 0.0] for _ in texts]
+
+    monkeypatch.setattr(runner, "_router_codex_task_embeddings", fake_router_embeddings)
+    args = SimpleNamespace(
+        codex_task_embeddings_provider="local_adapter",
+        codex_task_embeddings_model=None,
+        codex_task_embeddings_device=None,
+        codex_task_embeddings_batch_size=8,
+        codex_vector_fallback_mode="hash",
+    )
+    todo = ModalTodo(
+        todo_id="program-vector-cache",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="temporal deontic modal ambiguity",
+        sample_ids=["a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+        },
+    )
+    index_path = tmp_path / "codex-task-vectors.json"
+
+    vectors, report = runner._update_codex_task_vector_index(
+        args=args,
+        index_path=index_path,
+        todos=[todo],
+    )
+    cached_vectors, cached_report = runner._update_codex_task_vector_index(
+        args=args,
+        index_path=index_path,
+        todos=[todo],
+    )
+
+    assert vectors["program-vector-cache"] == [1.0, 0.0]
+    assert cached_vectors == vectors
+    assert report["backend"] == "embeddings_router"
+    assert cached_report["refreshed_count"] == 0
+    assert len(calls) == 1
+    assert index_path.exists()
 
 
 def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path) -> None:

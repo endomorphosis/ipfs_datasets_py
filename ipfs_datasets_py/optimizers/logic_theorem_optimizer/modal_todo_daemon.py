@@ -768,6 +768,31 @@ class ModalTodoQueue:
             claimed.append(todo)
         return claimed
 
+    def claim_todo_ids(
+        self,
+        *,
+        worker_id: str,
+        todo_ids: Sequence[str],
+        optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
+    ) -> List[ModalTodo]:
+        """Claim pending TODOs by id while still enforcing role/scope filters."""
+        claimed: List[ModalTodo] = []
+        for todo_id in todo_ids:
+            todo = self._todos.get(str(todo_id))
+            if todo is None:
+                continue
+            if not _todo_matches(
+                todo,
+                status="pending",
+                optimizer_role=optimizer_role,
+                metadata_filter=metadata_filter,
+            ):
+                continue
+            todo.claim(worker_id)
+            claimed.append(todo)
+        return claimed
+
     def claim_semantic_bundle(
         self,
         *,
@@ -799,6 +824,38 @@ class ModalTodoQueue:
 
         for todo in claimed:
             todo.claim(worker_id)
+        return claimed
+
+    def claim_vector_bundle(
+        self,
+        *,
+        worker_id: str,
+        max_items: int,
+        vectors_by_todo_id: Mapping[str, Sequence[float]],
+        min_similarity: float = 0.72,
+        optimizer_role: Optional[str] = None,
+        metadata_filter: Optional[Mapping[str, str]] = None,
+    ) -> List[ModalTodo]:
+        """Claim a priority anchor plus vector-nearest TODOs in the same AST scope."""
+        candidates = self._by_priority(
+            status="pending",
+            optimizer_role=optimizer_role,
+            metadata_filter=metadata_filter,
+        )
+        selected = select_program_synthesis_vector_bundle(
+            candidates,
+            vectors_by_todo_id=vectors_by_todo_id,
+            max_items=max_items,
+            min_similarity=min_similarity,
+        )
+        claimed: List[ModalTodo] = []
+        anchor_id = selected[0]["todo"].todo_id if selected else ""
+        for item in selected:
+            todo = item["todo"]
+            todo.metadata["vector_bundle_anchor_id"] = anchor_id
+            todo.metadata["vector_bundle_similarity"] = round(float(item["similarity"]), 6)
+            todo.claim(worker_id)
+            claimed.append(todo)
         return claimed
 
     def complete(self, todo_id: str) -> bool:
@@ -987,6 +1044,9 @@ class ModalTodoSupervisor:
         max_items: int,
         program_synthesis_scope: Optional[str] = None,
         semantic_bundle: bool = False,
+        vector_bundle: bool = False,
+        vectors_by_todo_id: Optional[Mapping[str, Sequence[float]]] = None,
+        vector_min_similarity: float = 0.72,
     ) -> List[ModalTodo]:
         """Claim reviewable deterministic repair TODOs for an external Codex worker."""
         metadata_filter = (
@@ -994,6 +1054,15 @@ class ModalTodoSupervisor:
             if program_synthesis_scope
             else None
         )
+        if vector_bundle:
+            return self.queue.claim_vector_bundle(
+                worker_id=worker_id,
+                max_items=max_items,
+                vectors_by_todo_id=vectors_by_todo_id or {},
+                min_similarity=vector_min_similarity,
+                optimizer_role=self.policy.program_synthesis_role,
+                metadata_filter=metadata_filter,
+            )
         if semantic_bundle:
             return self.queue.claim_semantic_bundle(
                 worker_id=worker_id,
@@ -1401,6 +1470,129 @@ def _program_todo_semantic_bundle_key(todo: ModalTodo) -> str:
         program_synthesis_scope=scope,
         family_pairs=_program_todo_family_pairs_from_evidence(hint_evidence),
     )
+
+
+def program_synthesis_todo_embedding_text(todo: ModalTodo) -> str:
+    """Return the text that the Codex task vector index embeds for bundling."""
+    metadata = todo.metadata or {}
+    evidence_lines: List[str] = []
+    for evidence in list(metadata.get("hint_evidence") or [])[:8]:
+        if not isinstance(evidence, Mapping):
+            continue
+        evidence_lines.append(
+            " ".join(
+                str(evidence.get(key) or "").strip()
+                for key in (
+                    "hint_id",
+                    "predicted_family",
+                    "target_family",
+                    "selected_frame",
+                    "frame_features",
+                    "roundtrip_preview",
+                )
+                if str(evidence.get(key) or "").strip()
+            )
+        )
+    parts = [
+        f"action: {todo.action}",
+        f"objective: {todo.objective}",
+        f"loss: {todo.loss_name}",
+        f"target_component: {_todo_target_component(todo)}",
+        f"program_synthesis_scope: {_program_todo_scope(todo)}",
+        f"semantic_bundle_key: {_program_todo_semantic_bundle_key(todo)}",
+        f"citations: {' '.join(todo.citations[:8])}",
+        f"sample_ids: {' '.join(todo.sample_ids[:16])}",
+        f"evidence: {' '.join(line for line in evidence_lines if line)}",
+    ]
+    return "\n".join(part for part in parts if part.strip())
+
+
+def select_program_synthesis_vector_bundle(
+    todos: Sequence[ModalTodo],
+    *,
+    vectors_by_todo_id: Mapping[str, Sequence[float]],
+    max_items: int,
+    min_similarity: float = 0.72,
+) -> List[Dict[str, Any]]:
+    """Select a vector-nearest program-synthesis bundle from pending candidates.
+
+    The first item is always the highest-priority anchor. Neighbors must remain
+    in the same program_synthesis_scope so parallel Codex workers stay inside
+    their AST/write lanes.
+    """
+    if max_items < 1:
+        return []
+    candidates = [
+        todo
+        for todo in sorted(todos, key=_todo_priority_key)
+        if _coerce_vector(vectors_by_todo_id.get(todo.todo_id))
+    ]
+    if not candidates:
+        return []
+
+    anchor = candidates[0]
+    anchor_vector = _coerce_vector(vectors_by_todo_id.get(anchor.todo_id))
+    if not anchor_vector:
+        return []
+
+    selected: List[Dict[str, Any]] = [
+        {"similarity": 1.0, "todo": anchor},
+    ]
+    scored: List[tuple[float, tuple[float, str, str], ModalTodo]] = []
+    for todo in candidates[1:]:
+        if not _program_todo_vector_bundle_compatible(anchor, todo):
+            continue
+        vector = _coerce_vector(vectors_by_todo_id.get(todo.todo_id))
+        if not vector:
+            continue
+        similarity = _cosine_similarity(anchor_vector, vector)
+        if similarity < float(min_similarity):
+            continue
+        scored.append((similarity, _todo_priority_key(todo), todo))
+
+    for similarity, _, todo in sorted(scored, key=lambda item: (-item[0], item[1])):
+        if len(selected) >= max_items:
+            break
+        selected.append({"similarity": similarity, "todo": todo})
+    return selected
+
+
+def _program_todo_scope(todo: ModalTodo) -> str:
+    scope = str(todo.metadata.get("program_synthesis_scope") or "").strip()
+    if scope:
+        return scope
+    return _program_synthesis_scope(
+        action=todo.action,
+        target_component=_todo_target_component(todo),
+    )
+
+
+def _program_todo_vector_bundle_compatible(anchor: ModalTodo, candidate: ModalTodo) -> bool:
+    if _program_todo_scope(anchor) != _program_todo_scope(candidate):
+        return False
+    return _todo_optimizer_role(anchor) == _todo_optimizer_role(candidate)
+
+
+def _coerce_vector(value: Optional[Sequence[float]]) -> List[float]:
+    if value is None:
+        return []
+    try:
+        vector = [float(item) for item in value]
+    except (TypeError, ValueError):
+        return []
+    return vector if vector else []
+
+
+def _cosine_similarity(left: Sequence[float], right: Sequence[float]) -> float:
+    size = min(len(left), len(right))
+    if size == 0:
+        return 0.0
+    dot = sum(float(left[index]) * float(right[index]) for index in range(size))
+    left_norm = sum(float(left[index]) ** 2 for index in range(size)) ** 0.5
+    right_norm = sum(float(right[index]) ** 2 for index in range(size)) ** 0.5
+    if left_norm == 0.0 or right_norm == 0.0:
+        return 0.0
+    return dot / (left_norm * right_norm)
 
 
 def _program_todo_family_pairs_from_evidence(value: Any) -> List[str]:

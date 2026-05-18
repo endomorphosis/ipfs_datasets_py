@@ -38,6 +38,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    program_synthesis_todo_embedding_text,
+    select_program_synthesis_vector_bundle,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_dataset import (
     HF_USCODE_DATASET_ID,
@@ -119,7 +121,9 @@ CODEX_SANDBOX_BLOCKER_PATTERNS = (
     "operation not permitted",
 )
 CODEX_COMPLETED_WORK_STATUSES = {"created", "applied_to_main"}
+CODEX_BUNDLE_MODES = ("priority", "semantic", "vector")
 CODEX_MERGE_REPAIR_MODES = ("off", "apply_3way")
+CODEX_VECTOR_FALLBACK_MODES = ("hash", "priority")
 CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
@@ -339,6 +343,336 @@ def codex_loop_execution_mode(args: argparse.Namespace) -> str:
     return "queued_for_external_codex_worker"
 
 
+def _codex_vector_index_path(args: argparse.Namespace, queue_path: Path) -> Path:
+    configured = str(getattr(args, "codex_vector_index_path", "") or "").strip()
+    if configured:
+        return Path(configured)
+    return queue_path.with_name(f"{queue_path.stem}.codex-task-vectors.json")
+
+
+def _program_synthesis_queue_todos(
+    queue: ModalTodoQueue,
+    *,
+    optimizer_role: str,
+) -> List[ModalTodo]:
+    return [
+        todo
+        for todo in queue.all()
+        if str(todo.metadata.get("optimizer_role") or "").strip() == optimizer_role
+    ]
+
+
+def _codex_scope_filter(scope: Optional[str]) -> Optional[Dict[str, str]]:
+    if not scope:
+        return None
+    return {"program_synthesis_scope": str(scope)}
+
+
+def _metadata_matches(todo: ModalTodo, metadata_filter: Optional[Mapping[str, str]]) -> bool:
+    if not metadata_filter:
+        return True
+    return all(str(todo.metadata.get(key) or "") == str(value) for key, value in metadata_filter.items())
+
+
+def _codex_task_fingerprint(todo: ModalTodo) -> str:
+    return hashlib.sha256(
+        program_synthesis_todo_embedding_text(todo).encode("utf-8")
+    ).hexdigest()
+
+
+def _coerce_embedding_vector(value: Any) -> List[float]:
+    if value is None:
+        return []
+    try:
+        vector = [float(item) for item in value]
+    except (TypeError, ValueError):
+        return []
+    return vector if vector else []
+
+
+def _hashed_embedding_texts(texts: Sequence[str], *, dimension: int = 128) -> List[List[float]]:
+    vectors: List[List[float]] = []
+    for text in texts:
+        vector = [0.0] * int(dimension)
+        tokens = [
+            token.strip("`'\".,;:()[]{}<>").lower()
+            for token in str(text or "").replace("\n", " ").split()
+        ]
+        for token in tokens:
+            if not token:
+                continue
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            index = int.from_bytes(digest[:4], "big") % len(vector)
+            sign = 1.0 if digest[4] % 2 == 0 else -1.0
+            vector[index] += sign
+        norm = sum(value * value for value in vector) ** 0.5
+        if norm:
+            vector = [value / norm for value in vector]
+        vectors.append(vector)
+    return vectors
+
+
+def _router_codex_task_embeddings(
+    texts: Sequence[str],
+    *,
+    args: argparse.Namespace,
+) -> List[List[float]]:
+    from ipfs_datasets_py import embeddings_router
+
+    provider = str(getattr(args, "codex_task_embeddings_provider", "local_adapter") or "").strip()
+    provider_arg = None if provider.lower() == "auto" else provider
+    model = str(getattr(args, "codex_task_embeddings_model", "") or "").strip() or None
+    device = str(getattr(args, "codex_task_embeddings_device", "") or "").strip() or None
+    batch_size = max(1, int(getattr(args, "codex_task_embeddings_batch_size", 32) or 32))
+    return embeddings_router.embed_texts_batched(
+        list(texts),
+        batch_size=batch_size,
+        model_name=model,
+        device=device,
+        provider=provider_arg,
+    )
+
+
+def _load_codex_task_vector_index(index_path: Path) -> Dict[str, Any]:
+    if not index_path.exists():
+        return {"items": {}, "version": 1}
+    try:
+        payload = json.loads(index_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"items": {}, "version": 1}
+    if not isinstance(payload, dict):
+        return {"items": {}, "version": 1}
+    items = payload.get("items")
+    if not isinstance(items, dict):
+        payload["items"] = {}
+    return payload
+
+
+def _save_codex_task_vector_index(index_path: Path, payload: Mapping[str, Any]) -> None:
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(
+        json.dumps(dict(payload), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _update_codex_task_vector_index(
+    *,
+    args: argparse.Namespace,
+    index_path: Path,
+    todos: Sequence[ModalTodo],
+) -> tuple[Dict[str, List[float]], Dict[str, Any]]:
+    """Update the persistent Codex TODO vector index and return vectors by id."""
+    todos_by_id = {todo.todo_id: todo for todo in todos}
+    missing: List[ModalTodo] = []
+
+    with queue_file_lock(index_path):
+        payload = _load_codex_task_vector_index(index_path)
+        existing_items = payload.get("items") if isinstance(payload.get("items"), dict) else {}
+        for todo_id, todo in sorted(todos_by_id.items()):
+            fingerprint = _codex_task_fingerprint(todo)
+            existing = existing_items.get(todo_id) if isinstance(existing_items, dict) else None
+            vector = (
+                _coerce_embedding_vector(existing.get("vector"))
+                if isinstance(existing, Mapping)
+                and str(existing.get("fingerprint") or "") == fingerprint
+                else []
+            )
+            if not vector:
+                missing.append(todo)
+
+    backend = "embeddings_router" if missing else str(payload.get("backend") or "embeddings_router")
+    fallback_reason = ""
+    refreshed = 0
+    generated_items: Dict[str, Dict[str, Any]] = {}
+    if missing:
+        texts = [program_synthesis_todo_embedding_text(todo) for todo in missing]
+        try:
+            vectors = _router_codex_task_embeddings(texts, args=args)
+        except Exception as exc:
+            fallback_reason = str(exc)
+            fallback_mode = str(getattr(args, "codex_vector_fallback_mode", "hash") or "hash")
+            if fallback_mode == "priority":
+                vectors = []
+                backend = "priority_fallback"
+            else:
+                vectors = _hashed_embedding_texts(texts)
+                backend = "local_hash_fallback"
+        refreshed = len(vectors)
+        for todo, vector in zip(missing, vectors):
+            coerced = _coerce_embedding_vector(vector)
+            if not coerced:
+                continue
+            generated_items[todo.todo_id] = {
+                "fingerprint": _codex_task_fingerprint(todo),
+                "status": todo.status,
+                "vector": coerced,
+            }
+
+    with queue_file_lock(index_path):
+        latest_payload = _load_codex_task_vector_index(index_path)
+        latest_items = latest_payload.get("items") if isinstance(latest_payload.get("items"), dict) else {}
+        items: Dict[str, Dict[str, Any]] = {}
+        for todo_id, todo in sorted(todos_by_id.items()):
+            fingerprint = _codex_task_fingerprint(todo)
+            existing = latest_items.get(todo_id) if isinstance(latest_items, dict) else None
+            vector = (
+                _coerce_embedding_vector(existing.get("vector"))
+                if isinstance(existing, Mapping)
+                and str(existing.get("fingerprint") or "") == fingerprint
+                else []
+            )
+            if vector:
+                items[todo_id] = {
+                    "fingerprint": fingerprint,
+                    "status": todo.status,
+                    "vector": vector,
+                }
+            elif todo_id in generated_items:
+                items[todo_id] = dict(generated_items[todo_id])
+
+        output = {
+            "backend": backend,
+            "fallback_reason": fallback_reason,
+            "indexed_count": len(items),
+            "items": items,
+            "model": str(getattr(args, "codex_task_embeddings_model", "") or ""),
+            "provider": str(getattr(args, "codex_task_embeddings_provider", "local_adapter") or ""),
+            "refreshed_count": refreshed,
+            "updated_at": utc_now(),
+            "version": 1,
+        }
+        _save_codex_task_vector_index(index_path, output)
+    vectors_by_id = {
+        todo_id: list(data["vector"])
+        for todo_id, data in items.items()
+        if isinstance(data, Mapping) and _coerce_embedding_vector(data.get("vector"))
+    }
+    report = {
+        "backend": backend,
+        "fallback_reason": fallback_reason,
+        "indexed_count": len(items),
+        "path": str(index_path),
+        "provider": output["provider"],
+        "refreshed_count": refreshed,
+    }
+    return vectors_by_id, report
+
+
+def _claim_vector_program_synthesis_batch(
+    *,
+    args: argparse.Namespace,
+    queue_path: Path,
+    worker_id: str,
+    policy: ModalOptimizerPolicy,
+    execution_mode: str,
+    summary: Dict[str, Any],
+) -> tuple[List[ModalTodo], ModalTodoQueue, Dict[str, Any], Dict[str, Any]]:
+    """Claim a vector-nearest Codex bundle without holding the queue lock while embedding."""
+    metadata_filter = _codex_scope_filter(getattr(args, "codex_scope", None))
+    with queue_file_lock(queue_path):
+        snapshot_queue = ModalTodoQueue.load_jsonl(queue_path)
+        candidates = [
+            todo
+            for todo in snapshot_queue.pending(optimizer_role=policy.program_synthesis_role)
+            if _metadata_matches(todo, metadata_filter)
+        ]
+        all_program_todos = _program_synthesis_queue_todos(
+            snapshot_queue,
+            optimizer_role=policy.program_synthesis_role,
+        )
+
+    vector_report: Dict[str, Any] = {
+        "candidate_count": len(candidates),
+        "mode": "vector",
+        "selected_count": 0,
+    }
+    if not candidates:
+        with queue_file_lock(queue_path):
+            queue = ModalTodoQueue.load_jsonl(queue_path)
+            status = update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+        return [], queue, status, vector_report
+
+    index_path = _codex_vector_index_path(args, queue_path)
+    vectors_by_id, index_report = _update_codex_task_vector_index(
+        args=args,
+        index_path=index_path,
+        todos=all_program_todos,
+    )
+    vector_report.update(index_report)
+
+    if not vectors_by_id:
+        with queue_file_lock(queue_path):
+            queue = ModalTodoQueue.load_jsonl(queue_path)
+            supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+            claimed = supervisor.claim_program_synthesis_batch(
+                worker_id=worker_id,
+                max_items=args.max_items,
+                program_synthesis_scope=getattr(args, "codex_scope", None),
+                semantic_bundle=False,
+            )
+            if claimed:
+                queue.save_jsonl(queue_path)
+            status = update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+        vector_report["mode"] = "priority_fallback"
+        vector_report["selected_count"] = len(claimed)
+        return claimed, queue, status, vector_report
+
+    selected = select_program_synthesis_vector_bundle(
+        candidates,
+        vectors_by_todo_id=vectors_by_id,
+        max_items=args.max_items,
+        min_similarity=float(getattr(args, "codex_vector_min_similarity", 0.72)),
+    )
+    selected_ids = [str(item["todo"].todo_id) for item in selected]
+    similarity_by_id = {
+        str(item["todo"].todo_id): float(item["similarity"])
+        for item in selected
+    }
+    anchor_id = selected_ids[0] if selected_ids else ""
+
+    with queue_file_lock(queue_path):
+        queue = ModalTodoQueue.load_jsonl(queue_path)
+        claimed = queue.claim_todo_ids(
+            worker_id=worker_id,
+            todo_ids=selected_ids,
+            optimizer_role=policy.program_synthesis_role,
+            metadata_filter=metadata_filter,
+        )
+        for todo in claimed:
+            todo.metadata["vector_bundle_anchor_id"] = anchor_id
+            todo.metadata["vector_bundle_similarity"] = round(
+                similarity_by_id.get(todo.todo_id, 0.0),
+                6,
+            )
+            todo.metadata["vector_bundle_index_path"] = str(index_path)
+            todo.metadata["vector_bundle_backend"] = str(vector_report.get("backend") or "")
+        if claimed:
+            queue.save_jsonl(queue_path)
+        status = update_program_synthesis_summary(
+            summary,
+            queue,
+            policy,
+            execution_mode=execution_mode,
+        )
+
+    vector_report["anchor_id"] = anchor_id
+    vector_report["selected_count"] = len(claimed)
+    vector_report["selected_ids"] = [todo.todo_id for todo in claimed]
+    vector_report["min_similarity"] = float(getattr(args, "codex_vector_min_similarity", 0.72))
+    return claimed, queue, status, vector_report
+
+
 def _codex_parallel_scope_values(args: argparse.Namespace) -> List[str]:
     raw = str(getattr(args, "codex_parallel_scopes", "") or "").strip()
     if not raw:
@@ -397,11 +731,25 @@ def _build_codex_child_command(
         str(getattr(args, "codex_commit_mode", "none")),
         "--codex-bundle-mode",
         str(getattr(args, "codex_bundle_mode", "semantic")),
+        "--codex-vector-min-similarity",
+        str(getattr(args, "codex_vector_min_similarity", 0.72)),
+        "--codex-task-embeddings-provider",
+        str(getattr(args, "codex_task_embeddings_provider", "local_adapter")),
+        "--codex-task-embeddings-batch-size",
+        str(getattr(args, "codex_task_embeddings_batch_size", 32)),
+        "--codex-vector-fallback-mode",
+        str(getattr(args, "codex_vector_fallback_mode", "hash")),
         "--codex-merge-repair-mode",
         str(getattr(args, "codex_merge_repair_mode", "apply_3way")),
         "--codex-merge-repair-attempts",
         str(getattr(args, "codex_merge_repair_attempts", 1)),
     ]
+    if getattr(args, "codex_vector_index_path", None):
+        command.extend(["--codex-vector-index-path", str(args.codex_vector_index_path)])
+    if getattr(args, "codex_task_embeddings_model", None):
+        command.extend(["--codex-task-embeddings-model", str(args.codex_task_embeddings_model)])
+    if getattr(args, "codex_task_embeddings_device", None):
+        command.extend(["--codex-task-embeddings-device", str(args.codex_task_embeddings_device)])
     if scope:
         command.extend(["--codex-scope", str(scope)])
     if worker_id:
@@ -535,6 +883,13 @@ def create_codex_work_packet(
             if todo.metadata.get("semantic_bundle_key")
         }
     )
+    vector_bundle_anchor_ids = sorted(
+        {
+            str(todo.metadata.get("vector_bundle_anchor_id") or "")
+            for todo in todos
+            if todo.metadata.get("vector_bundle_anchor_id")
+        }
+    )
     todo_list_path = packet_dir / "TODO_LIST.jsonl"
     todo_markdown_path = packet_dir / "TODO_LIST.md"
     todo_list_path.write_text(
@@ -609,6 +964,7 @@ def create_codex_work_packet(
         "run_id": run_id,
         "program_synthesis_scopes": program_synthesis_scopes,
         "semantic_bundle_keys": semantic_bundle_keys,
+        "vector_bundle_anchor_ids": vector_bundle_anchor_ids,
         "suggested_target_files": suggested_files,
         "source_repo_root": str(source_repo_root),
         "task_source": "autoencoder_supervisor_program_synthesis_queue",
@@ -1507,6 +1863,7 @@ def _todo_list_markdown(
                 f"  target: `{todo.metadata.get('target_component', '')}`",
                 f"  scope: `{todo.metadata.get('program_synthesis_scope', '')}`",
                 f"  bundle: `{todo.metadata.get('semantic_bundle_key', '')}`",
+                f"  vector_bundle: `{todo.metadata.get('vector_bundle_anchor_id', '')}` score `{todo.metadata.get('vector_bundle_similarity', '')}`",
                 f"  loss: `{todo.loss_name}` = `{todo.loss_value}`",
                 f"  objective: {todo.objective}",
                 f"  samples: `{', '.join(todo.sample_ids)}`",
@@ -1555,6 +1912,7 @@ def _codex_task_markdown(
                 f"  target: `{todo.metadata.get('target_component', '')}`",
                 f"  scope: `{todo.metadata.get('program_synthesis_scope', '')}`",
                 f"  bundle: `{todo.metadata.get('semantic_bundle_key', '')}`",
+                f"  vector_bundle: `{todo.metadata.get('vector_bundle_anchor_id', '')}` score `{todo.metadata.get('vector_bundle_similarity', '')}`",
                 f"  objective: {todo.objective}",
                 f"  support: {todo.metadata.get('support_count', '')}",
             ]
@@ -1582,7 +1940,7 @@ def _codex_exec_prompt(packet: Mapping[str, Any]) -> str:
         "Your worktree edits may be applied back to the source checkout and validated automatically when this packet finishes.",
         "Do not create changes.patch or other patch artifact files; leave source and test edits directly in the worktree.",
         "Treat the packet's program_synthesis_scope metadata as the AST/write-scope boundary; keep edits inside that lane unless a test requires a small adjacent change.",
-        "When multiple TODOs are present, they share a semantic_bundle_key; prefer one generalized compiler/decompiler/frame improvement over one-off sample fixes.",
+        "When multiple TODOs are present, treat their semantic_bundle_key or vector_bundle metadata as evidence for one generalized compiler/decompiler/frame improvement over one-off sample fixes.",
         "Implement a narrow deterministic parser, IR, decoder, or frame-logic improvement for the claimed TODOs.",
         "Prefer explainable compiler/decompiler code over learned weights when the TODO concerns modal or frame semantics.",
         "Use local repository files and tests only; do not use web search for this packet.",
@@ -1786,12 +2144,50 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--codex-bundle-mode",
-        choices=("priority", "semantic"),
+        choices=CODEX_BUNDLE_MODES,
         default="semantic",
         help=(
-            "For Codex loops, either claim plain priority batches or bundle the "
-            "top TODO with semantically similar TODOs from the same AST scope."
+            "For Codex loops, claim plain priority batches, exact semantic "
+            "bundles, or embeddings-router vector-nearest bundles in one AST scope."
         ),
+    )
+    parser.add_argument(
+        "--codex-vector-min-similarity",
+        type=float,
+        default=0.72,
+        help="Minimum cosine similarity for embeddings-router vector bundle neighbors.",
+    )
+    parser.add_argument(
+        "--codex-vector-index-path",
+        default=None,
+        help="Optional JSON path for the Codex TODO vector index cache.",
+    )
+    parser.add_argument(
+        "--codex-task-embeddings-provider",
+        default="local_adapter",
+        help="Provider passed to ipfs_datasets_py.embeddings_router for Codex TODO vectors; use 'auto' for router default.",
+    )
+    parser.add_argument(
+        "--codex-task-embeddings-model",
+        default=None,
+        help="Optional embeddings model name passed to embeddings_router for Codex TODO vectors.",
+    )
+    parser.add_argument(
+        "--codex-task-embeddings-device",
+        default=None,
+        help="Optional embeddings device passed to embeddings_router for Codex TODO vectors.",
+    )
+    parser.add_argument(
+        "--codex-task-embeddings-batch-size",
+        type=int,
+        default=32,
+        help="Batch size for embeddings_router Codex TODO vectorization.",
+    )
+    parser.add_argument(
+        "--codex-vector-fallback-mode",
+        choices=CODEX_VECTOR_FALLBACK_MODES,
+        default="hash",
+        help="Fallback when embeddings_router cannot vectorize TODOs: hash vectors or priority-only claiming.",
     )
     parser.add_argument(
         "--codex-merge-repair-mode",
@@ -2444,6 +2840,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
+            "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
+            "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
+            "codex_vector_min_similarity": args.codex_vector_min_similarity,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
             "codex_main_apply_count": 0,
@@ -2474,6 +2873,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_merge_repair_attempts", args.codex_merge_repair_attempts)
     summary.setdefault("codex_merge_repair_mode", args.codex_merge_repair_mode)
     summary.setdefault("codex_scope", args.codex_scope)
+    summary.setdefault("codex_task_embeddings_provider", args.codex_task_embeddings_provider)
+    summary.setdefault("codex_vector_index_path", str(_codex_vector_index_path(args, queue_path)))
+    summary.setdefault("codex_vector_min_similarity", args.codex_vector_min_similarity)
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
@@ -2492,6 +2894,9 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
+            "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
+            "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
+            "codex_vector_min_similarity": args.codex_vector_min_similarity,
             "codex_program_synthesis_execution_mode": execution_mode,
             "event": "codex_program_synthesis_runner_started",
             "queue_run_id": queue_run_id,
@@ -2504,26 +2909,35 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             cycle = int(summary.get("cycles", 0)) + 1
             cycle_started = time.time()
             packet: Dict[str, Any] = {}
-            with queue_file_lock(queue_path):
-                queue = ModalTodoQueue.load_jsonl(queue_path)
-                supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
-                claimed = supervisor.claim_program_synthesis_batch(
+            vector_claim_report: Dict[str, Any] = {}
+            bundle_mode = str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
+            if bundle_mode == "vector":
+                claimed, queue, status, vector_claim_report = _claim_vector_program_synthesis_batch(
+                    args=args,
+                    queue_path=queue_path,
                     worker_id=worker_id,
-                    max_items=args.max_items,
-                    program_synthesis_scope=getattr(args, "codex_scope", None),
-                    semantic_bundle=(
-                        str(getattr(args, "codex_bundle_mode", "semantic")).strip().lower()
-                        == "semantic"
-                    ),
-                )
-                if claimed:
-                    queue.save_jsonl(queue_path)
-                status = update_program_synthesis_summary(
-                    summary,
-                    queue,
-                    policy,
+                    policy=policy,
                     execution_mode=execution_mode,
+                    summary=summary,
                 )
+            else:
+                with queue_file_lock(queue_path):
+                    queue = ModalTodoQueue.load_jsonl(queue_path)
+                    supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
+                    claimed = supervisor.claim_program_synthesis_batch(
+                        worker_id=worker_id,
+                        max_items=args.max_items,
+                        program_synthesis_scope=getattr(args, "codex_scope", None),
+                        semantic_bundle=(bundle_mode == "semantic"),
+                    )
+                    if claimed:
+                        queue.save_jsonl(queue_path)
+                    status = update_program_synthesis_summary(
+                        summary,
+                        queue,
+                        policy,
+                        execution_mode=execution_mode,
+                    )
 
             if claimed:
                 packet = create_codex_work_packet(
@@ -2536,6 +2950,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     work_dir=work_dir,
                     worker_id=worker_id,
                 )
+                if vector_claim_report:
+                    packet["vector_claim_report"] = dict(vector_claim_report)
+                    _save_packet_if_possible(
+                        packet,
+                        Path(str(packet["packet_path"])) if packet.get("packet_path") else None,
+                    )
                 if args.codex_exec_mode == "codex_cli":
                     packet = execute_codex_work_packet(
                         packet,
@@ -2616,6 +3036,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             summary["elapsed_seconds"] = round(time.time() - started_at, 3)
             summary["latest_queue_counts"] = queue.status_counts()
             summary["latest_role_queue_counts"] = queue.role_status_counts()
+            if vector_claim_report:
+                summary["latest_codex_vector_claim_report"] = dict(vector_claim_report)
             summary["latest_stop_reason"] = (
                 "claimed_program_synthesis_todos"
                 if claimed
@@ -2630,6 +3052,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "codex_exec_status": dict(packet.get("codex_exec", {})).get("status"),
                     "codex_scope": getattr(args, "codex_scope", None),
                     "codex_bundle_mode": getattr(args, "codex_bundle_mode", None),
+                    "codex_vector_claim_report": vector_claim_report,
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "codex_program_synthesis_cycle",
                     "main_apply_status": packet.get("main_apply_status"),
