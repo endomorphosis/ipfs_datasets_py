@@ -3158,6 +3158,40 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert aligned_slot_map["citation_source_id_section_trailing_punct_pair"] == [
         "none|none"
     ]
+    assert aligned_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_style'][0]}|"
+            f"{aligned_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{aligned_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_pair"] == [
+        (
+            f"{aligned_slot_map['source_id_section_punctuation_style'][0]}|"
+            f"{aligned_slot_map['citation_section_punctuation_style'][0]}"
+        )
+    ]
+    assert aligned_slot_map["citation_source_id_section_punctuation_style_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map[
+        "citation_source_id_section_punctuation_style_presence_match"
+    ] == ["true"]
 
     assert mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
     assert mismatch_slot_map["citation_source_id_title_match"] == ["true"]
@@ -3208,6 +3242,40 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
         "none|none"
     ]
+    assert mismatch_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_pair"] == [
+        (
+            f"{mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
+            f"{mismatch_slot_map['citation_section_punctuation_style'][0]}"
+        )
+    ]
+    assert mismatch_slot_map["citation_source_id_section_punctuation_style_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map[
+        "citation_source_id_section_punctuation_style_presence_match"
+    ] == ["true"]
 
     assert punct_mismatch_slot_map["citation_source_id_alignment"] == ["exact_match"]
     assert punct_mismatch_slot_map["citation_source_id_title_match"] == ["true"]
@@ -3275,6 +3343,49 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
         ".|none"
     ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_pair"] == [
+        (
+            f"{punct_mismatch_slot_map['source_id_section_style'][0]}|"
+            f"{punct_mismatch_slot_map['citation_section_style'][0]}"
+        )
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_match"] == [
+        "false"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_style_presence_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_pair"] == [
+        (
+            f"{punct_mismatch_slot_map['source_id_section_suffix_style'][0]}|"
+            f"{punct_mismatch_slot_map['citation_section_suffix_style'][0]}"
+        )
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_suffix_style_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map[
+        "citation_source_id_section_suffix_style_presence_match"
+    ] == ["true"]
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_pair"]
+        == [
+            (
+                f"{punct_mismatch_slot_map['source_id_section_punctuation_style'][0]}|"
+                f"{punct_mismatch_slot_map['citation_section_punctuation_style'][0]}"
+            )
+        ]
+    )
+    assert (
+        punct_mismatch_slot_map["citation_source_id_section_punctuation_style_match"]
+        == ["false"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_punctuation_style_presence_match"
+        ]
+        == ["true"]
+    )
 
     assert range_aligned_slot_map["citation_source_id_section_is_range_pair"] == [
         "true|true"
@@ -3312,6 +3423,15 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         range_aligned_slot_map[
             "citation_source_id_section_range_connector_presence_match"
         ]
+        == ["true"]
+    )
+    assert range_aligned_slot_map["citation_source_id_section_style_match"] == ["true"]
+    assert (
+        range_aligned_slot_map["citation_source_id_section_suffix_style_match"]
+        == ["true"]
+    )
+    assert (
+        range_aligned_slot_map["citation_source_id_section_punctuation_style_match"]
         == ["true"]
     )
 
@@ -3360,6 +3480,15 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
         ]
         == ["true"]
     )
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_style_match"
+    ] == ["true"]
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_suffix_style_match"
+    ] == ["true"]
+    assert range_connector_mismatch_slot_map[
+        "citation_source_id_section_punctuation_style_match"
+    ] == ["true"]
 
 
 def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
@@ -3442,6 +3571,29 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(aligned_triples, "citation_source_id_section_trailing_punct_pair") == [
         "none|none"
     ]
+    assert objects(aligned_triples, "citation_source_id_section_style_match") == [
+        "true"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
 
     assert objects(mismatch_triples, "citation_source_id_alignment") == [
         "title_only_match"
@@ -3512,6 +3664,29 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         mismatch_triples,
         "citation_source_id_section_trailing_punct_pair",
     ) == ["none|none"]
+    assert objects(mismatch_triples, "citation_source_id_section_style_match") == [
+        "true"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
 
     assert objects(punct_mismatch_triples, "citation_source_id_alignment") == [
         "exact_match"
@@ -3591,6 +3766,30 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         punct_mismatch_triples,
         "citation_source_id_section_trailing_punct_pair",
     ) == [".|none"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_style_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_suffix_style_presence_match",
+    ) == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_punctuation_style_presence_match",
+    ) == ["true"]
 
     assert objects(
         range_aligned_triples,
@@ -3636,6 +3835,18 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         range_aligned_triples,
         "citation_source_id_section_range_connector_presence_match",
     ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_style_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        range_aligned_triples,
+        "citation_source_id_section_punctuation_style_match",
+    ) == ["true"]
 
     assert objects(
         range_connector_mismatch_triples,
@@ -3668,6 +3879,18 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(
         range_connector_mismatch_triples,
         "citation_source_id_section_range_connector_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_style_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_suffix_style_match",
+    ) == ["true"]
+    assert objects(
+        range_connector_mismatch_triples,
+        "citation_source_id_section_punctuation_style_match",
     ) == ["true"]
 
 

@@ -1362,6 +1362,99 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
+    source_section_style = _clean_text(
+        source_slot_map.get("source_id_section_style") or ""
+    )
+    citation_section_style = _clean_text(
+        citation_slot_map.get("citation_section_style") or ""
+    )
+    if source_section_style or citation_section_style:
+        slots.append(
+            (
+                "citation_source_id_section_style_pair",
+                f"{source_section_style or 'none'}|{citation_section_style or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_style_match",
+                "true"
+                if source_section_style.lower() == citation_section_style.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_style_presence_match",
+                "true"
+                if bool(source_section_style) == bool(citation_section_style)
+                else "false",
+            )
+        )
+    source_section_suffix_style = _clean_text(
+        source_slot_map.get("source_id_section_suffix_style") or ""
+    )
+    citation_section_suffix_style = _clean_text(
+        citation_slot_map.get("citation_section_suffix_style") or ""
+    )
+    if source_section_suffix_style or citation_section_suffix_style:
+        slots.append(
+            (
+                "citation_source_id_section_suffix_style_pair",
+                f"{source_section_suffix_style or 'none'}|"
+                f"{citation_section_suffix_style or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_suffix_style_match",
+                "true"
+                if source_section_suffix_style.lower()
+                == citation_section_suffix_style.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_suffix_style_presence_match",
+                "true"
+                if bool(source_section_suffix_style)
+                == bool(citation_section_suffix_style)
+                else "false",
+            )
+        )
+    source_section_punctuation_style = _clean_text(
+        source_slot_map.get("source_id_section_punctuation_style") or ""
+    )
+    citation_section_punctuation_style = _clean_text(
+        citation_slot_map.get("citation_section_punctuation_style") or ""
+    )
+    if source_section_punctuation_style or citation_section_punctuation_style:
+        slots.append(
+            (
+                "citation_source_id_section_punctuation_style_pair",
+                f"{source_section_punctuation_style or 'none'}|"
+                f"{citation_section_punctuation_style or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_punctuation_style_match",
+                "true"
+                if source_section_punctuation_style.lower()
+                == citation_section_punctuation_style.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_punctuation_style_presence_match",
+                "true"
+                if bool(source_section_punctuation_style)
+                == bool(citation_section_punctuation_style)
+                else "false",
+            )
+        )
     source_title_section_signature = _clean_text(
         source_slot_map.get("source_id_title_section_signature_normalized")
         or source_slot_map.get("source_id_title_section_signature")

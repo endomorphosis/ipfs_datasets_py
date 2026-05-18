@@ -1839,6 +1839,99 @@ def _provenance_alignment_components(
                 else "false",
             )
         )
+    source_section_style = _clean_non_empty_string(
+        source_component_map.get("source_id_section_style")
+    )
+    citation_section_style = _clean_non_empty_string(
+        citation_component_map.get("citation_section_style")
+    )
+    if source_section_style or citation_section_style:
+        components.append(
+            (
+                "citation_source_id_section_style_pair",
+                f"{source_section_style or 'none'}|{citation_section_style or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_style_match",
+                "true"
+                if source_section_style.lower() == citation_section_style.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_style_presence_match",
+                "true"
+                if bool(source_section_style) == bool(citation_section_style)
+                else "false",
+            )
+        )
+    source_section_suffix_style = _clean_non_empty_string(
+        source_component_map.get("source_id_section_suffix_style")
+    )
+    citation_section_suffix_style = _clean_non_empty_string(
+        citation_component_map.get("citation_section_suffix_style")
+    )
+    if source_section_suffix_style or citation_section_suffix_style:
+        components.append(
+            (
+                "citation_source_id_section_suffix_style_pair",
+                f"{source_section_suffix_style or 'none'}|"
+                f"{citation_section_suffix_style or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_suffix_style_match",
+                "true"
+                if source_section_suffix_style.lower()
+                == citation_section_suffix_style.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_suffix_style_presence_match",
+                "true"
+                if bool(source_section_suffix_style)
+                == bool(citation_section_suffix_style)
+                else "false",
+            )
+        )
+    source_section_punctuation_style = _clean_non_empty_string(
+        source_component_map.get("source_id_section_punctuation_style")
+    )
+    citation_section_punctuation_style = _clean_non_empty_string(
+        citation_component_map.get("citation_section_punctuation_style")
+    )
+    if source_section_punctuation_style or citation_section_punctuation_style:
+        components.append(
+            (
+                "citation_source_id_section_punctuation_style_pair",
+                f"{source_section_punctuation_style or 'none'}|"
+                f"{citation_section_punctuation_style or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_punctuation_style_match",
+                "true"
+                if source_section_punctuation_style.lower()
+                == citation_section_punctuation_style.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_punctuation_style_presence_match",
+                "true"
+                if bool(source_section_punctuation_style)
+                == bool(citation_section_punctuation_style)
+                else "false",
+            )
+        )
     source_title_section_signature = _clean_non_empty_string(
         source_component_map.get("source_id_title_section_signature_normalized")
         or source_component_map.get("source_id_title_section_signature")
