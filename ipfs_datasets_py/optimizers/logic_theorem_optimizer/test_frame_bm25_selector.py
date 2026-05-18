@@ -134,6 +134,17 @@ def test_frame_ontology_terms_support_source_id_citation_canonical_predicates() 
     assert feature_terms == ["50_2675", "16_460ff_1"]
 
 
+def test_frame_ontology_terms_normalize_truncated_slot_canonical_pair_values() -> None:
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:citation_source_id_canonical_pair:49_u_s_c_1101_49_u_s",
+            "slot:citation_source_id_canonical_pair:34_u_s_c_10406_34_u_s",
+        ]
+    )
+
+    assert feature_terms == ["49_1101", "34_10406"]
+
+
 def test_frame_ontology_terms_normalize_range_connector_predicates() -> None:
     triple_terms = frame_ontology_terms_from_triples(
         [

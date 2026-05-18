@@ -923,6 +923,20 @@ def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canon
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_normalize_truncated_slot_canonical_pair_values() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:citation_source_id_canonical_pair:49_u_s_c_1101_49_u_s",
+            "slot:citation_source_id_canonical_pair:34_u_s_c_10406_34_u_s",
+        ]
+    )
+
+    assert terms == [
+        "49_1101",
+        "34_10406",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_canonicalize_usc_citations_for_direct_frame_terms() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

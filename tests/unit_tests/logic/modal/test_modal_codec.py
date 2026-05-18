@@ -4593,6 +4593,28 @@ def test_modal_codec_frame_ontology_audit_tracks_slot_normalized_source_id_featu
     assert "2_31a_2b" in feature_terms
 
 
+def test_modal_codec_frame_ontology_audit_normalizes_truncated_citation_source_pair_terms() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="49",
+        section="1101.",
+        text="Sec. 1101. Administrative notice and hearing procedures.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+
+    raw_terms = result.modal_ir.metadata["frame_ontology_term_audit_terms"]
+    assert "49_1101" in raw_terms
+    assert "49_1101_49" not in raw_terms
+
+
 def test_modal_codec_frame_ontology_audit_prioritizes_decoder_frame_features() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

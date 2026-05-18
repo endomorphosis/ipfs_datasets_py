@@ -32,6 +32,7 @@ _FRAME_ONTOLOGY_USC_CITATION_RE = re.compile(
     re.IGNORECASE,
 )
 _FRAME_ONTOLOGY_SOURCE_ID_SECTION_TRAILING_PUNCT_RE = re.compile(r"[.;:]+$")
+_FRAME_ONTOLOGY_USC_TITLE_TOKEN_RE = re.compile(r"^\d+[a-z]*$", re.IGNORECASE)
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
         "a",
@@ -858,6 +859,9 @@ def _normalized_pair_ontology_value(raw_value: str) -> str:
     text = str(raw_value or "").strip()
     if not text:
         return ""
+    normalized_truncated_usc_pair = _normalized_truncated_usc_pair_value(text)
+    if normalized_truncated_usc_pair:
+        return normalized_truncated_usc_pair
     if "|" in text:
         left, separator, right = text.partition("|")
         if separator:
@@ -880,6 +884,34 @@ def _normalized_pair_ontology_value(raw_value: str) -> str:
             if collapsed:
                 return collapsed
     return text
+
+
+def _normalized_truncated_usc_pair_value(raw_value: str) -> str:
+    """Recover the canonical first citation from truncated slot-encoded pairs."""
+    tokens = [
+        token.strip().lower()
+        for token in str(raw_value or "").strip().split("_")
+        if token.strip()
+    ]
+    if len(tokens) < 5:
+        return ""
+    title = tokens[0]
+    if (
+        _FRAME_ONTOLOGY_USC_TITLE_TOKEN_RE.fullmatch(title) is None
+        or tokens[1:4] != ["u", "s", "c"]
+    ):
+        return ""
+    for index in range(4, len(tokens)):
+        if tokens[index] != title:
+            continue
+        if index + 1 >= len(tokens) or tokens[index + 1] != "u":
+            continue
+        # Slot feature values are token-capped and can truncate the second
+        # citation in `*_canonical_pair` values. Keep the first full citation.
+        collapsed_tokens = tokens[:index]
+        if len(collapsed_tokens) >= 5:
+            return "_".join(collapsed_tokens)
+    return ""
 
 
 def _normalized_modal_family_count_value(
