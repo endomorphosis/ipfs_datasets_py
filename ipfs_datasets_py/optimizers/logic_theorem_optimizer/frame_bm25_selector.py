@@ -80,6 +80,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "exception_",
     "fallback_rule_",
     "fallback_surface_text_",
+    "modal_family_count",
     "predicate_argument_",
     "predicate_stem",
     "predicate_token_",
@@ -517,6 +518,11 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
+    if normalized_predicate.startswith("modal_family_count"):
+        return _normalized_modal_family_count_value(
+            normalized_predicate=normalized_predicate,
+            raw_value=raw_value,
+        )
     if normalized_predicate == "statutory_scope_target":
         scoped_target = raw_value.split("(", 1)[0].strip()
         if scoped_target:
@@ -527,6 +533,35 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             positioned_value = str(match.group("value") or "").strip()
             if positioned_value:
                 return positioned_value
+    return raw_value
+
+
+def _normalized_modal_family_count_value(
+    *,
+    normalized_predicate: str,
+    raw_value: str,
+) -> str:
+    if normalized_predicate == "modal_family_count_value":
+        return ""
+    if normalized_predicate == "modal_family_count_family":
+        return raw_value
+    if normalized_predicate == "modal_family_count":
+        family, separator, _count = raw_value.partition(":")
+        if separator:
+            return family.strip()
+        return raw_value
+    if normalized_predicate == "modal_family_count_ranked":
+        _rank, separator, remainder = raw_value.partition(":")
+        if not separator:
+            return raw_value
+        family, separator, _count = remainder.partition(":")
+        if separator:
+            return family.strip()
+        return family.strip() or raw_value
+    if normalized_predicate.startswith("modal_family_count_"):
+        family = normalized_predicate[len("modal_family_count_") :].strip("_")
+        if family and family not in {"family", "ranked", "value"}:
+            return family
     return raw_value
 
 

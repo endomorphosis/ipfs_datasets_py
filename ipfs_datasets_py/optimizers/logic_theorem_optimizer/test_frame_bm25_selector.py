@@ -89,3 +89,27 @@ def test_frame_ontology_terms_from_feature_keys_keeps_single_letter_citation_suf
 
     assert "i" in terms
     assert "e" in terms
+
+
+def test_frame_ontology_terms_support_modal_family_count_predicates() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "modal_family_count", "object": "deontic:2"},
+            {"predicate": "modal_family_count_ranked", "object": "1:frame:3"},
+            {"predicate": "modal_family_count_family", "object": "temporal"},
+            {"predicate": "modal_family_count_dynamic", "object": "4"},
+            {"predicate": "modal_family_count_value", "object": "9"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:modal_family_count:deontic:2",
+            "flogic:modal_family_count_ranked:1:frame:3",
+            "flogic:modal_family_count_family:temporal",
+            "flogic:modal_family_count_dynamic:4",
+            "flogic:modal_family_count_value:9",
+        ]
+    )
+
+    assert triple_terms == ["deontic", "frame", "temporal", "dynamic"]
+    assert feature_terms == ["deontic", "frame", "temporal", "dynamic"]

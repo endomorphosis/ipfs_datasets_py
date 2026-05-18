@@ -437,6 +437,64 @@ def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_featur
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_modal_family_count_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:modal_family_count:deontic:2",
+            "flogic:modal_family_count_ranked:1:frame:3",
+            "flogic:modal_family_count_family:temporal",
+            "flogic:modal_family_count_dynamic:4",
+            "flogic:modal_family_count_value:9",
+        ]
+    )
+
+    assert terms == [
+        "deontic",
+        "frame",
+        "temporal",
+        "dynamic",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_modal_family_count_features() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "modal_family_count",
+                "object": "deontic:2",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_family_count_ranked",
+                "object": "1:frame:3",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_family_count_family",
+                "object": "temporal",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_family_count_dynamic",
+                "object": "4",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_family_count_value",
+                "object": "9",
+            },
+        ]
+    )
+
+    assert terms == [
+        "deontic",
+        "frame",
+        "temporal",
+        "dynamic",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_predicates() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -644,6 +702,9 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("cue:frame:transferred") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
     assert is_frame_ontology_feature_key("family:selected_frame:deontic") is True
+    assert is_frame_ontology_feature_key("flogic:modal_family_count:deontic:2") is True
+    assert is_frame_ontology_feature_key("flogic:modal_family_count_dynamic:4") is True
+    assert is_frame_ontology_feature_key("flogic:modal_family_count_value:9") is False
     assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
     assert is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing") is True
     assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True

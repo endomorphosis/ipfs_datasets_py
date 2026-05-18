@@ -143,3 +143,40 @@ def test_flogic_optimizer_tracks_selected_frame_family_terms() -> None:
         "deontic",
         "temporal",
     ]
+
+
+def test_flogic_optimizer_tracks_modal_family_count_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:modal_family_count:deontic:2",
+            "flogic:modal_family_count_ranked:1:frame:3",
+            "flogic:modal_family_count_family:temporal",
+            "flogic:modal_family_count_dynamic:4",
+            "flogic:modal_family_count_value:9",
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "flogic:modal_family_count:deontic:2",
+        "flogic:modal_family_count_dynamic:4",
+        "flogic:modal_family_count_family:temporal",
+        "flogic:modal_family_count_ranked:1:frame:3",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "deontic",
+        "dynamic",
+        "frame",
+        "temporal",
+    ]
