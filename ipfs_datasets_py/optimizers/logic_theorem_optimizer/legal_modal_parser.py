@@ -33,6 +33,10 @@ _USCODE_CODIFICATION_HINT_RE = re.compile(
     r"\b(?:transferred|editorially reclassified|codification)\b",
     re.IGNORECASE,
 )
+_USCODE_EDITORIAL_STATUS_HINT_RE = re.compile(
+    r"\b(?:repealed|omitted|reserved|vacant|renumbered|terminated)\b",
+    re.IGNORECASE,
+)
 _USCODE_CITATION_SECTION_RE = re.compile(
     r"\bU\.S\.C\.\s*([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
@@ -168,6 +172,14 @@ class LegalModalParser:
             segments=segments,
             start_index=len(formulas) + 1,
         )
+        if fallback_formula is None:
+            fallback_formula = self._uscode_editorial_status_fallback_formula(
+                resolved_document_id=resolved_document_id,
+                normalized_text=normalized,
+                citation=citation,
+                segments=segments,
+                start_index=len(formulas) + 1,
+            )
         if fallback_formula is not None:
             formulas.append(fallback_formula)
 
@@ -327,6 +339,84 @@ class LegalModalParser:
             return ""
         return match.group(1).strip().lower()
 
+    def _uscode_editorial_status_fallback_formula(
+        self,
+        *,
+        resolved_document_id: str,
+        normalized_text: str,
+        citation: Optional[str],
+        segments: Sequence[LegalSegment],
+        start_index: int,
+    ) -> Optional[ModalIRFormula]:
+        if not normalized_text.strip():
+            return None
+        if citation is None or "u.s.c." not in citation.lower():
+            return None
+        if self.extract_cues(normalized_text):
+            return None
+
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return None
+
+        candidate_segment: Optional[LegalSegment] = None
+        status_keyword = ""
+        for index, segment in enumerate(segments):
+            status_match = _USCODE_EDITORIAL_STATUS_HINT_RE.search(segment.text)
+            if not status_match:
+                continue
+            previous_segment_text = segments[index - 1].text if index > 0 else ""
+            if not self._looks_like_editorial_status_heading(
+                segment.text,
+                citation_section=citation_section,
+                previous_segment_text=previous_segment_text,
+            ):
+                continue
+            candidate_segment = segment
+            status_keyword = status_match.group(0).lower()
+            break
+        if candidate_segment is None:
+            return None
+
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return None
+        operator = profile.operators[0]
+        predicate = self._predicate_from_segment(
+            candidate_segment.text,
+            "__uscode_editorial_status_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(
+            candidate_segment.text
+        )
+        return ModalIRFormula(
+            formula_id=f"{resolved_document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role="frame",
+            ),
+            provenance=ModalIRProvenance(
+                source_id=resolved_document_id,
+                start_char=candidate_segment.start_char,
+                end_char=candidate_segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_editorial_status_fallback__",
+                "fallback_rule": "uscode_editorial_status_heading_v1",
+                "status_keyword": status_keyword,
+            },
+        )
+
     def _looks_like_transferred_section_heading(
         self,
         segment_text: str,
@@ -343,6 +433,40 @@ class LegalModalParser:
                 return True
             if f"section {citation_section}" in normalized:
                 return True
+        return False
+
+    def _looks_like_editorial_status_heading(
+        self,
+        segment_text: str,
+        *,
+        citation_section: str,
+        previous_segment_text: str = "",
+    ) -> bool:
+        normalized = self.normalize_text(segment_text).lower()
+        if not _USCODE_EDITORIAL_STATUS_HINT_RE.search(normalized):
+            return False
+        if f"\u00a7{citation_section}" in normalized:
+            return True
+        if f"section {citation_section}" in normalized:
+            return True
+        if normalized.startswith(f"{citation_section}."):
+            return True
+        if normalized.startswith(f"{citation_section} "):
+            return True
+        if normalized.startswith("repealed") or normalized.startswith("omitted") or normalized.startswith("reserved"):
+            previous = self.normalize_text(previous_segment_text).lower()
+            if f"\u00a7{citation_section}" in previous:
+                return True
+            if f"section {citation_section}" in previous:
+                return True
+            if previous.startswith(f"{citation_section}."):
+                return True
+            if previous.startswith(f"{citation_section} "):
+                return True
+            if len(_TOKEN_RE.findall(normalized)) <= 6:
+                return True
+        if normalized.startswith("\u00a7") and len(normalized) <= 240:
+            return True
         return False
 
 
