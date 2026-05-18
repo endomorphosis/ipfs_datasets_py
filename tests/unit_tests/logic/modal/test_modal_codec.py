@@ -4390,6 +4390,52 @@ def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
     assert not any(term.startswith("selected_frame_term") for term in selected_terms)
 
 
+def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-alnum-citation-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: [
+                    {"feature": "selected-frame-term:42 U.S.C. 1437q."},
+                    {"feature": "candidate-frame-term:20 U.S.C. 1087j"},
+                    {"feature_key": "slot:candidate_ontology_term:16 U.S.C. 460l-11"},
+                    {"feature": "flogic:selected_ontology_term:42 U.S.C. 2981 to 2981c."},
+                    {"feature_key": "flogic:interpreted_in_frame_term:22 U.S.C. 2349aa-4"},
+                ]
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "42_1437q" in selected_terms
+    assert "20_1087j" in selected_terms
+    assert "16_460l_11" in selected_terms
+    assert "42_2981_2981c" in selected_terms
+    assert "22_2349aa_4" in selected_terms
+
+
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     frame_selector = BM25FrameSelector(
         (

@@ -923,6 +923,26 @@ def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canon
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_canonicalize_usc_citations_for_direct_frame_terms() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "selected-frame-term:42 U.S.C. 1437q.",
+            "candidate-frame-term:20 U.S.C. 1087j",
+            "flogic:selected_ontology_term:16 U.S.C. 460l-11",
+            "slot:candidate_ontology_term:42 U.S.C. 2981 to 2981c.",
+            "flogic:interpreted_in_frame_term:22 U.S.C. 2349aa-4",
+        ]
+    )
+
+    assert terms == [
+        "42_1437q",
+        "20_1087j",
+        "16_460l_11",
+        "42_2981_2981c",
+        "22_2349aa_4",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_slot_normalized_source_ids() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -971,6 +991,46 @@ def test_frame_ontology_terms_from_triples_support_section_trailing_punctuation(
     assert terms == [
         "period",
         "right_paren_period",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_canonicalize_usc_citations_for_direct_frame_terms() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "42 U.S.C. 1437q.",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "candidate_ontology_term",
+                "object": "20 U.S.C. 1087j",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "interpreted_in_frame_term",
+                "object": "16 U.S.C. 460l-11",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "42 U.S.C. 2981 to 2981c.",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "candidate_ontology_term",
+                "object": "22 U.S.C. 2349aa-4",
+            },
+        ]
+    )
+
+    assert terms == [
+        "42_1437q",
+        "20_1087j",
+        "16_460l_11",
+        "42_2981_2981c",
+        "22_2349aa_4",
     ]
 
 

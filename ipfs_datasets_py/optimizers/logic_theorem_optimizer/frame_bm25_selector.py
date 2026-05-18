@@ -25,6 +25,12 @@ _FRAME_ONTOLOGY_SOURCE_ID_SLOT_NORMALIZED_RE = re.compile(
     r"^\s*(?P<scheme>us[_-]code)[_-](?P<title>[^_-]+)[_-](?P<section>.+)[_-](?P<digest>[0-9a-f]{16})\s*$",
     re.IGNORECASE,
 )
+_FRAME_ONTOLOGY_USC_CITATION_RE = re.compile(
+    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
+    r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
+    r"(?P<section>[0-9A-Za-z.\-]+(?:\s+(?:to|through|thru)\s+[0-9A-Za-z.\-]+)?)\s*$",
+    re.IGNORECASE,
+)
 _FRAME_ONTOLOGY_SOURCE_ID_SECTION_TRAILING_PUNCT_RE = re.compile(r"[.;:]+$")
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
@@ -478,6 +484,10 @@ def frame_ontology_terms_from_triples(
             canonical_predicate or predicate,
             str(triple.get("object", "")),
         )
+        coordinate_value = _frame_ontology_coordinate_value(raw_value)
+        if coordinate_value:
+            raw_value = coordinate_value
+            allow_numeric_tokens = True
         normalized = normalize_frame_ontology_term(
             raw_value,
             keep_numeric_tokens=allow_numeric_tokens,
@@ -515,6 +525,10 @@ def frame_ontology_terms_from_feature_keys(
         if not raw_value:
             continue
 
+        coordinate_value = _frame_ontology_coordinate_value(raw_value)
+        if coordinate_value:
+            raw_value = coordinate_value
+            allow_numeric_tokens = True
         normalized = normalize_frame_ontology_term(
             raw_value,
             keep_numeric_tokens=allow_numeric_tokens,
@@ -785,6 +799,31 @@ def _normalized_source_id_ontology_value(raw_value: str) -> str:
     if normalized_section:
         section = normalized_section
     return f"{title} {section}"
+
+
+def _normalized_usc_citation_ontology_value(raw_value: str) -> str:
+    text = str(raw_value or "").strip()
+    match = _FRAME_ONTOLOGY_USC_CITATION_RE.match(text)
+    if not match:
+        return ""
+    title = str(match.group("title") or "").strip()
+    section = str(match.group("section") or "").strip()
+    if not title or not section:
+        return ""
+    normalized_section = _FRAME_ONTOLOGY_SOURCE_ID_SECTION_TRAILING_PUNCT_RE.sub(
+        "",
+        section,
+    ).strip()
+    if normalized_section:
+        section = normalized_section
+    return f"{title} {section}"
+
+
+def _frame_ontology_coordinate_value(raw_value: str) -> str:
+    source_coordinate = _normalized_source_id_ontology_value(raw_value)
+    if source_coordinate:
+        return source_coordinate
+    return _normalized_usc_citation_ontology_value(raw_value)
 
 
 def _normalized_trailing_punct_ontology_value(raw_value: str) -> str:

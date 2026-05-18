@@ -246,6 +246,38 @@ def test_flogic_optimizer_tracks_source_id_citation_canonical_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_canonicalizes_alphanumeric_usc_frame_term_features() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "selected-frame-term:42 U.S.C. 1437q.",
+            "candidate-frame-term:20 U.S.C. 1087j",
+            "slot:candidate_ontology_term:16 U.S.C. 460l-11",
+            "flogic:selected_ontology_term:42 U.S.C. 2981 to 2981c.",
+            "flogic:interpreted_in_frame_term:22 U.S.C. 2349aa-4",
+        ],
+    )
+
+    assert result.metadata["frame_ontology_terms"] == [
+        "16_460l_11",
+        "20_1087j",
+        "22_2349aa_4",
+        "42_1437q",
+        "42_2981_2981c",
+    ]
+
+
 def test_flogic_optimizer_normalizes_range_connector_terms() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(
