@@ -974,7 +974,81 @@ def _provenance_alignment_slots(
         source_slot_map.get("source_id_citation_canonical") or ""
     )
     citation_canonical = _clean_text(citation_slot_map.get("citation_canonical") or "")
+    source_section_raw = _clean_text(
+        source_slot_map.get("source_id_section_raw")
+        or source_slot_map.get("source_id_section")
+        or ""
+    )
+    citation_section_raw = _clean_text(
+        citation_slot_map.get("citation_section_raw")
+        or citation_slot_map.get("citation_section")
+        or ""
+    )
+    source_section_trailing_punct = _clean_text(
+        source_slot_map.get("source_id_section_trailing_punct") or ""
+    )
+    citation_section_trailing_punct = _clean_text(
+        citation_slot_map.get("citation_section_trailing_punct") or ""
+    )
+    source_has_trailing_punct = _clean_text(
+        source_slot_map.get("source_id_section_has_trailing_punct")
+        or ("true" if source_section_trailing_punct else "false")
+    ).lower()
+    citation_has_trailing_punct = _clean_text(
+        citation_slot_map.get("citation_section_has_trailing_punct")
+        or ("true" if citation_section_trailing_punct else "false")
+    ).lower()
     slots: List[Tuple[str, str]] = []
+    if source_section_raw and citation_section_raw:
+        slots.append(
+            (
+                "citation_source_id_section_raw_match",
+                "true"
+                if source_section_raw.lower() == citation_section_raw.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_raw_pair",
+                f"{source_section_raw}|{citation_section_raw}",
+            )
+        )
+    if (
+        source_has_trailing_punct in {"true", "false"}
+        and citation_has_trailing_punct in {"true", "false"}
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_trailing_punct_presence_match",
+                "true"
+                if source_has_trailing_punct == citation_has_trailing_punct
+                else "false",
+            )
+        )
+    if (
+        source_section_trailing_punct
+        or citation_section_trailing_punct
+        or (
+            source_has_trailing_punct in {"true", "false"}
+            and citation_has_trailing_punct in {"true", "false"}
+        )
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_trailing_punct_match",
+                "true"
+                if source_section_trailing_punct == citation_section_trailing_punct
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_trailing_punct_pair",
+                f"{source_section_trailing_punct or 'none'}|"
+                f"{citation_section_trailing_punct or 'none'}",
+            )
+        )
     if not source_title or not citation_title or not source_section or not citation_section:
         slots.append(("citation_source_id_alignment", "unparsed"))
         return _unique_slot_values(slots)

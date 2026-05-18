@@ -66,6 +66,32 @@ def _provenance_alignment_mismatch_sample_document() -> ModalIRDocument:
     )
 
 
+def _provenance_alignment_trailing_punct_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-10318.-fce306c016fdd990"
+    formula = ModalIRFormula(
+        formula_id="f-alignment-trailing-punct-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_maritime_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="46 U.S.C. 10318",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="46 U.S.C. 10318 maritime notice requirement.",
+        formulas=[formula],
+    )
+
+
 def _range_sample_document() -> ModalIRDocument:
     source_id = "us-code-45-228a to 228c-0123456789abcdef"
     formula = ModalIRFormula(
@@ -2004,24 +2030,82 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     mismatch_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_provenance_alignment_mismatch_sample_document())
     )
+    punct_mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(
+            _provenance_alignment_trailing_punct_mismatch_sample_document()
+        )
+    )
 
     assert aligned_slot_map["citation_source_id_alignment"] == ["exact_match"]
     assert aligned_slot_map["citation_source_id_title_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_section_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_title_section_key_match"] == ["true"]
     assert aligned_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_raw_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_raw_pair"] == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert (
+        aligned_slot_map["citation_source_id_section_trailing_punct_presence_match"]
+        == ["true"]
+    )
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "true"
+    ]
+    assert aligned_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        "none|none"
+    ]
 
     assert mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
     assert mismatch_slot_map["citation_source_id_title_match"] == ["true"]
     assert mismatch_slot_map["citation_source_id_section_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_title_section_key_match"] == ["false"]
     assert mismatch_slot_map["citation_source_id_canonical_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_section_raw_pair"] == ["1131d|1131e"]
+    assert (
+        mismatch_slot_map["citation_source_id_section_trailing_punct_presence_match"]
+        == ["true"]
+    )
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "true"
+    ]
+    assert mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        "none|none"
+    ]
+
+    assert punct_mismatch_slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert punct_mismatch_slot_map["citation_source_id_title_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_section_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_title_section_key_match"] == [
+        "true"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert punct_mismatch_slot_map["citation_source_id_section_raw_match"] == ["false"]
+    assert punct_mismatch_slot_map["citation_source_id_section_raw_pair"] == [
+        "10318.|10318"
+    ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_trailing_punct_presence_match"
+        ]
+        == ["false"]
+    )
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_match"] == [
+        "false"
+    ]
+    assert punct_mismatch_slot_map["citation_source_id_section_trailing_punct_pair"] == [
+        ".|none"
+    ]
 
 
 def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
     aligned_triples = modal_ir_to_flogic_triples(_sample_document())
     mismatch_triples = modal_ir_to_flogic_triples(
         _provenance_alignment_mismatch_sample_document()
+    )
+    punct_mismatch_triples = modal_ir_to_flogic_triples(
+        _provenance_alignment_trailing_punct_mismatch_sample_document()
     )
 
     def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
@@ -2038,6 +2122,20 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "true"
     ]
     assert objects(aligned_triples, "citation_source_id_canonical_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_raw_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_raw_pair") == [
+        "360bbb-0|360bbb-0"
+    ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_match") == [
+        "true"
+    ]
+    assert objects(aligned_triples, "citation_source_id_section_trailing_punct_pair") == [
+        "none|none"
+    ]
 
     assert objects(mismatch_triples, "citation_source_id_alignment") == [
         "title_only_match"
@@ -2049,3 +2147,52 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         "citation_source_id_title_section_key_match",
     ) == ["false"]
     assert objects(mismatch_triples, "citation_source_id_canonical_match") == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_section_raw_match") == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_section_raw_pair") == [
+        "1131d|1131e"
+    ]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_trailing_punct_pair",
+    ) == ["none|none"]
+
+    assert objects(punct_mismatch_triples, "citation_source_id_alignment") == [
+        "exact_match"
+    ]
+    assert objects(punct_mismatch_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(punct_mismatch_triples, "citation_source_id_section_match") == ["true"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_title_section_key_match",
+    ) == ["true"]
+    assert objects(punct_mismatch_triples, "citation_source_id_canonical_match") == [
+        "true"
+    ]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_raw_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_raw_pair",
+    ) == ["10318.|10318"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_presence_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_match",
+    ) == ["false"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_trailing_punct_pair",
+    ) == [".|none"]

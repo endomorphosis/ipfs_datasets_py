@@ -1438,7 +1438,79 @@ def _provenance_alignment_components(
     citation_canonical = _clean_non_empty_string(
         citation_component_map.get("citation_canonical")
     )
+    source_section_raw = _clean_non_empty_string(
+        source_component_map.get("source_id_section_raw")
+        or source_component_map.get("source_id_section")
+    )
+    citation_section_raw = _clean_non_empty_string(
+        citation_component_map.get("citation_section_raw")
+        or citation_component_map.get("citation_section")
+    )
+    source_section_trailing_punct = _clean_non_empty_string(
+        source_component_map.get("source_id_section_trailing_punct")
+    )
+    citation_section_trailing_punct = _clean_non_empty_string(
+        citation_component_map.get("citation_section_trailing_punct")
+    )
+    source_has_trailing_punct = _clean_non_empty_string(
+        source_component_map.get("source_id_section_has_trailing_punct")
+        or ("true" if source_section_trailing_punct else "false")
+    ).lower()
+    citation_has_trailing_punct = _clean_non_empty_string(
+        citation_component_map.get("citation_section_has_trailing_punct")
+        or ("true" if citation_section_trailing_punct else "false")
+    ).lower()
     components: List[tuple[str, str]] = []
+    if source_section_raw and citation_section_raw:
+        components.append(
+            (
+                "citation_source_id_section_raw_match",
+                "true"
+                if source_section_raw.lower() == citation_section_raw.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_raw_pair",
+                f"{source_section_raw}|{citation_section_raw}",
+            )
+        )
+    if (
+        source_has_trailing_punct in {"true", "false"}
+        and citation_has_trailing_punct in {"true", "false"}
+    ):
+        components.append(
+            (
+                "citation_source_id_section_trailing_punct_presence_match",
+                "true"
+                if source_has_trailing_punct == citation_has_trailing_punct
+                else "false",
+            )
+        )
+    if (
+        source_section_trailing_punct
+        or citation_section_trailing_punct
+        or (
+            source_has_trailing_punct in {"true", "false"}
+            and citation_has_trailing_punct in {"true", "false"}
+        )
+    ):
+        components.append(
+            (
+                "citation_source_id_section_trailing_punct_match",
+                "true"
+                if source_section_trailing_punct == citation_section_trailing_punct
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_trailing_punct_pair",
+                f"{source_section_trailing_punct or 'none'}|"
+                f"{citation_section_trailing_punct or 'none'}",
+            )
+        )
     if not source_title or not citation_title or not source_section or not citation_section:
         components.append(("citation_source_id_alignment", "unparsed"))
         return _unique_preserve_order_tuples(components)
