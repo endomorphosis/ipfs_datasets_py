@@ -73,8 +73,13 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
     )
     assert supports_signal_free_adaptive_ambiguity_pair(
         "conditional_normative",
+        "deontic",
+    )
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        "conditional_normative",
         "temporal",
     )
+    assert supports_signal_free_adaptive_ambiguity_pair("epistemic", "deontic")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert supports_signal_free_adaptive_ambiguity_pair(
@@ -82,11 +87,12 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
         "conditional_normative",
     )
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "deontic")
+    assert supports_signal_free_adaptive_ambiguity_pair("frame", "epistemic")
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "temporal")
     assert (
         supports_signal_free_adaptive_ambiguity_pair(
-            "conditional_normative",
-            "deontic",
+            "epistemic",
+            "temporal",
         )
         is False
     )
@@ -104,15 +110,17 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "temporal",
     )
     assert signal_free_adaptive_ambiguity_targets("conditional_normative") == (
-        "temporal",
-    )
-    assert signal_free_adaptive_ambiguity_targets("frame") == (
-        "conditional_normative",
         "deontic",
         "temporal",
     )
+    assert signal_free_adaptive_ambiguity_targets("epistemic") == ("deontic",)
+    assert signal_free_adaptive_ambiguity_targets("frame") == (
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "temporal",
+    )
     assert signal_free_adaptive_ambiguity_targets("hybrid") == ("frame",)
-    assert signal_free_adaptive_ambiguity_targets("epistemic") == ()
 
 
 def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() -> None:

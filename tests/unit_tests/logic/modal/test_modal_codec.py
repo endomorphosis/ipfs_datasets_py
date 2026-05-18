@@ -2761,6 +2761,264 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_temporal_ad
     )
 
 
+def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_deontic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-conditional-deontic-doc",
+        text="Provided that the filing is complete, notice applies.",
+        normalized_text="Provided that the filing is complete, notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="STIT",
+                symbol="O_if",
+                label="conditional_obligation",
+                cue="provided that",
+                start_char=0,
+                end_char=13,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-conditional-deontic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-conditional-1",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="STIT",
+                    symbol="O_if",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="conditional_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-conditional-deontic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="11 U.S.C. 547",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "conditional_normative", "count": 1, "share": 1.0}],
+        family_shares={"conditional_normative": 1.0},
+    )
+
+    adaptive_deontic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative", "deontic"]
+    )
+    assert adaptive_deontic.metadata["has_target_signal_evidence"] is False
+    assert adaptive_deontic.metadata["signal_free_pair_policy_applied"] is True
+    assert (
+        adaptive_deontic.metadata["explicit_ambiguity_type"]
+        == "adaptive_conditional_normative_deontic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type
+        == "adaptive_conditional_normative_deontic_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_uses_signal_free_pair_policy_for_frame_epistemic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-frame-epistemic-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-frame-epistemic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-frame-epistemic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="7 U.S.C. 136c",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "frame", "count": 1, "share": 1.0}],
+        family_shares={"frame": 1.0},
+    )
+
+    adaptive_epistemic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "epistemic"]
+    )
+    assert adaptive_epistemic.metadata["has_target_signal_evidence"] is False
+    assert adaptive_epistemic.metadata["signal_free_pair_policy_applied"] is True
+    assert (
+        adaptive_epistemic.metadata["explicit_ambiguity_type"]
+        == "adaptive_frame_epistemic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_frame_epistemic_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-contested-epistemic-deontic-doc",
+        text="The agency knows and shall report.",
+        normalized_text="The agency knows and shall report.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="epistemic",
+                system="S5",
+                symbol="K",
+                label="knowledge",
+                cue="knows",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-contested-epistemic-deontic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-epistemic-1",
+                operator=ModalIROperator(
+                    family="epistemic",
+                    system="S5",
+                    symbol="K",
+                    label="knowledge",
+                ),
+                predicate=ModalIRPredicate(
+                    name="report",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-contested-epistemic-deontic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="33 U.S.C. 3035",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "epistemic", "count": 1, "share": 0.5},
+            {"family": "deontic", "count": 1, "share": 0.5},
+        ],
+        family_shares={"epistemic": 0.5, "deontic": 0.5},
+    )
+
+    adaptive_deontic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["epistemic", "deontic"]
+    )
+    assert adaptive_deontic.metadata["family_margin"] == 0.0
+    assert adaptive_deontic.metadata["adaptive_margin_direction"] == "contested"
+    assert adaptive_deontic.metadata["is_priority_policy_pair"] is False
+    assert adaptive_deontic.metadata["explicit_ambiguity_type"] == (
+        "adaptive_epistemic_deontic_contested_margin_low"
+    )
+    assert adaptive_deontic.severity == "review"
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_epistemic_deontic_contested_margin_low"
+        and ambiguity.metadata["family_margin"] == 0.0
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_logit_fallback_ranking_for_hybrid_frame_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
