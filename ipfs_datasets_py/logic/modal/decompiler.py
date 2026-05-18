@@ -1289,6 +1289,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
+    total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
         slots.append(("citation_section_component", component))
@@ -1300,6 +1301,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             slots.append(
                 ("citation_section_component_kind_positioned", f"{position}:other")
             )
+            if index == 1:
+                slots.append(("citation_section_primary_component_kind", "other"))
+            if index == total_components:
+                slots.append(("citation_section_terminal_component_kind", "other"))
             continue
         number = _clean_text(match.group("number"))
         suffix = _clean_text(match.group("suffix"))
@@ -1308,6 +1313,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             slots.append(("citation_section_number", number))
             slots.append(("citation_section_number_digit_count", str(len(number))))
             slots.append(("citation_section_number_positioned", f"{position}:{number}"))
+            if index == 1:
+                slots.append(("citation_section_primary_number", number))
+            if index == total_components:
+                slots.append(("citation_section_terminal_number", number))
         if suffix:
             component_shapes.append("NA")
             suffix_component_count += 1
@@ -1323,6 +1332,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             normalized_suffix = suffix.lower()
             if normalized_suffix:
                 slots.append(("citation_section_suffix_normalized", normalized_suffix))
+                if index == 1:
+                    slots.append(("citation_section_primary_suffix_normalized", normalized_suffix))
+                if index == total_components:
+                    slots.append(("citation_section_terminal_suffix_normalized", normalized_suffix))
             suffix_case = _alpha_case_kind(suffix)
             if suffix_case:
                 slots.append(("citation_section_suffix_case", suffix_case))
@@ -1332,12 +1345,26 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                         f"{position}:{suffix_case}",
                     )
                 )
+                if index == 1:
+                    slots.append(("citation_section_primary_suffix_case", suffix_case))
+                if index == total_components:
+                    slots.append(("citation_section_terminal_suffix_case", suffix_case))
+            if index == 1:
+                slots.append(("citation_section_primary_suffix", suffix))
+                slots.append(("citation_section_primary_component_kind", "alphanumeric"))
+            if index == total_components:
+                slots.append(("citation_section_terminal_suffix", suffix))
+                slots.append(("citation_section_terminal_component_kind", "alphanumeric"))
         else:
             component_shapes.append("N")
             slots.append(("citation_section_component_kind", "numeric"))
             slots.append(
                 ("citation_section_component_kind_positioned", f"{position}:numeric")
             )
+            if index == 1:
+                slots.append(("citation_section_primary_component_kind", "numeric"))
+            if index == total_components:
+                slots.append(("citation_section_terminal_component_kind", "numeric"))
     if component_shapes:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
     slots.append(

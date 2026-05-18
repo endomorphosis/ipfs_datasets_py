@@ -66,6 +66,32 @@ def _range_sample_document() -> ModalIRDocument:
     )
 
 
+def _single_component_sample_document() -> ModalIRDocument:
+    source_id = "us-code-2-190l-01dd1648c5b1588c"
+    formula = ModalIRFormula(
+        formula_id="f-single",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_library_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="2 U.S.C. 190l",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="2 U.S.C. 190l preservation requirement.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -80,6 +106,11 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
         "1:alphanumeric",
         "2:numeric",
     ]
+    assert slot_map["citation_section_primary_number"] == ["360"]
+    assert slot_map["citation_section_primary_suffix"] == ["bbb"]
+    assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_terminal_number"] == ["0"]
+    assert slot_map["citation_section_terminal_component_kind"] == ["numeric"]
 
     assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["source_id_section_number_positioned"] == ["1:360", "2:0"]
@@ -91,6 +122,11 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
         "1:alphanumeric",
         "2:numeric",
     ]
+    assert slot_map["source_id_section_primary_number"] == ["360"]
+    assert slot_map["source_id_section_primary_suffix"] == ["bbb"]
+    assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_terminal_number"] == ["0"]
+    assert slot_map["source_id_section_terminal_component_kind"] == ["numeric"]
 
 
 def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> None:
@@ -113,6 +149,11 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
         "1:alphanumeric",
         "2:numeric",
     ]
+    assert objects("citation_section_primary_number") == ["360"]
+    assert objects("citation_section_primary_suffix") == ["bbb"]
+    assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_terminal_number") == ["0"]
+    assert objects("citation_section_terminal_component_kind") == ["numeric"]
 
     assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("source_id_section_number_positioned") == ["1:360", "2:0"]
@@ -124,6 +165,55 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
         "1:alphanumeric",
         "2:numeric",
     ]
+    assert objects("source_id_section_primary_number") == ["360"]
+    assert objects("source_id_section_primary_suffix") == ["bbb"]
+    assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_terminal_number") == ["0"]
+    assert objects("source_id_section_terminal_component_kind") == ["numeric"]
+
+
+def test_decode_modal_ir_document_emits_single_component_section_role_slots() -> None:
+    decoded = decode_modal_ir_document(_single_component_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_primary_number"] == ["190"]
+    assert slot_map["citation_section_terminal_number"] == ["190"]
+    assert slot_map["citation_section_primary_suffix"] == ["l"]
+    assert slot_map["citation_section_terminal_suffix"] == ["l"]
+    assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["citation_section_terminal_component_kind"] == ["alphanumeric"]
+
+    assert slot_map["source_id_section_primary_number"] == ["190"]
+    assert slot_map["source_id_section_terminal_number"] == ["190"]
+    assert slot_map["source_id_section_primary_suffix"] == ["l"]
+    assert slot_map["source_id_section_terminal_suffix"] == ["l"]
+    assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
+    assert slot_map["source_id_section_terminal_component_kind"] == ["alphanumeric"]
+
+
+def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_primary_number") == ["190"]
+    assert objects("citation_section_terminal_number") == ["190"]
+    assert objects("citation_section_primary_suffix") == ["l"]
+    assert objects("citation_section_terminal_suffix") == ["l"]
+    assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("citation_section_terminal_component_kind") == ["alphanumeric"]
+
+    assert objects("source_id_section_primary_number") == ["190"]
+    assert objects("source_id_section_terminal_number") == ["190"]
+    assert objects("source_id_section_primary_suffix") == ["l"]
+    assert objects("source_id_section_terminal_suffix") == ["l"]
+    assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
+    assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
 
 
 def test_decode_modal_ir_document_emits_section_range_slots() -> None:
