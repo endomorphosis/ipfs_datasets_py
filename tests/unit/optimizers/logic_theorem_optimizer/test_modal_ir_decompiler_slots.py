@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalCompiler,
     ModalCompilerConfig,
@@ -554,3 +556,99 @@ def test_modal_slots_compact_status_surface_text_when_us_abbreviation_truncates_
     assert slot_map["status_keyword"] == ["transferred"]
     assert slot_map["fallback_surface_text"] == ["Transferred"]
     assert triple_values == ["Transferred"]
+
+
+def test_modal_slots_emit_canonical_section_style_alignment_slots() -> None:
+    expected_by_section = {
+        ("42", "1962d"): "single_alphanumeric_alpha_lower_clean",
+        ("26", "7520"): "single_numeric_none_none_clean",
+        ("51", "40504."): "single_numeric_none_none_trailing_punct",
+    }
+
+    for (title, section), canonical_style in expected_by_section.items():
+        for predicate in (
+            "citation_section_style_canonical",
+            "source_id_section_style_canonical",
+        ):
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == [canonical_style]
+            assert triple_values == [canonical_style]
+        for predicate in (
+            "citation_section_style_canonical_alnum_segment_kind_positioned",
+            "source_id_section_style_canonical_alnum_segment_kind_positioned",
+        ):
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert "4:alpha" in slot_values
+            assert "4:alpha" in triple_values
+        pair_values, pair_triple_values = _slot_and_triple_values_for_predicate(
+            section,
+            title=title,
+            predicate="citation_source_id_section_style_canonical_pair",
+        )
+        assert pair_values == [f"{canonical_style}|{canonical_style}"]
+        assert pair_triple_values == [f"{canonical_style}|{canonical_style}"]
+        match_values, match_triple_values = _slot_and_triple_values_for_predicate(
+            section,
+            title=title,
+            predicate="citation_source_id_section_style_canonical_match",
+        )
+        assert match_values == ["true"]
+        assert match_triple_values == ["true"]
+
+
+def test_modal_slots_derive_modal_operator_label_and_signature_for_temporal_next() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "In the next fiscal year, the Administrator shall apply reporting standards.",
+        document_id="us-code-26-7520-operator-label-fallback",
+        citation="26 U.S.C. 7520",
+        source="us_code",
+    )
+    temporal_formula = next(
+        (formula for formula in compiled.modal_ir.formulas if formula.operator.symbol == "X"),
+        None,
+    )
+    assert temporal_formula is not None
+    patched_modal_ir = replace(
+        compiled.modal_ir,
+        formulas=[
+            replace(
+                formula,
+                operator=replace(formula.operator, label=""),
+            )
+            if formula.formula_id == temporal_formula.formula_id
+            else formula
+            for formula in compiled.modal_ir.formulas
+        ],
+    )
+
+    decoded = decode_modal_ir_document(patched_modal_ir)
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert "next" in slot_map["modal_operator_label"]
+    assert "temporal:X:next" in slot_map["modal_operator_signature"]
+    assert "next" in slot_map["modal_operator_label_token"]
+    assert "temporal_x_next" in slot_map["modal_operator_signature_stem"]
+
+    triple_values: dict[str, list[str]] = {}
+    for triple in modal_ir_to_flogic_triples(patched_modal_ir):
+        predicate = str(triple.get("predicate", "")).strip()
+        value = str(triple.get("object", "")).strip()
+        if not predicate or not value:
+            continue
+        values = triple_values.setdefault(predicate, [])
+        if value not in values:
+            values.append(value)
+
+    assert "next" in triple_values["modal_operator_label"]
+    assert "temporal:X:next" in triple_values["modal_operator_signature"]
+    assert "next" in triple_values["modal_operator_label_token"]
+    assert "temporal_x_next" in triple_values["modal_operator_signature_stem"]

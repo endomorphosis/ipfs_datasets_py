@@ -406,16 +406,55 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
         spans=spans,
         emitted=statutory_scope_emissions,
     )
-    operator_label = _clean_text(formula.operator.label)
+    operator_label = _resolved_modal_operator_label(formula)
     if operator_label:
+        operator_spans = _span_from_values(cue_start, cue_end) or spans
         phrases.append(
             DecodedModalPhrase(
                 text=operator_label,
                 slot="modal_operator_label",
-                spans=_span_from_values(cue_start, cue_end) or spans,
+                spans=operator_spans,
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            operator_label,
+            slot_prefix="modal_operator_label",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=operator_spans,
+                    provenance_only=True,
+                )
+            )
+    operator_signature = _modal_operator_signature(
+        formula,
+        operator_label=operator_label,
+    )
+    if operator_signature:
+        operator_spans = _span_from_values(cue_start, cue_end) or spans
+        phrases.append(
+            DecodedModalPhrase(
+                text=operator_signature,
+                slot="modal_operator_signature",
+                spans=operator_spans,
+                provenance_only=True,
+            )
+        )
+        for slot, value in _typed_identifier_slots(
+            operator_signature.replace(":", "_"),
+            slot_prefix="modal_operator_signature",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=operator_spans,
+                    provenance_only=True,
+                )
+            )
     if cue:
         cue_spans = _span_from_values(cue_start, cue_end) or spans
         phrases.append(
@@ -1466,6 +1505,38 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
+    source_section_style_canonical = _clean_text(
+        source_slot_map.get("source_id_section_style_canonical") or ""
+    )
+    citation_section_style_canonical = _clean_text(
+        citation_slot_map.get("citation_section_style_canonical") or ""
+    )
+    if source_section_style_canonical or citation_section_style_canonical:
+        slots.append(
+            (
+                "citation_source_id_section_style_canonical_pair",
+                f"{source_section_style_canonical or 'none'}|"
+                f"{citation_section_style_canonical or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_style_canonical_match",
+                "true"
+                if source_section_style_canonical.lower()
+                == citation_section_style_canonical.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_style_canonical_presence_match",
+                "true"
+                if bool(source_section_style_canonical)
+                == bool(citation_section_style_canonical)
+                else "false",
+            )
+        )
     source_section_suffix_style = _clean_text(
         source_slot_map.get("source_id_section_suffix_style") or ""
     )
@@ -2121,6 +2192,31 @@ def _operator_phrase(formula: ModalIRFormula) -> str:
         "◇": "possible",
     }
     return phrase_map.get(symbol, label)
+
+
+def _resolved_modal_operator_label(formula: ModalIRFormula) -> str:
+    label = _clean_text(formula.operator.label)
+    if label:
+        return label
+    fallback = _clean_text(_operator_phrase(formula))
+    if not fallback or fallback == _clean_text(formula.operator.symbol):
+        return ""
+    return fallback
+
+
+def _modal_operator_signature(
+    formula: ModalIRFormula,
+    *,
+    operator_label: str,
+) -> str:
+    family = _clean_text(formula.operator.family)
+    symbol = _clean_text(formula.operator.symbol)
+    label = _clean_text(operator_label)
+    if not family or not symbol:
+        return ""
+    if not label:
+        return f"{family}:{symbol}"
+    return f"{family}:{symbol}:{label}"
 
 
 def _predicate_phrase(formula: ModalIRFormula) -> str:
@@ -3194,9 +3290,18 @@ def _section_style_slots(
         style_parts.append(suffix_style)
     style_parts.append(punctuation_style)
     style = "_".join(style_parts)
+    canonical_style = _section_style_canonical(
+        profile=profile,
+        suffix_kind=suffix_kind,
+        suffix_case=suffix_case,
+        punctuation_style=punctuation_style,
+    )
     slots: List[Tuple[str, str]] = [
         (f"{normalized_namespace}_section_style", style),
+        (f"{normalized_namespace}_section_style_canonical", canonical_style),
         (f"{normalized_namespace}_section_suffix_style", suffix_style),
+        (f"{normalized_namespace}_section_style_suffix_kind", suffix_kind or "none"),
+        (f"{normalized_namespace}_section_style_suffix_case", suffix_case or "none"),
         (f"{normalized_namespace}_section_punctuation_style", punctuation_style),
     ]
     slots.extend(
@@ -3205,7 +3310,32 @@ def _section_style_slots(
             slot_prefix=f"{normalized_namespace}_section_style",
         )
     )
+    slots.extend(
+        _typed_identifier_slots(
+            canonical_style,
+            slot_prefix=f"{normalized_namespace}_section_style_canonical",
+        )
+    )
     return _unique_slot_values(slots)
+
+
+def _section_style_canonical(
+    *,
+    profile: str,
+    suffix_kind: str,
+    suffix_case: str,
+    punctuation_style: str,
+) -> str:
+    normalized_profile = _clean_text(profile)
+    normalized_punctuation_style = _clean_text(punctuation_style)
+    if not normalized_profile or not normalized_punctuation_style:
+        return ""
+    normalized_suffix_kind = _clean_text(suffix_kind) or "none"
+    normalized_suffix_case = _clean_text(suffix_case) or "none"
+    return (
+        f"{normalized_profile}_{normalized_suffix_kind}_"
+        f"{normalized_suffix_case}_{normalized_punctuation_style}"
+    )
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:

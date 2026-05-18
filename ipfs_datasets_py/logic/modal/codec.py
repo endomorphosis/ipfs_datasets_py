@@ -947,7 +947,7 @@ def modal_ir_to_flogic_triples(
                     "object": predicate_value,
                 }
             )
-        modal_operator_label = _clean_non_empty_string(formula.operator.label)
+        modal_operator_label = _resolved_modal_operator_label(formula)
         if modal_operator_label:
             triples.append(
                 {
@@ -956,6 +956,40 @@ def modal_ir_to_flogic_triples(
                     "object": modal_operator_label,
                 }
             )
+            for predicate_name, predicate_value in _typed_identifier_components(
+                modal_operator_label,
+                slot_prefix="modal_operator_label",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate_name,
+                        "object": predicate_value,
+                    }
+                )
+        modal_operator_signature = _modal_operator_signature(
+            formula,
+            operator_label=modal_operator_label,
+        )
+        if modal_operator_signature:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "modal_operator_signature",
+                    "object": modal_operator_signature,
+                }
+            )
+            for predicate_name, predicate_value in _typed_identifier_components(
+                modal_operator_signature.replace(":", "_"),
+                slot_prefix="modal_operator_signature",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate_name,
+                        "object": predicate_value,
+                    }
+                )
         cue = _clean_non_empty_string(formula.metadata.get("cue"))
         if cue:
             triples.append(
@@ -1478,6 +1512,51 @@ def _softmax(logits: Mapping[str, float]) -> Dict[str, float]:
 def _clean_non_empty_string(value: Any) -> str:
     cleaned = str(value or "").strip()
     return cleaned if cleaned else ""
+
+
+def _modal_operator_phrase(formula: ModalIRFormula) -> str:
+    symbol = _clean_non_empty_string(formula.operator.symbol)
+    label = _clean_non_empty_string(formula.operator.label) or symbol
+    phrase_map = {
+        "O": "obligatory",
+        "P": "permitted",
+        "F": "forbidden",
+        "G": "always",
+        "X": "next",
+        "K": "known",
+        "B": "believed",
+        "O|": "conditionally obligatory",
+        "[a]": "after action",
+        "Frame": "framed as",
+        "□": "necessary",
+        "◇": "possible",
+    }
+    return phrase_map.get(symbol, label)
+
+
+def _resolved_modal_operator_label(formula: ModalIRFormula) -> str:
+    label = _clean_non_empty_string(formula.operator.label)
+    if label:
+        return label
+    fallback = _clean_non_empty_string(_modal_operator_phrase(formula))
+    if not fallback or fallback == _clean_non_empty_string(formula.operator.symbol):
+        return ""
+    return fallback
+
+
+def _modal_operator_signature(
+    formula: ModalIRFormula,
+    *,
+    operator_label: str,
+) -> str:
+    family = _clean_non_empty_string(formula.operator.family)
+    symbol = _clean_non_empty_string(formula.operator.symbol)
+    label = _clean_non_empty_string(operator_label)
+    if not family or not symbol:
+        return ""
+    if not label:
+        return f"{family}:{symbol}"
+    return f"{family}:{symbol}:{label}"
 
 
 def _typed_argument_key_value(argument: str) -> tuple[str, str] | None:
@@ -2126,6 +2205,38 @@ def _provenance_alignment_components(
                 "citation_source_id_section_style_presence_match",
                 "true"
                 if bool(source_section_style) == bool(citation_section_style)
+                else "false",
+            )
+        )
+    source_section_style_canonical = _clean_non_empty_string(
+        source_component_map.get("source_id_section_style_canonical")
+    )
+    citation_section_style_canonical = _clean_non_empty_string(
+        citation_component_map.get("citation_section_style_canonical")
+    )
+    if source_section_style_canonical or citation_section_style_canonical:
+        components.append(
+            (
+                "citation_source_id_section_style_canonical_pair",
+                f"{source_section_style_canonical or 'none'}|"
+                f"{citation_section_style_canonical or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_style_canonical_match",
+                "true"
+                if source_section_style_canonical.lower()
+                == citation_section_style_canonical.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_style_canonical_presence_match",
+                "true"
+                if bool(source_section_style_canonical)
+                == bool(citation_section_style_canonical)
                 else "false",
             )
         )
@@ -4021,9 +4132,18 @@ def _section_style_components(
         style_parts.append(suffix_style)
     style_parts.append(punctuation_style)
     style = "_".join(style_parts)
+    canonical_style = _section_style_canonical(
+        profile=profile,
+        suffix_kind=suffix_kind,
+        suffix_case=suffix_case,
+        punctuation_style=punctuation_style,
+    )
     components: List[tuple[str, str]] = [
         (f"{normalized_namespace}_section_style", style),
+        (f"{normalized_namespace}_section_style_canonical", canonical_style),
         (f"{normalized_namespace}_section_suffix_style", suffix_style),
+        (f"{normalized_namespace}_section_style_suffix_kind", suffix_kind or "none"),
+        (f"{normalized_namespace}_section_style_suffix_case", suffix_case or "none"),
         (f"{normalized_namespace}_section_punctuation_style", punctuation_style),
     ]
     components.extend(
@@ -4032,7 +4152,32 @@ def _section_style_components(
             slot_prefix=f"{normalized_namespace}_section_style",
         )
     )
+    components.extend(
+        _typed_identifier_components(
+            canonical_style,
+            slot_prefix=f"{normalized_namespace}_section_style_canonical",
+        )
+    )
     return _unique_preserve_order_tuples(components)
+
+
+def _section_style_canonical(
+    *,
+    profile: str,
+    suffix_kind: str,
+    suffix_case: str,
+    punctuation_style: str,
+) -> str:
+    normalized_profile = _clean_non_empty_string(profile)
+    normalized_punctuation_style = _clean_non_empty_string(punctuation_style)
+    if not normalized_profile or not normalized_punctuation_style:
+        return ""
+    normalized_suffix_kind = _clean_non_empty_string(suffix_kind) or "none"
+    normalized_suffix_case = _clean_non_empty_string(suffix_case) or "none"
+    return (
+        f"{normalized_profile}_{normalized_suffix_kind}_"
+        f"{normalized_suffix_case}_{normalized_punctuation_style}"
+    )
 
 
 def _unique_preserve_order_tuples(
