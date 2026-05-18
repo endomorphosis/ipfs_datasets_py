@@ -407,6 +407,21 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_frame_semantic_slot_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:operator:framed_as",
+            "slot:role:frame",
+            "slot:operator:obligatory",
+            "slot:role:clause",
+        ]
+    )
+
+    assert terms == [
+        "frame",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_selected_frame_slot_derivatives() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -847,6 +862,10 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("flogic:modal_family_count_dynamic:4") is True
     assert is_frame_ontology_feature_key("flogic:modal_family_count_value:9") is False
     assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
+    assert is_frame_ontology_feature_key("slot:operator:framed_as") is True
+    assert is_frame_ontology_feature_key("slot:role:frame") is True
+    assert is_frame_ontology_feature_key("slot:operator:obligatory") is False
+    assert is_frame_ontology_feature_key("slot:role:clause") is False
     assert is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing") is True
     assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True
     assert is_frame_ontology_feature_key(

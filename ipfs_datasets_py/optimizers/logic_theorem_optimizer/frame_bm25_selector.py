@@ -183,6 +183,11 @@ _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES = frozenset({"flogic", "slot"})
 _FRAME_ONTOLOGY_CONTEXTUAL_NAMESPACED_FEATURE_PREFIXES = frozenset(
     {"flogic", "slot"}
 )
+_FRAME_ONTOLOGY_SLOT_FRAME_SEMANTIC_VALUE_ALIASES = {
+    ("operator", "frame"): "frame",
+    ("operator", "framed_as"): "frame",
+    ("role", "frame"): "frame",
+}
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
@@ -664,6 +669,13 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
     predicate, separator, value = tail.partition(":")
     if not separator:
         return "", False, False
+    if namespace == "slot":
+        frame_semantic_value = _normalized_frame_semantic_slot_value(
+            predicate,
+            value,
+        )
+        if frame_semantic_value:
+            return frame_semantic_value, False, False
     canonical_predicate = _canonical_frame_ontology_predicate(predicate)
     if canonical_predicate:
         return (
@@ -687,6 +699,25 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
             False,
         )
     return "", False, False
+
+
+def _normalized_frame_semantic_slot_value(predicate: str, value: str) -> str:
+    normalized_predicate = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized_predicate:
+        return ""
+    normalized_value = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(value or "").strip().lower(),
+    ).strip("_")
+    if not normalized_value:
+        return ""
+    return _FRAME_ONTOLOGY_SLOT_FRAME_SEMANTIC_VALUE_ALIASES.get(
+        (normalized_predicate, normalized_value),
+        "",
+    )
 
 
 def _is_slot_frame_ontology_predicate(predicate: str) -> bool:

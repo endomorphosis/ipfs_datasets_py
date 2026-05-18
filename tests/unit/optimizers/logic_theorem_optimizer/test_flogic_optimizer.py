@@ -116,6 +116,37 @@ def test_flogic_optimizer_tracks_slot_contextual_frame_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_tracks_frame_semantic_slot_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "slot:operator:framed_as",
+            "slot:role:frame",
+            "slot:operator:obligatory",
+            "slot:role:clause",
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "slot:operator:framed_as",
+        "slot:role:frame",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "frame",
+    ]
+
+
 def test_flogic_optimizer_tracks_selected_frame_family_terms() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

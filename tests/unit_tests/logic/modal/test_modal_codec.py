@@ -3837,6 +3837,30 @@ def test_modal_codec_frame_decoder_audit_features_use_canonical_feature_parser()
     ]
 
 
+def test_modal_codec_frame_ontology_audit_tracks_frame_semantic_slot_features() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="15",
+        section="3722a",
+        text="Sec. 3722a. The Secretary may transfer authority under section 3722a.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+    assert result.flogic_result is not None
+
+    audit_feature_keys = result.flogic_result.metadata["frame_audit_feature_keys"]
+    assert "slot:operator:framed_as" in audit_feature_keys
+    assert "slot:role:frame" in audit_feature_keys
+    assert "frame" in result.flogic_result.metadata["frame_ontology_terms"]
+
+
 def test_modal_codec_frame_ontology_audit_prioritizes_decoder_frame_features() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
