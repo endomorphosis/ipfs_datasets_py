@@ -1261,12 +1261,17 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
-    for part in parts:
+    for index, part in enumerate(parts, start=1):
+        position = str(index)
         components.append(("citation_section_component", part))
+        components.append(("citation_section_component_positioned", f"{position}:{part}"))
         match = _CITATION_SECTION_PART_RE.fullmatch(part)
         if not match:
             component_shapes.append("X")
             components.append(("citation_section_component_kind", "other"))
+            components.append(
+                ("citation_section_component_kind_positioned", f"{position}:other")
+            )
             continue
         number = _clean_non_empty_string(match.group("number"))
         suffix = _clean_non_empty_string(match.group("suffix"))
@@ -1274,14 +1279,25 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         if number:
             components.append(("citation_section_number", number))
             components.append(("citation_section_number_digit_count", str(len(number))))
+            components.append(("citation_section_number_positioned", f"{position}:{number}"))
         if suffix:
             component_shapes.append("NA")
             suffix_component_count += 1
             components.append(("citation_section_component_kind", "alphanumeric"))
+            components.append(
+                (
+                    "citation_section_component_kind_positioned",
+                    f"{position}:alphanumeric",
+                )
+            )
             components.append(("citation_section_suffix", suffix))
+            components.append(("citation_section_suffix_positioned", f"{position}:{suffix}"))
         else:
             component_shapes.append("N")
             components.append(("citation_section_component_kind", "numeric"))
+            components.append(
+                ("citation_section_component_kind_positioned", f"{position}:numeric")
+            )
     if component_shapes:
         components.append(("citation_section_shape", "-".join(component_shapes)))
     components.append(
