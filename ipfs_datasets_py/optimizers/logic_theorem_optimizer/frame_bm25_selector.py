@@ -756,6 +756,10 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         normalized_range_connector = _normalized_range_connector_ontology_value(raw_value)
         if normalized_range_connector:
             return normalized_range_connector
+    if normalized_predicate.endswith("_pair"):
+        normalized_pair_value = _normalized_pair_ontology_value(raw_value)
+        if normalized_pair_value:
+            raw_value = normalized_pair_value
     if normalized_predicate == "statutory_scope_target":
         scoped_target = raw_value.split("(", 1)[0].strip()
         if scoped_target:
@@ -848,6 +852,34 @@ def _normalized_range_connector_ontology_value(raw_value: str) -> str:
     if not normalized:
         return ""
     return _FRAME_ONTOLOGY_RANGE_CONNECTOR_ALIASES.get(normalized, normalized)
+
+
+def _normalized_pair_ontology_value(raw_value: str) -> str:
+    text = str(raw_value or "").strip()
+    if not text:
+        return ""
+    if "|" in text:
+        left, separator, right = text.partition("|")
+        if separator:
+            normalized_left = left.strip()
+            normalized_right = right.strip()
+            if (
+                normalized_left
+                and normalized_right
+                and normalized_left.lower() == normalized_right.lower()
+            ):
+                return normalized_left
+    tokenized = [token for token in text.split("_") if token]
+    token_count = len(tokenized)
+    if token_count >= 2 and token_count % 2 == 0:
+        half = token_count // 2
+        left_tokens = tokenized[:half]
+        right_tokens = tokenized[half:]
+        if left_tokens == right_tokens:
+            collapsed = "_".join(left_tokens).strip("_")
+            if collapsed:
+                return collapsed
+    return text
 
 
 def _normalized_modal_family_count_value(

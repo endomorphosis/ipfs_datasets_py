@@ -259,3 +259,26 @@ def test_frame_ontology_terms_support_predicate_alnum_segment_predicates() -> No
 
     assert triple_terms == ["391", "a"]
     assert feature_terms == ["1790", "b"]
+
+
+def test_frame_ontology_terms_canonicalize_repeated_pair_values() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "predicate": "citation_source_id_title_section_key_pair",
+                "object": "22:10006|22:10006",
+            },
+            {"predicate": "citation_source_id_title_pair", "object": "22|22"},
+            {"predicate": "citation_source_id_section_pair", "object": "10006|10006"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:citation_source_id_title_section_key_pair:22_10006_22_10006",
+            "slot:citation_source_id_title_pair:22_22",
+            "slot:citation_source_id_section_pair:10006_10006",
+        ]
+    )
+
+    assert triple_terms == ["22_10006", "22", "10006"]
+    assert feature_terms == ["22_10006", "22", "10006"]
