@@ -3333,6 +3333,21 @@ def _numeric_signature_components(
     ]
 
 
+def _numeric_span_signature_components(
+    *,
+    slot_prefix: str,
+    span: str,
+) -> List[tuple[str, str]]:
+    normalized_slot_prefix = _clean_non_empty_string(slot_prefix)
+    normalized_span = _clean_non_empty_string(span)
+    if not normalized_slot_prefix or not normalized_span.isdigit():
+        return []
+    return _numeric_signature_components(
+        normalized_span,
+        slot_prefix=normalized_slot_prefix,
+    )
+
+
 def _numeric_magnitude_bucket(value: int) -> str:
     if value < 1_000:
         return "lt_1k"
@@ -3563,16 +3578,18 @@ def _title_section_number_relation_components(
     )
     if primary_relation is not None:
         relation, span = primary_relation
+        span_component = f"{normalized_namespace}_title_section_primary_number_span"
         components.append(
             (
                 f"{normalized_namespace}_title_section_primary_number_relation",
                 relation,
             )
         )
-        components.append(
-            (
-                f"{normalized_namespace}_title_section_primary_number_span",
-                span,
+        components.append((span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=span_component,
+                span=span,
             )
         )
     terminal_relation = _primary_terminal_number_relation(
@@ -3581,16 +3598,18 @@ def _title_section_number_relation_components(
     )
     if terminal_relation is not None:
         relation, span = terminal_relation
+        span_component = f"{normalized_namespace}_title_section_terminal_number_span"
         components.append(
             (
                 f"{normalized_namespace}_title_section_terminal_number_relation",
                 relation,
             )
         )
-        components.append(
-            (
-                f"{normalized_namespace}_title_section_terminal_number_span",
-                span,
+        components.append((span_component, span))
+        components.extend(
+            _numeric_span_signature_components(
+                slot_prefix=span_component,
+                span=span,
             )
         )
     return components

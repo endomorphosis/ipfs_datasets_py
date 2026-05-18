@@ -363,6 +363,118 @@ def test_modal_slots_emit_typed_title_section_coordinate_slots_for_todo_cluster_
             assert triple_values == expected[predicate]
 
 
+def test_modal_slots_emit_title_section_span_signature_slots_for_todo_cluster_sections() -> None:
+    expected_by_section = {
+        ("43", "1."): {
+            "span": "42",
+            "digit_bucket": "2_digit",
+            "magnitude_bucket": "lt_1k",
+            "prefix_three_digits": "42",
+            "has_zero_digit": "false",
+        },
+        ("49", "44114."): {
+            "span": "44065",
+            "digit_bucket": "5_digit",
+            "magnitude_bucket": "10k_to_99k",
+            "prefix_three_digits": "440",
+            "has_zero_digit": "true",
+        },
+        ("2", "132a"): {
+            "span": "130",
+            "digit_bucket": "3_digit",
+            "magnitude_bucket": "lt_1k",
+            "prefix_three_digits": "130",
+            "has_zero_digit": "true",
+        },
+    }
+    predicates = (
+        "citation_title_section_primary_number_span",
+        "citation_title_section_primary_number_span_digit_count_bucket",
+        "citation_title_section_primary_number_span_magnitude_bucket",
+        "citation_title_section_primary_number_span_prefix_three_digits",
+        "citation_title_section_primary_number_span_has_zero_digit",
+        "citation_title_section_terminal_number_span",
+        "citation_title_section_terminal_number_span_digit_count_bucket",
+        "citation_title_section_terminal_number_span_magnitude_bucket",
+        "citation_title_section_terminal_number_span_prefix_three_digits",
+        "citation_title_section_terminal_number_span_has_zero_digit",
+        "source_id_title_section_primary_number_span",
+        "source_id_title_section_primary_number_span_digit_count_bucket",
+        "source_id_title_section_primary_number_span_magnitude_bucket",
+        "source_id_title_section_primary_number_span_prefix_three_digits",
+        "source_id_title_section_primary_number_span_has_zero_digit",
+        "source_id_title_section_terminal_number_span",
+        "source_id_title_section_terminal_number_span_digit_count_bucket",
+        "source_id_title_section_terminal_number_span_magnitude_bucket",
+        "source_id_title_section_terminal_number_span_prefix_three_digits",
+        "source_id_title_section_terminal_number_span_has_zero_digit",
+    )
+
+    for (title, section), values in expected_by_section.items():
+        expected = {
+            "citation_title_section_primary_number_span": [values["span"]],
+            "citation_title_section_primary_number_span_digit_count_bucket": [
+                values["digit_bucket"]
+            ],
+            "citation_title_section_primary_number_span_magnitude_bucket": [
+                values["magnitude_bucket"]
+            ],
+            "citation_title_section_primary_number_span_prefix_three_digits": [
+                values["prefix_three_digits"]
+            ],
+            "citation_title_section_primary_number_span_has_zero_digit": [
+                values["has_zero_digit"]
+            ],
+            "citation_title_section_terminal_number_span": [values["span"]],
+            "citation_title_section_terminal_number_span_digit_count_bucket": [
+                values["digit_bucket"]
+            ],
+            "citation_title_section_terminal_number_span_magnitude_bucket": [
+                values["magnitude_bucket"]
+            ],
+            "citation_title_section_terminal_number_span_prefix_three_digits": [
+                values["prefix_three_digits"]
+            ],
+            "citation_title_section_terminal_number_span_has_zero_digit": [
+                values["has_zero_digit"]
+            ],
+            "source_id_title_section_primary_number_span": [values["span"]],
+            "source_id_title_section_primary_number_span_digit_count_bucket": [
+                values["digit_bucket"]
+            ],
+            "source_id_title_section_primary_number_span_magnitude_bucket": [
+                values["magnitude_bucket"]
+            ],
+            "source_id_title_section_primary_number_span_prefix_three_digits": [
+                values["prefix_three_digits"]
+            ],
+            "source_id_title_section_primary_number_span_has_zero_digit": [
+                values["has_zero_digit"]
+            ],
+            "source_id_title_section_terminal_number_span": [values["span"]],
+            "source_id_title_section_terminal_number_span_digit_count_bucket": [
+                values["digit_bucket"]
+            ],
+            "source_id_title_section_terminal_number_span_magnitude_bucket": [
+                values["magnitude_bucket"]
+            ],
+            "source_id_title_section_terminal_number_span_prefix_three_digits": [
+                values["prefix_three_digits"]
+            ],
+            "source_id_title_section_terminal_number_span_has_zero_digit": [
+                values["has_zero_digit"]
+            ],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]
+
+
 def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_sections() -> None:
     expected_by_section = {
         ("50", "31 to 39."): {

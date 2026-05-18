@@ -2752,16 +2752,18 @@ def _title_section_number_relation_slots(
     )
     if primary_relation is not None:
         relation, span = primary_relation
+        span_slot = f"{normalized_namespace}_title_section_primary_number_span"
         slots.append(
             (
                 f"{normalized_namespace}_title_section_primary_number_relation",
                 relation,
             )
         )
-        slots.append(
-            (
-                f"{normalized_namespace}_title_section_primary_number_span",
-                span,
+        slots.append((span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=span_slot,
+                span=span,
             )
         )
     terminal_relation = _primary_terminal_number_relation(
@@ -2770,16 +2772,18 @@ def _title_section_number_relation_slots(
     )
     if terminal_relation is not None:
         relation, span = terminal_relation
+        span_slot = f"{normalized_namespace}_title_section_terminal_number_span"
         slots.append(
             (
                 f"{normalized_namespace}_title_section_terminal_number_relation",
                 relation,
             )
         )
-        slots.append(
-            (
-                f"{normalized_namespace}_title_section_terminal_number_span",
-                span,
+        slots.append((span_slot, span))
+        slots.extend(
+            _numeric_span_signature_slots(
+                slot_prefix=span_slot,
+                span=span,
             )
         )
     return slots
@@ -3516,6 +3520,18 @@ def _numeric_signature_slots(
         ),
         (f"{slot_prefix}_trailing_zero_count", str(trailing_zero_count)),
     ]
+
+
+def _numeric_span_signature_slots(
+    *,
+    slot_prefix: str,
+    span: str,
+) -> List[Tuple[str, str]]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    normalized_span = _clean_text(span)
+    if not normalized_slot_prefix or not normalized_span.isdigit():
+        return []
+    return _numeric_signature_slots(normalized_span, slot_prefix=normalized_slot_prefix)
 
 
 def _numeric_magnitude_bucket(value: int) -> str:
