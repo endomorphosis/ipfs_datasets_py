@@ -49,6 +49,7 @@ class ModalCompilerConfig:
     modal_family_share_margin: float = 0.34
     modal_family_secondary_share_floor: float = 0.2
     modal_primary_family_margin: float = 0.15
+    modal_adaptive_family_margin: float = 0.15
     modal_primary_family_outvote_margin: float = 0.0
     modal_conditional_target_family_outvote_margin: float = 0.0
     modal_deontic_target_family_outvote_margin: float = 0.0
@@ -389,6 +390,13 @@ class DeterministicModalCompiler:
                 family_shares=family_shares,
             )
         )
+        ambiguities.extend(
+            self._adaptive_family_margin_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
         if len(ranking) < 2:
             return ambiguities
 
@@ -503,6 +511,71 @@ class DeterministicModalCompiler:
                         "family_ranking": ranking,
                         "runner_up_share": round(runner_share, 6),
                         "secondary_share_floor": self.config.modal_family_secondary_share_floor,
+                    },
+                )
+            )
+        return ambiguities
+
+    def _adaptive_family_margin_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        """Surface an explicit ambiguity when temporal cues outvote key legal families."""
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        if predicted_family != ModalLogicFamily.TEMPORAL.value:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        signals = modal_ambiguity_signals(encoding)
+        threshold = float(self.config.modal_adaptive_family_margin)
+        target_specs = (
+            (
+                ModalLogicFamily.FRAME.value,
+                bool(
+                    signals.get("has_frame_context")
+                    or signals.get("has_frame_cue")
+                    or signals.get("has_statutory_scope_reference")
+                ),
+            ),
+            (
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                bool(signals.get("has_condition_or_exception_scope")),
+            ),
+            (
+                ModalLogicFamily.DEONTIC.value,
+                bool(signals.get("has_deontic_scope")),
+            ),
+        )
+        ambiguities: List[ModalCompilationAmbiguity] = []
+        for target_family, has_signal in target_specs:
+            target_share = float(family_shares.get(target_family, 0.0))
+            if not has_signal and target_share <= 0.0:
+                continue
+            family_margin = target_share - predicted_share
+            if family_margin > threshold:
+                continue
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type="adaptive_family_margin_low",
+                    message=(
+                        "Temporal cues dominate while another legal modal family has "
+                        "competing scope/context evidence; family selection is ambiguous."
+                    ),
+                    candidate_ids=[predicted_family, target_family],
+                    severity="requires_rule" if family_margin < 0.0 else "review",
+                    metadata={
+                        "adaptive_family_margin_threshold": threshold,
+                        "family_margin": round(family_margin, 6),
+                        "family_ranking": list(ranking),
+                        "lexical_signals": dict(sorted(signals.items())),
+                        "predicted_family": predicted_family,
+                        "predicted_share": round(predicted_share, 6),
+                        "target_family": target_family,
+                        "target_share": round(target_share, 6),
                     },
                 )
             )

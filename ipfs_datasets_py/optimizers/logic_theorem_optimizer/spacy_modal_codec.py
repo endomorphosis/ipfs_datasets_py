@@ -172,8 +172,23 @@ _FRAME_CONTEXT_TOKENS = frozenset(
         "jurisdiction",
         "justice",
         "officer",
+        "omitted",
+        "reclassified",
+        "repealed",
+        "renumbered",
+        "reserved",
         "secretary",
+        "terminated",
+        "transferred",
+        "vacant",
     }
+)
+_FRAME_SCOPE_PHRASES = (
+    "editorially reclassified",
+    "renumbered",
+    "repealed",
+    "reserved",
+    "transferred",
 )
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
@@ -677,7 +692,10 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         or bool(dynamic_scope_phrase)
         or ModalLogicFamily.DYNAMIC.value in cue_families
     )
-    frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
+    frame_scope_phrase = _contains_scope_phrase(
+        normalized_text, _FRAME_SCOPE_PHRASES
+    )
+    frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS) or bool(frame_scope_phrase)
     return {
         "has_alethic_cue": ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,
@@ -704,6 +722,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_frame_context": frame_context,
+        "has_frame_scope_phrase": bool(frame_scope_phrase),
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
 

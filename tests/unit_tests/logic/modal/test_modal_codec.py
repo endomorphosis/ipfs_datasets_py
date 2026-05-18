@@ -283,6 +283,59 @@ def test_modal_compiler_surfaces_frame_family_margin_ambiguity_when_outvoted() -
     assert frame_outvoted_ambiguity.metadata["family_margin"] < 0.0
 
 
+def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_conflicts() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Notwithstanding subsection (b), within 30 days after review, the secretary shall submit the report."
+    )
+
+    adaptive_ambiguities = [
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+    ]
+    pairs = {tuple(ambiguity.candidate_ids) for ambiguity in adaptive_ambiguities}
+
+    assert ("temporal", "conditional_normative") in pairs
+    assert ("temporal", "deontic") in pairs
+    assert ("temporal", "frame") in pairs
+    assert all(
+        ambiguity.metadata["adaptive_family_margin_threshold"] == 0.15
+        for ambiguity in adaptive_ambiguities
+    )
+    assert all(ambiguity.metadata["family_margin"] < 0.0 for ambiguity in adaptive_ambiguities)
+
+
+def test_modal_compiler_treats_transferred_as_frame_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the section is transferred."
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "frame"]
+    )
+    assert adaptive_frame.metadata["lexical_signals"]["has_frame_context"] is True
+    assert adaptive_frame.metadata["lexical_signals"]["has_frame_scope_phrase"] is True
+
+
 def test_modal_compiler_surfaces_temporal_conditional_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
