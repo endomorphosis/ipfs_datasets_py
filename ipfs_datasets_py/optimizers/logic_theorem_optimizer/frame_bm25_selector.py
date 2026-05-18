@@ -101,6 +101,12 @@ _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "source_id_",
     "statutory_scope_",
 )
+_FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES = frozenset(
+    {
+        "modal_operator",
+        "modal_system",
+    }
+)
 _FRAME_ONTOLOGY_TRAILING_PUNCT_PREDICATES = frozenset(
     {
         "citation_section_trailing_punct",
@@ -847,6 +853,8 @@ def _predicate_allows_single_character_alpha_tokens(predicate: str) -> bool:
     if not normalized or normalized.endswith("_count"):
         return False
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    if canonical in _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES:
+        return True
     if not any(
         canonical.startswith(prefix)
         for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES

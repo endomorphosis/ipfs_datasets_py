@@ -278,6 +278,36 @@ def test_flogic_optimizer_tracks_legacy_bare_contextual_feature_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_tracks_single_letter_modal_symbol_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:modal_operator:P",
+            "flogic:modal_operator:O|",
+            "flogic:modal_system:D",
+            "flogic:modal_system:LTL",
+        ],
+    )
+
+    assert result.metadata["frame_ontology_terms"] == [
+        "d",
+        "ltl",
+        "o",
+        "p",
+    ]
+
+
 def test_flogic_optimizer_keeps_direct_frame_terms_when_audit_key_cap_is_exceeded() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

@@ -254,6 +254,40 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
     ]
 
 
+def test_frame_ontology_terms_from_triples_keep_single_letter_modal_symbols() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "modal_operator",
+                "object": "P",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_operator",
+                "object": "O|",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_system",
+                "object": "D",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "modal_system",
+                "object": "LTL",
+            },
+        ]
+    )
+
+    assert terms == [
+        "p",
+        "o",
+        "d",
+        "ltl",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_support_fallback_surface_text_predicates() -> None:
     terms = frame_ontology_terms_from_triples(
         [
@@ -426,6 +460,24 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_keep_single_letter_modal_symbols() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:modal_operator:P",
+            "flogic:modal_operator:O|",
+            "flogic:modal_system:D",
+            "slot:modal_system:LTL",
+        ]
+    )
+
+    assert terms == [
+        "p",
+        "o",
+        "d",
+        "ltl",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_frame_semantic_slot_features() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -491,6 +543,7 @@ def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_featur
         "ltl",
         "temporal_scope",
         "pub",
+        "o",
         "frame",
     ]
 
