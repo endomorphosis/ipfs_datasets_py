@@ -52,6 +52,7 @@ _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
+_SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
     "subsection",
@@ -163,6 +164,12 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         formula_text = modal_formula_to_text(formula)
         formulas.append(formula_text)
         phrases.extend(_decode_formula_phrases(formula))
+        phrases.extend(
+            _fallback_section_heading_tail_phrases(
+                document=document,
+                formula=formula,
+            )
+        )
 
     selected_frame = _selected_frame(document)
     if selected_frame:
@@ -482,6 +489,67 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 )
             )
     return phrases
+
+
+def _fallback_section_heading_tail_phrases(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+) -> List[DecodedModalPhrase]:
+    heading_tail = _fallback_section_heading_tail_text(document=document, formula=formula)
+    if not heading_tail:
+        return []
+    spans = [[formula.provenance.start_char, formula.provenance.end_char]]
+    phrases = [
+        DecodedModalPhrase(
+            text=heading_tail,
+            slot="section_heading_tail",
+            spans=spans,
+            provenance_only=True,
+        )
+    ]
+    for slot, value in _typed_identifier_slots(
+        heading_tail,
+        slot_prefix="section_heading_tail",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
+def _fallback_section_heading_tail_text(
+    *,
+    document: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 18,
+) -> str:
+    fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
+    if fallback_rule != "uscode_section_heading_v1":
+        return ""
+    source_text = str(document.normalized_text or "")
+    if not source_text:
+        return ""
+    start = max(0, min(len(source_text), int(formula.provenance.start_char)))
+    end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    trailing = source_text[end:]
+    if not trailing:
+        return ""
+    trailing = trailing.lstrip(" \t\r\n-–—:;,.")
+    if not trailing:
+        return ""
+    candidate = _SECTION_HEADING_TAIL_SPLIT_RE.split(trailing, maxsplit=1)[0]
+    heading_tail = _clean_text(candidate)
+    if not heading_tail:
+        return ""
+    if len(_tokenize_for_similarity(heading_tail)) > max_tokens:
+        return ""
+    return heading_tail
 
 
 def _operator_phrase(formula: ModalIRFormula) -> str:

@@ -2277,6 +2277,45 @@ def test_modal_decompiler_and_triples_surface_declarative_statement_hint_slot() 
     )
 
 
+def test_modal_decompiler_and_triples_surface_section_heading_tail_slots() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "\u00a73121. Definitions and purposes.",
+        document_id="us-code-29-3121-da7d5224c3804b0e",
+        citation="29 U.S.C. 3121",
+        source="us_code",
+    )
+
+    fallback = compiled.modal_ir.formulas[-1]
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert slot_texts["section_heading_tail"] == ["Definitions and purposes"]
+    assert slot_texts["section_heading_tail_token_count"] == ["3"]
+    assert slot_texts["section_heading_tail_token_prefix"] == ["definitions"]
+    assert slot_texts["section_heading_tail_token_suffix"] == ["purposes"]
+    assert slot_texts["section_heading_tail_stem"] == ["definitions_and_purposes"]
+    assert "and" in slot_texts["section_heading_tail_token"]
+    assert any(
+        triple["predicate"] == "section_heading_tail"
+        and triple["object"] == "Definitions and purposes"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "section_heading_tail_token"
+        and triple["object"] == "definitions"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "section_heading_tail_token_suffix"
+        and triple["object"] == "purposes"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile("The agency must provide notice.")

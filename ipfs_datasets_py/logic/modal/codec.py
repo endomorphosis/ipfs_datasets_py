@@ -109,6 +109,7 @@ _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
+_SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
     "subsection",
@@ -807,6 +808,29 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+        section_heading_tail = _fallback_section_heading_tail_text(
+            modal_ir=modal_ir,
+            formula=formula,
+        )
+        if section_heading_tail:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "section_heading_tail",
+                    "object": section_heading_tail,
+                }
+            )
+            for predicate, value in _typed_identifier_components(
+                section_heading_tail,
+                slot_prefix="section_heading_tail",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         status_keyword = _clean_non_empty_string(formula.metadata.get("status_keyword"))
         if status_keyword:
             triples.append(
@@ -1111,6 +1135,36 @@ def _typed_identifier_components(
     if stem_tokens:
         components.append((f"{slot_prefix}_stem", "_".join(stem_tokens)))
     return _unique_preserve_order_tuples(components)
+
+
+def _fallback_section_heading_tail_text(
+    *,
+    modal_ir: ModalIRDocument,
+    formula: ModalIRFormula,
+    max_tokens: int = 18,
+) -> str:
+    fallback_rule = _clean_non_empty_string(formula.metadata.get("fallback_rule"))
+    if fallback_rule != "uscode_section_heading_v1":
+        return ""
+    source_text = str(modal_ir.normalized_text or "")
+    if not source_text:
+        return ""
+    start = max(0, min(len(source_text), int(formula.provenance.start_char)))
+    end = max(start, min(len(source_text), int(formula.provenance.end_char)))
+    trailing = source_text[end:]
+    if not trailing:
+        return ""
+    trailing = trailing.lstrip(" \t\r\n-–—:;,.")
+    if not trailing:
+        return ""
+    candidate = _SECTION_HEADING_TAIL_SPLIT_RE.split(trailing, maxsplit=1)[0]
+    heading_tail = _clean_non_empty_string(candidate)
+    if not heading_tail:
+        return ""
+    tokens = _SLOT_FEATURE_TOKEN_RE.findall(heading_tail.lower())
+    if len(tokens) > max_tokens:
+        return ""
+    return heading_tail
 
 
 def _append_statutory_scope_triples(
