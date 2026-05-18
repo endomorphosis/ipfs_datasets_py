@@ -972,6 +972,48 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_normalized_source_i
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_digestless_source_ids() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:source_id:us-code-42-2624 to 2628.",
+            "slot:source_id:us_code_44_1305",
+            "slot:source_id:us_code_invalid_value",
+        ]
+    )
+
+    assert terms == [
+        "42_2624_2628",
+        "44_1305",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_digestless_source_ids() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "source_id",
+                "object": "us-code-42-2624 to 2628.",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id",
+                "object": "us_code_44_1305",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id",
+                "object": "us_code_invalid_value",
+            },
+        ]
+    )
+
+    assert terms == [
+        "42_2624_2628",
+        "44_1305",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_section_trailing_punctuation() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -1286,6 +1328,8 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
         "slot:source_id:us_code_5_552_deadbeefdeadbeef"
     ) is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
+    assert is_frame_ontology_feature_key("slot:source_id:us_code_44_1305") is True
+    assert is_frame_ontology_feature_key("flogic:source_id:us-code-42-2624 to 2628.") is True
     assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
     assert is_frame_ontology_feature_key("") is False
 

@@ -246,6 +246,37 @@ def test_flogic_optimizer_tracks_source_id_citation_canonical_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_tracks_digestless_source_id_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "slot:source_id:us-code-42-2624 to 2628.",
+            "flogic:source_id:us_code_44_1305",
+            "slot:source_id:us_code_invalid_value",
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "flogic:source_id:us_code_44_1305",
+        "slot:source_id:us-code-42-2624 to 2628.",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "42_2624_2628",
+        "44_1305",
+    ]
+
+
 def test_flogic_optimizer_normalizes_truncated_slot_canonical_pair_terms() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

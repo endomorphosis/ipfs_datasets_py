@@ -21,8 +21,16 @@ _FRAME_ONTOLOGY_SOURCE_ID_RE = re.compile(
     r"^\s*(?P<scheme>us-code)-(?P<title>[^-]+)-(?P<section>.+)-(?P<digest>[0-9a-f]{16})\s*$",
     re.IGNORECASE,
 )
+_FRAME_ONTOLOGY_SOURCE_ID_NO_DIGEST_RE = re.compile(
+    r"^\s*(?P<scheme>us-code)-(?P<title>\d+[A-Za-z]*)-(?P<section>.+?)\s*$",
+    re.IGNORECASE,
+)
 _FRAME_ONTOLOGY_SOURCE_ID_SLOT_NORMALIZED_RE = re.compile(
     r"^\s*(?P<scheme>us[_-]code)[_-](?P<title>[^_-]+)[_-](?P<section>.+)[_-](?P<digest>[0-9a-f]{16})\s*$",
+    re.IGNORECASE,
+)
+_FRAME_ONTOLOGY_SOURCE_ID_SLOT_NORMALIZED_NO_DIGEST_RE = re.compile(
+    r"^\s*(?P<scheme>us[_-]code)[_-](?P<title>\d+[A-Za-z]*)[_-](?P<section>.+?)\s*$",
     re.IGNORECASE,
 )
 _FRAME_ONTOLOGY_USC_CITATION_RE = re.compile(
@@ -791,6 +799,10 @@ def _normalized_source_id_ontology_value(raw_value: str) -> str:
         # source IDs often arrive as `us_code_<title>_<section>_<digest>`.
         # Accept that canonicalized shape to keep source coordinates in audits.
         match = _FRAME_ONTOLOGY_SOURCE_ID_SLOT_NORMALIZED_RE.match(text)
+    if match is None:
+        match = _FRAME_ONTOLOGY_SOURCE_ID_NO_DIGEST_RE.match(text)
+    if match is None:
+        match = _FRAME_ONTOLOGY_SOURCE_ID_SLOT_NORMALIZED_NO_DIGEST_RE.match(text)
     if not match:
         return ""
     title = str(match.group("title") or "").strip()
