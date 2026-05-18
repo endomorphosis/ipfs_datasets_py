@@ -155,6 +155,11 @@ _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
 _FRAME_ONTOLOGY_CUE_VALUE_ALIASES = {
     "is a": "isa",
 }
+_FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
+    "candidate_frame",
+    "frame_candidate",
+    "selected_frame",
+)
 
 
 @dataclass(frozen=True)
@@ -576,7 +581,26 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
             _predicate_allows_numeric_ontology_tokens(predicate),
             _predicate_allows_single_character_alpha_tokens(predicate),
         )
+    if namespace == "slot" and _is_slot_frame_ontology_predicate(predicate):
+        return (
+            _normalized_frame_ontology_value(predicate, value),
+            False,
+            False,
+        )
     return "", False, False
+
+
+def _is_slot_frame_ontology_predicate(predicate: str) -> bool:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized:
+        return False
+    return any(
+        normalized.startswith(prefix)
+        for prefix in _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES
+    )
 
 
 def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:

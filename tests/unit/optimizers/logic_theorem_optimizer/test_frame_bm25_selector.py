@@ -382,6 +382,37 @@ def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_selected_frame_slot_derivatives() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:selected_frame:administrative_notice_hearing",
+            "slot:selected_frame_stem:administrative_notice_hearing",
+            "slot:selected_frame_token:administrative",
+            "slot:selected_frame_token_count:3",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "administrative",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_ranked_frame_candidate_slots() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:frame_candidate_ranked:1:criminal_penalty_enforcement",
+            "slot:frame_candidate_token:penalty",
+            "slot:frame_candidate_rank:1",
+        ]
+    )
+
+    assert terms == [
+        "criminal_penalty_enforcement",
+        "penalty",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_features() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -595,6 +626,8 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("cue:frame:transferred") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
     assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
+    assert is_frame_ontology_feature_key("slot:selected_frame_stem:administrative_notice_hearing") is True
+    assert is_frame_ontology_feature_key("slot:frame_candidate_ranked:1:criminal_penalty_enforcement") is True
     assert is_frame_ontology_feature_key(
         "slot:selected_ontology_term:final order"
     ) is True
