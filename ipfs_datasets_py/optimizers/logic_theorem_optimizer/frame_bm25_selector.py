@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass, field
@@ -291,6 +292,7 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
 )
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048
+_FRAME_ONTOLOGY_FEATURE_VALUE_JSON_MAX_LENGTH = 4096
 
 
 @dataclass(frozen=True)
@@ -652,8 +654,38 @@ def _collect_frame_ontology_feature_value_candidates(
             )
         return
     text = str(values or "").strip()
-    if text:
-        extracted.append(text)
+    if not text:
+        return
+    parsed = _parsed_frame_ontology_feature_value(text)
+    if parsed is not None:
+        _collect_frame_ontology_feature_value_candidates(
+            parsed,
+            extracted,
+            depth=depth + 1,
+            max_depth=max_depth,
+            max_values=max_values,
+        )
+        return
+    extracted.append(text)
+
+
+def _parsed_frame_ontology_feature_value(text: str) -> Any | None:
+    stripped = str(text or "").strip()
+    if not stripped or len(stripped) > _FRAME_ONTOLOGY_FEATURE_VALUE_JSON_MAX_LENGTH:
+        return None
+    is_json_object = stripped.startswith("{") and stripped.endswith("}")
+    is_json_array = stripped.startswith("[") and stripped.endswith("]")
+    if not (is_json_object or is_json_array):
+        return None
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(parsed, Mapping):
+        return parsed
+    if isinstance(parsed, Sequence) and not isinstance(parsed, (str, bytes)):
+        return parsed
+    return None
 
 
 def is_high_signal_frame_ontology_term(

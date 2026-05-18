@@ -4171,11 +4171,24 @@ def _frame_ontology_audit_metadata_feature_keys(
     metadata = modal_ir.metadata if isinstance(modal_ir.metadata, Mapping) else {}
     metadata_values: List[Any] = [
         modal_ir.document_id,
+        metadata.get("citation"),
+        metadata.get("citations"),
+        metadata.get("dedupe_signature"),
+        metadata.get("feature"),
+        metadata.get("feature_key"),
+        metadata.get("feature_keys"),
+        metadata.get("features"),
+        metadata.get("frame_feature"),
+        metadata.get("frame_feature_key"),
+        metadata.get("frame_feature_keys"),
+        metadata.get("frame_features"),
         metadata.get("sample_id"),
         metadata.get("sample_ids"),
         metadata.get("source_id"),
         metadata.get("source_ids"),
         metadata.get("hint_evidence"),
+        metadata.get("top_embedding_features"),
+        metadata.get("top_family_features"),
     ]
     frame_logic_metadata = (
         modal_ir.frame_logic.metadata
@@ -4188,7 +4201,20 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("sample_ids"),
             frame_logic_metadata.get("source_id"),
             frame_logic_metadata.get("source_ids"),
+            frame_logic_metadata.get("citation"),
+            frame_logic_metadata.get("citations"),
+            frame_logic_metadata.get("dedupe_signature"),
+            frame_logic_metadata.get("feature"),
+            frame_logic_metadata.get("feature_key"),
+            frame_logic_metadata.get("feature_keys"),
+            frame_logic_metadata.get("features"),
+            frame_logic_metadata.get("frame_feature"),
+            frame_logic_metadata.get("frame_feature_key"),
+            frame_logic_metadata.get("frame_feature_keys"),
+            frame_logic_metadata.get("frame_features"),
             frame_logic_metadata.get("hint_evidence"),
+            frame_logic_metadata.get("top_embedding_features"),
+            frame_logic_metadata.get("top_family_features"),
         ]
     )
     return frame_ontology_feature_keys_from_values(

@@ -1,6 +1,7 @@
 """Tests for frame ontology feature/term extraction helpers."""
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_feature_keys_from_values,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
     normalize_frame_ontology_term,
@@ -293,3 +294,27 @@ def test_frame_ontology_terms_canonicalize_repeated_pair_values() -> None:
 
     assert triple_terms == ["22_10006", "22", "10006"]
     assert feature_terms == ["22_10006", "22", "10006"]
+
+
+def test_frame_ontology_feature_keys_from_values_parses_serialized_json_payloads() -> None:
+    feature_keys = frame_ontology_feature_keys_from_values(
+        {
+            "dedupe_signature": (
+                '{"action":"audit_frame_logic_terms",'
+                '"sample_ids":["us-code-51-60604.-82ff42829bbdeb0f",'
+                '"us-code-3-4-a7eca1aa946379a7"]}'
+            ),
+            "citations": ["42 U.S.C. 1437q."],
+        }
+    )
+
+    assert feature_keys == [
+        "us-code-51-60604.-82ff42829bbdeb0f",
+        "us-code-3-4-a7eca1aa946379a7",
+        "42 U.S.C. 1437q.",
+    ]
+    assert frame_ontology_terms_from_feature_keys(feature_keys) == [
+        "51_60604",
+        "3_4",
+        "42_1437q",
+    ]
