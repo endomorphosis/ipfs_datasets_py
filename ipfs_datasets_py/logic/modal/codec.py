@@ -2237,10 +2237,18 @@ def _numeric_signature_components(
     trailing_zero_count = len(cleaned) - len(cleaned.rstrip("0"))
     digit_count_bucket = f"{len(cleaned)}_digit"
     magnitude_bucket = _numeric_magnitude_bucket(numeric_value)
+    prefix_two_digits = cleaned[:2] if len(cleaned) > 1 else cleaned
+    prefix_three_digits = cleaned[:3] if len(cleaned) > 2 else cleaned
+    hundreds_block = str(numeric_value // 100)
+    thousands_block = str(numeric_value // 1_000)
     return [
         (f"{slot_prefix}_parity", parity),
         (f"{slot_prefix}_digit_count_bucket", digit_count_bucket),
         (f"{slot_prefix}_magnitude_bucket", magnitude_bucket),
+        (f"{slot_prefix}_prefix_two_digits", prefix_two_digits),
+        (f"{slot_prefix}_prefix_three_digits", prefix_three_digits),
+        (f"{slot_prefix}_hundreds_block", hundreds_block),
+        (f"{slot_prefix}_thousands_block", thousands_block),
         (f"{slot_prefix}_leading_digit", cleaned[0]),
         (f"{slot_prefix}_trailing_two_digits", trailing_two_digits),
         (f"{slot_prefix}_zero_digit_count", str(zero_digit_count)),

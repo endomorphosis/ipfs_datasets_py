@@ -199,6 +199,53 @@ def test_modal_slots_emit_numeric_magnitude_buckets_for_todo_cluster_sections() 
             assert triple_values == expected[predicate]
 
 
+def test_modal_slots_emit_numeric_prefix_and_block_slots_for_todo_cluster_sections() -> None:
+    expected_by_section = {
+        ("28", "363"): ("36", "363", "3", "0"),
+        ("7", "2143"): ("21", "214", "21", "2"),
+        ("46", "31109."): ("31", "311", "311", "31"),
+        ("25", "1300d-2"): ("13", "130", "13", "1"),
+    }
+    predicates = (
+        "citation_section_primary_number_prefix_two_digits",
+        "citation_section_primary_number_prefix_three_digits",
+        "citation_section_primary_number_hundreds_block",
+        "citation_section_primary_number_thousands_block",
+        "source_id_section_primary_number_prefix_two_digits",
+        "source_id_section_primary_number_prefix_three_digits",
+        "source_id_section_primary_number_hundreds_block",
+        "source_id_section_primary_number_thousands_block",
+    )
+
+    for (
+        title,
+        section,
+    ), (
+        prefix_two,
+        prefix_three,
+        hundreds_block,
+        thousands_block,
+    ) in expected_by_section.items():
+        expected = {
+            "citation_section_primary_number_prefix_two_digits": [prefix_two],
+            "citation_section_primary_number_prefix_three_digits": [prefix_three],
+            "citation_section_primary_number_hundreds_block": [hundreds_block],
+            "citation_section_primary_number_thousands_block": [thousands_block],
+            "source_id_section_primary_number_prefix_two_digits": [prefix_two],
+            "source_id_section_primary_number_prefix_three_digits": [prefix_three],
+            "source_id_section_primary_number_hundreds_block": [hundreds_block],
+            "source_id_section_primary_number_thousands_block": [thousands_block],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]
+
+
 def test_modal_slots_emit_alpha_repeat_shape_for_todo_cluster_suffix_sections() -> None:
     expected_by_section = {
         ("42", "300mm"): ("uniform_repeat", "2"),
