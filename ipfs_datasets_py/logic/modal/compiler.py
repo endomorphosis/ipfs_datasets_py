@@ -546,6 +546,17 @@ class DeterministicModalCompiler:
                     ModalLogicFamily.FRAME.value,
                     has_frame_scope,
                 ),
+                (
+                    ModalLogicFamily.TEMPORAL.value,
+                    bool(signals.get("has_temporal_scope")),
+                ),
+                (
+                    ModalLogicFamily.ALETHIC.value,
+                    bool(
+                        signals.get("has_alethic_scope")
+                        or signals.get("has_alethic_cue")
+                    ),
+                ),
             )
         else:
             target_specs = (

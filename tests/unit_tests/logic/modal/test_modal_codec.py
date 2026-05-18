@@ -402,6 +402,74 @@ def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_sign
     )
 
 
+def test_modal_compiler_surfaces_deontic_temporal_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must provide written notice before each annual review deadline."
+    )
+
+    adaptive_temporal = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "temporal"]
+    )
+    assert adaptive_temporal.metadata["predicted_family"] == "deontic"
+    assert adaptive_temporal.metadata["target_family"] == "temporal"
+    assert adaptive_temporal.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_temporal.metadata["family_margin"] < 0.0
+    assert (
+        adaptive_temporal.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_temporal_outvoted_margin_low"
+    )
+    assert adaptive_temporal.metadata["lexical_signals"]["has_temporal_scope"] is True
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_temporal_outvoted_margin_low"
+        for ambiguity in compiled.ambiguities
+    )
+
+
+def test_modal_compiler_surfaces_deontic_alethic_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "The agency shall and must be unable to deny access to the record."
+    )
+
+    adaptive_alethic = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "alethic"]
+    )
+    assert adaptive_alethic.metadata["predicted_family"] == "deontic"
+    assert adaptive_alethic.metadata["target_family"] == "alethic"
+    assert adaptive_alethic.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_alethic.metadata["family_margin"] < 0.0
+    assert (
+        adaptive_alethic.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_alethic_outvoted_margin_low"
+    )
+    assert adaptive_alethic.metadata["lexical_signals"]["has_alethic_scope"] is True
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_alethic_outvoted_margin_low"
+        for ambiguity in compiled.ambiguities
+    )
+
+
 def test_modal_compiler_surfaces_temporal_conditional_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
