@@ -572,6 +572,12 @@ class DeterministicModalCompiler:
             family_margin = target_share - predicted_share
             if family_margin > threshold:
                 continue
+            margin_direction = "outvoted" if family_margin < 0.0 else "contested"
+            explicit_type = self._adaptive_margin_explicit_type(
+                predicted_family,
+                target_family,
+                margin_direction,
+            )
             ambiguities.append(
                 ModalCompilationAmbiguity(
                     ambiguity_type="adaptive_family_margin_low",
@@ -584,6 +590,8 @@ class DeterministicModalCompiler:
                     severity="requires_rule" if family_margin < 0.0 else "review",
                     metadata={
                         "adaptive_family_margin_threshold": threshold,
+                        "adaptive_margin_direction": margin_direction,
+                        "explicit_ambiguity_type": explicit_type,
                         "family_margin": round(family_margin, 6),
                         "family_ranking": list(ranking),
                         "lexical_signals": dict(sorted(signals.items())),
@@ -595,6 +603,22 @@ class DeterministicModalCompiler:
                 )
             )
         return ambiguities
+
+    def _adaptive_margin_explicit_type(
+        self,
+        predicted_family: str,
+        target_family: str,
+        margin_direction: str,
+    ) -> str:
+        return "_".join(
+            (
+                "adaptive",
+                predicted_family,
+                target_family,
+                margin_direction,
+                "margin_low",
+            )
+        )
 
     def _temporal_target_family_ambiguities(
         self,
