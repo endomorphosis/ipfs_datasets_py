@@ -3308,3 +3308,133 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         range_connector_mismatch_triples,
         "citation_source_id_section_range_connector_presence_match",
     ) == ["true"]
+
+
+def test_decode_modal_ir_document_emits_section_structure_composite_slots() -> None:
+    single_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_single_component_sample_document())
+    )
+    assert single_slot_map["citation_section_profile_signature"] == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert single_slot_map["citation_section_profile_signature_normalized"] == [
+        "single_alphanumeric:n3a1"
+    ]
+    assert single_slot_map["citation_title_section_signature"] == ["2:N3A1"]
+    assert single_slot_map["citation_title_section_signature_normalized"] == ["2:n3a1"]
+    assert single_slot_map["citation_title_section_profile"] == [
+        "2:single_alphanumeric"
+    ]
+    assert single_slot_map["source_id_section_profile_signature"] == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert single_slot_map["source_id_title_section_signature"] == ["2:N3A1"]
+    assert single_slot_map["source_id_title_section_profile"] == [
+        "2:single_alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_section_signature_pair"] == [
+        "N3A1|N3A1"
+    ]
+    assert single_slot_map["citation_source_id_section_signature_match"] == ["true"]
+    assert single_slot_map["citation_source_id_section_profile_pair"] == [
+        "single_alphanumeric|single_alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_section_profile_match"] == ["true"]
+    assert single_slot_map["citation_source_id_title_section_signature_pair"] == [
+        "2:n3a1|2:n3a1"
+    ]
+    assert single_slot_map["citation_source_id_title_section_signature_match"] == [
+        "true"
+    ]
+    assert single_slot_map["citation_source_id_title_section_profile_pair"] == [
+        "2:single_alphanumeric|2:single_alphanumeric"
+    ]
+    assert single_slot_map["citation_source_id_title_section_profile_match"] == [
+        "true"
+    ]
+
+    compound_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_compound_alpha_suffix_hyphen_sample_document())
+    )
+    assert compound_slot_map["citation_section_profile_signature"] == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert compound_slot_map["citation_title_section_signature"] == ["16:N3A3-N1"]
+    assert compound_slot_map["citation_title_section_profile"] == ["16:compound_mixed"]
+    assert compound_slot_map["source_id_section_profile_signature"] == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert compound_slot_map["source_id_title_section_signature"] == ["16:N3A3-N1"]
+    assert compound_slot_map["source_id_title_section_profile"] == ["16:compound_mixed"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_structure_composite_slots() -> None:
+    single_triples = modal_ir_to_flogic_triples(_single_component_sample_document())
+    compound_triples = modal_ir_to_flogic_triples(
+        _compound_alpha_suffix_hyphen_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [triple["object"] for triple in triples if triple.get("predicate") == predicate]
+
+    assert objects(single_triples, "citation_section_profile_signature") == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert objects(single_triples, "citation_section_profile_signature_normalized") == [
+        "single_alphanumeric:n3a1"
+    ]
+    assert objects(single_triples, "citation_title_section_signature") == ["2:N3A1"]
+    assert objects(single_triples, "citation_title_section_signature_normalized") == [
+        "2:n3a1"
+    ]
+    assert objects(single_triples, "citation_title_section_profile") == [
+        "2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "source_id_section_profile_signature") == [
+        "single_alphanumeric:N3A1"
+    ]
+    assert objects(single_triples, "source_id_title_section_signature") == ["2:N3A1"]
+    assert objects(single_triples, "source_id_title_section_profile") == [
+        "2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_section_signature_pair") == [
+        "N3A1|N3A1"
+    ]
+    assert objects(single_triples, "citation_source_id_section_signature_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_section_profile_pair") == [
+        "single_alphanumeric|single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_section_profile_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_signature_pair") == [
+        "2:n3a1|2:n3a1"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_signature_match") == [
+        "true"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_profile_pair") == [
+        "2:single_alphanumeric|2:single_alphanumeric"
+    ]
+    assert objects(single_triples, "citation_source_id_title_section_profile_match") == [
+        "true"
+    ]
+
+    assert objects(compound_triples, "citation_section_profile_signature") == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert objects(compound_triples, "citation_title_section_signature") == ["16:N3A3-N1"]
+    assert objects(compound_triples, "citation_title_section_profile") == [
+        "16:compound_mixed"
+    ]
+    assert objects(compound_triples, "source_id_section_profile_signature") == [
+        "compound_mixed:N3A3-N1"
+    ]
+    assert objects(compound_triples, "source_id_title_section_signature") == [
+        "16:N3A3-N1"
+    ]
+    assert objects(compound_triples, "source_id_title_section_profile") == [
+        "16:compound_mixed"
+    ]

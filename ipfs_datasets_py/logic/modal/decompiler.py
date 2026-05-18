@@ -1107,7 +1107,21 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
             )
         )
     if section_for_slots:
-        slots.extend(_source_id_section_slots(section_for_slots))
+        section_slots = _source_id_section_slots(section_for_slots)
+        slots.extend(section_slots)
+        section_slot_map = _slot_value_map(section_slots)
+        slots.extend(
+            _section_structure_slots(
+                slot_namespace="source_id",
+                title=title,
+                section_signature=_clean_text(
+                    section_slot_map.get("source_id_section_signature") or ""
+                ),
+                section_profile=_clean_text(
+                    section_slot_map.get("source_id_section_component_profile") or ""
+                ),
+            )
+        )
         slots.extend(
             _typed_identifier_slots(
                 section_for_slots,
@@ -1266,6 +1280,139 @@ def _provenance_alignment_slots(
             (
                 "citation_source_id_canonical_pair",
                 f"{source_canonical}|{citation_canonical}",
+            )
+        )
+    source_section_signature = _clean_text(
+        source_slot_map.get("source_id_section_signature") or ""
+    )
+    citation_section_signature = _clean_text(
+        citation_slot_map.get("citation_section_signature") or ""
+    )
+    if source_section_signature or citation_section_signature:
+        slots.append(
+            (
+                "citation_source_id_section_signature_pair",
+                f"{source_section_signature or 'none'}|"
+                f"{citation_section_signature or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_signature_match",
+                "true"
+                if source_section_signature.lower()
+                == citation_section_signature.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_signature_presence_match",
+                "true"
+                if bool(source_section_signature) == bool(citation_section_signature)
+                else "false",
+            )
+        )
+    source_section_profile = _clean_text(
+        source_slot_map.get("source_id_section_component_profile") or ""
+    )
+    citation_section_profile = _clean_text(
+        citation_slot_map.get("citation_section_component_profile") or ""
+    )
+    if source_section_profile or citation_section_profile:
+        slots.append(
+            (
+                "citation_source_id_section_profile_pair",
+                f"{source_section_profile or 'none'}|"
+                f"{citation_section_profile or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_profile_match",
+                "true"
+                if source_section_profile.lower() == citation_section_profile.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_profile_presence_match",
+                "true"
+                if bool(source_section_profile) == bool(citation_section_profile)
+                else "false",
+            )
+        )
+    source_title_section_signature = _clean_text(
+        source_slot_map.get("source_id_title_section_signature_normalized")
+        or source_slot_map.get("source_id_title_section_signature")
+        or ""
+    )
+    citation_title_section_signature = _clean_text(
+        citation_slot_map.get("citation_title_section_signature_normalized")
+        or citation_slot_map.get("citation_title_section_signature")
+        or ""
+    )
+    if source_title_section_signature or citation_title_section_signature:
+        slots.append(
+            (
+                "citation_source_id_title_section_signature_pair",
+                f"{source_title_section_signature or 'none'}|"
+                f"{citation_title_section_signature or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_title_section_signature_match",
+                "true"
+                if source_title_section_signature.lower()
+                == citation_title_section_signature.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_title_section_signature_presence_match",
+                "true"
+                if bool(source_title_section_signature)
+                == bool(citation_title_section_signature)
+                else "false",
+            )
+        )
+    source_title_section_profile = _clean_text(
+        source_slot_map.get("source_id_title_section_profile_normalized")
+        or source_slot_map.get("source_id_title_section_profile")
+        or ""
+    )
+    citation_title_section_profile = _clean_text(
+        citation_slot_map.get("citation_title_section_profile_normalized")
+        or citation_slot_map.get("citation_title_section_profile")
+        or ""
+    )
+    if source_title_section_profile or citation_title_section_profile:
+        slots.append(
+            (
+                "citation_source_id_title_section_profile_pair",
+                f"{source_title_section_profile or 'none'}|"
+                f"{citation_title_section_profile or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_title_section_profile_match",
+                "true"
+                if source_title_section_profile.lower()
+                == citation_title_section_profile.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_title_section_profile_presence_match",
+                "true"
+                if bool(source_title_section_profile)
+                == bool(citation_title_section_profile)
+                else "false",
             )
         )
     source_title_number = _clean_text(source_slot_map.get("source_id_title_number") or "")
@@ -2197,7 +2344,21 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         else:
             slots.append(("citation_section_has_trailing_punct", "false"))
             slots.append(("citation_section_trailing_punct_count", "0"))
-        slots.extend(_citation_section_slots(section))
+        section_slots = _citation_section_slots(section)
+        slots.extend(section_slots)
+        section_slot_map = _slot_value_map(section_slots)
+        slots.extend(
+            _section_structure_slots(
+                slot_namespace="citation",
+                title=title,
+                section_signature=_clean_text(
+                    section_slot_map.get("citation_section_signature") or ""
+                ),
+                section_profile=_clean_text(
+                    section_slot_map.get("citation_section_component_profile") or ""
+                ),
+            )
+        )
         slots.extend(
             _typed_identifier_slots(
                 section,
@@ -2248,6 +2409,52 @@ def _title_section_coordinate(title: str, section: str) -> str:
     if not normalized_title or not normalized_section:
         return ""
     return f"{normalized_title}:{normalized_section}"
+
+
+def _section_structure_slots(
+    *,
+    slot_namespace: str,
+    title: str,
+    section_signature: str,
+    section_profile: str,
+) -> List[Tuple[str, str]]:
+    normalized_namespace = _clean_text(slot_namespace)
+    normalized_title = _clean_text(title)
+    normalized_signature = _clean_text(section_signature)
+    normalized_profile = _clean_text(section_profile)
+    if not normalized_namespace:
+        return []
+    slots: List[Tuple[str, str]] = []
+    if normalized_profile and normalized_signature:
+        profile_signature = f"{normalized_profile}:{normalized_signature}"
+        slots.append((f"{normalized_namespace}_section_profile_signature", profile_signature))
+        slots.append(
+            (
+                f"{normalized_namespace}_section_profile_signature_normalized",
+                profile_signature.lower(),
+            )
+        )
+    if normalized_title and normalized_signature:
+        title_section_signature = f"{normalized_title}:{normalized_signature}"
+        slots.append(
+            (f"{normalized_namespace}_title_section_signature", title_section_signature)
+        )
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_signature_normalized",
+                title_section_signature.lower(),
+            )
+        )
+    if normalized_title and normalized_profile:
+        title_section_profile = f"{normalized_title}:{normalized_profile}"
+        slots.append((f"{normalized_namespace}_title_section_profile", title_section_profile))
+        slots.append(
+            (
+                f"{normalized_namespace}_title_section_profile_normalized",
+                title_section_profile.lower(),
+            )
+        )
+    return slots
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:

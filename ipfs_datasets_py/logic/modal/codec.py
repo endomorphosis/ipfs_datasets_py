@@ -1446,7 +1446,21 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
         else:
             components.append(("citation_section_has_trailing_punct", "false"))
             components.append(("citation_section_trailing_punct_count", "0"))
-        components.extend(_citation_section_components(section))
+        section_components = _citation_section_components(section)
+        components.extend(section_components)
+        section_component_map = _component_value_map(section_components)
+        components.extend(
+            _section_structure_components(
+                slot_namespace="citation",
+                title=title,
+                section_signature=_clean_non_empty_string(
+                    section_component_map.get("citation_section_signature")
+                ),
+                section_profile=_clean_non_empty_string(
+                    section_component_map.get("citation_section_component_profile")
+                ),
+            )
+        )
         components.extend(
             _typed_identifier_components(
                 section,
@@ -1540,10 +1554,29 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
             )
         )
     if section_for_components:
-        for predicate, value in _citation_section_components(section_for_components):
+        section_components = _citation_section_components(section_for_components)
+        for predicate, value in section_components:
             if predicate.startswith("citation_section"):
                 mapped = predicate.replace("citation_section", "source_id_section", 1)
                 components.append((mapped, value))
+        source_section_components = [
+            (predicate, value)
+            for predicate, value in components
+            if predicate.startswith("source_id_section")
+        ]
+        source_section_component_map = _component_value_map(source_section_components)
+        components.extend(
+            _section_structure_components(
+                slot_namespace="source_id",
+                title=title,
+                section_signature=_clean_non_empty_string(
+                    source_section_component_map.get("source_id_section_signature")
+                ),
+                section_profile=_clean_non_empty_string(
+                    source_section_component_map.get("source_id_section_component_profile")
+                ),
+            )
+        )
         components.extend(
             _typed_identifier_components(
                 section_for_components,
@@ -1689,6 +1722,135 @@ def _provenance_alignment_components(
             (
                 "citation_source_id_canonical_pair",
                 f"{source_canonical}|{citation_canonical}",
+            )
+        )
+    source_section_signature = _clean_non_empty_string(
+        source_component_map.get("source_id_section_signature")
+    )
+    citation_section_signature = _clean_non_empty_string(
+        citation_component_map.get("citation_section_signature")
+    )
+    if source_section_signature or citation_section_signature:
+        components.append(
+            (
+                "citation_source_id_section_signature_pair",
+                f"{source_section_signature or 'none'}|"
+                f"{citation_section_signature or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_signature_match",
+                "true"
+                if source_section_signature.lower()
+                == citation_section_signature.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_signature_presence_match",
+                "true"
+                if bool(source_section_signature) == bool(citation_section_signature)
+                else "false",
+            )
+        )
+    source_section_profile = _clean_non_empty_string(
+        source_component_map.get("source_id_section_component_profile")
+    )
+    citation_section_profile = _clean_non_empty_string(
+        citation_component_map.get("citation_section_component_profile")
+    )
+    if source_section_profile or citation_section_profile:
+        components.append(
+            (
+                "citation_source_id_section_profile_pair",
+                f"{source_section_profile or 'none'}|"
+                f"{citation_section_profile or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_profile_match",
+                "true"
+                if source_section_profile.lower() == citation_section_profile.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_profile_presence_match",
+                "true"
+                if bool(source_section_profile) == bool(citation_section_profile)
+                else "false",
+            )
+        )
+    source_title_section_signature = _clean_non_empty_string(
+        source_component_map.get("source_id_title_section_signature_normalized")
+        or source_component_map.get("source_id_title_section_signature")
+    )
+    citation_title_section_signature = _clean_non_empty_string(
+        citation_component_map.get("citation_title_section_signature_normalized")
+        or citation_component_map.get("citation_title_section_signature")
+    )
+    if source_title_section_signature or citation_title_section_signature:
+        components.append(
+            (
+                "citation_source_id_title_section_signature_pair",
+                f"{source_title_section_signature or 'none'}|"
+                f"{citation_title_section_signature or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_title_section_signature_match",
+                "true"
+                if source_title_section_signature.lower()
+                == citation_title_section_signature.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_title_section_signature_presence_match",
+                "true"
+                if bool(source_title_section_signature)
+                == bool(citation_title_section_signature)
+                else "false",
+            )
+        )
+    source_title_section_profile = _clean_non_empty_string(
+        source_component_map.get("source_id_title_section_profile_normalized")
+        or source_component_map.get("source_id_title_section_profile")
+    )
+    citation_title_section_profile = _clean_non_empty_string(
+        citation_component_map.get("citation_title_section_profile_normalized")
+        or citation_component_map.get("citation_title_section_profile")
+    )
+    if source_title_section_profile or citation_title_section_profile:
+        components.append(
+            (
+                "citation_source_id_title_section_profile_pair",
+                f"{source_title_section_profile or 'none'}|"
+                f"{citation_title_section_profile or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_title_section_profile_match",
+                "true"
+                if source_title_section_profile.lower()
+                == citation_title_section_profile.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_title_section_profile_presence_match",
+                "true"
+                if bool(source_title_section_profile)
+                == bool(citation_title_section_profile)
+                else "false",
             )
         )
     source_title_number = _clean_non_empty_string(
@@ -2925,6 +3087,56 @@ def _title_section_coordinate(title: str, section: str) -> str:
     if not normalized_title or not normalized_section:
         return ""
     return f"{normalized_title}:{normalized_section}"
+
+
+def _section_structure_components(
+    *,
+    slot_namespace: str,
+    title: str,
+    section_signature: str,
+    section_profile: str,
+) -> List[tuple[str, str]]:
+    normalized_namespace = _clean_non_empty_string(slot_namespace)
+    normalized_title = _clean_non_empty_string(title)
+    normalized_signature = _clean_non_empty_string(section_signature)
+    normalized_profile = _clean_non_empty_string(section_profile)
+    if not normalized_namespace:
+        return []
+    components: List[tuple[str, str]] = []
+    if normalized_profile and normalized_signature:
+        profile_signature = f"{normalized_profile}:{normalized_signature}"
+        components.append(
+            (f"{normalized_namespace}_section_profile_signature", profile_signature)
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_section_profile_signature_normalized",
+                profile_signature.lower(),
+            )
+        )
+    if normalized_title and normalized_signature:
+        title_section_signature = f"{normalized_title}:{normalized_signature}"
+        components.append(
+            (f"{normalized_namespace}_title_section_signature", title_section_signature)
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_signature_normalized",
+                title_section_signature.lower(),
+            )
+        )
+    if normalized_title and normalized_profile:
+        title_section_profile = f"{normalized_title}:{normalized_profile}"
+        components.append(
+            (f"{normalized_namespace}_title_section_profile", title_section_profile)
+        )
+        components.append(
+            (
+                f"{normalized_namespace}_title_section_profile_normalized",
+                title_section_profile.lower(),
+            )
+        )
+    return components
 
 
 def _unique_preserve_order_tuples(
