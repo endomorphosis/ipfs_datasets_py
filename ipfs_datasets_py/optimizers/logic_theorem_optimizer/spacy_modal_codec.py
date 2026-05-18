@@ -201,18 +201,28 @@ _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
         "duties",
+        "liabilities",
         "liable",
         "liability",
         "mandatory",
         "obligation",
         "obligations",
+        "prohibition",
+        "prohibitions",
         "prohibited",
+        "requirement",
+        "requirements",
         "unlawful",
     }
 )
 _DEONTIC_SCOPE_PHRASES = (
     "has a duty to",
     "have a duty to",
+    "liability for",
+    "prohibition of",
+    "prohibition on",
+    "requirement that",
+    "requirements for",
     "is liable for",
     "is prohibited from",
     "is required to",

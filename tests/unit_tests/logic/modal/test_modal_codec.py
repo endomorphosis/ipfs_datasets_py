@@ -902,6 +902,42 @@ def test_modal_compiler_treats_deontic_scope_phrase_as_ambiguity_signal() -> Non
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
 
 
+def test_modal_compiler_treats_prohibition_heading_as_adaptive_deontic_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, prohibition on denial of access applies."
+    )
+
+    adaptive_deontic = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "deontic"]
+    )
+    assert adaptive_deontic.metadata["predicted_family"] == "temporal"
+    assert adaptive_deontic.metadata["target_family"] == "deontic"
+    assert adaptive_deontic.metadata["target_share"] == 0.0
+    assert adaptive_deontic.metadata["family_margin"] < 0.0
+    assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_cue"] is False
+    assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_scope"] is True
+    assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
+    assert (
+        adaptive_deontic.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_deontic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_deontic_outvoted_margin_low"
+        for ambiguity in compiled.ambiguities
+    )
+
+
 def test_modal_compiler_surfaces_dynamic_scope_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
