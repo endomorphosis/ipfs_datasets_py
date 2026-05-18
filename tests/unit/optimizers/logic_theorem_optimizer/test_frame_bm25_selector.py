@@ -6,6 +6,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
+    frame_ontology_contextualized_terms,
     frame_ontology_feature_value,
     frame_ontology_feature_keys,
     frame_ontology_feature_keys_from_values,
@@ -974,6 +975,42 @@ def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segm
         "of",
         "the",
     ]
+
+
+def test_frame_ontology_terms_from_feature_keys_preserve_conditional_normative_relation_terms() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_conditional_normative:O|:subject_to",
+        ]
+    )
+
+    assert terms == [
+        "subject_to",
+    ]
+
+
+def test_frame_ontology_contextualized_terms_explicitly_contextualize_distance_profile_and_terminal_bucket_values() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_title_section_primary_number_distance_profile_token:1k",
+            "flogic:citation_title_section_terminal_number_distance_profile:ascending_lt_1k",
+            "flogic:citation_title_section_terminal_number_distance_profile_stem:ascending_lt_1k",
+            "flogic:citation_section_terminal_number_digit_count_bucket:3_digit",
+            "flogic:condition_conditional_normative:O|:subject_to",
+        ],
+    )
+
+    assert "citation_title_section_primary_number_distance_profile_token_1k" in terms
+    assert (
+        "citation_title_section_terminal_number_distance_profile_ascending_lt_1k"
+        in terms
+    )
+    assert (
+        "citation_title_section_terminal_number_distance_profile_stem_ascending_lt_1k"
+        in terms
+    )
+    assert "citation_section_terminal_number_digit_count_bucket_3_digit" in terms
+    assert "condition_conditional_normative_subject_to" in terms
 
 
 def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_predicates() -> None:

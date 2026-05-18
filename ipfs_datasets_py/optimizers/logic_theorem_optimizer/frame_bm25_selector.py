@@ -328,6 +328,12 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_token_count",
     "_unique_char_count",
 )
+_FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
+    "_conditional_normative",
+    "_distance_profile",
+    "_terminal_number_digit_count_bucket",
+    "_terminal_number_span_digit_count_bucket",
+)
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_DEPTH = 6
 _FRAME_ONTOLOGY_FEATURE_VALUE_MAX_VALUES = 2048
 _FRAME_ONTOLOGY_FEATURE_VALUE_JSON_MAX_LENGTH = 4096
@@ -1004,6 +1010,12 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         scoped_target = raw_value.split("(", 1)[0].strip()
         if scoped_target:
             raw_value = scoped_target
+    if normalized_predicate.endswith("_conditional_normative"):
+        _operator, separator, clause_value = raw_value.partition(":")
+        if separator:
+            normalized_clause_value = clause_value.strip()
+            if normalized_clause_value:
+                raw_value = normalized_clause_value
     if normalized_predicate.endswith("_positioned"):
         match = _FRAME_ONTOLOGY_POSITIONED_VALUE_RE.match(raw_value)
         if match:
@@ -1431,6 +1443,7 @@ def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
     return (
         canonical == "modal_cue"
+        or canonical.endswith("_conditional_normative")
         or canonical.startswith("condition_alnum_segment")
         or canonical.startswith("condition_scope_alnum_segment")
         or canonical.startswith("exception_alnum_segment")
@@ -1565,9 +1578,21 @@ def _should_contextualize_frame_ontology_value(
 ) -> bool:
     if _is_frame_ontology_contextual_low_signal_value(normalized_value):
         return True
+    if _predicate_requires_explicit_frame_ontology_context(predicate):
+        return True
     if include_positioned_terms and predicate.endswith("_positioned"):
         return True
     return False
+
+
+def _predicate_requires_explicit_frame_ontology_context(predicate: str) -> bool:
+    normalized_predicate = _normalized_frame_ontology_predicate(predicate)
+    if not normalized_predicate:
+        return False
+    return any(
+        fragment in normalized_predicate
+        for fragment in _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS
+    )
 
 
 def _is_frame_ontology_contextual_low_signal_value(value: str) -> bool:
