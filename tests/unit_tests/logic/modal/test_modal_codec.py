@@ -463,6 +463,44 @@ def test_modal_compiler_surfaces_deontic_temporal_adaptive_ambiguity() -> None:
     )
 
 
+def test_modal_compiler_surfaces_deontic_conditional_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Before issuing a permit, the agency shall and must provide written notice."
+    )
+
+    adaptive_conditional = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "conditional_normative"]
+    )
+    assert adaptive_conditional.metadata["predicted_family"] == "deontic"
+    assert adaptive_conditional.metadata["target_family"] == "conditional_normative"
+    assert adaptive_conditional.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_conditional.metadata["family_margin"] < 0.0
+    assert (
+        adaptive_conditional.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_conditional_normative_outvoted_margin_low"
+    )
+    assert (
+        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+    assert any(
+        ambiguity.ambiguity_type
+        == "adaptive_deontic_conditional_normative_outvoted_margin_low"
+        for ambiguity in compiled.ambiguities
+    )
+
+
 def test_modal_compiler_surfaces_deontic_alethic_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
