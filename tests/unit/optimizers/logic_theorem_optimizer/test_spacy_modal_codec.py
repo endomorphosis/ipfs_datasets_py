@@ -23,6 +23,9 @@ _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
 _USCODE_7_473A_SEC_HEADING_TEXT = "Sec. 473a - Cotton classification services."
 _USCODE_20_1067J_SEC_HEADING_TEXT = "Sec. 1067j - Administrative provisions."
 _USCODE_15_2501_SEC_HEADING_TEXT = "Sec. 2501 - Congressional findings and policy."
+_USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
+_USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
+_USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
 
 
 def test_spacy_encoder_compiles_modal_ir_without_downloaded_model() -> None:
@@ -164,6 +167,55 @@ def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_
     assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
+
+
+def test_spacy_compiler_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to_92() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-7-431-b2d3ec880a4d889f",
+            "7 U.S.C. 431",
+            _USCODE_7_431_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-6-257-73184bd2fbf238f5",
+            "6 U.S.C. 257",
+            _USCODE_6_257_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-45-81 to 92.-1562d5d82d7f6c80",
+            "45 U.S.C. §§ 81 to 92.",
+            _USCODE_45_81_TO_92_TODO_TEXT,
+            "__uscode_editorial_status_fallback__",
+            "uscode_editorial_status_heading_v1",
+            "repealed",
+        ),
+    ]
+
+    for document_id, citation, text, cue, fallback_rule, status_keyword in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == cue
+        assert fallback.metadata["fallback_rule"] == fallback_rule
+        if status_keyword:
+            assert fallback.metadata["status_keyword"] == status_keyword
+        assert fallback.provenance.citation == citation
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:

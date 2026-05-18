@@ -216,6 +216,9 @@ _USCODE_19_3702_SYMBOLIC_VALIDITY_TEXT = (
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
+_USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
+_USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
 
 
 def test_parser_normalizes_and_segments_legal_text() -> None:
@@ -483,6 +486,54 @@ def test_parser_replays_editorial_status_zero_formula_sample_for_18_3008() -> No
     assert fallback.metadata["fallback_rule"] == "uscode_editorial_status_heading_v1"
     assert fallback.metadata["status_keyword"] == "repealed"
     assert fallback.provenance.citation == "18 U.S.C. 3008"
+
+
+def test_parser_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to_92() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-7-431-b2d3ec880a4d889f",
+            "7 U.S.C. 431",
+            _USCODE_7_431_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-6-257-73184bd2fbf238f5",
+            "6 U.S.C. 257",
+            _USCODE_6_257_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-45-81 to 92.-1562d5d82d7f6c80",
+            "45 U.S.C. §§ 81 to 92.",
+            _USCODE_45_81_TO_92_TODO_TEXT,
+            "__uscode_editorial_status_fallback__",
+            "uscode_editorial_status_heading_v1",
+            "repealed",
+        ),
+    ]
+
+    for document_id, citation, text, cue, fallback_rule, status_keyword in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == cue
+        assert fallback.metadata["fallback_rule"] == fallback_rule
+        if status_keyword:
+            assert fallback.metadata["status_keyword"] == status_keyword
+        assert fallback.provenance.citation == citation
 
 
 def test_parser_replays_uscode_declarative_statement_zero_formula_cases() -> None:

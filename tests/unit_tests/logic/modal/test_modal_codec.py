@@ -182,6 +182,9 @@ _USCODE_46_60101_TEXT = (
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
+_USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
+_USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
+_USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
 _USCODE_LONG_SUBSECTION_BODY = (
     "general program coordination reporting documentation verification auditing review "
     "management data cataloging compliance mapping operations planning record indexing "
@@ -679,6 +682,62 @@ def test_modal_compiler_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2
         assert fallback.operator.family == "frame"
         assert fallback.metadata["fallback_rule"] == fallback_rule
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to_92() -> None:
+    cases = [
+        (
+            "us-code-7-431-b2d3ec880a4d889f",
+            "7 U.S.C. 431",
+            _USCODE_7_431_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-6-257-73184bd2fbf238f5",
+            "6 U.S.C. 257",
+            _USCODE_6_257_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+            "",
+        ),
+        (
+            "us-code-45-81 to 92.-1562d5d82d7f6c80",
+            "45 U.S.C. §§ 81 to 92.",
+            _USCODE_45_81_TO_92_TODO_TEXT,
+            "__uscode_editorial_status_fallback__",
+            "uscode_editorial_status_heading_v1",
+            "repealed",
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text, cue, fallback_rule, status_keyword in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == cue
+            assert fallback.metadata["fallback_rule"] == fallback_rule
+            if status_keyword:
+                assert fallback.metadata["status_keyword"] == status_keyword
+            assert fallback.provenance.citation == citation
 
 
 def test_modal_compiler_replays_dataset_samples_for_478_1_6930_and_60101() -> None:

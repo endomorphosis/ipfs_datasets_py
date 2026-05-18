@@ -43,12 +43,14 @@ _USCODE_EDITORIAL_STATUS_HINT_RE = re.compile(
     r"\b(?:repealed|omitted|reserved|vacant|renumbered|terminated)\b",
     re.IGNORECASE,
 )
+_USCODE_SECTION_REF_PREFIX_RE = r"(?:§{1,2}\s*|\bsec(?:tion)?s?\.?\s*)"
+_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE = rf"(?:{_USCODE_SECTION_REF_PREFIX_RE})?"
 _USCODE_CITATION_MARKER_RE = re.compile(
     r"\bU\.?\s*S\.?\s*C\.?(?!\w)",
     re.IGNORECASE,
 )
 _USCODE_CITATION_SECTION_RE = re.compile(
-    r"\bU\.?\s*S\.?\s*C\.?(?!\w)\s*(?:§\s*)?([0-9A-Za-z.\-]+)\b",
+    rf"\bU\.?\s*S\.?\s*C\.?(?!\w)\s*{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}([0-9A-Za-z.\-]+)\b",
     re.IGNORECASE,
 )
 _USCODE_TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
@@ -459,17 +461,8 @@ class LegalModalParser:
         normalized = self.normalize_text(text).lower()
         section_pattern = re.escape(citation_section)
         if re.search(
-            rf"§\s*{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
-            normalized,
-        ):
-            return True
-        if re.search(
-            rf"\bsection\s+{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
-            normalized,
-        ):
-            return True
-        if re.search(
-            rf"\bsec\.?\s*{section_pattern}(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            rf"{_USCODE_SECTION_REF_PREFIX_RE}{section_pattern}"
+            rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
             normalized,
         ):
             return True
@@ -482,7 +475,7 @@ class LegalModalParser:
         section_pattern = re.escape(citation_section)
         return bool(
             re.match(
-                rf"^(?:§\s*|sec\.?\s*|section\s+)?{section_pattern}"
+                rf"^{_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
                 rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
                 normalized,
             )
@@ -500,7 +493,7 @@ class LegalModalParser:
 
         section_pattern = re.escape(citation_section)
         reference_pattern = re.compile(
-            rf"(?<!\w)(?:§\s*|sec\.?\s*|section\s+)?{section_pattern}"
+            rf"(?<!\w){_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
             rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
             re.IGNORECASE,
         )
@@ -541,8 +534,8 @@ class LegalModalParser:
             if token_count < 2 or token_count > _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS:
                 continue
 
-            has_prefixed_reference = candidate_text.lower().startswith(
-                ("§", "sec ", "sec.", "section ")
+            has_prefixed_reference = bool(
+                re.match(rf"^{_USCODE_SECTION_REF_PREFIX_RE}", candidate_text, re.IGNORECASE)
             )
             score = (0 if has_prefixed_reference else 1, token_count, start)
             if best_score is None or score < best_score:
