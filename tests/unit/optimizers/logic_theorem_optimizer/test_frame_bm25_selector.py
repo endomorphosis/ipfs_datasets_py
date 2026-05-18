@@ -6,9 +6,11 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
+    frame_ontology_feature_keys,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
     frame_ontology_terms,
+    is_frame_ontology_feature_key,
 )
 
 
@@ -337,3 +339,36 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -
     )
 
     assert terms == ["frame"]
+
+
+def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> None:
+    assert is_frame_ontology_feature_key("family:frame:1") is True
+    assert is_frame_ontology_feature_key("modal-family:frame") is True
+    assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
+    assert is_frame_ontology_feature_key(
+        "slot:selected_ontology_term:final order"
+    ) is True
+    assert is_frame_ontology_feature_key("token:agency") is False
+    assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
+    assert is_frame_ontology_feature_key("") is False
+
+
+def test_frame_ontology_feature_keys_filter_non_frame_and_preserve_order() -> None:
+    keys = frame_ontology_feature_keys(
+        [
+            "token:agency",
+            "family:frame:1",
+            "modal_family:frame:3",
+            "cue:frame:Frame:authority",
+            "slot:selected_frame:administrative_notice_hearing",
+            "family:frame:1",
+            "",
+        ]
+    )
+
+    assert keys == [
+        "family:frame:1",
+        "modal_family:frame:3",
+        "cue:frame:Frame:authority",
+        "slot:selected_frame:administrative_notice_hearing",
+    ]

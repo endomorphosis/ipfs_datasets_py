@@ -18,6 +18,7 @@ from ipfs_datasets_py.logic.modal import (
     modal_text_token_similarity,
     synthesis_hints_from_autoencoder_introspection,
 )
+from ipfs_datasets_py.logic.modal.codec import _frame_decoder_audit_features
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
     FrameCandidate,
@@ -2906,6 +2907,36 @@ def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     assert "selected-frame-term:and" not in feature_keys
     assert "selected-frame-term:the" not in feature_keys
     assert "selected-frame-term:hearing_rights" in feature_keys
+
+
+def test_modal_codec_frame_decoder_audit_features_use_canonical_feature_parser() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    encoding = codec.encode_sample(sample)
+
+    class _StubDecoder:
+        def _feature_stream(self, _encoding):  # pragma: no cover - helper only
+            return iter(
+                [
+                    "token:agency",
+                    "modal-family:frame:2",
+                    "cue:frame:Frame:authority",
+                    "slot:selected_frame:administrative_notice_hearing",
+                    "cue:deontic:O:must",
+                ]
+            )
+
+    assert _frame_decoder_audit_features(encoding, _StubDecoder()) == [
+        "modal-family:frame:2",
+        "cue:frame:Frame:authority",
+        "slot:selected_frame:administrative_notice_hearing",
+    ]
 
 
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:

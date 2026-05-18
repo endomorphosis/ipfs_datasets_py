@@ -26,12 +26,20 @@ def test_flogic_optimizer_reports_frame_feature_keys_and_context_terms() -> None
             "flogic:modal_family:temporal",
             "flogic:predicate_role:temporal_scope",
             "family:frame:1",
+            "token:agency",
             "",
         ],
     )
 
-    assert result.metadata["frame_feature_key_count"] == 3
+    assert result.metadata["frame_feature_key_count"] == 4
     assert result.metadata["frame_feature_keys"] == [
+        "family:frame:1",
+        "flogic:modal_family:temporal",
+        "flogic:predicate_role:temporal_scope",
+        "token:agency",
+    ]
+    assert result.metadata["frame_audit_feature_key_count"] == 3
+    assert result.metadata["frame_audit_feature_keys"] == [
         "family:frame:1",
         "flogic:modal_family:temporal",
         "flogic:predicate_role:temporal_scope",
@@ -41,4 +49,3 @@ def test_flogic_optimizer_reports_frame_feature_keys_and_context_terms() -> None
         "temporal",
         "temporal_scope",
     ]
-

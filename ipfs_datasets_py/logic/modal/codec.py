@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
     FrameSelection,
+    frame_ontology_feature_keys,
     frame_ontology_terms,
     frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
@@ -1380,12 +1381,7 @@ def _frame_decoder_audit_features(
     encoding: SpaCyLegalEncoding,
     decoder: SpaCyModalDecoder,
 ) -> List[str]:
-    features: List[str] = []
-    for feature in decoder._feature_stream(encoding):
-        lowered = feature.lower()
-        if lowered.startswith("cue:frame:") or lowered.startswith("family:frame:"):
-            features.append(feature)
-    return features
+    return frame_ontology_feature_keys(decoder._feature_stream(encoding))
 
 
 def _slot_feature_value(value: str, *, max_tokens: int = 8) -> str:

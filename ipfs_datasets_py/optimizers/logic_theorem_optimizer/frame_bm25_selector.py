@@ -342,6 +342,33 @@ def frame_ontology_terms_from_feature_keys(
     return terms
 
 
+def is_frame_ontology_feature_key(feature_key: str) -> bool:
+    """Return ``True`` when a feature key encodes a frame-ontology signal."""
+    feature = str(feature_key or "").strip()
+    if not feature:
+        return False
+    return bool(_raw_frame_ontology_value_from_feature(feature))
+
+
+def frame_ontology_feature_keys(
+    feature_keys: Iterable[str],
+    *,
+    max_keys: int = 256,
+) -> List[str]:
+    """Return unique frame-linked feature keys in stable encounter order."""
+    result: List[str] = []
+    for feature_key in feature_keys:
+        feature = str(feature_key or "").strip()
+        if not feature or feature in result:
+            continue
+        if not is_frame_ontology_feature_key(feature):
+            continue
+        result.append(feature)
+        if len(result) >= max_keys:
+            break
+    return result
+
+
 def _informative_ontology_tokens(value: str) -> List[str]:
     tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
     return [
@@ -458,8 +485,10 @@ __all__ = [
     "DEFAULT_LEGAL_FRAME_FIXTURE",
     "FrameCandidate",
     "FrameSelection",
+    "frame_ontology_feature_keys",
     "frame_ontology_terms_from_feature_keys",
     "frame_ontology_terms_from_triples",
     "frame_ontology_terms",
+    "is_frame_ontology_feature_key",
     "normalize_frame_ontology_term",
 ]
