@@ -2104,11 +2104,35 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
         ),
         metadata={"fallback_rule": "uscode_section_heading_v1"},
     )
+    tertiary_formula = ModalIRFormula(
+        formula_id="citation-shape-doc:f0003",
+        operator=ModalIROperator(
+            family="frame",
+            system="F",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(
+            name="section_heading_example_three",
+            role="frame",
+        ),
+        provenance=ModalIRProvenance(
+            source_id="citation-shape-doc",
+            start_char=58,
+            end_char=84,
+            citation="51 U.S.C. 60604.",
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_v1"},
+    )
     document = ModalIRDocument(
         document_id="citation-shape-doc",
         source="us_code",
-        normalized_text="Sec. 31a-2b. Example heading. Sec. 6050K. Another heading.",
-        formulas=[formula, secondary_formula],
+        normalized_text=(
+            "Sec. 31a-2b. Example heading. "
+            "Sec. 6050K. Another heading. "
+            "Sec. 60604. Final heading."
+        ),
+        formulas=[formula, secondary_formula, tertiary_formula],
     )
 
     decoded = decode_modal_ir_document(document)
@@ -2117,6 +2141,10 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
 
     assert "31a-2b" in slot_texts["citation_section"]
     assert "6050K" in slot_texts["citation_section"]
+    assert "60604" in slot_texts["citation_section"]
+    assert "60604." in slot_texts["citation_section_raw"]
+    assert "60604" in slot_texts["citation_section_normalized"]
+    assert slot_texts["citation_section_trailing_punct"] == ["."]
     assert "31a" in slot_texts["citation_section_primary"]
     assert "6050K" in slot_texts["citation_section_primary"]
     assert "2" in slot_texts["citation_section_component_count"]
@@ -2151,6 +2179,16 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_section_token_suffix"
         and triple["object"] == "6050k"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_raw"
+        and triple["object"] == "60604."
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_trailing_punct"
+        and triple["object"] == "."
         for triple in triples
     )
 
@@ -2215,6 +2253,7 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "10145." in slot_texts["source_id_section"]
     assert "2000e" in slot_texts["source_id_section"]
     assert "10145" in slot_texts["source_id_section_normalized"]
+    assert slot_texts["source_id_section_trailing_punct"] == ["."]
     assert "10145" in slot_texts["source_id_section_primary"]
     assert "2000e" in slot_texts["source_id_section_primary"]
     assert "10145" in slot_texts["source_id_section_number"]
@@ -2230,6 +2269,11 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert any(
         triple["predicate"] == "source_id_section_normalized"
         and triple["object"] == "10145"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_trailing_punct"
+        and triple["object"] == "."
         for triple in triples
     )
     assert any(

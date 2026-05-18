@@ -609,6 +609,10 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
     section = _clean_text(match.group("section"))
     digest = _clean_text(match.group("digest")).lower()
     normalized_section = _TRAILING_SECTION_PUNCT_RE.sub("", section)
+    section_trailing_punct = _section_trailing_punct(
+        raw_section=section,
+        normalized_section=normalized_section,
+    )
 
     slots: List[Tuple[str, str]] = [
         ("source_id", cleaned),
@@ -630,6 +634,8 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
         slots.append(("source_id_section", section))
     if normalized_section and normalized_section != section:
         slots.append(("source_id_section_normalized", normalized_section))
+    if section_trailing_punct:
+        slots.append(("source_id_section_trailing_punct", section_trailing_punct))
     section_for_slots = normalized_section or section
     if section_for_slots:
         slots.extend(_source_id_section_slots(section_for_slots))
@@ -964,13 +970,23 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
     if not match:
         return []
     title = _clean_text(match.group("title"))
-    section = _TRAILING_SECTION_PUNCT_RE.sub("", _clean_text(match.group("section")))
+    raw_section = _clean_text(match.group("section"))
+    section = _TRAILING_SECTION_PUNCT_RE.sub("", raw_section)
+    section_trailing_punct = _section_trailing_punct(
+        raw_section=raw_section,
+        normalized_section=section,
+    )
     slots: List[Tuple[str, str]] = []
     if title:
         slots.append(("citation_title", title))
     slots.append(("citation_code", "U.S.C."))
     if section:
         slots.append(("citation_section", section))
+        if raw_section and raw_section != section:
+            slots.append(("citation_section_raw", raw_section))
+            slots.append(("citation_section_normalized", section))
+        if section_trailing_punct:
+            slots.append(("citation_section_trailing_punct", section_trailing_punct))
         slots.extend(_citation_section_slots(section))
         slots.extend(
             _typed_identifier_slots(
@@ -979,6 +995,20 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
             )
         )
     return _unique_slot_values(slots)
+
+
+def _section_trailing_punct(
+    *,
+    raw_section: str,
+    normalized_section: str,
+) -> str:
+    raw = _clean_text(raw_section)
+    normalized = _clean_text(normalized_section)
+    if not raw or raw == normalized:
+        return ""
+    if not raw.startswith(normalized):
+        return ""
+    return _clean_text(raw[len(normalized) :])
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:

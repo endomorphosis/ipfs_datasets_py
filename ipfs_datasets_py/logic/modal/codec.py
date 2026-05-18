@@ -1077,9 +1077,11 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
     if not match:
         return []
     title = _clean_non_empty_string(match.group("title"))
-    section = _TRAILING_SECTION_PUNCT_RE.sub(
-        "",
-        _clean_non_empty_string(match.group("section")),
+    raw_section = _clean_non_empty_string(match.group("section"))
+    section = _TRAILING_SECTION_PUNCT_RE.sub("", raw_section)
+    section_trailing_punct = _section_trailing_punct(
+        raw_section=raw_section,
+        normalized_section=section,
     )
     components: List[tuple[str, str]] = []
     if title:
@@ -1087,6 +1089,11 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
     components.append(("citation_code", "U.S.C."))
     if section:
         components.append(("citation_section", section))
+        if raw_section and raw_section != section:
+            components.append(("citation_section_raw", raw_section))
+            components.append(("citation_section_normalized", section))
+        if section_trailing_punct:
+            components.append(("citation_section_trailing_punct", section_trailing_punct))
         components.extend(_citation_section_components(section))
         components.extend(
             _typed_identifier_components(
@@ -1110,6 +1117,10 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
     section = _clean_non_empty_string(match.group("section"))
     digest = _clean_non_empty_string(match.group("digest")).lower()
     normalized_section = _TRAILING_SECTION_PUNCT_RE.sub("", section)
+    section_trailing_punct = _section_trailing_punct(
+        raw_section=section,
+        normalized_section=normalized_section,
+    )
     section_for_components = normalized_section or section
 
     components: List[tuple[str, str]] = [
@@ -1136,6 +1147,8 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
         components.append(("source_id_section", section))
     if normalized_section and normalized_section != section:
         components.append(("source_id_section_normalized", normalized_section))
+    if section_trailing_punct:
+        components.append(("source_id_section_trailing_punct", section_trailing_punct))
     if section_for_components:
         for predicate, value in _citation_section_components(section_for_components):
             if predicate.startswith("citation_section"):
@@ -1179,6 +1192,20 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         if suffix:
             components.append(("citation_section_suffix", suffix))
     return components
+
+
+def _section_trailing_punct(
+    *,
+    raw_section: str,
+    normalized_section: str,
+) -> str:
+    raw = _clean_non_empty_string(raw_section)
+    normalized = _clean_non_empty_string(normalized_section)
+    if not raw or raw == normalized:
+        return ""
+    if not raw.startswith(normalized):
+        return ""
+    return _clean_non_empty_string(raw[len(normalized) :])
 
 
 def _unique_preserve_order_tuples(
