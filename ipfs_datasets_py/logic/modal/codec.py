@@ -103,6 +103,7 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
 )
 _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
+    r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
     r"(?P<section>[0-9A-Za-z.\-]+(?:\s+(?:to|through|thru)\s+[0-9A-Za-z.\-]+)?)\s*$",
     re.IGNORECASE,
 )

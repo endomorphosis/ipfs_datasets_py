@@ -66,6 +66,58 @@ def _range_sample_document() -> ModalIRDocument:
     )
 
 
+def _section_marker_sample_document() -> ModalIRDocument:
+    source_id = "us-code-2-190l-01dd1648c5b1588c"
+    formula = ModalIRFormula(
+        formula_id="f-section-marker",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="preserve_library_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="2 U.S.C. §190l",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="2 U.S.C. 190l preservation requirement.",
+        formulas=[formula],
+    )
+
+
+def _plural_section_marker_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-45-228a to 228c-0123456789abcdef"
+    formula = ModalIRFormula(
+        formula_id="f-plural-section-marker-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_child_support_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=24,
+            citation="45 U.S.C. §§ 228a to 228c.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="45 U.S.C. 228a to 228c child support enforcement.",
+        formulas=[formula],
+    )
+
+
 def _single_component_sample_document() -> ModalIRDocument:
     source_id = "us-code-2-190l-01dd1648c5b1588c"
     formula = ModalIRFormula(
@@ -1161,3 +1213,77 @@ def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
 
     assert odd_title_objects("citation_title_number_parity") == ["odd"]
     assert odd_title_objects("source_id_title_number_parity") == ["odd"]
+
+
+def test_decode_modal_ir_document_emits_usc_section_marker_variant_slots() -> None:
+    section_marker_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_section_marker_sample_document())
+    )
+    assert section_marker_slot_map["citation"] == ["2 U.S.C. §190l"]
+    assert section_marker_slot_map["citation_canonical"] == ["2 U.S.C. 190l"]
+    assert section_marker_slot_map["citation_section"] == ["190l"]
+    assert section_marker_slot_map["citation_section_primary"] == ["190l"]
+    assert section_marker_slot_map["citation_section_component_profile"] == [
+        "single_alphanumeric"
+    ]
+    assert section_marker_slot_map["citation_section_has_delimiter"] == ["false"]
+    assert section_marker_slot_map["citation_section_delimiter_count"] == ["0"]
+    assert section_marker_slot_map["citation_section_primary_suffix"] == ["l"]
+    assert section_marker_slot_map["citation_section_suffix_kind"] == ["alpha"]
+
+    plural_marker_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_plural_section_marker_range_sample_document())
+    )
+    assert plural_marker_slot_map["citation"] == ["45 U.S.C. §§ 228a to 228c."]
+    assert plural_marker_slot_map["citation_canonical"] == ["45 U.S.C. 228a to 228c"]
+    assert plural_marker_slot_map["citation_section"] == ["228a to 228c"]
+    assert plural_marker_slot_map["citation_section_range"] == ["228a to 228c"]
+    assert plural_marker_slot_map["citation_section_range_start"] == ["228a"]
+    assert plural_marker_slot_map["citation_section_range_end"] == ["228c"]
+    assert plural_marker_slot_map["citation_section_range_connector"] == ["to"]
+    assert plural_marker_slot_map["citation_section_trailing_punct"] == ["."]
+    assert plural_marker_slot_map["citation_section_has_trailing_punct"] == ["true"]
+    assert plural_marker_slot_map["citation_section_trailing_punct_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> None:
+    section_marker_triples = modal_ir_to_flogic_triples(_section_marker_sample_document())
+    plural_marker_triples = modal_ir_to_flogic_triples(
+        _plural_section_marker_range_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(section_marker_triples, "citation") == ["2 U.S.C. §190l"]
+    assert objects(section_marker_triples, "citation_canonical") == ["2 U.S.C. 190l"]
+    assert objects(section_marker_triples, "citation_section") == ["190l"]
+    assert objects(section_marker_triples, "citation_section_primary") == ["190l"]
+    assert objects(section_marker_triples, "citation_section_component_profile") == [
+        "single_alphanumeric"
+    ]
+    assert objects(section_marker_triples, "citation_section_has_delimiter") == ["false"]
+    assert objects(section_marker_triples, "citation_section_delimiter_count") == ["0"]
+    assert objects(section_marker_triples, "citation_section_primary_suffix") == ["l"]
+    assert objects(section_marker_triples, "citation_section_suffix_kind") == ["alpha"]
+
+    assert objects(plural_marker_triples, "citation") == ["45 U.S.C. §§ 228a to 228c."]
+    assert objects(plural_marker_triples, "citation_canonical") == [
+        "45 U.S.C. 228a to 228c"
+    ]
+    assert objects(plural_marker_triples, "citation_section") == ["228a to 228c"]
+    assert objects(plural_marker_triples, "citation_section_range") == ["228a to 228c"]
+    assert objects(plural_marker_triples, "citation_section_range_start") == ["228a"]
+    assert objects(plural_marker_triples, "citation_section_range_end") == ["228c"]
+    assert objects(plural_marker_triples, "citation_section_range_connector") == ["to"]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct") == ["."]
+    assert objects(plural_marker_triples, "citation_section_has_trailing_punct") == [
+        "true"
+    ]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == [
+        "1"
+    ]
