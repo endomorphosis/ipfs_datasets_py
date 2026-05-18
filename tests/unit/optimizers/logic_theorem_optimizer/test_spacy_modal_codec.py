@@ -438,6 +438,47 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_force_is_prese
     assert logits["deontic"] > logits["frame"]
 
 
+def test_spacy_decoder_debiases_generic_frame_logits_when_conditional_scope_is_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="1656",
+        text="Authority under this chapter applies pursuant to subsection (b).",
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "conditional_normative", "deontic"),
+    )
+
+    assert logits["conditional_normative"] > logits["frame"]
+
+
+def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="47",
+        section="219",
+        text="The agency shall provide written notice before each annual review deadline.",
+    )
+    encoding = codec.encode_sample(sample)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert logits["deontic"] > logits["temporal"]
+    assert logits["temporal"] > -0.25
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

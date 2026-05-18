@@ -365,6 +365,7 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
     }
 )
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
+_GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -885,9 +886,16 @@ class SpaCyModalDecoder:
         for family, count in weighted_counts.items():
             if family in logits:
                 logits[family] = 2.0 + float(count)
+        scope_boosts = _scope_signal_family_logit_boosts(signals)
+        for family, bonus in scope_boosts.items():
+            if family not in logits:
+                continue
+            if float(raw_counts.get(family, 0.0)) > 0.0:
+                continue
+            logits[family] = max(float(logits[family]), 0.25) + float(bonus)
         frame_bonus = _frame_logit_bonus(signals)
         if _is_generic_frame_cue_debias_context(encoding, signals):
-            frame_bonus = 0.0
+            frame_bonus = _debias_frame_bonus_for_generic_cues(signals)
         if ModalLogicFamily.FRAME.value in logits and frame_bonus > 0.0:
             logits[ModalLogicFamily.FRAME.value] = (
                 max(logits[ModalLogicFamily.FRAME.value], 0.5) + frame_bonus
@@ -1097,7 +1105,10 @@ def _is_generic_frame_cue_debias_context(
     encoding: SpaCyLegalEncoding,
     signals: Mapping[str, bool],
 ) -> bool:
-    if not bool(signals.get("has_deontic_cue")):
+    if not (
+        bool(signals.get("has_deontic_cue"))
+        or bool(signals.get("has_condition_or_exception_scope"))
+    ):
         return False
     if bool(signals.get("has_frame_scope_phrase")):
         return False
@@ -1111,6 +1122,27 @@ def _is_generic_frame_cue_debias_context(
     if not frame_cues:
         return False
     return all(cue in _GENERIC_FRAME_CUE_TERMS for cue in frame_cues)
+
+
+def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, float]:
+    """Return deterministic logit boosts for scope-signaled families without cues."""
+    boosts: Dict[str, float] = {}
+    if bool(signals.get("has_condition_or_exception_scope")):
+        boosts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = 0.9
+    if bool(signals.get("has_deontic_scope")):
+        boosts[ModalLogicFamily.DEONTIC.value] = 0.8
+    temporal_bonus = 0.0
+    if bool(signals.get("has_temporal_scope")):
+        temporal_bonus += 1.2
+    if (
+        bool(signals.get("has_calendar_date_scope"))
+        or bool(signals.get("has_temporal_scope_phrase"))
+        or bool(signals.get("has_temporal_within_scope"))
+    ):
+        temporal_bonus += 0.3
+    if temporal_bonus > 0.0:
+        boosts[ModalLogicFamily.TEMPORAL.value] = temporal_bonus
+    return boosts
 
 
 def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
@@ -1234,6 +1266,22 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
     if bool(signals.get("has_frame_cue")):
         bonus += 2.5
     return bonus
+
+
+def _debias_frame_bonus_for_generic_cues(signals: Mapping[str, bool]) -> float:
+    """Retain discounted structural frame context while removing generic cue dominance."""
+    structural_bonus = 0.0
+    if bool(signals.get("has_frame_context")):
+        structural_bonus += 0.6
+    if bool(signals.get("has_statutory_scope_reference")):
+        structural_bonus += 0.8
+    if bool(signals.get("has_frame_scope_phrase")):
+        structural_bonus += 1.2
+    if bool(signals.get("has_frame_editorial_scope_phrase")):
+        structural_bonus += 2.2
+    if structural_bonus <= 0.0:
+        return 0.0
+    return structural_bonus * _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR
 
 
 def _contains_scope_phrase(text: str, phrases: Sequence[str]) -> bool:
