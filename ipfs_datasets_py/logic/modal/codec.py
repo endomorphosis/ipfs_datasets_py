@@ -1378,6 +1378,21 @@ def modal_ir_to_flogic_triples(
                                 "object": predicate_value,
                             }
                         )
+            if not formula.conditions:
+                for (
+                    condition_predicate,
+                    condition_value,
+                ) in _condition_proxy_components_from_exception(
+                    formula,
+                    exception=exception,
+                ):
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": condition_predicate,
+                            "object": condition_value,
+                        }
+                    )
         citation = _clean_non_empty_string(formula.provenance.citation)
         citation_inferred_from_source_id = False
         if not citation:
@@ -1535,12 +1550,79 @@ def _modal_lexeme_components(
         (f"{normalized_slot_prefix}_operator", symbol),
         (f"{normalized_slot_prefix}_lexeme", cue_value),
     ]
+    if symbol == "O|":
+        conditional_normative_value = f"{symbol}:{cue_value}"
+        components.append(
+            (
+                f"{normalized_slot_prefix}_conditional_normative",
+                conditional_normative_value,
+            )
+        )
+        components.append(
+            (
+                f"{normalized_slot_prefix}_conditional_normative_signature",
+                f"conditional_normative:{conditional_normative_value}",
+            )
+        )
+        if normalized_slot_prefix.endswith("_modal"):
+            alias_prefix = _clean_non_empty_string(normalized_slot_prefix[: -len("_modal")])
+            if alias_prefix:
+                components.append(
+                    (
+                        f"{alias_prefix}_conditional_normative",
+                        conditional_normative_value,
+                    )
+                )
     temporal_relation = _temporal_clause_prefix_relation(cue_value)
     if temporal_relation:
         components.append(
             (f"{normalized_slot_prefix}_temporal_relation", temporal_relation)
         )
     return components
+
+
+def _condition_proxy_components_from_exception(
+    formula: ModalIRFormula,
+    *,
+    exception: str,
+) -> List[tuple[str, str]]:
+    scoped_exception = _clean_non_empty_string(exception)
+    if not scoped_exception:
+        return []
+    components: List[tuple[str, str]] = [("condition", scoped_exception)]
+    components.extend(
+        _typed_identifier_components(
+            scoped_exception,
+            slot_prefix="condition",
+        )
+    )
+    typed_exception = _typed_clause_key_value(scoped_exception, clause_type="exception")
+    if typed_exception is None:
+        return _unique_preserve_order_tuples(components)
+    key, scoped_value = typed_exception
+    components.append(("condition_prefix", key.replace("_", " ")))
+    components.append(("condition_prefix_key", key))
+    components.extend(
+        _modal_lexeme_components(
+            formula,
+            cue=key,
+            slot_prefix="condition_modal",
+        )
+    )
+    temporal_relation = _temporal_clause_prefix_relation(key)
+    if temporal_relation:
+        components.append(("condition_prefix_family", "temporal"))
+        components.append(("condition_prefix_temporal_relation", temporal_relation))
+    if scoped_value:
+        components.append((f"condition_{key}", scoped_value))
+        components.append(("condition_scope", scoped_value))
+        components.extend(
+            _typed_identifier_components(
+                scoped_value,
+                slot_prefix="condition_scope",
+            )
+        )
+    return _unique_preserve_order_tuples(components)
 
 
 def _temporal_clause_prefix_relation(prefix_key: str) -> str:

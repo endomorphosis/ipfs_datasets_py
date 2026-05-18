@@ -480,7 +480,10 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
-    for condition in _phrase_values(formula.conditions):
+    condition_values = _phrase_values(formula.conditions)
+    exception_values = _phrase_values(formula.exceptions)
+    proxy_condition_from_exception = not condition_values and bool(exception_values)
+    for condition in condition_values:
         phrases.append(
             DecodedModalPhrase(
                 text=condition,
@@ -515,7 +518,7 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             spans=spans,
             emitted=statutory_scope_emissions,
         )
-    for exception in _phrase_values(formula.exceptions):
+    for exception in exception_values:
         phrases.append(
             DecodedModalPhrase(
                 text=exception,
@@ -550,6 +553,14 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             spans=spans,
             emitted=statutory_scope_emissions,
         )
+        if proxy_condition_from_exception:
+            phrases.extend(
+                _condition_proxy_phrases_from_exception(
+                    exception=exception,
+                    spans=spans,
+                    formula=formula,
+                )
+            )
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
     if fallback_rule:
         phrases.append(
@@ -2497,6 +2508,119 @@ def _typed_clause_slot(
     return None
 
 
+def _condition_proxy_phrases_from_exception(
+    *,
+    exception: str,
+    spans: List[List[int]],
+    formula: ModalIRFormula,
+) -> List[DecodedModalPhrase]:
+    scoped_exception = _clean_text(exception)
+    if not scoped_exception:
+        return []
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=scoped_exception,
+            slot="condition",
+            spans=spans,
+            provenance_only=True,
+        )
+    ]
+    for typed_slot, typed_value in _typed_identifier_slots(
+        scoped_exception,
+        slot_prefix="condition",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=typed_value,
+                slot=typed_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    typed_exception = _typed_clause_slot(scoped_exception, slot="exception")
+    if typed_exception is None:
+        return phrases
+    prefix_slot_value, prefix_key, scoped_value = typed_exception
+    phrases.extend(
+        (
+            DecodedModalPhrase(
+                text=prefix_slot_value,
+                slot="condition_prefix",
+                spans=spans,
+                provenance_only=True,
+            ),
+            DecodedModalPhrase(
+                text=prefix_key,
+                slot="condition_prefix_key",
+                spans=spans,
+                provenance_only=True,
+            ),
+        )
+    )
+    temporal_relation = _temporal_clause_prefix_relation(prefix_key)
+    if temporal_relation:
+        phrases.extend(
+            (
+                DecodedModalPhrase(
+                    text="temporal",
+                    slot="condition_prefix_family",
+                    spans=spans,
+                    provenance_only=True,
+                ),
+                DecodedModalPhrase(
+                    text=temporal_relation,
+                    slot="condition_prefix_temporal_relation",
+                    spans=spans,
+                    provenance_only=True,
+                ),
+            )
+        )
+    for modal_slot, modal_value in _modal_lexeme_slots(
+        formula,
+        cue=prefix_key,
+        slot_prefix="condition_modal",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=modal_value,
+                slot=modal_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    if not scoped_value:
+        return phrases
+    phrases.extend(
+        (
+            DecodedModalPhrase(
+                text=scoped_value,
+                slot=f"condition_{prefix_key}",
+                spans=spans,
+                provenance_only=True,
+            ),
+            DecodedModalPhrase(
+                text=scoped_value,
+                slot="condition_scope",
+                spans=spans,
+                provenance_only=True,
+            ),
+        )
+    )
+    for typed_slot, typed_value in _typed_identifier_slots(
+        scoped_value,
+        slot_prefix="condition_scope",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=typed_value,
+                slot=typed_slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
+    return phrases
+
+
 def _cue_modal_slots(
     formula: ModalIRFormula,
     *,
@@ -2528,6 +2652,29 @@ def _modal_lexeme_slots(
         (f"{normalized_slot_prefix}_operator", symbol),
         (f"{normalized_slot_prefix}_lexeme", cue_value),
     ]
+    if symbol == "O|":
+        conditional_normative_value = f"{symbol}:{cue_value}"
+        slots.append(
+            (
+                f"{normalized_slot_prefix}_conditional_normative",
+                conditional_normative_value,
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_slot_prefix}_conditional_normative_signature",
+                f"conditional_normative:{conditional_normative_value}",
+            )
+        )
+        if normalized_slot_prefix.endswith("_modal"):
+            alias_prefix = _clean_text(normalized_slot_prefix[: -len("_modal")])
+            if alias_prefix:
+                slots.append(
+                    (
+                        f"{alias_prefix}_conditional_normative",
+                        conditional_normative_value,
+                    )
+                )
     temporal_relation = _temporal_clause_prefix_relation(cue_value)
     if temporal_relation:
         slots.append((f"{normalized_slot_prefix}_temporal_relation", temporal_relation))

@@ -577,6 +577,37 @@ def _typed_clause_scope_sample_document() -> ModalIRDocument:
     )
 
 
+def _exception_only_condition_proxy_sample_document() -> ModalIRDocument:
+    source_id = "us-code-42-1395c.-da5383050c7a2c5e"
+    normalized_text = (
+        "A plan may provide coverage except as such a determination applies."
+    )
+    formula = ModalIRFormula(
+        formula_id="f-exception-only-condition-proxy",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O|",
+            label="conditionally obligatory",
+        ),
+        predicate=ModalIRPredicate(name="provide_coverage"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="42 U.S.C. 1395c.",
+        ),
+        exceptions=["except as such a determination applies"],
+        metadata={"cue": "may"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _cue_signature_temporal_clause_sample_document() -> ModalIRDocument:
     source_id = "us-code-10-864-47dfb7b7e13861a9"
     sentence_one = "The applicant shall submit a report if requested."
@@ -3310,6 +3341,56 @@ def test_modal_ir_to_flogic_triples_emits_condition_exception_scope_slots() -> N
     assert objects("exception_scope") == ["in subsection (b)"]
     assert objects("exception_scope_token_count") == ["3"]
     assert objects("exception_scope_token_suffix") == ["(b)"]
+
+
+def test_decode_modal_ir_document_emits_condition_proxy_slots_for_exception_only_formula() -> None:
+    decoded = decode_modal_ir_document(_exception_only_condition_proxy_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["condition"] == ["except as such a determination applies"]
+    assert slot_map["condition_prefix"] == ["except as"]
+    assert slot_map["condition_prefix_key"] == ["except_as"]
+    assert slot_map["condition_modal_signature"] == ["deontic:O|:except_as"]
+    assert slot_map["condition_scope"] == ["such a determination applies"]
+    assert slot_map["condition_scope_alnum_segment"] == [
+        "such",
+        "a",
+        "determination",
+        "applies",
+    ]
+    assert slot_map["condition_scope_alnum_segment_count"] == ["4"]
+    assert slot_map["cue_modal_conditional_normative"] == ["O|:may"]
+    assert slot_map["cue_conditional_normative"] == ["O|:may"]
+    assert slot_map["condition_modal_conditional_normative"] == ["O|:except_as"]
+    assert slot_map["condition_conditional_normative"] == ["O|:except_as"]
+
+
+def test_modal_ir_to_flogic_triples_emits_condition_proxy_slots_for_exception_only_formula() -> None:
+    triples = modal_ir_to_flogic_triples(_exception_only_condition_proxy_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("condition") == ["except as such a determination applies"]
+    assert objects("condition_prefix") == ["except as"]
+    assert objects("condition_prefix_key") == ["except_as"]
+    assert objects("condition_modal_signature") == ["deontic:O|:except_as"]
+    assert objects("condition_scope") == ["such a determination applies"]
+    assert objects("condition_scope_alnum_segment") == [
+        "such",
+        "a",
+        "determination",
+        "applies",
+    ]
+    assert objects("condition_scope_alnum_segment_count") == ["4"]
+    assert objects("cue_modal_conditional_normative") == ["O|:may"]
+    assert objects("cue_conditional_normative") == ["O|:may"]
+    assert objects("condition_modal_conditional_normative") == ["O|:except_as"]
+    assert objects("condition_conditional_normative") == ["O|:except_as"]
 
 
 def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_slots() -> None:
