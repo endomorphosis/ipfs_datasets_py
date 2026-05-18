@@ -406,6 +406,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            fallback_rule,
+            slot_prefix="fallback_rule",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     status_keyword = _clean_text(formula.metadata.get("status_keyword") or "")
     if status_keyword:
         phrases.append(
@@ -416,6 +428,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            status_keyword,
+            slot_prefix="status_keyword",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     statement_hint = _clean_text(formula.metadata.get("statement_hint") or "")
     if statement_hint:
         phrases.append(
@@ -426,6 +450,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+        for slot, value in _typed_identifier_slots(
+            statement_hint,
+            slot_prefix="statement_hint",
+        ):
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    spans=spans,
+                    provenance_only=True,
+                )
+            )
     citation = _clean_text(formula.provenance.citation or "")
     if citation:
         phrases.append(
@@ -808,6 +844,38 @@ def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, st
         seen.add(value)
         result.append(value)
     return result
+
+
+def _typed_identifier_slots(
+    value: str,
+    *,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    normalized = _clean_text(value).replace("-", "_")
+    if not normalized:
+        return []
+    tokens = [
+        token
+        for token in re.split(r"[_\s]+", normalized.lower())
+        if token
+    ]
+    if not tokens:
+        return []
+    slots: List[Tuple[str, str]] = [
+        (f"{slot_prefix}_token_count", str(len(tokens))),
+        (f"{slot_prefix}_token_prefix", tokens[0]),
+        (f"{slot_prefix}_token_suffix", tokens[-1]),
+    ]
+    for token in tokens:
+        slots.append((f"{slot_prefix}_token", token))
+    if re.fullmatch(r"v\d+", tokens[-1]):
+        slots.append((f"{slot_prefix}_version", tokens[-1]))
+        stem_tokens = tokens[:-1]
+    else:
+        stem_tokens = tokens
+    if stem_tokens:
+        slots.append((f"{slot_prefix}_stem", "_".join(stem_tokens)))
+    return _unique_slot_values(slots)
 
 
 def _phrase_values(values: Sequence[str]) -> List[str]:

@@ -2203,15 +2203,40 @@ def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None
     triples = modal_ir_to_flogic_triples(compiled.modal_ir)
 
     assert slot_texts["fallback_rule"] == ["uscode_editorial_status_heading_v1"]
+    assert slot_texts["fallback_rule_token_count"] == ["5"]
+    assert slot_texts["fallback_rule_token_prefix"] == ["uscode"]
+    assert slot_texts["fallback_rule_token_suffix"] == ["v1"]
+    assert slot_texts["fallback_rule_version"] == ["v1"]
+    assert slot_texts["fallback_rule_stem"] == ["uscode_editorial_status_heading"]
+    assert "editorial" in slot_texts["fallback_rule_token"]
+    assert "status" in slot_texts["fallback_rule_token"]
     assert slot_texts["status_keyword"] == ["repealed"]
+    assert slot_texts["status_keyword_token_count"] == ["1"]
+    assert slot_texts["status_keyword_token"] == ["repealed"]
+    assert slot_texts["status_keyword_stem"] == ["repealed"]
     assert any(
         triple["predicate"] == "fallback_rule"
         and triple["object"] == "uscode_editorial_status_heading_v1"
         for triple in triples
     )
     assert any(
+        triple["predicate"] == "fallback_rule_token"
+        and triple["object"] == "editorial"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "fallback_rule_version"
+        and triple["object"] == "v1"
+        for triple in triples
+    )
+    assert any(
         triple["predicate"] == "status_keyword"
         and triple["object"] == "repealed"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "status_keyword_token_count"
+        and triple["object"] == "1"
         for triple in triples
     )
 
@@ -2231,9 +2256,23 @@ def test_modal_decompiler_and_triples_surface_declarative_statement_hint_slot() 
 
     assert slot_texts["fallback_rule"] == ["uscode_declarative_statement_v1"]
     assert slot_texts["statement_hint"] == ["sense_of_congress"]
+    assert slot_texts["statement_hint_token_count"] == ["3"]
+    assert slot_texts["statement_hint_token_prefix"] == ["sense"]
+    assert slot_texts["statement_hint_token_suffix"] == ["congress"]
+    assert slot_texts["statement_hint_stem"] == ["sense_of_congress"]
     assert any(
         triple["predicate"] == "statement_hint"
         and triple["object"] == "sense_of_congress"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statement_hint_token"
+        and triple["object"] == "sense"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "statement_hint_token"
+        and triple["object"] == "congress"
         for triple in triples
     )
 

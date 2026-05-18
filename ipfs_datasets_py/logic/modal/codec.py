@@ -796,6 +796,17 @@ def modal_ir_to_flogic_triples(
                     "object": fallback_rule,
                 }
             )
+            for predicate, value in _typed_identifier_components(
+                fallback_rule,
+                slot_prefix="fallback_rule",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         status_keyword = _clean_non_empty_string(formula.metadata.get("status_keyword"))
         if status_keyword:
             triples.append(
@@ -805,6 +816,17 @@ def modal_ir_to_flogic_triples(
                     "object": status_keyword,
                 }
             )
+            for predicate, value in _typed_identifier_components(
+                status_keyword,
+                slot_prefix="status_keyword",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         statement_hint = _clean_non_empty_string(formula.metadata.get("statement_hint"))
         if statement_hint:
             triples.append(
@@ -814,6 +836,17 @@ def modal_ir_to_flogic_triples(
                     "object": statement_hint,
                 }
             )
+            for predicate, value in _typed_identifier_components(
+                statement_hint,
+                slot_prefix="statement_hint",
+            ):
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": predicate,
+                        "object": value,
+                    }
+                )
         for condition in sorted({value for value in formula.conditions if value}):
             triples.append(
                 {
@@ -1046,6 +1079,38 @@ def _unique_preserve_order_tuples(
         seen.add(value)
         result.append(value)
     return result
+
+
+def _typed_identifier_components(
+    value: str,
+    *,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
+    normalized = _clean_non_empty_string(value).replace("-", "_")
+    if not normalized:
+        return []
+    tokens = [
+        token
+        for token in re.split(r"[_\s]+", normalized.lower())
+        if token
+    ]
+    if not tokens:
+        return []
+    components: List[tuple[str, str]] = [
+        (f"{slot_prefix}_token_count", str(len(tokens))),
+        (f"{slot_prefix}_token_prefix", tokens[0]),
+        (f"{slot_prefix}_token_suffix", tokens[-1]),
+    ]
+    for token in tokens:
+        components.append((f"{slot_prefix}_token", token))
+    if re.fullmatch(r"v\d+", tokens[-1]):
+        components.append((f"{slot_prefix}_version", tokens[-1]))
+        stem_tokens = tokens[:-1]
+    else:
+        stem_tokens = tokens
+    if stem_tokens:
+        components.append((f"{slot_prefix}_stem", "_".join(stem_tokens)))
+    return _unique_preserve_order_tuples(components)
 
 
 def _append_statutory_scope_triples(
