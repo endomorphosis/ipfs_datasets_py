@@ -2273,6 +2273,8 @@ def _alpha_signature_slots(
             "true" if consonant_count > 0 else "false",
         ),
         (f"{slot_prefix}_unique_char_count", str(len(set(letters)))),
+        (f"{slot_prefix}_repeat_kind", _alpha_repeat_kind(letters)),
+        (f"{slot_prefix}_max_run_length", str(_alpha_max_run_length(letters))),
     ]
     initial_ordinal = _alpha_ordinal(initial)
     if initial_ordinal:
@@ -2288,6 +2290,36 @@ def _alpha_ordinal(value: str) -> str:
     if len(cleaned) != 1 or not ("a" <= cleaned <= "z"):
         return ""
     return str(ord(cleaned) - ord("a") + 1)
+
+
+def _alpha_repeat_kind(letters: Sequence[str]) -> str:
+    if not letters:
+        return ""
+    if len(letters) == 1:
+        return "single"
+    unique_count = len(set(letters))
+    if unique_count == 1:
+        return "uniform_repeat"
+    if unique_count == len(letters):
+        return "all_distinct"
+    return "mixed_repeat"
+
+
+def _alpha_max_run_length(letters: Sequence[str]) -> int:
+    if not letters:
+        return 0
+    max_run_length = 1
+    current_run_length = 1
+    previous = letters[0]
+    for character in letters[1:]:
+        if character == previous:
+            current_run_length += 1
+        else:
+            current_run_length = 1
+            previous = character
+        if current_run_length > max_run_length:
+            max_run_length = current_run_length
+    return max_run_length
 
 
 def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:

@@ -197,3 +197,42 @@ def test_modal_slots_emit_numeric_magnitude_buckets_for_todo_cluster_sections() 
             )
             assert slot_values == expected[predicate]
             assert triple_values == expected[predicate]
+
+
+def test_modal_slots_emit_alpha_repeat_shape_for_todo_cluster_suffix_sections() -> None:
+    expected_by_section = {
+        ("42", "300mm"): ("uniform_repeat", "2"),
+        ("22", "283ff"): ("uniform_repeat", "2"),
+        ("16", "21b"): ("single", "1"),
+        ("20", "80p"): ("single", "1"),
+    }
+    predicates = (
+        "citation_section_suffix_repeat_kind",
+        "citation_section_suffix_max_run_length",
+        "citation_section_primary_suffix_repeat_kind",
+        "citation_section_primary_suffix_max_run_length",
+        "source_id_section_suffix_repeat_kind",
+        "source_id_section_suffix_max_run_length",
+        "source_id_section_primary_suffix_repeat_kind",
+        "source_id_section_primary_suffix_max_run_length",
+    )
+
+    for (title, section), (repeat_kind, max_run_length) in expected_by_section.items():
+        expected = {
+            "citation_section_suffix_repeat_kind": [repeat_kind],
+            "citation_section_suffix_max_run_length": [max_run_length],
+            "citation_section_primary_suffix_repeat_kind": [repeat_kind],
+            "citation_section_primary_suffix_max_run_length": [max_run_length],
+            "source_id_section_suffix_repeat_kind": [repeat_kind],
+            "source_id_section_suffix_max_run_length": [max_run_length],
+            "source_id_section_primary_suffix_repeat_kind": [repeat_kind],
+            "source_id_section_primary_suffix_max_run_length": [max_run_length],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]
