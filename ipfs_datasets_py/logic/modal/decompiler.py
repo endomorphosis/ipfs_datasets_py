@@ -818,6 +818,12 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
             title_suffix = _clean_text(title_match.group("suffix"))
             if title_number:
                 slots.append(("source_id_title_number", title_number))
+                slots.extend(
+                    _numeric_signature_slots(
+                        title_number,
+                        slot_prefix="source_id_title_number",
+                    )
+                )
             if title_suffix:
                 slots.append(("source_id_title_suffix", title_suffix))
 
@@ -1328,6 +1334,12 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
             title_suffix = _clean_text(title_match.group("suffix"))
             if title_number:
                 slots.append(("citation_title_number", title_number))
+                slots.extend(
+                    _numeric_signature_slots(
+                        title_number,
+                        slot_prefix="citation_title_number",
+                    )
+                )
             if title_suffix:
                 slots.append(("citation_title_suffix", title_suffix))
     slots.append(("citation_code", "U.S.C."))
@@ -1525,6 +1537,17 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 )
             )
             slots.append(("citation_section_number_positioned", f"{position}:{number}"))
+            for signature_slot, signature_value in _numeric_signature_slots(
+                number,
+                slot_prefix="citation_section_number",
+            ):
+                slots.append((signature_slot, signature_value))
+                slots.append(
+                    (
+                        f"{signature_slot}_positioned",
+                        f"{position}:{signature_value}",
+                    )
+                )
             if index == 1:
                 slots.append(("citation_section_primary_number", number))
                 primary_number = number
@@ -1534,6 +1557,12 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                         number_digit_count,
                     )
                 )
+                slots.extend(
+                    _numeric_signature_slots(
+                        number,
+                        slot_prefix="citation_section_primary_number",
+                    )
+                )
             if index == total_components:
                 slots.append(("citation_section_terminal_number", number))
                 terminal_number = number
@@ -1541,6 +1570,12 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                     (
                         "citation_section_terminal_number_digit_count",
                         number_digit_count,
+                    )
+                )
+                slots.extend(
+                    _numeric_signature_slots(
+                        number,
+                        slot_prefix="citation_section_terminal_number",
                     )
                 )
         if suffix:
@@ -1767,6 +1802,24 @@ def _primary_terminal_number_relation(
     if primary_value < terminal_value:
         return ("ascending", str(terminal_value - primary_value))
     return ("descending", str(primary_value - terminal_value))
+
+
+def _numeric_signature_slots(
+    value: str,
+    *,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    cleaned = _clean_text(value)
+    if not cleaned or not cleaned.isdigit():
+        return []
+    last_digit = cleaned[-1]
+    trailing_two_digits = cleaned[-2:] if len(cleaned) > 1 else cleaned
+    parity = "even" if last_digit in {"0", "2", "4", "6", "8"} else "odd"
+    return [
+        (f"{slot_prefix}_parity", parity),
+        (f"{slot_prefix}_leading_digit", cleaned[0]),
+        (f"{slot_prefix}_trailing_two_digits", trailing_two_digits),
+    ]
 
 
 def _unique_slot_values(values: Sequence[Tuple[str, str]]) -> List[Tuple[str, str]]:

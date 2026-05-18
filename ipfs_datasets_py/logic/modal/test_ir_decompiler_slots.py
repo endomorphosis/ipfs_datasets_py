@@ -944,3 +944,111 @@ def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() ->
     assert objects("modal_family_count_value") == ["2", "1"]
     assert objects("modal_family_count_deontic") == ["2"]
     assert objects("modal_family_count_temporal") == ["1"]
+
+
+def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
+    slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_dot_delimited_sample_document())
+    )
+
+    assert slot_map["citation_title_number_parity"] == ["even"]
+    assert slot_map["citation_title_number_leading_digit"] == ["4"]
+    assert slot_map["citation_title_number_trailing_two_digits"] == ["42"]
+    assert slot_map["source_id_title_number_parity"] == ["even"]
+    assert slot_map["source_id_title_number_leading_digit"] == ["4"]
+    assert slot_map["source_id_title_number_trailing_two_digits"] == ["42"]
+
+    assert slot_map["citation_section_number_parity"] == ["even", "odd"]
+    assert slot_map["citation_section_number_parity_positioned"] == ["1:even", "2:odd"]
+    assert slot_map["citation_section_number_leading_digit_positioned"] == ["1:1", "2:1"]
+    assert slot_map["citation_section_number_trailing_two_digits_positioned"] == [
+        "1:96",
+        "2:1",
+    ]
+    assert slot_map["citation_section_primary_number_parity"] == ["even"]
+    assert slot_map["citation_section_primary_number_leading_digit"] == ["1"]
+    assert slot_map["citation_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["citation_section_terminal_number_parity"] == ["odd"]
+    assert slot_map["citation_section_terminal_number_leading_digit"] == ["1"]
+    assert slot_map["citation_section_terminal_number_trailing_two_digits"] == ["1"]
+
+    assert slot_map["source_id_section_number_parity"] == ["even", "odd"]
+    assert slot_map["source_id_section_number_parity_positioned"] == ["1:even", "2:odd"]
+    assert slot_map["source_id_section_number_leading_digit_positioned"] == [
+        "1:1",
+        "2:1",
+    ]
+    assert slot_map["source_id_section_number_trailing_two_digits_positioned"] == [
+        "1:96",
+        "2:1",
+    ]
+    assert slot_map["source_id_section_primary_number_parity"] == ["even"]
+    assert slot_map["source_id_section_primary_number_leading_digit"] == ["1"]
+    assert slot_map["source_id_section_primary_number_trailing_two_digits"] == ["96"]
+    assert slot_map["source_id_section_terminal_number_parity"] == ["odd"]
+    assert slot_map["source_id_section_terminal_number_leading_digit"] == ["1"]
+    assert slot_map["source_id_section_terminal_number_trailing_two_digits"] == ["1"]
+
+    odd_title_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert odd_title_slot_map["citation_title_number_parity"] == ["odd"]
+    assert odd_title_slot_map["source_id_title_number_parity"] == ["odd"]
+
+
+def test_modal_ir_to_flogic_triples_emits_numeric_signature_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_dot_delimited_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_title_number_parity") == ["even"]
+    assert objects("citation_title_number_leading_digit") == ["4"]
+    assert objects("citation_title_number_trailing_two_digits") == ["42"]
+    assert objects("source_id_title_number_parity") == ["even"]
+    assert objects("source_id_title_number_leading_digit") == ["4"]
+    assert objects("source_id_title_number_trailing_two_digits") == ["42"]
+
+    assert objects("citation_section_number_parity") == ["even", "odd"]
+    assert objects("citation_section_number_parity_positioned") == ["1:even", "2:odd"]
+    assert objects("citation_section_number_leading_digit_positioned") == ["1:1", "2:1"]
+    assert objects("citation_section_number_trailing_two_digits_positioned") == [
+        "1:96",
+        "2:1",
+    ]
+    assert objects("citation_section_primary_number_parity") == ["even"]
+    assert objects("citation_section_primary_number_leading_digit") == ["1"]
+    assert objects("citation_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("citation_section_terminal_number_parity") == ["odd"]
+    assert objects("citation_section_terminal_number_leading_digit") == ["1"]
+    assert objects("citation_section_terminal_number_trailing_two_digits") == ["1"]
+
+    assert objects("source_id_section_number_parity") == ["even", "odd"]
+    assert objects("source_id_section_number_parity_positioned") == ["1:even", "2:odd"]
+    assert objects("source_id_section_number_leading_digit_positioned") == ["1:1", "2:1"]
+    assert objects("source_id_section_number_trailing_two_digits_positioned") == [
+        "1:96",
+        "2:1",
+    ]
+    assert objects("source_id_section_primary_number_parity") == ["even"]
+    assert objects("source_id_section_primary_number_leading_digit") == ["1"]
+    assert objects("source_id_section_primary_number_trailing_two_digits") == ["96"]
+    assert objects("source_id_section_terminal_number_parity") == ["odd"]
+    assert objects("source_id_section_terminal_number_leading_digit") == ["1"]
+    assert objects("source_id_section_terminal_number_trailing_two_digits") == ["1"]
+
+    odd_title_triples = modal_ir_to_flogic_triples(_sample_document())
+
+    def odd_title_objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in odd_title_triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert odd_title_objects("citation_title_number_parity") == ["odd"]
+    assert odd_title_objects("source_id_title_number_parity") == ["odd"]

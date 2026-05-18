@@ -1183,6 +1183,12 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
             title_suffix = _clean_non_empty_string(title_match.group("suffix"))
             if title_number:
                 components.append(("citation_title_number", title_number))
+                components.extend(
+                    _numeric_signature_components(
+                        title_number,
+                        slot_prefix="citation_title_number",
+                    )
+                )
             if title_suffix:
                 components.append(("citation_title_suffix", title_suffix))
     components.append(("citation_code", "U.S.C."))
@@ -1259,6 +1265,12 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
             title_suffix = _clean_non_empty_string(title_match.group("suffix"))
             if title_number:
                 components.append(("source_id_title_number", title_number))
+                components.extend(
+                    _numeric_signature_components(
+                        title_number,
+                        slot_prefix="source_id_title_number",
+                    )
+                )
             if title_suffix:
                 components.append(("source_id_title_suffix", title_suffix))
     if section:
@@ -1487,6 +1499,17 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 )
             )
             components.append(("citation_section_number_positioned", f"{position}:{number}"))
+            for signature_slot, signature_value in _numeric_signature_components(
+                number,
+                slot_prefix="citation_section_number",
+            ):
+                components.append((signature_slot, signature_value))
+                components.append(
+                    (
+                        f"{signature_slot}_positioned",
+                        f"{position}:{signature_value}",
+                    )
+                )
             if index == 1:
                 components.append(("citation_section_primary_number", number))
                 primary_number = number
@@ -1496,6 +1519,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                         number_digit_count,
                     )
                 )
+                components.extend(
+                    _numeric_signature_components(
+                        number,
+                        slot_prefix="citation_section_primary_number",
+                    )
+                )
             if index == total_parts:
                 components.append(("citation_section_terminal_number", number))
                 terminal_number = number
@@ -1503,6 +1532,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                     (
                         "citation_section_terminal_number_digit_count",
                         number_digit_count,
+                    )
+                )
+                components.extend(
+                    _numeric_signature_components(
+                        number,
+                        slot_prefix="citation_section_terminal_number",
                     )
                 )
         if suffix:
@@ -1730,6 +1765,24 @@ def _primary_terminal_number_relation(
     if primary_value < terminal_value:
         return ("ascending", str(terminal_value - primary_value))
     return ("descending", str(primary_value - terminal_value))
+
+
+def _numeric_signature_components(
+    value: str,
+    *,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned or not cleaned.isdigit():
+        return []
+    last_digit = cleaned[-1]
+    trailing_two_digits = cleaned[-2:] if len(cleaned) > 1 else cleaned
+    parity = "even" if last_digit in {"0", "2", "4", "6", "8"} else "odd"
+    return [
+        (f"{slot_prefix}_parity", parity),
+        (f"{slot_prefix}_leading_digit", cleaned[0]),
+        (f"{slot_prefix}_trailing_two_digits", trailing_two_digits),
+    ]
 
 
 def _section_trailing_punct(
