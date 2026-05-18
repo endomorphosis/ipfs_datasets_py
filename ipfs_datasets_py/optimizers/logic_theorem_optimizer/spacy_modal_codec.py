@@ -114,6 +114,41 @@ _TEMPORAL_SCOPE_PHRASES = (
     "period beginning on",
     "period ending on",
 )
+_DYNAMIC_SCOPE_TOKENS = frozenset(
+    {
+        "enforce",
+        "enforced",
+        "enforcement",
+        "enforces",
+        "enforcing",
+        "file",
+        "filed",
+        "files",
+        "filing",
+        "serve",
+        "served",
+        "serves",
+        "service",
+        "serving",
+        "terminate",
+        "terminated",
+        "terminates",
+        "terminating",
+        "termination",
+        "transfer",
+        "transferred",
+        "transferring",
+        "transfers",
+    }
+)
+_DYNAMIC_SCOPE_PHRASES = (
+    "after filing",
+    "after service",
+    "after transfer",
+    "upon filing",
+    "upon service",
+    "upon transfer",
+)
 _CALENDAR_DATE_RE = re.compile(
     r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
     r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
@@ -619,6 +654,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     temporal_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_SCOPE_PHRASES
     )
+    dynamic_scope_phrase = _contains_scope_phrase(
+        normalized_text, _DYNAMIC_SCOPE_PHRASES
+    )
     calendar_date_scope = bool(_CALENDAR_DATE_RE.search(normalized_text))
     alethic_scope = (
         bool(token_terms & _ALETHIC_SCOPE_TOKENS)
@@ -633,6 +671,11 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         bool(token_terms & _DEONTIC_SCOPE_TOKENS)
         or bool(deontic_scope_phrase)
         or ModalLogicFamily.DEONTIC.value in cue_families
+    )
+    dynamic_scope = (
+        bool(token_terms & _DYNAMIC_SCOPE_TOKENS)
+        or bool(dynamic_scope_phrase)
+        or ModalLogicFamily.DYNAMIC.value in cue_families
     )
     frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS)
     return {
@@ -655,6 +698,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
         "has_deontic_scope": deontic_scope,
         "has_deontic_scope_phrase": bool(deontic_scope_phrase),
+        "has_dynamic_cue": ModalLogicFamily.DYNAMIC.value in cue_families,
+        "has_dynamic_scope": dynamic_scope,
+        "has_dynamic_scope_phrase": bool(dynamic_scope_phrase),
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_frame_context": frame_context,

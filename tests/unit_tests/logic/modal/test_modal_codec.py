@@ -617,6 +617,58 @@ def test_modal_compiler_treats_deontic_scope_phrase_as_ambiguity_signal() -> Non
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
 
 
+def test_modal_compiler_surfaces_dynamic_scope_family_outvote_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_dynamic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the agency files the report by certified mail."
+    )
+
+    dynamic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "dynamic_scope_family_outvoted"
+    )
+    assert dynamic_scope.candidate_ids == ["temporal", "dynamic"]
+    assert dynamic_scope.metadata["predicted_family"] == "temporal"
+    assert dynamic_scope.metadata["target_family"] == "dynamic"
+    assert dynamic_scope.metadata["family_margin"] < 0.0
+    assert dynamic_scope.metadata["target_share"] > 0.0
+    assert dynamic_scope.metadata["lexical_signals"]["has_dynamic_cue"] is True
+
+
+def test_modal_compiler_treats_filed_as_dynamic_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_dynamic_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review, the agency filed the report."
+    )
+
+    dynamic_scope = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "dynamic_scope_family_outvoted"
+    )
+    assert dynamic_scope.candidate_ids == ["temporal", "dynamic"]
+    assert dynamic_scope.metadata["predicted_family"] == "temporal"
+    assert dynamic_scope.metadata["target_family"] == "dynamic"
+    assert dynamic_scope.metadata["target_share"] == 0.0
+    assert dynamic_scope.metadata["lexical_signals"]["has_dynamic_cue"] is False
+    assert dynamic_scope.metadata["lexical_signals"]["has_dynamic_scope"] is True
+
+
 def test_modal_compiler_surfaces_alethic_scope_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(

@@ -52,6 +52,7 @@ class ModalCompilerConfig:
     modal_primary_family_outvote_margin: float = 0.0
     modal_conditional_target_family_outvote_margin: float = 0.0
     modal_deontic_target_family_outvote_margin: float = 0.0
+    modal_dynamic_target_family_outvote_margin: float = 0.0
     modal_alethic_target_family_outvote_margin: float = 0.0
     modal_temporal_target_family_outvote_margin: float = 0.0
     modal_frame_target_family_outvote_margin: float = 0.0
@@ -362,6 +363,13 @@ class DeterministicModalCompiler:
         )
         ambiguities.extend(
             self._deontic_scope_target_family_ambiguities(
+                encoding,
+                ranking=ranking,
+                family_shares=family_shares,
+            )
+        )
+        ambiguities.extend(
+            self._dynamic_scope_target_family_ambiguities(
                 encoding,
                 ranking=ranking,
                 family_shares=family_shares,
@@ -772,6 +780,52 @@ class DeterministicModalCompiler:
                     "family_ranking": list(ranking),
                     "lexical_signals": dict(sorted(signals.items())),
                     "outvote_margin_threshold": self.config.modal_alethic_target_family_outvote_margin,
+                    "predicted_family": predicted_family,
+                    "predicted_share": round(predicted_share, 6),
+                    "target_family": target_family,
+                    "target_share": round(target_share, 6),
+                },
+            )
+        ]
+
+    def _dynamic_scope_target_family_ambiguities(
+        self,
+        encoding: SpaCyLegalEncoding,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not ranking:
+            return []
+        predicted_family = str(ranking[0]["family"])
+        target_family = ModalLogicFamily.DYNAMIC.value
+        if predicted_family == target_family:
+            return []
+        predicted_share = float(ranking[0]["share"])
+        target_share = float(family_shares.get(target_family, 0.0))
+        signals = modal_ambiguity_signals(encoding)
+        has_dynamic_scope = bool(
+            signals.get("has_dynamic_scope") or signals.get("has_dynamic_cue")
+        )
+        if not has_dynamic_scope and target_share <= 0.0:
+            return []
+        family_margin = target_share - predicted_share
+        if family_margin >= self.config.modal_dynamic_target_family_outvote_margin:
+            return []
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="dynamic_scope_family_outvoted",
+                message=(
+                    "Action-transition markers are present, but non-dynamic cue evidence "
+                    "outvotes dynamic family evidence."
+                ),
+                candidate_ids=[predicted_family, target_family],
+                severity="requires_rule",
+                metadata={
+                    "family_margin": round(family_margin, 6),
+                    "family_ranking": list(ranking),
+                    "lexical_signals": dict(sorted(signals.items())),
+                    "outvote_margin_threshold": self.config.modal_dynamic_target_family_outvote_margin,
                     "predicted_family": predicted_family,
                     "predicted_share": round(predicted_share, 6),
                     "target_family": target_family,
