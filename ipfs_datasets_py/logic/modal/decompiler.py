@@ -830,6 +830,15 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
     source_id_canonical = _canonical_usc_citation(title, section_for_slots)
     if source_id_canonical:
         slots.append(("source_id_citation_canonical", source_id_canonical))
+    source_id_title_section_key = _title_section_coordinate(title, section_for_slots)
+    if source_id_title_section_key:
+        slots.append(("source_id_title_section_key", source_id_title_section_key))
+        slots.append(
+            (
+                "source_id_title_section_key_normalized",
+                source_id_title_section_key.lower(),
+            )
+        )
     if section_for_slots:
         slots.extend(_source_id_section_slots(section_for_slots))
         slots.extend(
@@ -1307,6 +1316,15 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         citation_canonical = _canonical_usc_citation(title, section)
         if citation_canonical:
             slots.append(("citation_canonical", citation_canonical))
+        citation_title_section_key = _title_section_coordinate(title, section)
+        if citation_title_section_key:
+            slots.append(("citation_title_section_key", citation_title_section_key))
+            slots.append(
+                (
+                    "citation_title_section_key_normalized",
+                    citation_title_section_key.lower(),
+                )
+            )
         slots.append(("citation_section", section))
         if raw_section and raw_section != section:
             slots.append(("citation_section_raw", raw_section))
@@ -1343,6 +1361,14 @@ def _canonical_usc_citation(title: str, section: str) -> str:
     if not normalized_title or not normalized_section:
         return ""
     return f"{normalized_title} U.S.C. {normalized_section}"
+
+
+def _title_section_coordinate(title: str, section: str) -> str:
+    normalized_title = _clean_text(title)
+    normalized_section = _clean_text(_TRAILING_SECTION_PUNCT_RE.sub("", section))
+    if not normalized_title or not normalized_section:
+        return ""
+    return f"{normalized_title}:{normalized_section}"
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:

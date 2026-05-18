@@ -1187,6 +1187,15 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
         citation_canonical = _canonical_usc_citation(title, section)
         if citation_canonical:
             components.append(("citation_canonical", citation_canonical))
+        citation_title_section_key = _title_section_coordinate(title, section)
+        if citation_title_section_key:
+            components.append(("citation_title_section_key", citation_title_section_key))
+            components.append(
+                (
+                    "citation_title_section_key_normalized",
+                    citation_title_section_key.lower(),
+                )
+            )
         components.append(("citation_section", section))
         if raw_section and raw_section != section:
             components.append(("citation_section_raw", raw_section))
@@ -1251,6 +1260,15 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
     source_id_canonical = _canonical_usc_citation(title, section_for_components)
     if source_id_canonical:
         components.append(("source_id_citation_canonical", source_id_canonical))
+    source_id_title_section_key = _title_section_coordinate(title, section_for_components)
+    if source_id_title_section_key:
+        components.append(("source_id_title_section_key", source_id_title_section_key))
+        components.append(
+            (
+                "source_id_title_section_key_normalized",
+                source_id_title_section_key.lower(),
+            )
+        )
     if section_for_components:
         for predicate, value in _citation_section_components(section_for_components):
             if predicate.startswith("citation_section"):
@@ -1494,6 +1512,16 @@ def _canonical_usc_citation(title: str, section: str) -> str:
     if not normalized_title or not normalized_section:
         return ""
     return f"{normalized_title} U.S.C. {normalized_section}"
+
+
+def _title_section_coordinate(title: str, section: str) -> str:
+    normalized_title = _clean_non_empty_string(title)
+    normalized_section = _clean_non_empty_string(
+        _TRAILING_SECTION_PUNCT_RE.sub("", section)
+    )
+    if not normalized_title or not normalized_section:
+        return ""
+    return f"{normalized_title}:{normalized_section}"
 
 
 def _unique_preserve_order_tuples(

@@ -120,6 +120,8 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_number"] == ["0"]
     assert slot_map["citation_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
+    assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
 
     assert slot_map["source_id_section_component_positioned"] == ["1:360bbb", "2:0"]
     assert slot_map["source_id_section_number_positioned"] == ["1:360", "2:0"]
@@ -142,6 +144,8 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_number"] == ["0"]
     assert slot_map["source_id_section_terminal_component_kind"] == ["numeric"]
+    assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
+    assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
 
 
 def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> None:
@@ -178,6 +182,8 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_number") == ["0"]
     assert objects("citation_section_terminal_component_kind") == ["numeric"]
+    assert objects("citation_title_section_key") == ["21:360bbb-0"]
+    assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
 
     assert objects("source_id_section_component_positioned") == ["1:360bbb", "2:0"]
     assert objects("source_id_section_number_positioned") == ["1:360", "2:0"]
@@ -200,6 +206,8 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_number") == ["0"]
     assert objects("source_id_section_terminal_component_kind") == ["numeric"]
+    assert objects("source_id_title_section_key") == ["21:360bbb-0"]
+    assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
 
 
 def test_decode_modal_ir_document_emits_single_component_section_role_slots() -> None:
@@ -292,6 +300,8 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert slot_map["citation_title_section_key"] == ["45:228a to 228c"]
+    assert slot_map["citation_title_section_key_normalized"] == ["45:228a to 228c"]
 
     assert slot_map["source_id_section_range"] == ["228a to 228c"]
     assert slot_map["source_id_section_range_start"] == ["228a"]
@@ -311,6 +321,8 @@ def test_decode_modal_ir_document_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert slot_map["source_id_title_section_key"] == ["45:228a to 228c"]
+    assert slot_map["source_id_title_section_key_normalized"] == ["45:228a to 228c"]
 
 
 def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
@@ -341,6 +353,8 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert objects("citation_title_section_key") == ["45:228a to 228c"]
+    assert objects("citation_title_section_key_normalized") == ["45:228a to 228c"]
 
     assert objects("source_id_section_range") == ["228a to 228c"]
     assert objects("source_id_section_range_start") == ["228a"]
@@ -360,6 +374,8 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
         "1:alphanumeric",
         "2:alphanumeric",
     ]
+    assert objects("source_id_title_section_key") == ["45:228a to 228c"]
+    assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
 
 
 def test_decode_modal_ir_document_emits_document_modal_family_count_slots() -> None:
