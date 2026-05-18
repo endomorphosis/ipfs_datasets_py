@@ -322,6 +322,69 @@ def test_spacy_encoder_treats_within_days_as_temporal_cue_and_scope() -> None:
     assert signals["has_temporal_scope"] is True
 
 
+def test_spacy_encoder_detects_editorial_frame_scope_signals() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Editorial Notes Codification Section 5602 was formerly classified to "
+            "section 83 of this title prior to editorial reclassification and "
+            "renumbering as this section."
+        ),
+        document_id="sample-editorial-frame-scope",
+    )
+
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_frame_context"] is True
+    assert signals["has_frame_scope_phrase"] is True
+    assert signals["has_frame_editorial_scope_phrase"] is True
+
+
+def test_spacy_decoder_promotes_frame_logits_over_hybrid_for_editorial_scope_text() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="2",
+        section="5602",
+        text=(
+            "Editorial Notes Codification Section 5602 was formerly classified to "
+            "section 83 of this title prior to editorial reclassification and "
+            "renumbering as this section."
+        ),
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "hybrid", "temporal"),
+    )
+
+    assert logits["frame"] > logits["hybrid"]
+
+
+def test_spacy_decoder_promotes_frame_logits_over_temporal_for_editorial_scope_text() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="2",
+        section="5602",
+        text=(
+            "Editorial Notes Codification Section 5602 was formerly classified to "
+            "section 83 of this title after editorial reclassification and "
+            "renumbering as this section."
+        ),
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "hybrid", "temporal"),
+    )
+
+    assert logits["frame"] > logits["temporal"]
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

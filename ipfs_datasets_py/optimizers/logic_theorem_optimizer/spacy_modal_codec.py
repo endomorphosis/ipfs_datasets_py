@@ -296,10 +296,21 @@ _FRAME_CONTEXT_TOKENS = frozenset(
         "authority",
         "board",
         "bureau",
+        "classified",
+        "classification",
+        "codification",
         "commission",
+        "committee",
+        "committees",
+        "congress",
         "court",
         "department",
         "director",
+        "editorial",
+        "former",
+        "formerly",
+        "historical",
+        "house",
         "intelligence",
         "judge",
         "jurisdiction",
@@ -308,8 +319,11 @@ _FRAME_CONTEXT_TOKENS = frozenset(
         "omitted",
         "reclassified",
         "repealed",
+        "representatives",
         "renumbered",
+        "revision",
         "reserved",
+        "senate",
         "secretary",
         "terminated",
         "transferred",
@@ -317,11 +331,32 @@ _FRAME_CONTEXT_TOKENS = frozenset(
     }
 )
 _FRAME_SCOPE_PHRASES = (
+    "codification section",
+    "editorial notes",
     "editorially reclassified",
+    "former section",
+    "formerly classified",
+    "historical and revision notes",
+    "prior to editorial reclassification",
+    "prior to editorial reclassification and renumbering",
+    "reclassified as section",
     "renumbered",
     "repealed",
     "reserved",
     "transferred",
+    "transferred to section",
+    "was formerly classified",
+)
+_FRAME_EDITORIAL_SCOPE_PHRASES = (
+    "codification section",
+    "editorial notes",
+    "historical and revision notes",
+    "formerly classified",
+    "was formerly classified",
+    "prior to editorial reclassification",
+    "prior to editorial reclassification and renumbering",
+    "reclassified as section",
+    "transferred to section",
 )
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
@@ -838,8 +873,15 @@ class SpaCyModalDecoder:
         for family, count in counts.items():
             if family in logits:
                 logits[family] = 2.0 + float(count)
+        signals = modal_ambiguity_signals(encoding)
+        frame_bonus = _frame_logit_bonus(signals)
+        if ModalLogicFamily.FRAME.value in logits and frame_bonus > 0.0:
+            logits[ModalLogicFamily.FRAME.value] = (
+                max(logits[ModalLogicFamily.FRAME.value], 0.5) + frame_bonus
+            )
         if not counts and ModalLogicFamily.HYBRID.value in logits:
-            logits[ModalLogicFamily.HYBRID.value] = 1.0
+            if frame_bonus <= 0.0:
+                logits[ModalLogicFamily.HYBRID.value] = 1.0
         return logits
 
     def _feature_stream(self, encoding: SpaCyLegalEncoding) -> Iterable[str]:
@@ -1070,7 +1112,14 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     frame_scope_phrase = _contains_scope_phrase(
         normalized_text, _FRAME_SCOPE_PHRASES
     )
-    frame_context = bool(token_terms & _FRAME_CONTEXT_TOKENS) or bool(frame_scope_phrase)
+    frame_editorial_scope_phrase = _contains_scope_phrase(
+        normalized_text, _FRAME_EDITORIAL_SCOPE_PHRASES
+    )
+    frame_context = (
+        bool(token_terms & _FRAME_CONTEXT_TOKENS)
+        or bool(frame_scope_phrase)
+        or bool(frame_editorial_scope_phrase)
+    )
     return {
         "has_alethic_cue": ModalLogicFamily.ALETHIC.value in cue_families,
         "has_alethic_scope": alethic_scope or ModalLogicFamily.ALETHIC.value in cue_families,
@@ -1098,9 +1147,26 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_temporal_within_scope": temporal_within_scope,
         "has_frame_context": frame_context,
+        "has_frame_editorial_scope_phrase": bool(frame_editorial_scope_phrase),
         "has_frame_scope_phrase": bool(frame_scope_phrase),
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,
     }
+
+
+def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
+    """Return deterministic frame-family logit bonus from structural signals."""
+    bonus = 0.0
+    if bool(signals.get("has_frame_context")):
+        bonus += 0.6
+    if bool(signals.get("has_statutory_scope_reference")):
+        bonus += 0.8
+    if bool(signals.get("has_frame_scope_phrase")):
+        bonus += 1.2
+    if bool(signals.get("has_frame_editorial_scope_phrase")):
+        bonus += 2.2
+    if bool(signals.get("has_frame_cue")):
+        bonus += 2.5
+    return bonus
 
 
 def _contains_scope_phrase(text: str, phrases: Sequence[str]) -> bool:
