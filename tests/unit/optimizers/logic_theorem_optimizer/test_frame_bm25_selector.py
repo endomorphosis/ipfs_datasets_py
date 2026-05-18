@@ -254,6 +254,28 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
     ]
 
 
+def test_frame_ontology_terms_from_triples_support_fallback_surface_text_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "fallback_surface_text",
+                "object": "Housing voucher benefits and utility allowances",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "fallback_surface_text_token_suffix",
+                "object": "allowances",
+            },
+        ]
+    )
+
+    assert terms == [
+        "housing_voucher_benefits_utility_allowances",
+        "allowances",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_aliases() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -376,6 +398,20 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
         "authority",
         "permission",
         "may",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_fallback_surface_text_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:fallback_surface_text:Housing voucher benefits and utility allowances",
+            "flogic:fallback_surface_text_token_suffix:allowances",
+        ]
+    )
+
+    assert terms == [
+        "housing_voucher_benefits_utility_allowances",
+        "allowances",
     ]
 
 

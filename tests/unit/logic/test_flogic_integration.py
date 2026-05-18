@@ -586,3 +586,38 @@ class TestFLogicSemanticOptimizer:
             "may",
             "unless_written_notice_provided",
         ]
+
+    def test_result_metadata_tracks_fallback_surface_text_terms_from_triples(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            kg_triples=[
+                {
+                    "subject": "doc-1",
+                    "predicate": "fallback_surface_text",
+                    "object": "Housing voucher benefits and utility allowances",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "fallback_surface_text_token_suffix",
+                    "object": "allowances",
+                },
+            ],
+        )
+
+        assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 0
+        assert result.metadata["frame_ontology_terms_from_feature_keys"] == []
+        assert result.metadata["frame_ontology_terms_from_triples_count"] == 2
+        assert result.metadata["frame_ontology_terms_from_triples"] == [
+            "allowances",
+            "housing_voucher_benefits_utility_allowances",
+        ]
+        assert result.metadata["frame_ontology_term_count"] == 2
+        assert result.metadata["frame_ontology_terms"] == [
+            "allowances",
+            "housing_voucher_benefits_utility_allowances",
+        ]
