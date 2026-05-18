@@ -28,6 +28,15 @@ _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedne
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
 
 
+def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
+    noise_tokens = " ".join(chr(ord("a") + (index % 26)) for index in range(160))
+    return (
+        "U S C title archive register digest taxonomy index chapter crosswalk "
+        f"sec {section} {heading} "
+        f"{noise_tokens}"
+    )
+
+
 def test_spacy_encoder_compiles_modal_ir_without_downloaded_model() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -306,6 +315,47 @@ def test_spacy_compiler_replays_embedded_sec_heading_zero_formula_cases() -> Non
         assert fallback.operator.family == "frame"
         assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-7-3125-7e90453fbb54b8b5",
+            "7 U.S.C. 3125",
+            "3125",
+            "administrative notice hearing procedures",
+        ),
+        (
+            "us-code-15-828-103d21b6b8cb41ed",
+            "15 U.S.C. 828",
+            "828",
+            "administrative notice hearing records",
+        ),
+        (
+            "us-code-22-2878-e0e935df7cbf1b94",
+            "22 U.S.C. 2878",
+            "2878",
+            "administrative notice hearing review",
+        ),
+    ]
+
+    for document_id, citation, section, heading in cases:
+        encoding = encoder.encode(
+            _coarse_uscode_heading_noise_text(section, heading),
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_coarse_v1"
         assert fallback.provenance.citation == citation
 
 

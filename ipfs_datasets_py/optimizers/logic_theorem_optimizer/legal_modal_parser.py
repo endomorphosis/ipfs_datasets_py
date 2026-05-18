@@ -732,6 +732,7 @@ class LegalModalParser:
             return None
 
         candidate_segment: Optional[LegalSegment] = None
+        fallback_rule_override: Optional[str] = None
         long_heading_segment: Optional[LegalSegment] = None
         for segment in segments:
             if not self._starts_with_citation_section_reference(
@@ -785,6 +786,13 @@ class LegalModalParser:
                 citation_section=citation_section,
             )
         if candidate_segment is None:
+            candidate_segment = self._coarse_citation_heading_segment(
+                normalized_text=normalized_text,
+                citation_section=citation_section,
+            )
+            if candidate_segment is not None:
+                fallback_rule_override = "uscode_section_heading_coarse_v1"
+        if candidate_segment is None:
             return None
 
         profile = self.registry.get_profile(ModalLogicFamily.FRAME)
@@ -821,7 +829,8 @@ class LegalModalParser:
             exceptions=exceptions,
             metadata={
                 "cue": "__uscode_section_heading_fallback__",
-                "fallback_rule": (
+                "fallback_rule": fallback_rule_override
+                or (
                     "uscode_section_heading_v1"
                     if self._contains_citation_section_reference(
                         candidate_segment.text,
@@ -994,6 +1003,73 @@ class LegalModalParser:
         if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS:
             return False
         return True
+
+    def _coarse_citation_heading_segment(
+        self,
+        *,
+        normalized_text: str,
+        citation_section: str,
+    ) -> Optional[LegalSegment]:
+        """Recover a compact heading around a citation reference in noisy long lines."""
+        if not citation_section:
+            return None
+
+        section_pattern = re.escape(citation_section)
+        reference_pattern = re.compile(
+            rf"(?<!\w){_USCODE_OPTIONAL_SECTION_REF_PREFIX_RE}{section_pattern}"
+            rf"(?={_USCODE_SECTION_REF_SUFFIX_RE})",
+            re.IGNORECASE,
+        )
+        match = reference_pattern.search(normalized_text)
+        if match is None:
+            return None
+
+        start = match.start()
+        window_end = min(
+            len(normalized_text),
+            start + _USCODE_EMBEDDED_HEADING_WINDOW_MAX_CHARS,
+        )
+        window = normalized_text[start:window_end]
+        lowered_window = window.lower()
+        cut = len(window)
+
+        for marker in (
+            " from the u.s. government publishing office",
+            " editorial notes ",
+            " historical and revision notes ",
+            " amendments ",
+        ):
+            marker_index = lowered_window.find(marker)
+            if marker_index != -1:
+                cut = min(cut, marker_index)
+
+        subsection_match = _USCODE_SUBSECTION_MARKER_RE.search(
+            window,
+            pos=max(match.end() - start, 0),
+        )
+        if subsection_match is not None:
+            cut = min(cut, subsection_match.start())
+
+        candidate_text = self.normalize_text(window[:cut])
+        if not candidate_text:
+            return None
+
+        token_matches = list(_TOKEN_RE.finditer(candidate_text))
+        token_count = len(token_matches)
+        if token_count < 2:
+            return None
+        if token_count > _USCODE_SECTION_HEADING_EXTENDED_MAX_TOKENS:
+            cutoff = token_matches[_USCODE_SECTION_HEADING_SHORT_MAX_TOKENS - 1].end()
+            candidate_text = self.normalize_text(candidate_text[:cutoff])
+        if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(candidate_text):
+            return None
+
+        return LegalSegment(
+            text=candidate_text,
+            start_char=start,
+            end_char=start + len(candidate_text),
+            role="clause",
+        )
 
 
 __all__ = [

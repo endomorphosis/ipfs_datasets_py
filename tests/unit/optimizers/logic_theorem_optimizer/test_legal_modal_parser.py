@@ -224,6 +224,15 @@ _USCODE_35_4_TODO_TEXT = "Officers, employees, and attorneys."
 _USCODE_7_7316_TODO_TEXT = "Report."
 
 
+def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
+    noise_tokens = " ".join(chr(ord("a") + (index % 26)) for index in range(160))
+    return (
+        "U S C title archive register digest taxonomy index chapter crosswalk "
+        f"sec {section} {heading} "
+        f"{noise_tokens}"
+    )
+
+
 def test_parser_normalizes_and_segments_legal_text() -> None:
     parser = LegalModalParser()
     text = "  The agency   must provide notice. Unless waived, the applicant may appeal. "
@@ -848,6 +857,46 @@ def test_parser_replays_long_embedded_section_heading_samples_for_8_1365b_34_501
         assert fallback.operator.family == "frame"
         assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_symbolic_validity_todo_samples_with_coarse_section_heading_fallback() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-7-3125-7e90453fbb54b8b5",
+            "7 U.S.C. 3125",
+            "3125",
+            "administrative notice hearing procedures",
+        ),
+        (
+            "us-code-15-828-103d21b6b8cb41ed",
+            "15 U.S.C. 828",
+            "828",
+            "administrative notice hearing records",
+        ),
+        (
+            "us-code-22-2878-e0e935df7cbf1b94",
+            "22 U.S.C. 2878",
+            "2878",
+            "administrative notice hearing review",
+        ),
+    ]
+
+    for document_id, citation, section, heading in cases:
+        document = parser.parse(
+            _coarse_uscode_heading_noise_text(section, heading),
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_section_heading_coarse_v1"
         assert fallback.provenance.citation == citation
 
 
