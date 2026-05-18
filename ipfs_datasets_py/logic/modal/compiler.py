@@ -597,7 +597,19 @@ class DeterministicModalCompiler:
                 continue
             target_share = float(family_shares.get(target_family, 0.0))
             has_compiled_target_family_formula = target_family in compiled_modal_families
-            if not has_signal and target_share <= 0.0 and not has_compiled_target_family_formula:
+            has_target_signal_evidence = bool(
+                has_signal
+                or target_share > 0.0
+                or has_compiled_target_family_formula
+            )
+            supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
+                predicted_family,
+                target_family,
+            )
+            if (
+                not has_target_signal_evidence
+                and not supports_signal_free_pair_policy
+            ):
                 continue
             family_margin = target_share - predicted_share
             if family_margin > threshold:
@@ -615,6 +627,11 @@ class DeterministicModalCompiler:
                 "family_margin": round(family_margin, 6),
                 "family_ranking": list(ranking),
                 "compiled_modal_families": sorted(compiled_modal_families),
+                "has_target_signal_evidence": has_target_signal_evidence,
+                "signal_free_pair_policy_applied": (
+                    not has_target_signal_evidence
+                    and supports_signal_free_pair_policy
+                ),
                 "has_compiled_target_family_formula": has_compiled_target_family_formula,
                 "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
@@ -679,6 +696,23 @@ class DeterministicModalCompiler:
                 "margin_low",
             )
         )
+
+    def _supports_signal_free_adaptive_pair(
+        self,
+        predicted_family: str,
+        target_family: str,
+    ) -> bool:
+        """Return whether this pair must surface adaptive ambiguity without lexical support."""
+        return (predicted_family, target_family) in {
+            (
+                ModalLogicFamily.DEONTIC.value,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+            ),
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.DEONTIC.value,
+            ),
+        }
 
     def _temporal_target_family_ambiguities(
         self,
