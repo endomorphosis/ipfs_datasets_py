@@ -1402,12 +1402,31 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         numeric_component_count += 1
         if number:
             components.append(("citation_section_number", number))
-            components.append(("citation_section_number_digit_count", str(len(number))))
+            number_digit_count = str(len(number))
+            components.append(("citation_section_number_digit_count", number_digit_count))
+            components.append(
+                (
+                    "citation_section_number_digit_count_positioned",
+                    f"{position}:{number_digit_count}",
+                )
+            )
             components.append(("citation_section_number_positioned", f"{position}:{number}"))
             if index == 1:
                 components.append(("citation_section_primary_number", number))
+                components.append(
+                    (
+                        "citation_section_primary_number_digit_count",
+                        number_digit_count,
+                    )
+                )
             if index == total_parts:
                 components.append(("citation_section_terminal_number", number))
+                components.append(
+                    (
+                        "citation_section_terminal_number_digit_count",
+                        number_digit_count,
+                    )
+                )
         if suffix:
             component_shapes.append("NA")
             suffix_component_count += 1
