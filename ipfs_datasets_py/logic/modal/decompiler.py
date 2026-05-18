@@ -19,6 +19,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFormula,
 )
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    DEFAULT_MODAL_REGISTRY,
+)
 
 _CONDITION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("provided that", "provided_that"),
@@ -163,6 +166,7 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?!\w)",
     re.IGNORECASE,
 )
+_CUE_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 @dataclass(frozen=True)
@@ -344,9 +348,9 @@ def modal_text_token_similarity(left: str, right: str) -> float:
 
 def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]:
     spans = [[formula.provenance.start_char, formula.provenance.end_char]]
-    cue = str(formula.metadata.get("cue") or "").strip()
     cue_start = formula.metadata.get("cue_start_char")
     cue_end = formula.metadata.get("cue_end_char")
+    cue_values = _formula_cues(formula)
     argument_values = _phrase_values(formula.predicate.arguments)
     statutory_scope_emissions: set[Tuple[str, str]] = set()
     predicate_text = _predicate_phrase(formula)
@@ -455,12 +459,20 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
-    if cue:
+    for cue in cue_values:
         cue_spans = _span_from_values(cue_start, cue_end) or spans
         phrases.append(
             DecodedModalPhrase(
                 text=cue,
                 slot="cue",
+                spans=cue_spans,
+                provenance_only=True,
+            )
+        )
+        phrases.append(
+            DecodedModalPhrase(
+                text=cue,
+                slot="modal_cue",
                 spans=cue_spans,
                 provenance_only=True,
             )
@@ -474,6 +486,16 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
+            alias_slot = _cue_alias_slot_name(cue_slot)
+            if alias_slot:
+                phrases.append(
+                    DecodedModalPhrase(
+                        text=cue_value,
+                        slot=alias_slot,
+                        spans=cue_spans,
+                        provenance_only=True,
+                    )
+                )
     if argument_values:
         phrases.append(
             DecodedModalPhrase(
@@ -2727,6 +2749,105 @@ def _cue_modal_slots(
         cue=cue,
         slot_prefix="cue_modal",
     )
+
+
+def _formula_cues(formula: ModalIRFormula) -> List[str]:
+    cues: List[str] = []
+    explicit_cue = _clean_text(formula.metadata.get("cue") or "")
+    if explicit_cue:
+        cues.append(explicit_cue)
+    derived_cue = _derived_modal_cue(formula, explicit_cue=explicit_cue)
+    if derived_cue:
+        normalized_existing = {value.lower() for value in cues}
+        if derived_cue.lower() not in normalized_existing:
+            cues.append(derived_cue)
+    return cues
+
+
+def _derived_modal_cue(
+    formula: ModalIRFormula,
+    *,
+    explicit_cue: str,
+) -> str:
+    normalized_explicit = _clean_text(explicit_cue)
+    if normalized_explicit and not _is_fallback_modal_cue(normalized_explicit):
+        return ""
+    cue_terms = _operator_cue_terms(formula)
+    source_text = " ".join(
+        _clean_text(value).replace("_", " ").lower()
+        for value in (
+            formula.predicate.name,
+            *formula.conditions,
+            *formula.exceptions,
+        )
+        if _clean_text(value)
+    )
+    for cue_term in cue_terms:
+        normalized_term = _clean_text(cue_term).lower()
+        if not normalized_term:
+            continue
+        if _text_contains_cue_term(source_text, normalized_term):
+            return normalized_term
+    operator_label = _clean_text(_resolved_modal_operator_label(formula)).lower()
+    if operator_label:
+        label_tokens = _CUE_TOKEN_RE.findall(operator_label)
+        if label_tokens:
+            return label_tokens[0]
+    return ""
+
+
+def _operator_cue_terms(formula: ModalIRFormula) -> List[str]:
+    family = _clean_text(formula.operator.family).lower()
+    symbol = _clean_text(formula.operator.symbol)
+    if not family or not symbol:
+        return []
+    for profile in DEFAULT_MODAL_REGISTRY.all_profiles():
+        if _clean_text(profile.family.value).lower() != family:
+            continue
+        for operator in profile.operators:
+            if _clean_text(operator.symbol) != symbol:
+                continue
+            return [
+                _clean_text(cue_term)
+                for cue_term in operator.cue_terms
+                if _clean_text(cue_term)
+            ]
+    return []
+
+
+def _text_contains_cue_term(text: str, cue_term: str) -> bool:
+    normalized_text = _clean_text(text).lower()
+    normalized_term = _clean_text(cue_term).lower()
+    if not normalized_text or not normalized_term:
+        return False
+    if " " in normalized_term:
+        pattern = re.compile(
+            rf"(?<!\w){re.escape(normalized_term)}(?!\w)",
+            re.IGNORECASE,
+        )
+        return pattern.search(normalized_text) is not None
+    token_set = set(_CUE_TOKEN_RE.findall(normalized_text))
+    if normalized_term in token_set:
+        return True
+    if normalized_term.endswith("y"):
+        plural_variant = f"{normalized_term[:-1]}ies"
+        if plural_variant in token_set:
+            return True
+    return False
+
+
+def _is_fallback_modal_cue(cue: str) -> bool:
+    normalized = _clean_text(cue).lower()
+    return normalized.startswith("__") and normalized.endswith("__")
+
+
+def _cue_alias_slot_name(slot: str) -> str:
+    normalized_slot = _clean_text(slot)
+    if normalized_slot.startswith("cue_modal_"):
+        return f"modal_cue_{normalized_slot[len('cue_modal_') :]}"
+    if normalized_slot.startswith("cue_"):
+        return f"modal_cue_{normalized_slot[len('cue_') :]}"
+    return ""
 
 
 def _modal_lexeme_slots(

@@ -202,6 +202,7 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 _SLOT_FEATURE_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+_CUE_TOKEN_RE = re.compile(r"[a-z0-9]+")
 _USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
     "reclassified",
     "transferred",
@@ -994,26 +995,42 @@ def modal_ir_to_flogic_triples(
                         "object": predicate_value,
                     }
                 )
-        cue = _clean_non_empty_string(formula.metadata.get("cue"))
-        if cue:
-            triples.append(
-                {
-                    "subject": formula.formula_id,
-                    "predicate": "modal_cue",
-                    "object": cue,
-                }
-            )
-            for predicate, value in _cue_modal_components(
-                formula,
-                cue=cue,
-            ):
+        cue_entries: set[tuple[str, str]] = set()
+        for cue in _formula_cues(formula):
+            cue_value = _clean_non_empty_string(cue)
+            if not cue_value:
+                continue
+            modal_cue_entry = ("modal_cue", cue_value)
+            if modal_cue_entry not in cue_entries:
+                cue_entries.add(modal_cue_entry)
                 triples.append(
                     {
                         "subject": formula.formula_id,
-                        "predicate": predicate,
-                        "object": value,
+                        "predicate": "modal_cue",
+                        "object": cue_value,
                     }
                 )
+            for predicate, value in _cue_modal_components(
+                formula,
+                cue=cue_value,
+            ):
+                for resolved_predicate in (
+                    predicate,
+                    _cue_alias_predicate_name(predicate),
+                ):
+                    if not resolved_predicate:
+                        continue
+                    marker = (resolved_predicate, value)
+                    if marker in cue_entries:
+                        continue
+                    cue_entries.add(marker)
+                    triples.append(
+                        {
+                            "subject": formula.formula_id,
+                            "predicate": resolved_predicate,
+                            "object": value,
+                        }
+                    )
         if formula.predicate.role:
             triples.append(
                 {
@@ -1604,6 +1621,105 @@ def _cue_modal_components(
         cue=cue,
         slot_prefix="cue_modal",
     )
+
+
+def _formula_cues(formula: ModalIRFormula) -> List[str]:
+    cues: List[str] = []
+    explicit_cue = _clean_non_empty_string(formula.metadata.get("cue"))
+    if explicit_cue:
+        cues.append(explicit_cue)
+    derived_cue = _derived_modal_cue(formula, explicit_cue=explicit_cue)
+    if derived_cue:
+        normalized_explicit = explicit_cue.lower()
+        if not normalized_explicit or derived_cue.lower() != normalized_explicit:
+            cues.append(derived_cue)
+    return cues
+
+
+def _derived_modal_cue(
+    formula: ModalIRFormula,
+    *,
+    explicit_cue: str,
+) -> str:
+    normalized_explicit = _clean_non_empty_string(explicit_cue)
+    if normalized_explicit and not _is_fallback_modal_cue(normalized_explicit):
+        return ""
+    cue_terms = _operator_cue_terms(formula)
+    source_text = " ".join(
+        _clean_non_empty_string(value).replace("_", " ").lower()
+        for value in (
+            formula.predicate.name,
+            *formula.conditions,
+            *formula.exceptions,
+        )
+        if _clean_non_empty_string(value)
+    )
+    for cue_term in cue_terms:
+        normalized_term = _clean_non_empty_string(cue_term).lower()
+        if not normalized_term:
+            continue
+        if _text_contains_cue_term(source_text, normalized_term):
+            return normalized_term
+    operator_label = _clean_non_empty_string(_resolved_modal_operator_label(formula)).lower()
+    if operator_label:
+        label_tokens = _CUE_TOKEN_RE.findall(operator_label)
+        if label_tokens:
+            return label_tokens[0]
+    return ""
+
+
+def _operator_cue_terms(formula: ModalIRFormula) -> List[str]:
+    family = _clean_non_empty_string(formula.operator.family).lower()
+    symbol = _clean_non_empty_string(formula.operator.symbol)
+    if not family or not symbol:
+        return []
+    for profile in DEFAULT_MODAL_REGISTRY.all_profiles():
+        if _clean_non_empty_string(profile.family.value).lower() != family:
+            continue
+        for operator in profile.operators:
+            if _clean_non_empty_string(operator.symbol) != symbol:
+                continue
+            return [
+                _clean_non_empty_string(cue_term)
+                for cue_term in operator.cue_terms
+                if _clean_non_empty_string(cue_term)
+            ]
+    return []
+
+
+def _text_contains_cue_term(text: str, cue_term: str) -> bool:
+    normalized_text = _clean_non_empty_string(text).lower()
+    normalized_term = _clean_non_empty_string(cue_term).lower()
+    if not normalized_text or not normalized_term:
+        return False
+    if " " in normalized_term:
+        pattern = re.compile(
+            rf"(?<!\w){re.escape(normalized_term)}(?!\w)",
+            re.IGNORECASE,
+        )
+        return pattern.search(normalized_text) is not None
+    token_set = set(_CUE_TOKEN_RE.findall(normalized_text))
+    if normalized_term in token_set:
+        return True
+    if normalized_term.endswith("y"):
+        plural_variant = f"{normalized_term[:-1]}ies"
+        if plural_variant in token_set:
+            return True
+    return False
+
+
+def _is_fallback_modal_cue(cue: str) -> bool:
+    normalized = _clean_non_empty_string(cue).lower()
+    return normalized.startswith("__") and normalized.endswith("__")
+
+
+def _cue_alias_predicate_name(predicate: str) -> str:
+    normalized_predicate = _clean_non_empty_string(predicate)
+    if normalized_predicate.startswith("cue_modal_"):
+        return f"modal_cue_{normalized_predicate[len('cue_modal_') :]}"
+    if normalized_predicate.startswith("cue_"):
+        return f"modal_cue_{normalized_predicate[len('cue_') :]}"
+    return ""
 
 
 def _modal_lexeme_components(

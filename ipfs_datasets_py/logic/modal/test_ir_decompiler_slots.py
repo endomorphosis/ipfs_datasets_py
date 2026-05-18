@@ -783,6 +783,36 @@ def _single_formula_temporal_family_sample_document() -> ModalIRDocument:
     )
 
 
+def _fallback_frame_authority_cue_sample_document() -> ModalIRDocument:
+    source_id = "us-code-46-2104.-968c80c773abaeae"
+    formula = ModalIRFormula(
+        formula_id="f-fallback-frame-authority-cue",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="authorities_personnel_relating"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=42,
+            citation="46 U.S.C. 2104.",
+        ),
+        metadata={
+            "cue": "__uscode_section_heading_fallback__",
+            "fallback_rule": "uscode_section_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="Authorities and personnel relating to vessel documentation.",
+        formulas=[formula],
+    )
+
+
 def _metadata_only_frame_terms_sample_document() -> ModalIRDocument:
     source_id = "us-code-26-646-0cfbbfe0c86b90ae"
     formula = ModalIRFormula(
@@ -3361,6 +3391,7 @@ def test_decode_modal_ir_document_emits_condition_proxy_slots_for_exception_only
     assert slot_map["condition_scope_alnum_segment_count"] == ["4"]
     assert slot_map["cue_modal_conditional_normative"] == ["O|:may"]
     assert slot_map["cue_conditional_normative"] == ["O|:may"]
+    assert slot_map["modal_cue_conditional_normative"] == ["O|:may"]
     assert slot_map["condition_modal_conditional_normative"] == ["O|:except_as"]
     assert slot_map["condition_conditional_normative"] == ["O|:except_as"]
 
@@ -3389,6 +3420,7 @@ def test_modal_ir_to_flogic_triples_emits_condition_proxy_slots_for_exception_on
     assert objects("condition_scope_alnum_segment_count") == ["4"]
     assert objects("cue_modal_conditional_normative") == ["O|:may"]
     assert objects("cue_conditional_normative") == ["O|:may"]
+    assert objects("modal_cue_conditional_normative") == ["O|:may"]
     assert objects("condition_modal_conditional_normative") == ["O|:except_as"]
     assert objects("condition_conditional_normative") == ["O|:except_as"]
 
@@ -3402,6 +3434,12 @@ def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_
     assert slot_map["cue_modal_operator"] == ["O", "F"]
     assert slot_map["cue_modal_lexeme"] == ["shall", "by"]
     assert slot_map["cue_modal_temporal_relation"] == ["deadline"]
+    assert slot_map["modal_cue"] == ["shall", "by"]
+    assert slot_map["modal_cue_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["modal_cue_family"] == ["deontic", "temporal"]
+    assert slot_map["modal_cue_operator"] == ["O", "F"]
+    assert slot_map["modal_cue_lexeme"] == ["shall", "by"]
+    assert slot_map["modal_cue_temporal_relation"] == ["deadline"]
     assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
     assert slot_map["condition_modal_signature"] == [
         "deontic:O:if",
@@ -3433,6 +3471,12 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
     assert objects("cue_modal_operator") == ["O", "F"]
     assert objects("cue_modal_lexeme") == ["shall", "by"]
     assert objects("cue_modal_temporal_relation") == ["deadline"]
+    assert objects("modal_cue") == ["shall", "by"]
+    assert objects("modal_cue_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("modal_cue_family") == ["deontic", "temporal"]
+    assert objects("modal_cue_operator") == ["O", "F"]
+    assert objects("modal_cue_lexeme") == ["shall", "by"]
+    assert objects("modal_cue_temporal_relation") == ["deadline"]
     assert objects("condition_prefix_key") == ["if", "after", "by"]
     assert objects("condition_modal_signature") == [
         "deontic:O:if",
@@ -3447,6 +3491,37 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
     assert objects("condition_by") == ["march 1"]
     assert objects("condition_prefix_family") == ["temporal"]
     assert objects("condition_prefix_temporal_relation") == ["after", "deadline"]
+
+
+def test_decode_modal_ir_document_derives_modal_cue_from_fallback_frame_predicate() -> None:
+    decoded = decode_modal_ir_document(_fallback_frame_authority_cue_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["cue"] == ["__uscode_section_heading_fallback__", "authority"]
+    assert slot_map["modal_cue"] == ["__uscode_section_heading_fallback__", "authority"]
+    assert slot_map["modal_cue_signature"] == [
+        "frame:Frame:__uscode_section_heading_fallback__",
+        "frame:Frame:authority",
+    ]
+    assert slot_map["modal_cue_lexeme"] == ["__uscode_section_heading_fallback__", "authority"]
+
+
+def test_modal_ir_to_flogic_triples_derives_modal_cue_from_fallback_frame_predicate() -> None:
+    triples = modal_ir_to_flogic_triples(_fallback_frame_authority_cue_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_cue") == ["__uscode_section_heading_fallback__", "authority"]
+    assert objects("modal_cue_signature") == [
+        "frame:Frame:__uscode_section_heading_fallback__",
+        "frame:Frame:authority",
+    ]
+    assert objects("modal_cue_lexeme") == ["__uscode_section_heading_fallback__", "authority"]
 
 
 def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:
