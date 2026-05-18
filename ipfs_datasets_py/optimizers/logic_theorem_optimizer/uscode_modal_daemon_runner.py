@@ -805,27 +805,32 @@ def build_paired_daemon_commands(
     parallel_scopes = _codex_parallel_scope_values(args)
     if parallel_scopes:
         codex_children = []
+        scope_workers = max(1, int(getattr(args, "codex_scope_workers", 1) or 1))
         for scope in parallel_scopes:
-            child_run_id = f"{codex_run_id}-{scope}"
-            child_worker_id = (
-                f"{args.worker_id}-{scope}" if getattr(args, "worker_id", None) else f"codex-{scope}"
-            )
-            codex_children.append(
-                {
-                    "command": _build_codex_child_command(
-                        args,
-                        child_run_id=child_run_id,
-                        codex_duration_seconds=codex_duration_seconds,
-                        module_name=module_name,
-                        queue_run_id=queue_run_id,
-                        scope=scope,
-                        worker_id=child_worker_id,
-                    ),
-                    "run_id": child_run_id,
-                    "scope": scope,
-                    "worker_id": child_worker_id,
-                }
-            )
+            for worker_index in range(1, scope_workers + 1):
+                worker_suffix = scope if scope_workers == 1 else f"{scope}-{worker_index:02d}"
+                child_run_id = f"{codex_run_id}-{worker_suffix}"
+                child_worker_id = (
+                    f"{args.worker_id}-{worker_suffix}"
+                    if getattr(args, "worker_id", None)
+                    else f"codex-{worker_suffix}"
+                )
+                codex_children.append(
+                    {
+                        "command": _build_codex_child_command(
+                            args,
+                            child_run_id=child_run_id,
+                            codex_duration_seconds=codex_duration_seconds,
+                            module_name=module_name,
+                            queue_run_id=queue_run_id,
+                            scope=scope,
+                            worker_id=child_worker_id,
+                        ),
+                        "run_id": child_run_id,
+                        "scope": scope,
+                        "worker_id": child_worker_id,
+                    }
+                )
     else:
         codex_children = [
             {
@@ -2150,6 +2155,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "For paired runs, launch one Codex child per comma-separated AST scope "
             "or use 'all'. Each child claims only its scope."
+        ),
+    )
+    parser.add_argument(
+        "--codex-scope-workers",
+        type=int,
+        default=1,
+        help=(
+            "For paired parallel-scope runs, launch this many Codex children per "
+            "AST scope. Each child keeps the same scope filter but uses a unique worker id."
         ),
     )
     parser.add_argument(

@@ -33,6 +33,12 @@ TODO_STATUS_RANK = {
     "completed": 2,
     "failed_validation": 2,
 }
+PROGRAM_SYNTHESIS_DEDUPE_KEEP_RANK = {
+    "failed_validation": 0,
+    "pending": 1,
+    "claimed": 2,
+    "completed": 3,
+}
 PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD = 0.8
 PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "add_deterministic_parser_rule": "modal.compiler",
@@ -651,6 +657,7 @@ class ModalTodoQueue:
         *,
         optimizer_role: Optional[str] = None,
         near_duplicate_jaccard: float = PROGRAM_SYNTHESIS_NEAR_DUPLICATE_JACCARD,
+        include_bundle_key: bool = False,
     ) -> bool:
         """Return whether a queue item already covers the same synthesis work."""
         role = optimizer_role or _todo_optimizer_role(todo)
@@ -667,6 +674,8 @@ class ModalTodoQueue:
                 jaccard_threshold=near_duplicate_jaccard,
             ):
                 return True
+            if include_bundle_key and _program_todos_share_semantic_bundle(existing, todo):
+                return True
         return False
 
     def deduplicate_semantic(
@@ -681,7 +690,7 @@ class ModalTodoQueue:
         for todo in sorted(
             self._todos.values(),
             key=lambda item: (
-                -TODO_STATUS_RANK.get(item.status, 0),
+                -PROGRAM_SYNTHESIS_DEDUPE_KEEP_RANK.get(item.status, 0),
                 -item.priority,
                 item.created_at,
                 item.todo_id,
@@ -691,7 +700,7 @@ class ModalTodoQueue:
                 kept.append(todo)
                 continue
             duplicate = any(
-                _program_todos_near_duplicate(
+                _program_todos_duplicate_for_repair(
                     existing,
                     todo,
                     jaccard_threshold=near_duplicate_jaccard,
@@ -700,6 +709,17 @@ class ModalTodoQueue:
                 if _todo_optimizer_role(existing) == optimizer_role
             )
             if duplicate:
+                representative = next(
+                    existing
+                    for existing in kept
+                    if _todo_optimizer_role(existing) == optimizer_role
+                    and _program_todos_duplicate_for_repair(
+                        existing,
+                        todo,
+                        jaccard_threshold=near_duplicate_jaccard,
+                    )
+                )
+                _merge_program_todo_evidence(representative, todo)
                 removed_ids.append(todo.todo_id)
             else:
                 kept.append(todo)
@@ -1004,10 +1024,11 @@ class ModalTodoSupervisor:
                     todo,
                     optimizer_role=self.policy.program_synthesis_role,
                     near_duplicate_jaccard=self.policy.program_synthesis_near_duplicate_jaccard,
+                    include_bundle_key=True,
                 ):
                     continue
                 if any(
-                    _program_todos_near_duplicate(
+                    _program_todos_duplicate_for_repair(
                         existing,
                         todo,
                         jaccard_threshold=self.policy.program_synthesis_near_duplicate_jaccard,
@@ -1632,6 +1653,91 @@ def _program_todos_near_duplicate(
     if union == 0:
         return False
     return (intersection / union) >= float(jaccard_threshold)
+
+
+def _program_todos_duplicate_for_repair(
+    existing: ModalTodo,
+    candidate: ModalTodo,
+    *,
+    jaccard_threshold: float,
+) -> bool:
+    """Return True when two program-repair TODOs should share one Codex task."""
+
+    return _program_todos_near_duplicate(
+        existing,
+        candidate,
+        jaccard_threshold=jaccard_threshold,
+    ) or _program_todos_share_semantic_bundle(existing, candidate)
+
+
+def _program_todos_share_semantic_bundle(existing: ModalTodo, candidate: ModalTodo) -> bool:
+    """Return True for same action/component/scope/family-pair repair requests."""
+
+    if existing.action != candidate.action:
+        return False
+    if _todo_target_component(existing) != _todo_target_component(candidate):
+        return False
+    existing_key = _program_todo_semantic_bundle_key(existing)
+    candidate_key = _program_todo_semantic_bundle_key(candidate)
+    return bool(existing_key and candidate_key and existing_key == candidate_key)
+
+
+def _merge_program_todo_evidence(target: ModalTodo, duplicate: ModalTodo) -> None:
+    """Carry duplicate evidence into the representative program-repair TODO."""
+
+    target.sample_ids = _unique_preserve_order([*target.sample_ids, *duplicate.sample_ids])
+    target.citations = _unique_preserve_order([*target.citations, *duplicate.citations])
+    target.priority = max(float(target.priority), float(duplicate.priority))
+    target.loss_value = max(float(target.loss_value), float(duplicate.loss_value))
+    target.metadata["deduped_duplicate_count"] = int(
+        target.metadata.get("deduped_duplicate_count", 0)
+    ) + 1 + int(duplicate.metadata.get("deduped_duplicate_count", 0))
+    target.metadata["merged_sample_count"] = len(target.sample_ids)
+
+    duplicate_ids = list(target.metadata.get("deduped_todo_ids", []))
+    duplicate_ids.append(duplicate.todo_id)
+    duplicate_ids.extend(list(duplicate.metadata.get("deduped_todo_ids", [])))
+    target.metadata["deduped_todo_ids"] = _unique_preserve_order(
+        str(todo_id) for todo_id in duplicate_ids if str(todo_id)
+    )[:64]
+
+    hint_ids = _unique_preserve_order(
+        [
+            *list(target.metadata.get("hint_ids", [])),
+            *list(duplicate.metadata.get("hint_ids", [])),
+        ]
+    )
+    if hint_ids:
+        target.metadata["hint_ids"] = hint_ids[:128]
+
+    evidence = _merge_hint_evidence(
+        list(target.metadata.get("hint_evidence", [])),
+        list(duplicate.metadata.get("hint_evidence", [])),
+    )
+    if evidence:
+        target.metadata["hint_evidence"] = evidence
+    if target.sample_ids:
+        target.metadata["support_count"] = max(
+            int(target.metadata.get("support_count", 0) or 0),
+            len(target.sample_ids),
+        )
+
+
+def _merge_hint_evidence(left: Sequence[Any], right: Sequence[Any]) -> List[Any]:
+    merged: List[Any] = []
+    seen: set[str] = set()
+    for item in [*left, *right]:
+        try:
+            key = json.dumps(item, ensure_ascii=True, sort_keys=True, default=str)
+        except TypeError:
+            key = str(item)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(item)
+        if len(merged) >= 32:
+            break
+    return merged
 
 
 def _todo_target_component(todo: ModalTodo) -> str:

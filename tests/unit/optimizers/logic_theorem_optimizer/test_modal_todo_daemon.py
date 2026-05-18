@@ -295,6 +295,49 @@ def test_queue_semantic_dedupe_removes_near_duplicate_program_synthesis_items() 
     assert queue.get("program-b") is None
 
 
+def test_queue_semantic_dedupe_rejects_completed_bundle_duplicates() -> None:
+    metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "frame_logic",
+        "semantic_bundle_key": "frame:audit",
+        "target_component": "modal.frame_logic",
+    }
+    completed = ModalTodo(
+        todo_id="program-completed",
+        action="audit_frame_logic_terms",
+        objective="audit frame terms",
+        sample_ids=["a"],
+        citations=["1 U.S.C. 1"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=5.0,
+        status="completed",
+        metadata=dict(metadata),
+    )
+    duplicate = ModalTodo(
+        todo_id="program-duplicate",
+        action="audit_frame_logic_terms",
+        objective="audit frame terms again",
+        sample_ids=["b"],
+        citations=["2 U.S.C. 2"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=2.0,
+        priority=10.0,
+        metadata=dict(metadata),
+    )
+    queue = ModalTodoQueue([completed, duplicate])
+
+    removed = queue.deduplicate_semantic(optimizer_role="program_synthesis")
+
+    assert removed == 1
+    representative = queue.get("program-completed")
+    assert representative is not None
+    assert representative.status == "completed"
+    assert queue.get("program-duplicate") is None
+    assert representative.sample_ids == ["a", "b"]
+    assert representative.metadata["deduped_duplicate_count"] == 1
+
+
 def test_supervisor_can_claim_program_synthesis_by_ast_scope() -> None:
     compiler = ModalTodo(
         todo_id="program-compiler",
@@ -1005,6 +1048,66 @@ def test_build_paired_daemon_commands_can_launch_parallel_scoped_codex_children(
     assert all("--codex-scope" in child["command"] for child in children)
     assert "--codex-scope" in paired["codex_command"]
     assert paired["codex_command"][paired["codex_command"].index("--codex-scope") + 1] == "compiler_ambiguity"
+
+
+def test_build_paired_daemon_commands_can_launch_multiple_workers_per_scope() -> None:
+    args = SimpleNamespace(
+        run_id="parallel-root",
+        autoencoder_run_id=None,
+        codex_run_id=None,
+        duration_seconds=60.0,
+        train_count=2,
+        validation_count=1,
+        max_inner_iterations=1,
+        max_items=3,
+        learning_rate=0.1,
+        test_every_cycles=50,
+        poll_seconds=2.0,
+        worker_id="codex-worker",
+        codex_exec_mode="codex_cli",
+        codex_command="codex",
+        codex_model="gpt-5.3-codex",
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
+        codex_scope=None,
+        codex_parallel_scopes="compiler_ambiguity,frame_logic",
+        codex_scope_workers=2,
+        codex_bundle_mode="semantic",
+        codex_sandbox="workspace-write",
+        codex_timeout_seconds=45.0,
+        paired_grace_seconds=120.0,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+
+    children = paired["codex_children"]
+    assert [child["scope"] for child in children] == [
+        "compiler_ambiguity",
+        "compiler_ambiguity",
+        "frame_logic",
+        "frame_logic",
+    ]
+    assert [child["run_id"] for child in children] == [
+        "parallel-root-codex-compiler_ambiguity-01",
+        "parallel-root-codex-compiler_ambiguity-02",
+        "parallel-root-codex-frame_logic-01",
+        "parallel-root-codex-frame_logic-02",
+    ]
+    assert [child["worker_id"] for child in children] == [
+        "codex-worker-compiler_ambiguity-01",
+        "codex-worker-compiler_ambiguity-02",
+        "codex-worker-frame_logic-01",
+        "codex-worker-frame_logic-02",
+    ]
+    assert {
+        child["command"][child["command"].index("--codex-scope") + 1]
+        for child in children
+    } == {"compiler_ambiguity", "frame_logic"}
 
 
 def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -> None:
