@@ -74,6 +74,15 @@ _USCODE_25_5396_TODO_TEXT = (
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
     "title prior to editorial reclassification and renumbering as this section."
 )
+_USCODE_36_170307_TODO_TEXT = (
+    "Administrative notice and hearing procedures are established for this subchapter."
+)
+_USCODE_10_1095C_TODO_TEXT = (
+    "Administrative review procedures are established for health care collection actions."
+)
+_USCODE_19_2113_TODO_TEXT = (
+    "Administrative notice and hearing procedures are established for import petitions."
+)
 _USCODE_7_7913_TEXT = (
     "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
     "Title 7 - AGRICULTURE CHAPTER 106 - COMMODITY PROGRAMS SUBCHAPTER I - "
@@ -922,6 +931,47 @@ def test_parser_replays_packet_todo_symbolic_validity_sample_for_25_5396() -> No
         formula.provenance.citation == "25 U.S.C. 5396"
         for formula in document.formulas
     )
+
+
+def test_parser_replays_packet_todo_samples_for_36_170307_10_1095c_and_19_2113() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-36-170307-8767653c3220e539",
+            "36 U.S.C. 170307",
+            _USCODE_36_170307_TODO_TEXT,
+            "notice",
+        ),
+        (
+            "us-code-10-1095c-95cb9940fa4690f6",
+            "10 U.S.C. 1095c",
+            _USCODE_10_1095C_TODO_TEXT,
+            "review",
+        ),
+        (
+            "us-code-19-2113-bb39dec0898628d3",
+            "19 U.S.C. 2113",
+            _USCODE_19_2113_TODO_TEXT,
+            "notice",
+        ),
+    ]
+
+    for document_id, citation, text, procedural_keyword in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_procedural_clause_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_procedural_clause_v1"
+        assert fallback.metadata["procedural_keyword"] == procedural_keyword
+        assert fallback.provenance.citation == citation
 
 
 def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_42_6323() -> None:

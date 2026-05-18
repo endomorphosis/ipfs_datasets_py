@@ -89,6 +89,15 @@ _USCODE_25_5396_TODO_TEXT = (
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
     "title prior to editorial reclassification and renumbering as this section."
 )
+_USCODE_36_170307_TODO_TEXT = (
+    "Administrative notice and hearing procedures are established for this subchapter."
+)
+_USCODE_10_1095C_TODO_TEXT = (
+    "Administrative review procedures are established for health care collection actions."
+)
+_USCODE_19_2113_TODO_TEXT = (
+    "Administrative notice and hearing procedures are established for import petitions."
+)
 _USCODE_2_5602_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition "
     "Title 2 - THE CONGRESS CHAPTER 55 - HOUSE OF REPRESENTATIVES OFFICERS AND "
@@ -434,6 +443,49 @@ def test_spacy_compiler_replays_packet_todo_symbolic_validity_sample_for_25_5396
         formula.provenance.citation == "25 U.S.C. 5396"
         for formula in modal_ir.formulas
     )
+
+
+def test_spacy_compiler_replays_packet_todo_samples_for_36_170307_10_1095c_and_19_2113() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-36-170307-8767653c3220e539",
+            "36 U.S.C. 170307",
+            _USCODE_36_170307_TODO_TEXT,
+            "notice",
+        ),
+        (
+            "us-code-10-1095c-95cb9940fa4690f6",
+            "10 U.S.C. 1095c",
+            _USCODE_10_1095C_TODO_TEXT,
+            "review",
+        ),
+        (
+            "us-code-19-2113-bb39dec0898628d3",
+            "19 U.S.C. 2113",
+            _USCODE_19_2113_TODO_TEXT,
+            "notice",
+        ),
+    ]
+
+    for document_id, citation, text, procedural_keyword in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.document_id == document_id
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_procedural_clause_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_procedural_clause_v1"
+        assert fallback.metadata["procedural_keyword"] == procedural_keyword
+        assert fallback.provenance.citation == citation
 
 
 def test_spacy_compiler_supports_usc_and_section_symbol_citation_variants_for_sec_headings() -> None:

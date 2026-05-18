@@ -88,6 +88,18 @@ _USCODE_HEADING_ONLY_LEADING_STOPWORDS = frozenset(
 )
 _USCODE_HEADING_ONLY_ARTICLE_ALLOWED_LEAD = "the"
 _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS = frozenset({"term", "terms"})
+_USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE = re.compile(
+    r"\b(?:administrative|appeal|appeals|hearing|notice|petition|petitions|"
+    r"procedure|procedures|review)\b",
+    re.IGNORECASE,
+)
+_USCODE_PROCEDURAL_CLAUSE_VERB_RE = re.compile(
+    r"\b(?:appl(?:y|ies)|cover(?:s)?|establish(?:ed|es)|govern(?:ed|s)?|"
+    r"include(?:d|s)?|provide(?:d|s)?|remain(?:s)?)\b",
+    re.IGNORECASE,
+)
+_USCODE_PROCEDURAL_CLAUSE_MIN_TOKENS = 6
+_USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS = 42
 
 
 @dataclass(frozen=True)
@@ -292,6 +304,15 @@ class LegalModalParser:
         if fallback_formula is not None:
             return fallback_formula
         fallback_formula = self._uscode_declarative_statement_fallback_formula(
+            resolved_document_id=document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=candidate_segments,
+            start_index=start_index,
+        )
+        if fallback_formula is not None:
+            return fallback_formula
+        fallback_formula = self._uscode_procedural_clause_fallback_formula(
             resolved_document_id=document_id,
             normalized_text=normalized,
             citation=citation,
@@ -844,6 +865,99 @@ class LegalModalParser:
                     )
                     else "uscode_heading_without_section_reference_v1"
                 ),
+            },
+        )
+
+    def _uscode_procedural_clause_fallback_formula(
+        self,
+        *,
+        resolved_document_id: str,
+        normalized_text: str,
+        citation: Optional[str],
+        segments: Sequence[LegalSegment],
+        start_index: int,
+    ) -> Optional[ModalIRFormula]:
+        """Recover frame IR from short citation-bound procedural clauses with no modal cues."""
+        if not normalized_text.strip():
+            return None
+        if not self._is_uscode_citation(citation):
+            return None
+        if self.extract_cues(normalized_text):
+            return None
+
+        candidate_segment: Optional[LegalSegment] = None
+        procedural_keyword = ""
+        for segment in segments:
+            lowered = self.normalize_text(segment.text).lower()
+            token_count = len(_TOKEN_RE.findall(lowered))
+            if (
+                token_count < _USCODE_PROCEDURAL_CLAUSE_MIN_TOKENS
+                or token_count > _USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS
+            ):
+                continue
+            if (
+                _USCODE_CODIFICATION_HINT_RE.search(lowered)
+                or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+                or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+            ):
+                continue
+            keyword_matches = [
+                keyword_match.group(0).lower()
+                for keyword_match in _USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE.finditer(lowered)
+            ]
+            if not keyword_matches:
+                continue
+            if not _USCODE_PROCEDURAL_CLAUSE_VERB_RE.search(lowered):
+                continue
+            candidate_segment = segment
+            procedural_keyword = next(
+                (
+                    keyword
+                    for keyword in keyword_matches
+                    if keyword != "administrative"
+                ),
+                keyword_matches[0],
+            )
+            break
+        if candidate_segment is None:
+            return None
+
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return None
+        operator = profile.operators[0]
+        predicate = self._predicate_from_segment(
+            candidate_segment.text,
+            "__uscode_procedural_clause_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(
+            candidate_segment.text
+        )
+        return ModalIRFormula(
+            formula_id=f"{resolved_document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role="frame",
+            ),
+            provenance=ModalIRProvenance(
+                source_id=resolved_document_id,
+                start_char=candidate_segment.start_char,
+                end_char=candidate_segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_procedural_clause_fallback__",
+                "fallback_rule": "uscode_procedural_clause_v1",
+                "procedural_keyword": procedural_keyword,
             },
         )
 
