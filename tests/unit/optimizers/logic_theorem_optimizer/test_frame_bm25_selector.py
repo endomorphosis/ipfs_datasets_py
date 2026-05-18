@@ -449,6 +449,70 @@ def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_an
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_normalize_positioned_citation_values() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:citation_section_component_positioned:1:360bbb",
+            "slot:citation_section_number_positioned:1:360",
+            "slot:citation_section_number_positioned:2:0",
+            "flogic:source_id_section_component_positioned:1:360bbb",
+            "flogic:source_id_section_number_positioned:2:0",
+            "flogic:source_id_section_component_kind_positioned:1:alphanumeric",
+        ]
+    )
+
+    assert terms == [
+        "360bbb",
+        "360",
+        "0",
+        "alphanumeric",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_normalize_positioned_citation_values() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_component_positioned",
+                "object": "1:360bbb",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_number_positioned",
+                "object": "1:360",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_number_positioned",
+                "object": "2:0",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_component_positioned",
+                "object": "1:360bbb",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_number_positioned",
+                "object": "2:0",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_component_kind_positioned",
+                "object": "1:alphanumeric",
+            },
+        ]
+    )
+
+    assert terms == [
+        "360bbb",
+        "360",
+        "0",
+        "alphanumeric",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

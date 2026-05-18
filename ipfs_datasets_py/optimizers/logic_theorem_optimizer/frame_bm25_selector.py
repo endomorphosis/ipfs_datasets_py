@@ -11,6 +11,9 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _ONTOLOGY_TERM_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE = re.compile(r"[^a-z0-9]+")
+_FRAME_ONTOLOGY_POSITIONED_VALUE_RE = re.compile(
+    r"^\s*\d+\s*:\s*(?P<value>.+?)\s*$"
+)
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
         "a",
@@ -339,8 +342,12 @@ def frame_ontology_terms_from_triples(
         allow_numeric_tokens = _predicate_allows_numeric_ontology_tokens(
             canonical_predicate or predicate
         )
+        raw_value = _normalized_frame_ontology_value(
+            canonical_predicate or predicate,
+            str(triple.get("object", "")),
+        )
         normalized = normalize_frame_ontology_term(
-            str(triple.get("object", "")).strip(),
+            raw_value,
             keep_numeric_tokens=allow_numeric_tokens,
         )
         if not normalized:
@@ -468,6 +475,27 @@ def _is_contextual_frame_ontology_predicate(predicate: str) -> bool:
     )
 
 
+def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
+    raw_value = str(value or "").strip()
+    if not raw_value:
+        return ""
+    normalized_predicate = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if normalized_predicate == "statutory_scope_target":
+        scoped_target = raw_value.split("(", 1)[0].strip()
+        if scoped_target:
+            raw_value = scoped_target
+    if normalized_predicate.endswith("_positioned"):
+        match = _FRAME_ONTOLOGY_POSITIONED_VALUE_RE.match(raw_value)
+        if match:
+            positioned_value = str(match.group("value") or "").strip()
+            if positioned_value:
+                return positioned_value
+    return raw_value
+
+
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     value, _ = _frame_ontology_value_from_feature(feature)
     return value
@@ -499,7 +527,7 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
     canonical_head_predicate = _canonical_frame_ontology_predicate(head)
     if canonical_head_predicate:
         return (
-            tail.strip(),
+            _normalized_frame_ontology_value(canonical_head_predicate, tail),
             _predicate_allows_numeric_ontology_tokens(canonical_head_predicate),
         )
 
@@ -512,7 +540,7 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
     canonical_predicate = _canonical_frame_ontology_predicate(predicate)
     if canonical_predicate:
         return (
-            value.strip(),
+            _normalized_frame_ontology_value(canonical_predicate, value),
             _predicate_allows_numeric_ontology_tokens(canonical_predicate),
         )
     if (
@@ -520,7 +548,7 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
         and _is_contextual_frame_ontology_predicate(predicate)
     ):
         return (
-            value.strip(),
+            _normalized_frame_ontology_value(predicate, value),
             _predicate_allows_numeric_ontology_tokens(predicate),
         )
     return "", False
