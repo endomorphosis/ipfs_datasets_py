@@ -74,6 +74,55 @@ _USCODE_25_5396_TODO_TEXT = (
     "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
     "title prior to editorial reclassification and renumbering as this section."
 )
+_USCODE_25_507_PACKET_519_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition "
+    "Title 25 - INDIANS CHAPTER 14 - MISCELLANEOUS SUBCHAPTER VIII - INDIANS "
+    "IN OKLAHOMA: PROMOTION OF WELFARE Sec. 507 - Transferred From the U.S. "
+    "Government Publishing Office, www.gpo.gov §507. Transferred Editorial "
+    "Notes Codification Section 507 was editorially reclassified as section "
+    "5207 of this title."
+)
+_USCODE_10_167_PACKET_519_TEXT = (
+    "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition "
+    "Title 10 - ARMED FORCES PART I - ORGANIZATION AND GENERAL MILITARY POWERS "
+    "CHAPTER 6 - COMBATANT COMMANDS Sec. 167 - Unified combatant command for "
+    "special operations forces From the U.S. Government Publishing Office, "
+    "www.gpo.gov §167. Unified combatant command for special operations forces "
+    "(a) Establishment. With the advice and assistance of the Chairman of the "
+    "Joint Chiefs of Staff, the President, through the Secretary of Defense, "
+    "shall establish under section 161 of this title a unified combatant "
+    "command for special operations forces. (b) Assignment of Forces. Unless "
+    "otherwise directed by the Secretary of Defense, all active and reserve "
+    "special operations forces of the armed forces stationed in the United "
+    "States shall be assigned to the special operations command. (c) Grade of "
+    "Commander. The commander of the special operations command shall hold the "
+    "grade of general or admiral while serving in that position. (d) Command "
+    "of Activity or Mission. Unless otherwise directed by the President or the "
+    "Secretary of Defense, a special operations activity or mission shall be "
+    "conducted under the command of the commander of the unified combatant "
+    "command in whose geographic area the activity or mission is to be "
+    "conducted."
+)
+_USCODE_38_8112_PACKET_519_TEXT = (
+    "U.S.C. Title 38 - VETERANS' BENEFITS 38 U.S.C. United States Code, 2024 "
+    "Edition Title 38 - VETERANS' BENEFITS PART VI - ACQUISITION AND "
+    "DISPOSITION OF PROPERTY CHAPTER 81 - ACQUISITION AND OPERATION OF "
+    "HOSPITAL AND DOMICILIARY FACILITIES; PROCUREMENT AND SUPPLY; ENHANCED-USE "
+    "LEASES OF REAL PROPERTY SUBCHAPTER I - ACQUISITION AND OPERATION OF "
+    "MEDICAL FACILITIES Sec. 8112 - Partial relinquishment of legislative "
+    "jurisdiction From the U.S. Government Publishing Office, www.gpo.gov "
+    "§8112. Partial relinquishment of legislative jurisdiction The Secretary, "
+    "on behalf of the United States, may relinquish to the State in which any "
+    "lands or interests under the supervision or control of the Secretary are "
+    "situated, such measure of legislative jurisdiction over such lands or "
+    "interests as is necessary to establish concurrent jurisdiction between the "
+    "Federal Government and the State concerned. Such partial relinquishment "
+    "of legislative jurisdiction shall be initiated by filing a notice with the "
+    "Governor of the State concerned and shall take effect upon acceptance by "
+    "such State. Editorial Notes Prior Provisions Provisions similar to those "
+    "comprising this section were contained in former section 5007 of this "
+    "title prior to the general revision of this subchapter by Pub. L. 96-22."
+)
 _USCODE_36_170307_TODO_TEXT = (
     "Administrative notice and hearing procedures are established for this subchapter."
 )
@@ -952,6 +1001,49 @@ def test_parser_replays_packet_todo_symbolic_validity_sample_for_25_5396() -> No
         formula.provenance.citation == "25 U.S.C. 5396"
         for formula in document.formulas
     )
+
+
+def test_parser_replays_packet_todo_samples_for_25_507_10_167_and_38_8112() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-25-507-e22029a3cea8b735",
+            "25 U.S.C. 507",
+            _USCODE_25_507_PACKET_519_TEXT,
+            True,
+        ),
+        (
+            "us-code-10-167-c04be565137bd57c",
+            "10 U.S.C. 167",
+            _USCODE_10_167_PACKET_519_TEXT,
+            False,
+        ),
+        (
+            "us-code-38-8112-c323ef8fcde15329",
+            "38 U.S.C. 8112",
+            _USCODE_38_8112_PACKET_519_TEXT,
+            False,
+        ),
+    ]
+
+    for document_id, citation, text, expects_codification_fallback in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        assert all(formula.provenance.citation == citation for formula in document.formulas)
+        if expects_codification_fallback:
+            fallback = document.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        else:
+            assert any(formula.operator.family == "deontic" for formula in document.formulas)
 
 
 def test_parser_replays_packet_todo_samples_for_36_170307_10_1095c_and_19_2113() -> None:
