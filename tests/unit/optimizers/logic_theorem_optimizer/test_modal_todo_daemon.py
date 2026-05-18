@@ -200,6 +200,39 @@ def test_queue_merge_preserves_externally_claimed_program_synthesis_todos() -> N
     assert latest.claimed(optimizer_role="program_synthesis")[0].claimed_by == "codex-program-worker"
 
 
+def test_queue_merge_preserves_externally_completed_program_synthesis_todos() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice.",
+    )
+    snapshot = LossSnapshot.from_sample(
+        sample,
+        extra_losses={"frame_ranking_loss": 1.0},
+    )
+    todo = ModalLossTodoGenerator().generate([snapshot])[0]
+    latest = ModalTodoQueue([todo.__class__.from_dict(todo.to_dict())])
+    incoming = ModalTodoQueue([todo.__class__.from_dict(todo.to_dict())])
+    latest.claim_batch(
+        worker_id="codex-program-worker",
+        max_items=1,
+        optimizer_role="program_synthesis",
+    )
+    latest.complete(todo.todo_id)
+    incoming.claim_batch(
+        worker_id="stale-codex-view",
+        max_items=1,
+        optimizer_role="program_synthesis",
+    )
+
+    latest.merge_from(incoming, preserve_claimed_role="program_synthesis")
+
+    completed = latest.get(todo.todo_id)
+    assert completed is not None
+    assert completed.status == "completed"
+    assert completed.claimed_by == "codex-program-worker"
+
+
 def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
     todo = ModalLossTodoGenerator().generate(
         [

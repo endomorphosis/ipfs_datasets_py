@@ -27,6 +27,12 @@ AUTOENCODER_SGD_ROLE = "autoencoder_sgd"
 PROGRAM_SYNTHESIS_ROLE = "program_synthesis"
 AUTOENCODER_EXECUTION_TARGET = "adaptive_autoencoder"
 PROGRAM_SYNTHESIS_EXECUTION_TARGET = "codex_program_repair"
+TODO_STATUS_RANK = {
+    "pending": 0,
+    "claimed": 1,
+    "completed": 2,
+    "failed_validation": 2,
+}
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
     "improve_encoder_decoder_reconstruction",
@@ -570,15 +576,16 @@ class ModalTodoQueue:
         *,
         preserve_claimed_role: Optional[str] = None,
     ) -> None:
-        """Merge another queue while preserving externally claimed role items."""
+        """Merge another queue while preserving external role progress."""
         for todo in other.all():
             existing = self._todos.get(todo.todo_id)
             if (
                 existing is not None
                 and preserve_claimed_role is not None
                 and _todo_optimizer_role(existing) == preserve_claimed_role
-                and existing.status in {"claimed", "completed", "failed_validation"}
-                and todo.status == "pending"
+                and TODO_STATUS_RANK.get(existing.status, 0)
+                >= TODO_STATUS_RANK.get(todo.status, 0)
+                and existing.status != "pending"
             ):
                 continue
             self._todos[todo.todo_id] = todo
