@@ -69,6 +69,47 @@ _USCODE_46_8906_TEXT = (
     "chapter. Editorial Notes Amendments 1996 —Pub. L. 104–324 substituted "
     "\"not more than $25,000\" for \"$1,000\"."
 )
+_USCODE_36_110105_TODO_TEXT = (
+    "U.S.C. Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS 36 U.S.C. United States Co"
+    "de, 2024 Edition Title 36 - PATRIOTIC AND NATIONAL OBSERVANCES, CEREMONIES, AND ORGANIZATIONS Subtitle II - Pa"
+    "triotic and National Organizations Part B - Organizations CHAPTER 1101 - JEWISH WAR VETERANS OF THE UNITED STA"
+    "TES OF AMERICA, INCORPORATED Sec. 110105 - Governing body From the U.S. Government Publishing Office, www.gpo."
+    "gov §110105. Governing body (a) Board of Directors .—The board of directors and the responsibilities of the bo"
+    "ard are as provided in the articles of incorporation. (b) Officers .—The officers and the election of officers"
+    " are as provided in the articles of incorporation. (Pub. L. 105–225, Aug. 12, 1998, 112 Stat. 1367.) Historica"
+    "l and Revision Notes Revised Section Source (U.S. Code) Source (Statutes at Large) 110105(a) 36:2706. Aug. 21,"
+    " 1984, Pub. L. 98–391, §§6, 7, 98 Stat. 1359. 110105(b) 36:2707."
+)
+_USCODE_25_450_TODO_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 14 - MISCELLAN"
+    "EOUS SUBCHAPTER II - INDIAN SELF-DETERMINATION AND EDUCATION ASSISTANCE Sec. 450 - Transferred From the U.S. G"
+    "overnment Publishing Office, www.gpo.gov §450. Transferred Editorial Notes Codification Section 450 was editor"
+    "ially reclassified as section 5301 of this title."
+)
+_USCODE_25_5396_TODO_TEXT = (
+    "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
+    "LF-DETERMINATION AND EDUCATION ASSISTANCE SUBCHAPTER V - TRIBAL SELF-GOVERNANCE-INDIAN HEALTH SERVICE Sec. 539"
+    "6 - Application of other sections of this chapter From the U.S. Government Publishing Office, www.gpo.gov §539"
+    "6. Application of other sections of this chapter (a) Mandatory application All provisions of sections 5305(b),"
+    " 5306, 5307, 5321(c) and (d), 5323, 5324(k) and (l), 5325(a) through (k), and 5332 of this title and section 3"
+    "14 of Public Law 101–512 (coverage under chapter 171 of title 28, commonly known as the \"Federal Tort Claims A"
+    "ct\"), to the extent not in conflict with this subchapter, shall apply to compacts and funding agreements autho"
+    "rized by this subchapter. (b) Discretionary application At the request of a participating Indian tribe, any ot"
+    "her provision of subchapter I of this chapter, to the extent such provision is not in conflict with this subch"
+    "apter, shall be made a part of a funding agreement or compact entered into under this subchapter. The Secretar"
+    "y is obligated to include such provision at the option of the participating Indian tribe or tribes. If such pr"
+    "ovision is incorporated it shall have the same force and effect as if it were set out in full in this subchapt"
+    "er. In the event an Indian tribe requests such incorporation at the negotiation stage of a compact or funding "
+    "agreement, such incorporation shall be deemed effective immediately and shall control the negotiation and resu"
+    "lting compact and funding agreement. (Pub. L. 93–638, title V, §516, as added Pub. L. 106–260, §4, Aug. 18, 20"
+    "00, 114 Stat. 729.) Editorial Notes References in Text Section 314 of Pub. L. 101–512, referred to in subsec. "
+    "(a), is section 314 of Pub. L. 101–512, which is set out as a note under section 5321 of this title. Subchapte"
+    "r I of this chapter, referred to in subsec. (b), was in the original \"title I\", meaning title I of Pub. L. 93–"
+    "638, known as the Indian Self-Determination Act, which is classified principally to subchapter I (§5321 et seq"
+    ".) of this chapter. For complete classification of title I to the Code, see Short Title note set out under sec"
+    "tion 5301 of this title and Tables. Codification Section was formerly classified to section 458aaa–15 of this "
+    "title prior to editorial reclassification and renumbering as this section."
+)
 _USCODE_25_478_1_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS "
     "CHAPTER 14 - MISCELLANEOUS SUBCHAPTER V - PROTECTION OF INDIANS AND CONSERVATION OF "
@@ -711,6 +752,80 @@ def test_modal_compiler_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2
         assert fallback.operator.family == "frame"
         assert fallback.metadata["fallback_rule"] == fallback_rule
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_samples_for_36_110105_and_25_450() -> None:
+    cases = [
+        (
+            "us-code-36-110105-c16a1da4a57f02ec",
+            "36 U.S.C. 110105",
+            _USCODE_36_110105_TODO_TEXT,
+            "__uscode_section_heading_fallback__",
+            "uscode_section_heading_v1",
+        ),
+        (
+            "us-code-25-450-c265a65e885d4655",
+            "25 U.S.C. 450",
+            _USCODE_25_450_TODO_TEXT,
+            "__uscode_codification_fallback__",
+            "uscode_transferred_heading_v1",
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text, cue, fallback_rule in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == cue
+            assert fallback.metadata["fallback_rule"] == fallback_rule
+            assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_symbolic_validity_sample_for_25_5396() -> None:
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        compiled = compiler.compile(
+            _USCODE_25_5396_TODO_TEXT,
+            document_id="us-code-25-5396-17291bf2fa3ae3f6",
+            citation="25 U.S.C. 5396",
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        assert any(
+            formula.operator.family == "deontic"
+            for formula in compiled.modal_ir.formulas
+        )
+        assert all(
+            formula.provenance.citation == "25 U.S.C. 5396"
+            for formula in compiled.modal_ir.formulas
+        )
 
 
 def test_modal_compiler_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to_92() -> None:
