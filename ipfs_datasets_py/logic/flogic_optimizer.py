@@ -358,9 +358,7 @@ def _frame_ontology_metadata(
             triples=kg_triples,
         )
     )
-    ontology_terms = sorted(
-        set(feature_terms) | set(triple_terms) | set(contextualized_terms)
-    )
+    ontology_terms = sorted(set(feature_terms) | set(triple_terms))
     feature_high_signal_terms = frame_ontology_high_signal_terms(feature_terms)
     triple_high_signal_terms = frame_ontology_high_signal_terms(triple_terms)
     contextualized_high_signal_terms = frame_ontology_high_signal_terms(
