@@ -180,6 +180,13 @@ _USCODE_2_130A_TEXT = (
     "Office, www.gpo.gov §130a. Transferred Editorial Notes Codification Section 130a "
     "was editorially reclassified as section 4504 of this title."
 )
+_USCODE_2_59B_PACKET_144_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition Title 2 - "
+    "THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS Sec. 59b - "
+    "Transferred From the U.S. Government Publishing Office, www.gpo.gov §59b. "
+    "Transferred Editorial Notes Codification Section 59b was editorially reclassified "
+    "as section 6320 of this title."
+)
 _USCODE_16_6808_SYMBOLIC_VALIDITY_TEXT = (
     "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition Title "
     "16 - CONSERVATION CHAPTER 87 - FEDERAL LANDS RECREATION ENHANCEMENT Sec. 6808 - "
@@ -836,9 +843,16 @@ def test_parser_replays_uscode_declarative_statement_zero_formula_cases() -> Non
         assert fallback.provenance.citation == citation
 
 
-def test_parser_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2_and_8906() -> None:
+def test_parser_replays_dataset_zero_formula_cases_for_59b_130a_31a_2b_60a_2_and_8906() -> None:
     parser = LegalModalParser()
     cases = [
+        (
+            "us-code-2-59b-8902f0eb9b420bbe",
+            "2 U.S.C. 59b",
+            _USCODE_2_59B_PACKET_144_TEXT,
+            "__uscode_codification_fallback__",
+            "uscode_transferred_heading_v1",
+        ),
         (
             "us-code-2-130a-a14e984db7a8af87",
             "2 U.S.C. 130a",

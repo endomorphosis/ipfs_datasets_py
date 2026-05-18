@@ -329,6 +329,13 @@ _USCODE_2_130A_TEXT = (
     "Office, www.gpo.gov §130a. Transferred Editorial Notes Codification Section 130a "
     "was editorially reclassified as section 4504 of this title."
 )
+_USCODE_2_59B_PACKET_144_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition Title 2 - "
+    "THE CONGRESS CHAPTER 3 - COMPENSATION AND ALLOWANCES OF MEMBERS Sec. 59b - "
+    "Transferred From the U.S. Government Publishing Office, www.gpo.gov §59b. "
+    "Transferred Editorial Notes Codification Section 59b was editorially reclassified "
+    "as section 6320 of this title."
+)
 _USCODE_4_123_SYMBOLIC_VALIDITY_TEXT = (
     "U.S.C. Title 4 - FLAG AND SEAL, SEAT OF GOVERNMENT, AND THE STATES 4 U.S.C. United States Code, "
     "2024 Edition Title 4 - FLAG AND SEAL, SEAT OF GOVERNMENT, AND THE STATES CHAPTER 4 - THE STATES "
@@ -715,9 +722,15 @@ def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples()
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2_and_8906() -> None:
+def test_modal_compiler_replays_dataset_zero_formula_cases_for_59b_130a_31a_2b_60a_2_and_8906() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     cases = [
+        (
+            "us-code-2-59b-8902f0eb9b420bbe",
+            "2 U.S.C. 59b",
+            _USCODE_2_59B_PACKET_144_TEXT,
+            "uscode_transferred_heading_v1",
+        ),
         (
             "us-code-2-130a-a14e984db7a8af87",
             "2 U.S.C. 130a",
@@ -761,6 +774,33 @@ def test_modal_compiler_replays_dataset_zero_formula_cases_for_130a_31a_2b_60a_2
         assert fallback.operator.family == "frame"
         assert fallback.metadata["fallback_rule"] == fallback_rule
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_zero_formula_sample_for_2_59b() -> None:
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        compiled = compiler.compile(
+            _USCODE_2_59B_PACKET_144_TEXT,
+            document_id="us-code-2-59b-8902f0eb9b420bbe",
+            citation="2 U.S.C. 59b",
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == "2 U.S.C. 59b"
 
 
 def test_modal_compiler_replays_packet_todo_samples_for_36_110105_and_25_450() -> None:

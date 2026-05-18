@@ -1033,6 +1033,10 @@ class LegalModalParser:
             return False
         if normalized.startswith("transferred"):
             return True
+        # Accept compact transferred headings that start with a section marker,
+        # even when citation tokenization is noisy (e.g., OCR-spaced section ids).
+        if normalized.startswith("\u00a7") and len(normalized) <= 240:
+            return True
         return self._contains_citation_section_reference(
             normalized,
             citation_section,
