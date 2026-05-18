@@ -343,17 +343,25 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> 
     ]
 
 
-def test_frame_ontology_terms_from_feature_keys_ignore_unrelated_namespaces() -> None:
+def test_frame_ontology_terms_from_feature_keys_support_slot_contextual_features() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
             "cue:frame:transferred",
             "family:selected_frame:deontic",
             "slot:modal_family:frame",
+            "slot:condition:unless written notice is provided",
+            "slot:citation_section_number:5406",
+            "slot:source_id:us-code-5-552-deadbeefdeadbeef",
             "selected_ontology_frame:administrative_notice_hearing",
         ]
     )
 
-    assert terms == ["administrative_notice_hearing"]
+    assert terms == [
+        "frame",
+        "unless_written_notice_provided",
+        "5406",
+        "administrative_notice_hearing",
+    ]
 
 
 def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_features() -> None:
@@ -375,6 +383,7 @@ def test_frame_ontology_terms_from_feature_keys_support_contextual_flogic_featur
         "ltl",
         "temporal_scope",
         "pub",
+        "frame",
     ]
 
 
@@ -431,6 +440,8 @@ def test_frame_ontology_terms_from_feature_keys_support_typed_flogic_citation_an
 
     assert terms == [
         "430f",
+        "16",
+        "552",
         "pursuant_subsection",
         "notice",
         "if",
@@ -455,12 +466,14 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("family:frame:1") is True
     assert is_frame_ontology_feature_key("modal-family:frame") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
+    assert is_frame_ontology_feature_key("slot:modal_family:frame") is True
     assert is_frame_ontology_feature_key(
         "slot:selected_ontology_term:final order"
     ) is True
     assert is_frame_ontology_feature_key("token:agency") is False
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
     assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
+    assert is_frame_ontology_feature_key("slot:source_id:us-code-5-552-deadbeefdeadbeef") is False
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is False
     assert is_frame_ontology_feature_key("") is False
 

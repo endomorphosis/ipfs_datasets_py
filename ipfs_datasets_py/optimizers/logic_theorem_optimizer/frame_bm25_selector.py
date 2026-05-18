@@ -145,6 +145,9 @@ _ORDERED_FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = tuple(
     sorted(_FRAME_LINKED_FEATURE_PREFIXES, key=lambda value: (-len(value), value))
 )
 _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES = frozenset({"flogic", "slot"})
+_FRAME_ONTOLOGY_CONTEXTUAL_NAMESPACED_FEATURE_PREFIXES = frozenset(
+    {"flogic", "slot"}
+)
 _FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
 
 
@@ -512,7 +515,10 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
             value.strip(),
             _predicate_allows_numeric_ontology_tokens(canonical_predicate),
         )
-    if namespace == "flogic" and _is_contextual_frame_ontology_predicate(predicate):
+    if (
+        namespace in _FRAME_ONTOLOGY_CONTEXTUAL_NAMESPACED_FEATURE_PREFIXES
+        and _is_contextual_frame_ontology_predicate(predicate)
+    ):
         return (
             value.strip(),
             _predicate_allows_numeric_ontology_tokens(predicate),

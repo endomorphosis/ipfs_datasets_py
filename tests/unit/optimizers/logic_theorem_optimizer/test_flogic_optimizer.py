@@ -77,3 +77,40 @@ def test_flogic_optimizer_tracks_fallback_surface_text_frame_terms() -> None:
         "allowances",
         "housing_voucher_benefits_utility_allowances",
     ]
+
+
+def test_flogic_optimizer_tracks_slot_contextual_frame_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "slot:modal_family:frame",
+            "slot:condition:unless written notice is provided",
+            "slot:citation_section_number:5406",
+            "slot:source_id:us-code-5-552-deadbeefdeadbeef",
+        ],
+    )
+
+    assert result.metadata["frame_feature_key_count"] == 4
+    assert result.metadata["frame_audit_feature_key_count"] == 3
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "slot:citation_section_number:5406",
+        "slot:condition:unless written notice is provided",
+        "slot:modal_family:frame",
+    ]
+    assert result.metadata["frame_ontology_term_count"] == 3
+    assert result.metadata["frame_ontology_terms"] == [
+        "5406",
+        "frame",
+        "unless_written_notice_provided",
+    ]
