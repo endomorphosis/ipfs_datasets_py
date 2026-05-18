@@ -359,3 +359,58 @@ def test_modal_slots_emit_typed_title_section_coordinate_slots_for_todo_cluster_
             )
             assert slot_values == expected[predicate]
             assert triple_values == expected[predicate]
+
+
+def test_modal_slots_emit_terminal_and_profile_alignment_slots_for_todo_cluster_sections() -> None:
+    expected_by_section = {
+        ("50", "31 to 39."): {
+            "terminal_suffix_pair": "none|none",
+            "terminal_signature_pair": "N2|N2",
+            "profile_pair": "range|range",
+            "is_range_pair": "true|true",
+        },
+        ("50", "3352e."): {
+            "terminal_suffix_pair": "e|e",
+            "terminal_signature_pair": "N4A1|N4A1",
+            "profile_pair": "single_alphanumeric|single_alphanumeric",
+            "is_range_pair": "false|false",
+        },
+    }
+    predicates = (
+        "citation_source_id_section_terminal_number_relation",
+        "citation_source_id_section_terminal_number_span",
+        "citation_source_id_section_terminal_suffix_pair",
+        "citation_source_id_section_terminal_suffix_match",
+        "citation_source_id_section_terminal_suffix_presence_match",
+        "citation_source_id_section_terminal_component_signature_pair",
+        "citation_source_id_section_terminal_component_signature_match",
+        "citation_source_id_section_component_profile_pair",
+        "citation_source_id_section_component_profile_match",
+        "citation_source_id_section_is_range_pair",
+        "citation_source_id_section_is_range_match",
+    )
+
+    for (title, section), values in expected_by_section.items():
+        expected = {
+            "citation_source_id_section_terminal_number_relation": ["equal"],
+            "citation_source_id_section_terminal_number_span": ["0"],
+            "citation_source_id_section_terminal_suffix_pair": [values["terminal_suffix_pair"]],
+            "citation_source_id_section_terminal_suffix_match": ["true"],
+            "citation_source_id_section_terminal_suffix_presence_match": ["true"],
+            "citation_source_id_section_terminal_component_signature_pair": [
+                values["terminal_signature_pair"]
+            ],
+            "citation_source_id_section_terminal_component_signature_match": ["true"],
+            "citation_source_id_section_component_profile_pair": [values["profile_pair"]],
+            "citation_source_id_section_component_profile_match": ["true"],
+            "citation_source_id_section_is_range_pair": [values["is_range_pair"]],
+            "citation_source_id_section_is_range_match": ["true"],
+        }
+        for predicate in predicates:
+            slot_values, triple_values = _slot_and_triple_values_for_predicate(
+                section,
+                title=title,
+                predicate=predicate,
+            )
+            assert slot_values == expected[predicate]
+            assert triple_values == expected[predicate]

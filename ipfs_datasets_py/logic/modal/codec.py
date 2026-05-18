@@ -1705,6 +1705,22 @@ def _provenance_alignment_components(
         relation, span = section_number_relation
         components.append(("citation_source_id_section_primary_number_relation", relation))
         components.append(("citation_source_id_section_primary_number_span", span))
+    source_section_terminal_number = _clean_non_empty_string(
+        source_component_map.get("source_id_section_terminal_number")
+        or source_component_map.get("source_id_section_number")
+    )
+    citation_section_terminal_number = _clean_non_empty_string(
+        citation_component_map.get("citation_section_terminal_number")
+        or citation_component_map.get("citation_section_number")
+    )
+    section_terminal_number_relation = _primary_terminal_number_relation(
+        primary_number=source_section_terminal_number,
+        terminal_number=citation_section_terminal_number,
+    )
+    if section_terminal_number_relation is not None:
+        relation, span = section_terminal_number_relation
+        components.append(("citation_source_id_section_terminal_number_relation", relation))
+        components.append(("citation_source_id_section_terminal_number_span", span))
     source_section_primary_suffix = _clean_non_empty_string(
         source_component_map.get("source_id_section_primary_suffix_normalized")
         or source_component_map.get("source_id_section_primary_suffix")
@@ -1746,6 +1762,47 @@ def _provenance_alignment_components(
                 else "false",
             )
         )
+    source_section_terminal_suffix = _clean_non_empty_string(
+        source_component_map.get("source_id_section_terminal_suffix_normalized")
+        or source_component_map.get("source_id_section_terminal_suffix")
+    )
+    citation_section_terminal_suffix = _clean_non_empty_string(
+        citation_component_map.get("citation_section_terminal_suffix_normalized")
+        or citation_component_map.get("citation_section_terminal_suffix")
+    )
+    if (
+        source_section_terminal_suffix
+        or citation_section_terminal_suffix
+        or (
+            source_section_terminal_number
+            and citation_section_terminal_number
+        )
+    ):
+        components.append(
+            (
+                "citation_source_id_section_terminal_suffix_pair",
+                f"{source_section_terminal_suffix or 'none'}|"
+                f"{citation_section_terminal_suffix or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_terminal_suffix_match",
+                "true"
+                if source_section_terminal_suffix.lower()
+                == citation_section_terminal_suffix.lower()
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_terminal_suffix_presence_match",
+                "true"
+                if bool(source_section_terminal_suffix)
+                == bool(citation_section_terminal_suffix)
+                else "false",
+            )
+        )
     source_primary_component_signature = _clean_non_empty_string(
         source_component_map.get("source_id_section_primary_component_signature")
     )
@@ -1767,6 +1824,76 @@ def _provenance_alignment_components(
                 "citation_source_id_section_primary_component_signature_pair",
                 f"{source_primary_component_signature}|"
                 f"{citation_primary_component_signature}",
+            )
+        )
+    source_terminal_component_signature = _clean_non_empty_string(
+        source_component_map.get("source_id_section_terminal_component_signature")
+    )
+    citation_terminal_component_signature = _clean_non_empty_string(
+        citation_component_map.get("citation_section_terminal_component_signature")
+    )
+    if source_terminal_component_signature and citation_terminal_component_signature:
+        components.append(
+            (
+                "citation_source_id_section_terminal_component_signature_match",
+                "true"
+                if source_terminal_component_signature
+                == citation_terminal_component_signature
+                else "false",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_terminal_component_signature_pair",
+                f"{source_terminal_component_signature}|"
+                f"{citation_terminal_component_signature}",
+            )
+        )
+    source_section_profile = _clean_non_empty_string(
+        source_component_map.get("source_id_section_component_profile")
+    )
+    citation_section_profile = _clean_non_empty_string(
+        citation_component_map.get("citation_section_component_profile")
+    )
+    if source_section_profile or citation_section_profile:
+        components.append(
+            (
+                "citation_source_id_section_component_profile_pair",
+                f"{source_section_profile or 'none'}|"
+                f"{citation_section_profile or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_component_profile_match",
+                "true"
+                if source_section_profile.lower() == citation_section_profile.lower()
+                else "false",
+            )
+        )
+    source_section_is_range = _clean_non_empty_string(
+        source_component_map.get("source_id_section_is_range")
+    ).lower()
+    citation_section_is_range = _clean_non_empty_string(
+        citation_component_map.get("citation_section_is_range")
+    ).lower()
+    if (
+        source_section_is_range in {"true", "false"}
+        or citation_section_is_range in {"true", "false"}
+    ):
+        components.append(
+            (
+                "citation_source_id_section_is_range_pair",
+                f"{source_section_is_range or 'none'}|"
+                f"{citation_section_is_range or 'none'}",
+            )
+        )
+        components.append(
+            (
+                "citation_source_id_section_is_range_match",
+                "true"
+                if source_section_is_range == citation_section_is_range
+                else "false",
             )
         )
     if not source_title or not citation_title or not source_section or not citation_section:

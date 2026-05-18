@@ -1271,6 +1271,24 @@ def _provenance_alignment_slots(
         relation, span = section_number_relation
         slots.append(("citation_source_id_section_primary_number_relation", relation))
         slots.append(("citation_source_id_section_primary_number_span", span))
+    source_section_terminal_number = _clean_text(
+        source_slot_map.get("source_id_section_terminal_number")
+        or source_slot_map.get("source_id_section_number")
+        or ""
+    )
+    citation_section_terminal_number = _clean_text(
+        citation_slot_map.get("citation_section_terminal_number")
+        or citation_slot_map.get("citation_section_number")
+        or ""
+    )
+    section_terminal_number_relation = _primary_terminal_number_relation(
+        primary_number=source_section_terminal_number,
+        terminal_number=citation_section_terminal_number,
+    )
+    if section_terminal_number_relation is not None:
+        relation, span = section_terminal_number_relation
+        slots.append(("citation_source_id_section_terminal_number_relation", relation))
+        slots.append(("citation_source_id_section_terminal_number_span", span))
     source_section_primary_suffix = _clean_text(
         source_slot_map.get("source_id_section_primary_suffix_normalized")
         or source_slot_map.get("source_id_section_primary_suffix")
@@ -1314,6 +1332,49 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
+    source_section_terminal_suffix = _clean_text(
+        source_slot_map.get("source_id_section_terminal_suffix_normalized")
+        or source_slot_map.get("source_id_section_terminal_suffix")
+        or ""
+    )
+    citation_section_terminal_suffix = _clean_text(
+        citation_slot_map.get("citation_section_terminal_suffix_normalized")
+        or citation_slot_map.get("citation_section_terminal_suffix")
+        or ""
+    )
+    if (
+        source_section_terminal_suffix
+        or citation_section_terminal_suffix
+        or (
+            source_section_terminal_number
+            and citation_section_terminal_number
+        )
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_pair",
+                f"{source_section_terminal_suffix or 'none'}|"
+                f"{citation_section_terminal_suffix or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_match",
+                "true"
+                if source_section_terminal_suffix.lower()
+                == citation_section_terminal_suffix.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_presence_match",
+                "true"
+                if bool(source_section_terminal_suffix)
+                == bool(citation_section_terminal_suffix)
+                else "false",
+            )
+        )
     source_primary_component_signature = _clean_text(
         source_slot_map.get("source_id_section_primary_component_signature") or ""
     )
@@ -1335,6 +1396,76 @@ def _provenance_alignment_slots(
                 "citation_source_id_section_primary_component_signature_pair",
                 f"{source_primary_component_signature}|"
                 f"{citation_primary_component_signature}",
+            )
+        )
+    source_terminal_component_signature = _clean_text(
+        source_slot_map.get("source_id_section_terminal_component_signature") or ""
+    )
+    citation_terminal_component_signature = _clean_text(
+        citation_slot_map.get("citation_section_terminal_component_signature") or ""
+    )
+    if source_terminal_component_signature and citation_terminal_component_signature:
+        slots.append(
+            (
+                "citation_source_id_section_terminal_component_signature_match",
+                "true"
+                if source_terminal_component_signature
+                == citation_terminal_component_signature
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_terminal_component_signature_pair",
+                f"{source_terminal_component_signature}|"
+                f"{citation_terminal_component_signature}",
+            )
+        )
+    source_section_profile = _clean_text(
+        source_slot_map.get("source_id_section_component_profile") or ""
+    )
+    citation_section_profile = _clean_text(
+        citation_slot_map.get("citation_section_component_profile") or ""
+    )
+    if source_section_profile or citation_section_profile:
+        slots.append(
+            (
+                "citation_source_id_section_component_profile_pair",
+                f"{source_section_profile or 'none'}|"
+                f"{citation_section_profile or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_component_profile_match",
+                "true"
+                if source_section_profile.lower() == citation_section_profile.lower()
+                else "false",
+            )
+        )
+    source_section_is_range = _clean_text(
+        source_slot_map.get("source_id_section_is_range") or ""
+    ).lower()
+    citation_section_is_range = _clean_text(
+        citation_slot_map.get("citation_section_is_range") or ""
+    ).lower()
+    if (
+        source_section_is_range in {"true", "false"}
+        or citation_section_is_range in {"true", "false"}
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_is_range_pair",
+                f"{source_section_is_range or 'none'}|"
+                f"{citation_section_is_range or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_is_range_match",
+                "true"
+                if source_section_is_range == citation_section_is_range
+                else "false",
             )
         )
     if not source_title or not citation_title or not source_section or not citation_section:
