@@ -5178,6 +5178,106 @@ def test_modal_codec_audits_structured_hint_evidence_from_term_metadata_without_
     assert not any(term.startswith("modal_synthesis") for term in selected_terms)
 
 
+def test_modal_codec_audits_structured_evidence_from_term_metadata_without_key_noise() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-evidence-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: {
+                    "matched_terms": ["hearing rights"],
+                    "evidence": [
+                        {
+                            "hint_id": "modal-synthesis-5c028bc1799b3abf",
+                            "sample_id": "us-code-7-1595-3023e94b951ca7a0",
+                            "frame_features": [
+                                "selected-frame-term:42 U.S.C. 6932.",
+                                "cue:frame:Frame:transferred",
+                            ],
+                        }
+                    ],
+                    "hint_ids": ["modal-synthesis-6191fcb2398f9edb"],
+                    "score": 0.99,
+                }
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "hearing_rights" in selected_terms
+    assert "7_1595" in selected_terms
+    assert "42_6932" in selected_terms
+    assert "transferred" in selected_terms
+    assert "evidence" not in selected_terms
+    assert "frame_features" not in selected_terms
+    assert not any(term.startswith("modal_synthesis") for term in selected_terms)
+
+
+def test_modal_codec_frame_ontology_audit_feature_keys_include_evidence_payloads() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="frame-audit-evidence-doc",
+        source="us_code",
+        normalized_text="The agency may issue a final order.",
+        frame_logic=ModalIRFrameLogic(
+            metadata={
+                "evidence": [
+                    {
+                        "sample_id": "us-code-46-2104.-968c80c773abaeae",
+                        "frame_features": [
+                            "family:selected_frame:deontic",
+                            "token:agency",
+                        ],
+                    }
+                ]
+            }
+        ),
+        metadata={
+            "evidence": [
+                {
+                    "sample_id": "us-code-10-986-edca8f211d40c8ce",
+                    "frame_features": [
+                        "flogic:modal_cue:authority",
+                        "token:agency",
+                    ],
+                }
+            ]
+        },
+    )
+
+    keys = _frame_ontology_audit_feature_keys(
+        modal_ir=modal_ir,
+        selected_frame=None,
+        kg_triples=[],
+    )
+
+    assert "us-code-10-986-edca8f211d40c8ce" in keys
+    assert "us-code-46-2104.-968c80c773abaeae" in keys
+    assert "flogic:modal_cue:authority" in keys
+    assert "family:selected_frame:deontic" in keys
+    assert "token:agency" not in keys
+
+
 def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
