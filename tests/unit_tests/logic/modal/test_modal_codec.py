@@ -26,7 +26,18 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import bu
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
 )
-from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import ModalIRFrameLogic
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
+    ModalIRDocument,
+    ModalIRFormula,
+    ModalIRFrameLogic,
+    ModalIROperator,
+    ModalIRPredicate,
+    ModalIRProvenance,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+    SpaCyLegalEncoding,
+    SpaCyModalCueFeature,
+)
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
     DataType,
     LogicExtractionContext,
@@ -344,6 +355,114 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
         for ambiguity in adaptive_ambiguities
     )
     assert all(ambiguity.metadata["family_margin"] < 0.0 for ambiguity in adaptive_ambiguities)
+
+
+def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkeypatch) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {
+            "has_alethic_cue": False,
+            "has_alethic_scope": False,
+            "has_alethic_scope_phrase": False,
+            "has_calendar_date_scope": False,
+            "has_condition_clause": False,
+            "has_condition_or_exception_scope": False,
+            "has_conditional_scope_phrase": False,
+            "has_conditional_scope_token": False,
+            "has_deontic_cue": False,
+            "has_deontic_scope": False,
+            "has_deontic_scope_phrase": False,
+            "has_dynamic_cue": False,
+            "has_dynamic_scope": False,
+            "has_dynamic_scope_phrase": False,
+            "has_exception_clause": False,
+            "has_frame_context": False,
+            "has_frame_cue": False,
+            "has_frame_scope_phrase": False,
+            "has_statutory_scope_reference": False,
+            "has_temporal_scope": False,
+            "has_temporal_scope_phrase": False,
+        },
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-formula-signal-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-formula-signal-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-deontic-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-formula-signal-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="20 U.S.C. 7261",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "temporal", "count": 1, "share": 1.0}],
+        family_shares={"temporal": 1.0},
+    )
+
+    adaptive_deontic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "deontic"]
+    )
+    assert adaptive_deontic.metadata["has_compiled_target_family_formula"] is True
+    assert adaptive_deontic.metadata["target_share"] == 0.0
+    assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_scope"] is False
+    assert adaptive_deontic.metadata["compiled_modal_families"] == ["deontic"]
+    assert (
+        adaptive_deontic.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_deontic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_deontic_outvoted_margin_low"
+        and ambiguity.metadata["has_compiled_target_family_formula"] is True
+        for ambiguity in ambiguities
+    )
 
 
 def test_modal_compiler_treats_transferred_as_frame_scope_ambiguity_signal() -> None:

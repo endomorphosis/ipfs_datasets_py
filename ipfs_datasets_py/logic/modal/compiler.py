@@ -398,6 +398,7 @@ class DeterministicModalCompiler:
         ambiguities.extend(
             self._adaptive_family_margin_ambiguities(
                 encoding,
+                modal_ir=modal_ir,
                 ranking=ranking,
                 family_shares=family_shares,
                 frame_selections=frame_selections,
@@ -526,6 +527,7 @@ class DeterministicModalCompiler:
         self,
         encoding: SpaCyLegalEncoding,
         *,
+        modal_ir: ModalIRDocument,
         ranking: Sequence[Dict[str, Any]],
         family_shares: Dict[str, float],
         frame_selections: Sequence[FrameSelection] = (),
@@ -543,6 +545,9 @@ class DeterministicModalCompiler:
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
         has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
+        compiled_modal_families = {
+            str(formula.operator.family) for formula in modal_ir.formulas
+        }
         has_frame_scope = bool(
             signals.get("has_frame_context")
             or signals.get("has_frame_cue")
@@ -591,7 +596,8 @@ class DeterministicModalCompiler:
             if target_family == predicted_family:
                 continue
             target_share = float(family_shares.get(target_family, 0.0))
-            if not has_signal and target_share <= 0.0:
+            has_compiled_target_family_formula = target_family in compiled_modal_families
+            if not has_signal and target_share <= 0.0 and not has_compiled_target_family_formula:
                 continue
             family_margin = target_share - predicted_share
             if family_margin > threshold:
@@ -608,6 +614,8 @@ class DeterministicModalCompiler:
                 "explicit_ambiguity_type": explicit_type,
                 "family_margin": round(family_margin, 6),
                 "family_ranking": list(ranking),
+                "compiled_modal_families": sorted(compiled_modal_families),
+                "has_compiled_target_family_formula": has_compiled_target_family_formula,
                 "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
                 "predicted_family": predicted_family,
