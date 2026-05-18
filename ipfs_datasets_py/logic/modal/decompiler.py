@@ -61,6 +61,12 @@ _USCODE_STATUS_DERIVATION_RULES = frozenset(
         "uscode_editorial_status_heading_v1",
     }
 )
+_USCODE_SECTION_HEADING_TAIL_RULES = frozenset(
+    {
+        "uscode_section_heading_v1",
+        "uscode_section_heading_coarse_v1",
+    }
+)
 _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
     r"(?:§{1,2}\s*|sec\.?\s*|section\s+)?"
@@ -639,7 +645,7 @@ def _fallback_section_heading_tail_text(
     max_tokens: int = 18,
 ) -> str:
     fallback_rule = _clean_text(formula.metadata.get("fallback_rule") or "")
-    if fallback_rule != "uscode_section_heading_v1":
+    if fallback_rule not in _USCODE_SECTION_HEADING_TAIL_RULES:
         return ""
     source_text = str(document.normalized_text or "")
     if not source_text:

@@ -261,6 +261,33 @@ def _zero_formula_sample_document() -> ModalIRDocument:
     )
 
 
+def _coarse_heading_tail_sample_document() -> ModalIRDocument:
+    source_id = "us-code-20-741-d9743e9c6ae8213e"
+    formula = ModalIRFormula(
+        formula_id="f-coarse-heading-tail",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_section_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=8,
+            citation="20 U.S.C. 741",
+        ),
+        metadata={"fallback_rule": "uscode_section_heading_coarse_v1"},
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="Sec. 741. Student aid program improvements.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -1287,3 +1314,35 @@ def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> 
     assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == [
         "1"
     ]
+
+
+def test_decode_modal_ir_document_emits_section_heading_tail_for_coarse_fallback() -> None:
+    decoded = decode_modal_ir_document(_coarse_heading_tail_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_rule"] == ["uscode_section_heading_coarse_v1"]
+    assert slot_map["section_heading_tail"] == ["Student aid program improvements"]
+    assert slot_map["fallback_surface_text"] == ["Student aid program improvements"]
+    assert slot_map["section_heading_tail_token_count"] == ["4"]
+    assert slot_map["section_heading_tail_token_suffix"] == ["improvements"]
+    assert slot_map["fallback_surface_text_token_count"] == ["4"]
+    assert slot_map["fallback_surface_text_token_suffix"] == ["improvements"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallback() -> None:
+    triples = modal_ir_to_flogic_triples(_coarse_heading_tail_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_rule") == ["uscode_section_heading_coarse_v1"]
+    assert objects("section_heading_tail") == ["Student aid program improvements"]
+    assert objects("fallback_surface_text") == ["Student aid program improvements"]
+    assert objects("section_heading_tail_token_count") == ["4"]
+    assert objects("section_heading_tail_token_suffix") == ["improvements"]
+    assert objects("fallback_surface_text_token_count") == ["4"]
+    assert objects("fallback_surface_text_token_suffix") == ["improvements"]

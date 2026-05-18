@@ -203,6 +203,12 @@ _USCODE_STATUS_DERIVATION_RULES = frozenset(
         "uscode_editorial_status_heading_v1",
     }
 )
+_USCODE_SECTION_HEADING_TAIL_RULES = frozenset(
+    {
+        "uscode_section_heading_v1",
+        "uscode_section_heading_coarse_v1",
+    }
+)
 _FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS = 1024
 _FRAME_ONTOLOGY_AUDIT_MAX_TERMS = 256
 
@@ -1900,7 +1906,7 @@ def _fallback_section_heading_tail_text(
     max_tokens: int = 18,
 ) -> str:
     fallback_rule = _clean_non_empty_string(formula.metadata.get("fallback_rule"))
-    if fallback_rule != "uscode_section_heading_v1":
+    if fallback_rule not in _USCODE_SECTION_HEADING_TAIL_RULES:
         return ""
     source_text = str(modal_ir.normalized_text or "")
     if not source_text:
