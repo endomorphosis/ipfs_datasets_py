@@ -200,6 +200,40 @@ _USCODE_42_3796FF_LONG_SUBSECTION_HEADING_TEXT = (
     "Section 3796ff Public safety officer benefit administration and definitions (a) "
     + _USCODE_LONG_SUBSECTION_BODY
 )
+_USCODE_16_6410_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 83 - CORAL REEF CONSERVATION Sec. 6410 - "
+    "Ruth D. Gates Coral Reef Conservation Grant Program From the U.S. Government "
+    "Publishing Office, www.gpo.gov §6410. Ruth D. Gates Coral Reef "
+    "Conservation Grant Program (a) In general Subject to the availability of "
+    "appropriations, the Administrator shall establish a program to provide "
+    "grants for projects for the conservation and restoration of coral reef "
+    "ecosystems. (b) Matching requirements for grants Federal funds for a coral "
+    "reef project may not exceed 50 percent of the total cost of the project, and "
+    "the non-Federal share may be provided by in-kind contributions."
+)
+_USCODE_16_47A_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+    "Title 16 - CONSERVATION CHAPTER 1 - NATIONAL PARKS, MILITARY PARKS, "
+    "MONUMENTS, AND SEASHORES SUBCHAPTER VI - SEQUOIA AND YOSEMITE NATIONAL PARKS "
+    "Sec. 47a - Addition of certain lands to park authorized From the U.S. "
+    "Government Publishing Office, www.gpo.gov §47a. Addition of certain "
+    "lands to park authorized For the purpose of preserving and consolidating "
+    "timber stands along the western boundary of the Yosemite National Park the "
+    "President of the United States is authorized, upon the joint recommendation "
+    "of the Secretaries of Interior and Agriculture, to add to the Yosemite "
+    "National Park."
+)
+_USCODE_7_614_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition "
+    "Title 7 - AGRICULTURE CHAPTER 26 - AGRICULTURAL ADJUSTMENT SUBCHAPTER III - "
+    "COMMODITY BENEFITS Sec. 614 - Separability From the U.S. Government "
+    "Publishing Office, www.gpo.gov §614. Separability If any provision of "
+    "this chapter is declared unconstitutional, or the applicability thereof to "
+    "any person, circumstance, or commodity is held invalid the validity of the "
+    "remainder of this chapter and the applicability thereof to other persons, "
+    "circumstances, or commodities shall not be affected thereby."
+)
 
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
@@ -718,6 +752,50 @@ def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_f
     assert fallback.operator.family == "frame"
     assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
+
+
+def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_and_7_614() -> None:
+    cases = [
+        (
+            "us-code-16-6410-7cc9d1ff88340f35",
+            "16 U.S.C. 6410",
+            _USCODE_16_6410_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-16-47a-26c452e74b52db99",
+            "16 U.S.C. 47a",
+            _USCODE_16_47A_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-7-614-6e310cb5e196544b",
+            "7 U.S.C. 614",
+            _USCODE_7_614_SYMBOLIC_VALIDITY_TEXT,
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            assert all(
+                formula.provenance.citation == citation
+                for formula in compiled.modal_ir.formulas
+            )
 
 
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
