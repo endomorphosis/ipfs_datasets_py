@@ -1888,6 +1888,28 @@ def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkey
         and ambiguity.metadata["has_compiled_target_family_formula"] is True
         for ambiguity in ambiguities
     )
+    compiled_primary_pair = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "temporal"]
+    )
+    assert compiled_primary_pair.metadata["adaptive_predicted_family_source"] == (
+        "compiled_primary_family"
+    )
+    assert compiled_primary_pair.metadata["predicted_family"] == "deontic"
+    assert compiled_primary_pair.metadata["target_family"] == "temporal"
+    assert compiled_primary_pair.metadata["family_margin"] < 0.0
+    assert (
+        compiled_primary_pair.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_temporal_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_temporal_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_predicted_family_source"]
+        == "compiled_primary_family"
+        for ambiguity in ambiguities
+    )
 
 
 def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_deontic_adaptive_ambiguity(

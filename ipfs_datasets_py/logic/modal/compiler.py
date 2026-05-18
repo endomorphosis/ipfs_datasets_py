@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field, replace
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
@@ -619,62 +619,22 @@ class DeterministicModalCompiler:
         compiled_modal_families = {
             str(formula.operator.family) for formula in modal_ir.formulas
         }
+        compiled_primary_family = (
+            str(modal_ir.formulas[0].operator.family)
+            if modal_ir.formulas
+            else None
+        )
         has_frame_scope = bool(
             signals.get("has_frame_context")
             or signals.get("has_frame_cue")
             or signals.get("has_statutory_scope_reference")
             or has_frame_bm25_support
         )
-        target_signal_by_family: Dict[str, bool]
-        if predicted_family == ModalLogicFamily.DEONTIC.value:
-            target_signal_by_family = {
-                ModalLogicFamily.FRAME.value: has_frame_scope,
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
-                    signals.get("has_condition_or_exception_scope")
-                ),
-                ModalLogicFamily.TEMPORAL.value: bool(
-                    signals.get("has_temporal_scope")
-                ),
-                ModalLogicFamily.ALETHIC.value: bool(
-                    signals.get("has_alethic_scope")
-                    or signals.get("has_alethic_cue")
-                ),
-            }
-        elif predicted_family == ModalLogicFamily.TEMPORAL.value:
-            target_signal_by_family = {
-                ModalLogicFamily.FRAME.value: has_frame_scope,
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
-                    signals.get("has_condition_or_exception_scope")
-                ),
-                ModalLogicFamily.DEONTIC.value: bool(
-                    signals.get("has_deontic_scope")
-                ),
-            }
-        elif predicted_family == ModalLogicFamily.HYBRID.value:
-            target_signal_by_family = {
-                ModalLogicFamily.FRAME.value: has_frame_scope,
-            }
-        elif predicted_family == ModalLogicFamily.FRAME.value:
-            target_signal_by_family = {
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
-                    signals.get("has_condition_or_exception_scope")
-                ),
-                ModalLogicFamily.DEONTIC.value: bool(
-                    signals.get("has_deontic_scope")
-                    or signals.get("has_deontic_cue")
-                ),
-                ModalLogicFamily.TEMPORAL.value: bool(
-                    signals.get("has_temporal_scope")
-                ),
-            }
-        elif predicted_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
-            target_signal_by_family = {
-                ModalLogicFamily.EPISTEMIC.value: bool(
-                    signals.get("has_epistemic_cue")
-                ),
-            }
-        else:
-            target_signal_by_family = {}
+        target_signal_by_family = self._adaptive_target_signal_by_family(
+            predicted_family,
+            signals=signals,
+            has_frame_scope=has_frame_scope,
+        )
         for policy_target_family in signal_free_adaptive_ambiguity_targets(
             predicted_family
         ):
@@ -813,7 +773,195 @@ class DeterministicModalCompiler:
                     },
                 )
             )
+        if (
+            compiled_primary_family is not None
+            and compiled_primary_family != predicted_family
+        ):
+            ambiguities.extend(
+                self._compiled_primary_family_adaptive_pair_ambiguities(
+                    compiled_primary_family=compiled_primary_family,
+                    competing_family=predicted_family,
+                    ranking=ranking,
+                    family_shares=family_shares,
+                    threshold=threshold,
+                    signals=signals,
+                    has_frame_scope=has_frame_scope,
+                    has_frame_bm25_support=has_frame_bm25_support,
+                    compiled_modal_families=compiled_modal_families,
+                )
+            )
         return ambiguities
+
+    def _adaptive_target_signal_by_family(
+        self,
+        predicted_family: str,
+        *,
+        signals: Mapping[str, bool],
+        has_frame_scope: bool,
+    ) -> Dict[str, bool]:
+        target_signal_by_family: Dict[str, bool]
+        if predicted_family == ModalLogicFamily.DEONTIC.value:
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
+                ModalLogicFamily.ALETHIC.value: bool(
+                    signals.get("has_alethic_scope")
+                    or signals.get("has_alethic_cue")
+                ),
+            }
+        elif predicted_family == ModalLogicFamily.TEMPORAL.value:
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
+                ModalLogicFamily.DEONTIC.value: bool(
+                    signals.get("has_deontic_scope")
+                ),
+            }
+        elif predicted_family == ModalLogicFamily.HYBRID.value:
+            target_signal_by_family = {
+                ModalLogicFamily.FRAME.value: has_frame_scope,
+            }
+        elif predicted_family == ModalLogicFamily.FRAME.value:
+            target_signal_by_family = {
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
+                ModalLogicFamily.DEONTIC.value: bool(
+                    signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
+                ),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
+            }
+        elif predicted_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
+            target_signal_by_family = {
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_cue")
+                ),
+            }
+        else:
+            target_signal_by_family = {}
+        return target_signal_by_family
+
+    def _compiled_primary_family_adaptive_pair_ambiguities(
+        self,
+        *,
+        compiled_primary_family: str,
+        competing_family: str,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+        threshold: float,
+        signals: Mapping[str, bool],
+        has_frame_scope: bool,
+        has_frame_bm25_support: bool,
+        compiled_modal_families: Sequence[str],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not self._supports_signal_free_adaptive_pair(
+            compiled_primary_family,
+            competing_family,
+        ):
+            return []
+        primary_share = float(family_shares.get(compiled_primary_family, 0.0))
+        competing_share = float(family_shares.get(competing_family, 0.0))
+        family_margin = primary_share - competing_share
+        if family_margin > threshold:
+            return []
+        target_signal_by_family = self._adaptive_target_signal_by_family(
+            compiled_primary_family,
+            signals=signals,
+            has_frame_scope=has_frame_scope,
+        )
+        has_signal = bool(target_signal_by_family.get(competing_family, False))
+        has_compiled_target_family_formula = competing_family in compiled_modal_families
+        has_target_signal_evidence = bool(
+            has_signal
+            or competing_share > 0.0
+            or has_compiled_target_family_formula
+        )
+        is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
+            compiled_primary_family,
+            competing_family,
+        )
+        margin_direction = "outvoted" if (
+            family_margin < 0.0
+            or (family_margin <= 0.0 and is_priority_policy_pair)
+        ) else "contested"
+        requires_rule = margin_direction == "outvoted"
+        explicit_type = self._adaptive_margin_explicit_type(
+            compiled_primary_family,
+            competing_family,
+            margin_direction,
+        )
+        primary_share_display = round(primary_share, 6)
+        competing_share_display = round(competing_share, 6)
+        family_margin_display = round(
+            primary_share_display - competing_share_display,
+            6,
+        )
+        base_metadata = {
+            "adaptive_family_margin_threshold": threshold,
+            "adaptive_margin_direction": margin_direction,
+            "adaptive_predicted_family_source": "compiled_primary_family",
+            "explicit_ambiguity_type": explicit_type,
+            "family_margin_raw": family_margin,
+            "family_margin": family_margin_display,
+            "family_ranking": list(ranking),
+            "compiled_modal_families": sorted(compiled_modal_families),
+            "has_target_signal_evidence": has_target_signal_evidence,
+            "signal_free_pair_policy_applied": (
+                not has_target_signal_evidence
+            ),
+            "has_compiled_target_family_formula": has_compiled_target_family_formula,
+            "has_frame_bm25_support": has_frame_bm25_support,
+            "lexical_signals": dict(sorted(signals.items())),
+            "is_priority_policy_pair": is_priority_policy_pair,
+            "predicted_family": compiled_primary_family,
+            "predicted_margin_to_runner_up_raw": family_margin,
+            "predicted_margin_to_runner_up": round(family_margin, 6),
+            "runner_up_family": competing_family,
+            "runner_up_share_raw": competing_share,
+            "runner_up_share": competing_share_display,
+            "predicted_share_raw": primary_share,
+            "predicted_share": primary_share_display,
+            "target_family": competing_family,
+            "target_share_raw": competing_share,
+            "target_share": competing_share_display,
+            "is_self_pair": False,
+        }
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="adaptive_family_margin_low",
+                message=(
+                    "The compiled primary modal family is outvoted by competing "
+                    "cue evidence; family selection is ambiguous."
+                ),
+                candidate_ids=[compiled_primary_family, competing_family],
+                severity="requires_rule" if requires_rule else "review",
+                metadata=dict(base_metadata),
+            ),
+            ModalCompilationAmbiguity(
+                ambiguity_type=explicit_type,
+                message=(
+                    "Explicit adaptive modal-family conflict between the "
+                    "compiled primary family and a competing cue-dominant "
+                    "family."
+                ),
+                candidate_ids=[compiled_primary_family, competing_family],
+                severity="requires_rule" if requires_rule else "review",
+                metadata={
+                    **base_metadata,
+                    "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
+                },
+            ),
+        ]
 
     def _has_frame_bm25_support(
         self,
