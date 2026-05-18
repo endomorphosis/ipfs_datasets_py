@@ -1006,6 +1006,26 @@ def _frame_ontology_value_from_feature(
                 _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
 
+    # Autoencoder/hint pipelines may surface frame-linked source coordinates
+    # as raw values (without `flogic:`/`slot:` prefixes). Keep those values in
+    # the deterministic frame-term audit path.
+    raw_source_coordinate = _normalized_source_id_ontology_value(feature)
+    if raw_source_coordinate:
+        return (
+            raw_source_coordinate,
+            True,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+    raw_citation_coordinate = _normalized_usc_citation_ontology_value(feature)
+    if raw_citation_coordinate:
+        return (
+            raw_citation_coordinate,
+            True,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
+
     head, separator, tail = feature.partition(":")
     if not separator:
         return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE

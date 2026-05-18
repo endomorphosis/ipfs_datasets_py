@@ -987,6 +987,31 @@ def test_frame_ontology_terms_from_feature_keys_support_digestless_source_ids() 
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_bare_usc_and_source_id_coordinates() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "54 U.S.C. 308103.",
+            "us-code-25-4104-60f38eda8457e605",
+            "49 U.S.C. 44919.",
+            "us-code-16-460l-2-d5a72237fcd0f550",
+            "token:agency",
+            "25 U.S.C. 1041d",
+            "us-code-42-8013.-3827148a37e8f294",
+            "54 U.S.C. 100507.",
+        ]
+    )
+
+    assert terms == [
+        "54_308103",
+        "25_4104",
+        "49_44919",
+        "16_460l_2",
+        "25_1041d",
+        "42_8013",
+        "54_100507",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_support_digestless_source_ids() -> None:
     terms = frame_ontology_terms_from_triples(
         [
@@ -1330,7 +1355,10 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
     assert is_frame_ontology_feature_key("slot:source_id:us_code_44_1305") is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-42-2624 to 2628.") is True
+    assert is_frame_ontology_feature_key("54 U.S.C. 308103.") is True
+    assert is_frame_ontology_feature_key("us-code-16-460l-2-d5a72237fcd0f550") is True
     assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
+    assert is_frame_ontology_feature_key("transferred") is False
     assert is_frame_ontology_feature_key("") is False
 
 
