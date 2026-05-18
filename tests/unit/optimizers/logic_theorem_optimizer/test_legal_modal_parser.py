@@ -309,6 +309,9 @@ _USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT = (
 _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "The administrative notice and hearing procedures for certification."
 )
+_USCODE_2_453_PACKET_39_TEXT = "The oath of office."
+_USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
+_USCODE_43_1656_PACKET_39_TEXT = "The withdrawal and reservation of lands."
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
@@ -1211,6 +1214,43 @@ def test_parser_replays_packet_todo_samples_for_2_88b_5_42_18431_and_42_12313() 
             "us-code-42-12313.-c1053dbe1a049f60",
             "42 U.S.C. 12313.",
             _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-2-453-868ad5bf81742f35",
+            "2 U.S.C. 453",
+            _USCODE_2_453_PACKET_39_TEXT,
+        ),
+        (
+            "us-code-9-6-725aa2302c64ab87",
+            "9 U.S.C. 6",
+            _USCODE_9_6_PACKET_39_TEXT,
+        ),
+        (
+            "us-code-43-1656.-ee86a662b13291c8",
+            "43 U.S.C. 1656.",
+            _USCODE_43_1656_PACKET_39_TEXT,
         ),
     ]
 

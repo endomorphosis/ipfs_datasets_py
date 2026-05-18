@@ -233,6 +233,9 @@ _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
 _USCODE_6_314_TODO_TEXT = "National planning scenarios, preparedness targets, and implementation guidance."
 _USCODE_35_4_TODO_TEXT = "Officers, employees, and attorneys."
 _USCODE_7_7316_TODO_TEXT = "Report."
+_USCODE_2_453_PACKET_39_TEXT = "The oath of office."
+_USCODE_9_6_PACKET_39_TEXT = "The application heard as motion."
+_USCODE_43_1656_PACKET_39_TEXT = "The withdrawal and reservation of lands."
 _USCODE_46_55318_TODO_TEXT = (
     "§55318. Effect on other law This subchapter does not affect chapter 5 of title 5. "
     "(Pub. L. 109–304, §8(c), Oct. 6, 2006, 120 Stat. 1648.) Historical and Revision "
@@ -900,6 +903,51 @@ def test_modal_compiler_replays_packet_todo_heading_only_samples_for_6_314_35_4_
             "us-code-7-7316-85781f95eae6399d",
             "7 U.S.C. 7316",
             _USCODE_7_7316_TODO_TEXT,
+        ),
+    ]
+    for backend in ("regex", "spacy"):
+        compiler = DeterministicModalCompiler(
+            ModalCompilerConfig(
+                parser_backend=backend,
+                spacy_model_name="definitely_missing_legal_model",
+            )
+        )
+        for document_id, citation, text in cases:
+            compiled = compiler.compile(
+                text,
+                document_id=document_id,
+                citation=citation,
+                source="us_code",
+            )
+
+            assert compiled.modal_ir.formulas
+            assert all(
+                ambiguity.ambiguity_type != "missing_modal_formula"
+                for ambiguity in compiled.ambiguities
+            )
+            fallback = compiled.modal_ir.formulas[-1]
+            assert fallback.operator.family == "frame"
+            assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+            assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+            assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_replays_packet_todo_article_prefixed_heading_samples_for_2_453_9_6_and_43_1656() -> None:
+    cases = [
+        (
+            "us-code-2-453-868ad5bf81742f35",
+            "2 U.S.C. 453",
+            _USCODE_2_453_PACKET_39_TEXT,
+        ),
+        (
+            "us-code-9-6-725aa2302c64ab87",
+            "9 U.S.C. 6",
+            _USCODE_9_6_PACKET_39_TEXT,
+        ),
+        (
+            "us-code-43-1656.-ee86a662b13291c8",
+            "43 U.S.C. 1656.",
+            _USCODE_43_1656_PACKET_39_TEXT,
         ),
     ]
     for backend in ("regex", "spacy"):

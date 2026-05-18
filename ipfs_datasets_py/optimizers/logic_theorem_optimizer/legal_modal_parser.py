@@ -88,6 +88,37 @@ _USCODE_HEADING_ONLY_LEADING_STOPWORDS = frozenset(
 )
 _USCODE_HEADING_ONLY_ARTICLE_ALLOWED_LEAD = "the"
 _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS = frozenset({"term", "terms"})
+_USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS = frozenset(
+    {
+        "application",
+        "applications",
+        "authority",
+        "benefits",
+        "declaration",
+        "definitions",
+        "duties",
+        "hearing",
+        "hearings",
+        "lands",
+        "motion",
+        "motions",
+        "notice",
+        "oath",
+        "office",
+        "policy",
+        "procedures",
+        "proceeding",
+        "proceedings",
+        "provisions",
+        "requirements",
+        "reservation",
+        "reservations",
+        "review",
+        "rights",
+        "withdrawal",
+        "withdrawals",
+    }
+)
 _USCODE_PROCEDURAL_CLAUSE_KEYWORD_RE = re.compile(
     r"\b(?:administrative|appeal|appeals|hearing|notice|petition|petitions|"
     r"procedure|procedures|review)\b",
@@ -1122,7 +1153,7 @@ class LegalModalParser:
         return True
 
     def _looks_like_article_prefixed_heading(self, tokens: Sequence[str]) -> bool:
-        """Allow compact heading lines such as `The ... notice and hearing ...`."""
+        """Allow compact article-prefixed heading lines such as `The oath of office`."""
         if not tokens or tokens[0] != _USCODE_HEADING_ONLY_ARTICLE_ALLOWED_LEAD:
             return False
         body_tokens = list(tokens[1:])
@@ -1131,7 +1162,7 @@ class LegalModalParser:
         if body_tokens[0] in _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS:
             return False
         token_set = set(body_tokens)
-        return "notice" in token_set and "hearing" in token_set
+        return bool(token_set & _USCODE_HEADING_ONLY_ARTICLE_NOUN_HINTS)
 
     def _coarse_citation_heading_segment(
         self,
