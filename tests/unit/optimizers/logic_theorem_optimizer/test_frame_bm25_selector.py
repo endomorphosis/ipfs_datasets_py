@@ -318,6 +318,25 @@ def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for
     assert len(terms) > 64
 
 
+def test_frame_ontology_terms_from_feature_keys_prioritize_direct_terms_when_term_cap_is_exceeded() -> None:
+    contextual_features = [
+        f"flogic:citation_section_component:{1000 + index}"
+        for index in range(12)
+    ]
+    terms = frame_ontology_terms_from_feature_keys(
+        contextual_features
+        + ["selected-frame-term:final order"],
+        max_terms=4,
+    )
+
+    assert terms == [
+        "final_order",
+        "1000",
+        "1001",
+        "1002",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_are_case_insensitive_for_prefixes() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -561,6 +580,35 @@ def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_de
     assert "unless_written_notice_provided" in terms
     assert "term_fj" in terms
     assert len(terms) > 64
+
+
+def test_frame_ontology_terms_from_triples_prioritize_direct_terms_when_term_cap_is_exceeded() -> None:
+    contextual_triples = [
+        {
+            "subject": "doc-1",
+            "predicate": "citation_section_component",
+            "object": str(1000 + index),
+        }
+        for index in range(12)
+    ]
+    terms = frame_ontology_terms_from_triples(
+        contextual_triples
+        + [
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "final order",
+            }
+        ],
+        max_terms=4,
+    )
+
+    assert terms == [
+        "final_order",
+        "1000",
+        "1001",
+        "1002",
+    ]
 
 
 def test_frame_ontology_terms_from_triples_support_source_id_citation_canonical_terms() -> None:
@@ -906,4 +954,23 @@ def test_frame_ontology_feature_keys_filter_non_frame_and_preserve_order() -> No
         "modal_family:frame:3",
         "cue:frame:Frame:authority",
         "slot:selected_frame:administrative_notice_hearing",
+    ]
+
+
+def test_frame_ontology_feature_keys_prioritize_direct_signals_when_key_cap_is_exceeded() -> None:
+    contextual_features = [
+        f"flogic:citation_section_component:{1000 + index}"
+        for index in range(12)
+    ]
+    keys = frame_ontology_feature_keys(
+        contextual_features
+        + ["selected-frame-term:final_order"],
+        max_keys=4,
+    )
+
+    assert keys == [
+        "selected-frame-term:final_order",
+        "flogic:citation_section_component:1000",
+        "flogic:citation_section_component:1001",
+        "flogic:citation_section_component:1002",
     ]

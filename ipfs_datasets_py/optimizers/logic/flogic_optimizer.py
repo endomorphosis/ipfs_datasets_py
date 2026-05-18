@@ -190,19 +190,23 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
-        frame_feature_key_list = _sorted_unique_terms(
+        frame_feature_key_ordered_list = _unique_preserve_order(
             [
                 str(feature_key).strip()
                 for feature_key in (frame_feature_keys or [])
                 if str(feature_key or "").strip()
             ]
         )
+        frame_feature_key_list = _sorted_unique_terms(frame_feature_key_ordered_list)
+        frame_audit_feature_key_ordered_list = frame_ontology_feature_keys(
+            frame_feature_key_ordered_list
+        )
         frame_audit_feature_key_list = _sorted_unique_terms(
-            frame_ontology_feature_keys(frame_feature_key_list)
+            frame_audit_feature_key_ordered_list
         )
         frame_ontology_terms_from_features = _sorted_unique_terms(
             frame_ontology_terms_from_feature_keys(
-                frame_audit_feature_key_list,
+                frame_audit_feature_key_ordered_list,
                 max_terms=_FRAME_ONTOLOGY_AUDIT_MAX_TERMS,
             )
         )

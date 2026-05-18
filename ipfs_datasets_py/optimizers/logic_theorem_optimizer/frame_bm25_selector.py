@@ -197,6 +197,9 @@ _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
     "frame_candidate",
     "selected_frame",
 )
+_FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
+_FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 1
+_FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT = 2
 
 
 @dataclass(frozen=True)
@@ -377,7 +380,7 @@ def frame_ontology_terms_from_triples(
     max_terms: int = 256,
 ) -> List[str]:
     """Extract canonical frame ontology terms from frame-linked triples."""
-    terms: List[str] = []
+    term_entries: List[tuple[str, int]] = []
     for triple in triples:
         predicate = str(triple.get("predicate", "")).strip()
         if not predicate:
@@ -386,6 +389,11 @@ def frame_ontology_terms_from_triples(
         contextual = _is_contextual_frame_ontology_predicate(predicate)
         if not (canonical_predicate or contextual):
             continue
+        priority = (
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT
+            if canonical_predicate
+            else _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL
+        )
         allow_numeric_tokens = _predicate_allows_numeric_ontology_tokens(
             canonical_predicate or predicate
         )
@@ -403,12 +411,11 @@ def frame_ontology_terms_from_triples(
         )
         if not normalized:
             continue
-        if normalized in terms:
-            continue
-        terms.append(normalized)
-        if len(terms) >= max_terms:
-            break
-    return terms
+        term_entries.append((normalized, priority))
+    return _bounded_ontology_values(
+        term_entries,
+        max_items=max_terms,
+    )
 
 
 def frame_ontology_terms_from_feature_keys(
@@ -417,7 +424,7 @@ def frame_ontology_terms_from_feature_keys(
     max_terms: int = 256,
 ) -> List[str]:
     """Extract canonical frame ontology terms from frame-linked feature keys."""
-    terms: List[str] = []
+    term_entries: List[tuple[str, int]] = []
     for feature_key in feature_keys:
         feature = str(feature_key or "").strip()
         if not feature:
@@ -427,6 +434,7 @@ def frame_ontology_terms_from_feature_keys(
             raw_value,
             allow_numeric_tokens,
             allow_single_char_alpha_tokens,
+            priority,
         ) = _frame_ontology_value_from_feature(feature)
         if not raw_value:
             continue
@@ -438,12 +446,11 @@ def frame_ontology_terms_from_feature_keys(
         )
         if not normalized:
             continue
-        if normalized in terms:
-            continue
-        terms.append(normalized)
-        if len(terms) >= max_terms:
-            break
-    return terms
+        term_entries.append((normalized, priority))
+    return _bounded_ontology_values(
+        term_entries,
+        max_items=max_terms,
+    )
 
 
 def is_frame_ontology_feature_key(feature_key: str) -> bool:
@@ -451,7 +458,7 @@ def is_frame_ontology_feature_key(feature_key: str) -> bool:
     feature = str(feature_key or "").strip()
     if not feature:
         return False
-    value, _, _ = _frame_ontology_value_from_feature(feature)
+    value, _, _, _ = _frame_ontology_value_from_feature(feature)
     return bool(value)
 
 
@@ -461,16 +468,68 @@ def frame_ontology_feature_keys(
     max_keys: int = 1024,
 ) -> List[str]:
     """Return unique frame-linked feature keys in stable encounter order."""
-    result: List[str] = []
+    key_entries: List[tuple[str, int]] = []
     for feature_key in feature_keys:
         feature = str(feature_key or "").strip()
-        if not feature or feature in result:
+        if not feature:
             continue
-        if not is_frame_ontology_feature_key(feature):
+        value, _, _, priority = _frame_ontology_value_from_feature(feature)
+        if not value:
             continue
-        result.append(feature)
-        if len(result) >= max_keys:
-            break
+        key_entries.append((feature, priority))
+    return _bounded_ontology_values(
+        key_entries,
+        max_items=max_keys,
+    )
+
+
+def _bounded_ontology_values(
+    entries: Iterable[tuple[str, int]],
+    *,
+    max_items: int,
+) -> List[str]:
+    """Return deterministic bounded values with overflow priority handling."""
+    if max_items <= 0:
+        return []
+    deduplicated = _deduplicated_ontology_entries(entries)
+    if len(deduplicated) <= max_items:
+        return [value for value, _priority in deduplicated]
+
+    selected: List[str] = []
+    seen: set[str] = set()
+    for priority in (
+        _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
+        _FRAME_ONTOLOGY_TERM_PRIORITY_NONE,
+    ):
+        for value, entry_priority in deduplicated:
+            if entry_priority != priority or value in seen:
+                continue
+            selected.append(value)
+            seen.add(value)
+            if len(selected) >= max_items:
+                return selected
+    return selected
+
+
+def _deduplicated_ontology_entries(
+    entries: Iterable[tuple[str, int]]
+) -> List[tuple[str, int]]:
+    result: List[tuple[str, int]] = []
+    index_by_value: Dict[str, int] = {}
+    for value, priority in entries:
+        normalized_value = str(value or "").strip()
+        if not normalized_value:
+            continue
+        resolved_priority = int(priority)
+        existing_index = index_by_value.get(normalized_value)
+        if existing_index is None:
+            index_by_value[normalized_value] = len(result)
+            result.append((normalized_value, resolved_priority))
+            continue
+        existing_priority = result[existing_index][1]
+        if resolved_priority > existing_priority:
+            result[existing_index] = (normalized_value, resolved_priority)
     return result
 
 
@@ -624,64 +683,88 @@ def _normalized_modal_family_count_value(
 
 
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
-    value, _, _ = _frame_ontology_value_from_feature(feature)
+    value, _, _, _ = _frame_ontology_value_from_feature(feature)
     return value
 
 
-def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
+def _frame_ontology_value_from_feature(
+    feature: str,
+) -> tuple[str, bool, bool, int]:
     lowered = feature.lower()
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
-            return "frame", False, False
+            return "frame", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT
     for prefix in _FRAME_SCOPED_FAMILY_FEATURE_PREFIXES:
         if lowered.startswith(f"{prefix}:"):
-            return feature[len(prefix) + 1 :].strip(), False, False
+            return (
+                feature[len(prefix) + 1 :].strip(),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
 
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
         if not cue_tail:
-            return "", False, False
+            return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
         cue_symbol, separator, cue_value = cue_tail.partition(":")
         resolved_cue_value = cue_value.strip() if separator else cue_symbol.strip()
         if not resolved_cue_value:
-            return "", False, False
-        return _normalized_frame_ontology_cue_value(resolved_cue_value), False, False
+            return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
+        return (
+            _normalized_frame_ontology_cue_value(resolved_cue_value),
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
 
     for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
         if lowered.startswith(prefix):
-            return feature[len(prefix) :].strip(), False, False
+            return (
+                feature[len(prefix) :].strip(),
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
 
     head, separator, tail = feature.partition(":")
     if not separator:
-        return "", False, False
+        return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
     canonical_head_predicate = _canonical_frame_ontology_predicate(head)
     if canonical_head_predicate:
         return (
             _normalized_frame_ontology_value(canonical_head_predicate, tail),
             _predicate_allows_numeric_ontology_tokens(canonical_head_predicate),
             _predicate_allows_single_character_alpha_tokens(canonical_head_predicate),
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
 
     namespace = head.strip().lower()
     if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
-        return "", False, False
+        return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
     predicate, separator, value = tail.partition(":")
     if not separator:
-        return "", False, False
+        return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
     if namespace == "slot":
         frame_semantic_value = _normalized_frame_semantic_slot_value(
             predicate,
             value,
         )
         if frame_semantic_value:
-            return frame_semantic_value, False, False
+            return (
+                frame_semantic_value,
+                False,
+                False,
+                _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+            )
     canonical_predicate = _canonical_frame_ontology_predicate(predicate)
     if canonical_predicate:
         return (
             _normalized_frame_ontology_value(canonical_predicate, value),
             _predicate_allows_numeric_ontology_tokens(canonical_predicate),
             _predicate_allows_single_character_alpha_tokens(canonical_predicate),
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
     if (
         namespace in _FRAME_ONTOLOGY_CONTEXTUAL_NAMESPACED_FEATURE_PREFIXES
@@ -691,14 +774,16 @@ def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool, bool]:
             _normalized_frame_ontology_value(predicate, value),
             _predicate_allows_numeric_ontology_tokens(predicate),
             _predicate_allows_single_character_alpha_tokens(predicate),
+            _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL,
         )
     if namespace == "slot" and _is_slot_frame_ontology_predicate(predicate):
         return (
             _normalized_frame_ontology_value(predicate, value),
             False,
             False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
-    return "", False, False
+    return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
 
 
 def _normalized_frame_semantic_slot_value(predicate: str, value: str) -> str:

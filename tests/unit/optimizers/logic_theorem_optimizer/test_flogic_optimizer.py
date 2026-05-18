@@ -242,3 +242,28 @@ def test_flogic_optimizer_tracks_source_id_citation_canonical_terms() -> None:
         "16_460ff_1",
         "50_2675",
     ]
+
+
+def test_flogic_optimizer_keeps_direct_frame_terms_when_audit_key_cap_is_exceeded() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    dense_contextual_features = [
+        f"flogic:citation_section_component:{1000 + index}"
+        for index in range(1200)
+    ]
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=dense_contextual_features + ["selected-frame-term:final_order"],
+    )
+
+    assert "selected-frame-term:final_order" in result.metadata["frame_audit_feature_keys"]
+    assert "final_order" in result.metadata["frame_ontology_terms"]
