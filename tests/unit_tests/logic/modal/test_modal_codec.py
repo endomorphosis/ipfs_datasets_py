@@ -1746,11 +1746,40 @@ def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     )["deontic"] > 0.0
     feature_keys = codec.feature_keys_for_sample(sample)
     assert "frame:administrative_notice_hearing" in feature_keys
+    assert any(feature.startswith("frame-term:") for feature in feature_keys)
+    assert any(feature.startswith("selected-frame-term:") for feature in feature_keys)
     assert any(feature.startswith("flogic:modal_family:") for feature in feature_keys)
     assert "slot:modal_family" in feature_keys
     assert "slot:modal_operator" in feature_keys
     assert "slot:citation_title:5" in feature_keys
     assert "slot:citation_section:552" in feature_keys
+
+
+def test_modal_codec_emits_frame_ontology_term_triples() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice within 30 days.",
+        document_id="frame-term-doc",
+        citation="5 U.S.C. 552",
+        source="us_code",
+    )
+
+    assert any(
+        triple["predicate"] == "candidate_ontology_term"
+        for triple in result.kg_triples
+    )
+    assert any(
+        triple["predicate"] == "selected_ontology_term"
+        for triple in result.kg_triples
+    )
+    assert any(
+        triple["predicate"] == "interpreted_in_frame_term"
+        for triple in result.kg_triples
+    )
+    assert result.flogic_result is not None
+    assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
 
 
 def test_autoencoder_introspection_guides_typed_synthesis_hints() -> None:

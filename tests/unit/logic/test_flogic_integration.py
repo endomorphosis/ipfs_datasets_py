@@ -400,4 +400,30 @@ class TestFLogicSemanticOptimizer:
         result = opt.evaluate("hello", "world", emb, emb)
         assert result.metadata["source_text"] == "hello"
         assert result.metadata["decoded_text"] == "world"
+        assert result.metadata["frame_ontology_term_count"] == 0
+        assert result.metadata["frame_ontology_terms"] == []
         assert "threshold" in result.metadata
+
+    def test_result_metadata_tracks_frame_ontology_terms(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            kg_triples=[
+                {
+                    "subject": "doc-1",
+                    "predicate": "candidate_ontology_term",
+                    "object": "notice",
+                },
+                {
+                    "subject": "doc-1",
+                    "predicate": "selected_ontology_term",
+                    "object": "agency",
+                },
+            ],
+        )
+        assert result.metadata["frame_ontology_term_count"] == 2
+        assert result.metadata["frame_ontology_terms"] == ["agency", "notice"]

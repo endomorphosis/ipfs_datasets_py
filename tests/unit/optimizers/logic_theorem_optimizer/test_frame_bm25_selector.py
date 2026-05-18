@@ -6,6 +6,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
+    frame_ontology_terms,
 )
 
 
@@ -54,3 +55,19 @@ def test_bm25_selector_top_k_zero_returns_empty_list() -> None:
     selector = BM25FrameSelector(DEFAULT_LEGAL_FRAME_FIXTURE)
 
     assert selector.rank("agency notice", top_k=0) == []
+
+
+def test_frame_ontology_terms_are_canonical_and_include_matched_terms() -> None:
+    frame = FrameCandidate(
+        frame_id="administrative_notice_hearing",
+        label="Administrative Notice and Hearing",
+        terms=("agency", "final order"),
+        domain="administrative",
+    )
+
+    terms = frame_ontology_terms(frame, matched_terms=("notice", "hearing rights"))
+
+    assert "administrative_notice_hearing" in terms
+    assert "administrative" in terms
+    assert "notice" in terms
+    assert "hearing_rights" in terms

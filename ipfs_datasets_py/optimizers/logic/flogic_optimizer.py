@@ -179,6 +179,20 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
+        frame_term_predicates = {
+            "candidate_ontology_term",
+            "selected_ontology_term",
+            "interpreted_in_frame_term",
+        }
+        frame_ontology_terms = sorted(
+            {
+                str(triple.get("object", "")).strip()
+                for triple in (kg_triples or [])
+                if str(triple.get("predicate", "")).strip() in frame_term_predicates
+                and str(triple.get("object", "")).strip()
+            }
+        )
+
         passed = (
             similarity >= self.config.similarity_threshold and ontology_consistent
         )
@@ -191,6 +205,8 @@ class FLogicSemanticOptimizer:
             metadata={
                 "source_text": source_text,
                 "decoded_text": decoded_text,
+                "frame_ontology_term_count": len(frame_ontology_terms),
+                "frame_ontology_terms": frame_ontology_terms,
                 "threshold": self.config.similarity_threshold,
             },
         )

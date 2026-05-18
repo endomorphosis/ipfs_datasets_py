@@ -9,6 +9,7 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
+_ONTOLOGY_TERM_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 
 @dataclass(frozen=True)
@@ -125,6 +126,55 @@ class BM25FrameSelector:
         return frequencies
 
 
+def frame_ontology_terms(
+    frame: FrameCandidate,
+    *,
+    matched_terms: Sequence[str] = (),
+    max_terms: int = 24,
+) -> List[str]:
+    """Return deterministic ontology terms for one frame candidate.
+
+    The term list is intentionally stable and explainable: we keep canonical
+    phrase forms plus tokenized atoms for frame id/label/domain/terms and the
+    lexical matches that affected BM25 scoring.
+    """
+
+    raw_values = [
+        frame.frame_id,
+        frame.label,
+        frame.domain,
+        *frame.terms,
+        *matched_terms,
+    ]
+    terms: List[str] = []
+    for raw in raw_values:
+        text = str(raw or "").strip()
+        if not text:
+            continue
+        canonical = _canonical_ontology_term(text)
+        if canonical and canonical not in terms:
+            terms.append(canonical)
+            if len(terms) >= max_terms:
+                break
+        for token in _ONTOLOGY_TERM_TOKEN_RE.findall(text.lower()):
+            if len(token) < 2:
+                continue
+            if token not in terms:
+                terms.append(token)
+                if len(terms) >= max_terms:
+                    break
+        if len(terms) >= max_terms:
+            break
+    return terms
+
+
+def _canonical_ontology_term(value: str, *, max_tokens: int = 8) -> str:
+    tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
+    if not tokens:
+        return ""
+    return "_".join(tokens[:max_tokens])
+
+
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (
     FrameCandidate(
         frame_id="housing_voucher_benefits",
@@ -155,4 +205,5 @@ __all__ = [
     "DEFAULT_LEGAL_FRAME_FIXTURE",
     "FrameCandidate",
     "FrameSelection",
+    "frame_ontology_terms",
 ]

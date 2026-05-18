@@ -22,7 +22,9 @@ from ipfs_datasets_py.optimizers.logic.flogic_optimizer import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
+    FrameCandidate,
     FrameSelection,
+    frame_ontology_terms,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
     LegalModalParser,
@@ -418,6 +420,13 @@ class DeterministicModalLogicCodec:
         features.extend(_slot_features(codec_result.decoded_modal_text))
         if codec_result.selected_frame:
             features.append(f"frame:{codec_result.selected_frame}")
+        frame_terms = _frame_ontology_terms_by_frame(codec_result.modal_ir)
+        for frame_id in sorted(frame_terms):
+            terms = frame_terms[frame_id]
+            for term in terms:
+                features.append(f"frame-term:{term}")
+                if frame_id == codec_result.selected_frame:
+                    features.append(f"selected-frame-term:{term}")
         for candidate in codec_result.frame_candidates:
             frame_id = candidate.get("frame_id")
             if frame_id:
@@ -473,6 +482,16 @@ class DeterministicModalLogicCodec:
             **modal_ir.metadata,
             "deterministic_parser": parser_name,
             "encoder_decoder": "deterministic_modal_logic_codec_v1",
+            "frame_ontology_terms": {
+                selection.frame.frame_id: frame_ontology_terms(
+                    selection.frame,
+                    matched_terms=selection.matched_terms,
+                )
+                for selection in sorted(
+                    frame_selections,
+                    key=lambda item: item.frame.frame_id,
+                )
+            },
             "frame_selector": "bm25_v1",
             "llm_call_count": 0,
             "modal_family_counts": encoding.modal_family_counts(),
@@ -556,6 +575,8 @@ def modal_ir_to_flogic_triples(
                 "object": selected_frame,
             }
         )
+    frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
+    selected_frame_terms: List[str] = []
     for frame in modal_ir.frame_candidates:
         triples.append(
             {
@@ -564,6 +585,25 @@ def modal_ir_to_flogic_triples(
                 "object": frame.frame_id,
             }
         )
+        candidate_terms = frame_terms_by_frame.get(frame.frame_id, [])
+        for term in candidate_terms:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "candidate_ontology_term",
+                    "object": term,
+                }
+            )
+        if selected_frame and frame.frame_id == selected_frame:
+            selected_frame_terms = list(candidate_terms)
+            for term in selected_frame_terms:
+                triples.append(
+                    {
+                        "subject": modal_ir.document_id,
+                        "predicate": "selected_ontology_term",
+                        "object": term,
+                    }
+                )
     for formula in modal_ir.formulas:
         condition_prefixes: set[str] = set()
         exception_prefixes: set[str] = set()
@@ -746,6 +786,14 @@ def modal_ir_to_flogic_triples(
                     "object": selected_frame,
                 }
             )
+            for term in selected_frame_terms:
+                triples.append(
+                    {
+                        "subject": formula.formula_id,
+                        "predicate": "interpreted_in_frame_term",
+                        "object": term,
+                    }
+                )
     return triples
 
 
@@ -855,6 +903,41 @@ def _slot_feature_value(value: str, *, max_tokens: int = 8) -> str:
     if not tokens:
         return ""
     return "_".join(tokens[:max_tokens])
+
+
+def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[str]]:
+    metadata_terms = modal_ir.metadata.get("frame_ontology_terms")
+    if isinstance(metadata_terms, Mapping):
+        result: Dict[str, List[str]] = {}
+        for frame_id, values in metadata_terms.items():
+            normalized_values = _unique_preserve_order(
+                _slot_feature_value(str(value))
+                for value in (values if isinstance(values, Sequence) and not isinstance(values, (str, bytes)) else [])
+            )
+            frame_key = _clean_non_empty_string(frame_id)
+            if frame_key and normalized_values:
+                result[frame_key] = normalized_values
+        if result:
+            return result
+
+    fallback: Dict[str, List[str]] = {}
+    for frame in modal_ir.frame_candidates:
+        candidate = FrameCandidate(
+            frame_id=frame.frame_id,
+            label=frame.frame_id.replace("_", " "),
+            terms=tuple(frame.matched_terms),
+            domain="general",
+        )
+        terms = _unique_preserve_order(
+            _slot_feature_value(term)
+            for term in frame_ontology_terms(
+                candidate,
+                matched_terms=frame.matched_terms,
+            )
+        )
+        if terms:
+            fallback[frame.frame_id] = terms
+    return fallback
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:
