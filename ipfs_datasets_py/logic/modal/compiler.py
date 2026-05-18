@@ -539,6 +539,7 @@ class DeterministicModalCompiler:
         if predicted_family not in {
             ModalLogicFamily.TEMPORAL.value,
             ModalLogicFamily.DEONTIC.value,
+            ModalLogicFamily.HYBRID.value,
         }:
             return []
         predicted_share = float(ranking[0]["share"])
@@ -576,7 +577,7 @@ class DeterministicModalCompiler:
                     ),
                 ),
             )
-        else:
+        elif predicted_family == ModalLogicFamily.TEMPORAL.value:
             target_specs = (
                 (
                     ModalLogicFamily.FRAME.value,
@@ -589,6 +590,13 @@ class DeterministicModalCompiler:
                 (
                     ModalLogicFamily.DEONTIC.value,
                     bool(signals.get("has_deontic_scope")),
+                ),
+            )
+        else:
+            target_specs = (
+                (
+                    ModalLogicFamily.FRAME.value,
+                    has_frame_scope,
                 ),
             )
         ambiguities: List[ModalCompilationAmbiguity] = []
@@ -715,6 +723,14 @@ class DeterministicModalCompiler:
             (
                 ModalLogicFamily.TEMPORAL.value,
                 ModalLogicFamily.DEONTIC.value,
+            ),
+            (
+                ModalLogicFamily.TEMPORAL.value,
+                ModalLogicFamily.FRAME.value,
+            ),
+            (
+                ModalLogicFamily.HYBRID.value,
+                ModalLogicFamily.FRAME.value,
             ),
         }
 
