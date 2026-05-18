@@ -86,6 +86,8 @@ _USCODE_HEADING_ONLY_LEADING_STOPWORDS = frozenset(
         "those",
     }
 )
+_USCODE_HEADING_ONLY_ARTICLE_ALLOWED_LEAD = "the"
+_USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS = frozenset({"term", "terms"})
 
 
 @dataclass(frozen=True)
@@ -1001,8 +1003,21 @@ class LegalModalParser:
         if any(punctuation in normalized for punctuation in ":[]{}"):
             return False
         if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS:
-            return False
+            if not self._looks_like_article_prefixed_heading(tokens):
+                return False
         return True
+
+    def _looks_like_article_prefixed_heading(self, tokens: Sequence[str]) -> bool:
+        """Allow compact heading lines such as `The ... notice and hearing ...`."""
+        if not tokens or tokens[0] != _USCODE_HEADING_ONLY_ARTICLE_ALLOWED_LEAD:
+            return False
+        body_tokens = list(tokens[1:])
+        if len(body_tokens) < 2:
+            return False
+        if body_tokens[0] in _USCODE_HEADING_ONLY_ARTICLE_BANNED_SECOND_TOKENS:
+            return False
+        token_set = set(body_tokens)
+        return "notice" in token_set and "hearing" in token_set
 
     def _coarse_citation_heading_segment(
         self,

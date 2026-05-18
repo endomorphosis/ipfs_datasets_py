@@ -128,6 +128,13 @@ _USCODE_42_15251_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "editorially reclassified as section 50321 of Title 34, Crime Control and "
     "Law Enforcement."
 )
+_USCODE_2_88B_5_TODO_TEXT = "The administrative notice and hearing procedures."
+_USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "The notice and hearing requirements for administrative review."
+)
+_USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "The administrative notice and hearing procedures for certification."
+)
 
 
 def _coarse_uscode_heading_noise_text(section: str, heading: str) -> str:
@@ -599,6 +606,45 @@ def test_spacy_compiler_replays_symbolic_validity_todo_samples_for_2_5602_5_5348
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
+
+
+def test_spacy_compiler_replays_packet_todo_samples_for_2_88b_5_42_18431_and_42_12313() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-2-88b-5-94883a45ddc4a6db",
+            "2 U.S.C. 88b-5",
+            _USCODE_2_88B_5_TODO_TEXT,
+        ),
+        (
+            "us-code-42-18431.-b72b735d11b81b90",
+            "42 U.S.C. 18431.",
+            _USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+        (
+            "us-code-42-12313.-c1053dbe1a049f60",
+            "42 U.S.C. 12313.",
+            _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.document_id == document_id
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+        assert fallback.provenance.citation == citation
 
 
 def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases() -> None:

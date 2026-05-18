@@ -293,6 +293,13 @@ _USCODE_42_15251_SYMBOLIC_VALIDITY_TODO_TEXT = (
     "editorially reclassified as section 50321 of Title 34, Crime Control and "
     "Law Enforcement."
 )
+_USCODE_2_88B_5_TODO_TEXT = "The administrative notice and hearing procedures."
+_USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "The notice and hearing requirements for administrative review."
+)
+_USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT = (
+    "The administrative notice and hearing procedures for certification."
+)
 _USCODE_25_422_HEADING_ONLY_TEXT = "Housing voucher benefits and utility allowances."
 _USCODE_48_1572_HEADING_ONLY_TEXT = "Administrative notice and hearing."
 _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
@@ -1135,6 +1142,43 @@ def test_parser_replays_symbolic_validity_todo_samples_for_2_5602_5_5348_and_42_
             assert fallback.operator.family == "frame"
             assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
             assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
+
+
+def test_parser_replays_packet_todo_samples_for_2_88b_5_42_18431_and_42_12313() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-2-88b-5-94883a45ddc4a6db",
+            "2 U.S.C. 88b-5",
+            _USCODE_2_88B_5_TODO_TEXT,
+        ),
+        (
+            "us-code-42-18431.-b72b735d11b81b90",
+            "42 U.S.C. 18431.",
+            _USCODE_42_18431_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+        (
+            "us-code-42-12313.-c1053dbe1a049f60",
+            "42 U.S.C. 12313.",
+            _USCODE_42_12313_SYMBOLIC_VALIDITY_TODO_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
+        assert fallback.provenance.citation == citation
 
 
 def test_logic_extractor_uses_deterministic_modal_parser_without_llm() -> None:
