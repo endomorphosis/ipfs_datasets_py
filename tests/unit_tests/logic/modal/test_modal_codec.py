@@ -4444,6 +4444,67 @@ def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
     assert not any(term.startswith("selected_frame_term") for term in selected_terms)
 
 
+def test_modal_codec_audits_structured_hint_evidence_from_term_metadata_without_key_noise() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-hint-evidence-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: {
+                    "matched_terms": ["hearing rights"],
+                    "hint_evidence": [
+                        {
+                            "hint_id": "modal-synthesis-5c028bc1799b3abf",
+                            "sample_id": "us-code-7-1595-3023e94b951ca7a0",
+                        }
+                    ],
+                    "frame_features": [
+                        "selected-frame-term:42 U.S.C. 6932.",
+                        "cue:frame:Frame:transferred",
+                    ],
+                    "top_family_features": [
+                        "family:selected_frame:deontic",
+                    ],
+                    "hint_ids": ["modal-synthesis-6191fcb2398f9edb"],
+                    "score": 0.99,
+                }
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "hearing_rights" in selected_terms
+    assert "7_1595" in selected_terms
+    assert "42_6932" in selected_terms
+    assert "transferred" in selected_terms
+    assert "deontic" in selected_terms
+    assert "hint_evidence" not in selected_terms
+    assert "frame_features" not in selected_terms
+    assert "top_family_features" not in selected_terms
+    assert not any(term.startswith("modal_synthesis") for term in selected_terms)
+
+
 def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
