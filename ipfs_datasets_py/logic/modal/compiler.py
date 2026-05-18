@@ -523,35 +523,49 @@ class DeterministicModalCompiler:
         ranking: Sequence[Dict[str, Any]],
         family_shares: Dict[str, float],
     ) -> List[ModalCompilationAmbiguity]:
-        """Surface an explicit ambiguity when temporal cues outvote key legal families."""
+        """Surface explicit ambiguities when strong legal families compete."""
         if not ranking:
             return []
         predicted_family = str(ranking[0]["family"])
-        if predicted_family != ModalLogicFamily.TEMPORAL.value:
+        if predicted_family not in {
+            ModalLogicFamily.TEMPORAL.value,
+            ModalLogicFamily.DEONTIC.value,
+        }:
             return []
         predicted_share = float(ranking[0]["share"])
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
-        target_specs = (
-            (
-                ModalLogicFamily.FRAME.value,
-                bool(
-                    signals.get("has_frame_context")
-                    or signals.get("has_frame_cue")
-                    or signals.get("has_statutory_scope_reference")
-                ),
-            ),
-            (
-                ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-                bool(signals.get("has_condition_or_exception_scope")),
-            ),
-            (
-                ModalLogicFamily.DEONTIC.value,
-                bool(signals.get("has_deontic_scope")),
-            ),
+        has_frame_scope = bool(
+            signals.get("has_frame_context")
+            or signals.get("has_frame_cue")
+            or signals.get("has_statutory_scope_reference")
         )
+        if predicted_family == ModalLogicFamily.DEONTIC.value:
+            target_specs = (
+                (
+                    ModalLogicFamily.FRAME.value,
+                    has_frame_scope,
+                ),
+            )
+        else:
+            target_specs = (
+                (
+                    ModalLogicFamily.FRAME.value,
+                    has_frame_scope,
+                ),
+                (
+                    ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                    bool(signals.get("has_condition_or_exception_scope")),
+                ),
+                (
+                    ModalLogicFamily.DEONTIC.value,
+                    bool(signals.get("has_deontic_scope")),
+                ),
+            )
         ambiguities: List[ModalCompilationAmbiguity] = []
         for target_family, has_signal in target_specs:
+            if target_family == predicted_family:
+                continue
             target_share = float(family_shares.get(target_family, 0.0))
             if not has_signal and target_share <= 0.0:
                 continue
@@ -562,8 +576,9 @@ class DeterministicModalCompiler:
                 ModalCompilationAmbiguity(
                     ambiguity_type="adaptive_family_margin_low",
                     message=(
-                        "Temporal cues dominate while another legal modal family has "
-                        "competing scope/context evidence; family selection is ambiguous."
+                        "A dominant modal family outvotes another legal modal family "
+                        "despite competing scope/context evidence; family selection is "
+                        "ambiguous."
                     ),
                     candidate_ids=[predicted_family, target_family],
                     severity="requires_rule" if family_margin < 0.0 else "review",

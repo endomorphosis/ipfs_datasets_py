@@ -336,6 +336,34 @@ def test_modal_compiler_treats_transferred_as_frame_scope_ambiguity_signal() -> 
     assert adaptive_frame.metadata["lexical_signals"]["has_frame_scope_phrase"] is True
 
 
+def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Applicants shall and must provide notice under this section."
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "frame"]
+    )
+    assert adaptive_frame.metadata["predicted_family"] == "deontic"
+    assert adaptive_frame.metadata["target_family"] == "frame"
+    assert adaptive_frame.metadata["family_margin"] < 0.0
+    assert (
+        adaptive_frame.metadata["lexical_signals"]["has_statutory_scope_reference"]
+        is True
+    )
+
+
 def test_modal_compiler_surfaces_temporal_conditional_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
