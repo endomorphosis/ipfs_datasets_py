@@ -829,6 +829,11 @@ def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     return value
 
 
+def frame_ontology_feature_value(feature_key: str) -> str:
+    """Return normalized raw ontology value from one feature key, if present."""
+    return _raw_frame_ontology_value_from_feature(str(feature_key or ""))
+
+
 def _frame_ontology_value_from_feature(
     feature: str,
 ) -> tuple[str, bool, bool, int]:
@@ -1066,6 +1071,7 @@ __all__ = [
     "DEFAULT_LEGAL_FRAME_FIXTURE",
     "FrameCandidate",
     "FrameSelection",
+    "frame_ontology_feature_value",
     "frame_ontology_feature_keys",
     "frame_ontology_high_signal_terms",
     "frame_ontology_terms_from_feature_keys",

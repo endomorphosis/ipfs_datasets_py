@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
     FrameSelection,
+    frame_ontology_feature_value,
     frame_ontology_feature_keys,
     frame_ontology_high_signal_terms,
     frame_ontology_terms,
@@ -217,6 +218,10 @@ _FRAME_ONTOLOGY_METADATA_VALUE_KEYS = frozenset(
     {
         "candidate_term",
         "candidate_terms",
+        "feature",
+        "feature_key",
+        "feature_keys",
+        "features",
         "frame",
         "frame_term",
         "frame_terms",
@@ -2796,6 +2801,13 @@ def _frame_ontology_metadata_terms(value: Any) -> List[str]:
     if not raw_value:
         return []
     terms: List[str] = []
+
+    frame_feature_value = frame_ontology_feature_value(raw_value)
+    if frame_feature_value:
+        feature_terms = frame_ontology_terms_from_feature_keys([raw_value])
+        if feature_terms:
+            return _unique_preserve_order(feature_terms)
+        raw_value = frame_feature_value
 
     citation_match = _USC_CITATION_RE.match(raw_value)
     source_id_match = _USCODE_SOURCE_ID_RE.match(raw_value)

@@ -6,6 +6,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
+    frame_ontology_feature_value,
     frame_ontology_feature_keys,
     frame_ontology_high_signal_terms,
     frame_ontology_terms_from_feature_keys,
@@ -329,6 +330,20 @@ def test_frame_ontology_terms_from_feature_keys_support_selected_candidate_alias
         "hearing_rights",
         "final_order",
     ]
+
+
+def test_frame_ontology_feature_value_extracts_normalized_raw_values() -> None:
+    assert (
+        frame_ontology_feature_value("selected-frame-term:42 U.S.C. 6932.")
+        == "42 U.S.C. 6932."
+    )
+    assert (
+        frame_ontology_feature_value(
+            "flogic:source_id:us-code-5-552-deadbeefdeadbeef"
+        )
+        == "5 552"
+    )
+    assert frame_ontology_feature_value("token:agency") == ""
 
 
 def test_frame_ontology_terms_from_feature_keys_preserve_tail_frame_features_for_dense_inputs() -> None:

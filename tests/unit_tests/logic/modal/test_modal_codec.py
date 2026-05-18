@@ -4206,6 +4206,50 @@ def test_modal_codec_audits_citation_coordinates_from_frame_term_metadata() -> N
     assert "us_code_564m_dee77e626d5d85a3" not in selected_terms
 
 
+def test_modal_codec_audits_frame_feature_keys_from_term_metadata() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-feature-key-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+
+    selected_frame = result.selected_frame
+    patched_modal_ir = replace(
+        result.modal_ir,
+        frame_logic=ModalIRFrameLogic(selected_frame=selected_frame),
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: [
+                    {"feature": "selected-frame-term:42 U.S.C. 6932."},
+                    {"feature_key": "cue:frame:Frame:transferred"},
+                    {"feature": "flogic:source_id:us-code-5-552-deadbeefdeadbeef"},
+                ]
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert "42_6932" in selected_terms
+    assert "transferred" in selected_terms
+    assert "5_552" in selected_terms
+    assert "feature" not in selected_terms
+    assert not any(term.startswith("selected_frame_term") for term in selected_terms)
+
+
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     frame_selector = BM25FrameSelector(
         (
