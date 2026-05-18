@@ -802,6 +802,10 @@ def modal_ir_to_flogic_triples(
     """Project modal IR into simple F-logic-style triples."""
     if modal_ir.frame_logic.triples:
         return modal_ir.frame_logic.to_triples()
+    resolved_selected_frame = _resolved_selected_frame(
+        modal_ir,
+        explicit_selected_frame=selected_frame,
+    )
     triples: List[Dict[str, str]] = [
         {"subject": modal_ir.document_id, "predicate": "type", "object": "legal_modal_document"},
         {"subject": modal_ir.document_id, "predicate": "source", "object": modal_ir.source},
@@ -831,25 +835,29 @@ def modal_ir_to_flogic_triples(
                     "object": value,
                 }
             )
-    if selected_frame:
+    if resolved_selected_frame:
         triples.append(
             {
                 "subject": modal_ir.document_id,
                 "predicate": "selected_ontology_frame",
-                "object": selected_frame,
+                "object": resolved_selected_frame,
             }
         )
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     selected_frame_terms: List[str] = []
-    for frame in modal_ir.frame_candidates:
+    for frame_id in _ranked_candidate_frame_ids(
+        modal_ir,
+        frame_terms_by_frame=frame_terms_by_frame,
+        selected_frame=resolved_selected_frame,
+    ):
         triples.append(
             {
                 "subject": modal_ir.document_id,
                 "predicate": "candidate_ontology_frame",
-                "object": frame.frame_id,
+                "object": frame_id,
             }
         )
-        candidate_terms = frame_terms_by_frame.get(frame.frame_id, [])
+        candidate_terms = frame_terms_by_frame.get(frame_id, [])
         for term in candidate_terms:
             triples.append(
                 {
@@ -858,7 +866,7 @@ def modal_ir_to_flogic_triples(
                     "object": term,
                 }
             )
-        if selected_frame and frame.frame_id == selected_frame:
+        if resolved_selected_frame and frame_id == resolved_selected_frame:
             selected_frame_terms = list(candidate_terms)
             for term in selected_frame_terms:
                 triples.append(
@@ -868,6 +876,16 @@ def modal_ir_to_flogic_triples(
                         "object": term,
                     }
                 )
+    if resolved_selected_frame and not selected_frame_terms:
+        selected_frame_terms = list(frame_terms_by_frame.get(resolved_selected_frame, ()))
+        for term in selected_frame_terms:
+            triples.append(
+                {
+                    "subject": modal_ir.document_id,
+                    "predicate": "selected_ontology_term",
+                    "object": term,
+                }
+            )
     for formula in modal_ir.formulas:
         condition_prefixes: set[str] = set()
         condition_prefix_families: set[str] = set()
@@ -1392,12 +1410,12 @@ def modal_ir_to_flogic_triples(
                     "object": value,
                 }
             )
-        if selected_frame:
+        if resolved_selected_frame:
             triples.append(
                 {
                     "subject": formula.formula_id,
                     "predicate": "interpreted_in_frame",
-                    "object": selected_frame,
+                    "object": resolved_selected_frame,
                 }
             )
             for term in selected_frame_terms:
@@ -2726,7 +2744,7 @@ def _document_modal_family_count_components(
 ) -> List[tuple[str, str]]:
     components: List[tuple[str, str]] = []
     for rank, (family, count) in enumerate(
-        _normalized_modal_family_counts(modal_ir.metadata.get("modal_family_counts")),
+        _resolved_modal_family_counts(modal_ir),
         start=1,
     ):
         components.extend(
@@ -2739,6 +2757,31 @@ def _document_modal_family_count_components(
             ]
         )
     return _unique_preserve_order_tuples(components)
+
+
+def _resolved_modal_family_counts(
+    modal_ir: ModalIRDocument,
+) -> List[tuple[str, str]]:
+    metadata_counts = _normalized_modal_family_counts(
+        modal_ir.metadata.get("modal_family_counts")
+    )
+    if metadata_counts:
+        return metadata_counts
+    formula_counts: Dict[str, int] = {}
+    for formula in modal_ir.formulas:
+        family = _slot_safe_family_key(
+            _clean_non_empty_string(formula.operator.family).lower()
+        )
+        if not family:
+            continue
+        formula_counts[family] = formula_counts.get(family, 0) + 1
+    return sorted(
+        (
+            (family, str(count))
+            for family, count in formula_counts.items()
+        ),
+        key=lambda item: item[0],
+    )
 
 
 def _document_source_context_components(
@@ -4296,6 +4339,71 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
         if terms:
             result[frame_key] = terms
     return result
+
+
+def _resolved_selected_frame(
+    modal_ir: ModalIRDocument,
+    *,
+    explicit_selected_frame: Optional[str],
+) -> str:
+    explicit = _clean_non_empty_string(explicit_selected_frame)
+    if explicit:
+        return explicit
+    metadata_selected = _clean_non_empty_string(modal_ir.metadata.get("selected_frame"))
+    if metadata_selected:
+        return metadata_selected
+    frame_logic_selected = _clean_non_empty_string(
+        getattr(modal_ir.frame_logic, "selected_frame", "")
+    )
+    if frame_logic_selected:
+        return frame_logic_selected
+    for frame in modal_ir.frame_candidates:
+        frame_id = _clean_non_empty_string(frame.frame_id)
+        if frame_id:
+            return frame_id
+    frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
+    for frame_id in sorted(frame_terms_by_frame):
+        normalized = _clean_non_empty_string(frame_id)
+        if normalized:
+            return normalized
+    return ""
+
+
+def _ranked_candidate_frame_ids(
+    modal_ir: ModalIRDocument,
+    *,
+    frame_terms_by_frame: Mapping[str, Sequence[str]],
+    selected_frame: str,
+) -> List[str]:
+    def _candidate_sort_key(frame: ModalIRFrame) -> tuple[float, str]:
+        frame_id = _clean_non_empty_string(frame.frame_id)
+        try:
+            score = float(frame.score)
+        except (TypeError, ValueError):
+            score = 0.0
+        return (-score, frame_id)
+
+    ranked_ids: List[str] = []
+    seen: set[str] = set()
+    for frame in sorted(
+        modal_ir.frame_candidates,
+        key=_candidate_sort_key,
+    ):
+        frame_id = _clean_non_empty_string(frame.frame_id)
+        if not frame_id or frame_id in seen:
+            continue
+        seen.add(frame_id)
+        ranked_ids.append(frame_id)
+    for frame_id in sorted(frame_terms_by_frame):
+        normalized = _clean_non_empty_string(frame_id)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        ranked_ids.append(normalized)
+    normalized_selected = _clean_non_empty_string(selected_frame)
+    if normalized_selected and normalized_selected not in seen:
+        ranked_ids.append(normalized_selected)
+    return ranked_ids
 
 
 def _frame_ontology_metadata_terms(value: Any) -> List[str]:

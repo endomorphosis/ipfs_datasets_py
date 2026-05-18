@@ -7,6 +7,7 @@ from ipfs_datasets_py.logic.modal.decompiler import (
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
+    ModalIRFrameLogic,
     ModalIRFormula,
     ModalIROperator,
     ModalIRPredicate,
@@ -722,6 +723,80 @@ def _span_metrics_sample_document() -> ModalIRDocument:
                 ),
             ),
         ],
+    )
+
+
+def _single_formula_temporal_family_sample_document() -> ModalIRDocument:
+    source_id = "us-code-7-8758-6c50bb2c1676bbf9"
+    formula = ModalIRFormula(
+        formula_id="f-temporal-family-only",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=22,
+            citation="7 U.S.C. 8758",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="7 U.S.C. 8758 notice publication requirement.",
+        formulas=[formula],
+    )
+
+
+def _metadata_only_frame_terms_sample_document() -> ModalIRDocument:
+    source_id = "us-code-26-646-0cfbbfe0c86b90ae"
+    formula = ModalIRFormula(
+        formula_id="f-frame-metadata-only",
+        operator=ModalIROperator(
+            family="temporal",
+            system="ltl",
+            symbol="F",
+            label="eventually",
+        ),
+        predicate=ModalIRPredicate(name="publish_deadline_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=38,
+            citation="26 U.S.C. 646",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="26 U.S.C. 646 agency notice and deadline appeal process.",
+        formulas=[formula],
+        frame_logic=ModalIRFrameLogic(selected_frame="administrative_notice_hearing"),
+        metadata={
+            "frame_ontology_terms": {
+                "administrative_notice_hearing": [
+                    "administrative",
+                    "administrative_notice_hearing",
+                    "agency",
+                    "appeal",
+                    "deadline",
+                ],
+                "criminal_penalty_enforcement": [
+                    "criminal",
+                    "enforcement",
+                    "penalty",
+                ],
+                "housing_voucher_benefits": [
+                    "accommodation",
+                    "housing",
+                    "voucher",
+                ],
+            }
+        },
     )
 
 
@@ -2561,6 +2636,80 @@ def test_modal_ir_to_flogic_triples_emits_document_modal_family_count_slots() ->
     assert objects("modal_family_count_value") == ["2", "1"]
     assert objects("modal_family_count_deontic") == ["2"]
     assert objects("modal_family_count_temporal") == ["1"]
+
+
+def test_decode_modal_ir_document_derives_modal_family_count_slots_from_formulas() -> None:
+    decoded = decode_modal_ir_document(_single_formula_temporal_family_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["modal_family_count"] == ["temporal:1"]
+    assert slot_map["modal_family_count_ranked"] == ["1:temporal:1"]
+    assert slot_map["modal_family_count_family"] == ["temporal"]
+    assert slot_map["modal_family_count_value"] == ["1"]
+    assert slot_map["modal_family_count_temporal"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_derives_modal_family_count_slots_from_formulas() -> None:
+    triples = modal_ir_to_flogic_triples(_single_formula_temporal_family_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("modal_family_count") == ["temporal:1"]
+    assert objects("modal_family_count_ranked") == ["1:temporal:1"]
+    assert objects("modal_family_count_family") == ["temporal"]
+    assert objects("modal_family_count_value") == ["1"]
+    assert objects("modal_family_count_temporal") == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_infers_selected_frame_and_candidates_from_metadata() -> None:
+    triples = modal_ir_to_flogic_triples(_metadata_only_frame_terms_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("selected_ontology_frame") == ["administrative_notice_hearing"]
+    assert objects("candidate_ontology_frame") == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "housing_voucher_benefits",
+    ]
+    assert objects("candidate_ontology_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+        "criminal",
+        "enforcement",
+        "penalty",
+        "accommodation",
+        "housing",
+        "voucher",
+    ]
+    assert objects("selected_ontology_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
+    assert objects("interpreted_in_frame") == ["administrative_notice_hearing"]
+    assert objects("interpreted_in_frame_term") == [
+        "administrative",
+        "administrative_notice_hearing",
+        "agency",
+        "appeal",
+        "deadline",
+    ]
 
 
 def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formulas() -> None:

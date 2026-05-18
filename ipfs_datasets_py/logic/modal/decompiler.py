@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
@@ -955,7 +955,8 @@ def _document_modal_family_count_phrases(
 ) -> List[DecodedModalPhrase]:
     phrases: List[DecodedModalPhrase] = []
     for slot, value in _modal_family_count_slots(
-        document.metadata.get("modal_family_counts")
+        document.metadata.get("modal_family_counts"),
+        formulas=document.formulas,
     ):
         phrases.append(
             DecodedModalPhrase(
@@ -967,10 +968,14 @@ def _document_modal_family_count_phrases(
     return phrases
 
 
-def _modal_family_count_slots(raw_counts: Any) -> List[Tuple[str, str]]:
+def _modal_family_count_slots(
+    raw_counts: Any,
+    *,
+    formulas: Sequence[ModalIRFormula] = (),
+) -> List[Tuple[str, str]]:
     slots: List[Tuple[str, str]] = []
     for rank, (family, count) in enumerate(
-        _normalized_modal_family_counts(raw_counts),
+        _resolved_modal_family_counts(raw_counts, formulas=formulas),
         start=1,
     ):
         slots.extend(
@@ -985,8 +990,31 @@ def _modal_family_count_slots(raw_counts: Any) -> List[Tuple[str, str]]:
     return _unique_slot_values(slots)
 
 
+def _resolved_modal_family_counts(
+    raw_counts: Any,
+    *,
+    formulas: Sequence[ModalIRFormula] = (),
+) -> List[Tuple[str, str]]:
+    metadata_counts = _normalized_modal_family_counts(raw_counts)
+    if metadata_counts:
+        return metadata_counts
+    formula_counts: Dict[str, int] = {}
+    for formula in formulas:
+        family = _slot_safe_family_key(_clean_text(formula.operator.family).lower())
+        if not family:
+            continue
+        formula_counts[family] = formula_counts.get(family, 0) + 1
+    return sorted(
+        (
+            (family, str(count))
+            for family, count in formula_counts.items()
+        ),
+        key=lambda item: item[0],
+    )
+
+
 def _normalized_modal_family_counts(raw_counts: Any) -> List[Tuple[str, str]]:
-    if not isinstance(raw_counts, dict):
+    if not isinstance(raw_counts, Mapping):
         return []
     normalized: Dict[str, str] = {}
     for raw_family, raw_count in raw_counts.items():
