@@ -883,6 +883,12 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
                 str(len(section_trailing_punct)),
             )
         )
+        punct_kind = _section_trailing_punct_kind(section_trailing_punct)
+        if punct_kind:
+            slots.append(("source_id_section_trailing_punct_kind", punct_kind))
+    else:
+        slots.append(("source_id_section_has_trailing_punct", "false"))
+        slots.append(("source_id_section_trailing_punct_count", "0"))
     section_for_slots = normalized_section or section
     source_id_canonical = _canonical_usc_citation(title, section_for_slots)
     if source_id_canonical:
@@ -1431,6 +1437,12 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
                     str(len(section_trailing_punct)),
                 )
             )
+            punct_kind = _section_trailing_punct_kind(section_trailing_punct)
+            if punct_kind:
+                slots.append(("citation_section_trailing_punct_kind", punct_kind))
+        else:
+            slots.append(("citation_section_has_trailing_punct", "false"))
+            slots.append(("citation_section_trailing_punct_count", "0"))
         slots.extend(_citation_section_slots(section))
         slots.extend(
             _typed_identifier_slots(
@@ -1453,6 +1465,19 @@ def _section_trailing_punct(
     if not raw.startswith(normalized):
         return ""
     return _clean_text(raw[len(normalized) :])
+
+
+def _section_trailing_punct_kind(value: str) -> str:
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return ""
+    if all(character == "." for character in cleaned):
+        return "dot"
+    if all(character == ":" for character in cleaned):
+        return "colon"
+    if all(character == ";" for character in cleaned):
+        return "semicolon"
+    return "other"
 
 
 def _canonical_usc_citation(title: str, section: str) -> str:

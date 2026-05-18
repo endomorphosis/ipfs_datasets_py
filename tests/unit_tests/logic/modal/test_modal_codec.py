@@ -3040,8 +3040,9 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "60604." in slot_texts["citation_section_raw"]
     assert "60604" in slot_texts["citation_section_normalized"]
     assert slot_texts["citation_section_trailing_punct"] == ["."]
-    assert slot_texts["citation_section_has_trailing_punct"] == ["true"]
-    assert slot_texts["citation_section_trailing_punct_count"] == ["1"]
+    assert slot_texts["citation_section_has_trailing_punct"] == ["false", "true"]
+    assert slot_texts["citation_section_trailing_punct_count"] == ["0", "1"]
+    assert slot_texts["citation_section_trailing_punct_kind"] == ["dot"]
     assert "31a" in slot_texts["citation_section_primary"]
     assert "6050K" in slot_texts["citation_section_primary"]
     assert "2" in slot_texts["citation_section_component_count"]
@@ -3128,8 +3129,23 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
         for triple in triples
     )
     assert any(
+        triple["predicate"] == "citation_section_has_trailing_punct"
+        and triple["object"] == "false"
+        for triple in triples
+    )
+    assert any(
         triple["predicate"] == "citation_section_trailing_punct_count"
         and triple["object"] == "1"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_trailing_punct_count"
+        and triple["object"] == "0"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_trailing_punct_kind"
+        and triple["object"] == "dot"
         for triple in triples
     )
     assert any(
@@ -3212,8 +3228,9 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
     assert "42 U.S.C. 2000e" in slot_texts["source_id_citation_canonical"]
     assert "10145" in slot_texts["source_id_section_normalized"]
     assert slot_texts["source_id_section_trailing_punct"] == ["."]
-    assert slot_texts["source_id_section_has_trailing_punct"] == ["true"]
-    assert slot_texts["source_id_section_trailing_punct_count"] == ["1"]
+    assert slot_texts["source_id_section_has_trailing_punct"] == ["true", "false"]
+    assert slot_texts["source_id_section_trailing_punct_count"] == ["1", "0"]
+    assert slot_texts["source_id_section_trailing_punct_kind"] == ["dot"]
     assert "10145" in slot_texts["source_id_section_primary"]
     assert "2000e" in slot_texts["source_id_section_primary"]
     assert "10145" in slot_texts["source_id_section_number"]
@@ -3252,8 +3269,23 @@ def test_modal_decompiler_and_triples_surface_uscode_source_id_slots() -> None:
         for triple in triples
     )
     assert any(
+        triple["predicate"] == "source_id_section_has_trailing_punct"
+        and triple["object"] == "false"
+        for triple in triples
+    )
+    assert any(
         triple["predicate"] == "source_id_section_trailing_punct_count"
         and triple["object"] == "1"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_trailing_punct_count"
+        and triple["object"] == "0"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "source_id_section_trailing_punct_kind"
+        and triple["object"] == "dot"
         for triple in triples
     )
     assert any(

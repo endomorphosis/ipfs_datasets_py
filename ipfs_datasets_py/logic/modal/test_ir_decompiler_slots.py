@@ -431,6 +431,8 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_delimiter_pattern"] == ["hyphen"]
     assert slot_map["citation_section_delimiter_distinct_count"] == ["1"]
     assert slot_map["citation_section_is_range"] == ["false"]
+    assert slot_map["citation_section_has_trailing_punct"] == ["false"]
+    assert slot_map["citation_section_trailing_punct_count"] == ["0"]
     assert slot_map["citation_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["citation_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -492,6 +494,8 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_delimiter_pattern"] == ["hyphen"]
     assert slot_map["source_id_section_delimiter_distinct_count"] == ["1"]
     assert slot_map["source_id_section_is_range"] == ["false"]
+    assert slot_map["source_id_section_has_trailing_punct"] == ["false"]
+    assert slot_map["source_id_section_trailing_punct_count"] == ["0"]
     assert slot_map["source_id_title_section_key"] == ["21:360bbb-0"]
     assert slot_map["source_id_title_section_key_normalized"] == ["21:360bbb-0"]
 
@@ -567,6 +571,8 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_delimiter_pattern") == ["hyphen"]
     assert objects("citation_section_delimiter_distinct_count") == ["1"]
     assert objects("citation_section_is_range") == ["false"]
+    assert objects("citation_section_has_trailing_punct") == ["false"]
+    assert objects("citation_section_trailing_punct_count") == ["0"]
     assert objects("citation_title_section_key") == ["21:360bbb-0"]
     assert objects("citation_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -628,6 +634,8 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_delimiter_pattern") == ["hyphen"]
     assert objects("source_id_section_delimiter_distinct_count") == ["1"]
     assert objects("source_id_section_is_range") == ["false"]
+    assert objects("source_id_section_has_trailing_punct") == ["false"]
+    assert objects("source_id_section_trailing_punct_count") == ["0"]
     assert objects("source_id_title_section_key") == ["21:360bbb-0"]
     assert objects("source_id_title_section_key_normalized") == ["21:360bbb-0"]
 
@@ -1286,12 +1294,14 @@ def test_decode_modal_ir_document_emits_trailing_punct_presence_slots() -> None:
     assert slot_map["citation_section_trailing_punct"] == ["."]
     assert slot_map["citation_section_has_trailing_punct"] == ["true"]
     assert slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert slot_map["citation_section_trailing_punct_kind"] == ["dot"]
     assert slot_map["citation_section_has_suffix"] == ["false"]
     assert slot_map["citation_section_primary_has_suffix"] == ["false"]
     assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
     assert slot_map["source_id_section_trailing_punct"] == ["."]
     assert slot_map["source_id_section_has_trailing_punct"] == ["true"]
     assert slot_map["source_id_section_trailing_punct_count"] == ["1"]
+    assert slot_map["source_id_section_trailing_punct_kind"] == ["dot"]
     assert slot_map["source_id_section_has_suffix"] == ["false"]
     assert slot_map["source_id_section_primary_has_suffix"] == ["false"]
     assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
@@ -1310,12 +1320,14 @@ def test_modal_ir_to_flogic_triples_emit_trailing_punct_presence_slots() -> None
     assert objects("citation_section_trailing_punct") == ["."]
     assert objects("citation_section_has_trailing_punct") == ["true"]
     assert objects("citation_section_trailing_punct_count") == ["1"]
+    assert objects("citation_section_trailing_punct_kind") == ["dot"]
     assert objects("citation_section_has_suffix") == ["false"]
     assert objects("citation_section_primary_has_suffix") == ["false"]
     assert objects("citation_section_terminal_has_suffix") == ["false"]
     assert objects("source_id_section_trailing_punct") == ["."]
     assert objects("source_id_section_has_trailing_punct") == ["true"]
     assert objects("source_id_section_trailing_punct_count") == ["1"]
+    assert objects("source_id_section_trailing_punct_kind") == ["dot"]
     assert objects("source_id_section_has_suffix") == ["false"]
     assert objects("source_id_section_primary_has_suffix") == ["false"]
     assert objects("source_id_section_terminal_has_suffix") == ["false"]
@@ -1854,6 +1866,7 @@ def test_decode_modal_ir_document_emits_usc_section_marker_variant_slots() -> No
     assert plural_marker_slot_map["citation_section_trailing_punct"] == ["."]
     assert plural_marker_slot_map["citation_section_has_trailing_punct"] == ["true"]
     assert plural_marker_slot_map["citation_section_trailing_punct_count"] == ["1"]
+    assert plural_marker_slot_map["citation_section_trailing_punct_kind"] == ["dot"]
 
 
 def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> None:
@@ -1896,6 +1909,9 @@ def test_modal_ir_to_flogic_triples_emits_usc_section_marker_variant_slots() -> 
     ]
     assert objects(plural_marker_triples, "citation_section_trailing_punct_count") == [
         "1"
+    ]
+    assert objects(plural_marker_triples, "citation_section_trailing_punct_kind") == [
+        "dot"
     ]
 
 
