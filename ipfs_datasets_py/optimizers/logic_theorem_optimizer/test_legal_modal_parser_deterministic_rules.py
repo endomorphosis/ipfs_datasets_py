@@ -28,6 +28,21 @@ def _missing_modal_formula_count(result) -> int:
     )
 
 
+def _has_adaptive_explicit_pair(
+    result,
+    *,
+    predicted_family: str,
+    target_family: str,
+) -> bool:
+    return any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.metadata.get("predicted_family") == predicted_family
+        and ambiguity.metadata.get("target_family") == target_family
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        for ambiguity in result.ambiguities
+    )
+
+
 def test_parser_recovers_article_prefixed_commission_heading() -> None:
     parser = LegalModalParser()
 
@@ -105,3 +120,45 @@ def test_compiler_spacy_backend_no_longer_emits_missing_formula_for_regression_c
         )
         assert result.modal_ir.formulas, document_id
         assert _missing_modal_formula_count(result) == 0, document_id
+
+
+def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    conditional_result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-frame-conditional",
+    )
+    assert _has_adaptive_explicit_pair(
+        conditional_result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    )
+
+    temporal_result = compiler.compile(
+        "For the period beginning on January 1, 2030, this authority applies.",
+        document_id="compiler-ambiguity-frame-temporal",
+    )
+    assert _has_adaptive_explicit_pair(
+        temporal_result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.TEMPORAL.value,
+    )
+
+
+def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "In the event that the Secretary determines eligibility, this authority applies.",
+        document_id="compiler-ambiguity-conditional-epistemic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+    )

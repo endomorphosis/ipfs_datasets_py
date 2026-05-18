@@ -1143,6 +1143,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_dynamic_cue": ModalLogicFamily.DYNAMIC.value in cue_families,
         "has_dynamic_scope": dynamic_scope,
         "has_dynamic_scope_phrase": bool(dynamic_scope_phrase),
+        "has_epistemic_cue": ModalLogicFamily.EPISTEMIC.value in cue_families,
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_temporal_within_scope": temporal_within_scope,

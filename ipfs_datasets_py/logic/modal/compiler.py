@@ -649,9 +649,21 @@ class DeterministicModalCompiler:
             }
         elif predicted_family == ModalLogicFamily.FRAME.value:
             target_signal_by_family = {
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
                 ModalLogicFamily.DEONTIC.value: bool(
                     signals.get("has_deontic_scope")
                     or signals.get("has_deontic_cue")
+                ),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
+            }
+        elif predicted_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
+            target_signal_by_family = {
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_cue")
                 ),
             }
         else:
