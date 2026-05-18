@@ -40,6 +40,32 @@ def _sample_document() -> ModalIRDocument:
     )
 
 
+def _provenance_alignment_mismatch_sample_document() -> ModalIRDocument:
+    source_id = "us-code-20-1131d-2a8fb06a45e3babe"
+    formula = ModalIRFormula(
+        formula_id="f-alignment-mismatch",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="publish_education_program_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=17,
+            citation="20 U.S.C. 1131e",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="20 U.S.C. 1131d compliance requirement.",
+        formulas=[formula],
+    )
+
+
 def _range_sample_document() -> ModalIRDocument:
     source_id = "us-code-45-228a to 228c-0123456789abcdef"
     formula = ModalIRFormula(
@@ -1969,3 +1995,57 @@ def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallba
     assert objects("section_heading_tail_token_suffix") == ["improvements"]
     assert objects("fallback_surface_text_token_count") == ["4"]
     assert objects("fallback_surface_text_token_suffix") == ["improvements"]
+
+
+def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> None:
+    aligned_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    mismatch_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_provenance_alignment_mismatch_sample_document())
+    )
+
+    assert aligned_slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert aligned_slot_map["citation_source_id_title_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_section_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_title_section_key_match"] == ["true"]
+    assert aligned_slot_map["citation_source_id_canonical_match"] == ["true"]
+
+    assert mismatch_slot_map["citation_source_id_alignment"] == ["title_only_match"]
+    assert mismatch_slot_map["citation_source_id_title_match"] == ["true"]
+    assert mismatch_slot_map["citation_source_id_section_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_title_section_key_match"] == ["false"]
+    assert mismatch_slot_map["citation_source_id_canonical_match"] == ["false"]
+
+
+def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -> None:
+    aligned_triples = modal_ir_to_flogic_triples(_sample_document())
+    mismatch_triples = modal_ir_to_flogic_triples(
+        _provenance_alignment_mismatch_sample_document()
+    )
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(aligned_triples, "citation_source_id_alignment") == ["exact_match"]
+    assert objects(aligned_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_section_match") == ["true"]
+    assert objects(aligned_triples, "citation_source_id_title_section_key_match") == [
+        "true"
+    ]
+    assert objects(aligned_triples, "citation_source_id_canonical_match") == ["true"]
+
+    assert objects(mismatch_triples, "citation_source_id_alignment") == [
+        "title_only_match"
+    ]
+    assert objects(mismatch_triples, "citation_source_id_title_match") == ["true"]
+    assert objects(mismatch_triples, "citation_source_id_section_match") == ["false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_section_key_match",
+    ) == ["false"]
+    assert objects(mismatch_triples, "citation_source_id_canonical_match") == ["false"]

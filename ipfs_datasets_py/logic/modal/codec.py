@@ -1098,15 +1098,16 @@ def modal_ir_to_flogic_triples(
                             "object": value,
                         }
                     )
-        if formula.provenance.citation:
+        citation = _clean_non_empty_string(formula.provenance.citation)
+        if citation:
             triples.append(
                 {
                     "subject": formula.formula_id,
                     "predicate": "citation",
-                    "object": formula.provenance.citation,
+                    "object": citation,
                 }
             )
-            citation_components = _citation_components(formula.provenance.citation)
+            citation_components = _citation_components(citation)
             for predicate, value in citation_components:
                 triples.append(
                     {
@@ -1115,6 +1116,17 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
+        for predicate, value in _provenance_alignment_components(
+            source_id=source_id,
+            citation=citation,
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate,
+                    "object": value,
+                }
+            )
         if selected_frame:
             triples.append(
                 {
@@ -1389,6 +1401,97 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
     if digest:
         components.append(("source_id_digest", digest))
     return _unique_preserve_order_tuples(components)
+
+
+def _provenance_alignment_components(
+    *,
+    source_id: str,
+    citation: str,
+) -> List[tuple[str, str]]:
+    normalized_source_id = _clean_non_empty_string(source_id)
+    normalized_citation = _clean_non_empty_string(citation)
+    if not normalized_source_id or not normalized_citation:
+        return []
+    source_component_map = _component_value_map(_source_id_components(normalized_source_id))
+    citation_component_map = _component_value_map(_citation_components(normalized_citation))
+    source_title = _clean_non_empty_string(source_component_map.get("source_id_title"))
+    citation_title = _clean_non_empty_string(citation_component_map.get("citation_title"))
+    source_section = _clean_non_empty_string(
+        source_component_map.get("source_id_section_normalized")
+        or source_component_map.get("source_id_section")
+    )
+    citation_section = _clean_non_empty_string(
+        citation_component_map.get("citation_section_normalized")
+        or citation_component_map.get("citation_section")
+    )
+    source_key = _clean_non_empty_string(
+        source_component_map.get("source_id_title_section_key_normalized")
+        or source_component_map.get("source_id_title_section_key")
+    )
+    citation_key = _clean_non_empty_string(
+        citation_component_map.get("citation_title_section_key_normalized")
+        or citation_component_map.get("citation_title_section_key")
+    )
+    source_canonical = _clean_non_empty_string(
+        source_component_map.get("source_id_citation_canonical")
+    )
+    citation_canonical = _clean_non_empty_string(
+        citation_component_map.get("citation_canonical")
+    )
+    components: List[tuple[str, str]] = []
+    if not source_title or not citation_title or not source_section or not citation_section:
+        components.append(("citation_source_id_alignment", "unparsed"))
+        return _unique_preserve_order_tuples(components)
+
+    title_match = source_title.lower() == citation_title.lower()
+    section_match = source_section.lower() == citation_section.lower()
+    components.append(
+        ("citation_source_id_title_match", "true" if title_match else "false")
+    )
+    components.append(
+        ("citation_source_id_section_match", "true" if section_match else "false")
+    )
+    if source_key and citation_key:
+        components.append(
+            (
+                "citation_source_id_title_section_key_match",
+                "true" if source_key.lower() == citation_key.lower() else "false",
+            )
+        )
+    if source_canonical and citation_canonical:
+        components.append(
+            (
+                "citation_source_id_canonical_match",
+                "true"
+                if source_canonical.lower() == citation_canonical.lower()
+                else "false",
+            )
+        )
+    if title_match and section_match:
+        alignment = "exact_match"
+    elif title_match:
+        alignment = "title_only_match"
+    elif section_match:
+        alignment = "section_only_match"
+    else:
+        alignment = "mismatch"
+    components.append(("citation_source_id_alignment", alignment))
+    return _unique_preserve_order_tuples(components)
+
+
+def _component_value_map(components: Sequence[tuple[str, str]]) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    for component, value in components:
+        normalized_component = _clean_non_empty_string(component)
+        normalized_value = _clean_non_empty_string(value)
+        if (
+            not normalized_component
+            or not normalized_value
+            or normalized_component in values
+        ):
+            continue
+        values[normalized_component] = normalized_value
+    return values
 
 
 def _document_modal_family_count_components(

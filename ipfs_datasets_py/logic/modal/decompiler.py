@@ -553,6 +553,7 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
+    source_id = _clean_text(formula.provenance.source_id or "")
     citation = _clean_text(formula.provenance.citation or "")
     if citation:
         phrases.append(
@@ -572,6 +573,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
+    for slot, value in _provenance_alignment_slots(
+        source_id=source_id,
+        citation=citation,
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     return phrases
 
 
@@ -922,6 +935,99 @@ def _source_id_section_slots(section: str) -> List[Tuple[str, str]]:
         if slot.startswith("citation_section"):
             slots.append((slot.replace("citation_section", "source_id_section", 1), value))
     return slots
+
+
+def _provenance_alignment_slots(
+    *,
+    source_id: str,
+    citation: str,
+) -> List[Tuple[str, str]]:
+    normalized_source_id = _clean_text(source_id)
+    normalized_citation = _clean_text(citation)
+    if not normalized_source_id or not normalized_citation:
+        return []
+    source_slot_map = _slot_value_map(_source_id_slots(normalized_source_id))
+    citation_slot_map = _slot_value_map(_citation_slots(normalized_citation))
+    source_title = _clean_text(source_slot_map.get("source_id_title") or "")
+    citation_title = _clean_text(citation_slot_map.get("citation_title") or "")
+    source_section = _clean_text(
+        source_slot_map.get("source_id_section_normalized")
+        or source_slot_map.get("source_id_section")
+        or ""
+    )
+    citation_section = _clean_text(
+        citation_slot_map.get("citation_section_normalized")
+        or citation_slot_map.get("citation_section")
+        or ""
+    )
+    source_key = _clean_text(
+        source_slot_map.get("source_id_title_section_key_normalized")
+        or source_slot_map.get("source_id_title_section_key")
+        or ""
+    )
+    citation_key = _clean_text(
+        citation_slot_map.get("citation_title_section_key_normalized")
+        or citation_slot_map.get("citation_title_section_key")
+        or ""
+    )
+    source_canonical = _clean_text(
+        source_slot_map.get("source_id_citation_canonical") or ""
+    )
+    citation_canonical = _clean_text(citation_slot_map.get("citation_canonical") or "")
+    slots: List[Tuple[str, str]] = []
+    if not source_title or not citation_title or not source_section or not citation_section:
+        slots.append(("citation_source_id_alignment", "unparsed"))
+        return _unique_slot_values(slots)
+
+    title_match = source_title.lower() == citation_title.lower()
+    section_match = source_section.lower() == citation_section.lower()
+    slots.append(
+        ("citation_source_id_title_match", "true" if title_match else "false")
+    )
+    slots.append(
+        ("citation_source_id_section_match", "true" if section_match else "false")
+    )
+    if source_key and citation_key:
+        slots.append(
+            (
+                "citation_source_id_title_section_key_match",
+                "true" if source_key.lower() == citation_key.lower() else "false",
+            )
+        )
+    if source_canonical and citation_canonical:
+        slots.append(
+            (
+                "citation_source_id_canonical_match",
+                "true"
+                if source_canonical.lower() == citation_canonical.lower()
+                else "false",
+            )
+        )
+    if title_match and section_match:
+        alignment = "exact_match"
+    elif title_match:
+        alignment = "title_only_match"
+    elif section_match:
+        alignment = "section_only_match"
+    else:
+        alignment = "mismatch"
+    slots.append(("citation_source_id_alignment", alignment))
+    return _unique_slot_values(slots)
+
+
+def _slot_value_map(slots: Sequence[Tuple[str, str]]) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    for slot, value in slots:
+        normalized_slot = _clean_text(slot)
+        normalized_value = _clean_text(value)
+        if (
+            not normalized_slot
+            or not normalized_value
+            or normalized_slot in values
+        ):
+            continue
+        values[normalized_slot] = normalized_value
+    return values
 
 
 def _frame_candidate_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
