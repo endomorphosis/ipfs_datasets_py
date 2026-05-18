@@ -180,3 +180,34 @@ def test_flogic_optimizer_tracks_modal_family_count_terms() -> None:
         "frame",
         "temporal",
     ]
+
+
+def test_flogic_optimizer_tracks_source_id_citation_canonical_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:source_id_citation_canonical:50 U.S.C. 2675",
+            "slot:source_id_citation_canonical:16 U.S.C. 460ff-1",
+            "flogic:source_id_digest:8dbd5e2eb6c364c8",
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "flogic:source_id_citation_canonical:50 U.S.C. 2675",
+        "slot:source_id_citation_canonical:16 U.S.C. 460ff-1",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "16_460ff_1",
+        "50_2675",
+    ]

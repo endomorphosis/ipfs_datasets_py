@@ -113,3 +113,22 @@ def test_frame_ontology_terms_support_modal_family_count_predicates() -> None:
 
     assert triple_terms == ["deontic", "frame", "temporal", "dynamic"]
     assert feature_terms == ["deontic", "frame", "temporal", "dynamic"]
+
+
+def test_frame_ontology_terms_support_source_id_citation_canonical_predicates() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "source_id_citation_canonical", "object": "50 U.S.C. 2675"},
+            {"predicate": "source_id_digest", "object": "8dbd5e2eb6c364c8"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:source_id_citation_canonical:50 U.S.C. 2675",
+            "slot:source_id_citation_canonical:16 U.S.C. 460ff-1",
+            "flogic:source_id_digest:8dbd5e2eb6c364c8",
+        ]
+    )
+
+    assert triple_terms == ["50_2675"]
+    assert feature_terms == ["50_2675", "16_460ff_1"]

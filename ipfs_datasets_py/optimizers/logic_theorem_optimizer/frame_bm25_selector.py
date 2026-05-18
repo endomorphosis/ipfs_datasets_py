@@ -86,6 +86,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "predicate_token_",
     "section_heading_tail_",
     "source_id_section",
+    "source_id_citation",
     "source_id_title",
     "statement_hint_",
     "statutory_scope_",

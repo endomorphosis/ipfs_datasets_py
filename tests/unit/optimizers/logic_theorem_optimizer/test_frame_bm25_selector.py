@@ -495,6 +495,25 @@ def test_frame_ontology_terms_from_triples_support_modal_family_count_features()
     ]
 
 
+def test_frame_ontology_terms_from_triples_support_source_id_citation_canonical_terms() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_citation_canonical",
+                "object": "50 U.S.C. 2675",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_digest",
+                "object": "8dbd5e2eb6c364c8",
+            },
+        ]
+    )
+
+    assert terms == ["50_2675"]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_predicates() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -515,6 +534,21 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
         "authority",
         "permission",
         "may",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canonical_terms() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:source_id_citation_canonical:50 U.S.C. 2675",
+            "slot:source_id_citation_canonical:16 U.S.C. 460ff-1",
+            "flogic:source_id_digest:8dbd5e2eb6c364c8",
+        ]
+    )
+
+    assert terms == [
+        "50_2675",
+        "16_460ff_1",
     ]
 
 
@@ -711,6 +745,15 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key(
         "slot:selected_ontology_term:final order"
     ) is True
+    assert is_frame_ontology_feature_key(
+        "flogic:source_id_citation_canonical:50 U.S.C. 2675"
+    ) is True
+    assert is_frame_ontology_feature_key(
+        "slot:source_id_citation_canonical:16 U.S.C. 460ff-1"
+    ) is True
+    assert is_frame_ontology_feature_key(
+        "flogic:source_id_digest:8dbd5e2eb6c364c8"
+    ) is False
     assert is_frame_ontology_feature_key("token:agency") is False
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
     assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
