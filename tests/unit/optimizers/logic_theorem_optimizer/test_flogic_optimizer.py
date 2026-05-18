@@ -493,6 +493,33 @@ def test_flogic_optimizer_reports_high_signal_frame_ontology_terms() -> None:
     assert result.metadata["frame_ontology_high_signal_terms_from_triples"] == []
 
 
+def test_flogic_optimizer_tracks_zero_digit_count_frame_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:citation_title_number_zero_digit_count:0",
+            "slot:source_id_title_section_primary_number_span_trailing_zero_count:1",
+            "flogic:citation_section_component_count:3",
+        ],
+    )
+
+    assert result.metadata["frame_ontology_terms"] == [
+        "0",
+        "1",
+    ]
+
+
 def test_flogic_optimizer_extracts_frame_features_from_structured_hint_evidence() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

@@ -140,6 +140,10 @@ _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES = frozenset(
         "predicate_alnum_segment_positioned",
     }
 )
+_FRAME_ONTOLOGY_NUMERIC_COUNT_PREDICATE_SUFFIXES: tuple[str, ...] = (
+    "_trailing_zero_count",
+    "_zero_digit_count",
+)
 _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES = frozenset(
     {
         "modal_operator",
@@ -1303,9 +1307,14 @@ def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
-    if not normalized or normalized.endswith("_count"):
+    if not normalized:
         return False
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    if canonical.endswith("_count"):
+        return any(
+            canonical.endswith(suffix)
+            for suffix in _FRAME_ONTOLOGY_NUMERIC_COUNT_PREDICATE_SUFFIXES
+        )
     if canonical in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES:
         return True
     return any(

@@ -1347,6 +1347,60 @@ def test_frame_ontology_terms_from_triples_normalize_positioned_citation_values(
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_keep_zero_digit_count_values() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:citation_title_number_zero_digit_count:0",
+            "flogic:citation_title_number_trailing_zero_count:0",
+            "slot:source_id_section_primary_number_zero_digit_count:1",
+            "slot:source_id_section_primary_number_trailing_zero_count:1",
+            "flogic:citation_section_component_count:3",
+        ]
+    )
+
+    assert terms == [
+        "0",
+        "1",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_keep_zero_digit_count_values() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "citation_title_number_zero_digit_count",
+                "object": "0",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_title_number_trailing_zero_count",
+                "object": "0",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_primary_number_zero_digit_count",
+                "object": "1",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "source_id_section_primary_number_trailing_zero_count",
+                "object": "1",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "citation_section_component_count",
+                "object": "3",
+            },
+        ]
+    )
+
+    assert terms == [
+        "0",
+        "1",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
