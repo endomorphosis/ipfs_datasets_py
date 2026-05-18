@@ -258,6 +258,70 @@ def test_frame_ontology_terms_from_triples_support_contextual_flogic_predicates(
     ]
 
 
+def test_frame_ontology_terms_from_triples_support_procedural_keyword_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "procedural_keyword",
+                "object": "review",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "procedural_keyword_stem",
+                "object": "adjudicatory_review",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "procedural_keyword_token_count",
+                "object": "2",
+            },
+        ]
+    )
+
+    assert terms == [
+        "review",
+        "adjudicatory_review",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_predicate_alnum_segment_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_alnum_segment",
+                "object": "391",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_alnum_segment_positioned",
+                "object": "1:391",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_alnum_segment",
+                "object": "a",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_alnum_segment_positioned",
+                "object": "2:a",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "predicate_alnum_segment_kind",
+                "object": "alpha",
+            },
+        ]
+    )
+
+    assert terms == [
+        "391",
+        "a",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_keep_single_letter_modal_symbols() -> None:
     terms = frame_ontology_terms_from_triples(
         [
@@ -789,6 +853,38 @@ def test_frame_ontology_terms_from_feature_keys_support_plain_contextual_flogic_
         "permission",
         "may",
         "5_552",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_procedural_keyword_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:procedural_keyword:review",
+            "slot:procedural_keyword_stem:adjudicatory_review",
+            "slot:procedural_keyword_token_count:2",
+        ]
+    )
+
+    assert terms == [
+        "review",
+        "adjudicatory_review",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_predicate_alnum_segment_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:predicate_alnum_segment:1790",
+            "flogic:predicate_alnum_segment_positioned:1:1790",
+            "slot:predicate_alnum_segment:b",
+            "slot:predicate_alnum_segment_positioned:2:b",
+            "slot:predicate_alnum_segment_kind:alpha",
+        ]
+    )
+
+    assert terms == [
+        "1790",
+        "b",
     ]
 
 

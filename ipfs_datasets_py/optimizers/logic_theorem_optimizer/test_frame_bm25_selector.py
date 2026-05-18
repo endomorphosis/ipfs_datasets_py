@@ -181,3 +181,50 @@ def test_frame_ontology_terms_support_slot_normalized_source_id_coordinate_terms
     )
 
     assert feature_terms == ["54_102701", "2_31a_2b"]
+
+
+def test_frame_ontology_terms_support_procedural_keyword_predicates() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "procedural_keyword", "object": "review"},
+            {
+                "predicate": "procedural_keyword_stem",
+                "object": "adjudicatory_review",
+            },
+            {"predicate": "procedural_keyword_token_count", "object": "2"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:procedural_keyword:review",
+            "slot:procedural_keyword_stem:adjudicatory_review",
+            "slot:procedural_keyword_token_count:2",
+        ]
+    )
+
+    assert triple_terms == ["review", "adjudicatory_review"]
+    assert feature_terms == ["review", "adjudicatory_review"]
+
+
+def test_frame_ontology_terms_support_predicate_alnum_segment_predicates() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "predicate_alnum_segment", "object": "391"},
+            {"predicate": "predicate_alnum_segment_positioned", "object": "1:391"},
+            {"predicate": "predicate_alnum_segment", "object": "a"},
+            {"predicate": "predicate_alnum_segment_positioned", "object": "2:a"},
+            {"predicate": "predicate_alnum_segment_kind", "object": "alpha"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:predicate_alnum_segment:1790",
+            "flogic:predicate_alnum_segment_positioned:1:1790",
+            "slot:predicate_alnum_segment:b",
+            "slot:predicate_alnum_segment_positioned:2:b",
+            "slot:predicate_alnum_segment_kind:alpha",
+        ]
+    )
+
+    assert triple_terms == ["391", "a"]
+    assert feature_terms == ["1790", "b"]

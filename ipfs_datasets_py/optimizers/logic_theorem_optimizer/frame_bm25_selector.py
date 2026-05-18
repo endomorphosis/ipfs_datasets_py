@@ -78,9 +78,12 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
         "modal_operator_label",
         "modal_system",
         "predicate",
+        "predicate_alnum_segment",
+        "predicate_alnum_segment_positioned",
         "predicate_argument",
         "predicate_role",
         "predicate_token",
+        "procedural_keyword",
         "section_heading_tail",
         "source_id",
         "statement_hint",
@@ -95,6 +98,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "fallback_surface_text_",
     "modal_family_count",
     "predicate_argument_",
+    "procedural_keyword_",
     "predicate_stem",
     "predicate_token_",
     "section_heading_tail_",
@@ -112,10 +116,22 @@ _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
     "source_id_",
     "statutory_scope_",
 )
+_FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES = frozenset(
+    {
+        "predicate_alnum_segment",
+        "predicate_alnum_segment_positioned",
+    }
+)
 _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES = frozenset(
     {
         "modal_operator",
         "modal_system",
+    }
+)
+_FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_VALUE_PREDICATES = frozenset(
+    {
+        "predicate_alnum_segment",
+        "predicate_alnum_segment_positioned",
     }
 )
 _FRAME_ONTOLOGY_TRAILING_PUNCT_PREDICATES = frozenset(
@@ -980,6 +996,8 @@ def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:
     if not normalized or normalized.endswith("_count"):
         return False
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    if canonical in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATES:
+        return True
     return any(
         canonical.startswith(prefix)
         for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
@@ -994,6 +1012,8 @@ def _predicate_allows_single_character_alpha_tokens(predicate: str) -> bool:
     if not normalized or normalized.endswith("_count"):
         return False
     canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    if canonical in _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_VALUE_PREDICATES:
+        return True
     if canonical in _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES:
         return True
     if not any(
