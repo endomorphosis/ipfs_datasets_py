@@ -3665,10 +3665,34 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     ]
     assert aligned_slot_map["citation_source_id_title_number_relation"] == ["equal"]
     assert aligned_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        aligned_slot_map[
+            "citation_source_id_title_number_signature_leading_digit_pair"
+        ]
+        == ["2|2"]
+    )
+    assert (
+        aligned_slot_map[
+            "citation_source_id_title_number_signature_leading_digit_match"
+        ]
+        == ["true"]
+    )
     assert aligned_slot_map["citation_source_id_section_primary_number_relation"] == [
         "equal"
     ]
     assert aligned_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert (
+        aligned_slot_map[
+            "citation_source_id_section_primary_number_signature_zero_digit_count_pair"
+        ]
+        == ["1|1"]
+    )
+    assert (
+        aligned_slot_map[
+            "citation_source_id_section_primary_number_signature_zero_digit_count_match"
+        ]
+        == ["true"]
+    )
     assert aligned_slot_map["citation_source_id_section_primary_suffix_pair"] == [
         "bbb|bbb"
     ]
@@ -3749,10 +3773,34 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     ]
     assert mismatch_slot_map["citation_source_id_title_number_relation"] == ["equal"]
     assert mismatch_slot_map["citation_source_id_title_number_span"] == ["0"]
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_title_number_signature_parity_pair"
+        ]
+        == ["even|even"]
+    )
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_title_number_signature_parity_match"
+        ]
+        == ["true"]
+    )
     assert mismatch_slot_map["citation_source_id_section_primary_number_relation"] == [
         "equal"
     ]
     assert mismatch_slot_map["citation_source_id_section_primary_number_span"] == ["0"]
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_has_zero_digit_pair"
+        ]
+        == ["false|false"]
+    )
+    assert (
+        mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_has_zero_digit_match"
+        ]
+        == ["true"]
+    )
     assert mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
         "d|e"
     ]
@@ -3844,6 +3892,18 @@ def test_decode_modal_ir_document_emits_citation_source_id_alignment_slots() -> 
     assert punct_mismatch_slot_map["citation_source_id_section_primary_number_span"] == [
         "0"
     ]
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_magnitude_bucket_pair"
+        ]
+        == ["10k_to_99k|10k_to_99k"]
+    )
+    assert (
+        punct_mismatch_slot_map[
+            "citation_source_id_section_primary_number_signature_magnitude_bucket_match"
+        ]
+        == ["true"]
+    )
     assert punct_mismatch_slot_map["citation_source_id_section_primary_suffix_pair"] == [
         "none|none"
     ]
@@ -4075,11 +4135,27 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(aligned_triples, "citation_source_id_title_number_span") == ["0"]
     assert objects(
         aligned_triples,
+        "citation_source_id_title_number_signature_leading_digit_pair",
+    ) == ["2|2"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_title_number_signature_leading_digit_match",
+    ) == ["true"]
+    assert objects(
+        aligned_triples,
         "citation_source_id_section_primary_number_relation",
     ) == ["equal"]
     assert objects(aligned_triples, "citation_source_id_section_primary_number_span") == [
         "0"
     ]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_signature_zero_digit_count_pair",
+    ) == ["1|1"]
+    assert objects(
+        aligned_triples,
+        "citation_source_id_section_primary_number_signature_zero_digit_count_match",
+    ) == ["true"]
     assert objects(aligned_triples, "citation_source_id_section_primary_suffix_pair") == [
         "bbb|bbb"
     ]
@@ -4163,12 +4239,28 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
     assert objects(mismatch_triples, "citation_source_id_title_number_span") == ["0"]
     assert objects(
         mismatch_triples,
+        "citation_source_id_title_number_signature_parity_pair",
+    ) == ["even|even"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_title_number_signature_parity_match",
+    ) == ["true"]
+    assert objects(
+        mismatch_triples,
         "citation_source_id_section_primary_number_relation",
     ) == ["equal"]
     assert objects(
         mismatch_triples,
         "citation_source_id_section_primary_number_span",
     ) == ["0"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_signature_has_zero_digit_pair",
+    ) == ["false|false"]
+    assert objects(
+        mismatch_triples,
+        "citation_source_id_section_primary_number_signature_has_zero_digit_match",
+    ) == ["true"]
     assert objects(
         mismatch_triples,
         "citation_source_id_section_primary_suffix_pair",
@@ -4267,6 +4359,14 @@ def test_modal_ir_to_flogic_triples_emits_citation_source_id_alignment_slots() -
         punct_mismatch_triples,
         "citation_source_id_section_primary_number_span",
     ) == ["0"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_pair",
+    ) == ["10k_to_99k|10k_to_99k"]
+    assert objects(
+        punct_mismatch_triples,
+        "citation_source_id_section_primary_number_signature_magnitude_bucket_match",
+    ) == ["true"]
     assert objects(
         punct_mismatch_triples,
         "citation_source_id_section_primary_suffix_pair",

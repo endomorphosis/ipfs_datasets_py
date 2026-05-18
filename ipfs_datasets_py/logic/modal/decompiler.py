@@ -158,6 +158,14 @@ _STRICT_ROMAN_NUMERAL_RE = re.compile(
     re.IGNORECASE,
 )
 _VOWEL_CHARS = frozenset({"a", "e", "i", "o", "u"})
+_PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES: tuple[str, ...] = (
+    "leading_digit",
+    "parity",
+    "has_zero_digit",
+    "zero_digit_count",
+    "magnitude_bucket",
+    "thousands_block",
+)
 _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?<!\w)"
     rf"(?P<connector>{_STATUTORY_SCOPE_CONNECTOR_PATTERN})"
@@ -1807,6 +1815,13 @@ def _provenance_alignment_slots(
                     slot_prefix=profile_slot,
                 )
             )
+    slots.extend(
+        _numeric_signature_alignment_slots(
+            source_number=source_title_number,
+            citation_number=citation_title_number,
+            slot_prefix="citation_source_id_title_number_signature",
+        )
+    )
     source_section_primary_number = _clean_text(
         source_slot_map.get("source_id_section_primary_number")
         or source_slot_map.get("source_id_section_number")
@@ -1842,6 +1857,13 @@ def _provenance_alignment_slots(
                     slot_prefix=profile_slot,
                 )
             )
+    slots.extend(
+        _numeric_signature_alignment_slots(
+            source_number=source_section_primary_number,
+            citation_number=citation_section_primary_number,
+            slot_prefix="citation_source_id_section_primary_number_signature",
+        )
+    )
     source_section_terminal_number = _clean_text(
         source_slot_map.get("source_id_section_terminal_number")
         or source_slot_map.get("source_id_section_number")
@@ -1877,6 +1899,13 @@ def _provenance_alignment_slots(
                     slot_prefix=profile_slot,
                 )
             )
+    slots.extend(
+        _numeric_signature_alignment_slots(
+            source_number=source_section_terminal_number,
+            citation_number=citation_section_terminal_number,
+            slot_prefix="citation_source_id_section_terminal_number_signature",
+        )
+    )
     source_section_primary_suffix = _clean_text(
         source_slot_map.get("source_id_section_primary_suffix_normalized")
         or source_slot_map.get("source_id_section_primary_suffix")
@@ -4372,6 +4401,58 @@ def _numeric_span_signature_slots(
     if not normalized_slot_prefix or not normalized_span.isdigit():
         return []
     return _numeric_signature_slots(normalized_span, slot_prefix=normalized_slot_prefix)
+
+
+def _numeric_signature_value_map(value: str) -> Dict[str, str]:
+    cleaned = _clean_text(value)
+    if not cleaned.isdigit():
+        return {}
+    values: Dict[str, str] = {}
+    for slot, slot_value in _numeric_signature_slots(cleaned, slot_prefix="number"):
+        key = slot.removeprefix("number_")
+        if key:
+            values[key] = slot_value
+    return values
+
+
+def _numeric_signature_alignment_slots(
+    *,
+    source_number: str,
+    citation_number: str,
+    slot_prefix: str,
+) -> List[Tuple[str, str]]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    if not normalized_slot_prefix:
+        return []
+    source_signature_values = _numeric_signature_value_map(source_number)
+    citation_signature_values = _numeric_signature_value_map(citation_number)
+    slots: List[Tuple[str, str]] = []
+    for signature_name in _PROVENANCE_NUMERIC_ALIGNMENT_SIGNATURES:
+        source_value = _clean_text(source_signature_values.get(signature_name) or "")
+        citation_value = _clean_text(citation_signature_values.get(signature_name) or "")
+        if not source_value and not citation_value:
+            continue
+        slots.append(
+            (
+                f"{normalized_slot_prefix}_{signature_name}_pair",
+                f"{source_value or 'none'}|{citation_value or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_slot_prefix}_{signature_name}_match",
+                "true"
+                if source_value.lower() == citation_value.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                f"{normalized_slot_prefix}_{signature_name}_presence_match",
+                "true" if bool(source_value) == bool(citation_value) else "false",
+            )
+        )
+    return slots
 
 
 def _numeric_magnitude_bucket(value: int) -> str:
