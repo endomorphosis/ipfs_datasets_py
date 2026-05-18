@@ -2368,7 +2368,7 @@ terminate_matching_legal_parser_daemons() {
     if [[ -z "$pid" ]] || [[ "$pid" == "$$" ]] || [[ "$pid" == "${child_pid:-}" ]]; then
       continue
     fi
-    if [[ "$args" == *"python"* && "$args" == *"-m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon"* ]]; then
+    if [[ "$args" == *"python"* && "$args" == *"-m ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon"* ]]; then
       echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) cleaning up orphaned legal-parser daemon $pid before supervisor start/restart" >> "$REPO_ROOT/$LATEST_LOG_PATH" 2>/dev/null || true
       terminate_pid_tree "$pid"
     fi
@@ -2476,7 +2476,7 @@ while true; do
   (
     cd "$REPO_ROOT" || exit 2
     python3_args=(
-      python3 -u -m ipfs_datasets_py.optimizers.logic.deontic.parser_daemon
+      python3 -u -m ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon
       --repo-root .
       --output-dir "$OUTPUT_DIR"
       --max-cycles 0

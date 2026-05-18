@@ -30,8 +30,8 @@ async def check_document_consistency(
 ) -> Dict[str, Any]:
     """Check legal document consistency against temporal deontic logic theorems."""
     try:
-        from ...logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ...logic_integration.document_consistency_checker import DocumentConsistencyChecker
+        from ...logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ...logic.integration.document_consistency_checker import DocumentConsistencyChecker
 
         if not document_text:
             return {"success": False, "error": "Document text is required", "error_code": "MISSING_DOCUMENT_TEXT"}
@@ -105,8 +105,8 @@ async def query_theorems(
 ) -> Dict[str, Any]:
     """Query temporal deontic logic theorems using RAG retrieval."""
     try:
-        from ...logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ...logic_integration.deontic_logic_core import DeonticOperator
+        from ...logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ...logic.integration.deontic_logic_core import DeonticOperator
 
         if not query:
             return {"success": False, "error": "Query string is required", "error_code": "MISSING_QUERY"}
@@ -185,7 +185,7 @@ async def bulk_process_caselaw(
     """Bulk process caselaw documents to extract deontic logic theorems."""
     try:
         import os
-        from ...logic_integration.caselaw_bulk_processor import CaselawBulkProcessor, BulkProcessingConfig
+        from ...logic.integration.domain.caselaw_bulk_processor import CaselawBulkProcessor, BulkProcessingConfig
 
         directories = caselaw_directories or []
         if not directories:
@@ -267,8 +267,8 @@ async def add_theorem(
 ) -> Dict[str, Any]:
     """Add a deontic logic theorem to the RAG store."""
     try:
-        from ...logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ...logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+        from ...logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ...logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
 
         if not proposition:
             return {"success": False, "error": "Proposition is required", "error_code": "MISSING_PROPOSITION"}

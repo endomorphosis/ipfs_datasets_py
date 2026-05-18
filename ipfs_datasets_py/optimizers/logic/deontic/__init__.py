@@ -1,6 +1,6 @@
-"""Deontic logic optimizer helpers."""
+"""Compatibility exports for the canonical legal parser daemon module."""
 
-from .parser_daemon import (
+from ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon import (
     LegalParserCycleProposal,
     LegalParserDaemonConfig,
     LegalParserOptimizerDaemon,

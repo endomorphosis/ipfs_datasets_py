@@ -29,14 +29,13 @@ def _cosine(a, b):
 
 
 def _load_flogic_optimizer():
-    """Load flogic_optimizer directly, bypassing the broken optimizers.logic chain."""
-    _MOD_NAME = "ipfs_datasets_py.optimizers.logic.flogic_optimizer"
+    """Load the canonical flogic optimizer module directly."""
+    _MOD_NAME = "ipfs_datasets_py.logic.flogic_optimizer"
     if _MOD_NAME in sys.modules:
         return sys.modules[_MOD_NAME]
     _path = (
         Path(__file__).parent.parent.parent.parent
         / "ipfs_datasets_py"
-        / "optimizers"
         / "logic"
         / "flogic_optimizer.py"
     )

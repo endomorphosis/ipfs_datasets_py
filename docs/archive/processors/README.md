@@ -30,13 +30,13 @@ This directory contains historical planning documents, session reports, and phas
 
 For active Processors documentation, see:
 - `/docs/guides/processors/` - All current guides and references
-- `/docs/modules/processors/` - Module-specific documentation
-- `/docs/examples/processors/` - Usage examples
+- package docstrings in `/ipfs_datasets_py/processors/`
+- the active module implementations under `/ipfs_datasets_py/processors/`
 
 ## Key Active Guides
 
 Located in `/docs/guides/processors/`:
-- `PROCESSORS_ARCHITECTURE.md` - Current architecture (Phase 5 Complete)
+- `PROCESSORS_ARCHITECTURE.md` - Current architecture and live layout notes
 - `PROCESSORS_MIGRATION_GUIDE.md` - Migration guide for users
 - `PROCESSORS_ENGINES_GUIDE.md` - Engine reference
 - `PROCESSORS_QUICK_REFERENCE.md` - Quick reference guide

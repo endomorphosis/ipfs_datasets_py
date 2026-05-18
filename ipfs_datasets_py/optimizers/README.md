@@ -11,39 +11,41 @@ The optimizers module provides:
 3. **GraphRAG Optimizers** - Knowledge graph-based optimization
 4. **Common Infrastructure** - Shared base classes and utilities
 
+## Namespace & Migration Notes
+
+- `ipfs_datasets_py.optimizers.logic` is a **legacy compatibility facade**, not a
+  second production logic implementation.
+- The canonical F-logic semantic optimizer now lives at
+  `ipfs_datasets_py.logic.flogic_optimizer`.
+- The canonical legal parser optimizer daemon now lives at
+  `ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon`.
+- `ipfs_datasets_py.optimizers.logic_theorem_optimizer` remains the production
+  home for theorem/logic optimization workflows.
+
+Existing imports through `ipfs_datasets_py.optimizers.logic` still work for
+compatibility, but new code should prefer the canonical import paths above.
+
 ## Directory Structure
 
 ```
 optimizers/
-├── agentic/                    # AI-powered agentic optimization
-│   ├── base.py                 # Base classes and interfaces
-│   ├── coordinator.py          # Multi-agent coordination
-│   ├── github_control.py       # GitHub-based change control
-│   ├── patch_control.py        # Patch-based change control
-│   ├── validation.py           # Comprehensive validation framework
-│   ├── cli.py                  # Command-line interface
-│   ├── github_api_unified.py   # Unified GitHub API with caching
-│   └── methods/                # Optimization methods
-│       ├── test_driven.py      # Test-driven optimization
-│       ├── adversarial.py      # Adversarial optimization
-│       ├── actor_critic.py     # Actor-critic optimization
-│       └── chaos.py            # Chaos engineering optimization
-│
-├── common/                     # Shared infrastructure
-│   ├── base_optimizer.py       # BaseOptimizer abstract class
-│   └── README.md               # Common infrastructure guide
-│
-├── logic_theorem_optimizer/    # Logic and theorem proving
-│   ├── logic_optimizer.py      # Main logic optimizer
-│   ├── logic_critic.py         # Logic critic
-│   ├── theorem_session.py      # Theorem proving sessions
-│   └── ...                     # Additional logic components
-│
-└── graphrag/                   # GraphRAG optimization
-    ├── ontology_optimizer.py   # Ontology optimization
-    ├── ontology_critic.py      # Ontology critic
-    ├── query_optimizer.py      # Query optimization
-    └── ...                     # Additional GraphRAG components
+├── README.md                    # High-level optimizer overview
+├── __init__.py                  # Top-level optimizer exports
+├── agentic/                     # AI-powered agentic optimization
+├── api/                         # Optimizer-facing API helpers
+├── common/                      # Shared infrastructure
+├── graphrag/                    # GraphRAG optimization
+├── integrations/                # Third-party / subsystem integrations
+├── logic/                       # LEGACY compatibility facade
+│                                # (re-exports logic/modal + logic_theorem_optimizer)
+├── logic_theorem_optimizer/     # Production theorem/logic optimization package
+├── perf/                        # Performance-oriented optimizer helpers
+├── security/                    # Security-related optimizer helpers
+├── tests/                       # Optimizer-focused test support
+├── todo_daemon/                 # Canonical optimizer daemon implementations
+├── logic_port_daemon.py         # Logic port daemon entry point
+├── performance_optimizer.py     # General performance optimizer entry point
+└── ...                          # Supporting utilities and integration modules
 ```
 
   ## Architecture Diagram
@@ -241,6 +243,11 @@ python -m ipfs_datasets_py.optimizers.graphrag.cli_wrapper health
 ```
 
 ### Logic Theorem Optimizer (Python API)
+
+> **Note**: This section covers theorem/logic optimization via
+> `ipfs_datasets_py.optimizers.logic_theorem_optimizer`. For F-logic semantic
+> optimization, use `ipfs_datasets_py.logic.flogic_optimizer` instead of the
+> legacy `ipfs_datasets_py.optimizers.logic` facade.
 
 ```python
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer

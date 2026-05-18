@@ -10,12 +10,19 @@ To use with real API keys, set the environment variables:
 """
 import anyio
 import sys
-import os
+from pathlib import Path
 
-# Get absolute path to web_archive_tools
-script_dir = os.path.dirname(os.path.abspath(__file__))
-web_tools_path = os.path.join(script_dir, '../ipfs_datasets_py/mcp_server/tools/web_archive_tools')
-sys.path.insert(0, os.path.abspath(web_tools_path))
+# Add the repository root so demos import the canonical package modules directly.
+def _find_repo_root(start: Path) -> Path:
+    for candidate in (start, *start.parents):
+        if (candidate / "setup.py").is_file() and (candidate / "pyproject.toml").is_file():
+            return candidate
+    raise RuntimeError(f"Could not determine repository root from {start}")
+
+
+ROOT = _find_repo_root(Path(__file__).resolve().parent)
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 async def demo_brave_search():
     """Demo Brave Search integration."""
@@ -23,7 +30,7 @@ async def demo_brave_search():
     print("Brave Search API Demo")
     print("=" * 70)
     
-    from brave_search import search_brave
+    from ipfs_datasets_py.processors.web_archiving.brave_search_engine import search_brave
     
     result = await search_brave(
         query="IPFS dataset storage",
@@ -43,7 +50,7 @@ async def demo_google_search():
     print("Google Custom Search API Demo")
     print("=" * 70)
     
-    from google_search import search_google
+    from ipfs_datasets_py.processors.web_archiving.google_search_engine import search_google
     
     result = await search_google(
         query="decentralized storage",
@@ -64,7 +71,9 @@ async def demo_github_search():
     print("GitHub API Search Demo")
     print("=" * 70)
     
-    from github_search import search_github_repositories
+    from ipfs_datasets_py.processors.web_archiving.github_search_engine import (
+        search_github_repositories,
+    )
     
     # GitHub allows limited searches without authentication
     result = await search_github_repositories(
@@ -93,7 +102,9 @@ async def demo_huggingface_search():
     print("HuggingFace Hub API Search Demo")
     print("=" * 70)
     
-    from huggingface_search import search_huggingface_models
+    from ipfs_datasets_py.processors.web_archiving.huggingface_search_engine import (
+        search_huggingface_models,
+    )
     
     # HuggingFace allows searches without authentication for public data
     result = await search_huggingface_models(
@@ -122,7 +133,9 @@ async def demo_batch_search():
     print("Batch Search Demo (GitHub)")
     print("=" * 70)
     
-    from github_search import batch_search_github
+    from ipfs_datasets_py.processors.web_archiving.github_search_engine import (
+        batch_search_github,
+    )
     
     queries = [
         "machine-learning language:python stars:>1000",

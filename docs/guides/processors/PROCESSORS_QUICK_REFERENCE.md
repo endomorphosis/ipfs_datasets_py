@@ -2,6 +2,13 @@
 
 **Quick navigation for the comprehensive refactoring plan**
 
+> **Historical snapshot:** this guide summarizes the refactoring direction, not
+> the exact live file inventory. The current repository still contains both
+> root-level processor modules and refactored `core/` / `engines/` packages.
+> Use `PROCESSORS_ARCHITECTURE.md` plus the package docstrings under
+> `/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/ipfs_datasets_py/processors/`
+> for the current structure.
+
 ## 🎯 Goal
 Create a **single Universal Processor** entry point that handles any URL/file/folder and intelligently routes to specialized processors for knowledge graph and vector generation.
 
@@ -9,7 +16,8 @@ Create a **single Universal Processor** entry point that handles any URL/file/fo
 - **138 Python files** in processors/
 - **~3,500 lines** of GraphRAG duplication (4 implementations)
 - **453 multimedia files** still in data_transformation/
-- **No unified entry point** - users must know which processor to use
+- **Root-level and core-level entry points coexist** (`universal_processor.py`
+  at the package root and `core/universal_processor.py`)
 - **Inconsistent APIs** across processors
 
 ## 🎯 Target State

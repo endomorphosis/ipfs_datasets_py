@@ -196,7 +196,7 @@ def test_legal_parser_lifecycle_spec_is_reusable_and_keeps_defaults(tmp_path, mo
     assert spec.progress_path == Path("artifacts/legal_parser_optimizer_daemon/progress_summary.json")
     assert spec.tmux_session_name == "legal-parser-daemon"
     assert spec.worktree_root == Path(".daemon/legal-parser-worktrees")
-    assert "ipfs_datasets_py.optimizers.logic.deontic.parser_daemon" in spec.daemon_process_match_all
+    assert "ipfs_datasets_py.optimizers.todo_daemon.legal_parser_daemon" in spec.daemon_process_match_all
     assert launch_env["MODEL_NAME"] == "gpt-5.3-codex"
     assert launch_env["PROVIDER"] == "codex"
     assert launch_env["IPFS_DATASETS_PY_LLM_PROVIDER"] == "codex_cli"

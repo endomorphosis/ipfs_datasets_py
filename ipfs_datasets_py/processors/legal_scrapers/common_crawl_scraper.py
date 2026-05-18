@@ -140,7 +140,7 @@ except ImportError:
 
 # Import logic module
 try:
-    from ...logic_integration import LogicProcessor
+    from ...core_operations import LogicProcessor
     HAVE_LOGIC = True
 except ImportError:
     HAVE_LOGIC = False
