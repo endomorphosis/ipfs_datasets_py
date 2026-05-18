@@ -1769,6 +1769,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
             ]
         )
     component_shapes: List[str] = []
+    component_signatures: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
     roman_suffix_component_count = 0
@@ -1787,6 +1788,23 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         match = _CITATION_SECTION_PART_RE.fullmatch(component)
         if not match:
             component_shapes.append("X")
+            component_signature = "X"
+            component_signatures.append(component_signature)
+            slots.append(("citation_section_component_signature", component_signature))
+            slots.append(
+                (
+                    "citation_section_component_signature_positioned",
+                    f"{position}:{component_signature}",
+                )
+            )
+            if index == 1:
+                slots.append(
+                    ("citation_section_primary_component_signature", component_signature)
+                )
+            if index == total_components:
+                slots.append(
+                    ("citation_section_terminal_component_signature", component_signature)
+                )
             slots.append(("citation_section_component_kind", "other"))
             slots.append(
                 ("citation_section_component_kind_positioned", f"{position}:other")
@@ -1858,6 +1876,26 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                         slot_prefix="citation_section_terminal_number",
                     )
                 )
+        suffix_kind = _suffix_kind(suffix) if suffix else ""
+        component_signature = _citation_section_component_signature(
+            number=number,
+            suffix=suffix,
+            suffix_kind=suffix_kind,
+        )
+        component_signatures.append(component_signature)
+        slots.append(("citation_section_component_signature", component_signature))
+        slots.append(
+            (
+                "citation_section_component_signature_positioned",
+                f"{position}:{component_signature}",
+            )
+        )
+        if index == 1:
+            slots.append(("citation_section_primary_component_signature", component_signature))
+        if index == total_components:
+            slots.append(
+                ("citation_section_terminal_component_signature", component_signature)
+            )
         if suffix:
             component_shapes.append("NA")
             suffix_component_count += 1
@@ -1918,7 +1956,6 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                         f"{position}:{alpha_value}",
                     )
                 )
-            suffix_kind = _suffix_kind(suffix)
             if suffix_kind:
                 slots.append(("citation_section_suffix_kind", suffix_kind))
                 slots.append(
@@ -2014,6 +2051,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         )
     if component_shapes:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
+    if component_signatures:
+        slots.append(("citation_section_signature", "-".join(component_signatures)))
     component_profile = _citation_section_component_profile(
         component_count=total_components,
         suffix_component_count=suffix_component_count,
@@ -2075,6 +2114,22 @@ def _citation_section_delimiter_kind(delimiter: str) -> str:
     if all(character in ".-" for character in cleaned):
         return "mixed"
     return "other"
+
+
+def _citation_section_component_signature(
+    *,
+    number: str,
+    suffix: str,
+    suffix_kind: str,
+) -> str:
+    number_text = _clean_text(number)
+    suffix_text = _clean_text(suffix)
+    number_width = str(len(number_text)) if number_text else "0"
+    if not suffix_text:
+        return f"N{number_width}"
+    kind_key = _clean_text(suffix_kind).lower()
+    kind_symbol = "R" if kind_key == "roman" else "A" if kind_key == "alpha" else "O"
+    return f"N{number_width}{kind_symbol}{len(suffix_text)}"
 
 
 def _citation_section_component_profile(

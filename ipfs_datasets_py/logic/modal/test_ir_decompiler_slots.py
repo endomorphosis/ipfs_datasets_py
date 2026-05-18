@@ -300,6 +300,32 @@ def _roman_suffix_hyphen_sample_document() -> ModalIRDocument:
     )
 
 
+def _compound_alpha_suffix_hyphen_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-460eee-2-151f071e709ab648"
+    formula = ModalIRFormula(
+        formula_id="f-compound-alpha-suffix",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_federal_land_withdrawal_notice"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=23,
+            citation="16 U.S.C. 460eee-2",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="16 U.S.C. 460eee-2 federal land withdrawal notice requirement.",
+        formulas=[formula],
+    )
+
+
 def _noncanonical_romanlike_suffix_sample_document() -> ModalIRDocument:
     source_id = "us-code-21-360ll-11684335ce2f2caa"
     formula = ModalIRFormula(
@@ -842,6 +868,78 @@ def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
     assert objects("source_id_section_primary_suffix_is_roman") == ["true"]
     assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
     assert objects("source_id_section_roman_suffix_component_count") == ["1"]
+
+
+def test_decode_modal_ir_document_emits_section_component_signature_slots() -> None:
+    mixed_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert mixed_slot_map["citation_section_component_signature"] == ["N3A3", "N1"]
+    assert mixed_slot_map["citation_section_component_signature_positioned"] == [
+        "1:N3A3",
+        "2:N1",
+    ]
+    assert mixed_slot_map["citation_section_primary_component_signature"] == ["N3A3"]
+    assert mixed_slot_map["citation_section_terminal_component_signature"] == ["N1"]
+    assert mixed_slot_map["citation_section_signature"] == ["N3A3-N1"]
+    assert mixed_slot_map["source_id_section_signature"] == ["N3A3-N1"]
+
+    roman_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
+    )
+    assert roman_slot_map["citation_section_signature"] == ["N3R3-N1"]
+    assert roman_slot_map["source_id_section_signature"] == ["N3R3-N1"]
+
+    todo_cluster_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_compound_alpha_suffix_hyphen_sample_document())
+    )
+    assert todo_cluster_slot_map["citation_section_signature"] == ["N3A3-N1"]
+    assert todo_cluster_slot_map["source_id_section_signature"] == ["N3A3-N1"]
+
+    numeric_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_trailing_punct_sample_document())
+    )
+    assert numeric_slot_map["citation_section_signature"] == ["N5"]
+    assert numeric_slot_map["source_id_section_signature"] == ["N5"]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_component_signature_slots() -> None:
+    mixed_triples = modal_ir_to_flogic_triples(_sample_document())
+    roman_triples = modal_ir_to_flogic_triples(_roman_suffix_hyphen_sample_document())
+    todo_cluster_triples = modal_ir_to_flogic_triples(
+        _compound_alpha_suffix_hyphen_sample_document()
+    )
+    numeric_triples = modal_ir_to_flogic_triples(_trailing_punct_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(mixed_triples, "citation_section_component_signature") == ["N3A3", "N1"]
+    assert objects(
+        mixed_triples,
+        "citation_section_component_signature_positioned",
+    ) == ["1:N3A3", "2:N1"]
+    assert objects(mixed_triples, "citation_section_primary_component_signature") == [
+        "N3A3"
+    ]
+    assert objects(mixed_triples, "citation_section_terminal_component_signature") == [
+        "N1"
+    ]
+    assert objects(mixed_triples, "citation_section_signature") == ["N3A3-N1"]
+    assert objects(mixed_triples, "source_id_section_signature") == ["N3A3-N1"]
+
+    assert objects(roman_triples, "citation_section_signature") == ["N3R3-N1"]
+    assert objects(roman_triples, "source_id_section_signature") == ["N3R3-N1"]
+
+    assert objects(todo_cluster_triples, "citation_section_signature") == ["N3A3-N1"]
+    assert objects(todo_cluster_triples, "source_id_section_signature") == ["N3A3-N1"]
+
+    assert objects(numeric_triples, "citation_section_signature") == ["N5"]
+    assert objects(numeric_triples, "source_id_section_signature") == ["N5"]
 
 
 def test_decode_modal_ir_document_emits_suffix_alpha_signature_slots() -> None:
