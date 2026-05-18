@@ -179,6 +179,38 @@ def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() 
     )
 
 
+def test_compiler_emits_explicit_deontic_to_conditional_normative_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "The Secretary shall submit the report when the committee approves.",
+        document_id="compiler-ambiguity-deontic-conditional",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    )
+
+
+def test_compiler_emits_explicit_temporal_to_deontic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "Within 30 days after June 1, 2030, and before the end of the fiscal year, the Secretary may issue guidance.",
+        document_id="compiler-ambiguity-temporal-deontic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+    )
+
+
 def test_compiler_emits_explicit_conditional_normative_to_frame_adaptive_pair() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
