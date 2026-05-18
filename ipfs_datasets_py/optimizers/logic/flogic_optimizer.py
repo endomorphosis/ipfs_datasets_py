@@ -46,6 +46,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector import (
+    frame_ontology_terms_from_feature_keys,
     frame_ontology_terms_from_triples,
 )
 
@@ -156,6 +157,7 @@ class FLogicSemanticOptimizer:
         source_embedding: Sequence[float],
         decoded_embedding: Sequence[float],
         kg_triples: Optional[List[Dict[str, str]]] = None,
+        frame_feature_keys: Optional[Sequence[str]] = None,
     ) -> FLogicOptimizerResult:
         """
         Evaluate semantic preservation between *source_text* and *decoded_text*.
@@ -168,6 +170,9 @@ class FLogicSemanticOptimizer:
             kg_triples: Optional list of ``{"subject": …, "predicate": …,
                 "object": …}`` dicts representing the encoded knowledge-graph
                 triples.  Used for F-logic consistency checking.
+            frame_feature_keys: Optional frame-linked feature keys that were
+                used by reconstruction/family scoring and should be audited as
+                ontology terms.
 
         Returns:
             :class:`FLogicOptimizerResult` with similarity score, pass/fail
@@ -183,7 +188,10 @@ class FLogicSemanticOptimizer:
             violations = self._check_flogic_consistency(kg_triples)
             ontology_consistent = len(violations) == 0
 
-        frame_ontology_terms = frame_ontology_terms_from_triples(kg_triples or [])
+        frame_ontology_terms = _unique_preserve_order(
+            list(frame_ontology_terms_from_feature_keys(frame_feature_keys or []))
+            + list(frame_ontology_terms_from_triples(kg_triples or []))
+        )
 
         passed = (
             similarity >= self.config.similarity_threshold and ontology_consistent
@@ -319,6 +327,17 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
     if norm_a == 0.0 or norm_b == 0.0:
         return 0.0
     return dot / (norm_a * norm_b)
+
+
+def _unique_preserve_order(values: Sequence[str]) -> List[str]:
+    seen: set[str] = set()
+    result: List[str] = []
+    for value in values:
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
 
 
 __all__ = [

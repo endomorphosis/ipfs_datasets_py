@@ -153,3 +153,49 @@ def test_frame_ontology_terms_from_feature_keys_extract_frame_linked_values() ->
         "final_order",
         "agency_notice",
     ]
+
+
+def test_frame_ontology_terms_from_feature_keys_support_slot_and_legacy_aliases() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:selected_frame:administrative_notice_hearing",
+            "frame_candidate:criminal_penalty_enforcement",
+            "frame_term:agency notice",
+            "selected_frame_term:final order",
+            "flogic:selected-frame-term:hearing rights",
+            "flogic:candidate-frame:housing_voucher_benefits",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "criminal_penalty_enforcement",
+        "agency_notice",
+        "final_order",
+        "hearing_rights",
+        "housing_voucher_benefits",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_legacy_frame_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "candidate-frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_term",
+                "object": "Final Order",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "interpreted-frame-term",
+                "object": "and",
+            },
+        ]
+    )
+
+    assert terms == ["administrative_notice_hearing", "final_order"]

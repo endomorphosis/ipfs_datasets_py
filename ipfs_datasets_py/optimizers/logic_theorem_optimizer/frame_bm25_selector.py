@@ -10,6 +10,7 @@ from typing import Dict, Iterable, List, Mapping, Sequence
 
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _ONTOLOGY_TERM_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+_FRAME_ONTOLOGY_PREDICATE_TOKEN_RE = re.compile(r"[^a-z0-9]+")
 _FRAME_ONTOLOGY_STOPWORDS = frozenset(
     {
         "a",
@@ -49,11 +50,30 @@ _FRAME_ONTOLOGY_FRAME_PREDICATES = frozenset(
 _FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
     set(_FRAME_ONTOLOGY_TERM_PREDICATES) | set(_FRAME_ONTOLOGY_FRAME_PREDICATES)
 )
+_FRAME_ONTOLOGY_PREDICATE_ALIASES = {
+    "candidate_frame": "candidate_ontology_frame",
+    "candidate_frame_term": "candidate_ontology_term",
+    "interpreted_frame": "interpreted_in_frame",
+    "interpreted_frame_term": "interpreted_in_frame_term",
+    "selected_frame": "selected_ontology_frame",
+    "selected_frame_term": "selected_ontology_term",
+}
 _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
     "frame:",
     "frame-candidate:",
+    "frame_candidate:",
     "frame-term:",
+    "frame_term:",
     "selected-frame-term:",
+    "selected_frame_term:",
+    "slot:selected_frame:",
+    "slot:selected-frame:",
+    "slot:frame-candidate:",
+    "slot:frame_candidate:",
+    "slot:frame-term:",
+    "slot:frame_term:",
+    "slot:selected-frame-term:",
+    "slot:selected_frame_term:",
 )
 
 
@@ -227,8 +247,10 @@ def frame_ontology_terms_from_triples(
     """Extract canonical frame ontology terms from frame-linked triples."""
     terms: List[str] = []
     for triple in triples:
-        predicate = str(triple.get("predicate", "")).strip()
-        if predicate not in _FRAME_ONTOLOGY_AUDIT_PREDICATES:
+        predicate = _canonical_frame_ontology_predicate(
+            str(triple.get("predicate", "")).strip()
+        )
+        if not predicate:
             continue
         normalized = normalize_frame_ontology_term(
             str(triple.get("object", "")).strip()
@@ -255,15 +277,7 @@ def frame_ontology_terms_from_feature_keys(
         if not feature:
             continue
 
-        raw_value = ""
-        for prefix in _FRAME_LINKED_FEATURE_PREFIXES:
-            if feature.startswith(prefix):
-                raw_value = feature[len(prefix) :].strip()
-                break
-        if not raw_value and feature.startswith("flogic:"):
-            parts = feature.split(":", 2)
-            if len(parts) == 3 and parts[1] in _FRAME_ONTOLOGY_AUDIT_PREDICATES:
-                raw_value = parts[2].strip()
+        raw_value = _raw_frame_ontology_value_from_feature(feature)
         if not raw_value:
             continue
 
@@ -295,6 +309,33 @@ def _is_informative_ontology_token(token: str) -> bool:
     if token.isdigit():
         return False
     return any(character.isalpha() for character in token)
+
+
+def _canonical_frame_ontology_predicate(predicate: str) -> str:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized:
+        return ""
+    canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    if canonical in _FRAME_ONTOLOGY_AUDIT_PREDICATES:
+        return canonical
+    return ""
+
+
+def _raw_frame_ontology_value_from_feature(feature: str) -> str:
+    for prefix in _FRAME_LINKED_FEATURE_PREFIXES:
+        if feature.startswith(prefix):
+            return feature[len(prefix) :].strip()
+    if not feature.startswith("flogic:"):
+        return ""
+    parts = feature.split(":", 2)
+    if len(parts) != 3:
+        return ""
+    if not _canonical_frame_ontology_predicate(parts[1]):
+        return ""
+    return parts[2].strip()
 
 
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (

@@ -315,15 +315,6 @@ class DeterministicModalLogicCodec:
         target_family = target_family_for_modal_ir(modal_ir)
         target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
         kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
-        frame_feature_keys = _frame_ontology_audit_feature_keys(
-            modal_ir=modal_ir,
-            selected_frame=selected_frame,
-            kg_triples=kg_triples,
-        )
-        frame_audit_terms = _frame_ontology_audit_terms(
-            frame_feature_keys=frame_feature_keys,
-            kg_triples=kg_triples,
-        )
         flogic_ontology = flogic_triples_to_ontology(
             kg_triples,
             name=f"{modal_ir.document_id}_flogic",
@@ -360,8 +351,6 @@ class DeterministicModalLogicCodec:
                 "flogic_ontology": flogic_ontology_to_dict(flogic_ontology),
                 "flogic_triple_count": len(kg_triples),
                 "flogic_triples": list(kg_triples),
-                "frame_ontology_term_audit_count": len(frame_audit_terms),
-                "frame_ontology_term_audit_terms": frame_audit_terms,
                 "neo4j_graph": {
                     "graph_id": neo4j_graph_data.metadata.get("graph_id"),
                     "node_count": neo4j_graph_data.node_count,
@@ -373,6 +362,24 @@ class DeterministicModalLogicCodec:
             },
         )
         decoded_modal_text = decode_modal_ir_document(modal_ir)
+        frame_feature_keys = _frame_ontology_audit_feature_keys(
+            modal_ir=modal_ir,
+            selected_frame=selected_frame,
+            kg_triples=kg_triples,
+            extra_feature_keys=_slot_features(decoded_modal_text),
+        )
+        frame_audit_terms = _frame_ontology_audit_terms(
+            frame_feature_keys=frame_feature_keys,
+            kg_triples=kg_triples,
+        )
+        modal_ir = replace(
+            modal_ir,
+            metadata={
+                **modal_ir.metadata,
+                "frame_ontology_term_audit_count": len(frame_audit_terms),
+                "frame_ontology_term_audit_terms": frame_audit_terms,
+            },
+        )
         decoded_text = decoded_modal_text.text
         flogic_result = self._evaluate_flogic(
             normalized_text,
@@ -380,6 +387,7 @@ class DeterministicModalLogicCodec:
             resolved_source_embedding,
             decoded_embedding,
             kg_triples,
+            frame_feature_keys=frame_feature_keys,
         )
         losses = {
             "cosine_loss": cosine_loss(resolved_source_embedding, decoded_embedding),
@@ -572,6 +580,8 @@ class DeterministicModalLogicCodec:
         source_embedding: Sequence[float],
         decoded_embedding: Sequence[float],
         kg_triples: List[Dict[str, str]],
+        *,
+        frame_feature_keys: Optional[Sequence[str]] = None,
     ) -> Optional[FLogicOptimizerResult]:
         if not self.config.use_flogic:
             return None
@@ -581,6 +591,7 @@ class DeterministicModalLogicCodec:
             source_embedding=source_embedding,
             decoded_embedding=decoded_embedding,
             kg_triples=kg_triples,
+            frame_feature_keys=frame_feature_keys,
         )
 
 
@@ -1123,6 +1134,7 @@ def _frame_ontology_audit_feature_keys(
     modal_ir: ModalIRDocument,
     selected_frame: Optional[str],
     kg_triples: Sequence[Mapping[str, str]],
+    extra_feature_keys: Sequence[str] = (),
 ) -> List[str]:
     frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
     feature_keys: List[str] = []
@@ -1141,6 +1153,7 @@ def _frame_ontology_audit_feature_keys(
         obj = _clean_non_empty_string(triple.get("object"))
         if predicate and obj:
             feature_keys.append(f"flogic:{predicate}:{obj}")
+    feature_keys.extend(str(value) for value in extra_feature_keys if str(value or "").strip())
     return _unique_preserve_order(feature_keys)
 
 
