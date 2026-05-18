@@ -2632,26 +2632,11 @@ def _frame_ontology_metadata_terms(value: Any) -> List[str]:
         return []
     terms: List[str] = []
 
-    normalized = normalize_frame_ontology_term(raw_value)
-    if normalized:
-        terms.append(normalized)
-
     citation_match = _USC_CITATION_RE.match(raw_value)
-    if citation_match:
-        citation_title = _clean_non_empty_string(citation_match.group("title"))
-        citation_section = _TRAILING_SECTION_PUNCT_RE.sub(
-            "",
-            _clean_non_empty_string(citation_match.group("section")),
-        )
-        if citation_title and citation_section:
-            citation_coordinate = normalize_frame_ontology_term(
-                f"{citation_title} {citation_section}",
-                keep_numeric_tokens=True,
-            )
-            if citation_coordinate:
-                terms.append(citation_coordinate)
-
     source_id_match = _USCODE_SOURCE_ID_RE.match(raw_value)
+
+    # Source-id values include opaque digests. Keep only canonical title/section
+    # coordinates so frame-term audits remain interpretable and deterministic.
     if source_id_match:
         source_title = _clean_non_empty_string(source_id_match.group("title"))
         source_section = _TRAILING_SECTION_PUNCT_RE.sub(
@@ -2665,6 +2650,25 @@ def _frame_ontology_metadata_terms(value: Any) -> List[str]:
             )
             if source_coordinate:
                 terms.append(source_coordinate)
+        return _unique_preserve_order(terms)
+
+    normalized = normalize_frame_ontology_term(raw_value)
+    if normalized:
+        terms.append(normalized)
+
+    if citation_match:
+        citation_title = _clean_non_empty_string(citation_match.group("title"))
+        citation_section = _TRAILING_SECTION_PUNCT_RE.sub(
+            "",
+            _clean_non_empty_string(citation_match.group("section")),
+        )
+        if citation_title and citation_section:
+            citation_coordinate = normalize_frame_ontology_term(
+                f"{citation_title} {citation_section}",
+                keep_numeric_tokens=True,
+            )
+            if citation_coordinate:
+                terms.append(citation_coordinate)
 
     return _unique_preserve_order(terms)
 

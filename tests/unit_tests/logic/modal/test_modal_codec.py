@@ -4203,6 +4203,7 @@ def test_modal_codec_audits_citation_coordinates_from_frame_term_metadata() -> N
 
     assert "42_6932" in selected_terms
     assert "25_564m" in selected_terms
+    assert "us_code_564m_dee77e626d5d85a3" not in selected_terms
 
 
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
