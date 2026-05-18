@@ -578,6 +578,18 @@ class DeterministicModalCompiler:
                 target_family,
                 margin_direction,
             )
+            base_metadata = {
+                "adaptive_family_margin_threshold": threshold,
+                "adaptive_margin_direction": margin_direction,
+                "explicit_ambiguity_type": explicit_type,
+                "family_margin": round(family_margin, 6),
+                "family_ranking": list(ranking),
+                "lexical_signals": dict(sorted(signals.items())),
+                "predicted_family": predicted_family,
+                "predicted_share": round(predicted_share, 6),
+                "target_family": target_family,
+                "target_share": round(target_share, 6),
+            }
             ambiguities.append(
                 ModalCompilationAmbiguity(
                     ambiguity_type="adaptive_family_margin_low",
@@ -588,17 +600,21 @@ class DeterministicModalCompiler:
                     ),
                     candidate_ids=[predicted_family, target_family],
                     severity="requires_rule" if family_margin < 0.0 else "review",
+                    metadata=dict(base_metadata),
+                )
+            )
+            ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type=explicit_type,
+                    message=(
+                        "Explicit adaptive modal-family conflict between the predicted "
+                        "family and a competing legal family."
+                    ),
+                    candidate_ids=[predicted_family, target_family],
+                    severity="requires_rule" if family_margin < 0.0 else "review",
                     metadata={
-                        "adaptive_family_margin_threshold": threshold,
-                        "adaptive_margin_direction": margin_direction,
-                        "explicit_ambiguity_type": explicit_type,
-                        "family_margin": round(family_margin, 6),
-                        "family_ranking": list(ranking),
-                        "lexical_signals": dict(sorted(signals.items())),
-                        "predicted_family": predicted_family,
-                        "predicted_share": round(predicted_share, 6),
-                        "target_family": target_family,
-                        "target_share": round(target_share, 6),
+                        **base_metadata,
+                        "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                     },
                 )
             )

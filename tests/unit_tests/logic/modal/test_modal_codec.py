@@ -306,6 +306,12 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
         tuple(ambiguity.candidate_ids): str(ambiguity.metadata["explicit_ambiguity_type"])
         for ambiguity in adaptive_ambiguities
     }
+    explicit_adaptive_ambiguities = {
+        ambiguity.ambiguity_type: ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+    }
 
     assert ("temporal", "conditional_normative") in pairs
     assert ("temporal", "deontic") in pairs
@@ -321,6 +327,13 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
     assert (
         explicit_types[("temporal", "frame")]
         == "adaptive_temporal_frame_outvoted_margin_low"
+    )
+    assert "adaptive_temporal_conditional_normative_outvoted_margin_low" in explicit_adaptive_ambiguities
+    assert "adaptive_temporal_deontic_outvoted_margin_low" in explicit_adaptive_ambiguities
+    assert "adaptive_temporal_frame_outvoted_margin_low" in explicit_adaptive_ambiguities
+    assert all(
+        ambiguity.metadata["adaptive_base_ambiguity_type"] == "adaptive_family_margin_low"
+        for ambiguity in explicit_adaptive_ambiguities.values()
     )
     assert all(
         ambiguity.metadata["adaptive_family_margin_threshold"] == 0.15
