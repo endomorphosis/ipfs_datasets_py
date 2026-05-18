@@ -2209,13 +2209,18 @@ def _numeric_signature_slots(
     cleaned = _clean_text(value)
     if not cleaned or not cleaned.isdigit():
         return []
+    numeric_value = int(cleaned)
     last_digit = cleaned[-1]
     trailing_two_digits = cleaned[-2:] if len(cleaned) > 1 else cleaned
     parity = "even" if last_digit in {"0", "2", "4", "6", "8"} else "odd"
     zero_digit_count = cleaned.count("0")
     trailing_zero_count = len(cleaned) - len(cleaned.rstrip("0"))
+    digit_count_bucket = f"{len(cleaned)}_digit"
+    magnitude_bucket = _numeric_magnitude_bucket(numeric_value)
     return [
         (f"{slot_prefix}_parity", parity),
+        (f"{slot_prefix}_digit_count_bucket", digit_count_bucket),
+        (f"{slot_prefix}_magnitude_bucket", magnitude_bucket),
         (f"{slot_prefix}_leading_digit", cleaned[0]),
         (f"{slot_prefix}_trailing_two_digits", trailing_two_digits),
         (f"{slot_prefix}_zero_digit_count", str(zero_digit_count)),
@@ -2225,6 +2230,18 @@ def _numeric_signature_slots(
         ),
         (f"{slot_prefix}_trailing_zero_count", str(trailing_zero_count)),
     ]
+
+
+def _numeric_magnitude_bucket(value: int) -> str:
+    if value < 1_000:
+        return "lt_1k"
+    if value < 10_000:
+        return "1k_to_9k"
+    if value < 100_000:
+        return "10k_to_99k"
+    if value < 1_000_000:
+        return "100k_to_999k"
+    return "1m_plus"
 
 
 def _alpha_signature_slots(
