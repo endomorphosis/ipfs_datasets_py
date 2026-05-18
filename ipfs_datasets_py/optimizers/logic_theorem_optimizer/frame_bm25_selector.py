@@ -292,9 +292,12 @@ _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 2
 _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT = 3
 _FRAME_ONTOLOGY_AUDIT_LOW_SIGNAL_TERMS = frozenset(
     {
+        "alpha",
         "equal",
         "even",
         "false",
+        "none",
+        "numeric",
         "odd",
         "true",
     }

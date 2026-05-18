@@ -399,3 +399,23 @@ def test_frame_ontology_contextualized_terms_keep_positioned_structural_features
     assert "source_id_section_number_parity_positioned_odd" in terms
     assert "citation_section_component_signature_n4" not in terms
     assert "citation_section_number_digit_count_bucket_4_digit" not in terms
+
+
+def test_frame_ontology_contextualized_terms_contextualize_generic_structural_values() -> None:
+    feature_keys = [
+        "flogic:citation_section_component_kind:numeric",
+        "flogic:citation_section_terminal_component_kind:numeric",
+        "flogic:citation_source_id_section_terminal_suffix_pair:none|none",
+        "flogic:condition_alnum_segment_kind:alpha",
+    ]
+    terms = frame_ontology_terms_from_feature_keys(feature_keys)
+    contextualized = frame_ontology_contextualized_terms(feature_keys=feature_keys)
+
+    assert "numeric" in terms
+    assert "none" in terms
+    assert "alpha" in terms
+    assert "citation_section_component_kind_numeric" in contextualized
+    assert "citation_section_terminal_component_kind_numeric" in contextualized
+    assert "citation_source_id_section_terminal_suffix_pair_none" in contextualized
+    assert "condition_alnum_segment_kind_alpha" in contextualized
+    assert frame_ontology_high_signal_terms(terms) == []
