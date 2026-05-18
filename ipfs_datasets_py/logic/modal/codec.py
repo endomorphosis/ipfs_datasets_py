@@ -610,6 +610,8 @@ class DeterministicModalLogicCodec:
         features.extend(_slot_features(codec_result.decoded_modal_text))
         if codec_result.selected_frame:
             features.append(f"frame:{codec_result.selected_frame}")
+            for family in _selected_frame_modal_families(codec_result.modal_ir):
+                features.append(f"family:selected_frame:{family}")
         frame_terms = _frame_ontology_terms_by_frame(codec_result.modal_ir)
         for frame_id in sorted(frame_terms):
             terms = frame_terms[frame_id]
@@ -3186,6 +3188,8 @@ def _frame_ontology_audit_feature_keys(
     feature_keys: List[str] = []
     if selected_frame:
         feature_keys.append(f"frame:{selected_frame}")
+        for family in _selected_frame_modal_families(modal_ir):
+            feature_keys.append(f"family:selected_frame:{family}")
     for frame in modal_ir.frame_candidates:
         if not frame.frame_id:
             continue
@@ -3225,6 +3229,19 @@ def _frame_ontology_audit_terms(
             )
         )
     ))
+
+
+def _selected_frame_modal_families(modal_ir: ModalIRDocument) -> List[str]:
+    families = _unique_preserve_order(
+        _slot_safe_family_key(_clean_non_empty_string(formula.operator.family).lower())
+        for formula in modal_ir.formulas
+    )
+    for family, _count in _normalized_modal_family_counts(
+        modal_ir.metadata.get("modal_family_counts")
+    ):
+        if family and family not in families:
+            families.append(family)
+    return families
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:

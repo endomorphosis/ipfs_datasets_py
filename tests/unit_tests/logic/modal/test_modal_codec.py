@@ -4005,6 +4005,7 @@ def test_modal_codec_supports_autoencoder_feature_codec_protocol() -> None:
     assert "frame:administrative_notice_hearing" in feature_keys
     assert any(feature.startswith("frame-term:") for feature in feature_keys)
     assert any(feature.startswith("selected-frame-term:") for feature in feature_keys)
+    assert any(feature.startswith("family:selected_frame:") for feature in feature_keys)
     assert any(feature.startswith("flogic:modal_family:") for feature in feature_keys)
     assert "slot:modal_family" in feature_keys
     assert "slot:modal_operator" in feature_keys
@@ -4486,6 +4487,39 @@ def test_modal_codec_frame_ontology_audit_tracks_frame_semantic_slot_features() 
     assert "slot:operator:framed_as" in audit_feature_keys
     assert "slot:role:frame" in audit_feature_keys
     assert "frame" in result.flogic_result.metadata["frame_ontology_terms"]
+
+
+def test_modal_codec_frame_ontology_audit_tracks_selected_frame_modal_families() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency must provide notice within 30 days.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+    assert result.flogic_result is not None
+
+    expected_families = sorted(
+        {
+            formula.operator.family
+            for formula in result.modal_ir.formulas
+        }
+    )
+    assert expected_families
+
+    audit_feature_keys = result.flogic_result.metadata["frame_audit_feature_keys"]
+    feature_terms = result.flogic_result.metadata["frame_ontology_terms_from_feature_keys"]
+    for family in expected_families:
+        assert f"family:selected_frame:{family}" in audit_feature_keys
+        assert family in feature_terms
 
 
 def test_modal_codec_frame_ontology_audit_tracks_slot_normalized_source_id_features() -> None:
