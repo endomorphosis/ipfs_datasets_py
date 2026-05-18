@@ -126,6 +126,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DEONTIC.value,
     ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
 )
 
 
