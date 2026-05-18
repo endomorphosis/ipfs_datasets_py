@@ -234,6 +234,66 @@ _USCODE_7_614_SYMBOLIC_VALIDITY_TEXT = (
     "remainder of this chapter and the applicability thereof to other persons, "
     "circumstances, or commodities shall not be affected thereby."
 )
+_USCODE_2_60A_2_TEXT = (
+    "U.S.C. Title 2 - THE CONGRESS 2 U.S.C. United States Code, 2024 Edition Title 2 "
+    "- THE CONGRESS CHAPTER 4 - OFFICERS AND EMPLOYEES OF SENATE AND HOUSE OF "
+    "REPRESENTATIVES Sec. 60a-2 - Transferred From the U.S. Government Publishing "
+    "Office, www.gpo.gov §60a–2. Transferred Editorial Notes Codification Section "
+    "60a–2 was editorially reclassified as section 4531 of this title."
+)
+_USCODE_16_6808_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition Title "
+    "16 - CONSERVATION CHAPTER 87 - FEDERAL LANDS RECREATION ENHANCEMENT Sec. 6808 - "
+    "Reports From the U.S. Government Publishing Office, www.gpo.gov §6808. Reports "
+    "Not later than May 1, 2006, and every 3 years thereafter, the Secretary shall "
+    "submit to Congress a report detailing the status of the recreation fee program "
+    "conducted for Federal recreational lands and waters, including an evaluation of "
+    "the recreation fee program, examples of projects that were funded using such "
+    "fees, and future projects and programs for funding with fees, and containing any "
+    "recommendations for changes in the overall fee system. (Pub. L. 108–447, div. J, "
+    "title VIII, §809, Dec. 8, 2004, 118 Stat. 3389.)"
+)
+_USCODE_7_7656_SYMBOLIC_VALIDITY_TEXT = (
+    "U.S.C. Title 7 - AGRICULTURE 7 U.S.C. United States Code, 2024 Edition Title 7 - "
+    "AGRICULTURE CHAPTER 103 - AGRICULTURAL RESEARCH, EXTENSION, AND EDUCATION REFORM "
+    "SUBCHAPTER III - MISCELLANEOUS PROVISIONS Part B - General Sec. 7656 - "
+    "Designation of Crisis Management Team within Department From the U.S. Government "
+    "Publishing Office, www.gpo.gov §7656. Designation of Crisis Management Team "
+    "within Department (a) Designation of Crisis Management Team The Secretary of "
+    "Agriculture shall designate a Crisis Management Team within the Department of "
+    "Agriculture, which shall be— (1) composed of senior departmental personnel with "
+    "strong subject matter expertise selected from each relevant agency of the "
+    "Department; and (2) headed by a team leader with management and communications "
+    "skills. (b) Duties of Crisis Management Team The Crisis Management Team shall be "
+    "responsible for the following: (1) Developing a Department-wide crisis "
+    "management plan, taking into account similar plans developed by other government "
+    "agencies and other large organizations, and developing written procedures for "
+    "the implementation of the crisis management plan. (2) Conducting periodic "
+    "reviews and revisions of the crisis management plan and procedures developed "
+    "under paragraph (1). (3) Ensuring compliance with crisis management procedures "
+    "by personnel of the Department and ensuring that appropriate Department "
+    "personnel are familiar with the crisis management plan and procedures and are "
+    "encouraged to bring information regarding crises or potential crises to the "
+    "attention of members of the Crisis Management Team. (4) Coordinating the "
+    "Department's information gathering and dissemination activities concerning "
+    "issues managed by the Crisis Management Team. (5) Ensuring that Department "
+    "spokespersons convey accurate, timely, and scientifically sound information "
+    "regarding crises or potential crises that can be easily understood by the "
+    "general public. (6) Cooperating with, and coordinating among, other Federal "
+    "agencies, States, local governments, industry, and public interest groups, "
+    "Department activities regarding a crisis. (c) Role in prioritizing certain "
+    "research The Crisis Management Team shall cooperate with the Advisory Board in "
+    "the prioritization of agricultural research conducted or funded by the "
+    "Department regarding animal health, natural disasters, food safety, and other "
+    "agricultural issues. (d) Cooperative agreements The Secretary shall seek to "
+    "enter into cooperative agreements with other Federal departments and agencies "
+    "that have related programs or activities to help ensure consistent, accurate, "
+    "and coordinated dissemination of information throughout the executive branch in "
+    "the event of a crisis, such as, in the case of a threat to human health from "
+    "food-borne pathogens, developing a rapid and coordinated response among the "
+    "Department, the Centers for Disease Control, and the Food and Drug "
+    "Administration. (Pub. L. 105–185, title VI, §618, June 23, 1998, 112 Stat. 607.)"
+)
 
 
 def test_modal_codec_encodes_all_modal_families_with_frame_logic() -> None:
@@ -480,13 +540,19 @@ def test_modal_compiler_handles_embedded_sec_headings_for_known_uscode_samples()
         assert fallback.provenance.citation == citation
 
 
-def test_modal_compiler_replays_dataset_zero_formula_cases_for_31a_2b_and_8906() -> None:
+def test_modal_compiler_replays_dataset_zero_formula_cases_for_31a_2b_60a_2_and_8906() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     cases = [
         (
             "us-code-2-31a-2b-a99b26c5ad622cfe",
             "2 U.S.C. 31a-2b",
             _USCODE_2_31A_2B_TEXT,
+            "uscode_transferred_heading_v1",
+        ),
+        (
+            "us-code-2-60a-2-ee0af9802f887e89",
+            "2 U.S.C. 60a-2",
+            _USCODE_2_60A_2_TEXT,
             "uscode_transferred_heading_v1",
         ),
         (
@@ -754,7 +820,7 @@ def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_f
     assert fallback.provenance.citation == "15 U.S.C. 1693l"
 
 
-def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_and_7_614() -> None:
+def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_16_6808_7_614_and_7_7656() -> None:
     cases = [
         (
             "us-code-16-6410-7cc9d1ff88340f35",
@@ -767,9 +833,19 @@ def test_modal_compiler_replays_symbolic_validity_samples_for_16_6410_16_47a_and
             _USCODE_16_47A_SYMBOLIC_VALIDITY_TEXT,
         ),
         (
+            "us-code-16-6808-655096c0f6deada6",
+            "16 U.S.C. 6808",
+            _USCODE_16_6808_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
             "us-code-7-614-6e310cb5e196544b",
             "7 U.S.C. 614",
             _USCODE_7_614_SYMBOLIC_VALIDITY_TEXT,
+        ),
+        (
+            "us-code-7-7656-ba2dced7f1b0e6ea",
+            "7 U.S.C. 7656",
+            _USCODE_7_7656_SYMBOLIC_VALIDITY_TEXT,
         ),
     ]
     for backend in ("regex", "spacy"):
