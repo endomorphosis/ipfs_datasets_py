@@ -25,6 +25,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     FrameCandidate,
     FrameSelection,
     frame_ontology_terms,
+    frame_ontology_terms_from_feature_keys,
+    frame_ontology_terms_from_triples,
     normalize_frame_ontology_term,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_modal_parser import (
@@ -292,6 +294,15 @@ class DeterministicModalLogicCodec:
         target_family = target_family_for_modal_ir(modal_ir)
         target_family_distribution = target_family_distribution_for_modal_ir(modal_ir)
         kg_triples = modal_ir_to_flogic_triples(modal_ir, selected_frame=selected_frame)
+        frame_feature_keys = _frame_ontology_audit_feature_keys(
+            modal_ir=modal_ir,
+            selected_frame=selected_frame,
+            kg_triples=kg_triples,
+        )
+        frame_audit_terms = _frame_ontology_audit_terms(
+            frame_feature_keys=frame_feature_keys,
+            kg_triples=kg_triples,
+        )
         flogic_ontology = flogic_triples_to_ontology(
             kg_triples,
             name=f"{modal_ir.document_id}_flogic",
@@ -328,6 +339,8 @@ class DeterministicModalLogicCodec:
                 "flogic_ontology": flogic_ontology_to_dict(flogic_ontology),
                 "flogic_triple_count": len(kg_triples),
                 "flogic_triples": list(kg_triples),
+                "frame_ontology_term_audit_count": len(frame_audit_terms),
+                "frame_ontology_term_audit_terms": frame_audit_terms,
                 "neo4j_graph": {
                     "graph_id": neo4j_graph_data.metadata.get("graph_id"),
                     "node_count": neo4j_graph_data.node_count,
@@ -1048,9 +1061,9 @@ def _slot_feature_value(value: str, *, max_tokens: int = 8) -> str:
 
 
 def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[str]]:
+    result: Dict[str, List[str]] = {}
     metadata_terms = modal_ir.metadata.get("frame_ontology_terms")
     if isinstance(metadata_terms, Mapping):
-        result: Dict[str, List[str]] = {}
         for frame_id, values in metadata_terms.items():
             normalized_values = _unique_preserve_order(
                 normalize_frame_ontology_term(str(value))
@@ -1059,11 +1072,13 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
             frame_key = _clean_non_empty_string(frame_id)
             if frame_key and normalized_values:
                 result[frame_key] = normalized_values
-        if result:
-            return result
 
-    fallback: Dict[str, List[str]] = {}
     for frame in modal_ir.frame_candidates:
+        frame_key = _clean_non_empty_string(frame.frame_id)
+        if not frame_key:
+            continue
+        if frame_key in result and result[frame_key]:
+            continue
         candidate = FrameCandidate(
             frame_id=frame.frame_id,
             label=frame.frame_id.replace("_", " "),
@@ -1078,8 +1093,45 @@ def _frame_ontology_terms_by_frame(modal_ir: ModalIRDocument) -> Dict[str, List[
             )
         )
         if terms:
-            fallback[frame.frame_id] = terms
-    return fallback
+            result[frame_key] = terms
+    return result
+
+
+def _frame_ontology_audit_feature_keys(
+    *,
+    modal_ir: ModalIRDocument,
+    selected_frame: Optional[str],
+    kg_triples: Sequence[Mapping[str, str]],
+) -> List[str]:
+    frame_terms_by_frame = _frame_ontology_terms_by_frame(modal_ir)
+    feature_keys: List[str] = []
+    if selected_frame:
+        feature_keys.append(f"frame:{selected_frame}")
+    for frame in modal_ir.frame_candidates:
+        if not frame.frame_id:
+            continue
+        feature_keys.append(f"frame-candidate:{frame.frame_id}")
+        for term in frame_terms_by_frame.get(frame.frame_id, []):
+            feature_keys.append(f"frame-term:{term}")
+            if selected_frame and frame.frame_id == selected_frame:
+                feature_keys.append(f"selected-frame-term:{term}")
+    for triple in kg_triples:
+        predicate = _clean_non_empty_string(triple.get("predicate"))
+        obj = _clean_non_empty_string(triple.get("object"))
+        if predicate and obj:
+            feature_keys.append(f"flogic:{predicate}:{obj}")
+    return _unique_preserve_order(feature_keys)
+
+
+def _frame_ontology_audit_terms(
+    *,
+    frame_feature_keys: Sequence[str],
+    kg_triples: Sequence[Mapping[str, str]],
+) -> List[str]:
+    return _unique_preserve_order(
+        list(frame_ontology_terms_from_feature_keys(frame_feature_keys))
+        + list(frame_ontology_terms_from_triples(kg_triples))
+    )
 
 
 def _flogic_result_to_dict(result: Optional[FLogicOptimizerResult]) -> Optional[Dict[str, Any]]:

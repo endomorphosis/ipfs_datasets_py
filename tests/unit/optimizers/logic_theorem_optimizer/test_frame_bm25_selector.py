@@ -6,6 +6,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.frame_bm25_selector imp
     BM25FrameSelector,
     DEFAULT_LEGAL_FRAME_FIXTURE,
     FrameCandidate,
+    frame_ontology_terms_from_feature_keys,
+    frame_ontology_terms_from_triples,
     frame_ontology_terms,
 )
 
@@ -111,4 +113,43 @@ def test_frame_ontology_terms_prioritize_matched_terms_with_term_cap() -> None:
         "hearing_rights",
         "hearing",
         "rights",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_include_frame_predicates() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "candidate_ontology_frame",
+                "object": "administrative_notice_hearing",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_ontology_term",
+                "object": "final order",
+            },
+        ]
+    )
+
+    assert terms == ["administrative_notice_hearing", "final_order"]
+
+
+def test_frame_ontology_terms_from_feature_keys_extract_frame_linked_values() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "frame:administrative_notice_hearing",
+            "frame-candidate:housing_voucher_benefits",
+            "selected-frame-term:final_order",
+            "flogic:selected_ontology_frame:administrative_notice_hearing",
+            "flogic:candidate_ontology_term:agency notice",
+            "token:agency",
+        ]
+    )
+
+    assert terms == [
+        "administrative_notice_hearing",
+        "housing_voucher_benefits",
+        "final_order",
+        "agency_notice",
     ]

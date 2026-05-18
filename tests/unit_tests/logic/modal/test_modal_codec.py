@@ -1939,6 +1939,49 @@ def test_modal_codec_emits_frame_ontology_term_triples() -> None:
     assert result.flogic_result.metadata["frame_ontology_term_count"] > 0
 
 
+def test_modal_codec_audits_frame_terms_when_metadata_is_partial() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    result = codec.encode(
+        "The agency must provide notice and a hearing before a final order.",
+        document_id="frame-term-partial-metadata-doc",
+        source="us_code",
+    )
+    assert result.selected_frame is not None
+    assert len(result.modal_ir.frame_candidates) >= 2
+
+    selected_frame = result.selected_frame
+    alternate_frame = next(
+        frame.frame_id
+        for frame in result.modal_ir.frame_candidates
+        if frame.frame_id != selected_frame
+    )
+    patched_modal_ir = replace(
+        result.modal_ir,
+        metadata={
+            **result.modal_ir.metadata,
+            "frame_ontology_terms": {
+                selected_frame: ["and"],
+                alternate_frame: ["housing_voucher_benefits"],
+            },
+        },
+    )
+
+    triples = modal_ir_to_flogic_triples(
+        patched_modal_ir,
+        selected_frame=selected_frame,
+    )
+    selected_terms = {
+        triple["object"]
+        for triple in triples
+        if triple["predicate"] == "selected_ontology_term"
+    }
+
+    assert selected_frame in selected_terms
+    assert "and" not in selected_terms
+
+
 def test_modal_codec_filters_non_informative_frame_ontology_terms() -> None:
     frame_selector = BM25FrameSelector(
         (

@@ -32,6 +32,29 @@ _FRAME_ONTOLOGY_STOPWORDS = frozenset(
         "with",
     }
 )
+_FRAME_ONTOLOGY_TERM_PREDICATES = frozenset(
+    {
+        "candidate_ontology_term",
+        "selected_ontology_term",
+        "interpreted_in_frame_term",
+    }
+)
+_FRAME_ONTOLOGY_FRAME_PREDICATES = frozenset(
+    {
+        "candidate_ontology_frame",
+        "selected_ontology_frame",
+        "interpreted_in_frame",
+    }
+)
+_FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
+    set(_FRAME_ONTOLOGY_TERM_PREDICATES) | set(_FRAME_ONTOLOGY_FRAME_PREDICATES)
+)
+_FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
+    "frame:",
+    "frame-candidate:",
+    "frame-term:",
+    "selected-frame-term:",
+)
 
 
 @dataclass(frozen=True)
@@ -196,6 +219,65 @@ def normalize_frame_ontology_term(value: str, *, max_tokens: int = 8) -> str:
     return "_".join(tokens[:max_tokens])
 
 
+def frame_ontology_terms_from_triples(
+    triples: Iterable[Mapping[str, object]],
+    *,
+    max_terms: int = 64,
+) -> List[str]:
+    """Extract canonical frame ontology terms from frame-linked triples."""
+    terms: List[str] = []
+    for triple in triples:
+        predicate = str(triple.get("predicate", "")).strip()
+        if predicate not in _FRAME_ONTOLOGY_AUDIT_PREDICATES:
+            continue
+        normalized = normalize_frame_ontology_term(
+            str(triple.get("object", "")).strip()
+        )
+        if not normalized:
+            continue
+        if normalized in terms:
+            continue
+        terms.append(normalized)
+        if len(terms) >= max_terms:
+            break
+    return terms
+
+
+def frame_ontology_terms_from_feature_keys(
+    feature_keys: Iterable[str],
+    *,
+    max_terms: int = 64,
+) -> List[str]:
+    """Extract canonical frame ontology terms from frame-linked feature keys."""
+    terms: List[str] = []
+    for feature_key in feature_keys:
+        feature = str(feature_key or "").strip()
+        if not feature:
+            continue
+
+        raw_value = ""
+        for prefix in _FRAME_LINKED_FEATURE_PREFIXES:
+            if feature.startswith(prefix):
+                raw_value = feature[len(prefix) :].strip()
+                break
+        if not raw_value and feature.startswith("flogic:"):
+            parts = feature.split(":", 2)
+            if len(parts) == 3 and parts[1] in _FRAME_ONTOLOGY_AUDIT_PREDICATES:
+                raw_value = parts[2].strip()
+        if not raw_value:
+            continue
+
+        normalized = normalize_frame_ontology_term(raw_value)
+        if not normalized:
+            continue
+        if normalized in terms:
+            continue
+        terms.append(normalized)
+        if len(terms) >= max_terms:
+            break
+    return terms
+
+
 def _informative_ontology_tokens(value: str) -> List[str]:
     tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
     return [
@@ -245,6 +327,8 @@ __all__ = [
     "DEFAULT_LEGAL_FRAME_FIXTURE",
     "FrameCandidate",
     "FrameSelection",
+    "frame_ontology_terms_from_feature_keys",
+    "frame_ontology_terms_from_triples",
     "frame_ontology_terms",
     "normalize_frame_ontology_term",
 ]
