@@ -43,6 +43,24 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("unless", "unless"),
     ("except", "except"),
 )
+_USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
+    "reclassified",
+    "transferred",
+    "codification",
+    "repealed",
+    "omitted",
+    "reserved",
+    "vacant",
+    "renumbered",
+    "terminated",
+)
+_USCODE_STATUS_DERIVATION_RULES = frozenset(
+    {
+        "uscode_transferred_heading_v1",
+        "uscode_codification_transfer_heading_v1",
+        "uscode_editorial_status_heading_v1",
+    }
+)
 _USC_CITATION_RE = re.compile(
     r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
     re.IGNORECASE,
@@ -454,7 +472,10 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                     provenance_only=True,
                 )
             )
-    status_keyword = _clean_text(formula.metadata.get("status_keyword") or "")
+    status_keyword = _derived_status_keyword(
+        formula=formula,
+        fallback_rule=fallback_rule,
+    )
     if status_keyword:
         phrases.append(
             DecodedModalPhrase(
@@ -1036,6 +1057,29 @@ def _canonical_statutory_scope_unit(unit: str) -> str:
         if singular in _STATUTORY_SCOPE_UNITS:
             return singular
     return normalized
+
+
+def _derived_status_keyword(
+    *,
+    formula: ModalIRFormula,
+    fallback_rule: str,
+) -> str:
+    explicit = _clean_text(formula.metadata.get("status_keyword") or "").lower()
+    if explicit:
+        return explicit
+    normalized_rule = _clean_text(fallback_rule).lower()
+    if normalized_rule not in _USCODE_STATUS_DERIVATION_RULES:
+        return ""
+    predicate_text = _clean_text(formula.predicate.name).replace("_", " ").lower()
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", predicate_text):
+            return keyword
+    if normalized_rule in {
+        "uscode_transferred_heading_v1",
+        "uscode_codification_transfer_heading_v1",
+    }:
+        return "transferred"
+    return ""
 
 
 def _citation_slots(citation: str) -> List[Tuple[str, str]]:

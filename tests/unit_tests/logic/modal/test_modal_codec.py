@@ -2709,6 +2709,31 @@ def test_modal_decompiler_and_triples_capture_extended_statutory_scope_connector
     )
 
 
+def test_modal_decompiler_and_triples_surface_transferred_status_keyword_slot() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "\u00a7688. Transferred.",
+        document_id="us-code-15-688-3977b0476c11fbf1",
+        citation="15 U.S.C. 688",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert "uscode_transferred_heading_v1" in slot_texts["fallback_rule"]
+    assert slot_texts["status_keyword"] == ["transferred"]
+    assert slot_texts["status_keyword_token_count"] == ["1"]
+    assert slot_texts["status_keyword_token"] == ["transferred"]
+    assert slot_texts["status_keyword_stem"] == ["transferred"]
+    assert any(
+        triple["predicate"] == "status_keyword"
+        and triple["object"] == "transferred"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile(

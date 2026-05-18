@@ -172,6 +172,24 @@ _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 _SLOT_FEATURE_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+_USCODE_FALLBACK_STATUS_KEYWORDS: tuple[str, ...] = (
+    "reclassified",
+    "transferred",
+    "codification",
+    "repealed",
+    "omitted",
+    "reserved",
+    "vacant",
+    "renumbered",
+    "terminated",
+)
+_USCODE_STATUS_DERIVATION_RULES = frozenset(
+    {
+        "uscode_transferred_heading_v1",
+        "uscode_codification_transfer_heading_v1",
+        "uscode_editorial_status_heading_v1",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -887,7 +905,10 @@ def modal_ir_to_flogic_triples(
                         "object": value,
                     }
                 )
-        status_keyword = _clean_non_empty_string(formula.metadata.get("status_keyword"))
+        status_keyword = _status_keyword_value(
+            formula,
+            fallback_rule=fallback_rule,
+        )
         if status_keyword:
             triples.append(
                 {
@@ -1095,6 +1116,29 @@ def _typed_clause_key_value(
         value = _clean_non_empty_string(normalized[len(prefix_text) :].lstrip(",:;- "))
         return prefix_key, value
     return None
+
+
+def _status_keyword_value(
+    formula: ModalIRFormula,
+    *,
+    fallback_rule: str,
+) -> str:
+    explicit = _clean_non_empty_string(formula.metadata.get("status_keyword")).lower()
+    if explicit:
+        return explicit
+    normalized_rule = _clean_non_empty_string(fallback_rule).lower()
+    if normalized_rule not in _USCODE_STATUS_DERIVATION_RULES:
+        return ""
+    predicate_text = _clean_non_empty_string(formula.predicate.name).replace("_", " ").lower()
+    for keyword in _USCODE_FALLBACK_STATUS_KEYWORDS:
+        if re.search(rf"(?<!\w){re.escape(keyword)}(?!\w)", predicate_text):
+            return keyword
+    if normalized_rule in {
+        "uscode_transferred_heading_v1",
+        "uscode_codification_transfer_heading_v1",
+    }:
+        return "transferred"
+    return ""
 
 
 def _citation_components(citation: str) -> List[tuple[str, str]]:
