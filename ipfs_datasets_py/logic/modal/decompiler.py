@@ -2846,6 +2846,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     terminal_component_kind = ""
     primary_number = ""
     terminal_number = ""
+    primary_suffix = ""
+    terminal_suffix = ""
     total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
@@ -3063,6 +3065,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 if index == total_components:
                     terminal_suffix_is_roman = True
             if index == 1:
+                primary_suffix = suffix
                 slots.append(("citation_section_primary_suffix", suffix))
                 slots.append(("citation_section_primary_suffix_char_count", suffix_char_count))
                 if suffix_profile:
@@ -3076,6 +3079,7 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 slots.append(("citation_section_primary_component_kind", "alphanumeric"))
                 primary_component_kind = "alphanumeric"
             if index == total_components:
+                terminal_suffix = suffix
                 slots.append(("citation_section_terminal_suffix", suffix))
                 slots.append(("citation_section_terminal_suffix_char_count", suffix_char_count))
                 if suffix_profile:
@@ -3190,6 +3194,23 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         if is_range:
             slots.append(("citation_section_range_number_relation", relation))
             slots.append(("citation_section_range_number_span", span))
+    slots.extend(
+        _primary_terminal_suffix_relation_slots(
+            primary_suffix=primary_suffix,
+            terminal_suffix=terminal_suffix,
+            slot_prefix="citation_section_primary_terminal_suffix",
+            emit_when_absent=is_range,
+        )
+    )
+    if is_range:
+        slots.extend(
+            _primary_terminal_suffix_relation_slots(
+                primary_suffix=primary_suffix,
+                terminal_suffix=terminal_suffix,
+                slot_prefix="citation_section_range_suffix",
+                emit_when_absent=True,
+            )
+        )
     if is_range:
         slots.append(
             (
@@ -3289,6 +3310,80 @@ def _primary_terminal_number_relation(
     if primary_value < terminal_value:
         return ("ascending", str(terminal_value - primary_value))
     return ("descending", str(primary_value - terminal_value))
+
+
+def _primary_terminal_suffix_relation_slots(
+    *,
+    primary_suffix: str,
+    terminal_suffix: str,
+    slot_prefix: str,
+    emit_when_absent: bool = False,
+) -> List[Tuple[str, str]]:
+    normalized_slot_prefix = _clean_text(slot_prefix)
+    if not normalized_slot_prefix:
+        return []
+    primary = _clean_text(primary_suffix).lower()
+    terminal = _clean_text(terminal_suffix).lower()
+    if not primary and not terminal and not emit_when_absent:
+        return []
+    slots: List[Tuple[str, str]] = [
+        (
+            f"{normalized_slot_prefix}_pair",
+            f"{primary or 'none'}|{terminal or 'none'}",
+        ),
+        (
+            f"{normalized_slot_prefix}_match",
+            "true" if primary == terminal else "false",
+        ),
+        (
+            f"{normalized_slot_prefix}_presence_match",
+            "true" if bool(primary) == bool(terminal) else "false",
+        ),
+    ]
+    if primary and terminal:
+        length_relation = _primary_terminal_number_relation(
+            primary_number=str(len(primary)),
+            terminal_number=str(len(terminal)),
+        )
+        if length_relation is not None:
+            relation, span = length_relation
+            slots.append((f"{normalized_slot_prefix}_length_relation", relation))
+            slots.append((f"{normalized_slot_prefix}_length_span", span))
+        alpha_relation = _primary_terminal_alpha_relation(
+            primary_token=primary,
+            terminal_token=terminal,
+        )
+        if alpha_relation is not None:
+            relation, span = alpha_relation
+            slots.append((f"{normalized_slot_prefix}_alpha_relation", relation))
+            slots.append((f"{normalized_slot_prefix}_alpha_span", span))
+    return slots
+
+
+def _primary_terminal_alpha_relation(
+    *,
+    primary_token: str,
+    terminal_token: str,
+) -> Tuple[str, str] | None:
+    primary_value = _alpha_token_value(primary_token)
+    terminal_value = _alpha_token_value(terminal_token)
+    if primary_value is None or terminal_value is None:
+        return None
+    if primary_value == terminal_value:
+        return ("equal", "0")
+    if primary_value < terminal_value:
+        return ("ascending", str(terminal_value - primary_value))
+    return ("descending", str(primary_value - terminal_value))
+
+
+def _alpha_token_value(value: str) -> int | None:
+    cleaned = _clean_text(value).lower()
+    if not cleaned or not cleaned.isalpha():
+        return None
+    numeric_value = 0
+    for character in cleaned:
+        numeric_value = (numeric_value * 26) + (ord(character) - ord("a") + 1)
+    return numeric_value
 
 
 def _numeric_signature_slots(

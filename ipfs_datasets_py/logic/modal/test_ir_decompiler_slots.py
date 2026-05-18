@@ -172,6 +172,34 @@ def _range_connector_mismatch_sample_document() -> ModalIRDocument:
     )
 
 
+def _long_alpha_range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-43-616tttt to 616yyyy.-1e019a04fbdab0cb"
+    formula = ModalIRFormula(
+        formula_id="f-long-alpha-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_land_management_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=29,
+            citation="43 U.S.C. 616tttt to 616yyyy.",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=(
+            "43 U.S.C. 616tttt to 616yyyy. Land management records are retained."
+        ),
+        formulas=[formula],
+    )
+
+
 def _section_marker_sample_document() -> ModalIRDocument:
     source_id = "us-code-2-190l-01dd1648c5b1588c"
     formula = ModalIRFormula(
@@ -1729,6 +1757,253 @@ def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
     assert objects("source_id_section_delimiter_count") == ["0"]
     assert objects("source_id_title_section_key") == ["45:228a to 228c"]
     assert objects("source_id_title_section_key_normalized") == ["45:228a to 228c"]
+
+
+def test_decode_modal_ir_document_emits_suffix_relation_slots() -> None:
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    long_alpha_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_long_alpha_range_sample_document())
+    )
+
+    assert range_slot_map["citation_section_primary_terminal_suffix_pair"] == ["a|c"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_match"] == ["false"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_length_span"] == ["0"]
+    assert range_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == ["2"]
+    assert range_slot_map["citation_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["citation_section_range_suffix_alpha_span"] == ["2"]
+
+    assert range_slot_map["source_id_section_primary_terminal_suffix_pair"] == ["a|c"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_match"] == ["false"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_length_relation"] == [
+        "equal"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_length_span"] == ["0"]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == ["2"]
+    assert range_slot_map["source_id_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert range_slot_map["source_id_section_range_suffix_alpha_span"] == ["2"]
+
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_pair"] == [
+        "tttt|yyyy"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_match"] == [
+        "false"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert (
+        long_alpha_slot_map["citation_section_primary_terminal_suffix_length_relation"]
+        == ["equal"]
+    )
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_length_span"] == [
+        "0"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["citation_section_primary_terminal_suffix_alpha_span"] == [
+        "91395"
+    ]
+    assert long_alpha_slot_map["citation_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["citation_section_range_suffix_alpha_span"] == ["91395"]
+
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_pair"] == [
+        "tttt|yyyy"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_match"] == [
+        "false"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_presence_match"] == [
+        "true"
+    ]
+    assert (
+        long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_relation"]
+        == ["equal"]
+    )
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_length_span"] == [
+        "0"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["source_id_section_primary_terminal_suffix_alpha_span"] == [
+        "91395"
+    ]
+    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_relation"] == [
+        "ascending"
+    ]
+    assert long_alpha_slot_map["source_id_section_range_suffix_alpha_span"] == ["91395"]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_relation_slots() -> None:
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+    long_alpha_triples = modal_ir_to_flogic_triples(_long_alpha_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_pair") == [
+        "a|c"
+    ]
+    assert objects(range_triples, "citation_section_primary_terminal_suffix_match") == [
+        "false"
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        range_triples,
+        "citation_section_primary_terminal_suffix_alpha_span",
+    ) == ["2"]
+    assert objects(range_triples, "citation_section_range_suffix_alpha_relation") == [
+        "ascending"
+    ]
+    assert objects(range_triples, "citation_section_range_suffix_alpha_span") == ["2"]
+
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_pair") == [
+        "a|c"
+    ]
+    assert objects(range_triples, "source_id_section_primary_terminal_suffix_match") == [
+        "false"
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        range_triples,
+        "source_id_section_primary_terminal_suffix_alpha_span",
+    ) == ["2"]
+    assert objects(range_triples, "source_id_section_range_suffix_alpha_relation") == [
+        "ascending"
+    ]
+    assert objects(range_triples, "source_id_section_range_suffix_alpha_span") == ["2"]
+
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_pair",
+    ) == ["tttt|yyyy"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_match",
+    ) == ["false"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_primary_terminal_suffix_alpha_span",
+    ) == ["91395"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_range_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "citation_section_range_suffix_alpha_span",
+    ) == ["91395"]
+
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_pair",
+    ) == ["tttt|yyyy"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_match",
+    ) == ["false"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_presence_match",
+    ) == ["true"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_length_relation",
+    ) == ["equal"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_length_span",
+    ) == ["0"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_primary_terminal_suffix_alpha_span",
+    ) == ["91395"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_range_suffix_alpha_relation",
+    ) == ["ascending"]
+    assert objects(
+        long_alpha_triples,
+        "source_id_section_range_suffix_alpha_span",
+    ) == ["91395"]
 
 
 def test_decode_modal_ir_document_emits_numeric_section_range_relation_slots() -> None:
