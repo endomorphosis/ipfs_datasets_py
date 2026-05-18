@@ -174,6 +174,7 @@ _STRICT_ROMAN_NUMERAL_RE = re.compile(
     r"^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$",
     re.IGNORECASE,
 )
+_VOWEL_CHARS = frozenset({"a", "e", "i", "o", "u"})
 _STATUTORY_SCOPE_REFERENCE_RE = re.compile(
     rf"(?<!\w)"
     rf"(?P<connector>{_STATUTORY_SCOPE_CONNECTOR_PATTERN})"
@@ -1667,6 +1668,17 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                     components.append(("citation_section_primary_suffix_case", suffix_case))
                 if index == total_parts:
                     components.append(("citation_section_terminal_suffix_case", suffix_case))
+            for alpha_slot, alpha_value in _alpha_signature_components(
+                suffix,
+                slot_prefix="citation_section_suffix",
+            ):
+                components.append((alpha_slot, alpha_value))
+                components.append(
+                    (
+                        f"{alpha_slot}_positioned",
+                        f"{position}:{alpha_value}",
+                    )
+                )
             suffix_kind = _suffix_kind(suffix)
             if suffix_kind:
                 components.append(("citation_section_suffix_kind", suffix_kind))
@@ -1691,12 +1703,24 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 components.append(("citation_section_primary_suffix_char_count", suffix_char_count))
                 if suffix_profile:
                     components.append(("citation_section_primary_suffix_profile", suffix_profile))
+                components.extend(
+                    _alpha_signature_components(
+                        suffix,
+                        slot_prefix="citation_section_primary_suffix",
+                    )
+                )
                 components.append(("citation_section_primary_component_kind", "alphanumeric"))
             if index == total_parts:
                 components.append(("citation_section_terminal_suffix", suffix))
                 components.append(("citation_section_terminal_suffix_char_count", suffix_char_count))
                 if suffix_profile:
                     components.append(("citation_section_terminal_suffix_profile", suffix_profile))
+                components.extend(
+                    _alpha_signature_components(
+                        suffix,
+                        slot_prefix="citation_section_terminal_suffix",
+                    )
+                )
                 components.append(("citation_section_terminal_component_kind", "alphanumeric"))
         else:
             component_shapes.append("N")
@@ -1869,6 +1893,52 @@ def _numeric_signature_components(
         ),
         (f"{slot_prefix}_trailing_zero_count", str(trailing_zero_count)),
     ]
+
+
+def _alpha_signature_components(
+    value: str,
+    *,
+    slot_prefix: str,
+) -> List[tuple[str, str]]:
+    cleaned = _clean_non_empty_string(value).lower()
+    if not cleaned:
+        return []
+    letters = [character for character in cleaned if character.isalpha()]
+    if not letters:
+        return []
+    initial = letters[0]
+    terminal = letters[-1]
+    vowel_count = sum(1 for character in letters if character in _VOWEL_CHARS)
+    consonant_count = len(letters) - vowel_count
+    components: List[tuple[str, str]] = [
+        (f"{slot_prefix}_initial", initial),
+        (f"{slot_prefix}_terminal", terminal),
+        (f"{slot_prefix}_vowel_count", str(vowel_count)),
+        (f"{slot_prefix}_consonant_count", str(consonant_count)),
+        (
+            f"{slot_prefix}_has_vowel",
+            "true" if vowel_count > 0 else "false",
+        ),
+        (
+            f"{slot_prefix}_has_consonant",
+            "true" if consonant_count > 0 else "false",
+        ),
+        (f"{slot_prefix}_unique_char_count", str(len(set(letters)))),
+    ]
+    initial_ordinal = _alpha_ordinal(initial)
+    if initial_ordinal:
+        components.append((f"{slot_prefix}_initial_ordinal", initial_ordinal))
+    terminal_ordinal = _alpha_ordinal(terminal)
+    if terminal_ordinal:
+        components.append((f"{slot_prefix}_terminal_ordinal", terminal_ordinal))
+    return components
+
+
+def _alpha_ordinal(value: str) -> str:
+    cleaned = _clean_non_empty_string(value).lower()
+    if len(cleaned) != 1 or not ("a" <= cleaned <= "z"):
+        return ""
+    return str(ord(cleaned) - ord("a") + 1)
 
 
 def _section_trailing_punct(

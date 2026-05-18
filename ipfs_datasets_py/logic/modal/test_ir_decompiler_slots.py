@@ -656,6 +656,167 @@ def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
     assert objects("source_id_section_roman_suffix_component_count") == ["1"]
 
 
+def test_decode_modal_ir_document_emits_suffix_alpha_signature_slots() -> None:
+    sample_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_sample_document())
+    )
+    assert sample_slot_map["citation_section_suffix_initial"] == ["b"]
+    assert sample_slot_map["citation_section_suffix_terminal"] == ["b"]
+    assert sample_slot_map["citation_section_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_suffix_terminal_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_suffix_vowel_count"] == ["0"]
+    assert sample_slot_map["citation_section_suffix_consonant_count"] == ["3"]
+    assert sample_slot_map["citation_section_suffix_has_vowel"] == ["false"]
+    assert sample_slot_map["citation_section_suffix_has_consonant"] == ["true"]
+    assert sample_slot_map["citation_section_suffix_unique_char_count"] == ["1"]
+    assert sample_slot_map["citation_section_primary_suffix_initial"] == ["b"]
+    assert sample_slot_map["citation_section_primary_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["citation_section_primary_suffix_has_consonant"] == ["true"]
+
+    assert sample_slot_map["source_id_section_suffix_initial"] == ["b"]
+    assert sample_slot_map["source_id_section_suffix_terminal"] == ["b"]
+    assert sample_slot_map["source_id_section_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_suffix_terminal_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_suffix_vowel_count"] == ["0"]
+    assert sample_slot_map["source_id_section_suffix_consonant_count"] == ["3"]
+    assert sample_slot_map["source_id_section_suffix_has_vowel"] == ["false"]
+    assert sample_slot_map["source_id_section_suffix_has_consonant"] == ["true"]
+    assert sample_slot_map["source_id_section_suffix_unique_char_count"] == ["1"]
+    assert sample_slot_map["source_id_section_primary_suffix_initial"] == ["b"]
+    assert sample_slot_map["source_id_section_primary_suffix_initial_ordinal"] == ["2"]
+    assert sample_slot_map["source_id_section_primary_suffix_has_consonant"] == ["true"]
+
+    range_slot_map = decoded_modal_phrase_slot_text_map(
+        decode_modal_ir_document(_range_sample_document())
+    )
+    assert range_slot_map["citation_section_suffix_initial_positioned"] == [
+        "1:a",
+        "2:c",
+    ]
+    assert range_slot_map["citation_section_suffix_initial_ordinal_positioned"] == [
+        "1:1",
+        "2:3",
+    ]
+    assert range_slot_map["citation_section_suffix_has_vowel_positioned"] == [
+        "1:true",
+        "2:false",
+    ]
+    assert range_slot_map["citation_section_suffix_has_consonant_positioned"] == [
+        "1:false",
+        "2:true",
+    ]
+    assert range_slot_map["citation_section_primary_suffix_has_vowel"] == ["true"]
+    assert range_slot_map["citation_section_terminal_suffix_has_vowel"] == ["false"]
+
+    assert range_slot_map["source_id_section_suffix_initial_positioned"] == [
+        "1:a",
+        "2:c",
+    ]
+    assert range_slot_map["source_id_section_suffix_initial_ordinal_positioned"] == [
+        "1:1",
+        "2:3",
+    ]
+    assert range_slot_map["source_id_section_suffix_has_vowel_positioned"] == [
+        "1:true",
+        "2:false",
+    ]
+    assert range_slot_map["source_id_section_suffix_has_consonant_positioned"] == [
+        "1:false",
+        "2:true",
+    ]
+    assert range_slot_map["source_id_section_primary_suffix_has_vowel"] == ["true"]
+    assert range_slot_map["source_id_section_terminal_suffix_has_vowel"] == ["false"]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_alpha_signature_slots() -> None:
+    sample_triples = modal_ir_to_flogic_triples(_sample_document())
+    range_triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(triples: list[dict[str, str]], predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects(sample_triples, "citation_section_suffix_initial") == ["b"]
+    assert objects(sample_triples, "citation_section_suffix_terminal") == ["b"]
+    assert objects(sample_triples, "citation_section_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_suffix_terminal_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_suffix_vowel_count") == ["0"]
+    assert objects(sample_triples, "citation_section_suffix_consonant_count") == ["3"]
+    assert objects(sample_triples, "citation_section_suffix_has_vowel") == ["false"]
+    assert objects(sample_triples, "citation_section_suffix_has_consonant") == ["true"]
+    assert objects(sample_triples, "citation_section_suffix_unique_char_count") == ["1"]
+    assert objects(sample_triples, "citation_section_primary_suffix_initial") == ["b"]
+    assert objects(sample_triples, "citation_section_primary_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "citation_section_primary_suffix_has_consonant") == [
+        "true"
+    ]
+
+    assert objects(sample_triples, "source_id_section_suffix_initial") == ["b"]
+    assert objects(sample_triples, "source_id_section_suffix_terminal") == ["b"]
+    assert objects(sample_triples, "source_id_section_suffix_initial_ordinal") == ["2"]
+    assert objects(sample_triples, "source_id_section_suffix_terminal_ordinal") == ["2"]
+    assert objects(sample_triples, "source_id_section_suffix_vowel_count") == ["0"]
+    assert objects(sample_triples, "source_id_section_suffix_consonant_count") == ["3"]
+    assert objects(sample_triples, "source_id_section_suffix_has_vowel") == ["false"]
+    assert objects(sample_triples, "source_id_section_suffix_has_consonant") == ["true"]
+    assert objects(sample_triples, "source_id_section_suffix_unique_char_count") == ["1"]
+    assert objects(sample_triples, "source_id_section_primary_suffix_initial") == ["b"]
+    assert objects(sample_triples, "source_id_section_primary_suffix_initial_ordinal") == [
+        "2"
+    ]
+    assert objects(
+        sample_triples,
+        "source_id_section_primary_suffix_has_consonant",
+    ) == ["true"]
+
+    assert objects(range_triples, "citation_section_suffix_initial_positioned") == [
+        "1:a",
+        "2:c",
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_suffix_initial_ordinal_positioned",
+    ) == ["1:1", "2:3"]
+    assert objects(range_triples, "citation_section_suffix_has_vowel_positioned") == [
+        "1:true",
+        "2:false",
+    ]
+    assert objects(
+        range_triples,
+        "citation_section_suffix_has_consonant_positioned",
+    ) == ["1:false", "2:true"]
+    assert objects(range_triples, "citation_section_primary_suffix_has_vowel") == ["true"]
+    assert objects(range_triples, "citation_section_terminal_suffix_has_vowel") == [
+        "false"
+    ]
+
+    assert objects(range_triples, "source_id_section_suffix_initial_positioned") == [
+        "1:a",
+        "2:c",
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_suffix_initial_ordinal_positioned",
+    ) == ["1:1", "2:3"]
+    assert objects(range_triples, "source_id_section_suffix_has_vowel_positioned") == [
+        "1:true",
+        "2:false",
+    ]
+    assert objects(
+        range_triples,
+        "source_id_section_suffix_has_consonant_positioned",
+    ) == ["1:false", "2:true"]
+    assert objects(range_triples, "source_id_section_primary_suffix_has_vowel") == [
+        "true"
+    ]
+    assert objects(range_triples, "source_id_section_terminal_suffix_has_vowel") == [
+        "false"
+    ]
+
+
 def test_decode_modal_ir_document_does_not_misclassify_noncanonical_roman_suffix() -> None:
     decoded = decode_modal_ir_document(_noncanonical_romanlike_suffix_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
