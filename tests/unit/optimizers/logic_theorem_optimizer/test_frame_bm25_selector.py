@@ -253,6 +253,21 @@ def test_frame_ontology_terms_from_feature_keys_support_direct_ontology_predicat
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_frame_cue_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "cue:frame:Frame:authority",
+            "cue:frame:Frame:part of",
+            "cue:deontic:O:must",
+        ]
+    )
+
+    assert terms == [
+        "authority",
+        "part",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_ignore_unrelated_namespaces() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

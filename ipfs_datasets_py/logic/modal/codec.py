@@ -371,7 +371,10 @@ class DeterministicModalLogicCodec:
             modal_ir=modal_ir,
             selected_frame=selected_frame,
             kg_triples=kg_triples,
-            extra_feature_keys=_slot_features(decoded_modal_text),
+            extra_feature_keys=(
+                _slot_features(decoded_modal_text)
+                + _frame_cue_features(encoding, self.decoder)
+            ),
         )
         frame_audit_terms = _frame_ontology_audit_terms(
             frame_feature_keys=frame_feature_keys,
@@ -1258,6 +1261,17 @@ def _slot_features(decoded: DecodedModalText) -> List[str]:
             if encoded_value:
                 features.append(f"slot:{slot}:{encoded_value}")
     return features
+
+
+def _frame_cue_features(
+    encoding: SpaCyLegalEncoding,
+    decoder: SpaCyModalDecoder,
+) -> List[str]:
+    return [
+        feature
+        for feature in decoder._feature_stream(encoding)
+        if feature.lower().startswith("cue:frame:")
+    ]
 
 
 def _slot_feature_value(value: str, *, max_tokens: int = 8) -> str:

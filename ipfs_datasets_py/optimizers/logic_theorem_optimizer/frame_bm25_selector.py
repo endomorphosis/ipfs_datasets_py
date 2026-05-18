@@ -97,6 +97,7 @@ _ORDERED_FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = tuple(
     sorted(_FRAME_LINKED_FEATURE_PREFIXES, key=lambda value: (-len(value), value))
 )
 _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES = frozenset({"flogic", "slot"})
+_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX = "cue:frame:"
 
 
 @dataclass(frozen=True)
@@ -348,6 +349,16 @@ def _canonical_frame_ontology_predicate(predicate: str) -> str:
 
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
     lowered = feature.lower()
+
+    if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
+        cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
+        if not cue_tail:
+            return ""
+        cue_symbol, separator, cue_value = cue_tail.partition(":")
+        if not separator:
+            return ""
+        return cue_value.strip()
+
     for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
         if lowered.startswith(prefix):
             return feature[len(prefix) :].strip()
