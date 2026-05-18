@@ -1893,6 +1893,14 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 )
             )
             components.append(("citation_section_number_positioned", f"{position}:{number}"))
+            number_suffix_pair = f"{number}|{suffix or 'none'}"
+            components.append(("citation_section_number_suffix_pair", number_suffix_pair))
+            components.append(
+                (
+                    "citation_section_number_suffix_pair_positioned",
+                    f"{position}:{number_suffix_pair}",
+                )
+            )
             for signature_slot, signature_value in _numeric_signature_components(
                 number,
                 slot_prefix="citation_section_number",
@@ -1919,6 +1927,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                         slot_prefix="citation_section_primary_number",
                     )
                 )
+                components.append(
+                    (
+                        "citation_section_primary_number_suffix_pair",
+                        number_suffix_pair,
+                    )
+                )
             if index == total_parts:
                 components.append(("citation_section_terminal_number", number))
                 terminal_number = number
@@ -1932,6 +1946,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                     _numeric_signature_components(
                         number,
                         slot_prefix="citation_section_terminal_number",
+                    )
+                )
+                components.append(
+                    (
+                        "citation_section_terminal_number_suffix_pair",
+                        number_suffix_pair,
                     )
                 )
         suffix_kind = _suffix_kind(suffix) if suffix else ""

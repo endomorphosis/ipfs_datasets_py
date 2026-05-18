@@ -1547,6 +1547,20 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     mixed_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_sample_document())
     )
+    assert mixed_slot_map["citation_section_number_suffix_pair"] == ["360|bbb", "0|none"]
+    assert mixed_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert mixed_slot_map["citation_section_primary_number_suffix_pair"] == ["360|bbb"]
+    assert mixed_slot_map["citation_section_terminal_number_suffix_pair"] == ["0|none"]
+    assert mixed_slot_map["source_id_section_number_suffix_pair"] == ["360|bbb", "0|none"]
+    assert mixed_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert mixed_slot_map["source_id_section_primary_number_suffix_pair"] == ["360|bbb"]
+    assert mixed_slot_map["source_id_section_terminal_number_suffix_pair"] == ["0|none"]
     assert mixed_slot_map["citation_section_component_profile"] == ["compound_mixed"]
     assert mixed_slot_map["citation_section_primary_terminal_number_relation"] == [
         "descending"
@@ -1561,6 +1575,26 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     single_alnum_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_single_component_sample_document())
     )
+    assert single_alnum_slot_map["citation_section_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:190|l"
+    ]
+    assert single_alnum_slot_map["citation_section_primary_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["citation_section_terminal_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_number_suffix_pair"] == ["190|l"]
+    assert single_alnum_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_primary_number_suffix_pair"] == [
+        "190|l"
+    ]
+    assert single_alnum_slot_map["source_id_section_terminal_number_suffix_pair"] == [
+        "190|l"
+    ]
     assert single_alnum_slot_map["citation_section_component_profile"] == [
         "single_alphanumeric"
     ]
@@ -1581,6 +1615,26 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     single_numeric_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_trailing_punct_sample_document())
     )
+    assert single_numeric_slot_map["citation_section_number_suffix_pair"] == ["60101|none"]
+    assert single_numeric_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:60101|none"
+    ]
+    assert single_numeric_slot_map["citation_section_primary_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["citation_section_terminal_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_number_suffix_pair"] == ["60101|none"]
+    assert single_numeric_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_primary_number_suffix_pair"] == [
+        "60101|none"
+    ]
+    assert single_numeric_slot_map["source_id_section_terminal_number_suffix_pair"] == [
+        "60101|none"
+    ]
     assert single_numeric_slot_map["citation_section_component_profile"] == [
         "single_numeric"
     ]
@@ -1591,6 +1645,20 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     range_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_range_sample_document())
     )
+    assert range_slot_map["citation_section_number_suffix_pair"] == ["228|a", "228|c"]
+    assert range_slot_map["citation_section_number_suffix_pair_positioned"] == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert range_slot_map["citation_section_primary_number_suffix_pair"] == ["228|a"]
+    assert range_slot_map["citation_section_terminal_number_suffix_pair"] == ["228|c"]
+    assert range_slot_map["source_id_section_number_suffix_pair"] == ["228|a", "228|c"]
+    assert range_slot_map["source_id_section_number_suffix_pair_positioned"] == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert range_slot_map["source_id_section_primary_number_suffix_pair"] == ["228|a"]
+    assert range_slot_map["source_id_section_terminal_number_suffix_pair"] == ["228|c"]
     assert range_slot_map["citation_section_component_profile"] == ["range"]
     assert range_slot_map["citation_section_primary_terminal_number_relation"] == [
         "equal"
@@ -1619,6 +1687,34 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(mixed_triples, "citation_section_component_profile") == [
         "compound_mixed"
     ]
+    assert objects(mixed_triples, "citation_section_number_suffix_pair") == [
+        "360|bbb",
+        "0|none",
+    ]
+    assert objects(mixed_triples, "citation_section_number_suffix_pair_positioned") == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert objects(mixed_triples, "citation_section_primary_number_suffix_pair") == [
+        "360|bbb"
+    ]
+    assert objects(mixed_triples, "citation_section_terminal_number_suffix_pair") == [
+        "0|none"
+    ]
+    assert objects(mixed_triples, "source_id_section_number_suffix_pair") == [
+        "360|bbb",
+        "0|none",
+    ]
+    assert objects(mixed_triples, "source_id_section_number_suffix_pair_positioned") == [
+        "1:360|bbb",
+        "2:0|none",
+    ]
+    assert objects(mixed_triples, "source_id_section_primary_number_suffix_pair") == [
+        "360|bbb"
+    ]
+    assert objects(mixed_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "0|none"
+    ]
     assert objects(mixed_triples, "citation_section_primary_terminal_number_relation") == [
         "descending"
     ]
@@ -1637,6 +1733,28 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
 
     assert objects(single_alnum_triples, "citation_section_component_profile") == [
         "single_alphanumeric"
+    ]
+    assert objects(single_alnum_triples, "citation_section_number_suffix_pair") == ["190|l"]
+    assert objects(
+        single_alnum_triples,
+        "citation_section_number_suffix_pair_positioned",
+    ) == ["1:190|l"]
+    assert objects(single_alnum_triples, "citation_section_primary_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "citation_section_terminal_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_number_suffix_pair") == ["190|l"]
+    assert objects(
+        single_alnum_triples,
+        "source_id_section_number_suffix_pair_positioned",
+    ) == ["1:190|l"]
+    assert objects(single_alnum_triples, "source_id_section_primary_number_suffix_pair") == [
+        "190|l"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "190|l"
     ]
     assert objects(single_alnum_triples, "citation_section_primary_terminal_number_relation") == [
         "equal"
@@ -1657,11 +1775,57 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(single_numeric_triples, "citation_section_component_profile") == [
         "single_numeric"
     ]
+    assert objects(single_numeric_triples, "citation_section_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(
+        single_numeric_triples,
+        "citation_section_number_suffix_pair_positioned",
+    ) == ["1:60101|none"]
+    assert objects(single_numeric_triples, "citation_section_primary_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "citation_section_terminal_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(
+        single_numeric_triples,
+        "source_id_section_number_suffix_pair_positioned",
+    ) == ["1:60101|none"]
+    assert objects(single_numeric_triples, "source_id_section_primary_number_suffix_pair") == [
+        "60101|none"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_terminal_number_suffix_pair") == [
+        "60101|none"
+    ]
     assert objects(single_numeric_triples, "source_id_section_component_profile") == [
         "single_numeric"
     ]
 
     assert objects(range_triples, "citation_section_component_profile") == ["range"]
+    assert objects(range_triples, "citation_section_number_suffix_pair") == [
+        "228|a",
+        "228|c",
+    ]
+    assert objects(range_triples, "citation_section_number_suffix_pair_positioned") == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert objects(range_triples, "citation_section_primary_number_suffix_pair") == ["228|a"]
+    assert objects(range_triples, "citation_section_terminal_number_suffix_pair") == ["228|c"]
+    assert objects(range_triples, "source_id_section_number_suffix_pair") == [
+        "228|a",
+        "228|c",
+    ]
+    assert objects(range_triples, "source_id_section_number_suffix_pair_positioned") == [
+        "1:228|a",
+        "2:228|c",
+    ]
+    assert objects(range_triples, "source_id_section_primary_number_suffix_pair") == ["228|a"]
+    assert objects(range_triples, "source_id_section_terminal_number_suffix_pair") == ["228|c"]
     assert objects(range_triples, "citation_section_primary_terminal_number_relation") == [
         "equal"
     ]
