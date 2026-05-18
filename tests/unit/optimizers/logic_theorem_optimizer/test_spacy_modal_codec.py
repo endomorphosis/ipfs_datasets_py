@@ -92,6 +92,58 @@ def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> 
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_cases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-2-123b-a41bd4aaf77abbf3",
+            "2 U.S.C. 123b",
+            "Sec. 123b - Transferred.",
+        ),
+        (
+            "us-code-25-478-ebbb6cefef299fc2",
+            "25 U.S.C. 478",
+            "Sec. 478 - Transferred.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        "Sec. 1693l - Waiver of rights.",
+        document_id="us-code-15-1693l-62b207bc138a3216",
+        citation="15 U.S.C. 1693l",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.formulas
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    assert fallback.provenance.citation == "15 U.S.C. 1693l"
+
+
 def test_spacy_compiler_replays_uscode_declarative_statement_zero_formula_cases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     compiler = SpaCyModalIRCompiler()

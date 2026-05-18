@@ -175,6 +175,56 @@ def test_parser_replays_spaced_transferred_heading_zero_formula_samples() -> Non
         assert fallback.provenance.citation == citation
 
 
+def test_parser_replays_sec_prefixed_transferred_heading_zero_formula_samples() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-2-123b-a41bd4aaf77abbf3",
+            "2 U.S.C. 123b",
+            "Sec. 123b - Transferred.",
+        ),
+        (
+            "us-code-25-478-ebbb6cefef299fc2",
+            "25 U.S.C. 478",
+            "Sec. 478 - Transferred.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        "Sec. 1693l - Waiver of rights.",
+        document_id="us-code-15-1693l-62b207bc138a3216",
+        source="us_code",
+        citation="15 U.S.C. 1693l",
+    )
+
+    assert document.document_id == "us-code-15-1693l-62b207bc138a3216"
+    assert document.formulas
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    assert fallback.provenance.citation == "15 U.S.C. 1693l"
+
+
 def test_parser_replays_editorial_status_zero_formula_sample_for_18_3008() -> None:
     parser = LegalModalParser()
     document = parser.parse(

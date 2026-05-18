@@ -228,7 +228,16 @@ class LegalModalParser:
         )
         if fallback_formula is not None:
             return fallback_formula
-        return self._uscode_declarative_statement_fallback_formula(
+        fallback_formula = self._uscode_declarative_statement_fallback_formula(
+            resolved_document_id=document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=candidate_segments,
+            start_index=start_index,
+        )
+        if fallback_formula is not None:
+            return fallback_formula
+        return self._uscode_section_heading_fallback_formula(
             resolved_document_id=document_id,
             normalized_text=normalized,
             citation=citation,
@@ -390,6 +399,8 @@ class LegalModalParser:
             return True
         if re.search(rf"\bsection\s+{section_pattern}(?:\b|[.)])", normalized):
             return True
+        if re.search(rf"\bsec\.\s*{section_pattern}(?:\b|[.)-])", normalized):
+            return True
         return False
 
     def _starts_with_citation_section_reference(self, text: str, citation_section: str) -> bool:
@@ -398,7 +409,7 @@ class LegalModalParser:
         normalized = self.normalize_text(text).lower()
         section_pattern = re.escape(citation_section)
         return bool(
-            re.match(rf"^(?:§\s*)?{section_pattern}(?:\b|[.)])", normalized)
+            re.match(rf"^(?:§\s*|sec\.\s*|section\s+)?{section_pattern}(?:\b|[.)-])", normalized)
         )
 
     def _uscode_editorial_status_fallback_formula(
@@ -561,6 +572,79 @@ class LegalModalParser:
             },
         )
 
+    def _uscode_section_heading_fallback_formula(
+        self,
+        *,
+        resolved_document_id: str,
+        normalized_text: str,
+        citation: Optional[str],
+        segments: Sequence[LegalSegment],
+        start_index: int,
+    ) -> Optional[ModalIRFormula]:
+        """Emit frame IR for short U.S.C. section-heading lines with no modal cues."""
+        if not normalized_text.strip():
+            return None
+        if citation is None or "u.s.c." not in citation.lower():
+            return None
+        if self.extract_cues(normalized_text):
+            return None
+
+        citation_section = self._citation_section_token(citation)
+        if not citation_section:
+            return None
+
+        candidate_segment: Optional[LegalSegment] = None
+        for segment in segments:
+            if not self._starts_with_citation_section_reference(
+                segment.text,
+                citation_section,
+            ):
+                continue
+            if len(_TOKEN_RE.findall(segment.text)) > 24:
+                continue
+            candidate_segment = segment
+            break
+        if candidate_segment is None:
+            return None
+
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return None
+        operator = profile.operators[0]
+        predicate = self._predicate_from_segment(
+            candidate_segment.text,
+            "__uscode_section_heading_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(
+            candidate_segment.text
+        )
+        return ModalIRFormula(
+            formula_id=f"{resolved_document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role="frame",
+            ),
+            provenance=ModalIRProvenance(
+                source_id=resolved_document_id,
+                start_char=candidate_segment.start_char,
+                end_char=candidate_segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_section_heading_fallback__",
+                "fallback_rule": "uscode_section_heading_v1",
+            },
+        )
+
     def _looks_like_transferred_section_heading(
         self,
         segment_text: str,
@@ -614,9 +698,10 @@ class LegalModalParser:
     ) -> bool:
         if not citation_section:
             return False
-        normalized = self.normalize_text(text).lower()
-        section_pattern = re.escape(citation_section)
-        return bool(re.search(rf"\bsec\.\s*{section_pattern}(?:\b|[.)-])", normalized))
+        return self._contains_citation_section_reference(
+            text,
+            citation_section,
+        )
 
     def _segment_or_neighbor_has_citation_section_reference(
         self,

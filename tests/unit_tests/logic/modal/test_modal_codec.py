@@ -218,6 +218,39 @@ def test_modal_compiler_handles_spaced_transferred_headings_for_known_uscode_sam
         assert fallback.provenance.citation == citation
 
 
+def test_modal_compiler_handles_sec_prefixed_transferred_headings_for_known_uscode_samples() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    cases = [
+        (
+            "us-code-2-123b-a41bd4aaf77abbf3",
+            "2 U.S.C. 123b",
+            "Sec. 123b - Transferred.",
+        ),
+        (
+            "us-code-25-478-ebbb6cefef299fc2",
+            "25 U.S.C. 478",
+            "Sec. 478 - Transferred.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
+        assert fallback.provenance.citation == citation
+
+
 def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -261,6 +294,31 @@ def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() ->
         assert fallback.metadata["fallback_rule"] == "uscode_editorial_status_heading_v1"
         assert fallback.metadata["status_keyword"] == "omitted"
         assert fallback.provenance.citation == citation
+
+
+def test_modal_compiler_spacy_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+        )
+    )
+    compiled = compiler.compile(
+        "Sec. 1693l - Waiver of rights.",
+        document_id="us-code-15-1693l-62b207bc138a3216",
+        citation="15 U.S.C. 1693l",
+        source="us_code",
+    )
+
+    assert compiled.modal_ir.formulas
+    assert all(
+        ambiguity.ambiguity_type != "missing_modal_formula"
+        for ambiguity in compiled.ambiguities
+    )
+    fallback = compiled.modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    assert fallback.provenance.citation == "15 U.S.C. 1693l"
 
 
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
