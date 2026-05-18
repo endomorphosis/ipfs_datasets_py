@@ -1112,6 +1112,13 @@ def _source_id_slots(source_id: str) -> List[Tuple[str, str]]:
         slots.extend(section_slots)
         section_slot_map = _slot_value_map(section_slots)
         slots.extend(
+            _section_style_slots(
+                slot_namespace="source_id",
+                section_slot_map=section_slot_map,
+                has_trailing_punct=bool(section_trailing_punct),
+            )
+        )
+        slots.extend(
             _section_structure_slots(
                 slot_namespace="source_id",
                 title=title,
@@ -2357,6 +2364,13 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
         slots.extend(section_slots)
         section_slot_map = _slot_value_map(section_slots)
         slots.extend(
+            _section_style_slots(
+                slot_namespace="citation",
+                section_slot_map=section_slot_map,
+                has_trailing_punct=bool(section_trailing_punct),
+            )
+        )
+        slots.extend(
             _section_structure_slots(
                 slot_namespace="citation",
                 title=title,
@@ -2549,6 +2563,54 @@ def _title_section_number_relation_slots(
             )
         )
     return slots
+
+
+def _section_style_slots(
+    *,
+    slot_namespace: str,
+    section_slot_map: Dict[str, str],
+    has_trailing_punct: bool,
+) -> List[Tuple[str, str]]:
+    normalized_namespace = _clean_text(slot_namespace)
+    if not normalized_namespace:
+        return []
+    profile = _clean_text(
+        section_slot_map.get(f"{normalized_namespace}_section_component_profile")
+        or ""
+    )
+    if not profile:
+        return []
+    suffix_kind = _clean_text(
+        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_kind")
+        or ""
+    )
+    suffix_case = _clean_text(
+        section_slot_map.get(f"{normalized_namespace}_section_primary_suffix_case")
+        or ""
+    )
+    suffix_style = "none"
+    if suffix_kind:
+        suffix_style = suffix_kind
+        if suffix_case:
+            suffix_style = f"{suffix_style}_{suffix_case}"
+    punctuation_style = "trailing_punct" if has_trailing_punct else "clean"
+    style_parts: List[str] = [profile]
+    if suffix_style != "none":
+        style_parts.append(suffix_style)
+    style_parts.append(punctuation_style)
+    style = "_".join(style_parts)
+    slots: List[Tuple[str, str]] = [
+        (f"{normalized_namespace}_section_style", style),
+        (f"{normalized_namespace}_section_suffix_style", suffix_style),
+        (f"{normalized_namespace}_section_punctuation_style", punctuation_style),
+    ]
+    slots.extend(
+        _typed_identifier_slots(
+            style,
+            slot_prefix=f"{normalized_namespace}_section_style",
+        )
+    )
+    return _unique_slot_values(slots)
 
 
 def _citation_section_slots(section: str) -> List[Tuple[str, str]]:

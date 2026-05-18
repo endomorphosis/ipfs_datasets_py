@@ -1452,6 +1452,13 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
         components.extend(section_components)
         section_component_map = _component_value_map(section_components)
         components.extend(
+            _section_style_components(
+                slot_namespace="citation",
+                section_component_map=section_component_map,
+                has_trailing_punct=bool(section_trailing_punct),
+            )
+        )
+        components.extend(
             _section_structure_components(
                 slot_namespace="citation",
                 title=title,
@@ -1575,6 +1582,13 @@ def _source_id_components(source_id: str) -> List[tuple[str, str]]:
             if predicate.startswith("source_id_section")
         ]
         source_section_component_map = _component_value_map(source_section_components)
+        components.extend(
+            _section_style_components(
+                slot_namespace="source_id",
+                section_component_map=source_section_component_map,
+                has_trailing_punct=bool(section_trailing_punct),
+            )
+        )
         components.extend(
             _section_structure_components(
                 slot_namespace="source_id",
@@ -3230,6 +3244,51 @@ def _title_section_number_relation_components(
             )
         )
     return components
+
+
+def _section_style_components(
+    *,
+    slot_namespace: str,
+    section_component_map: Dict[str, str],
+    has_trailing_punct: bool,
+) -> List[tuple[str, str]]:
+    normalized_namespace = _clean_non_empty_string(slot_namespace)
+    if not normalized_namespace:
+        return []
+    profile = _clean_non_empty_string(
+        section_component_map.get(f"{normalized_namespace}_section_component_profile")
+    )
+    if not profile:
+        return []
+    suffix_kind = _clean_non_empty_string(
+        section_component_map.get(f"{normalized_namespace}_section_primary_suffix_kind")
+    )
+    suffix_case = _clean_non_empty_string(
+        section_component_map.get(f"{normalized_namespace}_section_primary_suffix_case")
+    )
+    suffix_style = "none"
+    if suffix_kind:
+        suffix_style = suffix_kind
+        if suffix_case:
+            suffix_style = f"{suffix_style}_{suffix_case}"
+    punctuation_style = "trailing_punct" if has_trailing_punct else "clean"
+    style_parts: List[str] = [profile]
+    if suffix_style != "none":
+        style_parts.append(suffix_style)
+    style_parts.append(punctuation_style)
+    style = "_".join(style_parts)
+    components: List[tuple[str, str]] = [
+        (f"{normalized_namespace}_section_style", style),
+        (f"{normalized_namespace}_section_suffix_style", suffix_style),
+        (f"{normalized_namespace}_section_punctuation_style", punctuation_style),
+    ]
+    components.extend(
+        _typed_identifier_components(
+            style,
+            slot_prefix=f"{normalized_namespace}_section_style",
+        )
+    )
+    return _unique_preserve_order_tuples(components)
 
 
 def _unique_preserve_order_tuples(
