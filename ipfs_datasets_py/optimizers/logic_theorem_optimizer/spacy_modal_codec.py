@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
+from .legal_modal_parser import LegalModalParser
 from .legal_samples import LegalSample
 from .modal_ir import (
     ModalIRDocument,
@@ -475,6 +476,9 @@ class SpaCyLegalEncoder:
 class SpaCyModalIRCompiler:
     """Compile spaCy legal encodings into canonical modal IR documents."""
 
+    def __init__(self, *, parser: Optional[LegalModalParser] = None) -> None:
+        self._fallback_parser = parser or LegalModalParser()
+
     def compile(self, encoding: SpaCyLegalEncoding) -> ModalIRDocument:
         formulas: List[ModalIRFormula] = []
         for index, cue in enumerate(encoding.cues, start=1):
@@ -510,6 +514,15 @@ class SpaCyModalIRCompiler:
                     },
                 )
             )
+        if not formulas and encoding.normalized_text:
+            fallback_formula = self._fallback_parser.fallback_formula(
+                document_id=encoding.document_id,
+                text=encoding.normalized_text,
+                citation=encoding.citation,
+                start_index=1,
+            )
+            if fallback_formula is not None:
+                formulas.append(fallback_formula)
         return ModalIRDocument(
             document_id=encoding.document_id,
             source=encoding.source,

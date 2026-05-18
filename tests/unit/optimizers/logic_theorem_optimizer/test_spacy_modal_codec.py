@@ -53,6 +53,45 @@ def test_spacy_compiler_extracts_condition_and_exception_slots() -> None:
     assert "unless waived" in deontic_formula.exceptions
 
 
+def test_spacy_compiler_replays_uscode_editorial_status_zero_formula_cases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    cases = [
+        (
+            "us-code-2-117j-0f405de004ab24ed",
+            "2 U.S.C. 117j",
+            "\u00a7117j. Omitted.",
+        ),
+        (
+            "us-code-7-450-759794f8a1f6176f",
+            "7 U.S.C. 450",
+            "\u00a7450. Omitted.",
+        ),
+        (
+            "us-code-8-71-ba23a2579e9f7282",
+            "8 U.S.C. 71",
+            "\u00a771. Omitted.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        encoding = encoder.encode(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+        modal_ir = compiler.compile(encoding)
+
+        assert modal_ir.formulas
+        fallback = modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_editorial_status_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_editorial_status_heading_v1"
+        assert fallback.metadata["status_keyword"] == "omitted"
+        assert fallback.provenance.citation == citation
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

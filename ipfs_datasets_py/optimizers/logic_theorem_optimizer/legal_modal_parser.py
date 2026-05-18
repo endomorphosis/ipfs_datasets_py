@@ -166,21 +166,13 @@ class LegalModalParser:
                 )
             )
 
-        fallback_formula = self._uscode_codification_fallback_formula(
-            resolved_document_id=resolved_document_id,
-            normalized_text=normalized,
+        fallback_formula = self.fallback_formula(
+            document_id=resolved_document_id,
+            text=normalized,
             citation=citation,
-            segments=segments,
             start_index=len(formulas) + 1,
+            segments=segments,
         )
-        if fallback_formula is None:
-            fallback_formula = self._uscode_editorial_status_fallback_formula(
-                resolved_document_id=resolved_document_id,
-                normalized_text=normalized,
-                citation=citation,
-                segments=segments,
-                start_index=len(formulas) + 1,
-            )
         if fallback_formula is not None:
             formulas.append(fallback_formula)
 
@@ -194,6 +186,39 @@ class LegalModalParser:
                 "deterministic_parser": "legal_modal_parser_v1",
                 "segment_count": len(segments),
             },
+        )
+
+    def fallback_formula(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        segments: Optional[Sequence[LegalSegment]] = None,
+    ) -> Optional[ModalIRFormula]:
+        """Return a deterministic fallback formula for known U.S. Code heading forms."""
+        normalized = self.normalize_text(text)
+        candidate_segments: Sequence[LegalSegment]
+        if segments is None:
+            candidate_segments = self.segment(normalized)
+        else:
+            candidate_segments = segments
+        fallback_formula = self._uscode_codification_fallback_formula(
+            resolved_document_id=document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=candidate_segments,
+            start_index=start_index,
+        )
+        if fallback_formula is not None:
+            return fallback_formula
+        return self._uscode_editorial_status_fallback_formula(
+            resolved_document_id=document_id,
+            normalized_text=normalized,
+            citation=citation,
+            segments=candidate_segments,
+            start_index=start_index,
         )
 
     def _classify_segment_role(self, text: str) -> str:

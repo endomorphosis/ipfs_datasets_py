@@ -218,6 +218,51 @@ def test_modal_compiler_handles_spaced_transferred_headings_for_known_uscode_sam
         assert fallback.provenance.citation == citation
 
 
+def test_modal_compiler_spacy_replays_editorial_status_zero_formula_samples() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="spacy",
+            spacy_model_name="definitely_missing_legal_model",
+        )
+    )
+    cases = [
+        (
+            "us-code-2-117j-0f405de004ab24ed",
+            "2 U.S.C. 117j",
+            "\u00a7117j. Omitted.",
+        ),
+        (
+            "us-code-7-450-759794f8a1f6176f",
+            "7 U.S.C. 450",
+            "\u00a7450. Omitted.",
+        ),
+        (
+            "us-code-8-71-ba23a2579e9f7282",
+            "8 U.S.C. 71",
+            "\u00a771. Omitted.",
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        compiled = compiler.compile(
+            text,
+            document_id=document_id,
+            citation=citation,
+            source="us_code",
+        )
+
+        assert compiled.modal_ir.formulas
+        assert all(
+            ambiguity.ambiguity_type != "missing_modal_formula"
+            for ambiguity in compiled.ambiguities
+        )
+        fallback = compiled.modal_ir.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["fallback_rule"] == "uscode_editorial_status_heading_v1"
+        assert fallback.metadata["status_keyword"] == "omitted"
+        assert fallback.provenance.citation == citation
+
+
 def test_modal_compiler_surfaces_modal_family_ambiguity_when_cues_overlap() -> None:
     frame_selector = BM25FrameSelector(
         (
