@@ -533,3 +533,39 @@ def test_flogic_optimizer_extracts_frame_features_from_structured_hint_evidence(
     assert result.metadata["frame_ontology_terms"] == [
         "26_307",
     ]
+
+
+def test_flogic_optimizer_extracts_semantic_frame_fields_from_structured_features() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            {
+                "hint_id": "modal-synthesis-meaningful-frame-fields",
+                "selected_frame": "administrative_notice_hearing",
+                "predicted_family": "deontic",
+                "target_family": "frame",
+            },
+        ],
+    )
+
+    assert result.metadata["frame_audit_feature_keys"] == [
+        "family:selected_frame:deontic",
+        "family:selected_frame:frame",
+        "frame:administrative_notice_hearing",
+    ]
+    assert result.metadata["frame_ontology_terms"] == [
+        "administrative_notice_hearing",
+        "deontic",
+        "frame",
+    ]

@@ -251,6 +251,21 @@ _FRAME_ONTOLOGY_SLOT_FRAME_PREDICATE_PREFIXES: tuple[str, ...] = (
     "frame_candidate",
     "selected_frame",
 )
+_FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES = {
+    "candidate_frame": "frame-candidate:",
+    "candidate_ontology_frame": "frame-candidate:",
+    "candidate_frame_term": "frame-term:",
+    "candidate_ontology_term": "frame-term:",
+    "frame_id": "frame:",
+    "frame_term": "frame-term:",
+    "modal_family": "family:selected_frame:",
+    "predicted_family": "family:selected_frame:",
+    "selected_frame": "frame:",
+    "selected_frame_term": "selected-frame-term:",
+    "selected_ontology_frame": "frame:",
+    "selected_ontology_term": "selected-frame-term:",
+    "target_family": "family:selected_frame:",
+}
 _FRAME_ONTOLOGY_TERM_PRIORITY_NONE = 0
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL_STRUCTURAL = 1
 _FRAME_ONTOLOGY_TERM_PRIORITY_CONTEXTUAL = 2
@@ -633,6 +648,13 @@ def _collect_frame_ontology_feature_value_candidates(
                 extracted.append(key_text)
                 if len(extracted) >= max(max_values, 1):
                     return
+            for synthetic_feature in _synthetic_frame_feature_candidates_from_key_value(
+                key_text,
+                value,
+            ):
+                extracted.append(synthetic_feature)
+                if len(extracted) >= max(max_values, 1):
+                    return
             _collect_frame_ontology_feature_value_candidates(
                 value,
                 extracted,
@@ -667,6 +689,40 @@ def _collect_frame_ontology_feature_value_candidates(
         )
         return
     extracted.append(text)
+
+
+def _synthetic_frame_feature_candidates_from_key_value(
+    key_text: str,
+    value: Any,
+) -> List[str]:
+    normalized_key = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(key_text or "").strip().lower(),
+    ).strip("_")
+    if not normalized_key:
+        return []
+    prefix = _FRAME_ONTOLOGY_VALUE_KEY_FEATURE_PREFIXES.get(normalized_key)
+    if not prefix:
+        return []
+    candidates: List[str] = []
+    values: Sequence[Any]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        values = value
+    else:
+        values = (value,)
+    for item in values:
+        if isinstance(item, Mapping):
+            continue
+        if isinstance(item, Sequence) and not isinstance(item, (str, bytes)):
+            continue
+        text = str(item or "").strip()
+        if not text:
+            continue
+        if is_frame_ontology_feature_key(text):
+            candidates.append(text)
+            continue
+        candidates.append(f"{prefix}{text}")
+    return candidates
 
 
 def _parsed_frame_ontology_feature_value(text: str) -> Any | None:

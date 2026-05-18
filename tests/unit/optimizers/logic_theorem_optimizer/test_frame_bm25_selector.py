@@ -1433,6 +1433,32 @@ def test_frame_ontology_feature_keys_from_values_extracts_nested_hint_evidence()
     ]
 
 
+def test_frame_ontology_feature_keys_from_values_synthesizes_semantic_frame_fields() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "hint_evidence": [
+                {
+                    "selected_frame": "administrative_notice_hearing",
+                    "predicted_family": "deontic",
+                    "target_family": "frame",
+                    "top_family_features": ["token:agency"],
+                }
+            ]
+        }
+    )
+
+    assert keys == [
+        "frame:administrative_notice_hearing",
+        "family:selected_frame:deontic",
+        "family:selected_frame:frame",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys) == [
+        "administrative_notice_hearing",
+        "deontic",
+        "frame",
+    ]
+
+
 def test_is_high_signal_frame_ontology_term_filters_structural_noise() -> None:
     assert is_high_signal_frame_ontology_term("final_order") is True
     assert is_high_signal_frame_ontology_term("42_291") is True
