@@ -219,6 +219,9 @@ _USCODE_42_6323_HEADING_ONLY_TEXT = "Notice and hearing requirements."
 _USCODE_7_431_TODO_TEXT = "Sec. 431 - Declaration of policy."
 _USCODE_6_257_TODO_TEXT = "Sec. 257 - National planning scenarios and preparedness targets."
 _USCODE_45_81_TO_92_TODO_TEXT = "Secs. 81 to 92. Repealed."
+_USCODE_6_314_TODO_TEXT = "National planning scenarios, preparedness targets, and implementation guidance."
+_USCODE_35_4_TODO_TEXT = "Officers, employees, and attorneys."
+_USCODE_7_7316_TODO_TEXT = "Report."
 
 
 def test_parser_normalizes_and_segments_legal_text() -> None:
@@ -533,6 +536,43 @@ def test_parser_replays_packet_todo_samples_for_7_431_6_257_and_45_81_to_92() ->
         assert fallback.metadata["fallback_rule"] == fallback_rule
         if status_keyword:
             assert fallback.metadata["status_keyword"] == status_keyword
+        assert fallback.provenance.citation == citation
+
+
+def test_parser_replays_packet_todo_heading_only_samples_for_6_314_35_4_and_7_7316() -> None:
+    parser = LegalModalParser()
+    cases = [
+        (
+            "us-code-6-314-afaf3a4084d6428b",
+            "6 U.S.C. 314",
+            _USCODE_6_314_TODO_TEXT,
+        ),
+        (
+            "us-code-35-4-50bdd346f6009649",
+            "35 U.S.C. 4",
+            _USCODE_35_4_TODO_TEXT,
+        ),
+        (
+            "us-code-7-7316-85781f95eae6399d",
+            "7 U.S.C. 7316",
+            _USCODE_7_7316_TODO_TEXT,
+        ),
+    ]
+
+    for document_id, citation, text in cases:
+        document = parser.parse(
+            text,
+            document_id=document_id,
+            source="us_code",
+            citation=citation,
+        )
+
+        assert document.document_id == document_id
+        assert document.formulas
+        fallback = document.formulas[-1]
+        assert fallback.operator.family == "frame"
+        assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+        assert fallback.metadata["fallback_rule"] == "uscode_heading_without_section_reference_v1"
         assert fallback.provenance.citation == citation
 
 

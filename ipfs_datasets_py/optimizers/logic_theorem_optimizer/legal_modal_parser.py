@@ -65,6 +65,7 @@ _USCODE_SUBSECTION_HEADING_PREFIX_MAX_CHARS = 220
 _USCODE_SUBSECTION_HEADING_PREFIX_MAX_TOKENS = 24
 _USCODE_SUBSECTION_HEADING_BODY_MIN_TOKENS = 40
 _USCODE_HEADING_ONLY_MAX_TOKENS = 12
+_USCODE_HEADING_ONLY_MIN_TOKENS = 1
 _USCODE_EMBEDDED_HEADING_WINDOW_MAX_CHARS = 260
 _USCODE_HEADING_ONLY_VERB_HINT_RE = re.compile(
     r"\b(?:shall|must|may|is|are|was|were|be|been|being|has|have|had|"
@@ -973,7 +974,10 @@ class LegalModalParser:
             return False
         lowered = normalized.lower()
         tokens = _TOKEN_RE.findall(lowered)
-        if len(tokens) < 2 or len(tokens) > _USCODE_HEADING_ONLY_MAX_TOKENS:
+        if (
+            len(tokens) < _USCODE_HEADING_ONLY_MIN_TOKENS
+            or len(tokens) > _USCODE_HEADING_ONLY_MAX_TOKENS
+        ):
             return False
         if _USCODE_HEADING_ONLY_VERB_HINT_RE.search(lowered):
             return False
@@ -983,7 +987,9 @@ class LegalModalParser:
             or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
         ):
             return False
-        if any(punctuation in normalized for punctuation in ",:;()[]{}"):
+        # Permit compact comma/semicolon headings (e.g., "Officers, employees, and attorneys.")
+        # but continue rejecting heading-like fragments with stronger clause punctuation.
+        if any(punctuation in normalized for punctuation in ":[]{}"):
             return False
         if tokens[0] in _USCODE_HEADING_ONLY_LEADING_STOPWORDS:
             return False
