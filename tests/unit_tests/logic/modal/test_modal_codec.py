@@ -4305,6 +4305,31 @@ def test_modal_codec_frame_ontology_audit_tracks_frame_semantic_slot_features() 
     assert "frame" in result.flogic_result.metadata["frame_ontology_terms"]
 
 
+def test_modal_codec_frame_ontology_audit_tracks_slot_normalized_source_id_features() -> None:
+    codec = DeterministicModalLogicCodec(
+        ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)
+    )
+    sample = build_us_code_sample(
+        title="2",
+        section="31a-2b",
+        text="Sec. 31a-2b. Transferred.",
+    )
+    result = codec.encode(
+        sample.text,
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    )
+    assert result.flogic_result is not None
+
+    source_id_slot_feature = f"slot:source_id:{sample.sample_id.replace('-', '_')}"
+    audit_feature_keys = result.flogic_result.metadata["frame_audit_feature_keys"]
+    feature_terms = result.flogic_result.metadata["frame_ontology_terms_from_feature_keys"]
+    assert source_id_slot_feature in audit_feature_keys
+    assert "2_31a_2b" in feature_terms
+
+
 def test_modal_codec_frame_ontology_audit_prioritizes_decoder_frame_features() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

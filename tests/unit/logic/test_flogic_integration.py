@@ -457,6 +457,30 @@ class TestFLogicSemanticOptimizer:
         assert result.metadata["frame_ontology_terms_from_triples_count"] == 0
         assert result.metadata["frame_ontology_terms_from_triples"] == []
 
+    def test_result_metadata_tracks_slot_normalized_source_id_terms_from_feature_keys(self):
+        opt = self._optimizer()
+        emb = [1.0, 0.0]
+        result = opt.evaluate(
+            "src",
+            "decoded",
+            emb,
+            emb,
+            frame_feature_keys=[
+                "slot:source_id:us_code_54_102701_171f636b98d4b36b",
+                "slot:source_id:us_code_2_31a_2b_119e8839f18f02be",
+            ],
+        )
+        assert result.metadata["frame_ontology_term_count"] == 2
+        assert result.metadata["frame_ontology_terms"] == [
+            "2_31a_2b",
+            "54_102701",
+        ]
+        assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 2
+        assert result.metadata["frame_ontology_terms_from_feature_keys"] == [
+            "2_31a_2b",
+            "54_102701",
+        ]
+
     def test_result_metadata_tracks_frame_ontology_terms_from_frame_cues(self):
         opt = self._optimizer()
         emb = [1.0, 0.0]
@@ -572,16 +596,18 @@ class TestFLogicSemanticOptimizer:
                 },
             ],
         )
-        assert result.metadata["frame_ontology_term_count"] == 3
+        assert result.metadata["frame_ontology_term_count"] == 4
         assert result.metadata["frame_ontology_terms"] == [
+            "5_552",
             "actor_agency",
             "may",
             "unless_written_notice_provided",
         ]
         assert result.metadata["frame_ontology_terms_from_feature_keys_count"] == 0
         assert result.metadata["frame_ontology_terms_from_feature_keys"] == []
-        assert result.metadata["frame_ontology_terms_from_triples_count"] == 3
+        assert result.metadata["frame_ontology_terms_from_triples_count"] == 4
         assert result.metadata["frame_ontology_terms_from_triples"] == [
+            "5_552",
             "actor_agency",
             "may",
             "unless_written_notice_provided",

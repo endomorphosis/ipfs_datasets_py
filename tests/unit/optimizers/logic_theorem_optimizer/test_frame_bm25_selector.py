@@ -746,6 +746,21 @@ def test_frame_ontology_terms_from_feature_keys_support_source_id_citation_canon
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_slot_normalized_source_ids() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:source_id:us_code_54_102701_171f636b98d4b36b",
+            "slot:source_id:us_code_2_31a_2b_119e8839f18f02be",
+            "slot:source_id:us_code_invalid_value",
+        ]
+    )
+
+    assert terms == [
+        "54_102701",
+        "2_31a_2b",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_section_trailing_punctuation() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -1016,6 +1031,9 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("cue:deontic:O:must") is False
     assert is_frame_ontology_feature_key("flogic:condition:unless written notice is provided") is True
     assert is_frame_ontology_feature_key("slot:source_id:us-code-5-552-deadbeefdeadbeef") is True
+    assert is_frame_ontology_feature_key(
+        "slot:source_id:us_code_5_552_deadbeefdeadbeef"
+    ) is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
     assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
     assert is_frame_ontology_feature_key("") is False

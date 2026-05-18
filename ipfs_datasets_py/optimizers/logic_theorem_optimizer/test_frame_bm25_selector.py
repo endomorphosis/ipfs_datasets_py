@@ -170,3 +170,14 @@ def test_frame_ontology_terms_extract_source_id_coordinate_terms() -> None:
 
     assert triple_terms == ["43_945a"]
     assert feature_terms == ["43_945a"]
+
+
+def test_frame_ontology_terms_support_slot_normalized_source_id_coordinate_terms() -> None:
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "slot:source_id:us_code_54_102701_171f636b98d4b36b",
+            "slot:source_id:us_code_2_31a_2b_119e8839f18f02be",
+        ]
+    )
+
+    assert feature_terms == ["54_102701", "2_31a_2b"]
