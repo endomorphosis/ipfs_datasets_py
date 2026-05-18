@@ -41,6 +41,14 @@ def test_frame_profile_is_bm25_ontology_grounded() -> None:
     assert profile.semantics.ontology_frame_grounded is True
 
 
+def test_conditional_profile_includes_terms_and_conditions_cues() -> None:
+    profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.CONDITIONAL_NORMATIVE)
+    cue_terms = {cue for operator in profile.operators for cue in operator.cue_terms}
+
+    assert "under such terms and conditions" in cue_terms
+    assert "subject to the terms and conditions" in cue_terms
+
+
 def test_registry_serialization_is_stable_json_ready() -> None:
     registry = ModalRegistry()
     payload = registry.to_dict()

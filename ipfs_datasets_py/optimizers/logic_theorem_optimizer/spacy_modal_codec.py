@@ -40,6 +40,10 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
+    "under terms and conditions",
+    "under such terms and conditions",
+    "on such terms and conditions",
+    "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
     "as provided in",
@@ -216,6 +220,69 @@ _TEMPORAL_BY_PHRASE_RE = re.compile(
     r"(?:no|not)\s+later\s+than\b|"
     r"(?:next|following)\b"
     r")",
+    re.IGNORECASE,
+)
+_TEMPORAL_WITHIN_PHRASE_RE = re.compile(
+    r"^\s+(?:"
+    r"\d{1,4}\b|"
+    r"(?:a|an)\s+(?:day|days|month|months|year|years|week|weeks|hour|hours)\b|"
+    r"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
+    r"(?:next|following)\b|"
+    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
+    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
+    r"dec(?:ember)?)\s+\d{1,2}(?:,\s*|\s+)\d{4}\b"
+    r")",
+    re.IGNORECASE,
+)
+_NON_TEMPORAL_WITHIN_PREFIX_TOKENS = frozenset(
+    {
+        "the",
+        "this",
+        "that",
+        "these",
+        "those",
+        "such",
+        "its",
+        "their",
+        "our",
+    }
+)
+_NON_TEMPORAL_WITHIN_CONTEXT_TOKENS = frozenset(
+    {
+        "agency",
+        "authority",
+        "boundaries",
+        "chapter",
+        "control",
+        "custody",
+        "department",
+        "district",
+        "jurisdiction",
+        "limits",
+        "meaning",
+        "office",
+        "paragraph",
+        "possession",
+        "scope",
+        "section",
+        "state",
+        "states",
+        "subchapter",
+        "subparagraph",
+        "subsection",
+        "supervision",
+        "territory",
+        "title",
+        "united",
+    }
+)
+_NON_TEMPORAL_WITHIN_PHRASE_RE = re.compile(
+    r"^\s+(?:the\s+)?(?:"
+    r"agency|authority|boundaries|chapter|control|custody|department|district|"
+    r"jurisdiction|limits|meaning|office|paragraph|possession|scope|section|"
+    r"state|states|subchapter|subparagraph|subsection|supervision|territory|"
+    r"title|united\s+states"
+    r")\b",
     re.IGNORECASE,
 )
 _NON_TEMPORAL_FOLLOWING_PREFIX_TOKENS = frozenset(
@@ -496,6 +563,16 @@ class SpaCyLegalEncoder:
                             ):
                                 continue
                             if (
+                                lowered_cue == "within"
+                                and not self._is_temporal_duration_within_cue(
+                                    normalized_text=normalized,
+                                    tokens=tokens,
+                                    start_char=match.start(),
+                                    end_char=match.end(),
+                                )
+                            ):
+                                continue
+                            if (
                                 lowered_cue == "following"
                                 and self._is_non_temporal_following_cue(
                                     normalized_text=normalized,
@@ -571,6 +648,22 @@ class SpaCyLegalEncoder:
             if re.fullmatch(r"\d{1,4}", token.text):
                 return True
         return False
+
+    def _is_temporal_duration_within_cue(
+        self,
+        *,
+        normalized_text: str,
+        tokens: Sequence[SpaCyTokenFeature],
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat temporal `within` as a deadline cue only when local context is time-like."""
+        return _is_temporal_duration_within_context(
+            normalized_text=normalized_text,
+            tokens=tokens,
+            start_char=start_char,
+            end_char=end_char,
+        )
 
     def _is_non_temporal_following_cue(
         self,
@@ -826,6 +919,74 @@ def _feature_hash(feature: str, dimensions: int) -> tuple[int, float]:
     return slot, sign * magnitude
 
 
+def _is_temporal_duration_within_context(
+    *,
+    normalized_text: str,
+    tokens: Sequence[SpaCyTokenFeature],
+    start_char: int,
+    end_char: int,
+) -> bool:
+    trailing = normalized_text[end_char : end_char + 80]
+    if _TEMPORAL_WITHIN_PHRASE_RE.match(trailing):
+        return True
+    lookahead = _lookahead_tokens(tokens, end_char, limit=4)
+    for token in lookahead:
+        normalized = token.normalized().lower()
+        if normalized in _TEMPORAL_SCOPE_TOKENS:
+            return True
+        if normalized in _TEMPORAL_BY_CONTEXT_TOKENS:
+            return True
+        if normalized in _MONTH_NAME_TOKENS:
+            return True
+        if re.fullmatch(r"\d{1,4}", token.text):
+            return True
+    if not lookahead:
+        return False
+    first = lookahead[0].normalized().lower()
+    second = lookahead[1].normalized().lower() if len(lookahead) > 1 else ""
+    if (
+        first in _NON_TEMPORAL_WITHIN_PREFIX_TOKENS
+        and second in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS
+    ):
+        return False
+    if first in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS:
+        return False
+    if _NON_TEMPORAL_WITHIN_PHRASE_RE.match(trailing):
+        return False
+    return False
+
+
+def _has_temporal_within_scope(
+    normalized_text: str,
+    tokens: Sequence[SpaCyTokenFeature],
+) -> bool:
+    return any(
+        token.normalized().lower() == "within"
+        and _is_temporal_duration_within_context(
+            normalized_text=normalized_text,
+            tokens=tokens,
+            start_char=token.start_char,
+            end_char=token.end_char,
+        )
+        for token in tokens
+    )
+
+
+def _lookahead_tokens(
+    tokens: Sequence[SpaCyTokenFeature],
+    end_char: int,
+    *,
+    limit: int,
+) -> List[SpaCyTokenFeature]:
+    lookahead: List[SpaCyTokenFeature] = []
+    for token in tokens:
+        if token.start_char >= end_char:
+            lookahead.append(token)
+            if len(lookahead) >= limit:
+                break
+    return lookahead
+
+
 def ranked_modal_families(encoding: SpaCyLegalEncoding) -> List[Dict[str, float]]:
     """Rank modal families by deterministic cue count and normalized share."""
     counts = encoding.modal_family_counts()
@@ -882,12 +1043,17 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         normalized_text, _DYNAMIC_SCOPE_PHRASES
     )
     calendar_date_scope = bool(_CALENDAR_DATE_RE.search(normalized_text))
+    temporal_within_scope = _has_temporal_within_scope(
+        encoding.normalized_text,
+        encoding.tokens,
+    )
     alethic_scope = (
         bool(token_terms & _ALETHIC_SCOPE_TOKENS)
         or bool(alethic_scope_phrase)
     )
     temporal_scope = (
-        bool(token_terms & _TEMPORAL_SCOPE_TOKENS)
+        bool(token_terms & (_TEMPORAL_SCOPE_TOKENS - {"within"}))
+        or temporal_within_scope
         or bool(temporal_scope_phrase)
         or calendar_date_scope
     )
@@ -930,6 +1096,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_dynamic_scope_phrase": bool(dynamic_scope_phrase),
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
+        "has_temporal_within_scope": temporal_within_scope,
         "has_frame_context": frame_context,
         "has_frame_scope_phrase": bool(frame_scope_phrase),
         "has_frame_cue": ModalLogicFamily.FRAME.value in cue_families,

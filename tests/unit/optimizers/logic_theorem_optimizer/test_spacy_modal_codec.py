@@ -12,6 +12,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec impor
     SpaCyModalCodec,
     SpaCyModalDecoder,
     SpaCyModalIRCompiler,
+    modal_ambiguity_signals,
     ranked_modal_families,
 )
 
@@ -284,6 +285,53 @@ def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
 
     assert any(
         cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_within_department_as_non_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall designate a team within the Department of Agriculture.",
+        document_id="sample-within-department-non-temporal",
+    )
+
+    assert any(cue.family == "deontic" and cue.cue.lower() == "shall" for cue in encoding.cues)
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "within"
+        for cue in encoding.cues
+    )
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_temporal_within_scope"] is False
+    assert signals["has_temporal_scope"] is False
+
+
+def test_spacy_encoder_treats_within_days_as_temporal_cue_and_scope() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall provide notice within 30 days after review.",
+        document_id="sample-within-days-temporal",
+    )
+
+    assert any(
+        cue.family == "temporal" and cue.cue.lower() == "within"
+        for cue in encoding.cues
+    )
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_temporal_within_scope"] is True
+    assert signals["has_temporal_scope"] is True
+
+
+def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall and must act under such terms and conditions as the Secretary prescribes.",
+        document_id="sample-terms-and-conditions-conditional",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "under such terms and conditions"
         for cue in encoding.cues
     )
 
