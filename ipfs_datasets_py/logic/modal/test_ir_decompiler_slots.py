@@ -144,6 +144,32 @@ def _dot_delimited_sample_document() -> ModalIRDocument:
     )
 
 
+def _roman_suffix_hyphen_sample_document() -> ModalIRDocument:
+    source_id = "us-code-16-460iii-4-aa834016adcc86bf"
+    formula = ModalIRFormula(
+        formula_id="f-roman-suffix",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_national_park_access"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=23,
+            citation="16 U.S.C. 460iii-4",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="16 U.S.C. 460iii-4 national park access requirement.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -173,8 +199,12 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["citation_section_primary_suffix_char_count"] == ["3"]
     assert slot_map["citation_section_primary_suffix_profile"] == ["repeat"]
     assert slot_map["citation_section_has_suffix"] == ["true"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
     assert slot_map["citation_section_primary_has_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
     assert slot_map["citation_section_terminal_has_suffix"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
     assert slot_map["citation_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["citation_section_terminal_number"] == ["0"]
     assert slot_map["citation_section_terminal_number_digit_count"] == ["1"]
@@ -214,8 +244,12 @@ def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     assert slot_map["source_id_section_primary_suffix_char_count"] == ["3"]
     assert slot_map["source_id_section_primary_suffix_profile"] == ["repeat"]
     assert slot_map["source_id_section_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
     assert slot_map["source_id_section_primary_has_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
     assert slot_map["source_id_section_terminal_has_suffix"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
     assert slot_map["source_id_section_primary_component_kind"] == ["alphanumeric"]
     assert slot_map["source_id_section_terminal_number"] == ["0"]
     assert slot_map["source_id_section_terminal_number_digit_count"] == ["1"]
@@ -269,8 +303,12 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("citation_section_primary_suffix_char_count") == ["3"]
     assert objects("citation_section_primary_suffix_profile") == ["repeat"]
     assert objects("citation_section_has_suffix") == ["true"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
     assert objects("citation_section_primary_has_suffix") == ["true"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
     assert objects("citation_section_terminal_has_suffix") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
     assert objects("citation_section_primary_component_kind") == ["alphanumeric"]
     assert objects("citation_section_terminal_number") == ["0"]
     assert objects("citation_section_terminal_number_digit_count") == ["1"]
@@ -310,8 +348,12 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_primary_suffix_char_count") == ["3"]
     assert objects("source_id_section_primary_suffix_profile") == ["repeat"]
     assert objects("source_id_section_has_suffix") == ["true"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
     assert objects("source_id_section_primary_has_suffix") == ["true"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
     assert objects("source_id_section_terminal_has_suffix") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_number") == ["0"]
     assert objects("source_id_section_terminal_number_digit_count") == ["1"]
@@ -416,6 +458,58 @@ def test_modal_ir_to_flogic_triples_emits_single_component_section_role_slots() 
     assert objects("source_id_section_terminal_suffix") == ["l"]
     assert objects("source_id_section_primary_component_kind") == ["alphanumeric"]
     assert objects("source_id_section_terminal_component_kind") == ["alphanumeric"]
+
+
+def test_decode_modal_ir_document_emits_roman_suffix_slots() -> None:
+    decoded = decode_modal_ir_document(_roman_suffix_hyphen_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["roman"]
+    assert slot_map["citation_section_suffix_kind_positioned"] == ["1:roman"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["roman"]
+    assert "citation_section_terminal_suffix_kind" not in slot_map
+    assert slot_map["citation_section_has_roman_suffix"] == ["true"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["true"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["1"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["roman"]
+    assert slot_map["source_id_section_suffix_kind_positioned"] == ["1:roman"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["roman"]
+    assert "source_id_section_terminal_suffix_kind" not in slot_map
+    assert slot_map["source_id_section_has_roman_suffix"] == ["true"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["true"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["1"]
+
+
+def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_roman_suffix_hyphen_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["roman"]
+    assert objects("citation_section_suffix_kind_positioned") == ["1:roman"]
+    assert objects("citation_section_primary_suffix_kind") == ["roman"]
+    assert objects("citation_section_terminal_suffix_kind") == []
+    assert objects("citation_section_has_roman_suffix") == ["true"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["true"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["1"]
+
+    assert objects("source_id_section_suffix_kind") == ["roman"]
+    assert objects("source_id_section_suffix_kind_positioned") == ["1:roman"]
+    assert objects("source_id_section_primary_suffix_kind") == ["roman"]
+    assert objects("source_id_section_terminal_suffix_kind") == []
+    assert objects("source_id_section_has_roman_suffix") == ["true"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["true"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["1"]
 
 
 def test_decode_modal_ir_document_emits_section_range_slots() -> None:

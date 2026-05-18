@@ -1270,6 +1270,17 @@ def _suffix_profile(value: str) -> str:
     return "mixed"
 
 
+def _suffix_kind(value: str) -> str:
+    cleaned = _clean_text(value)
+    if not cleaned:
+        return ""
+    if len(cleaned) > 1 and _ROMAN_NUMERAL_RE.fullmatch(cleaned):
+        return "roman"
+    if cleaned.isalpha():
+        return "alpha"
+    return "other"
+
+
 def _derived_status_keyword(
     *,
     formula: ModalIRFormula,
@@ -1466,9 +1477,12 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
+    roman_suffix_component_count = 0
     parsed_component_count = 0
     primary_has_suffix: bool | None = None
     terminal_has_suffix: bool | None = None
+    primary_suffix_is_roman: bool | None = None
+    terminal_suffix_is_roman: bool | None = None
     total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
@@ -1492,8 +1506,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
         parsed_component_count += 1
         if index == 1:
             primary_has_suffix = bool(suffix)
+            primary_suffix_is_roman = False
         if index == total_components:
             terminal_has_suffix = bool(suffix)
+            terminal_suffix_is_roman = False
         if number:
             slots.append(("citation_section_number", number))
             number_digit_count = str(len(number))
@@ -1570,6 +1586,25 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                     slots.append(("citation_section_primary_suffix_case", suffix_case))
                 if index == total_components:
                     slots.append(("citation_section_terminal_suffix_case", suffix_case))
+            suffix_kind = _suffix_kind(suffix)
+            if suffix_kind:
+                slots.append(("citation_section_suffix_kind", suffix_kind))
+                slots.append(
+                    (
+                        "citation_section_suffix_kind_positioned",
+                        f"{position}:{suffix_kind}",
+                    )
+                )
+                if index == 1:
+                    slots.append(("citation_section_primary_suffix_kind", suffix_kind))
+                if index == total_components:
+                    slots.append(("citation_section_terminal_suffix_kind", suffix_kind))
+            if suffix_kind == "roman":
+                roman_suffix_component_count += 1
+                if index == 1:
+                    primary_suffix_is_roman = True
+                if index == total_components:
+                    terminal_suffix_is_roman = True
             if index == 1:
                 slots.append(("citation_section_primary_suffix", suffix))
                 slots.append(("citation_section_primary_suffix_char_count", suffix_char_count))
@@ -1599,11 +1634,24 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 "true" if suffix_component_count > 0 else "false",
             )
         )
+        slots.append(
+            (
+                "citation_section_has_roman_suffix",
+                "true" if roman_suffix_component_count > 0 else "false",
+            )
+        )
     if primary_has_suffix is not None:
         slots.append(
             (
                 "citation_section_primary_has_suffix",
                 "true" if primary_has_suffix else "false",
+            )
+        )
+    if primary_suffix_is_roman is not None:
+        slots.append(
+            (
+                "citation_section_primary_suffix_is_roman",
+                "true" if primary_suffix_is_roman else "false",
             )
         )
     if terminal_has_suffix is not None:
@@ -1613,6 +1661,13 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 "true" if terminal_has_suffix else "false",
             )
         )
+    if terminal_suffix_is_roman is not None:
+        slots.append(
+            (
+                "citation_section_terminal_suffix_is_roman",
+                "true" if terminal_suffix_is_roman else "false",
+            )
+        )
     if component_shapes:
         slots.append(("citation_section_shape", "-".join(component_shapes)))
     slots.append(
@@ -1620,6 +1675,12 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     )
     slots.append(
         ("citation_section_suffix_component_count", str(suffix_component_count))
+    )
+    slots.append(
+        (
+            "citation_section_roman_suffix_component_count",
+            str(roman_suffix_component_count),
+        )
     )
     return slots
 

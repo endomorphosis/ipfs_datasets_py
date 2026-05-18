@@ -1437,9 +1437,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0
+    roman_suffix_component_count = 0
     parsed_component_count = 0
     primary_has_suffix: bool | None = None
     terminal_has_suffix: bool | None = None
+    primary_suffix_is_roman: bool | None = None
+    terminal_suffix_is_roman: bool | None = None
     total_parts = len(parts)
     for index, part in enumerate(parts, start=1):
         position = str(index)
@@ -1463,8 +1466,10 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
         parsed_component_count += 1
         if index == 1:
             primary_has_suffix = bool(suffix)
+            primary_suffix_is_roman = False
         if index == total_parts:
             terminal_has_suffix = bool(suffix)
+            terminal_suffix_is_roman = False
         if number:
             components.append(("citation_section_number", number))
             number_digit_count = str(len(number))
@@ -1541,6 +1546,25 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                     components.append(("citation_section_primary_suffix_case", suffix_case))
                 if index == total_parts:
                     components.append(("citation_section_terminal_suffix_case", suffix_case))
+            suffix_kind = _suffix_kind(suffix)
+            if suffix_kind:
+                components.append(("citation_section_suffix_kind", suffix_kind))
+                components.append(
+                    (
+                        "citation_section_suffix_kind_positioned",
+                        f"{position}:{suffix_kind}",
+                    )
+                )
+                if index == 1:
+                    components.append(("citation_section_primary_suffix_kind", suffix_kind))
+                if index == total_parts:
+                    components.append(("citation_section_terminal_suffix_kind", suffix_kind))
+            if suffix_kind == "roman":
+                roman_suffix_component_count += 1
+                if index == 1:
+                    primary_suffix_is_roman = True
+                if index == total_parts:
+                    terminal_suffix_is_roman = True
             if index == 1:
                 components.append(("citation_section_primary_suffix", suffix))
                 components.append(("citation_section_primary_suffix_char_count", suffix_char_count))
@@ -1570,11 +1594,24 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 "true" if suffix_component_count > 0 else "false",
             )
         )
+        components.append(
+            (
+                "citation_section_has_roman_suffix",
+                "true" if roman_suffix_component_count > 0 else "false",
+            )
+        )
     if primary_has_suffix is not None:
         components.append(
             (
                 "citation_section_primary_has_suffix",
                 "true" if primary_has_suffix else "false",
+            )
+        )
+    if primary_suffix_is_roman is not None:
+        components.append(
+            (
+                "citation_section_primary_suffix_is_roman",
+                "true" if primary_suffix_is_roman else "false",
             )
         )
     if terminal_has_suffix is not None:
@@ -1584,6 +1621,13 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 "true" if terminal_has_suffix else "false",
             )
         )
+    if terminal_suffix_is_roman is not None:
+        components.append(
+            (
+                "citation_section_terminal_suffix_is_roman",
+                "true" if terminal_suffix_is_roman else "false",
+            )
+        )
     if component_shapes:
         components.append(("citation_section_shape", "-".join(component_shapes)))
     components.append(
@@ -1591,6 +1635,12 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     )
     components.append(
         ("citation_section_suffix_component_count", str(suffix_component_count))
+    )
+    components.append(
+        (
+            "citation_section_roman_suffix_component_count",
+            str(roman_suffix_component_count),
+        )
     )
     return components
 
@@ -1866,6 +1916,17 @@ def _suffix_profile(value: str) -> str:
     if len(set(cleaned)) == 1:
         return "repeat"
     return "mixed"
+
+
+def _suffix_kind(value: str) -> str:
+    cleaned = _clean_non_empty_string(value)
+    if not cleaned:
+        return ""
+    if len(cleaned) > 1 and _ROMAN_NUMERAL_RE.fullmatch(cleaned):
+        return "roman"
+    if cleaned.isalpha():
+        return "alpha"
+    return "other"
 
 
 def _slot_features(decoded: DecodedModalText) -> List[str]:
