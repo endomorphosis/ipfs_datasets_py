@@ -652,6 +652,37 @@ def test_modal_compiler_treats_for_purposes_of_as_conditional_scope_ambiguity_si
     )
 
 
+def test_modal_compiler_treats_with_respect_to_as_conditional_scope_ambiguity_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_temporal_target_family_outvote_margin=0.0,
+        )
+    )
+
+    compiled = compiler.compile(
+        "Within 30 days after review and following consultation, the agency shall issue the annual notice with respect to each assessed amount."
+    )
+
+    temporal_conditional = next(
+        ambiguity
+        for ambiguity in compiled.ambiguities
+        if ambiguity.ambiguity_type == "temporal_conditional_normative_family_outvoted"
+    )
+    assert temporal_conditional.metadata["predicted_family"] == "temporal"
+    assert temporal_conditional.metadata["target_family"] == "conditional_normative"
+    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        is True
+    )
+    assert (
+        temporal_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
+        is True
+    )
+
+
 def test_modal_compiler_surfaces_temporal_frame_family_outvote_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(

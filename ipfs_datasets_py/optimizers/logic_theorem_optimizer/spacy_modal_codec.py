@@ -35,6 +35,7 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "notwithstanding",
     "for purposes of",
     "for the purposes of",
+    "with respect to",
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
