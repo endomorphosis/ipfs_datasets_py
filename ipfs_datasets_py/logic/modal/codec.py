@@ -102,7 +102,8 @@ _EXCEPTION_PREFIXES: tuple[tuple[str, str], ...] = (
     ("except", "except"),
 )
 _USC_CITATION_RE = re.compile(
-    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
+    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
+    r"(?P<section>[0-9A-Za-z.\-]+(?:\s+(?:to|through|thru)\s+[0-9A-Za-z.\-]+)?)\s*$",
     re.IGNORECASE,
 )
 _USCODE_SOURCE_ID_RE = re.compile(
@@ -111,6 +112,12 @@ _USCODE_SOURCE_ID_RE = re.compile(
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
+_CITATION_SECTION_RANGE_RE = re.compile(
+    r"^\s*(?P<start>[0-9A-Za-z.\-]+)\s+"
+    r"(?P<connector>to|through|thru)\s+"
+    r"(?P<end>[0-9A-Za-z.\-]+)\s*$",
+    re.IGNORECASE,
+)
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
@@ -1247,17 +1254,37 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
     cleaned = _clean_non_empty_string(section)
     if not cleaned:
         return []
-    parts = [
-        _clean_non_empty_string(part)
-        for part in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
-        if _clean_non_empty_string(part)
-    ]
+    range_match = _CITATION_SECTION_RANGE_RE.fullmatch(cleaned)
+    range_start = ""
+    range_end = ""
+    range_connector = ""
+    if range_match:
+        range_start = _clean_non_empty_string(range_match.group("start"))
+        range_end = _clean_non_empty_string(range_match.group("end"))
+        range_connector = _clean_non_empty_string(range_match.group("connector")).lower()
+    if range_start and range_end and range_connector:
+        parts = [range_start, range_end]
+    else:
+        parts = [
+            _clean_non_empty_string(part)
+            for part in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
+            if _clean_non_empty_string(part)
+        ]
     if not parts:
         return []
     components: List[tuple[str, str]] = [
         ("citation_section_primary", parts[0]),
         ("citation_section_component_count", str(len(parts))),
     ]
+    if range_start and range_end and range_connector:
+        components.extend(
+            [
+                ("citation_section_range", f"{range_start} {range_connector} {range_end}"),
+                ("citation_section_range_start", range_start),
+                ("citation_section_range_end", range_end),
+                ("citation_section_range_connector", range_connector),
+            ]
+        )
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0

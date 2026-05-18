@@ -62,7 +62,8 @@ _USCODE_STATUS_DERIVATION_RULES = frozenset(
     }
 )
 _USC_CITATION_RE = re.compile(
-    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*(?P<section>[0-9A-Za-z.\-]+)\s*$",
+    r"^\s*(?P<title>\d+[A-Za-z]*)\s+U\.?\s*S\.?\s*C\.?\s*\.?\s*"
+    r"(?P<section>[0-9A-Za-z.\-]+(?:\s+(?:to|through|thru)\s+[0-9A-Za-z.\-]+)?)\s*$",
     re.IGNORECASE,
 )
 _USCODE_SOURCE_ID_RE = re.compile(
@@ -71,6 +72,12 @@ _USCODE_SOURCE_ID_RE = re.compile(
 )
 _TRAILING_SECTION_PUNCT_RE = re.compile(r"[.;:]+$")
 _CITATION_SECTION_COMPONENT_SPLIT_RE = re.compile(r"[.\-]+")
+_CITATION_SECTION_RANGE_RE = re.compile(
+    r"^\s*(?P<start>[0-9A-Za-z.\-]+)\s+"
+    r"(?P<connector>to|through|thru)\s+"
+    r"(?P<end>[0-9A-Za-z.\-]+)\s*$",
+    re.IGNORECASE,
+)
 _CITATION_SECTION_PART_RE = re.compile(
     r"^(?P<number>\d+)(?P<suffix>[A-Za-z]+)?$"
 )
@@ -1163,17 +1170,37 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     cleaned = _clean_text(section)
     if not cleaned:
         return []
-    components = [
-        _clean_text(component)
-        for component in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
-        if _clean_text(component)
-    ]
+    range_match = _CITATION_SECTION_RANGE_RE.fullmatch(cleaned)
+    range_start = ""
+    range_end = ""
+    range_connector = ""
+    if range_match:
+        range_start = _clean_text(range_match.group("start"))
+        range_end = _clean_text(range_match.group("end"))
+        range_connector = _clean_text(range_match.group("connector")).lower()
+    if range_start and range_end and range_connector:
+        components = [range_start, range_end]
+    else:
+        components = [
+            _clean_text(component)
+            for component in _CITATION_SECTION_COMPONENT_SPLIT_RE.split(cleaned)
+            if _clean_text(component)
+        ]
     if not components:
         return []
     slots: List[Tuple[str, str]] = [
         ("citation_section_primary", components[0]),
         ("citation_section_component_count", str(len(components))),
     ]
+    if range_start and range_end and range_connector:
+        slots.extend(
+            [
+                ("citation_section_range", f"{range_start} {range_connector} {range_end}"),
+                ("citation_section_range_start", range_start),
+                ("citation_section_range_end", range_end),
+                ("citation_section_range_connector", range_connector),
+            ]
+        )
     component_shapes: List[str] = []
     numeric_component_count = 0
     suffix_component_count = 0

@@ -40,6 +40,32 @@ def _sample_document() -> ModalIRDocument:
     )
 
 
+def _range_sample_document() -> ModalIRDocument:
+    source_id = "us-code-45-228a to 228c-0123456789abcdef"
+    formula = ModalIRFormula(
+        formula_id="f-range",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_child_support_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=22,
+            citation="45 U.S.C. 228a to 228c",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="45 U.S.C. 228a to 228c child support enforcement.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -97,4 +123,68 @@ def test_modal_ir_to_flogic_triples_emits_positional_citation_components() -> No
     assert objects("source_id_section_component_kind_positioned") == [
         "1:alphanumeric",
         "2:numeric",
+    ]
+
+
+def test_decode_modal_ir_document_emits_section_range_slots() -> None:
+    decoded = decode_modal_ir_document(_range_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_range"] == ["228a to 228c"]
+    assert slot_map["citation_section_range_start"] == ["228a"]
+    assert slot_map["citation_section_range_end"] == ["228c"]
+    assert slot_map["citation_section_range_connector"] == ["to"]
+    assert slot_map["citation_section_component_positioned"] == ["1:228a", "2:228c"]
+    assert slot_map["citation_section_number_positioned"] == ["1:228", "2:228"]
+    assert slot_map["citation_section_suffix_positioned"] == ["1:a", "2:c"]
+    assert slot_map["citation_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+
+    assert slot_map["source_id_section_range"] == ["228a to 228c"]
+    assert slot_map["source_id_section_range_start"] == ["228a"]
+    assert slot_map["source_id_section_range_end"] == ["228c"]
+    assert slot_map["source_id_section_range_connector"] == ["to"]
+    assert slot_map["source_id_section_component_positioned"] == ["1:228a", "2:228c"]
+    assert slot_map["source_id_section_number_positioned"] == ["1:228", "2:228"]
+    assert slot_map["source_id_section_suffix_positioned"] == ["1:a", "2:c"]
+    assert slot_map["source_id_section_component_kind_positioned"] == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+
+
+def test_modal_ir_to_flogic_triples_emits_section_range_slots() -> None:
+    triples = modal_ir_to_flogic_triples(_range_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_range") == ["228a to 228c"]
+    assert objects("citation_section_range_start") == ["228a"]
+    assert objects("citation_section_range_end") == ["228c"]
+    assert objects("citation_section_range_connector") == ["to"]
+    assert objects("citation_section_component_positioned") == ["1:228a", "2:228c"]
+    assert objects("citation_section_number_positioned") == ["1:228", "2:228"]
+    assert objects("citation_section_suffix_positioned") == ["1:a", "2:c"]
+    assert objects("citation_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:alphanumeric",
+    ]
+
+    assert objects("source_id_section_range") == ["228a to 228c"]
+    assert objects("source_id_section_range_start") == ["228a"]
+    assert objects("source_id_section_range_end") == ["228c"]
+    assert objects("source_id_section_range_connector") == ["to"]
+    assert objects("source_id_section_component_positioned") == ["1:228a", "2:228c"]
+    assert objects("source_id_section_number_positioned") == ["1:228", "2:228"]
+    assert objects("source_id_section_suffix_positioned") == ["1:a", "2:c"]
+    assert objects("source_id_section_component_kind_positioned") == [
+        "1:alphanumeric",
+        "2:alphanumeric",
     ]
