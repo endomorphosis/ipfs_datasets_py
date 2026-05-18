@@ -79,9 +79,17 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "predicate_stem",
     "predicate_token_",
     "section_heading_tail_",
+    "source_id_section",
+    "source_id_title",
     "statement_hint_",
     "statutory_scope_",
     "status_keyword_",
+)
+_FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
+    "citation",
+    "citation_",
+    "source_id_",
+    "statutory_scope_",
 )
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
@@ -293,8 +301,16 @@ def frame_ontology_terms(
     return terms
 
 
-def normalize_frame_ontology_term(value: str, *, max_tokens: int = 8) -> str:
-    tokens = _informative_ontology_tokens(value)
+def normalize_frame_ontology_term(
+    value: str,
+    *,
+    max_tokens: int = 8,
+    keep_numeric_tokens: bool = False,
+) -> str:
+    tokens = _informative_ontology_tokens(
+        value,
+        keep_numeric_tokens=keep_numeric_tokens,
+    )
     if not tokens:
         return ""
     return "_".join(tokens[:max_tokens])
@@ -311,13 +327,16 @@ def frame_ontology_terms_from_triples(
         predicate = str(triple.get("predicate", "")).strip()
         if not predicate:
             continue
-        if not (
-            _canonical_frame_ontology_predicate(predicate)
-            or _is_contextual_frame_ontology_predicate(predicate)
-        ):
+        canonical_predicate = _canonical_frame_ontology_predicate(predicate)
+        contextual = _is_contextual_frame_ontology_predicate(predicate)
+        if not (canonical_predicate or contextual):
             continue
+        allow_numeric_tokens = _predicate_allows_numeric_ontology_tokens(
+            canonical_predicate or predicate
+        )
         normalized = normalize_frame_ontology_term(
-            str(triple.get("object", "")).strip()
+            str(triple.get("object", "")).strip(),
+            keep_numeric_tokens=allow_numeric_tokens,
         )
         if not normalized:
             continue
@@ -341,11 +360,14 @@ def frame_ontology_terms_from_feature_keys(
         if not feature:
             continue
 
-        raw_value = _raw_frame_ontology_value_from_feature(feature)
+        raw_value, allow_numeric_tokens = _frame_ontology_value_from_feature(feature)
         if not raw_value:
             continue
 
-        normalized = normalize_frame_ontology_term(raw_value)
+        normalized = normalize_frame_ontology_term(
+            raw_value,
+            keep_numeric_tokens=allow_numeric_tokens,
+        )
         if not normalized:
             continue
         if normalized in terms:
@@ -361,7 +383,8 @@ def is_frame_ontology_feature_key(feature_key: str) -> bool:
     feature = str(feature_key or "").strip()
     if not feature:
         return False
-    return bool(_raw_frame_ontology_value_from_feature(feature))
+    value, _ = _frame_ontology_value_from_feature(feature)
+    return bool(value)
 
 
 def frame_ontology_feature_keys(
@@ -383,22 +406,33 @@ def frame_ontology_feature_keys(
     return result
 
 
-def _informative_ontology_tokens(value: str) -> List[str]:
+def _informative_ontology_tokens(
+    value: str,
+    *,
+    keep_numeric_tokens: bool = False,
+) -> List[str]:
     tokens = _ONTOLOGY_TERM_TOKEN_RE.findall(str(value or "").lower())
     return [
         token
         for token in tokens
-        if _is_informative_ontology_token(token)
+        if _is_informative_ontology_token(
+            token,
+            keep_numeric_tokens=keep_numeric_tokens,
+        )
     ]
 
 
-def _is_informative_ontology_token(token: str) -> bool:
+def _is_informative_ontology_token(
+    token: str,
+    *,
+    keep_numeric_tokens: bool = False,
+) -> bool:
     if len(token) < 2:
         return False
     if token in _FRAME_ONTOLOGY_STOPWORDS:
         return False
     if token.isdigit():
-        return False
+        return keep_numeric_tokens
     return any(character.isalpha() for character in token)
 
 
@@ -430,43 +464,72 @@ def _is_contextual_frame_ontology_predicate(predicate: str) -> bool:
 
 
 def _raw_frame_ontology_value_from_feature(feature: str) -> str:
+    value, _ = _frame_ontology_value_from_feature(feature)
+    return value
+
+
+def _frame_ontology_value_from_feature(feature: str) -> tuple[str, bool]:
     lowered = feature.lower()
 
     for prefix in _FRAME_FAMILY_FEATURE_PREFIXES:
         if lowered == prefix or lowered.startswith(f"{prefix}:"):
-            return "frame"
+            return "frame", False
 
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
         if not cue_tail:
-            return ""
+            return "", False
         cue_symbol, separator, cue_value = cue_tail.partition(":")
         if not separator:
-            return ""
-        return cue_value.strip()
+            return "", False
+        return cue_value.strip(), False
 
     for prefix in _ORDERED_FRAME_LINKED_FEATURE_PREFIXES:
         if lowered.startswith(prefix):
-            return feature[len(prefix) :].strip()
+            return feature[len(prefix) :].strip(), False
 
     head, separator, tail = feature.partition(":")
     if not separator:
-        return ""
-    if _canonical_frame_ontology_predicate(head):
-        return tail.strip()
+        return "", False
+    canonical_head_predicate = _canonical_frame_ontology_predicate(head)
+    if canonical_head_predicate:
+        return (
+            tail.strip(),
+            _predicate_allows_numeric_ontology_tokens(canonical_head_predicate),
+        )
 
     namespace = head.strip().lower()
     if namespace not in _FRAME_ONTOLOGY_NAMESPACED_FEATURE_PREFIXES:
-        return ""
+        return "", False
     predicate, separator, value = tail.partition(":")
     if not separator:
-        return ""
-    if not (
-        _canonical_frame_ontology_predicate(predicate)
-        or (namespace == "flogic" and _is_contextual_frame_ontology_predicate(predicate))
-    ):
-        return ""
-    return value.strip()
+        return "", False
+    canonical_predicate = _canonical_frame_ontology_predicate(predicate)
+    if canonical_predicate:
+        return (
+            value.strip(),
+            _predicate_allows_numeric_ontology_tokens(canonical_predicate),
+        )
+    if namespace == "flogic" and _is_contextual_frame_ontology_predicate(predicate):
+        return (
+            value.strip(),
+            _predicate_allows_numeric_ontology_tokens(predicate),
+        )
+    return "", False
+
+
+def _predicate_allows_numeric_ontology_tokens(predicate: str) -> bool:
+    normalized = _FRAME_ONTOLOGY_PREDICATE_TOKEN_RE.sub(
+        "_",
+        str(predicate or "").strip().lower(),
+    ).strip("_")
+    if not normalized or normalized.endswith("_count"):
+        return False
+    canonical = _FRAME_ONTOLOGY_PREDICATE_ALIASES.get(normalized, normalized)
+    return any(
+        canonical.startswith(prefix)
+        for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
+    )
 
 
 DEFAULT_LEGAL_FRAME_FIXTURE: tuple[FrameCandidate, ...] = (
