@@ -186,6 +186,7 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
     phrases: List[DecodedModalPhrase] = [
         *source_phrases,
         *_source_identifier_phrases(document),
+        *_document_citation_phrases(document),
         *_document_modal_family_count_phrases(document),
         *_frame_candidate_phrases(document),
     ]
@@ -704,6 +705,35 @@ def _source_identifier_phrases(document: ModalIRDocument) -> List[DecodedModalPh
                     provenance_only=True,
                 )
             )
+    return phrases
+
+
+def _document_citation_phrases(document: ModalIRDocument) -> List[DecodedModalPhrase]:
+    citation = _clean_text(document.metadata.get("citation") or "")
+    if not citation:
+        return []
+    formula_citations = {
+        _clean_text(formula.provenance.citation or "")
+        for formula in document.formulas
+        if _clean_text(formula.provenance.citation or "")
+    }
+    if citation in formula_citations:
+        return []
+    phrases: List[DecodedModalPhrase] = [
+        DecodedModalPhrase(
+            text=citation,
+            slot="citation",
+            provenance_only=True,
+        )
+    ]
+    for slot, value in _citation_slots(citation):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                provenance_only=True,
+            )
+        )
     return phrases
 
 

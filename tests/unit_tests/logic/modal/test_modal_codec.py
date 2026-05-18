@@ -2801,6 +2801,39 @@ def test_modal_decompiler_recovers_condition_exception_and_citation_slots() -> N
     )
 
 
+def test_modal_decompiler_surfaces_metadata_citation_slots_without_formulas() -> None:
+    document = ModalIRDocument(
+        document_id="metadata-citation-only-doc",
+        source="us_code",
+        normalized_text="Editorial Notes.",
+        metadata={"citation": "45 U.S.C. 431 to 447."},
+    )
+
+    decoded = decode_modal_ir_document(document)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(document)
+
+    assert slot_texts["citation"] == ["45 U.S.C. 431 to 447."]
+    assert slot_texts["citation_canonical"] == ["45 U.S.C. 431 to 447"]
+    assert slot_texts["citation_title"] == ["45"]
+    assert slot_texts["citation_section"] == ["431 to 447"]
+    assert slot_texts["citation_section_range"] == ["431 to 447"]
+    assert slot_texts["citation_section_range_start"] == ["431"]
+    assert slot_texts["citation_section_range_end"] == ["447"]
+    assert slot_texts["citation_section_range_connector"] == ["to"]
+    assert slot_texts["citation_section_component_profile"] == ["range"]
+    assert any(
+        triple["predicate"] == "citation_section_range"
+        and triple["object"] == "431 to 447"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_component_profile"
+        and triple["object"] == "range"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots() -> None:
     formula = ModalIRFormula(
         formula_id="citation-shape-doc:f0001",
