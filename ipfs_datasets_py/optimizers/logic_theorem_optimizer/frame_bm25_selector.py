@@ -205,6 +205,20 @@ _FRAME_SCOPED_FAMILY_FEATURE_PREFIXES: tuple[str, ...] = (
     "modal_family:selected_frame",
     "modal_family:selected-frame",
 )
+_FRAME_ONTOLOGY_FAMILY_FEATURE_NAMESPACES = frozenset(
+    {
+        "family",
+        "modal-family",
+        "modal_family",
+    }
+)
+_FRAME_ONTOLOGY_FAMILY_FEATURE_EXCLUDED_VALUES = frozenset(
+    {
+        "frame",
+        "selected-frame",
+        "selected_frame",
+    }
+)
 _FRAME_LINKED_FEATURE_PREFIXES: tuple[str, ...] = (
     "frame:",
     "selected-frame:",
@@ -1195,6 +1209,14 @@ def _frame_ontology_value_from_feature(
                 False,
                 _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
             )
+    family_score_term = _frame_ontology_family_score_term(feature)
+    if family_score_term:
+        return (
+            family_score_term,
+            False,
+            False,
+            _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
+        )
 
     if lowered.startswith(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX):
         cue_tail = feature[len(_FRAME_ONTOLOGY_CUE_FEATURE_PREFIX) :].strip()
@@ -1303,6 +1325,24 @@ def _frame_ontology_value_from_feature(
             _FRAME_ONTOLOGY_TERM_PRIORITY_DIRECT,
         )
     return "", False, False, _FRAME_ONTOLOGY_TERM_PRIORITY_NONE
+
+
+def _frame_ontology_family_score_term(feature: str) -> str:
+    """Extract family labels from legacy family-score feature keys."""
+    namespace, separator, remainder = str(feature or "").partition(":")
+    if not separator:
+        return ""
+    normalized_namespace = namespace.strip().lower()
+    if normalized_namespace not in _FRAME_ONTOLOGY_FAMILY_FEATURE_NAMESPACES:
+        return ""
+    family, _separator, _value = remainder.partition(":")
+    normalized_family = family.strip()
+    if not normalized_family:
+        return ""
+    lowered_family = normalized_family.lower()
+    if lowered_family in _FRAME_ONTOLOGY_FAMILY_FEATURE_EXCLUDED_VALUES:
+        return ""
+    return normalized_family
 
 
 def _normalized_frame_semantic_slot_value(predicate: str, value: str) -> str:

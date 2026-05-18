@@ -1448,7 +1448,10 @@ def test_frame_ontology_terms_from_feature_keys_support_frame_family_signals() -
         ]
     )
 
-    assert terms == ["frame"]
+    assert terms == [
+        "frame",
+        "deontic",
+    ]
 
 
 def test_frame_ontology_terms_from_feature_keys_support_selected_frame_family_signals() -> None:
@@ -1471,6 +1474,7 @@ def test_frame_ontology_terms_from_feature_keys_support_selected_frame_family_si
 def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> None:
     assert is_frame_ontology_feature_key("family:frame:1") is True
     assert is_frame_ontology_feature_key("modal-family:frame") is True
+    assert is_frame_ontology_feature_key("family:deontic:2") is True
     assert is_frame_ontology_feature_key("cue:frame:transferred") is True
     assert is_frame_ontology_feature_key("cue:frame:Frame:authority") is True
     assert is_frame_ontology_feature_key("family:selected_frame:deontic") is True
