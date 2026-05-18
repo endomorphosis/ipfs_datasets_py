@@ -170,6 +170,32 @@ def _roman_suffix_hyphen_sample_document() -> ModalIRDocument:
     )
 
 
+def _noncanonical_romanlike_suffix_sample_document() -> ModalIRDocument:
+    source_id = "us-code-21-360ll-11684335ce2f2caa"
+    formula = ModalIRFormula(
+        formula_id="f-noncanonical-romanlike",
+        operator=ModalIROperator(
+            family="deontic",
+            system="kd",
+            symbol="O",
+            label="obligatory",
+        ),
+        predicate=ModalIRPredicate(name="maintain_drug_device_records"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=18,
+            citation="21 U.S.C. 360ll",
+        ),
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text="21 U.S.C. 360ll recordkeeping requirement.",
+        formulas=[formula],
+    )
+
+
 def test_decode_modal_ir_document_emits_positional_citation_slots() -> None:
     decoded = decode_modal_ir_document(_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
@@ -510,6 +536,54 @@ def test_modal_ir_to_flogic_triples_emits_roman_suffix_slots() -> None:
     assert objects("source_id_section_primary_suffix_is_roman") == ["true"]
     assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
     assert objects("source_id_section_roman_suffix_component_count") == ["1"]
+
+
+def test_decode_modal_ir_document_does_not_misclassify_noncanonical_roman_suffix() -> None:
+    decoded = decode_modal_ir_document(_noncanonical_romanlike_suffix_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_section_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["citation_section_has_roman_suffix"] == ["false"]
+    assert slot_map["citation_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["citation_section_roman_suffix_component_count"] == ["0"]
+
+    assert slot_map["source_id_section_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_primary_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_terminal_suffix_kind"] == ["alpha"]
+    assert slot_map["source_id_section_has_roman_suffix"] == ["false"]
+    assert slot_map["source_id_section_primary_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_terminal_suffix_is_roman"] == ["false"]
+    assert slot_map["source_id_section_roman_suffix_component_count"] == ["0"]
+
+
+def test_modal_ir_to_flogic_triples_does_not_misclassify_noncanonical_roman_suffix() -> None:
+    triples = modal_ir_to_flogic_triples(_noncanonical_romanlike_suffix_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("citation_section_suffix_kind") == ["alpha"]
+    assert objects("citation_section_primary_suffix_kind") == ["alpha"]
+    assert objects("citation_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("citation_section_has_roman_suffix") == ["false"]
+    assert objects("citation_section_primary_suffix_is_roman") == ["false"]
+    assert objects("citation_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("citation_section_roman_suffix_component_count") == ["0"]
+
+    assert objects("source_id_section_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_primary_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_terminal_suffix_kind") == ["alpha"]
+    assert objects("source_id_section_has_roman_suffix") == ["false"]
+    assert objects("source_id_section_primary_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_terminal_suffix_is_roman") == ["false"]
+    assert objects("source_id_section_roman_suffix_component_count") == ["0"]
 
 
 def test_decode_modal_ir_document_emits_section_range_slots() -> None:
