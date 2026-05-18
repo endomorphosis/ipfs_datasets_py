@@ -2038,6 +2038,28 @@ def test_modal_decompiler_and_triples_surface_editorial_fallback_slots() -> None
     )
 
 
+def test_modal_decompiler_and_triples_surface_declarative_statement_hint_slot() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    compiled = compiler.compile(
+        "Sec. 2232. It is the sense of the Congress that agency coordination improves administration.",
+        document_id="us-code-2-2232-d2b7eed159c634a0",
+        citation="2 U.S.C. 2232",
+        source="us_code",
+    )
+
+    decoded = decode_modal_ir_document(compiled.modal_ir)
+    slot_texts = decoded_modal_phrase_slot_text_map(decoded)
+    triples = modal_ir_to_flogic_triples(compiled.modal_ir)
+
+    assert slot_texts["fallback_rule"] == ["uscode_declarative_statement_v1"]
+    assert slot_texts["statement_hint"] == ["sense_of_congress"]
+    assert any(
+        triple["predicate"] == "statement_hint"
+        and triple["object"] == "sense_of_congress"
+        for triple in triples
+    )
+
+
 def test_modal_decompiler_falls_back_to_frame_logic_selected_frame() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     compiled = compiler.compile("The agency must provide notice.")

@@ -801,6 +801,15 @@ def modal_ir_to_flogic_triples(
                     "object": status_keyword,
                 }
             )
+        statement_hint = _clean_non_empty_string(formula.metadata.get("statement_hint"))
+        if statement_hint:
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": "statement_hint",
+                    "object": statement_hint,
+                }
+            )
         for condition in sorted({value for value in formula.conditions if value}):
             triples.append(
                 {

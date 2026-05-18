@@ -412,6 +412,16 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
                 provenance_only=True,
             )
         )
+    statement_hint = _clean_text(formula.metadata.get("statement_hint") or "")
+    if statement_hint:
+        phrases.append(
+            DecodedModalPhrase(
+                text=statement_hint,
+                slot="statement_hint",
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     citation = _clean_text(formula.provenance.citation or "")
     if citation:
         phrases.append(
