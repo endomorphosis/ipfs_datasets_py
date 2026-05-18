@@ -4944,6 +4944,7 @@ def test_autoencoder_synthesis_hint_extracts_frame_linked_feature_variants() -> 
             "top_embedding_contributions": [
                 {"feature": "cue:frame:Frame:transferred"},
                 {"feature": "flogic:source_id:us-code-5-552-deadbeefdeadbeef"},
+                {"feature": "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c"},
                 {"feature": "lemma:notice"},
             ],
         }
@@ -4956,6 +4957,7 @@ def test_autoencoder_synthesis_hint_extracts_frame_linked_feature_variants() -> 
         "family:selected_frame:deontic",
         "cue:frame:Frame:transferred",
         "flogic:source_id:us-code-5-552-deadbeefdeadbeef",
+        "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c",
     ]
 
 

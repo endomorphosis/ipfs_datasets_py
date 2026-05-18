@@ -83,6 +83,7 @@ _FRAME_ONTOLOGY_AUDIT_PREDICATES = frozenset(
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATES = frozenset(
     {
+        "belongs_to_document",
         "citation",
         "condition",
         "exception",
@@ -126,6 +127,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "status_keyword_",
 )
 _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES: tuple[str, ...] = (
+    "belongs_to_document",
     "citation",
     "citation_",
     "source_id",
@@ -907,7 +909,7 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
         "_",
         str(predicate or "").strip().lower(),
     ).strip("_")
-    if normalized_predicate == "source_id":
+    if normalized_predicate in {"source_id", "belongs_to_document"}:
         normalized_source_id = _normalized_source_id_ontology_value(raw_value)
         if normalized_source_id:
             return normalized_source_id

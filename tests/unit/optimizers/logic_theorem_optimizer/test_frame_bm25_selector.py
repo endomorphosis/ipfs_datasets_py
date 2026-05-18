@@ -408,6 +408,12 @@ def test_frame_ontology_feature_value_extracts_normalized_raw_values() -> None:
         )
         == "5 552"
     )
+    assert (
+        frame_ontology_feature_value(
+            "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c"
+        )
+        == "46 30525"
+    )
     assert frame_ontology_feature_value("token:agency") == ""
 
 
@@ -988,6 +994,21 @@ def test_frame_ontology_terms_from_feature_keys_support_digestless_source_ids() 
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_belongs_to_document_source_ids() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c",
+            "flogic:belongs_to_document:us-code-48-1422b.-1024d577005506f9",
+            "flogic:belongs_to_document:not-a-us-code-source-id",
+        ]
+    )
+
+    assert terms == [
+        "46_30525",
+        "48_1422b",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_support_bare_usc_and_source_id_coordinates() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
@@ -1356,6 +1377,9 @@ def test_is_frame_ontology_feature_key_distinguishes_frame_linked_signals() -> N
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-5-552-deadbeefdeadbeef") is True
     assert is_frame_ontology_feature_key("slot:source_id:us_code_44_1305") is True
     assert is_frame_ontology_feature_key("flogic:source_id:us-code-42-2624 to 2628.") is True
+    assert is_frame_ontology_feature_key(
+        "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c"
+    ) is True
     assert is_frame_ontology_feature_key("54 U.S.C. 308103.") is True
     assert is_frame_ontology_feature_key("us-code-16-460l-2-d5a72237fcd0f550") is True
     assert is_frame_ontology_feature_key("slot:source_id:not-a-us-code-source-id") is False
@@ -1430,6 +1454,25 @@ def test_frame_ontology_feature_keys_from_values_extracts_nested_hint_evidence()
         "us-code-26-307-c04b9c0813def639",
         "selected-frame-term:26 U.S.C. 307",
         "us-code-42-300i-0102d16fb9d986ee",
+    ]
+
+
+def test_frame_ontology_feature_keys_from_values_extracts_belongs_to_document_features() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "hint_evidence": [
+                {
+                    "top_embedding_features": [
+                        "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c",
+                        "token:agency",
+                    ]
+                }
+            ]
+        }
+    )
+
+    assert keys == [
+        "flogic:belongs_to_document:us-code-46-30525.-99a6422ab828fa0c",
     ]
 
 
