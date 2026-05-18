@@ -198,6 +198,8 @@ def decode_modal_ir_document(document: ModalIRDocument) -> DecodedModalText:
         *_document_modal_family_count_phrases(document),
         *_frame_candidate_phrases(document),
     ]
+    if not document.formulas:
+        phrases.extend(_document_provenance_alignment_phrases(document))
     missing_slots: List[str] = []
     formulas: List[str] = []
 
@@ -755,6 +757,33 @@ def _document_citation_phrases(document: ModalIRDocument) -> List[DecodedModalPh
                 provenance_only=True,
             )
         )
+    return phrases
+
+
+def _document_provenance_alignment_phrases(
+    document: ModalIRDocument,
+) -> List[DecodedModalPhrase]:
+    citation = _clean_text(document.metadata.get("citation") or "")
+    if not citation:
+        return []
+    phrases: List[DecodedModalPhrase] = []
+    seen: set[Tuple[str, str]] = set()
+    for source_id in _document_source_ids(document):
+        for slot, value in _provenance_alignment_slots(
+            source_id=source_id,
+            citation=citation,
+        ):
+            marker = (slot, value)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            phrases.append(
+                DecodedModalPhrase(
+                    text=value,
+                    slot=slot,
+                    provenance_only=True,
+                )
+            )
     return phrases
 
 

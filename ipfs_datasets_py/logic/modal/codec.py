@@ -1599,14 +1599,33 @@ def _document_source_context_components(
     modal_ir: ModalIRDocument,
 ) -> List[tuple[str, str]]:
     components: List[tuple[str, str]] = []
-    source_id = _clean_non_empty_string(modal_ir.document_id)
-    if source_id:
+    source_ids = _document_source_ids(modal_ir)
+    for source_id in source_ids:
         components.extend(_source_id_components(source_id))
     citation = _clean_non_empty_string(modal_ir.metadata.get("citation"))
     if citation:
         components.append(("citation", citation))
         components.extend(_citation_components(citation))
+        for source_id in source_ids:
+            components.extend(
+                _provenance_alignment_components(
+                    source_id=source_id,
+                    citation=citation,
+                )
+            )
     return _unique_preserve_order_tuples(components)
+
+
+def _document_source_ids(modal_ir: ModalIRDocument) -> List[str]:
+    source_ids: List[str] = []
+    document_id = _clean_non_empty_string(modal_ir.document_id)
+    if document_id:
+        source_ids.append(document_id)
+    for formula in modal_ir.formulas:
+        source_id = _clean_non_empty_string(formula.provenance.source_id)
+        if source_id and source_id not in source_ids:
+            source_ids.append(source_id)
+    return source_ids
 
 
 def _normalized_modal_family_counts(raw_counts: Any) -> List[tuple[str, str]]:

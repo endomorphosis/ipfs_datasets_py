@@ -1723,6 +1723,32 @@ def test_modal_ir_to_flogic_triples_emits_document_citation_slots_when_no_formul
     assert objects("source_id_section_trailing_punct") == ["."]
     assert objects("source_id_section_trailing_punct_count") == ["1"]
     assert objects("source_id_citation_canonical") == ["50 U.S.C. 3091"]
+    assert objects("citation_source_id_alignment") == ["exact_match"]
+    assert objects("citation_source_id_title_match") == ["true"]
+    assert objects("citation_source_id_section_match") == ["true"]
+    assert objects("citation_source_id_title_section_key_match") == ["true"]
+    assert objects("citation_source_id_canonical_match") == ["true"]
+    assert objects("citation_source_id_section_raw_match") == ["true"]
+    assert objects("citation_source_id_section_raw_pair") == ["3091.|3091."]
+    assert objects("citation_source_id_section_trailing_punct_presence_match") == ["true"]
+    assert objects("citation_source_id_section_trailing_punct_match") == ["true"]
+    assert objects("citation_source_id_section_trailing_punct_pair") == [".|."]
+
+
+def test_decode_modal_ir_document_emits_document_citation_source_id_alignment_slots_when_no_formulas() -> None:
+    decoded = decode_modal_ir_document(_zero_formula_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["citation_source_id_alignment"] == ["exact_match"]
+    assert slot_map["citation_source_id_title_match"] == ["true"]
+    assert slot_map["citation_source_id_section_match"] == ["true"]
+    assert slot_map["citation_source_id_title_section_key_match"] == ["true"]
+    assert slot_map["citation_source_id_canonical_match"] == ["true"]
+    assert slot_map["citation_source_id_section_raw_match"] == ["true"]
+    assert slot_map["citation_source_id_section_raw_pair"] == ["3091.|3091."]
+    assert slot_map["citation_source_id_section_trailing_punct_presence_match"] == ["true"]
+    assert slot_map["citation_source_id_section_trailing_punct_match"] == ["true"]
+    assert slot_map["citation_source_id_section_trailing_punct_pair"] == [".|."]
 
 
 def test_decode_modal_ir_document_emits_numeric_signature_slots() -> None:
