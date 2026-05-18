@@ -722,6 +722,17 @@ def modal_ir_to_flogic_triples(
                 },
             ]
         )
+        for predicate_name, predicate_value in _typed_identifier_components(
+            formula.predicate.name,
+            slot_prefix="predicate",
+        ):
+            triples.append(
+                {
+                    "subject": formula.formula_id,
+                    "predicate": predicate_name,
+                    "object": predicate_value,
+                }
+            )
         modal_operator_label = _clean_non_empty_string(formula.operator.label)
         if modal_operator_label:
             triples.append(
@@ -1063,6 +1074,12 @@ def _citation_components(citation: str) -> List[tuple[str, str]]:
     if section:
         components.append(("citation_section", section))
         components.extend(_citation_section_components(section))
+        components.extend(
+            _typed_identifier_components(
+                section,
+                slot_prefix="citation_section",
+            )
+        )
     return _unique_preserve_order_tuples(components)
 
 

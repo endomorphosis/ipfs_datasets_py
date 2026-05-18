@@ -2082,6 +2082,14 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert "a" in slot_texts["citation_section_suffix"]
     assert "b" in slot_texts["citation_section_suffix"]
     assert "K" in slot_texts["citation_section_suffix"]
+    assert "2" in slot_texts["citation_section_token_count"]
+    assert "1" in slot_texts["citation_section_token_count"]
+    assert "31a" in slot_texts["citation_section_token_prefix"]
+    assert "6050k" in slot_texts["citation_section_token_prefix"]
+    assert "2b" in slot_texts["citation_section_token_suffix"]
+    assert "6050k" in slot_texts["citation_section_token_suffix"]
+    assert "31a_2b" in slot_texts["citation_section_stem"]
+    assert "6050k" in slot_texts["citation_section_stem"]
     assert any(
         triple["predicate"] == "citation_section_component"
         and triple["object"] == "2b"
@@ -2090,6 +2098,11 @@ def test_modal_decompiler_and_triples_expand_alphanumeric_citation_section_slots
     assert any(
         triple["predicate"] == "citation_section_suffix"
         and triple["object"] == "K"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "citation_section_token_suffix"
+        and triple["object"] == "6050k"
         for triple in triples
     )
 
@@ -2182,6 +2195,11 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
         "paragraph",
     ]
     assert slot_texts["statutory_scope_target"] == ["this", "(b)", "(1)", "552(a)(1)"]
+    assert slot_texts["predicate_token_count"] == ["6"]
+    assert slot_texts["predicate_token_prefix"] == ["must"]
+    assert slot_texts["predicate_token_suffix"] == ["notice"]
+    assert slot_texts["predicate_stem"] == ["must_under_this_section_provide_notice"]
+    assert "section" in slot_texts["predicate_token"]
     assert any(
         triple["predicate"] == "statutory_scope_reference"
         and triple["object"] == "under this section"
@@ -2205,6 +2223,11 @@ def test_modal_decompiler_and_triples_include_statutory_scope_reference_slots() 
     assert any(
         triple["predicate"] == "statutory_scope_target"
         and triple["object"] == "552(a)(1)"
+        for triple in triples
+    )
+    assert any(
+        triple["predicate"] == "predicate_token_suffix"
+        and triple["object"] == "notice"
         for triple in triples
     )
 

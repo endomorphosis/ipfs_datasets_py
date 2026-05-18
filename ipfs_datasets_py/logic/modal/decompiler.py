@@ -301,6 +301,18 @@ def _decode_formula_phrases(formula: ModalIRFormula) -> List[DecodedModalPhrase]
             provenance_only=True,
         ),
     ]
+    for slot, value in _typed_identifier_slots(
+        predicate_text,
+        slot_prefix="predicate",
+    ):
+        phrases.append(
+            DecodedModalPhrase(
+                text=value,
+                slot=slot,
+                spans=spans,
+                provenance_only=True,
+            )
+        )
     _append_statutory_scope_phrases(
         phrases,
         predicate_text,
@@ -871,6 +883,12 @@ def _citation_slots(citation: str) -> List[Tuple[str, str]]:
     if section:
         slots.append(("citation_section", section))
         slots.extend(_citation_section_slots(section))
+        slots.extend(
+            _typed_identifier_slots(
+                section,
+                slot_prefix="citation_section",
+            )
+        )
     return _unique_slot_values(slots)
 
 
