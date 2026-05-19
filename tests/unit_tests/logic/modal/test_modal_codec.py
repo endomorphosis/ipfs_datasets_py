@@ -8,6 +8,7 @@ import re
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalCompiler,
     DeterministicModalLogicCodec,
+    ModalCompilationAmbiguity,
     ModalCompilerConfig,
     ModalLogicCodecConfig,
     decode_modal_ir_document,
@@ -1781,6 +1782,77 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
         for ambiguity in adaptive_ambiguities
     )
     assert all(ambiguity.metadata["family_margin"] <= 0.0 for ambiguity in adaptive_ambiguities)
+
+
+def test_modal_compiler_backfills_missing_explicit_adaptive_ambiguity_from_base_record() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    base_ambiguity = ModalCompilationAmbiguity(
+        ambiguity_type="adaptive_family_margin_low",
+        message="base adaptive ambiguity",
+        candidate_ids=["frame", "deontic"],
+        severity="requires_rule",
+        metadata={
+            "adaptive_policy_pair": "frame->deontic",
+            "adaptive_predicted_family_source": "ranked_modal_families",
+            "explicit_ambiguity_type": "adaptive_frame_deontic_outvoted_margin_low",
+            "is_self_pair": False,
+        },
+    )
+
+    ambiguities = compiler._ensure_explicit_adaptive_ambiguities([base_ambiguity])
+
+    explicit = [
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_frame_deontic_outvoted_margin_low"
+    ]
+    assert len(explicit) == 1
+    assert explicit[0].candidate_ids == ["frame", "deontic"]
+    assert explicit[0].severity == "requires_rule"
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
+        "adaptive_family_margin_low"
+    )
+
+
+def test_modal_compiler_does_not_duplicate_existing_explicit_adaptive_ambiguity_record() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    base_ambiguity = ModalCompilationAmbiguity(
+        ambiguity_type="adaptive_family_margin_low",
+        message="base adaptive ambiguity",
+        candidate_ids=["frame", "deontic"],
+        severity="requires_rule",
+        metadata={
+            "adaptive_policy_pair": "frame->deontic",
+            "adaptive_predicted_family_source": "ranked_modal_families",
+            "explicit_ambiguity_type": "adaptive_frame_deontic_outvoted_margin_low",
+            "is_self_pair": False,
+        },
+    )
+    explicit_ambiguity = ModalCompilationAmbiguity(
+        ambiguity_type="adaptive_frame_deontic_outvoted_margin_low",
+        message="explicit adaptive ambiguity",
+        candidate_ids=["frame", "deontic"],
+        severity="requires_rule",
+        metadata={
+            "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
+            "adaptive_policy_pair": "frame->deontic",
+            "adaptive_predicted_family_source": "ranked_modal_families",
+        },
+    )
+
+    ambiguities = compiler._ensure_explicit_adaptive_ambiguities(
+        [base_ambiguity, explicit_ambiguity]
+    )
+
+    assert (
+        sum(
+            1
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type
+            == "adaptive_frame_deontic_outvoted_margin_low"
+        )
+        == 1
+    )
 
 
 def test_modal_compiler_emits_adaptive_logits_ambiguity_for_same_top_low_margin(

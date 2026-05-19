@@ -299,13 +299,15 @@ class DeterministicModalCompiler:
                 str(candidate["family"]): self._ranking_share(candidate)
                 for candidate in adaptive_ranking
             }
-            return self._adaptive_family_margin_ambiguities(
-                encoding,
-                modal_ir=modal_ir,
-                ranking=adaptive_ranking,
-                family_shares=adaptive_family_shares,
-                frame_selections=frame_selections,
-                predicted_family_source="adaptive_logits_fallback",
+            return self._ensure_explicit_adaptive_ambiguities(
+                self._adaptive_family_margin_ambiguities(
+                    encoding,
+                    modal_ir=modal_ir,
+                    ranking=adaptive_ranking,
+                    family_shares=adaptive_family_shares,
+                    frame_selections=frame_selections,
+                    predicted_family_source="adaptive_logits_fallback",
+                )
             )
 
         ambiguities: List[ModalCompilationAmbiguity] = []
@@ -474,7 +476,7 @@ class DeterministicModalCompiler:
                     )
                 )
         if len(ranking) < 2:
-            return ambiguities
+            return self._ensure_explicit_adaptive_ambiguities(ambiguities)
 
         top, runner_up = ranking[0], ranking[1]
         share_margin = self._ranking_share(top) - self._ranking_share(runner_up)
@@ -591,7 +593,71 @@ class DeterministicModalCompiler:
                     },
                 )
             )
-        return ambiguities
+        return self._ensure_explicit_adaptive_ambiguities(ambiguities)
+
+    @staticmethod
+    def _adaptive_explicit_ambiguity_key(
+        ambiguity: ModalCompilationAmbiguity,
+    ) -> tuple[str, tuple[str, ...], str, str]:
+        metadata = ambiguity.metadata if isinstance(ambiguity.metadata, dict) else {}
+        return (
+            str(ambiguity.ambiguity_type),
+            tuple(str(candidate_id) for candidate_id in ambiguity.candidate_ids),
+            str(metadata.get("adaptive_policy_pair") or ""),
+            str(metadata.get("adaptive_predicted_family_source") or ""),
+        )
+
+    def _ensure_explicit_adaptive_ambiguities(
+        self,
+        ambiguities: Sequence[ModalCompilationAmbiguity],
+    ) -> List[ModalCompilationAmbiguity]:
+        """Backfill explicit adaptive ambiguity variants from base low-margin records."""
+        resolved_ambiguities = list(ambiguities)
+        existing_explicit_keys = {
+            self._adaptive_explicit_ambiguity_key(ambiguity)
+            for ambiguity in resolved_ambiguities
+            if ambiguity.ambiguity_type.startswith("adaptive_")
+            and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        }
+        for ambiguity in list(resolved_ambiguities):
+            if ambiguity.ambiguity_type != "adaptive_family_margin_low":
+                continue
+            explicit_type = str(
+                ambiguity.metadata.get("explicit_ambiguity_type") or ""
+            ).strip()
+            if not explicit_type or explicit_type == "adaptive_family_margin_low":
+                continue
+            explicit_key = (
+                explicit_type,
+                tuple(str(candidate_id) for candidate_id in ambiguity.candidate_ids),
+                str(ambiguity.metadata.get("adaptive_policy_pair") or ""),
+                str(ambiguity.metadata.get("adaptive_predicted_family_source") or ""),
+            )
+            if explicit_key in existing_explicit_keys:
+                continue
+            explicit_message = (
+                "Explicit adaptive low-margin ambiguity for the predicted modal "
+                "family against close competing families."
+                if bool(ambiguity.metadata.get("is_self_pair"))
+                else (
+                    "Explicit adaptive modal-family conflict between the predicted "
+                    "family and a competing legal family."
+                )
+            )
+            resolved_ambiguities.append(
+                ModalCompilationAmbiguity(
+                    ambiguity_type=explicit_type,
+                    message=explicit_message,
+                    candidate_ids=list(ambiguity.candidate_ids),
+                    severity=ambiguity.severity,
+                    metadata={
+                        **ambiguity.metadata,
+                        "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
+                    },
+                )
+            )
+            existing_explicit_keys.add(explicit_key)
+        return resolved_ambiguities
 
     def _adaptive_family_ranking_from_logits(
         self,
