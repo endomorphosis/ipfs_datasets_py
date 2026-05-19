@@ -803,7 +803,10 @@ class DeterministicModalCompiler:
             )
             if is_self_pair and (
                 predicted_margin_to_runner_up is None
-                or predicted_margin_to_runner_up > threshold
+                or not self._adaptive_margin_within_threshold(
+                    family_margin=predicted_margin_to_runner_up,
+                    threshold=threshold,
+                )
             ):
                 continue
             target_share = float(family_shares.get(target_family, 0.0))
@@ -838,7 +841,10 @@ class DeterministicModalCompiler:
                 if is_self_pair and predicted_margin_to_runner_up is not None
                 else target_share - predicted_share
             )
-            if family_margin > threshold:
+            if not self._adaptive_margin_within_threshold(
+                family_margin=family_margin,
+                threshold=threshold,
+            ):
                 continue
             margin_direction = "outvoted" if (
                 family_margin < 0.0
@@ -1224,7 +1230,10 @@ class DeterministicModalCompiler:
             if is_self_pair and runner_up_share is not None
             else primary_share - competing_share
         )
-        if family_margin > threshold:
+        if not self._adaptive_margin_within_threshold(
+            family_margin=family_margin,
+            threshold=threshold,
+        ):
             return []
         target_signal_by_family = self._adaptive_target_signal_by_family(
             compiled_primary_family,
@@ -1425,7 +1434,10 @@ class DeterministicModalCompiler:
         runner_up_family = str(runner_up["family"])
         runner_up_share = self._ranking_share(runner_up)
         family_margin = primary_share - runner_up_share
-        if family_margin > threshold:
+        if not self._adaptive_margin_within_threshold(
+            family_margin=family_margin,
+            threshold=threshold,
+        ):
             return []
         runner_up_is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
@@ -1586,6 +1598,19 @@ class DeterministicModalCompiler:
         if resolved_margin > 0.0:
             return max(0.0, resolved_threshold - resolved_margin)
         return abs(resolved_margin) + resolved_threshold
+
+    @staticmethod
+    def _adaptive_margin_within_threshold(
+        *,
+        family_margin: float,
+        threshold: float,
+        epsilon: float = 1e-12,
+    ) -> bool:
+        """Return whether the margin is at or below threshold with float tolerance."""
+        resolved_margin = float(family_margin)
+        resolved_threshold = float(threshold)
+        resolved_epsilon = max(0.0, float(epsilon))
+        return resolved_margin <= (resolved_threshold + resolved_epsilon)
 
     def _supports_signal_free_adaptive_pair(
         self,
