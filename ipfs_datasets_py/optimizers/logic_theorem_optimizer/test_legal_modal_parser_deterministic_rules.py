@@ -43,6 +43,24 @@ def _has_adaptive_explicit_pair(
     )
 
 
+def _has_adaptive_explicit_pair_from_source(
+    result,
+    *,
+    predicted_family: str,
+    target_family: str,
+    predicted_family_source: str,
+) -> bool:
+    return any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.metadata.get("predicted_family") == predicted_family
+        and ambiguity.metadata.get("target_family") == target_family
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == predicted_family_source
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        for ambiguity in result.ambiguities
+    )
+
+
 def test_parser_recovers_article_prefixed_commission_heading() -> None:
     parser = LegalModalParser()
 
@@ -324,6 +342,68 @@ def test_compiler_emits_explicit_pair_from_adaptive_logits_disagreement() -> Non
         for ambiguity in result.ambiguities
         if ambiguity.ambiguity_type.startswith("adaptive_")
         and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+    )
+
+
+def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled_primary_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.6,
+                "share_raw": 0.38,
+                "share": 0.38,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.4,
+                "share_raw": 0.36,
+                "share": 0.36,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                "count": 0,
+                "logit": 1.35,
+                "share_raw": 0.35,
+                "share": 0.35,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.30,
+                "share": 0.30,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-frame-compiled-primary-policy",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        predicted_family_source="compiled_primary_family",
+    )
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+        predicted_family_source="compiled_primary_family",
     )
 
 

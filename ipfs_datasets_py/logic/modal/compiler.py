@@ -801,29 +801,31 @@ class DeterministicModalCompiler:
             compiled_primary_family is not None
             and compiled_primary_family != predicted_family
         ):
-            ambiguities.extend(
-                self._compiled_primary_family_adaptive_pair_ambiguities(
-                    compiled_primary_family=compiled_primary_family,
-                    competing_family=predicted_family,
-                    ranking=ranking,
-                    family_shares=family_shares,
-                    threshold=threshold,
-                    signals=signals,
-                    has_frame_scope=has_frame_scope,
-                    has_frame_bm25_support=has_frame_bm25_support,
-                    compiled_modal_families=compiled_modal_families,
-                )
-            )
-            if (
-                compiled_primary_family == ModalLogicFamily.DEONTIC.value
-                and predicted_family != ModalLogicFamily.CONDITIONAL_NORMATIVE.value
-            ):
+            compiled_primary_targets: List[str] = [predicted_family]
+            if compiled_primary_family == ModalLogicFamily.DEONTIC.value:
                 # Preserve explicit deontic-vs-conditional policy coverage even when
                 # cue ranking predicts a different top family.
+                compiled_primary_targets.append(
+                    ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+                )
+            if compiled_primary_family == ModalLogicFamily.FRAME.value:
+                # Preserve explicit frame-vs-(conditional/deontic) coverage when
+                # adaptive logits favor a different top family.
+                compiled_primary_targets.extend(
+                    (
+                        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                        ModalLogicFamily.DEONTIC.value,
+                    )
+                )
+            seen_competing_families: set[str] = set()
+            for competing_family in compiled_primary_targets:
+                if competing_family in seen_competing_families:
+                    continue
+                seen_competing_families.add(competing_family)
                 ambiguities.extend(
                     self._compiled_primary_family_adaptive_pair_ambiguities(
                         compiled_primary_family=compiled_primary_family,
-                        competing_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                        competing_family=competing_family,
                         ranking=ranking,
                         family_shares=family_shares,
                         threshold=threshold,
