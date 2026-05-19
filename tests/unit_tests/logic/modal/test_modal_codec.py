@@ -12040,7 +12040,7 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
         )
 
 
-def test_modal_compiler_emits_explicit_ambiguity_for_required_deontic_margin_bundle(
+def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pairs(
     monkeypatch,
 ) -> None:
     compiler = DeterministicModalCompiler(
@@ -12069,6 +12069,25 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_deontic_margin_bun
             "family_margin": -0.241161539133,
             "adaptive_priority": 0.391161539133,
             "expected_explicit_type": "adaptive_temporal_deontic_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-temporal-conditional-margin-doc",
+            "predicted_family": "temporal",
+            "predicted_system": "LTL",
+            "predicted_symbol": "F",
+            "predicted_label": "eventually",
+            "target_family": "conditional_normative",
+            "ranking": (
+                {"family": "temporal", "count": 1, "share": 1.0},
+                {"family": "conditional_normative", "count": 1, "share": 0.760266802459},
+            ),
+            "family_margin": -0.239733197541,
+            "adaptive_priority": 0.389733197541,
+            "expected_explicit_type": (
+                "adaptive_temporal_conditional_normative_outvoted_margin_low"
+            ),
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
@@ -12103,6 +12122,42 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_deontic_margin_bun
             "family_margin": -0.999966368036,
             "adaptive_priority": 1.149966368036,
             "expected_explicit_type": "adaptive_frame_deontic_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-frame-conditional-margin-doc",
+            "predicted_family": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "predicted_label": "frame",
+            "target_family": "conditional_normative",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 1.0},
+                {"family": "conditional_normative", "count": 1, "share": 0.742899391998},
+            ),
+            "family_margin": -0.257100608002,
+            "adaptive_priority": 0.407100608002,
+            "expected_explicit_type": (
+                "adaptive_frame_conditional_normative_outvoted_margin_low"
+            ),
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-frame-temporal-margin-doc",
+            "predicted_family": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "predicted_label": "frame",
+            "target_family": "temporal",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 1.0},
+                {"family": "temporal", "count": 1, "share": 0.004924258631},
+            ),
+            "family_margin": -0.995075741369,
+            "adaptive_priority": 1.145075741369,
+            "expected_explicit_type": "adaptive_frame_temporal_outvoted_margin_low",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
