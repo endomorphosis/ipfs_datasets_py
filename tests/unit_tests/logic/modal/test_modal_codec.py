@@ -9715,6 +9715,57 @@ def test_modal_codec_treats_powers_and_duties_as_deontic_scope_phrase() -> None:
     assert signals["has_deontic_scope_phrase"] is True
 
 
+def test_modal_codec_treats_policy_of_phrase_as_deontic_scope_phrase() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "It is the policy of the United States to protect children."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_scope"] is True
+    assert signals["has_deontic_scope_phrase"] is True
+
+
+def test_modal_codec_treats_any_person_who_as_conditional_scope_phrase() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "Any person who knowingly violates this requirement shall be fined."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_condition_or_exception_scope"] is True
+    assert signals["has_conditional_scope_phrase"] is True
+
+
+def test_modal_codec_treats_under_this_subchapter_as_statutory_scope_reference() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "Benefits under this subchapter are available to qualifying applicants."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+
+
 def test_modal_codec_treats_deemed_to_as_epistemic_scope_phrase_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(

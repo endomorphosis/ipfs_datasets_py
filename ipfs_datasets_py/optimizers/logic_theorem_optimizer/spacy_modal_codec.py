@@ -31,6 +31,11 @@ _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _CONDITIONAL_SCOPE_PHRASES = (
+    "any person who",
+    "any person that",
+    "any individual who",
+    "any entity that",
+    "whoever",
     "as provided by",
     "except as provided by",
     "in the case of",
@@ -61,7 +66,12 @@ _STATUTORY_SCOPE_REFERENCE_PHRASES = (
     "pursuant to",
     "under section",
     "under this chapter",
+    "under this division",
+    "under this part",
     "under this section",
+    "under this subchapter",
+    "under this subpart",
+    "under this subtitle",
     "under this title",
     "under subsection",
     "under paragraph",
@@ -159,6 +169,8 @@ _TEMPORAL_STRONG_SCOPE_TOKENS = frozenset(
 _TEMPORAL_SCOPE_PHRASES = (
     "at any time",
     "at such time",
+    "at such times",
+    "at such times as",
     "at the time",
     "as soon as practicable",
     "beginning on or after",
@@ -590,6 +602,8 @@ _DEONTIC_SCOPE_TOKENS = frozenset(
     }
 )
 _DEONTIC_SCOPE_PHRASES = (
+    "it is the policy of",
+    "it shall be the policy of",
     "is guilty of",
     "has a duty to",
     "have a duty to",
