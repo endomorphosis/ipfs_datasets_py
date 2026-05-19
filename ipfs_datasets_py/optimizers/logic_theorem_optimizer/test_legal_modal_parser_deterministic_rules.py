@@ -915,6 +915,53 @@ def test_compiler_marks_alethic_to_deontic_pair_as_compiler_ambiguity_bundle_fro
     )
 
 
+def test_compiler_marks_alethic_to_epistemic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.ALETHIC.value,
+                "count": 0,
+                "logit": 1.35,
+                "share_raw": 0.91,
+                "share": 0.91,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.EPISTEMIC.value,
+                "count": 0,
+                "logit": 0.35,
+                "share_raw": 0.09,
+                "share": 0.09,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "It is necessary that the Secretary act.",
+        document_id="compiler-ambiguity-alethic-epistemic-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.ALETHIC.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in result.ambiguities
+    )
+
+
 def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -928,6 +975,53 @@ def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> No
         result,
         predicted_family=ModalLogicFamily.DEONTIC.value,
         target_family=ModalLogicFamily.DEONTIC.value,
+    )
+
+
+def test_compiler_marks_temporal_self_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "Within 30 days after June 1, 2030, annual publication occurs.",
+        document_id="compiler-ambiguity-temporal-self-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in result.ambiguities
     )
 
 
