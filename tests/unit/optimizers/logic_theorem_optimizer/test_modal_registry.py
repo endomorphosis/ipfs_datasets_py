@@ -8,6 +8,7 @@ import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as mod
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+    compiler_ambiguity_policy_targets,
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
     is_compiler_ambiguity_policy_pair,
@@ -209,6 +210,36 @@ def test_signal_free_support_falls_back_to_compiler_required_policy_pairs(
     ) is True
 
 
+def test_signal_free_support_falls_back_to_compiler_ambiguity_bundle_pairs(
+    monkeypatch,
+) -> None:
+    trimmed_signal_free_pairs = tuple(
+        pair
+        for pair in modal_registry.SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if pair != ("frame", "dynamic")
+    )
+    trimmed_required_pairs = tuple(
+        pair
+        for pair in modal_registry.COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if pair != ("frame", "dynamic")
+    )
+    monkeypatch.setattr(
+        modal_registry,
+        "SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+        trimmed_signal_free_pairs,
+    )
+    monkeypatch.setattr(
+        modal_registry,
+        "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+        trimmed_required_pairs,
+    )
+
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        "frame",
+        "dynamic",
+    ) is True
+
+
 def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pairs() -> None:
     required_pairs = set(COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS)
 
@@ -371,6 +402,27 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     ) is True
     assert is_compiler_required_adaptive_ambiguity_pair("deontic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("temporal", "temporal") is True
+
+
+def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None:
+    assert compiler_ambiguity_policy_targets("alethic") == (
+        "deontic",
+        "conditional_normative",
+        "frame",
+    )
+    assert compiler_ambiguity_policy_targets("deontic") == (
+        "conditional_normative",
+        "dynamic",
+        "deontic",
+        "temporal",
+    )
+    assert compiler_ambiguity_policy_targets("frame") == (
+        "conditional_normative",
+        "deontic",
+        "alethic",
+        "dynamic",
+        "temporal",
+    )
 
 
 def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:

@@ -394,6 +394,12 @@ def _ordered_unique_adaptive_ambiguity_family_pairs(
     return tuple(unique_pairs)
 
 
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
+    )
+)
+
 SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
     _ordered_unique_adaptive_ambiguity_family_pairs(
         SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
@@ -842,12 +848,25 @@ def supports_signal_free_adaptive_ambiguity_pair(
     """Return whether an adaptive pair should emit ambiguity without target cues."""
     resolved_target_family = _resolve_modal_family_name(target_family)
     return (
-        resolved_target_family in signal_free_adaptive_ambiguity_targets(
+        resolved_target_family in compiler_ambiguity_policy_targets(predicted_family)
+        or resolved_target_family in signal_free_adaptive_ambiguity_targets(
             predicted_family
         )
         or resolved_target_family in compiler_required_adaptive_ambiguity_targets(
             predicted_family
         )
+    )
+
+
+def compiler_ambiguity_policy_targets(
+    predicted_family: ModalLogicFamily | str,
+) -> Tuple[str, ...]:
+    """Return ordered targets covered by the compiler_ambiguity policy bundle."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    return tuple(
+        target_family
+        for source_family, target_family in COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
+        if source_family == resolved_predicted_family
     )
 
 
@@ -956,6 +975,7 @@ __all__ = [
     "DEFAULT_MODAL_REGISTRY",
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+    "compiler_ambiguity_policy_targets",
     "is_compiler_ambiguity_policy_pair",
     "ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "compiler_required_adaptive_ambiguity_targets",
