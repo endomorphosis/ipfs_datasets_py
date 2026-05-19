@@ -2460,47 +2460,75 @@ def _is_generic_frame_cue_debias_context(
     return all(cue in _GENERIC_FRAME_CUE_TERMS for cue in frame_cues)
 
 
+def _has_explicit_conditional_scope(signals: Mapping[str, bool]) -> bool:
+    """Return whether conditional scope is explicit beyond bare statutory references."""
+    return bool(
+        signals.get("has_condition_clause")
+        or signals.get("has_exception_clause")
+        or signals.get("has_conditional_scope_phrase")
+        or signals.get("has_conditional_scope_token")
+    )
+
+
 def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, float]:
     """Return deterministic logit boosts for scope-signaled families without cues."""
     boosts: Dict[str, float] = {}
+    explicit_conditional_scope = _has_explicit_conditional_scope(signals)
+    has_statutory_frame_context = bool(
+        signals.get("has_statutory_scope_reference")
+        and (
+            signals.get("has_frame_context")
+            or signals.get("has_frame_cue")
+        )
+    )
     if bool(signals.get("has_condition_or_exception_scope")):
         conditional_bonus = 0.9
+        if explicit_conditional_scope:
+            conditional_bonus += 0.15
+        if has_statutory_frame_context:
+            conditional_bonus += 0.35
         if (
-            bool(signals.get("has_statutory_scope_reference"))
+            (bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")))
             and (
-                bool(signals.get("has_frame_context"))
-                or bool(signals.get("has_frame_cue"))
+                explicit_conditional_scope
+                or bool(signals.get("has_statutory_scope_reference"))
             )
         ):
-            conditional_bonus += 0.25
+            conditional_bonus += 0.2
         boosts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = conditional_bonus
     if bool(signals.get("has_deontic_scope")):
         deontic_bonus = 0.8
         if bool(signals.get("has_deontic_scope_phrase")):
             deontic_bonus += 0.2
-        if (
-            bool(signals.get("has_statutory_scope_reference"))
-            and (
-                bool(signals.get("has_frame_context"))
-                or bool(signals.get("has_frame_cue"))
-            )
-        ):
+        if has_statutory_frame_context:
             deontic_bonus += 0.4
         if bool(signals.get("has_temporal_scope")):
             deontic_bonus += 0.25
-        if bool(signals.get("has_alethic_scope")) or bool(signals.get("has_alethic_cue")):
+        has_alethic_competition = bool(
+            signals.get("has_alethic_scope")
+            or signals.get("has_alethic_cue")
+        )
+        if has_alethic_competition:
             deontic_bonus += 0.35
+            if (
+                bool(signals.get("has_deontic_scope_phrase"))
+                or bool(signals.get("has_deontic_cue"))
+            ):
+                deontic_bonus += 0.2
         boosts[ModalLogicFamily.DEONTIC.value] = deontic_bonus
     temporal_bonus = 0.0
+    has_strong_temporal_scope = bool(
+        signals.get("has_calendar_date_scope")
+        or signals.get("has_temporal_scope_phrase")
+        or signals.get("has_temporal_within_scope")
+    )
     if bool(signals.get("has_temporal_scope")):
         temporal_bonus += 1.2
         if bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")):
             temporal_bonus += 0.2
-    if (
-        bool(signals.get("has_calendar_date_scope"))
-        or bool(signals.get("has_temporal_scope_phrase"))
-        or bool(signals.get("has_temporal_within_scope"))
-    ):
+            if has_strong_temporal_scope:
+                temporal_bonus += 0.15
+    if has_strong_temporal_scope:
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
         boosts[ModalLogicFamily.TEMPORAL.value] = temporal_bonus
@@ -2659,11 +2687,41 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
 
 def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
     """Return deterministic frame-family logit bonus from structural signals."""
+    explicit_conditional_scope = _has_explicit_conditional_scope(signals)
+    has_editorial_or_direct_frame_signal = bool(
+        signals.get("has_frame_scope_phrase")
+        or signals.get("has_frame_editorial_scope_phrase")
+        or signals.get("has_frame_cue")
+    )
+    has_non_frame_scope_competition = bool(
+        signals.get("has_deontic_scope")
+        or signals.get("has_deontic_cue")
+        or signals.get("has_temporal_scope")
+        or signals.get("has_temporal_scope_phrase")
+        or signals.get("has_temporal_within_scope")
+        or explicit_conditional_scope
+    )
     bonus = 0.0
     if bool(signals.get("has_frame_context")):
-        bonus += 0.6
+        frame_context_bonus = 0.6
+        if (
+            not has_editorial_or_direct_frame_signal
+            and has_non_frame_scope_competition
+        ):
+            frame_context_bonus = 0.35
+        bonus += frame_context_bonus
     if bool(signals.get("has_statutory_scope_reference")):
-        bonus += 0.8
+        statutory_bonus = 0.8
+        if (
+            not has_editorial_or_direct_frame_signal
+            and (
+                explicit_conditional_scope
+                or bool(signals.get("has_deontic_scope"))
+                or bool(signals.get("has_temporal_scope"))
+            )
+        ):
+            statutory_bonus = 0.35
+        bonus += statutory_bonus
     if bool(signals.get("has_frame_scope_phrase")):
         bonus += 1.2
     if bool(signals.get("has_frame_editorial_scope_phrase")):

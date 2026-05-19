@@ -520,6 +520,25 @@ def test_spacy_decoder_strengthens_conditional_scope_boost_for_statutory_frame_c
     assert competing_logits["conditional_normative"] > baseline_logits["conditional_normative"]
 
 
+def test_spacy_decoder_prefers_conditional_over_frame_for_statutory_deontic_scope_without_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="9151a",
+        text="The agency shall issue notice as provided in subsection (b).",
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("conditional_normative", "frame", "deontic"),
+    )
+
+    assert logits["conditional_normative"] > logits["frame"]
+
+
 def test_spacy_decoder_strengthens_deontic_scope_boost_for_statutory_frame_context() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -576,6 +595,37 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_temporal_competition(
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
+def test_spacy_decoder_strengthens_temporal_logits_for_strong_temporal_scope_with_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="29",
+        section="2861c",
+        text="Within 90 days, liability for noncompliance applies.",
+    )
+    competing = build_us_code_sample(
+        title="29",
+        section="2861d",
+        text=(
+            "No later than January 1, 2030, liability for noncompliance applies "
+            "within 90 days."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert competing_logits["temporal"] > baseline_logits["temporal"]
+
+
 def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -590,6 +640,37 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition()
         title="28",
         section="1b",
         text="It is possible that liability for noncompliance applies.",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
+def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition_with_deontic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1aa",
+        text="It is possible and necessary that the filing proceeds.",
+    )
+    competing = build_us_code_sample(
+        title="28",
+        section="1ab",
+        text=(
+            "It is possible and necessary that the agency is under an obligation "
+            "to file notice."
+        ),
     )
 
     baseline_logits = codec.family_logits_for_sample(
