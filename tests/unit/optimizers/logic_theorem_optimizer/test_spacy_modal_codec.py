@@ -1265,6 +1265,68 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_dynamic_competition
     assert competing_logits["dynamic"] > baseline_logits["dynamic"]
 
 
+def test_spacy_decoder_strengthens_dynamic_logits_for_dense_deontic_scope_with_dynamic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="18",
+        section="1034a",
+        text="Vendor shall and must and shall and must provide reports.",
+    )
+    competing = build_us_code_sample(
+        title="18",
+        section="1034b",
+        text=(
+            "Vendor shall and must and shall and must provide reports upon transfer."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "dynamic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "dynamic", "frame"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["dynamic"] > baseline_logits["dynamic"]
+
+
+def test_spacy_decoder_strengthens_temporal_logits_for_dense_deontic_scope_with_temporal_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="47",
+        section="221a",
+        text="Vendor shall and must and shall and must submit reports.",
+    )
+    competing = build_us_code_sample(
+        title="47",
+        section="221b",
+        text=(
+            "Vendor shall and must and shall and must submit reports while pending review."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["temporal"] > baseline_logits["temporal"]
+
+
 def test_spacy_decoder_soft_caps_repeated_temporal_logits_for_deontic_competition() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1837,6 +1899,26 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_deontic_compe
     assert competing_signals["has_deontic_scope_phrase"] is False
     assert competing_ranking[0]["family"] == "deontic"
     assert competing_frame_share > baseline_frame_share
+
+
+def test_spacy_codec_keeps_deontic_dominant_for_statutory_reference_with_dense_frame_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="22",
+        section="1642f",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction under section "
+            "1642f of this title shall apply."
+        ),
+    )
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    shares = {str(item["family"]): float(item["share"]) for item in ranking}
+
+    assert ranking[0]["family"] == "deontic"
+    assert shares["deontic"] > shares["frame"]
 
 
 def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_competition() -> None:

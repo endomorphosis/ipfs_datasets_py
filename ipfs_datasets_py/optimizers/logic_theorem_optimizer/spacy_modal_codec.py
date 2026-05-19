@@ -493,6 +493,7 @@ _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_PRESENT_CUE_SCOPE_BONUS_FACTOR = 0.35
 _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
+_DEONTIC_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _TEMPORAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _FRAME_COMPETING_SCOPE_SOFT_CAP = 3.0
@@ -506,9 +507,9 @@ _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 2.0
-_DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 3.0
+_DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 2.5
 _DEONTIC_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 2.0
-_DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 3.0
+_DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 2.5
 _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER = 2.0
 _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.35
 _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.35
@@ -537,6 +538,8 @@ _TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO = 0.2
 _TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX = 0.35
 _DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO = 0.2
 _DEONTIC_COMPETING_SCOPE_BACKFILL_MAX = 0.35
+_DYNAMIC_COMPETING_SCOPE_BACKFILL_RATIO = 0.2
+_DYNAMIC_COMPETING_SCOPE_BACKFILL_MAX = 0.45
 _STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX = 0.55
 _FRAME_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.45
 _DEONTIC_SCOPE_TOKENS = frozenset(
@@ -1466,8 +1469,31 @@ def _apply_deontic_competing_scope_soft_cap(
         or has_dynamic_competition
     ):
         return
-    overflow = deontic_count - _DEONTIC_COMPETING_SCOPE_SOFT_CAP
-    counts[deontic_family] = _DEONTIC_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
+    deontic_soft_cap = _DEONTIC_COMPETING_SCOPE_SOFT_CAP
+    has_strong_temporal_competition = (
+        has_temporal_competition
+        and (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_temporal_within_scope"))
+        )
+    )
+    has_strong_dynamic_competition = (
+        has_dynamic_competition
+        and (
+            bool(signals.get("has_dynamic_scope_phrase"))
+            or bool(signals.get("has_dynamic_cue"))
+        )
+    )
+    if has_strong_temporal_competition or has_strong_dynamic_competition:
+        deontic_soft_cap = min(
+            deontic_soft_cap,
+            _DEONTIC_STRONG_COMPETING_SCOPE_SOFT_CAP,
+        )
+    if deontic_count <= deontic_soft_cap:
+        return
+    overflow = deontic_count - deontic_soft_cap
+    counts[deontic_family] = deontic_soft_cap + math.log1p(overflow)
 
 
 def _apply_temporal_competing_scope_soft_cap(
@@ -1980,7 +2006,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         deontic_count >= _DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER
-        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and temporal_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_temporal_scope"))
     ):
         temporal_backfill = max(
@@ -1992,6 +2018,15 @@ def _apply_competing_scope_backfill(
                 maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
             ),
         )
+        if (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_temporal_within_scope"))
+        ):
+            temporal_backfill = max(
+                temporal_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,
@@ -2086,7 +2121,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         deontic_count >= _DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER
-        and dynamic_count <= 0.0
+        and dynamic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_dynamic_scope"))
         and (
             bool(signals.get("has_dynamic_scope_phrase"))
@@ -2094,9 +2129,23 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_deontic_scope_phrase"))
         )
     ):
+        dynamic_backfill = max(
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _scaled_competing_scope_backfill(
+                source_count=deontic_count,
+                ratio=_DYNAMIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_DYNAMIC_COMPETING_SCOPE_BACKFILL_MAX,
+            ),
+        )
+        if bool(signals.get("has_dynamic_scope_phrase")):
+            dynamic_backfill = max(
+                dynamic_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[dynamic_family] = max(
             float(counts.get(dynamic_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            dynamic_backfill,
         )
     if (
         frame_count >= _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER
@@ -2347,9 +2396,12 @@ def _apply_statutory_reference_frame_scope_backfill(
         deontic_count > 0.0
         and not bool(signals.get("has_deontic_scope_phrase"))
     ):
+        deontic_competing_floor = _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT
+        if bool(signals.get("has_deontic_cue")):
+            deontic_competing_floor = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
         counts[frame_family] = max(
             frame_count,
-            _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT,
+            deontic_competing_floor,
         )
 
 
@@ -2442,6 +2494,8 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
     temporal_bonus = 0.0
     if bool(signals.get("has_temporal_scope")):
         temporal_bonus += 1.2
+        if bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")):
+            temporal_bonus += 0.2
     if (
         bool(signals.get("has_calendar_date_scope"))
         or bool(signals.get("has_temporal_scope_phrase"))
@@ -2467,11 +2521,15 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
     dynamic_bonus = 0.0
     if bool(signals.get("has_dynamic_scope_phrase")):
         dynamic_bonus += 1.0
+        if bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")):
+            dynamic_bonus += 0.25
     elif bool(signals.get("has_dynamic_scope")) and not (
         bool(signals.get("has_frame_scope_phrase"))
         or bool(signals.get("has_frame_editorial_scope_phrase"))
     ):
         dynamic_bonus += 0.7
+        if bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")):
+            dynamic_bonus += 0.2
     if dynamic_bonus > 0.0:
         boosts[ModalLogicFamily.DYNAMIC.value] = dynamic_bonus
     return boosts
