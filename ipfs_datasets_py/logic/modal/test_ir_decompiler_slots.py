@@ -742,6 +742,59 @@ def _upper_alpha_suffix_sample_document() -> ModalIRDocument:
     )
 
 
+def _citation_suffix_kind_residual_samples() -> list[ModalIRDocument]:
+    cases = [
+        (
+            "us-code-16-198a-69c109aec60f214a",
+            "16 U.S.C. 198a",
+            "maintain_national_memorial_records",
+        ),
+        (
+            "us-code-22-1642e-0a4a6e0aa906f829",
+            "22 U.S.C. 1642e",
+            "maintain_foreign_relations_records",
+        ),
+        (
+            "us-code-25-450a-1-b25ed1d7e3a8d3a7",
+            "25 U.S.C. 450a-1",
+            "maintain_tribal_contract_records",
+        ),
+        (
+            "us-code-46-12107.-ac993296d58346dd",
+            "46 U.S.C. 12107.",
+            "maintain_vessel_documentation_records",
+        ),
+    ]
+    documents: list[ModalIRDocument] = []
+    for source_id, citation, predicate_name in cases:
+        documents.append(
+            ModalIRDocument(
+                document_id=source_id,
+                source="us_code",
+                normalized_text=f"{citation} records requirement.",
+                formulas=[
+                    ModalIRFormula(
+                        formula_id=f"f-{source_id}",
+                        operator=ModalIROperator(
+                            family="deontic",
+                            system="kd",
+                            symbol="O",
+                            label="obligatory",
+                        ),
+                        predicate=ModalIRPredicate(name=predicate_name),
+                        provenance=ModalIRProvenance(
+                            source_id=source_id,
+                            start_char=0,
+                            end_char=len(citation),
+                            citation=citation,
+                        ),
+                    )
+                ],
+            )
+        )
+    return documents
+
+
 def _span_metrics_sample_document() -> ModalIRDocument:
     source_id = "us-code-42-12782.-01f3026e32e90a63"
     source_text = "ABCDEFGHIJKLMNOPQRST"
@@ -4987,6 +5040,149 @@ def test_modal_ir_to_flogic_triples_emits_section_style_slots() -> None:
     assert objects(punct_triples, "source_id_section_punctuation_style") == [
         "trailing_punct"
     ]
+
+
+def test_decode_modal_ir_document_emits_suffix_kind_coarse_and_alignment_slots() -> None:
+    expected = {
+        "us-code-16-198a-69c109aec60f214a": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-22-1642e-0a4a6e0aa906f829": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-25-450a-1-b25ed1d7e3a8d3a7": {
+            "section_pair": "alpha|none",
+            "section_match": "false",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "none|none",
+        },
+        "us-code-46-12107.-ac993296d58346dd": {
+            "section_pair": "none|none",
+            "section_match": "true",
+            "primary_alignment_pair": "none|none",
+            "terminal_alignment_pair": "none|none",
+        },
+    }
+
+    for document in _citation_suffix_kind_residual_samples():
+        slot_map = decoded_modal_phrase_slot_text_map(
+            decode_modal_ir_document(document)
+        )
+        doc_expected = expected[document.document_id]
+        section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
+
+        assert slot_map["citation_section_primary_suffix_kind_coarse"] == [section_primary_kind]
+        assert slot_map["citation_section_terminal_suffix_kind_coarse"] == [section_terminal_kind]
+        assert slot_map["citation_section_primary_terminal_suffix_kind_pair"] == [
+            doc_expected["section_pair"]
+        ]
+        assert slot_map["citation_section_primary_terminal_suffix_kind_match"] == [
+            doc_expected["section_match"]
+        ]
+
+        assert slot_map["source_id_section_primary_suffix_kind_coarse"] == [section_primary_kind]
+        assert slot_map["source_id_section_terminal_suffix_kind_coarse"] == [section_terminal_kind]
+        assert slot_map["source_id_section_primary_terminal_suffix_kind_pair"] == [
+            doc_expected["section_pair"]
+        ]
+        assert slot_map["source_id_section_primary_terminal_suffix_kind_match"] == [
+            doc_expected["section_match"]
+        ]
+
+        assert slot_map["citation_source_id_section_primary_suffix_kind_pair"] == [
+            doc_expected["primary_alignment_pair"]
+        ]
+        assert slot_map["citation_source_id_section_primary_suffix_kind_match"] == ["true"]
+        assert slot_map["citation_source_id_section_primary_suffix_kind_presence_match"] == [
+            "true"
+        ]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_pair"] == [
+            doc_expected["terminal_alignment_pair"]
+        ]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_match"] == ["true"]
+        assert slot_map["citation_source_id_section_terminal_suffix_kind_presence_match"] == [
+            "true"
+        ]
+
+
+def test_modal_ir_to_flogic_triples_emits_suffix_kind_coarse_and_alignment_slots() -> None:
+    expected = {
+        "us-code-16-198a-69c109aec60f214a": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-22-1642e-0a4a6e0aa906f829": {
+            "section_pair": "alpha|alpha",
+            "section_match": "true",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "alpha|alpha",
+        },
+        "us-code-25-450a-1-b25ed1d7e3a8d3a7": {
+            "section_pair": "alpha|none",
+            "section_match": "false",
+            "primary_alignment_pair": "alpha|alpha",
+            "terminal_alignment_pair": "none|none",
+        },
+        "us-code-46-12107.-ac993296d58346dd": {
+            "section_pair": "none|none",
+            "section_match": "true",
+            "primary_alignment_pair": "none|none",
+            "terminal_alignment_pair": "none|none",
+        },
+    }
+
+    for document in _citation_suffix_kind_residual_samples():
+        triples = modal_ir_to_flogic_triples(document)
+        doc_expected = expected[document.document_id]
+        section_primary_kind, section_terminal_kind = doc_expected["section_pair"].split("|")
+
+        def objects(predicate: str) -> list[str]:
+            return [
+                triple["object"]
+                for triple in triples
+                if triple.get("predicate") == predicate
+            ]
+
+        assert objects("citation_section_primary_suffix_kind_coarse") == [section_primary_kind]
+        assert objects("citation_section_terminal_suffix_kind_coarse") == [section_terminal_kind]
+        assert objects("citation_section_primary_terminal_suffix_kind_pair") == [
+            doc_expected["section_pair"]
+        ]
+        assert objects("citation_section_primary_terminal_suffix_kind_match") == [
+            doc_expected["section_match"]
+        ]
+
+        assert objects("source_id_section_primary_suffix_kind_coarse") == [section_primary_kind]
+        assert objects("source_id_section_terminal_suffix_kind_coarse") == [section_terminal_kind]
+        assert objects("source_id_section_primary_terminal_suffix_kind_pair") == [
+            doc_expected["section_pair"]
+        ]
+        assert objects("source_id_section_primary_terminal_suffix_kind_match") == [
+            doc_expected["section_match"]
+        ]
+
+        assert objects("citation_source_id_section_primary_suffix_kind_pair") == [
+            doc_expected["primary_alignment_pair"]
+        ]
+        assert objects("citation_source_id_section_primary_suffix_kind_match") == ["true"]
+        assert objects("citation_source_id_section_primary_suffix_kind_presence_match") == [
+            "true"
+        ]
+        assert objects("citation_source_id_section_terminal_suffix_kind_pair") == [
+            doc_expected["terminal_alignment_pair"]
+        ]
+        assert objects("citation_source_id_section_terminal_suffix_kind_match") == ["true"]
+        assert objects("citation_source_id_section_terminal_suffix_kind_presence_match") == [
+            "true"
+        ]
 
 
 def test_decode_modal_ir_document_emits_number_distance_profile_slots() -> None:

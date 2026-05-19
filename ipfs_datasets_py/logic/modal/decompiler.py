@@ -1964,6 +1964,49 @@ def _provenance_alignment_slots(
                 else "false",
             )
         )
+    source_section_primary_suffix_kind = _clean_text(
+        source_slot_map.get("source_id_section_primary_suffix_kind_coarse")
+        or source_slot_map.get("source_id_section_primary_suffix_kind")
+        or ""
+    )
+    citation_section_primary_suffix_kind = _clean_text(
+        citation_slot_map.get("citation_section_primary_suffix_kind_coarse")
+        or citation_slot_map.get("citation_section_primary_suffix_kind")
+        or ""
+    )
+    if (
+        source_section_primary_suffix_kind
+        or citation_section_primary_suffix_kind
+        or (
+            source_section_primary_number
+            and citation_section_primary_number
+        )
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_kind_pair",
+                f"{source_section_primary_suffix_kind or 'none'}|"
+                f"{citation_section_primary_suffix_kind or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_kind_match",
+                "true"
+                if source_section_primary_suffix_kind.lower()
+                == citation_section_primary_suffix_kind.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_primary_suffix_kind_presence_match",
+                "true"
+                if bool(source_section_primary_suffix_kind)
+                == bool(citation_section_primary_suffix_kind)
+                else "false",
+            )
+        )
     source_section_terminal_suffix = _clean_text(
         source_slot_map.get("source_id_section_terminal_suffix_normalized")
         or source_slot_map.get("source_id_section_terminal_suffix")
@@ -2004,6 +2047,49 @@ def _provenance_alignment_slots(
                 "true"
                 if bool(source_section_terminal_suffix)
                 == bool(citation_section_terminal_suffix)
+                else "false",
+            )
+        )
+    source_section_terminal_suffix_kind = _clean_text(
+        source_slot_map.get("source_id_section_terminal_suffix_kind_coarse")
+        or source_slot_map.get("source_id_section_terminal_suffix_kind")
+        or ""
+    )
+    citation_section_terminal_suffix_kind = _clean_text(
+        citation_slot_map.get("citation_section_terminal_suffix_kind_coarse")
+        or citation_slot_map.get("citation_section_terminal_suffix_kind")
+        or ""
+    )
+    if (
+        source_section_terminal_suffix_kind
+        or citation_section_terminal_suffix_kind
+        or (
+            source_section_terminal_number
+            and citation_section_terminal_number
+        )
+    ):
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_kind_pair",
+                f"{source_section_terminal_suffix_kind or 'none'}|"
+                f"{citation_section_terminal_suffix_kind or 'none'}",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_kind_match",
+                "true"
+                if source_section_terminal_suffix_kind.lower()
+                == citation_section_terminal_suffix_kind.lower()
+                else "false",
+            )
+        )
+        slots.append(
+            (
+                "citation_source_id_section_terminal_suffix_kind_presence_match",
+                "true"
+                if bool(source_section_terminal_suffix_kind)
+                == bool(citation_section_terminal_suffix_kind)
                 else "false",
             )
         )
@@ -3945,6 +4031,8 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
     terminal_number = ""
     primary_suffix = ""
     terminal_suffix = ""
+    primary_suffix_kind = ""
+    terminal_suffix_kind = ""
     total_components = len(components)
     for index, component in enumerate(components, start=1):
         position = str(index)
@@ -4153,8 +4241,10 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 )
                 if index == 1:
                     slots.append(("citation_section_primary_suffix_kind", suffix_kind))
+                    primary_suffix_kind = suffix_kind
                 if index == total_components:
                     slots.append(("citation_section_terminal_suffix_kind", suffix_kind))
+                    terminal_suffix_kind = suffix_kind
             if suffix_kind == "roman":
                 roman_suffix_component_count += 1
                 if index == 1:
@@ -4213,6 +4303,30 @@ def _citation_section_slots(section: str) -> List[Tuple[str, str]]:
                 "citation_section_has_roman_suffix",
                 "true" if roman_suffix_component_count > 0 else "false",
             )
+        )
+        primary_suffix_kind_coarse = primary_suffix_kind or "none"
+        terminal_suffix_kind_coarse = terminal_suffix_kind or "none"
+        slots.extend(
+            [
+                (
+                    "citation_section_primary_suffix_kind_coarse",
+                    primary_suffix_kind_coarse,
+                ),
+                (
+                    "citation_section_terminal_suffix_kind_coarse",
+                    terminal_suffix_kind_coarse,
+                ),
+                (
+                    "citation_section_primary_terminal_suffix_kind_pair",
+                    f"{primary_suffix_kind_coarse}|{terminal_suffix_kind_coarse}",
+                ),
+                (
+                    "citation_section_primary_terminal_suffix_kind_match",
+                    "true"
+                    if primary_suffix_kind_coarse == terminal_suffix_kind_coarse
+                    else "false",
+                ),
+            ]
         )
     if primary_has_suffix is not None:
         slots.append(
