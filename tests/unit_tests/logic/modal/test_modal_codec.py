@@ -8454,6 +8454,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_conditional_ada
     )
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_conditional.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_conditional.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_alethic_conditional_normative_outvoted_margin_low"
