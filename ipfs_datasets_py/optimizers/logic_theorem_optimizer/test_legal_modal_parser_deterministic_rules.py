@@ -282,6 +282,22 @@ def test_compiler_emits_explicit_conditional_normative_to_deontic_adaptive_pair(
     )
 
 
+def test_compiler_emits_explicit_conditional_normative_to_temporal_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "In the event that this authority applies, the Administrator acts.",
+        document_id="compiler-ambiguity-conditional-temporal",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.TEMPORAL.value,
+    )
+
+
 def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")

@@ -167,6 +167,10 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         "conditional_normative",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair("deontic", "epistemic")
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "conditional_normative",
+        "temporal",
+    )
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert is_priority_signal_free_adaptive_ambiguity_pair("hybrid", "frame")
