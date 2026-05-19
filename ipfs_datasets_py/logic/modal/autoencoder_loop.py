@@ -52,6 +52,13 @@ from .kg_bridge import flogic_triples_to_graph_data, import_modal_ir_to_graph_en
 LLMGenerateFn = Callable[..., str]
 _PATCH_PREDICATE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 _WORD_RE = re.compile(r"[A-Za-z0-9]+")
+DEFAULT_LEGAL_IR_BRIDGE_NAMES = (
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router",
+)
 
 
 @dataclass(frozen=True)
@@ -63,6 +70,7 @@ class ModalAutoencoderLoopConfig:
     evaluate_provers: bool = True
     import_frame_logic_graph: bool = True
     check_external_prover_router: bool = False
+    legal_ir_bridge_names: Sequence[str] = DEFAULT_LEGAL_IR_BRIDGE_NAMES
     allow_llm_repair: bool = False
     apply_llm_frame_logic_patches: bool = False
     llm_provider: str = DEFAULT_CODEX_PROVIDER
@@ -82,6 +90,7 @@ class ModalAutoencoderLoopConfig:
             "evaluate_provers": self.evaluate_provers,
             "gate_config": self.gate_config.to_dict(),
             "import_frame_logic_graph": self.import_frame_logic_graph,
+            "legal_ir_bridge_names": list(_normalise_bridge_names(self.legal_ir_bridge_names)),
             "llm_max_new_tokens": self.llm_max_new_tokens,
             "llm_model": self.llm_model,
             "llm_provider": self.llm_provider,
@@ -211,11 +220,13 @@ class LegalModalAutoencoderLoop:
         graph_report = self._import_graph(sample.modal_ir)
         prover_signal = self._evaluate_provers(sample)
         available_external_provers = self._external_prover_inventory()
+        legal_ir_bridge_names = _normalise_bridge_names(self.config.legal_ir_bridge_names)
         decision = self.autoencoder.codex_call_decision(
             sample,
             config=self.config.gate_config,
             cache=self.cache,
             prover_signal=prover_signal,
+            legal_ir_bridge_names=legal_ir_bridge_names,
         )
 
         llm_called = False
@@ -272,6 +283,7 @@ class LegalModalAutoencoderLoop:
                 "llm_provider": self.config.llm_provider if llm_called else "",
                 "loop": "legal_modal_autoencoder_loop_v1",
                 "codex_cache_path": str(self.cache_path) if self.cache_path else "",
+                "legal_ir_bridge_names": list(legal_ir_bridge_names),
             },
         )
 
@@ -460,6 +472,20 @@ def _codex_cache_from_mapping(data: Mapping[str, Any]) -> CodexCallCache:
 def _optional_str(value: Any) -> Optional[str]:
     text = str(value or "").strip()
     return text or None
+
+
+def _normalise_bridge_names(bridge_names: Sequence[str] | str) -> tuple[str, ...]:
+    if isinstance(bridge_names, str):
+        raw_names: Iterable[str] = bridge_names.split(",")
+    else:
+        raw_names = bridge_names
+    return tuple(
+        dict.fromkeys(
+            str(name).strip()
+            for name in raw_names
+            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
+        )
+    )
 
 
 def _accepted(
@@ -749,6 +775,7 @@ def _citation_for_modal_ir(modal_ir: ModalIRDocument) -> str:
 __all__ = [
     "FrameLogicPatchValidation",
     "LegalModalAutoencoderLoop",
+    "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
     "ModalAutoencoderLoopConfig",
     "ModalAutoencoderLoopResult",
     "validate_frame_logic_patch",

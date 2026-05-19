@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 
 def test_logic_manifest_covers_core_logic_families() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
@@ -92,6 +94,23 @@ def test_optimizer_hints_include_non_modal_logic_lanes() -> None:
     assert logic_optimizer_scope_for_component("deontic.ir") == "deontic"
     assert logic_optimizer_scope_for_component("TDFOL.prover") == "tdfol"
     assert logic_optimizer_scope_for_component("external_provers.router") == "external_provers"
+
+
+def test_optimizer_target_file_hints_resolve_to_repo_paths() -> None:
+    from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_target_file_hints
+
+    repo_root = Path(__file__).resolve().parents[3]
+    missing = {
+        component: [
+            file_path
+            for file_path in file_paths
+            if not (repo_root / file_path).exists()
+        ]
+        for component, file_paths in logic_optimizer_target_file_hints().items()
+    }
+    missing = {component: paths for component, paths in missing.items() if paths}
+
+    assert missing == {}
 
 
 def test_modal_frame_logic_bridge_remains_neo4j_compatible() -> None:

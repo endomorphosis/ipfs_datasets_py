@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from ipfs_datasets_py.logic.modal import (
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
     LegalModalAutoencoderLoop,
     ModalAutoencoderLoopConfig,
     ModalLogicCodecConfig,
@@ -53,6 +54,48 @@ def test_autoencoder_loop_keeps_frame_logic_graph_and_provers_before_llm() -> No
     assert result.codex_decision.feature_signature_hash
     assert isinstance(result.available_external_provers, tuple)
     assert result.metadata["loop"] == "legal_modal_autoencoder_loop_v1"
+
+
+def test_autoencoder_loop_gate_includes_multiview_legal_ir_losses() -> None:
+    loop = LegalModalAutoencoderLoop(
+        ModalAutoencoderLoopConfig(
+            codec_config=ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8),
+            gate_config=CodexCallGateConfig(
+                min_cosine_similarity=0.0,
+                max_cross_entropy_loss=10.0,
+                max_frame_ranking_loss=10.0,
+                max_reconstruction_loss=10.0,
+                max_symbolic_validity_penalty=10.0,
+                require_prover_compilation=False,
+                codex_call_cost=0.0,
+            ),
+            allow_llm_repair=False,
+            evaluate_provers=False,
+            legal_ir_bridge_names=("deontic_norms", "fol_tdfol"),
+        )
+    )
+
+    result = loop.run(
+        "The agency must provide notice within 30 days after application.",
+        document_id="loop-doc",
+        citation="5 U.S.C. 552",
+    )
+
+    metrics = result.codex_decision.metrics
+    assert result.metadata["legal_ir_bridge_names"] == ["deontic_norms", "fol_tdfol"]
+    assert DEFAULT_LEGAL_IR_BRIDGE_NAMES == (
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router",
+    )
+    assert metrics["legal_ir_target_count"] == 1.0
+    assert metrics["legal_ir_multiview_total_loss"] > 0.0
+    assert metrics["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert "high_legal_ir_multiview_total_loss" in result.codex_decision.reasons
+    assert "high_legal_ir_view_cross_entropy_loss" in result.codex_decision.reasons
+    assert result.llm_called is False
 
 
 def test_autoencoder_loop_routes_sparse_codex_repair_through_llm_router_defaults() -> None:

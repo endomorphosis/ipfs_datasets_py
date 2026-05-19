@@ -224,6 +224,10 @@ class CodexCallGateConfig:
     min_cosine_similarity: float = 0.72
     max_cross_entropy_loss: float = 1.20
     max_reconstruction_loss: float = 0.20
+    max_legal_ir_multiview_total_loss: float = 0.25
+    max_legal_ir_view_cross_entropy_loss: float = 0.05
+    max_legal_ir_proof_failure_ratio: float = 0.0
+    max_legal_ir_graph_failure_penalty: float = 0.0
     max_frame_ranking_loss: float = 0.0
     max_symbolic_validity_penalty: float = 0.0
     require_prover_compilation: bool = True
@@ -234,6 +238,7 @@ class CodexCallGateConfig:
     cosine_weight: float = 1.0
     cross_entropy_weight: float = 1.0
     reconstruction_weight: float = 1.0
+    legal_ir_weight: float = 1.0
     frame_weight: float = 0.5
     symbolic_weight: float = 1.0
     prover_weight: float = 1.0
@@ -245,9 +250,14 @@ class CodexCallGateConfig:
             "cosine_weight": self.cosine_weight,
             "cross_entropy_weight": self.cross_entropy_weight,
             "frame_weight": self.frame_weight,
+            "legal_ir_weight": self.legal_ir_weight,
             "max_codex_calls": self.max_codex_calls,
             "max_cross_entropy_loss": self.max_cross_entropy_loss,
             "max_frame_ranking_loss": self.max_frame_ranking_loss,
+            "max_legal_ir_graph_failure_penalty": self.max_legal_ir_graph_failure_penalty,
+            "max_legal_ir_multiview_total_loss": self.max_legal_ir_multiview_total_loss,
+            "max_legal_ir_proof_failure_ratio": self.max_legal_ir_proof_failure_ratio,
+            "max_legal_ir_view_cross_entropy_loss": self.max_legal_ir_view_cross_entropy_loss,
             "max_reconstruction_loss": self.max_reconstruction_loss,
             "max_symbolic_validity_penalty": self.max_symbolic_validity_penalty,
             "min_cosine_similarity": self.min_cosine_similarity,
@@ -838,19 +848,33 @@ class AdaptiveModalAutoencoder:
         config: Optional[CodexCallGateConfig] = None,
         cache: Optional[CodexCallCache] = None,
         prover_signal: Optional[ProverCompilationSignal] = None,
+        legal_ir_bridge_names: Sequence[str] | str = (),
+        legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         use_sample_memory: bool = False,
     ) -> CodexCallDecision:
         """Decide whether this sample is worth an expensive Codex advisor call."""
         gate = config or CodexCallGateConfig()
-        evaluation = self.evaluate([sample], use_sample_memory=use_sample_memory)
+        evaluation = self.evaluate(
+            [sample],
+            legal_ir_bridge_names=legal_ir_bridge_names,
+            legal_ir_targets=legal_ir_targets,
+            use_sample_memory=use_sample_memory,
+        )
         metrics = {
             "cosine_loss": evaluation.cosine_loss,
             "cross_entropy_loss": evaluation.cross_entropy_loss,
             "embedding_cosine_similarity": evaluation.embedding_cosine_similarity,
             "frame_ranking_loss": evaluation.frame_ranking_loss,
+            "legal_ir_target_count": float(evaluation.legal_ir_target_count),
             "reconstruction_loss": evaluation.reconstruction_loss,
             "symbolic_validity_penalty": evaluation.symbolic_validity_penalty,
         }
+        metrics.update(
+            {
+                str(name): float(value)
+                for name, value in sorted(evaluation.legal_ir_losses.items())
+            }
+        )
         feature_signature = self.codex_feature_signature(sample)
         text_hash = _hash_text(sample.normalized_text)
         feature_signature_hash = _hash_json(feature_signature)
@@ -867,6 +891,27 @@ class AdaptiveModalAutoencoder:
             reasons.append("frame_ranking_uncertain")
         if evaluation.symbolic_validity_penalty > gate.max_symbolic_validity_penalty:
             reasons.append("missing_or_invalid_symbolic_ir")
+        if evaluation.legal_ir_target_count > 0:
+            if (
+                metrics.get("legal_ir_multiview_total_loss", 0.0)
+                > gate.max_legal_ir_multiview_total_loss
+            ):
+                reasons.append("high_legal_ir_multiview_total_loss")
+            if (
+                metrics.get("legal_ir_view_cross_entropy_loss", 0.0)
+                > gate.max_legal_ir_view_cross_entropy_loss
+            ):
+                reasons.append("high_legal_ir_view_cross_entropy_loss")
+            if (
+                metrics.get("legal_ir_multiview_proof_failure_ratio", 0.0)
+                > gate.max_legal_ir_proof_failure_ratio
+            ):
+                reasons.append("legal_ir_prover_gate_failed")
+            if (
+                metrics.get("legal_ir_multiview_graph_failure_penalty", 0.0)
+                > gate.max_legal_ir_graph_failure_penalty
+            ):
+                reasons.append("legal_ir_graph_projection_failed")
 
         if gate.require_prover_compilation:
             resolved_prover_signal = prover_signal or evaluate_modal_prover_compilation(sample)
@@ -1659,7 +1704,7 @@ def _legal_ir_target_payload(
 def _legal_ir_target_items(
     samples: Sequence[LegalSample],
     *,
-    bridge_names: Sequence[str],
+    bridge_names: Sequence[str] | str,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
 ) -> List[tuple[str, Any]]:
     if legal_ir_targets is not None:
@@ -1681,13 +1726,7 @@ def _legal_ir_target_items(
             target_items.append((sample_id, target))
         return target_items
 
-    names = tuple(
-        dict.fromkeys(
-            str(name).strip()
-            for name in bridge_names
-            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
-        )
-    )
+    names = _normalise_bridge_names(bridge_names)
     if not names:
         return []
 
@@ -1705,6 +1744,20 @@ def _legal_ir_target_items(
         )
         target_items.append((sample.sample_id, report.training_target()))
     return target_items
+
+
+def _normalise_bridge_names(bridge_names: Sequence[str] | str) -> tuple[str, ...]:
+    if isinstance(bridge_names, str):
+        raw_names: Iterable[str] = bridge_names.split(",")
+    else:
+        raw_names = bridge_names
+    return tuple(
+        dict.fromkeys(
+            str(name).strip()
+            for name in raw_names
+            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
+        )
+    )
 
 
 @dataclass(frozen=True)
@@ -1891,6 +1944,13 @@ def _codex_gate_local_loss(
         + gate.frame_weight * max(0.0, float(metrics.get("frame_ranking_loss", 0.0)))
         + gate.symbolic_weight * max(0.0, float(metrics.get("symbolic_validity_penalty", 0.0)))
     )
+    legal_ir_loss = (
+        max(0.0, float(metrics.get("legal_ir_multiview_total_loss", 0.0)))
+        + max(0.0, float(metrics.get("legal_ir_view_cross_entropy_loss", 0.0)))
+        + max(0.0, float(metrics.get("legal_ir_multiview_proof_failure_ratio", 0.0)))
+        + max(0.0, float(metrics.get("legal_ir_multiview_graph_failure_penalty", 0.0)))
+    )
+    loss += gate.legal_ir_weight * legal_ir_loss
     if gate.require_prover_compilation:
         if prover_signal is None:
             loss += gate.prover_weight

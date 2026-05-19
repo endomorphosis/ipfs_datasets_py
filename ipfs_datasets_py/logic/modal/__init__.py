@@ -9,6 +9,7 @@ from .compiler import (
     ModalCompilerConfig,
 )
 from .autoencoder_loop import (
+    DEFAULT_LEGAL_IR_BRIDGE_NAMES,
     FrameLogicPatchValidation,
     LegalModalAutoencoderLoop,
     ModalAutoencoderLoopConfig,
@@ -49,6 +50,7 @@ from .synthesis import (
 __all__ = [
     "DecodedModalPhrase",
     "DecodedModalText",
+    "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
     "DeterministicModalCompiler",
     "DeterministicModalLogicCodec",
     "FrameLogicPatchValidation",

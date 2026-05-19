@@ -110,7 +110,7 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         optimizer_components=("fol.converter", "fol.predicate_extractor"),
         target_files=(
             "ipfs_datasets_py/logic/fol/__init__.py",
-            "ipfs_datasets_py/logic/fol/fol_converter.py",
+            "ipfs_datasets_py/logic/fol/converter.py",
             "ipfs_datasets_py/logic/fol/utils/nlp_predicate_extractor.py",
         ),
         ast_scope="fol",
