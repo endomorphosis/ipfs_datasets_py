@@ -1688,6 +1688,17 @@ def _apply_competing_scope_backfill(
         or bool(signals.get("has_statutory_scope_reference"))
         or bool(signals.get("has_frame_cue"))
     )
+    has_strong_temporal_scope = (
+        bool(signals.get("has_calendar_date_scope"))
+        or bool(signals.get("has_temporal_scope_phrase"))
+        or bool(signals.get("has_temporal_within_scope"))
+    )
+    has_strong_conditional_scope = (
+        bool(signals.get("has_exception_clause"))
+        or bool(signals.get("has_conditional_scope_phrase"))
+        or bool(signals.get("has_conditional_scope_token"))
+        or bool(signals.get("has_statutory_scope_reference"))
+    )
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
@@ -1709,6 +1720,24 @@ def _apply_competing_scope_backfill(
             bool(signals.get("has_condition_clause"))
             or bool(signals.get("has_exception_clause"))
         ):
+            conditional_backfill = max(
+                conditional_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[conditional_family] = max(
+            float(counts.get(conditional_family, 0.0)),
+            conditional_backfill,
+        )
+    if (
+        conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_strong_conditional_scope
+        and (
+            deontic_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+            or frame_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+        )
+    ):
+        conditional_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if bool(signals.get("has_exception_clause")):
             conditional_backfill = max(
                 conditional_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
@@ -1783,6 +1812,28 @@ def _apply_competing_scope_backfill(
                 maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
             ),
         )
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            temporal_backfill,
+        )
+    if (
+        temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_strong_temporal_scope
+        and (
+            deontic_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+            or frame_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+            or conditional_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+        )
+    ):
+        temporal_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+        ):
+            temporal_backfill = max(
+                temporal_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,

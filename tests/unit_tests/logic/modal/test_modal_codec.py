@@ -9119,7 +9119,7 @@ def test_modal_compiler_treats_as_provided_in_as_conditional_scope_ambiguity_sig
     assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
     assert conditional_scope.metadata["predicted_family"] == "deontic"
     assert conditional_scope.metadata["target_family"] == "conditional_normative"
-    assert conditional_scope.metadata["target_share"] == 0.0
+    assert conditional_scope.metadata["target_share"] > 0.0
     assert (
         conditional_scope.metadata["lexical_signals"]["has_statutory_scope_reference"]
         is True
@@ -9674,7 +9674,7 @@ def test_modal_compiler_treats_period_beginning_with_calendar_date_as_temporal_s
     assert temporal_scope.candidate_ids == ["deontic", "temporal"]
     assert temporal_scope.metadata["predicted_family"] == "deontic"
     assert temporal_scope.metadata["target_family"] == "temporal"
-    assert temporal_scope.metadata["target_share"] == 0.0
+    assert temporal_scope.metadata["target_share"] > 0.0
     assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
     assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope_phrase"] is True
     assert temporal_scope.metadata["lexical_signals"]["has_calendar_date_scope"] is True

@@ -1536,6 +1536,56 @@ def test_spacy_codec_backfills_deontic_share_for_single_frame_cue_with_temporal_
     assert deontic_share > 0.0
 
 
+def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_calendar_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="9150",
+        text="The agency shall issue notice on January 1, 2030.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_deontic_cue"] is True
+    assert signals["has_calendar_date_scope"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
+def test_spacy_codec_backfills_conditional_share_for_deontic_competition_with_statutory_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="9151",
+        text="The agency shall issue notice as provided in subsection (b).",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
+    assert signals["has_deontic_cue"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    assert conditional_share > 0.0
+
+
 def test_spacy_codec_backfills_conditional_share_for_single_frame_cue_with_statutory_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
