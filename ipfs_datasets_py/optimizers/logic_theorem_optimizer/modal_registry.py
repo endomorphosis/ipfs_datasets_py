@@ -89,6 +89,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.EPISTEMIC.value,
     ),
     (
@@ -161,6 +165,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
         ModalLogicFamily.ALETHIC.value,
@@ -298,6 +306,10 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.EPISTEMIC.value,
     ),
     (
@@ -416,6 +428,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
         ModalLogicFamily.DEONTIC.value,
