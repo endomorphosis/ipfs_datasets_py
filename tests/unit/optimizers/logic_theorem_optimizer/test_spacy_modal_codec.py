@@ -1952,6 +1952,46 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_c
     assert conditional_share > frame_share
 
 
+def test_spacy_codec_limits_statutory_frame_backfill_with_explicit_conditional_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="22",
+        section="1642g",
+        text=(
+            "Authority and jurisdiction under this section, as provided in subsection "
+            "(b), impose liability for noncompliance."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+    signals = modal_ambiguity_signals(encoding)
+
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+    assert conditional_share > 0.3
+    assert frame_share - conditional_share < 0.1
+    assert deontic_share > 0.0
+
+
 def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_scope_phrase() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
