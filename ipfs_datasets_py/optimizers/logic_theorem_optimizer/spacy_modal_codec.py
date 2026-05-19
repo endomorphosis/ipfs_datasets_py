@@ -1173,6 +1173,7 @@ def _is_generic_frame_cue_debias_context(
         bool(signals.get("has_deontic_scope"))
         or bool(signals.get("has_temporal_scope"))
         or bool(signals.get("has_condition_or_exception_scope"))
+        or bool(signals.get("has_epistemic_cue"))
     ):
         return False
     if bool(signals.get("has_frame_scope_phrase")):
@@ -1207,6 +1208,16 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
         boosts[ModalLogicFamily.TEMPORAL.value] = temporal_bonus
+    dynamic_bonus = 0.0
+    if bool(signals.get("has_dynamic_scope_phrase")):
+        dynamic_bonus += 1.0
+    elif bool(signals.get("has_dynamic_scope")) and not (
+        bool(signals.get("has_frame_scope_phrase"))
+        or bool(signals.get("has_frame_editorial_scope_phrase"))
+    ):
+        dynamic_bonus += 0.7
+    if dynamic_bonus > 0.0:
+        boosts[ModalLogicFamily.DYNAMIC.value] = dynamic_bonus
     return boosts
 
 

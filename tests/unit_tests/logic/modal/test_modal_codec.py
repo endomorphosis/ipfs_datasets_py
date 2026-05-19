@@ -3319,6 +3319,89 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_epistemic_adaptiv
     )
 
 
+def test_modal_compiler_uses_epistemic_signal_for_frame_epistemic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {
+            "has_epistemic_cue": True,
+        },
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signaled-frame-epistemic-doc",
+        text="Authority finds.",
+        normalized_text="Authority finds.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="authority",
+                start_char=0,
+                end_char=9,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signaled-frame-epistemic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="authority_findings",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signaled-frame-epistemic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="20 U.S.C. 80e",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "frame", "count": 1, "share": 1.0}],
+        family_shares={"frame": 1.0},
+    )
+
+    adaptive_epistemic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "epistemic"]
+    )
+    assert adaptive_epistemic.metadata["has_target_signal_evidence"] is True
+    assert adaptive_epistemic.metadata["signal_free_pair_policy_applied"] is False
+    assert (
+        adaptive_epistemic.metadata["explicit_ambiguity_type"]
+        == "adaptive_frame_epistemic_outvoted_margin_low"
+    )
+
+
 def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -3575,6 +3658,95 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_temporal_temporal_contested_margin_low"
+        and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_runner_up_margin(
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-epistemic-self-doc",
+        text="The agency knows the report is false.",
+        normalized_text="The agency knows the report is false.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="epistemic",
+                system="S5",
+                symbol="K",
+                label="knowledge",
+                cue="knows",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-epistemic-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-epistemic-1",
+                operator=ModalIROperator(
+                    family="epistemic",
+                    system="S5",
+                    symbol="K",
+                    label="knowledge",
+                ),
+                predicate=ModalIRPredicate(
+                    name="knowledge_report_false",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-epistemic-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="2 U.S.C. 1612",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "epistemic", "count": 2, "share": 0.55},
+            {"family": "deontic", "count": 2, "share": 0.45},
+        ],
+        family_shares={"epistemic": 0.55, "deontic": 0.45},
+    )
+
+    adaptive_epistemic_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["epistemic"]
+    )
+    assert adaptive_epistemic_self.metadata["predicted_family"] == "epistemic"
+    assert adaptive_epistemic_self.metadata["target_family"] == "epistemic"
+    assert adaptive_epistemic_self.metadata["is_self_pair"] is True
+    assert adaptive_epistemic_self.metadata["predicted_margin_to_runner_up"] == 0.1
+    assert adaptive_epistemic_self.metadata["family_margin"] == 0.0
+    assert adaptive_epistemic_self.metadata["adaptive_margin_direction"] == "contested"
+    assert (
+        adaptive_epistemic_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_epistemic_epistemic_contested_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_epistemic_epistemic_contested_margin_low"
         and ambiguity.metadata["is_self_pair"] is True
         for ambiguity in ambiguities
     )

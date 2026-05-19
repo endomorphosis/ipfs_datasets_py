@@ -546,6 +546,27 @@ def test_spacy_decoder_debiases_relational_frame_cues_when_temporal_scope_is_pre
     assert logits["temporal"] > logits["frame"]
 
 
+def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_cues_are_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="80e",
+        text=(
+            "Authority under this chapter finds that the report is false."
+        ),
+    )
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "epistemic", "deontic"),
+    )
+
+    assert logits["epistemic"] > logits["frame"]
+
+
 def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -566,6 +587,29 @@ def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues()
 
     assert logits["deontic"] > logits["temporal"]
     assert logits["temporal"] > -0.25
+
+
+def test_spacy_decoder_boosts_dynamic_logits_from_scope_without_dynamic_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="6339",
+        text="The agency shall file the report.",
+    )
+    encoding = codec.encode_sample(sample)
+
+    assert not any(cue.family == "dynamic" for cue in encoding.cues)
+    signals = modal_ambiguity_signals(encoding)
+    assert signals["has_dynamic_scope"] is True
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "dynamic", "frame"),
+    )
+
+    assert logits["dynamic"] > -0.25
 
 
 def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_temporal_competition() -> None:
