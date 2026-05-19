@@ -4153,6 +4153,94 @@ def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_
     )
 
 
+def test_modal_compiler_surfaces_deontic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-deontic-self-doc",
+        text="The agency shall provide the report.",
+        normalized_text="The agency shall provide the report.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-deontic-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-deontic-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_report",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-deontic-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="5 U.S.C. 552",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "deontic", "count": 2, "share": 0.57265},
+            {"family": "temporal", "count": 2, "share": 0.42735},
+        ],
+        family_shares={"deontic": 0.57265, "temporal": 0.42735},
+    )
+
+    adaptive_deontic_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic"]
+    )
+    assert adaptive_deontic_self.metadata["predicted_family"] == "deontic"
+    assert adaptive_deontic_self.metadata["target_family"] == "deontic"
+    assert adaptive_deontic_self.metadata["is_self_pair"] is True
+    assert adaptive_deontic_self.metadata["predicted_margin_to_runner_up"] == 0.1453
+    assert adaptive_deontic_self.metadata["family_margin"] == 0.0
+    assert adaptive_deontic_self.metadata["adaptive_margin_direction"] == "contested"
+    assert (
+        adaptive_deontic_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_deontic_contested_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_deontic_contested_margin_low"
+        and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -5244,6 +5332,92 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_epistemic_adapt
     )
     assert any(
         ambiguity.ambiguity_type == "adaptive_alethic_epistemic_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_deontic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-alethic-deontic-doc",
+        text="It is possible to provide written notice.",
+        normalized_text="It is possible to provide written notice.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="alethic",
+                system="S5",
+                symbol="◇",
+                label="possible",
+                cue="possible",
+                start_char=6,
+                end_char=14,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-alethic-deontic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-1",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="◇",
+                    label="possible",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-alethic-deontic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="18 U.S.C. 930",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "alethic", "count": 1, "share": 1.0}],
+        family_shares={"alethic": 1.0},
+    )
+
+    adaptive_deontic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["alethic", "deontic"]
+    )
+    assert adaptive_deontic.metadata["has_target_signal_evidence"] is False
+    assert adaptive_deontic.metadata["signal_free_pair_policy_applied"] is True
+    assert (
+        adaptive_deontic.metadata["explicit_ambiguity_type"]
+        == "adaptive_alethic_deontic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_alethic_deontic_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
     )
