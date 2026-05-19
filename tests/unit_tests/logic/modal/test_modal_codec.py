@@ -9148,6 +9148,27 @@ def test_logic_extractor_uses_logic_layer_modal_codec_without_llm() -> None:
     assert result.statements[0].metadata["selected_frame"] == "administrative_notice_hearing"
 
 
+def test_modal_compiler_orders_priority_adaptive_targets_before_non_priority_targets() -> None:
+    ordered_targets = DeterministicModalCompiler._ordered_adaptive_target_families(
+        predicted_family="frame",
+        target_signal_by_family={
+            "conditional_normative": False,
+            "deontic": False,
+            "epistemic": True,
+            "temporal": False,
+            "frame": False,
+        },
+    )
+
+    assert ordered_targets == [
+        "conditional_normative",
+        "deontic",
+        "temporal",
+        "epistemic",
+        "frame",
+    ]
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

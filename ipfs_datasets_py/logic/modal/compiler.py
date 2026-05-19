@@ -29,6 +29,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalRegistry,
     is_priority_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
+    priority_signal_free_adaptive_ambiguity_targets,
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
@@ -680,8 +681,13 @@ class DeterministicModalCompiler:
             target_signal_by_family.setdefault(policy_target_family, False)
         if not target_signal_by_family:
             return []
+        ordered_target_families = self._ordered_adaptive_target_families(
+            predicted_family=predicted_family,
+            target_signal_by_family=target_signal_by_family,
+        )
         ambiguities: List[ModalCompilationAmbiguity] = []
-        for target_family, has_signal in target_signal_by_family.items():
+        for target_family in ordered_target_families:
+            has_signal = bool(target_signal_by_family.get(target_family, False))
             is_self_pair = target_family == predicted_family
             if is_self_pair and (
                 predicted_margin_to_runner_up is None
@@ -824,15 +830,24 @@ class DeterministicModalCompiler:
             and compiled_primary_family != predicted_family
         ):
             compiled_primary_targets: List[str] = [predicted_family]
+            for target_family in priority_signal_free_adaptive_ambiguity_targets(
+                compiled_primary_family
+            ):
+                if (
+                    target_family != compiled_primary_family
+                    and target_family not in compiled_primary_targets
+                ):
+                    compiled_primary_targets.append(target_family)
             # Preserve all declared directional policy pairs for the compiled
             # primary family, not just a hard-coded subset.
-            compiled_primary_targets.extend(
-                target_family
-                for target_family in signal_free_adaptive_ambiguity_targets(
-                    compiled_primary_family
-                )
-                if target_family != compiled_primary_family
-            )
+            for target_family in signal_free_adaptive_ambiguity_targets(
+                compiled_primary_family
+            ):
+                if (
+                    target_family != compiled_primary_family
+                    and target_family not in compiled_primary_targets
+                ):
+                    compiled_primary_targets.append(target_family)
             seen_competing_families: set[str] = set()
             for competing_family in compiled_primary_targets:
                 if competing_family in seen_competing_families:
@@ -852,6 +867,29 @@ class DeterministicModalCompiler:
                     )
                 )
         return ambiguities
+
+    @staticmethod
+    def _ordered_adaptive_target_families(
+        *,
+        predicted_family: str,
+        target_signal_by_family: Mapping[str, bool],
+    ) -> List[str]:
+        ordered_targets: List[str] = []
+        seen_targets: set[str] = set()
+        for target_family in priority_signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        ):
+            if (
+                target_family in target_signal_by_family
+                and target_family not in seen_targets
+            ):
+                ordered_targets.append(target_family)
+                seen_targets.add(target_family)
+        for target_family in target_signal_by_family:
+            if target_family not in seen_targets:
+                ordered_targets.append(target_family)
+                seen_targets.add(target_family)
+        return ordered_targets
 
     def _adaptive_target_signal_by_family(
         self,

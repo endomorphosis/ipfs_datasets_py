@@ -533,6 +533,18 @@ def signal_free_adaptive_ambiguity_targets(
     )
 
 
+def priority_signal_free_adaptive_ambiguity_targets(
+    predicted_family: ModalLogicFamily | str,
+) -> Tuple[str, ...]:
+    """Return ordered high-priority adaptive-ambiguity targets."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    return tuple(
+        target_family
+        for source_family, target_family in PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if source_family == resolved_predicted_family
+    )
+
+
 def is_priority_signal_free_adaptive_ambiguity_pair(
     predicted_family: ModalLogicFamily | str,
     target_family: ModalLogicFamily | str,
@@ -572,6 +584,7 @@ __all__ = [
     "ModalSemanticsSpec",
     "ModalSystem",
     "is_normative_modal_family",
+    "priority_signal_free_adaptive_ambiguity_targets",
     "signal_free_adaptive_ambiguity_targets",
     "supports_signal_free_adaptive_ambiguity_pair",
 ]

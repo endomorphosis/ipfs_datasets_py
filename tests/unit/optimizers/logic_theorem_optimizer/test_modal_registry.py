@@ -11,6 +11,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalSystem,
     is_priority_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
+    priority_signal_free_adaptive_ambiguity_targets,
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
 )
@@ -209,4 +210,27 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     assert (
         is_priority_signal_free_adaptive_ambiguity_pair("epistemic", "deontic")
         is False
+    )
+
+
+def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets() -> None:
+    assert priority_signal_free_adaptive_ambiguity_targets("conditional_normative") == (
+        "deontic",
+        "temporal",
+        "frame",
+    )
+    assert priority_signal_free_adaptive_ambiguity_targets("temporal") == (
+        "deontic",
+        "frame",
+    )
+    assert priority_signal_free_adaptive_ambiguity_targets("frame") == (
+        "conditional_normative",
+        "deontic",
+        "temporal",
+    )
+    assert priority_signal_free_adaptive_ambiguity_targets("deontic") == (
+        "conditional_normative",
+        "epistemic",
+        "frame",
+        "temporal",
     )
