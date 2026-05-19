@@ -279,7 +279,12 @@ class ConnecticutScraper(BaseStateScraper):
             chapter_urls = await self._discover_chapter_urls(code_url, limit=max(max_sections * 3, 20))
             statutes: List[NormalizedStatute] = []
             seen_sections: set[str] = set()
-            for chapter_url in chapter_urls:
+            if chapter_urls:
+                self.logger.info(
+                    "Connecticut chapter crawl: discovered_chapters=%s",
+                    len(chapter_urls),
+                )
+            for chapter_index, chapter_url in enumerate(chapter_urls, start=1):
                 if len(statutes) >= max_sections:
                     break
                 chapter_statutes = await self._extract_chapter_sections(
@@ -295,6 +300,13 @@ class ConnecticutScraper(BaseStateScraper):
                     statutes.append(statute)
                     if len(statutes) >= max_sections:
                         break
+                if chapter_index == 1 or chapter_index % 5 == 0:
+                    self.logger.info(
+                        "Connecticut chapter crawl: chapter=%s/%s statutes_so_far=%s",
+                        chapter_index,
+                        len(chapter_urls),
+                        len(statutes),
+                    )
 
             self.logger.info(f"Connecticut custom scraper: Scraped {len(statutes)} sections")
             

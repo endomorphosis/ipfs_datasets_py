@@ -141,6 +141,7 @@ class RoundTripMetrics:
             + max(0.0, self.symbolic_validity_penalty)
             + max(0.0, proof_failure_ratio)
             + max(0.0, graph_failure_penalty)
+            + sum(max(0.0, _coerce_float(value)) for value in self.extra_losses.values())
         )
 
     def to_dict(self) -> Dict[str, Any]:

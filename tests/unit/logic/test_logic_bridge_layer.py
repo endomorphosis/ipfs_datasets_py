@@ -106,6 +106,9 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert report.proof_gate.valid_count >= 5
     assert report.round_trip.cosine_similarity >= 0.0
     assert "deontic_quality_requires_validation_loss" in report.round_trip.extra_losses
+    assert report.total_loss >= report.round_trip.extra_losses[
+        "deontic_quality_requires_validation_loss"
+    ]
     assert report.to_dict()["ir_document"]["views"]["deontic_prover_syntax"][
         "metadata"
     ]["coverage_record_count"] >= 1

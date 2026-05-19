@@ -255,9 +255,10 @@ class IndianaScraper(BaseStateScraper):
             seen_pages.add(page_url)
             if len(seen_pages) == 1 or len(seen_pages) % 25 == 0:
                 self.logger.info(
-                    "Indiana Justia link graph crawl progress: pages=%s queued=%s records=%s cap=%s",
+                    "Indiana Justia link graph crawl progress: pages=%s queued=%s records=%s statutes_so_far=%s cap=%s",
                     len(seen_pages),
                     len(queue),
+                    len(out),
                     len(out),
                     crawl_limit,
                 )

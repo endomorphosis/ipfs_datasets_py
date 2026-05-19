@@ -30,6 +30,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
     apply_codex_worktree_changes_to_main,
+    bridge_ir_metric_block,
     build_paired_daemon_commands,
     compiler_ir_metric_block,
     create_codex_work_packet,
@@ -2574,6 +2575,34 @@ def test_compiler_ir_metric_block_reports_deterministic_codec_losses() -> None:
     assert "reconstruction_loss" in block
     assert "text_reconstruction_loss" in block
     assert "modal_span_coverage" in block
+
+
+def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    block = bridge_ir_metric_block([sample], ["deontic_norms", "fol_tdfol"])
+
+    assert block["sample_count"] == 1
+    assert block["adapter_count"] == 2
+    assert block["evaluated_count"] == 2
+    assert block["metric_failures"] == 0
+    assert "acceptance_rate" in block
+    assert "total_loss" in block
+    assert block["total_loss"] > 0.0
+
+    deontic = block["adapters"]["deontic_norms"]
+    assert deontic["views"]["deontic_ir"]["metadata"]["norm_count"] >= 1
+    assert deontic["views"]["frame_logic"]["metadata"]["triple_count"] >= 1
+    assert "deontic_quality_requires_validation_loss" in deontic
+
+    tdfol = block["adapters"]["fol_tdfol"]
+    assert tdfol["views"]["tdfol_formula"]["metadata"]["formula_count"] >= 1
+    assert tdfol["views"]["proof_obligations"]["metadata"]["obligation_count"] >= 1
+    assert "tdfol_parse_failure_ratio" in tdfol
 
 
 def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path) -> None:

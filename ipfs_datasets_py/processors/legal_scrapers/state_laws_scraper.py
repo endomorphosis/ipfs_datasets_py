@@ -60,6 +60,36 @@ _QUALITY_LEGAL_METADATA_RE = re.compile(
 )
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = str(os.getenv(name, "") or "").strip()
+    if not raw:
+        return float(default)
+    try:
+        return float(raw)
+    except Exception:
+        return float(default)
+
+
+def _derive_bounded_scraper_timeouts(per_state_timeout_seconds: float) -> Dict[str, float]:
+    bounded_timeout = max(0.0, float(per_state_timeout_seconds or 0.0))
+    if bounded_timeout <= 0.0:
+        return {"code_timeout_seconds": 0.0, "fetch_timeout_seconds": 0.0}
+
+    code_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_CODE_TIMEOUT_FRACTION", 0.8)))
+    raw_code_cap = _env_float("STATE_SCRAPER_CODE_TIMEOUT_CAP_SECONDS", 0.0)
+    code_cap = bounded_timeout if raw_code_cap <= 0.0 else max(45.0, raw_code_cap)
+    code_timeout = max(5.0, min(bounded_timeout * code_fraction, code_cap))
+
+    fetch_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_FRACTION", 0.35)))
+    fetch_cap = max(12.0, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_CAP_SECONDS", 120.0))
+    fetch_timeout = max(5.0, min(code_timeout * fetch_fraction, fetch_cap))
+
+    return {
+        "code_timeout_seconds": float(code_timeout),
+        "fetch_timeout_seconds": float(fetch_timeout),
+    }
+
+
 def _extract_statute_quality_fields(statute: Any) -> Dict[str, str]:
     if isinstance(statute, dict):
         return {
@@ -284,8 +314,9 @@ async def scrape_state_laws(
                 bounded_timeout = max(0.0, float(per_state_timeout_seconds or 0.0))
                 use_global_bounded_env = bool(max_statutes and int(max_statutes) > 0 and bounded_timeout > 0)
                 if use_global_bounded_env:
-                    code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
-                    fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
+                    timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
+                    code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
+                    fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
                     os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
                     os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
                     os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))
@@ -1060,8 +1091,9 @@ async def _run_sync_scrape_on_daemon_thread(
         prior_direct_only = os.environ.get("STATE_SCRAPER_BOUNDED_DIRECT_ONLY")
         bounded_timeout = max(0.0, float(timeout_seconds or 0.0))
         if not global_bounded_env and max_statutes and int(max_statutes) > 0 and bounded_timeout > 0:
-            code_timeout = max(0.1, min(bounded_timeout * 0.8, 45.0))
-            fetch_timeout = max(0.1, min(code_timeout / 3.0, 12.0))
+            timeouts = _derive_bounded_scraper_timeouts(bounded_timeout)
+            code_timeout = max(0.1, float(timeouts.get("code_timeout_seconds") or 0.0))
+            fetch_timeout = max(0.1, float(timeouts.get("fetch_timeout_seconds") or 0.0))
             os.environ["STATE_SCRAPER_CODE_TIMEOUT_SECONDS"] = f"{code_timeout:.3f}"
             os.environ["STATE_SCRAPER_FETCH_TIMEOUT_SECONDS"] = f"{fetch_timeout:.3f}"
             os.environ["STATE_SCRAPER_MAX_STATUTES"] = str(int(max_statutes))

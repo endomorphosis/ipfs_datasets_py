@@ -394,8 +394,24 @@ class NewHampshireScraper(BaseStateScraper):
                         metadata=StatuteMetadata(),
                     )
                 )
+                if len(section_statutes) == 1 or len(section_statutes) % 40 == 0:
+                    self.logger.info(
+                        "New Hampshire archived index: chapter=%s scanned_sections=%s/%s statutes_so_far=%s",
+                        chapter_id,
+                        len(section_statutes),
+                        len(section_links),
+                        len(section_statutes),
+                    )
                 if _limit_reached(len(section_statutes)):
                     break
+            if section_links:
+                self.logger.info(
+                    "New Hampshire archived index: chapter=%s scanned_sections=%s/%s statutes_so_far=%s",
+                    chapter_id,
+                    len(section_statutes),
+                    len(section_links),
+                    len(section_statutes),
+                )
             return section_statutes
 
         sem = asyncio.Semaphore(4)

@@ -50,9 +50,9 @@ STATUS_ORDER = {
 _LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)")
 _LOG_STATE_RE = re.compile(r"base_scraper\.([A-Z]{2})\]")
 _LOG_STATE_START_RE = re.compile(r"Scraping\s+\d+\s+codes\s+for\s+", flags=re.IGNORECASE)
-_LOG_SCRAPED_STATUTES_RE = re.compile(r"Scraped\s+(\d+)\s+statutes\s+from\s+", flags=re.IGNORECASE)
+_LOG_SCRAPED_STATUTES_RE = re.compile(r"Scraped\s+(\d+)\s+(?:statutes|sections)\s+from\s+", flags=re.IGNORECASE)
 _LOG_STATUTES_SOFAR_RE = re.compile(r"statutes_so_far=(\d+)", flags=re.IGNORECASE)
-_LOG_STATUTES_EQ_RE = re.compile(r"\bstatutes=(\d+)\b", flags=re.IGNORECASE)
+_LOG_COUNTER_EQ_RE = re.compile(r"\b(?:statutes|records|sections|pages)=(\d+)\b", flags=re.IGNORECASE)
 
 
 def utc_now() -> str:
@@ -882,7 +882,7 @@ def _collect_state_rate_analytics(
         if so_far_match:
             counter = _safe_int(so_far_match.group(1), 0)
         else:
-            eq_match = _LOG_STATUTES_EQ_RE.search(line)
+            eq_match = _LOG_COUNTER_EQ_RE.search(line)
             if eq_match:
                 counter = _safe_int(eq_match.group(1), 0)
 

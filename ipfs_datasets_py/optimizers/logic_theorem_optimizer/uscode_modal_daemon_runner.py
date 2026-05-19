@@ -566,6 +566,217 @@ def compiler_ir_metric_block(
     return block
 
 
+BRIDGE_ROUND_TRIP_METRIC_NAMES = (
+    "cosine_loss",
+    "cosine_similarity",
+    "cross_entropy_loss",
+    "flogic_similarity_loss",
+    "flogic_similarity_score",
+    "frame_ranking_loss",
+    "reconstruction_loss",
+    "symbolic_validity_penalty",
+    "text_reconstruction_loss",
+)
+
+
+def bridge_ir_metric_block(
+    samples: Sequence[Any],
+    bridge_names: Sequence[str],
+) -> Dict[str, Any]:
+    """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
+
+    sample_list = list(samples)
+    adapter_names = [
+        name
+        for name in dict.fromkeys(str(name).strip() for name in bridge_names)
+        if name and name.lower() not in {"none", "off", "false"}
+    ]
+    block: Dict[str, Any] = {
+        "adapter_count": len(adapter_names),
+        "adapters": {},
+        "evaluated_count": 0,
+        "metric_failures": 0,
+        "sample_count": len(sample_list),
+    }
+    if not sample_list or not adapter_names:
+        return block
+
+    aggregate_values: Dict[str, List[float]] = {
+        "acceptance": [],
+        "graph_failure_penalty": [],
+        "proof_failure_ratio": [],
+        "total_loss": [],
+    }
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    for adapter_name in adapter_names:
+        try:
+            adapter = load_logic_bridge_adapter(adapter_name)
+        except Exception as exc:
+            adapter_block = {
+                "evaluated_count": 0,
+                "load_error": f"{type(exc).__name__}: {exc}",
+                "metric_failures": len(sample_list),
+                "sample_count": len(sample_list),
+            }
+            block["adapters"][adapter_name] = adapter_block
+            block["metric_failures"] += len(sample_list)
+            continue
+
+        adapter_block = _evaluate_bridge_adapter_metrics(
+            adapter_name=adapter_name,
+            adapter=adapter,
+            samples=sample_list,
+        )
+        block["adapters"][adapter_name] = adapter_block
+        block["evaluated_count"] += int(adapter_block.get("evaluated_count", 0))
+        block["metric_failures"] += int(adapter_block.get("metric_failures", 0))
+        if int(adapter_block.get("evaluated_count", 0)) > 0:
+            aggregate_values["acceptance"].append(float(adapter_block.get("acceptance_rate", 0.0)))
+            aggregate_values["graph_failure_penalty"].append(
+                float(adapter_block.get("graph_failure_penalty", 0.0))
+            )
+            aggregate_values["proof_failure_ratio"].append(
+                float(adapter_block.get("proof_failure_ratio", 0.0))
+            )
+            aggregate_values["total_loss"].append(float(adapter_block.get("total_loss", 0.0)))
+
+    for name, values in aggregate_values.items():
+        if values:
+            block[name if name != "acceptance" else "acceptance_rate"] = _mean(values)
+    return block
+
+
+def _evaluate_bridge_adapter_metrics(
+    *,
+    adapter_name: str,
+    adapter: Any,
+    samples: Sequence[Any],
+) -> Dict[str, Any]:
+    metric_values: Dict[str, List[float]] = {
+        "accepted": [],
+        "graph_failure_penalty": [],
+        "graph_node_count": [],
+        "graph_relationship_count": [],
+        "proof_attempted_count": [],
+        "proof_error_count": [],
+        "proof_failed_count": [],
+        "proof_failure_ratio": [],
+        "proof_unavailable_count": [],
+        "proof_valid_count": [],
+        "total_loss": [],
+    }
+    for name in BRIDGE_ROUND_TRIP_METRIC_NAMES:
+        metric_values[name] = []
+
+    status_counts: Dict[str, int] = {}
+    view_counts: Dict[str, int] = {}
+    view_metadata_values: Dict[str, Dict[str, List[float]]] = {}
+    target_component = ""
+    failures = 0
+
+    for sample in samples:
+        try:
+            report = adapter.evaluate(
+                sample.text,
+                document_id=sample.sample_id,
+                citation=sample.citation,
+                source=sample.source,
+                source_embedding=sample.embedding_vector,
+            )
+        except Exception:
+            failures += 1
+            continue
+
+        target_component = target_component or str(getattr(report, "target_component", ""))
+        status = str(getattr(report, "status", "unknown") or "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+        metric_values["accepted"].append(1.0 if bool(getattr(report, "accepted", False)) else 0.0)
+        metric_values["total_loss"].append(float(getattr(report, "total_loss", 0.0) or 0.0))
+
+        proof_gate = getattr(report, "proof_gate", None)
+        metric_values["proof_attempted_count"].append(
+            float(getattr(proof_gate, "attempted_count", 0) or 0)
+        )
+        metric_values["proof_valid_count"].append(float(getattr(proof_gate, "valid_count", 0) or 0))
+        metric_values["proof_unavailable_count"].append(
+            float(getattr(proof_gate, "unavailable_count", 0) or 0)
+        )
+        metric_values["proof_error_count"].append(float(getattr(proof_gate, "error_count", 0) or 0))
+        metric_values["proof_failed_count"].append(float(getattr(proof_gate, "failed_count", 0) or 0))
+        metric_values["proof_failure_ratio"].append(float(getattr(proof_gate, "failure_ratio", 0.0) or 0.0))
+
+        graph_projection = getattr(report, "graph_projection", None)
+        metric_values["graph_failure_penalty"].append(
+            float(getattr(graph_projection, "graph_failure_penalty", 0.0) or 0.0)
+        )
+        metric_values["graph_node_count"].append(float(getattr(graph_projection, "node_count", 0) or 0))
+        metric_values["graph_relationship_count"].append(
+            float(getattr(graph_projection, "relationship_count", 0) or 0)
+        )
+
+        round_trip = getattr(report, "round_trip", None)
+        for name in BRIDGE_ROUND_TRIP_METRIC_NAMES:
+            metric_values[name].append(float(getattr(round_trip, name, 0.0) or 0.0))
+        for name, value in dict(getattr(round_trip, "extra_losses", {}) or {}).items():
+            metric_values.setdefault(str(name), []).append(_float_or_zero(value))
+
+        ir_document = getattr(report, "ir_document", None)
+        views = dict(getattr(ir_document, "views", {}) or {})
+        for view_name, view in views.items():
+            view_counts[str(view_name)] = view_counts.get(str(view_name), 0) + 1
+            metadata_bucket = view_metadata_values.setdefault(str(view_name), {})
+            for key, value in dict(getattr(view, "metadata", {}) or {}).items():
+                if isinstance(value, bool):
+                    continue
+                if isinstance(value, (int, float)):
+                    metadata_bucket.setdefault(str(key), []).append(float(value))
+
+    evaluated_count = len(samples) - failures
+    adapter_block: Dict[str, Any] = {
+        "adapter_name": adapter_name,
+        "evaluated_count": evaluated_count,
+        "metric_failures": failures,
+        "sample_count": len(samples),
+        "status_counts": dict(sorted(status_counts.items())),
+        "target_component": target_component,
+    }
+    if evaluated_count > 0:
+        adapter_block["accepted_count"] = int(round(sum(metric_values["accepted"])))
+        adapter_block["acceptance_rate"] = _mean(metric_values["accepted"])
+        for name, values in sorted(metric_values.items()):
+            if name == "accepted" or not values:
+                continue
+            adapter_block[name] = _mean(values)
+        adapter_block["views"] = {
+            view_name: {
+                "metadata": {
+                    key: _mean(values)
+                    for key, values in sorted(metadata.items())
+                    if values
+                },
+                "present_count": count,
+                "present_rate": round(count / evaluated_count, 9),
+            }
+            for view_name, count in sorted(view_counts.items())
+            for metadata in [view_metadata_values.get(view_name, {})]
+        }
+    return adapter_block
+
+
+def _mean(values: Sequence[float]) -> float:
+    if not values:
+        return 0.0
+    return round(sum(float(value) for value in values) / len(values), 9)
+
+
+def _float_or_zero(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def program_synthesis_status_block(
     queue: ModalTodoQueue,
     policy: ModalOptimizerPolicy,
@@ -2594,10 +2805,14 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_ir_reconstruction": 1.0e12,
         "best_validation_ir_text_reconstruction": 1.0e12,
         "best_validation_reconstruction": 1.0e12,
+        "best_validation_logic_bridge_acceptance": -1.0,
+        "best_validation_logic_bridge_proof_failure_ratio": 1.0e12,
+        "best_validation_logic_bridge_total_loss": 1.0e12,
         "bridge_loss_adapters": bridge_loss_adapter_names(args),
         "bridge_loss_failures": 0,
         "bridge_loss_samples": 0,
         "bridge_loss_signals": 0,
+        "bridge_metric_failures": 0,
         "cycles": 0,
         "codex_program_synthesis_execution_mode": "queued_for_external_codex_worker",
         "dataset_id": HF_USCODE_DATASET_ID,
@@ -3228,6 +3443,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)
     summary.setdefault("bridge_loss_signals", 0)
+    summary.setdefault("bridge_metric_failures", 0)
+    summary.setdefault("best_validation_logic_bridge_acceptance", -1.0)
+    summary.setdefault("best_validation_logic_bridge_proof_failure_ratio", 1.0e12)
+    summary.setdefault("best_validation_logic_bridge_total_loss", 1.0e12)
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
@@ -3321,6 +3540,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_samples,
                 feature_codec,
             )
+            bridge_ir_train = bridge_ir_metric_block(train_samples, bridge_adapters)
+            bridge_ir_validation = bridge_ir_metric_block(validation_samples, bridge_adapters)
             run = supervisor.optimize(
                 train_samples,
                 validation_samples=validation_samples,
@@ -3398,9 +3619,19 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["bridge_loss_signals"] = int(
                 summary.get("bridge_loss_signals", 0)
             ) + int(bridge_loss_signals)
+            summary["bridge_metric_failures"] = int(
+                summary.get("bridge_metric_failures", 0)
+            ) + int(
+                bridge_ir_train.get("metric_failures", 0)
+                + bridge_ir_validation.get("metric_failures", 0)
+            )
+            summary["latest_logic_bridge_train"] = bridge_ir_train
+            summary["latest_logic_bridge_validation"] = bridge_ir_validation
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
+                + bridge_ir_train.get("metric_failures", 0)
+                + bridge_ir_validation.get("metric_failures", 0)
             )
             summary["train_ce_improved_cycles"] = int(summary.get("train_ce_improved_cycles", 0)) + int(train_ce_delta > 0.0)
             summary["validation_ce_improved_cycles"] = int(summary.get("validation_ce_improved_cycles", 0)) + int(validation_ce_delta > 0.0)
@@ -3422,6 +3653,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["best_validation_ir_text_reconstruction"] = min(
                 summary.get("best_validation_ir_text_reconstruction", 1.0e12),
                 float(compiler_ir_validation.get("text_reconstruction_loss", 1.0e12)),
+            )
+            summary["best_validation_logic_bridge_acceptance"] = max(
+                summary.get("best_validation_logic_bridge_acceptance", -1.0),
+                float(bridge_ir_validation.get("acceptance_rate", -1.0)),
+            )
+            summary["best_validation_logic_bridge_proof_failure_ratio"] = min(
+                summary.get("best_validation_logic_bridge_proof_failure_ratio", 1.0e12),
+                float(bridge_ir_validation.get("proof_failure_ratio", 1.0e12)),
+            )
+            summary["best_validation_logic_bridge_total_loss"] = min(
+                summary.get("best_validation_logic_bridge_total_loss", 1.0e12),
+                float(bridge_ir_validation.get("total_loss", 1.0e12)),
             )
             summary["best_validation_cosine"] = max(
                 summary.get("best_validation_cosine"),
@@ -3447,6 +3690,8 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "completed_count": sum(step.completed_count for step in run.steps),
                     "compiler_ir_train": compiler_ir_train,
                     "compiler_ir_validation": compiler_ir_validation,
+                    "logic_bridge_train": bridge_ir_train,
+                    "logic_bridge_validation": bridge_ir_validation,
                     "cycle": cycle,
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "cycle",

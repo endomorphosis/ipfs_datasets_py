@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import re
-from urllib.parse import urlparse, parse_qs, unquote
+from urllib.parse import urlparse, parse_qs, unquote, urlunparse
 
 from .citation_history import extract_trailing_history_citations
 from ...playwright_limiter import acquire_playwright_slot
@@ -395,8 +395,25 @@ class BaseStateScraper(ABC):
 
     @staticmethod
     def _ipfs_page_cache_key(url: str) -> str:
-        normalized = str(url or "").strip()
+        normalized = BaseStateScraper._canonical_fetch_url(url)
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _canonical_fetch_url(url: str) -> str:
+        value = str(url or "").strip()
+        if not value:
+            return ""
+        try:
+            parsed = urlparse(value)
+            # URL fragments are client-side anchors and do not change the
+            # HTTP resource. Remove them so per-section statute URLs reuse the
+            # same page fetch/cache entry.
+            if parsed.fragment:
+                parsed = parsed._replace(fragment="")
+                value = urlunparse(parsed)
+        except Exception:
+            pass
+        return value
 
     def _fetch_cache_paths(self, url: str) -> tuple[Path, Path]:
         cache_key = self._ipfs_page_cache_key(url)
@@ -1053,6 +1070,10 @@ class BaseStateScraper(ABC):
         This keeps Common Crawl/Wayback/Archive.is logic inside state scrapers,
         mirroring Oregon archival workflow for all states.
         """
+        fetch_url = self._canonical_fetch_url(url)
+        if not fetch_url:
+            return b""
+
         original_timeout_seconds = timeout_seconds
         bounded_fetch_timeout = _env_float("STATE_SCRAPER_FETCH_TIMEOUT_SECONDS", 0.0)
         if bounded_fetch_timeout > 0:
@@ -1066,7 +1087,7 @@ class BaseStateScraper(ABC):
                     "User-Agent": "ipfs-datasets-state-scraper/2.0",
                     "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
                 }
-                for candidate_url in self._wayback_replay_candidates(url):
+                for candidate_url in self._wayback_replay_candidates(fetch_url):
                     try:
                         request = Request(candidate_url, headers=headers)
                         with urlopen(request, timeout=max(1, int(timeout_seconds or 25))) as response:
@@ -1076,7 +1097,7 @@ class BaseStateScraper(ABC):
                             continue
                         self._record_fetch_event(provider="requests_direct", success=True)
                         await self._cache_successful_page_fetch(
-                            url=url,
+                            url=fetch_url,
                             payload=content,
                             provider="requests_direct",
                         )
@@ -1090,7 +1111,7 @@ class BaseStateScraper(ABC):
                 self._record_fetch_event(provider="requests_direct", success=False, error=str(exc))
                 return b""
 
-        cached_bytes = await self._load_page_bytes_from_any_cache(url)
+        cached_bytes = await self._load_page_bytes_from_any_cache(fetch_url)
         if cached_bytes:
             return cached_bytes
 
@@ -1118,7 +1139,7 @@ class BaseStateScraper(ABC):
         if original_timeout_seconds <= 5 and bounded_fetch_timeout <= 0:
             unified_enabled = False
         if unified_enabled:
-            for candidate_url in self._wayback_replay_candidates(url):
+            for candidate_url in self._wayback_replay_candidates(fetch_url):
                 unified_bytes = await self._fetch_page_content_with_unified_api(
                     url=candidate_url,
                     timeout_seconds=timeout_seconds,
@@ -1127,7 +1148,7 @@ class BaseStateScraper(ABC):
                     unified_bytes = b""
                 if unified_bytes:
                     await self._cache_successful_page_fetch(
-                        url=url,
+                        url=fetch_url,
                         payload=unified_bytes,
                         provider="unified_api",
                     )
@@ -1144,7 +1165,7 @@ class BaseStateScraper(ABC):
                     request_timeout_seconds=timeout_seconds,
                     delay_seconds=0.0,
                 )
-                fetched = await client.fetch_with_fallback(url)
+                fetched = await client.fetch_with_fallback(fetch_url)
                 self._record_fetch_event(
                     provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
                     success=bool(getattr(fetched, "content", b"")),
@@ -1152,7 +1173,7 @@ class BaseStateScraper(ABC):
                 content = bytes(fetched.content or b"")
                 if content:
                     await self._cache_successful_page_fetch(
-                        url=url,
+                        url=fetch_url,
                         payload=content,
                         provider=str(getattr(fetched, "source", "archival_fallback") or "archival_fallback"),
                     )
