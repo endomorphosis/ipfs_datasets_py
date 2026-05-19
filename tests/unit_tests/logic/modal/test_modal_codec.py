@@ -2464,6 +2464,7 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
                 "deontic->conditional_normative",
                 "deontic->frame",
                 "deontic->temporal",
+                "deontic->dynamic",
             ),
         ),
         (
@@ -2489,6 +2490,24 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
             (
                 "alethic->deontic",
                 "alethic->conditional_normative",
+            ),
+        ),
+        (
+            "temporal",
+            "LTL",
+            "F",
+            "within",
+            [
+                {"family": "temporal", "count": 1, "share": 0.5},
+                {"family": "deontic", "count": 1, "share": 0.5},
+            ],
+            {
+                "temporal": 0.5,
+                "deontic": 0.5,
+            },
+            (
+                "temporal->deontic",
+                "temporal->temporal",
             ),
         ),
     )
@@ -6102,6 +6121,97 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     assert any(
         ambiguity.ambiguity_type == "adaptive_temporal_temporal_contested_margin_low"
         and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_treats_zero_margin_temporal_self_pair_with_priority_runner_up_as_outvoted_adaptive_ambiguity(
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-zero-margin-temporal-self-doc",
+        text="Within 30 days the filing deadline applies.",
+        normalized_text="Within 30 days the filing deadline applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-zero-margin-temporal-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="filing_deadline",
+                    arguments=["actor:agency"],
+                    role="temporal_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-zero-margin-temporal-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="10 U.S.C. 12645",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "temporal", "count": 1, "share": 0.5},
+            {"family": "deontic", "count": 1, "share": 0.5},
+        ],
+        family_shares={"temporal": 0.5, "deontic": 0.5},
+    )
+
+    adaptive_temporal_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal"]
+    )
+    assert adaptive_temporal_self.metadata["predicted_family"] == "temporal"
+    assert adaptive_temporal_self.metadata["target_family"] == "temporal"
+    assert adaptive_temporal_self.metadata["is_self_pair"] is True
+    assert adaptive_temporal_self.metadata["predicted_margin_to_runner_up"] == 0.0
+    assert adaptive_temporal_self.metadata["family_margin"] == 0.0
+    assert adaptive_temporal_self.metadata["runner_up_family"] == "deontic"
+    assert adaptive_temporal_self.metadata["runner_up_is_priority_policy_pair"] is True
+    assert adaptive_temporal_self.metadata["adaptive_margin_direction"] == "outvoted"
+    assert (
+        adaptive_temporal_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_temporal_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_temporal_outvoted_margin_low"
+        and ambiguity.metadata["runner_up_is_priority_policy_pair"] is True
         for ambiguity in ambiguities
     )
 

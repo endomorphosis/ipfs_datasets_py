@@ -755,6 +755,14 @@ class DeterministicModalCompiler:
         for target_family in ordered_target_families:
             has_signal = bool(target_signal_by_family.get(target_family, False))
             is_self_pair = target_family == predicted_family
+            runner_up_is_priority_policy_pair = bool(
+                is_self_pair
+                and runner_up_family is not None
+                and is_priority_signal_free_adaptive_ambiguity_pair(
+                    predicted_family,
+                    runner_up_family,
+                )
+            )
             if is_self_pair and (
                 predicted_margin_to_runner_up is None
                 or predicted_margin_to_runner_up > threshold
@@ -774,7 +782,7 @@ class DeterministicModalCompiler:
             is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
                 predicted_family,
                 target_family,
-            )
+            ) or runner_up_is_priority_policy_pair
             if (
                 not has_target_signal_evidence
                 and not supports_signal_free_pair_policy
@@ -838,6 +846,7 @@ class DeterministicModalCompiler:
                 "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
                 "is_priority_policy_pair": is_priority_policy_pair,
+                "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
                 "predicted_family": predicted_family,
                 "predicted_margin_to_runner_up_raw": predicted_margin_to_runner_up,
                 "predicted_margin_to_runner_up": (
