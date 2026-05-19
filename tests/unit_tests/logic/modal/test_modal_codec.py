@@ -3073,6 +3073,7 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
                 "alethic->conditional_normative",
                 "alethic->epistemic",
                 "alethic->temporal",
+                "alethic->frame",
             ),
         ),
         (
@@ -9434,6 +9435,97 @@ def test_modal_compiler_uses_frame_signal_for_alethic_frame_adaptive_ambiguity(
     )
 
 
+def test_modal_compiler_treats_zero_margin_alethic_frame_priority_pair_as_outvoted_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-zero-margin-alethic-frame-doc",
+        text="It is possible to provide written notice.",
+        normalized_text="It is possible to provide written notice.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="alethic",
+                system="S5",
+                symbol="◇",
+                label="possible",
+                cue="possible",
+                start_char=6,
+                end_char=14,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-zero-margin-alethic-frame-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-1",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="◇",
+                    label="possible",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-zero-margin-alethic-frame-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="18 U.S.C. 930",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "alethic", "count": 1, "share": 0.5},
+            {"family": "frame", "count": 1, "share": 0.5},
+        ],
+        family_shares={"alethic": 0.5, "frame": 0.5},
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["alethic", "frame"]
+    )
+    assert adaptive_frame.metadata["family_margin"] == 0.0
+    assert adaptive_frame.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_frame.metadata["is_priority_policy_pair"] is True
+    assert adaptive_frame.metadata["is_compiler_required_policy_pair"] is True
+    assert adaptive_frame.metadata["explicit_ambiguity_type"] == (
+        "adaptive_alethic_frame_outvoted_margin_low"
+    )
+    assert adaptive_frame.severity == "requires_rule"
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_alethic_frame_outvoted_margin_low"
+        and ambiguity.metadata["family_margin"] == 0.0
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_treats_zero_margin_deontic_epistemic_priority_pair_as_outvoted_adaptive_ambiguity(
     monkeypatch,
 ) -> None:
@@ -13503,6 +13595,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "family_margin": -0.326486646276,
             "adaptive_priority": 0.476486646276,
             "expected_explicit_type": "adaptive_alethic_epistemic_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-alethic-frame-margin-doc",
+            "predicted_family": "alethic",
+            "predicted_system": "S5",
+            "predicted_symbol": "◇",
+            "predicted_label": "possible",
+            "target_family": "frame",
+            "ranking": (
+                {"family": "alethic", "count": 1, "share": 0.873489298146},
+                {"family": "frame", "count": 1, "share": 0.126510701854},
+            ),
+            "family_margin": -0.746978596292,
+            "adaptive_priority": 0.896978596292,
+            "expected_explicit_type": "adaptive_alethic_frame_outvoted_margin_low",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
