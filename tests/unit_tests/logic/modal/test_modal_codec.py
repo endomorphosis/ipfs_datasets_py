@@ -4592,7 +4592,7 @@ def test_modal_compiler_surfaces_deontic_self_pair_adaptive_ambiguity_for_low_ru
     assert adaptive_deontic_self.metadata["target_family"] == "deontic"
     assert adaptive_deontic_self.metadata["is_self_pair"] is True
     assert adaptive_deontic_self.metadata["predicted_margin_to_runner_up"] == 0.1453
-    assert adaptive_deontic_self.metadata["family_margin"] == 0.0
+    assert adaptive_deontic_self.metadata["family_margin"] == 0.1453
     assert adaptive_deontic_self.metadata["adaptive_margin_direction"] == "contested"
     assert (
         adaptive_deontic_self.metadata["explicit_ambiguity_type"]
@@ -4680,7 +4680,7 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     assert adaptive_temporal_self.metadata["target_family"] == "temporal"
     assert adaptive_temporal_self.metadata["is_self_pair"] is True
     assert adaptive_temporal_self.metadata["predicted_margin_to_runner_up"] == 0.04
-    assert adaptive_temporal_self.metadata["family_margin"] == 0.0
+    assert adaptive_temporal_self.metadata["family_margin"] == 0.04
     assert adaptive_temporal_self.metadata["adaptive_margin_direction"] == "contested"
     assert (
         adaptive_temporal_self.metadata["explicit_ambiguity_type"]
@@ -4769,7 +4769,7 @@ def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_
     assert adaptive_epistemic_self.metadata["target_family"] == "epistemic"
     assert adaptive_epistemic_self.metadata["is_self_pair"] is True
     assert adaptive_epistemic_self.metadata["predicted_margin_to_runner_up"] == 0.1
-    assert adaptive_epistemic_self.metadata["family_margin"] == 0.0
+    assert adaptive_epistemic_self.metadata["family_margin"] == 0.1
     assert adaptive_epistemic_self.metadata["adaptive_margin_direction"] == "contested"
     assert (
         adaptive_epistemic_self.metadata["explicit_ambiguity_type"]
@@ -4857,7 +4857,7 @@ def test_modal_compiler_surfaces_frame_self_pair_adaptive_ambiguity_for_low_runn
     assert adaptive_frame_self.metadata["target_family"] == "frame"
     assert adaptive_frame_self.metadata["is_self_pair"] is True
     assert adaptive_frame_self.metadata["predicted_margin_to_runner_up"] == 0.06
-    assert adaptive_frame_self.metadata["family_margin"] == 0.0
+    assert adaptive_frame_self.metadata["family_margin"] == 0.06
     assert adaptive_frame_self.metadata["adaptive_margin_direction"] == "contested"
     assert (
         adaptive_frame_self.metadata["explicit_ambiguity_type"]

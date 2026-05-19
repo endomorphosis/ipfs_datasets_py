@@ -714,7 +714,11 @@ class DeterministicModalCompiler:
                 and not supports_signal_free_pair_policy
             ):
                 continue
-            family_margin = target_share - predicted_share
+            family_margin = (
+                predicted_margin_to_runner_up
+                if is_self_pair and predicted_margin_to_runner_up is not None
+                else target_share - predicted_share
+            )
             if family_margin > threshold:
                 continue
             margin_direction = "outvoted" if (
@@ -729,9 +733,13 @@ class DeterministicModalCompiler:
             )
             predicted_share_display = round(predicted_share, 6)
             target_share_display = round(target_share, 6)
-            family_margin_display = round(
-                target_share_display - predicted_share_display,
-                6,
+            family_margin_display = (
+                round(family_margin, 6)
+                if is_self_pair
+                else round(
+                    target_share_display - predicted_share_display,
+                    6,
+                )
             )
             candidate_ids = (
                 [predicted_family]
