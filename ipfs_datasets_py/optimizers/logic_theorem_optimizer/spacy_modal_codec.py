@@ -1564,7 +1564,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         frame_count >= _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER
-        and deontic_count <= 0.0
+        and deontic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_deontic_scope"))
     ):
         counts[deontic_family] = max(
@@ -1573,7 +1573,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         frame_count >= _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER
-        and temporal_count <= 0.0
+        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_temporal_scope"))
     ):
         temporal_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
@@ -1592,7 +1592,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         frame_count >= _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
-        and conditional_count <= 0.0
+        and conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_condition_or_exception_scope"))
         and (
             bool(signals.get("has_statutory_scope_reference"))

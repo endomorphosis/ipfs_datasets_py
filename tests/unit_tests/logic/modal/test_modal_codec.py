@@ -8263,6 +8263,65 @@ def test_modal_codec_caps_repeated_generic_frame_cues_against_conditional_scope(
     assert ranking[1]["share"] == 0.5
 
 
+def test_modal_codec_upgrades_generic_frame_temporal_scope_backfill_floor() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The authority, authority, authority annual deadline applies."
+    )
+    ranking = ranked_modal_families(encoding)
+
+    assert ranking[0]["family"] == "frame"
+    assert ranking[1]["family"] == "temporal"
+    assert ranking[0]["share"] == 0.631579
+    assert ranking[1]["share"] == 0.368421
+
+
+def test_modal_codec_upgrades_generic_frame_deontic_scope_backfill_floor() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The authority, authority, authority liability for violations applies."
+    )
+    ranking = ranked_modal_families(encoding)
+
+    assert ranking[0]["family"] == "frame"
+    assert ranking[1]["family"] == "deontic"
+    assert ranking[0]["share"] == 0.631579
+    assert ranking[1]["share"] == 0.368421
+
+
+def test_modal_codec_upgrades_generic_frame_conditional_and_temporal_backfill_floor() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The authority, authority, authority before each annual review deadline."
+    )
+    ranking = ranked_modal_families(encoding)
+
+    assert ranking[0]["family"] == "frame"
+    assert ranking[1]["family"] == "conditional_normative"
+    assert ranking[2]["family"] == "temporal"
+    assert ranking[0]["share"] == 0.461538
+    assert ranking[1]["share"] == 0.269231
+    assert ranking[2]["share"] == 0.269231
+
+
 def test_modal_compiler_surfaces_deontic_temporal_adaptive_ambiguity() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
