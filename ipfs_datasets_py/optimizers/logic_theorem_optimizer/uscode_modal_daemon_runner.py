@@ -607,26 +607,75 @@ def bridge_ir_metric_block(
         "proof_failure_ratio": [],
         "total_loss": [],
     }
-    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+    canonical_values: Dict[str, List[float]] = {
+        "acceptance_rate": [],
+        "graph_failure_penalty": [],
+        "proof_failure_ratio": [],
+        "total_loss": [],
+        "view_coverage_loss": [],
+        "view_count": [],
+    }
+    canonical_hashes: List[str] = []
+    canonical_loss_values: Dict[str, List[float]] = {}
+    canonical_view_distribution_values: Dict[str, List[float]] = {}
+    reports_by_adapter: Dict[str, List[Any]] = {name: [] for name in adapter_names}
+    failures_by_adapter: Dict[str, int] = {name: 0 for name in adapter_names}
+
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    for sample in sample_list:
+        multiview = evaluate_legal_ir_multiview(
+            sample.text,
+            bridge_names=adapter_names,
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+            source_embedding=sample.embedding_vector,
+        )
+        canonical_values["acceptance_rate"].append(multiview.acceptance_rate)
+        canonical_values["graph_failure_penalty"].append(multiview.graph_failure_penalty)
+        canonical_values["proof_failure_ratio"].append(multiview.proof_failure_ratio)
+        canonical_values["total_loss"].append(multiview.total_loss)
+        canonical_values["view_coverage_loss"].append(multiview.view_coverage_loss())
+        canonical_values["view_count"].append(float(multiview.view_count))
+        canonical_hashes.append(multiview.document.canonical_hash())
+        training_target = multiview.training_target()
+        for name, value in training_target.losses.items():
+            canonical_loss_values.setdefault(name, []).append(float(value))
+        for name, value in training_target.view_distribution.items():
+            canonical_view_distribution_values.setdefault(name, []).append(float(value))
+
+        for adapter_name, report in multiview.reports.items():
+            reports_by_adapter.setdefault(adapter_name, []).append(report)
+        for adapter_name in multiview.failures:
+            failures_by_adapter[adapter_name] = failures_by_adapter.get(adapter_name, 0) + 1
+
+    block["canonical_ir"] = {
+        "acceptance_rate": _mean(canonical_values["acceptance_rate"]),
+        "document_hashes": canonical_hashes[:16],
+        "graph_failure_penalty": _mean(canonical_values["graph_failure_penalty"]),
+        "proof_failure_ratio": _mean(canonical_values["proof_failure_ratio"]),
+        "total_loss": _mean(canonical_values["total_loss"]),
+        "losses": {
+            name: _mean(values)
+            for name, values in sorted(canonical_loss_values.items())
+            if values
+        },
+        "view_coverage_loss": _mean(canonical_values["view_coverage_loss"]),
+        "view_count": _mean(canonical_values["view_count"]),
+        "view_distribution": {
+            name: _mean(values)
+            for name, values in sorted(canonical_view_distribution_values.items())
+            if values
+        },
+    }
 
     for adapter_name in adapter_names:
-        try:
-            adapter = load_logic_bridge_adapter(adapter_name)
-        except Exception as exc:
-            adapter_block = {
-                "evaluated_count": 0,
-                "load_error": f"{type(exc).__name__}: {exc}",
-                "metric_failures": len(sample_list),
-                "sample_count": len(sample_list),
-            }
-            block["adapters"][adapter_name] = adapter_block
-            block["metric_failures"] += len(sample_list)
-            continue
-
-        adapter_block = _evaluate_bridge_adapter_metrics(
+        adapter_block = _adapter_metrics_from_reports(
             adapter_name=adapter_name,
-            adapter=adapter,
-            samples=sample_list,
+            reports=reports_by_adapter.get(adapter_name, []),
+            sample_count=len(sample_list),
+            failure_count=failures_by_adapter.get(adapter_name, 0),
         )
         block["adapters"][adapter_name] = adapter_block
         block["evaluated_count"] += int(adapter_block.get("evaluated_count", 0))
@@ -647,11 +696,12 @@ def bridge_ir_metric_block(
     return block
 
 
-def _evaluate_bridge_adapter_metrics(
+def _adapter_metrics_from_reports(
     *,
     adapter_name: str,
-    adapter: Any,
-    samples: Sequence[Any],
+    reports: Sequence[Any],
+    sample_count: int,
+    failure_count: int,
 ) -> Dict[str, Any]:
     metric_values: Dict[str, List[float]] = {
         "accepted": [],
@@ -673,21 +723,8 @@ def _evaluate_bridge_adapter_metrics(
     view_counts: Dict[str, int] = {}
     view_metadata_values: Dict[str, Dict[str, List[float]]] = {}
     target_component = ""
-    failures = 0
 
-    for sample in samples:
-        try:
-            report = adapter.evaluate(
-                sample.text,
-                document_id=sample.sample_id,
-                citation=sample.citation,
-                source=sample.source,
-                source_embedding=sample.embedding_vector,
-            )
-        except Exception:
-            failures += 1
-            continue
-
+    for report in reports:
         target_component = target_component or str(getattr(report, "target_component", ""))
         status = str(getattr(report, "status", "unknown") or "unknown")
         status_counts[status] = status_counts.get(status, 0) + 1
@@ -732,12 +769,12 @@ def _evaluate_bridge_adapter_metrics(
                 if isinstance(value, (int, float)):
                     metadata_bucket.setdefault(str(key), []).append(float(value))
 
-    evaluated_count = len(samples) - failures
+    evaluated_count = len(reports)
     adapter_block: Dict[str, Any] = {
         "adapter_name": adapter_name,
         "evaluated_count": evaluated_count,
-        "metric_failures": failures,
-        "sample_count": len(samples),
+        "metric_failures": failure_count,
+        "sample_count": sample_count,
         "status_counts": dict(sorted(status_counts.items())),
         "target_component": target_component,
     }

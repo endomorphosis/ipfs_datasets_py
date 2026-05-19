@@ -754,7 +754,40 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
 
     assert sample.sample_id in losses
     assert "deontic_quality_requires_validation_loss" in losses[sample.sample_id]
+    assert "legal_ir_multiview_total_loss" in losses[sample.sample_id]
+    assert "legal_ir_multiview_view_coverage_loss" in losses[sample.sample_id]
     assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
+
+
+def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    def fake_bridge_evaluator(samples):
+        return {
+            samples[0].sample_id: {
+                "legal_ir_multiview_total_loss": 0.25,
+                "legal_ir_multiview_view_coverage_loss": 0.5,
+            }
+        }
+
+    supervisor = ModalTodoSupervisor(bridge_loss_evaluator=fake_bridge_evaluator)
+
+    seeded = supervisor.seed_from_evaluation([sample])
+
+    actions = {todo.action for todo in seeded}
+    assert "repair_multiview_legal_ir_loss" in actions
+    assert "repair_multiview_legal_ir_view_coverage" in actions
+    by_action = {todo.action: todo for todo in seeded}
+    assert by_action["repair_multiview_legal_ir_loss"].metadata[
+        "target_component"
+    ] == "bridge.contracts"
+    assert by_action["repair_multiview_legal_ir_loss"].metadata[
+        "program_synthesis_scope"
+    ] == "bridge"
 
 
 def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:
@@ -2593,6 +2626,11 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert "acceptance_rate" in block
     assert "total_loss" in block
     assert block["total_loss"] > 0.0
+    assert block["canonical_ir"]["view_count"] >= 8
+    assert block["canonical_ir"]["total_loss"] > 0.0
+    assert block["canonical_ir"]["view_coverage_loss"] == 0.0
+    assert block["canonical_ir"]["losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert block["canonical_ir"]["view_distribution"]
 
     deontic = block["adapters"]["deontic_norms"]
     assert deontic["views"]["deontic_ir"]["metadata"]["norm_count"] >= 1

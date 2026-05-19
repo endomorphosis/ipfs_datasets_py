@@ -53,7 +53,7 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         ),
         roles=("legal_ir", "modal", "frame_logic", "kg", "prover", "loss"),
         source_view="legal_text",
-        target_views=("modal_ir", "frame_logic_triples", "neo4j_graph_data"),
+        target_views=("modal_ir", "frame_logic", "neo4j_graph_data"),
         loss_names=(
             "cosine_similarity",
             "cosine_loss",
@@ -105,7 +105,12 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         description="Legal text -> FOL/TDFOL formulas, proof obligations, and parser proof gate.",
         roles=("legal_ir", "fol", "tdfol", "temporal", "prover"),
         source_view="legal_text",
-        target_views=("fol_formula", "tdfol_formula", "proof_obligations"),
+        target_views=(
+            "tdfol_formula",
+            "proof_obligations",
+            "frame_logic",
+            "neo4j_graph_data",
+        ),
         loss_names=(
             "tdfol_no_formula_loss",
             "tdfol_parse_failure_ratio",
@@ -121,7 +126,13 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         description="Legal text -> CEC/DCEC event formulas, validation trace, and graph records.",
         roles=("legal_ir", "cec", "event_calculus", "prover"),
         source_view="legal_text",
-        target_views=("cec_events", "dcec_formula", "proof_trace"),
+        target_views=(
+            "cec_events",
+            "dcec_formula",
+            "proof_trace",
+            "frame_logic",
+            "neo4j_graph_data",
+        ),
         loss_names=(
             "cec_dcec_no_formula_loss",
             "cec_dcec_validation_failure_ratio",
@@ -137,7 +148,7 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         description="TDFOL formulas -> lazy external prover-router diagnostics and proof gate.",
         roles=("prover", "installer", "router"),
         source_view="formal_formula",
-        target_views=("proof_gate", "prover_diagnostics"),
+        target_views=("prover_formulas", "frame_logic", "neo4j_graph_data"),
         loss_names=(
             "external_prover_failure_ratio",
             "external_prover_unavailable_loss",

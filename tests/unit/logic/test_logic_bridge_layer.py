@@ -172,6 +172,41 @@ def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     assert "external_prover_unavailable_loss" in report.round_trip.extra_losses
 
 
+def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    report = evaluate_legal_ir_multiview(
+        "The agency shall publish notice before the permit takes effect.",
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="multiview-bridge-smoke",
+        citation="MultiView Bridge Smoke",
+    )
+
+    assert report.attempted_count == 2
+    assert report.document.version == "legal-ir-multiview-v1"
+    assert report.document.has_frame_logic is True
+    assert "deontic_norms.deontic_ir" in report.document.views
+    assert "deontic_norms.deontic_prover_syntax" in report.document.views
+    assert "fol_tdfol.tdfol_formula" in report.document.views
+    assert "fol_tdfol.proof_obligations" in report.document.views
+    assert report.document.metadata["view_count"] == report.view_count
+    assert report.failures == {}
+    assert report.total_loss > 0.0
+    assert report.view_coverage_loss() == 0.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_total_loss"] == report.total_loss
+    assert report.canonical_loss_vector()["legal_ir_multiview_view_coverage_loss"] == 0.0
+    assert report.loss_vector()[
+        "deontic_norms.deontic_quality_requires_validation_loss"
+    ] == 1.0
+    target = report.training_target()
+    assert target.document is report.document
+    assert target.losses["legal_ir_multiview_total_loss"] == report.total_loss
+    assert target.adapter_losses["deontic_norms"][
+        "deontic_quality_requires_validation_loss"
+    ] == 1.0
+    assert target.view_distribution
+
+
 def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 

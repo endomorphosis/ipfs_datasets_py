@@ -88,6 +88,7 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "ipfs_datasets_py/logic/bridge/__init__.py",
             "ipfs_datasets_py/logic/bridge/types.py",
             "ipfs_datasets_py/logic/bridge/registry.py",
+            "ipfs_datasets_py/logic/bridge/multiview.py",
             "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
             "ipfs_datasets_py/logic/bridge/deontic_norms.py",
             "ipfs_datasets_py/logic/bridge/fol_tdfol.py",

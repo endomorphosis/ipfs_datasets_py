@@ -56,6 +56,11 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_deontic_prover_bridge": "deontic.ir",
     "repair_cec_dcec_bridge": "CEC.native",
     "repair_external_prover_router": "external_provers.router",
+    "repair_multiview_legal_ir_acceptance": "bridge.contracts",
+    "repair_multiview_legal_ir_graph_projection": "knowledge_graphs.neo4j_compat",
+    "repair_multiview_legal_ir_loss": "bridge.contracts",
+    "repair_multiview_legal_ir_prover_gate": "external_provers.router",
+    "repair_multiview_legal_ir_view_coverage": "bridge.contracts",
     "repair_flogic_ontology_constraints": "modal.frame_logic",
     "repair_tdfol_bridge_parse": "TDFOL.prover",
 }
@@ -190,48 +195,50 @@ def bridge_loss_evaluator_for_names(
             if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
         )
     )
-    adapters: Dict[str, Any] = {}
-    adapter_errors: Dict[str, str] = {}
-
-    def _adapter(name: str) -> Any:
-        if name in adapters:
-            return adapters[name]
-        if name in adapter_errors:
-            raise RuntimeError(adapter_errors[name])
-        try:
-            from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
-
-            adapters[name] = load_logic_bridge_adapter(name)
-            return adapters[name]
-        except Exception as exc:  # pragma: no cover - defensive daemon path
-            adapter_errors[name] = str(exc)
-            raise
-
     def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
         losses_by_sample: Dict[str, Dict[str, float]] = {}
         if not names:
             return losses_by_sample
+        from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
         for sample in samples:
             sample_losses: Dict[str, float] = {}
-            for name in names:
-                prefix = _bridge_loss_prefix(name)
-                try:
-                    adapter = _adapter(name)
-                    report = adapter.evaluate(
-                        sample.text,
-                        document_id=sample.sample_id,
-                        citation=sample.citation,
-                        source=sample.source,
-                        source_embedding=sample.embedding_vector,
-                    )
-                    sample_losses.update(_bridge_losses_from_report(report))
-                except Exception:
-                    sample_losses[f"{prefix}_bridge_evaluation_failure_loss"] = 1.0
+            try:
+                multiview = evaluate_legal_ir_multiview(
+                    sample.text,
+                    bridge_names=names,
+                    document_id=sample.sample_id,
+                    citation=sample.citation,
+                    source=sample.source,
+                    source_embedding=sample.embedding_vector,
+                )
+                sample_losses.update(_multiview_losses_for_optimizer(multiview))
+            except Exception:
+                sample_losses["legal_ir_multiview_bridge_evaluation_failure_loss"] = 1.0
             if sample_losses:
                 losses_by_sample[sample.sample_id] = dict(sorted(sample_losses.items()))
         return losses_by_sample
 
     return evaluate
+
+
+def _multiview_losses_for_optimizer(multiview: Any) -> Dict[str, float]:
+    """Flatten a multi-view bridge report into TODO-generator loss names."""
+
+    losses: Dict[str, float] = {}
+    training_target = multiview.training_target()
+    losses.update(
+        {
+            str(name): _safe_float(value)
+            for name, value in dict(getattr(training_target, "losses", {}) or {}).items()
+        }
+    )
+    for report in dict(getattr(multiview, "reports", {}) or {}).values():
+        losses.update(_bridge_losses_from_report(report))
+    for adapter_name in dict(getattr(multiview, "failures", {}) or {}):
+        prefix = _bridge_loss_prefix(adapter_name)
+        losses[f"{prefix}_bridge_evaluation_failure_loss"] = 1.0
+    return dict(sorted(losses.items()))
 
 
 def _bridge_losses_from_report(report: Any) -> Dict[str, float]:
@@ -507,6 +514,17 @@ class ModalLossTodoGenerator:
         "external_prover_unavailable_loss": 0.0,
         "flogic_similarity_loss": 0.05,
         "frame_ranking_loss": 0.0,
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_bridge_evaluation_failure_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.05,
+        "legal_ir_multiview_cross_entropy_loss": 0.05,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.05,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.05,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
         "modal_span_coverage_loss": 0.0,
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
@@ -615,6 +633,50 @@ class ModalLossTodoGenerator:
             "external_prover_unavailable_loss": (
                 "repair_external_prover_router",
                 "Wire lazy prover installation and native fallback so at least one prover is available.",
+            ),
+            "legal_ir_multiview_acceptance_loss": (
+                "repair_multiview_legal_ir_acceptance",
+                "Repair the canonical multiview LegalIR bridge so every requested logic view accepts the legal text.",
+            ),
+            "legal_ir_multiview_bridge_evaluation_failure_loss": (
+                "repair_multiview_legal_ir_acceptance",
+                "Fix a canonical multiview LegalIR evaluation failure before optimizer loss routing.",
+            ),
+            "legal_ir_multiview_cosine_loss": (
+                "repair_multiview_legal_ir_loss",
+                "Improve the canonical multiview LegalIR round-trip cosine objective across bridge views.",
+            ),
+            "legal_ir_multiview_cross_entropy_loss": (
+                "repair_multiview_legal_ir_loss",
+                "Improve the canonical multiview LegalIR view-family cross-entropy objective.",
+            ),
+            "legal_ir_multiview_frame_logic_missing_loss": (
+                "repair_multiview_legal_ir_view_coverage",
+                "Ensure canonical LegalIR contains frame-logic triples across modal and deontic bridge views.",
+            ),
+            "legal_ir_multiview_graph_failure_penalty": (
+                "repair_multiview_legal_ir_graph_projection",
+                "Repair canonical LegalIR graph projection into the Neo4j-compatible decentralized KG layer.",
+            ),
+            "legal_ir_multiview_proof_failure_ratio": (
+                "repair_multiview_legal_ir_prover_gate",
+                "Repair canonical LegalIR proof-gate routing across local and external theorem provers.",
+            ),
+            "legal_ir_multiview_reconstruction_loss": (
+                "repair_multiview_legal_ir_loss",
+                "Improve canonical multiview LegalIR reconstruction across encoder and decoder views.",
+            ),
+            "legal_ir_multiview_text_reconstruction_loss": (
+                "repair_multiview_legal_ir_loss",
+                "Improve canonical multiview LegalIR decompiler text reconstruction.",
+            ),
+            "legal_ir_multiview_total_loss": (
+                "repair_multiview_legal_ir_loss",
+                "Reduce total canonical multiview LegalIR loss across adapters, proof gates, and graph projections.",
+            ),
+            "legal_ir_multiview_view_coverage_loss": (
+                "repair_multiview_legal_ir_view_coverage",
+                "Fill missing canonical LegalIR views so modal, deontic, TDFOL, CEC, frame, and prover outputs stay coherent.",
             ),
             "tdfol_no_formula_loss": (
                 "repair_tdfol_bridge_parse",

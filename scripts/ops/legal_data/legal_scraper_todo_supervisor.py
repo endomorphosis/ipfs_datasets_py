@@ -1669,13 +1669,18 @@ def _maybe_generate_llm_rewrite_plans(
     errors: List[str] = []
 
     metrics = backlog.get("metrics") if isinstance(backlog.get("metrics"), dict) else {}
+    provider_value = str(provider or "").strip()
+    # "llm_router"/"router"/"auto" are supervisor-level aliases that mean
+    # "use router default provider selection", not literal provider ids.
+    if provider_value.lower() in {"llm_router", "router", "auto"}:
+        provider_value = ""
     for task in selected:
         prompt = _llm_rewrite_prompt(task, metrics)
         try:
             kwargs: Dict[str, Any] = {"max_new_tokens": max(128, int(max_tokens))}
             response = llm_router.generate_text(
                 prompt,
-                provider=(provider or None),
+                provider=(provider_value or None),
                 model_name=(model or None),
                 **kwargs,
             )
