@@ -10119,7 +10119,7 @@ def test_objection_response_comment_light_verb_duties_export_operative_predicate
     assert "exception_requires_scope_review" in blocked["llm_repair"]["reasons"]
 
 
-def test_review_request_light_verb_duties_preserve_source_grounded_predicates():
+def test_review_request_light_verb_duties_preserve_source_grounded_operative_predicates():
     examples = [
         (
             "The applicant shall file an appeal of the denial.",
