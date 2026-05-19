@@ -2952,6 +2952,118 @@ def test_spacy_codec_lowers_initial_family_cross_entropy() -> None:
     assert spacy_eval.cross_entropy_loss < plain_eval.cross_entropy_loss
 
 
+def test_spacy_codec_strengthens_deontic_share_for_statutory_generic_frame_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="1396u",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction under this section "
+            "impose liability for violations."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "deontic" for cue in encoding.cues)
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert deontic_share > 0.3
+    assert frame_share > deontic_share
+
+
+def test_spacy_codec_strengthens_temporal_share_for_statutory_generic_frame_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="50",
+        section="3305",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction under this section "
+            "apply before each annual review deadline."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert temporal_share > 0.3
+    assert frame_share > temporal_share
+
+
+def test_spacy_codec_strengthens_conditional_share_for_dense_temporal_scope_statutory_conflict() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="326",
+        text=(
+            "Within 30 days and by January 1, 2030 and no later than the fiscal year "
+            "deadline, as provided in subsection (b), the agency publishes the report."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    assert conditional_share > 0.075
+
+
+def test_spacy_codec_strengthens_temporal_share_for_dense_deontic_scope_statutory_conflict() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="2",
+        section="5303",
+        text=(
+            "The agency shall and must and shall and must provide notice before each "
+            "annual review deadline under this section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.1
+
+
 def test_supervisor_with_spacy_codec_improves_loss_and_cosine() -> None:
     sample = build_us_code_sample(
         title="5",
