@@ -960,6 +960,10 @@ class DeterministicModalCompiler:
                     signals.get("has_temporal_scope")
                 ),
                 ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.DYNAMIC.value: bool(
+                    signals.get("has_dynamic_scope")
+                    or signals.get("has_dynamic_cue")
+                ),
             }
         elif predicted_family == ModalLogicFamily.ALETHIC.value:
             target_signal_by_family = {
