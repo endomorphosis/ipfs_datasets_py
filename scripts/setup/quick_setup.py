@@ -31,6 +31,66 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _candidate_ipfs_accelerate_roots(repo_root: Path) -> list[Path]:
+    roots: list[Path] = []
+    for env_name in ("IPFS_ACCELERATE_PY_ROOT", "IPFS_ACCELERATE_PY_HOME"):
+        value = os.environ.get(env_name)
+        if value:
+            roots.append(Path(value).expanduser())
+    roots.extend(
+        [
+            repo_root / 'ipfs_accelerate_py',
+            repo_root.parent / 'ipfs_accelerate_py',
+            Path.home() / 'ipfs_accelerate_py',
+        ]
+    )
+    seen: set[str] = set()
+    unique_roots: list[Path] = []
+    for root in roots:
+        try:
+            resolved = str(root.resolve())
+        except OSError:
+            resolved = str(root)
+        if resolved not in seen:
+            seen.add(resolved)
+            unique_roots.append(root)
+    return unique_roots
+
+
+def _activate_ipfs_accelerate_checkout(checkout_root: Path) -> bool:
+    package_root = checkout_root / 'ipfs_accelerate_py'
+    package_init = package_root / '__init__.py'
+    if not package_init.exists():
+        return False
+    if not (package_root / 'p2p_tasks').is_dir():
+        return False
+    checkout_text = str(checkout_root)
+    if checkout_text not in sys.path:
+        sys.path.insert(0, checkout_text)
+    current_module = sys.modules.get('ipfs_accelerate_py')
+    if current_module is not None and not getattr(current_module, '__file__', None):
+        sys.modules.pop('ipfs_accelerate_py', None)
+    importlib.invalidate_caches()
+    return True
+
+
+def _ipfs_accelerate_service_active() -> bool:
+    systemctl = shutil.which('systemctl')
+    if not systemctl:
+        return False
+    try:
+        result = subprocess.run(
+            [systemctl, '--user', 'is-active', 'ipfs-accelerate-task-worker.service'],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except Exception:
+        return False
+    return result.returncode == 0 and (result.stdout or '').strip() == 'active'
+
+
 def _reexec_in_repo_venv(logger) -> None:
     """Re-exec this script inside a repo-local virtualenv if needed.
 
@@ -179,6 +239,17 @@ def ensure_libp2p_main(logger) -> None:
 
 def ensure_ipfs_accelerate_py(logger) -> None:
     """Ensure ipfs_accelerate_py is installed from the git main branch."""
+    repo_root = _repo_root()
+    for local_path in _candidate_ipfs_accelerate_roots(repo_root):
+        if _activate_ipfs_accelerate_checkout(local_path):
+            service_note = " with running systemd service" if _ipfs_accelerate_service_active() else ""
+            logger.info(
+                "✅ ipfs_accelerate_py available from local checkout: %s%s",
+                local_path.resolve(),
+                service_note,
+            )
+            return
+
     try:
         result = subprocess.run(
             [

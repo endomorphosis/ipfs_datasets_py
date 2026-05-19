@@ -1,4 +1,6 @@
 import types
+import importlib.util
+import sys
 
 
 def test_dependency_installer_honors_legacy_auto_install_truthy(monkeypatch):
@@ -182,3 +184,46 @@ def test_runtime_installer_reruns_when_revision_changes(monkeypatch, tmp_path):
     ]
     state = auto_installer._load_runtime_installer_state()
     assert state["repo_revision"] == "rev-new"
+
+
+def test_setup_installer_uses_existing_ipfs_accelerate_checkout(monkeypatch, tmp_path, capsys):
+    install_path = (
+        __import__("pathlib").Path(__file__).resolve().parents[2]
+        / "scripts"
+        / "setup"
+        / "install.py"
+    )
+    spec = importlib.util.spec_from_file_location("test_setup_install_ipfs_accel", install_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    checkout = tmp_path / "ipfs_accelerate_py"
+    package_root = checkout / "ipfs_accelerate_py"
+    (package_root / "p2p_tasks").mkdir(parents=True)
+    (package_root / "__init__.py").write_text("", encoding="utf-8")
+    (package_root / "p2p_tasks" / "__init__.py").write_text("", encoding="utf-8")
+
+    calls: list[object] = []
+    monkeypatch.setattr(module, "_repo_root", lambda: tmp_path / "repo")
+    monkeypatch.setenv("IPFS_ACCELERATE_PY_ROOT", str(checkout))
+    monkeypatch.setattr(module, "_ipfs_accelerate_service_active", lambda: True)
+    monkeypatch.setattr(module.subprocess, "run", lambda *args, **kwargs: calls.append(args) or None)
+    sys.modules.pop("ipfs_accelerate_py", None)
+    sys.modules.pop("ipfs_accelerate_py.p2p_tasks", None)
+
+    try:
+        module.ensure_ipfs_accelerate_py()
+    finally:
+        sys.modules.pop("ipfs_accelerate_py", None)
+        sys.modules.pop("ipfs_accelerate_py.p2p_tasks", None)
+        try:
+            sys.path.remove(str(checkout))
+        except ValueError:
+            pass
+
+    output = capsys.readouterr().out
+    assert "available from local checkout" in output
+    assert "running systemd service" in output
+    assert calls == []
