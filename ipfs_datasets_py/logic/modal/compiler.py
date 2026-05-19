@@ -1035,10 +1035,7 @@ class DeterministicModalCompiler:
         for target_family in priority_signal_free_adaptive_ambiguity_targets(
             predicted_family
         ):
-            if (
-                target_family in target_signal_by_family
-                and target_family not in seen_targets
-            ):
+            if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
         for target_family in target_signal_by_family:

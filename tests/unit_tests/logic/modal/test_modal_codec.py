@@ -11445,6 +11445,23 @@ def test_modal_compiler_orders_priority_adaptive_targets_before_non_priority_tar
     ]
 
 
+def test_modal_compiler_includes_priority_adaptive_targets_even_when_signal_map_is_sparse() -> None:
+    ordered_targets = DeterministicModalCompiler._ordered_adaptive_target_families(
+        predicted_family="frame",
+        target_signal_by_family={
+            "frame": False,
+        },
+    )
+
+    assert ordered_targets[:4] == [
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "temporal",
+    ]
+    assert "frame" in ordered_targets
+
+
 def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_bundle(
     monkeypatch,
 ) -> None:
