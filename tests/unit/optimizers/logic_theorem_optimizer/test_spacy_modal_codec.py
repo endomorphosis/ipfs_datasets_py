@@ -1496,6 +1496,47 @@ def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_deontic_tokens
     assert deontic_share > 0.0
 
 
+def test_spacy_codec_strengthens_deontic_share_for_generic_frame_scope_with_penalty_terms() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="18",
+        section="1792a",
+        text="Authority and jurisdiction under this section apply.",
+    )
+    competing = build_us_code_sample(
+        title="18",
+        section="1792b",
+        text=(
+            "Authority and jurisdiction under this section apply, and violations are "
+            "subject to criminal penalties."
+        ),
+    )
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_ranking = ranked_modal_families(codec.encode_sample(competing))
+
+    baseline_deontic_share = next(
+        (
+            float(item["share"])
+            for item in baseline_ranking
+            if item["family"] == "deontic"
+        ),
+        0.0,
+    )
+    competing_deontic_share = next(
+        (
+            float(item["share"])
+            for item in competing_ranking
+            if item["family"] == "deontic"
+        ),
+        0.0,
+    )
+    assert competing_deontic_share > baseline_deontic_share
+    assert competing_deontic_share > 0.0
+
+
 def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_temporal_tokens() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1839,6 +1880,23 @@ def test_spacy_encoder_extracts_deontic_obligation_phrase_cue() -> None:
     assert any(
         cue.family == "deontic"
         and cue.cue.lower() == "under an obligation to"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_avoids_alethic_may_be_cue_in_permission_context() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary may be authorized to issue the permit if review is complete.",
+        document_id="sample-may-be-permission-context",
+    )
+
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "may"
+        for cue in encoding.cues
+    )
+    assert not any(
+        cue.family == "alethic" and cue.cue.lower() == "may be"
         for cue in encoding.cues
     )
 

@@ -232,6 +232,10 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         "deontic",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "alethic",
+        "conditional_normative",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
         "deontic",
         "conditional_normative",
     )

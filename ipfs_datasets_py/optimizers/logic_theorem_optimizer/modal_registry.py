@@ -393,7 +393,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
         system=ModalSystem.S5,
         operators=(
             _op("□", ("necessary", "must_be"), ("necessary", "impossible", "cannot"), (ModalSystem.K, ModalSystem.T, ModalSystem.S4, ModalSystem.S5)),
-            _op("◇", ("possible",), ("possible", "may be", "can be"), (ModalSystem.K, ModalSystem.T, ModalSystem.S4, ModalSystem.S5)),
+            _op("◇", ("possible",), ("possible", "can be"), (ModalSystem.K, ModalSystem.T, ModalSystem.S4, ModalSystem.S5)),
         ),
         semantics=ModalSemanticsSpec(reflexive=True, transitive=True, symmetric=True, euclidean=True),
         description="Alethic necessity and possibility.",
@@ -527,6 +527,9 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "under such terms and conditions",
                     "on such terms and conditions",
                     "subject to the terms and conditions",
+                    "subject only to",
+                    "subject, however, to",
+                    "subject however to",
                     "with respect to",
                 ),
                 (ModalSystem.KD,),

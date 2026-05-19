@@ -407,15 +407,15 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
     }
 )
 _GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5
-_GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
+_GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.2
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
 _TEMPORAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP = 3.0
-_GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT = 0.08
+_GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT = 0.12
 _GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT = 0.35
-_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.08
+_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.12
 _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
@@ -424,37 +424,55 @@ _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER = 2.0
-_FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
-_FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
-_FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.35
+_FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.35
+_FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.35
 _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 3.0
-_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.2
+_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
 _STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
 _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT = 0.6
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
+        "compliance",
+        "comply",
         "duty",
         "duties",
+        "fine",
+        "fined",
+        "fines",
+        "imprison",
+        "imprisoned",
+        "imprisonment",
         "liabilities",
         "liable",
         "liability",
         "mandatory",
+        "noncompliance",
         "obligation",
         "obligations",
+        "offense",
+        "offenses",
+        "penalty",
+        "penalties",
         "prohibition",
         "prohibitions",
         "prohibited",
         "requirement",
         "requirements",
         "unlawful",
+        "violate",
+        "violated",
+        "violation",
+        "violations",
     }
 )
 _DEONTIC_SCOPE_PHRASES = (
+    "is guilty of",
     "has a duty to",
     "have a duty to",
     "liability for",
@@ -463,8 +481,14 @@ _DEONTIC_SCOPE_PHRASES = (
     "requirement that",
     "requirements for",
     "is liable for",
+    "shall be fined",
+    "shall be imprisoned",
     "is prohibited from",
     "is required to",
+    "subject to a civil penalty",
+    "subject to civil penalties",
+    "subject to criminal penalties",
+    "subject to imprisonment",
     "under an obligation to",
 )
 
