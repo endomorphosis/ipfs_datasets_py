@@ -44,6 +44,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoding,
     SpaCyModalCueFeature,
+    modal_ambiguity_signals,
     ranked_modal_families,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
@@ -9145,6 +9146,36 @@ def test_modal_codec_upgrades_generic_frame_conditional_and_temporal_backfill_fl
     assert ranking[0]["share"] == 0.461538
     assert ranking[1]["share"] == 0.269231
     assert ranking[2]["share"] == 0.269231
+
+
+def test_modal_codec_marks_at_any_time_phrase_as_temporal_scope_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode("The authority may act at any time.")
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_temporal_scope_phrase"] is True
+    assert signals["has_temporal_scope"] is True
+
+
+def test_modal_codec_marks_requires_token_as_deontic_scope_signal_without_cue() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode("The authority requires filing records.")
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_cue"] is False
+    assert signals["has_deontic_scope"] is True
 
 
 def test_modal_compiler_surfaces_deontic_temporal_adaptive_ambiguity() -> None:
