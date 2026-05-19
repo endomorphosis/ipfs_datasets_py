@@ -7893,6 +7893,45 @@ def test_modal_codec_frame_ontology_audit_feature_keys_include_autoencoder_contr
     assert "49_47126" in terms
 
 
+def test_modal_codec_frame_ontology_audit_feature_keys_include_family_scoring_metadata_fields() -> None:
+    modal_ir = ModalIRDocument(
+        document_id="frame-audit-family-fields-doc",
+        source="us_code",
+        normalized_text="The agency may issue a final order.",
+        frame_logic=ModalIRFrameLogic(
+            metadata={
+                "family": "deontic",
+                "selected_family": "temporal",
+            }
+        ),
+        metadata={
+            "predicted_family": "frame",
+            "target_family": "epistemic",
+            "top_family_features": ["token:agency"],
+        },
+    )
+
+    keys = _frame_ontology_audit_feature_keys(
+        modal_ir=modal_ir,
+        selected_frame=None,
+        kg_triples=[],
+    )
+    terms = _frame_ontology_audit_terms(
+        frame_feature_keys=keys,
+        kg_triples=[],
+    )
+
+    assert "family:selected_frame:deontic" in keys
+    assert "family:selected_frame:temporal" in keys
+    assert "family:selected_frame:frame" in keys
+    assert "family:selected_frame:epistemic" in keys
+    assert "token:agency" not in keys
+    assert "deontic" in terms
+    assert "temporal" in terms
+    assert "frame" in terms
+    assert "epistemic" in terms
+
+
 def test_modal_codec_audits_alphanumeric_usc_frame_term_feature_keys() -> None:
     codec = DeterministicModalLogicCodec(
         ModalLogicCodecConfig(parser_backend="spacy", embedding_dimensions=8)

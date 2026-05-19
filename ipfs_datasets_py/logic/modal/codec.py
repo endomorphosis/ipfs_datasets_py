@@ -5500,6 +5500,10 @@ def _frame_ontology_audit_metadata_feature_keys(
         metadata.get("sample_ids"),
         metadata.get("source_id"),
         metadata.get("source_ids"),
+        metadata.get("family"),
+        metadata.get("predicted_family"),
+        metadata.get("target_family"),
+        metadata.get("selected_family"),
         metadata.get("hint_evidence"),
         metadata.get("top_embedding_contributions"),
         metadata.get("top_embedding_features"),
@@ -5517,6 +5521,10 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("sample_ids"),
             frame_logic_metadata.get("source_id"),
             frame_logic_metadata.get("source_ids"),
+            frame_logic_metadata.get("family"),
+            frame_logic_metadata.get("predicted_family"),
+            frame_logic_metadata.get("target_family"),
+            frame_logic_metadata.get("selected_family"),
             frame_logic_metadata.get("citation"),
             frame_logic_metadata.get("citations"),
             frame_logic_metadata.get("dedupe_signature"),
@@ -5537,6 +5545,16 @@ def _frame_ontology_audit_metadata_feature_keys(
             frame_logic_metadata.get("top_family_features"),
         ]
     )
+    for source_metadata in (metadata, frame_logic_metadata):
+        for family_field in (
+            "family",
+            "predicted_family",
+            "target_family",
+            "selected_family",
+        ):
+            family_value = _clean_non_empty_string(source_metadata.get(family_field))
+            if family_value:
+                metadata_values.append(f"family:selected_frame:{family_value}")
     return frame_ontology_feature_keys_from_values(
         metadata_values,
         max_keys=_FRAME_ONTOLOGY_AUDIT_MAX_FEATURE_KEYS,

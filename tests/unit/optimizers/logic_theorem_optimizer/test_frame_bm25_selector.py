@@ -1751,6 +1751,38 @@ def test_frame_ontology_feature_keys_from_values_synthesizes_semantic_frame_fiel
     ]
 
 
+def test_frame_ontology_feature_keys_from_values_synthesizes_family_alias_fields() -> None:
+    keys = frame_ontology_feature_keys_from_values(
+        {
+            "hint_evidence": [
+                {
+                    "family": "deontic",
+                    "selected_family": "temporal",
+                    "candidate_family": "epistemic",
+                    "family_name": "dynamic",
+                    "modal_family_name": "frame",
+                    "top_family_features": ["token:agency"],
+                }
+            ]
+        }
+    )
+
+    assert keys == [
+        "family:selected_frame:deontic",
+        "family:selected_frame:temporal",
+        "family:selected_frame:epistemic",
+        "family:selected_frame:dynamic",
+        "family:selected_frame:frame",
+    ]
+    assert frame_ontology_terms_from_feature_keys(keys) == [
+        "deontic",
+        "temporal",
+        "epistemic",
+        "dynamic",
+        "frame",
+    ]
+
+
 def test_is_high_signal_frame_ontology_term_filters_structural_noise() -> None:
     assert is_high_signal_frame_ontology_term("final_order") is True
     assert is_high_signal_frame_ontology_term("42_291") is True
