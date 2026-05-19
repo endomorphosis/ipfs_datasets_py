@@ -2263,6 +2263,178 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_deontic_adapti
     )
 
 
+def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_alethic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-temporal-alethic-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-temporal-alethic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="temporal_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-temporal-alethic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="29 U.S.C. 161",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "temporal", "count": 1, "share": 1.0}],
+        family_shares={"temporal": 1.0},
+    )
+
+    adaptive_alethic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "alethic"]
+    )
+    assert adaptive_alethic.metadata["has_target_signal_evidence"] is False
+    assert adaptive_alethic.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_alethic.metadata["is_priority_policy_pair"] is True
+    assert (
+        adaptive_alethic.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_alethic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_temporal_alethic_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_treats_alethic_scope_as_temporal_adaptive_target_signal(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {
+            "has_alethic_cue": False,
+            "has_alethic_scope": True,
+        },
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-scope-temporal-alethic-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-scope-temporal-alethic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="temporal_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-scope-temporal-alethic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="10 U.S.C. 4901",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "temporal", "count": 1, "share": 1.0}],
+        family_shares={"temporal": 1.0},
+    )
+
+    adaptive_alethic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["temporal", "alethic"]
+    )
+    assert adaptive_alethic.metadata["has_target_signal_evidence"] is True
+    assert adaptive_alethic.metadata["signal_free_pair_policy_applied"] is False
+    assert adaptive_alethic.metadata["lexical_signals"]["has_alethic_scope"] is True
+    assert (
+        adaptive_alethic.metadata["explicit_ambiguity_type"]
+        == "adaptive_temporal_alethic_outvoted_margin_low"
+    )
+
+
 def test_modal_compiler_surfaces_compiled_primary_deontic_conditional_policy_ambiguity_when_cues_predict_temporal(
     monkeypatch,
 ) -> None:

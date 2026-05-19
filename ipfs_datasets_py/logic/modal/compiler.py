@@ -1027,6 +1027,10 @@ class DeterministicModalCompiler:
                 ModalLogicFamily.DEONTIC.value: bool(
                     signals.get("has_deontic_scope")
                 ),
+                ModalLogicFamily.ALETHIC.value: bool(
+                    signals.get("has_alethic_scope")
+                    or signals.get("has_alethic_cue")
+                ),
             }
         elif predicted_family == ModalLogicFamily.HYBRID.value:
             target_signal_by_family = {
