@@ -146,6 +146,13 @@ class MaineScraper(BaseStateScraper):
             seen_titles.add(full_url)
             title_urls.append(full_url)
 
+        self.logger.info(
+            "Maine official tree: discovered_titles=%s max_statutes=%s",
+            len(title_urls),
+            max_statutes,
+        )
+
+        processed_chapters = 0
         for title_url in title_urls:
             if len(statutes) >= max_statutes:
                 break
@@ -166,9 +173,17 @@ class MaineScraper(BaseStateScraper):
                 seen_chapters.add(full_url)
                 chapter_urls.append(full_url)
 
+            self.logger.info(
+                "Maine official tree: title_url=%s discovered_chapters=%s statutes_so_far=%s",
+                title_url,
+                len(chapter_urls),
+                len(statutes),
+            )
+
             for chapter_url in chapter_urls:
                 if len(statutes) >= max_statutes:
                     break
+                processed_chapters += 1
                 chapter_raw = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=25)
                 if not chapter_raw:
                     continue
@@ -185,6 +200,12 @@ class MaineScraper(BaseStateScraper):
                     statute = await self._build_official_section_statute(code_name, section_url)
                     if statute is not None:
                         statutes.append(statute)
+                        if len(statutes) == 1 or len(statutes) % 25 == 0:
+                            self.logger.info(
+                                "Maine official tree: chapters_processed=%s statutes_so_far=%s",
+                                processed_chapters,
+                                len(statutes),
+                            )
                         if len(statutes) >= max_statutes:
                             break
 

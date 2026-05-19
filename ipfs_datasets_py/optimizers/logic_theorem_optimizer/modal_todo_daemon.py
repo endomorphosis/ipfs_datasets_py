@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, BinaryIO, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from ipfs_datasets_py.logic.modal.synthesis import (
     ModalProgramSynthesisHint,
@@ -51,7 +51,13 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "refine_modal_family_cue_rules": "modal.compiler.registry",
     "refine_semantic_decompiler_reconstruction": "modal.ir_decompiler",
     "refine_typed_ir_or_decompiler_slots": "modal.ir_decompiler",
+    "repair_deontic_bridge_quality_gate": "deontic.ir",
+    "repair_deontic_graph_bridge": "deontic.ir",
+    "repair_deontic_prover_bridge": "deontic.ir",
+    "repair_cec_dcec_bridge": "CEC.native",
+    "repair_external_prover_router": "external_provers.router",
     "repair_flogic_ontology_constraints": "modal.frame_logic",
+    "repair_tdfol_bridge_parse": "TDFOL.prover",
 }
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
@@ -63,6 +69,10 @@ AUTOENCODER_TRAINABLE_LOSSES = {
     "cross_entropy_loss",
     "reconstruction_loss",
 }
+BridgeLossEvaluator = Callable[
+    [Sequence[LegalSample]],
+    Mapping[str, Mapping[str, float]],
+]
 
 
 @dataclass(frozen=True)
@@ -161,6 +171,107 @@ class LossSnapshot:
             "sample_id": self.sample_id,
             "selected_frame": self.selected_frame,
         }
+
+
+def bridge_loss_evaluator_for_names(
+    bridge_names: Sequence[str],
+) -> BridgeLossEvaluator:
+    """Build a lazy bridge evaluator that returns optimizer-visible losses.
+
+    The evaluator is intentionally sample-id keyed so the supervisor can merge
+    bridge diagnostics into the existing ``LossSnapshot`` flow without coupling
+    TODO generation to any one logic adapter.
+    """
+
+    names = tuple(
+        dict.fromkeys(
+            str(name).strip()
+            for name in bridge_names
+            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
+        )
+    )
+    adapters: Dict[str, Any] = {}
+    adapter_errors: Dict[str, str] = {}
+
+    def _adapter(name: str) -> Any:
+        if name in adapters:
+            return adapters[name]
+        if name in adapter_errors:
+            raise RuntimeError(adapter_errors[name])
+        try:
+            from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+            adapters[name] = load_logic_bridge_adapter(name)
+            return adapters[name]
+        except Exception as exc:  # pragma: no cover - defensive daemon path
+            adapter_errors[name] = str(exc)
+            raise
+
+    def evaluate(samples: Sequence[LegalSample]) -> Mapping[str, Mapping[str, float]]:
+        losses_by_sample: Dict[str, Dict[str, float]] = {}
+        if not names:
+            return losses_by_sample
+        for sample in samples:
+            sample_losses: Dict[str, float] = {}
+            for name in names:
+                prefix = _bridge_loss_prefix(name)
+                try:
+                    adapter = _adapter(name)
+                    report = adapter.evaluate(
+                        sample.text,
+                        document_id=sample.sample_id,
+                        citation=sample.citation,
+                        source=sample.source,
+                        source_embedding=sample.embedding_vector,
+                    )
+                    sample_losses.update(_bridge_losses_from_report(report))
+                except Exception:
+                    sample_losses[f"{prefix}_bridge_evaluation_failure_loss"] = 1.0
+            if sample_losses:
+                losses_by_sample[sample.sample_id] = dict(sorted(sample_losses.items()))
+        return losses_by_sample
+
+    return evaluate
+
+
+def _bridge_losses_from_report(report: Any) -> Dict[str, float]:
+    prefix = _bridge_loss_prefix(str(getattr(report, "adapter_name", "bridge")))
+    round_trip = getattr(report, "round_trip", None)
+    proof_gate = getattr(report, "proof_gate", None)
+    graph_projection = getattr(report, "graph_projection", None)
+    losses: Dict[str, float] = {}
+
+    for name, value in dict(getattr(round_trip, "extra_losses", {}) or {}).items():
+        losses[str(name)] = _safe_float(value)
+
+    proof_failure_ratio = _safe_float(getattr(proof_gate, "failure_ratio", 0.0))
+    if proof_failure_ratio > 0.0:
+        losses[f"{prefix}_proof_failure_ratio"] = proof_failure_ratio
+
+    graph_failure_penalty = _safe_float(
+        getattr(graph_projection, "graph_failure_penalty", 0.0)
+    )
+    if graph_failure_penalty > 0.0:
+        losses[f"{prefix}_graph_failure_penalty"] = graph_failure_penalty
+
+    return dict(sorted(losses.items()))
+
+
+def _bridge_loss_prefix(name: str) -> str:
+    normalized = "".join(
+        char.lower() if char.isalnum() else "_"
+        for char in str(name or "bridge").strip()
+    ).strip("_")
+    if normalized == "deontic_norms":
+        return "deontic"
+    return normalized or "bridge"
+
+
+def _safe_float(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 @dataclass
@@ -267,6 +378,9 @@ class ModalOptimizationStep:
     failed_validation_todo_ids: List[str] = field(default_factory=list)
     applied_updates: List[Dict[str, Any]] = field(default_factory=list)
     autoencoder_claimed_count: int = 0
+    bridge_loss_failure_count: int = 0
+    bridge_loss_sample_count: int = 0
+    bridge_loss_signal_count: int = 0
     loss_seeded_count: int = 0
     program_synthesis_deduped_count: int = 0
     program_synthesis_pending_count: int = 0
@@ -314,6 +428,9 @@ class ModalOptimizationStep:
             "applied_updates": list(self.applied_updates),
             "autoencoder_claimed_count": self.autoencoder_claimed_count,
             "before": self.before.to_dict(),
+            "bridge_loss_failure_count": self.bridge_loss_failure_count,
+            "bridge_loss_sample_count": self.bridge_loss_sample_count,
+            "bridge_loss_signal_count": self.bridge_loss_signal_count,
             "claimed_count": self.claimed_count,
             "claimed_open_count": self.claimed_open_count,
             "completed_count": self.completed_count,
@@ -377,14 +494,25 @@ class ModalLossTodoGenerator:
     """Convert loss signals into optimizer or program-repair TODOs."""
 
     DEFAULT_THRESHOLDS = {
+        "cec_dcec_no_formula_loss": 0.0,
+        "cec_dcec_validation_failure_ratio": 0.0,
         "cosine_loss": 0.05,
         "cross_entropy_loss": 0.05,
+        "deontic_bridge_evaluation_failure_loss": 0.0,
+        "deontic_graph_failure_penalty": 0.0,
+        "deontic_proof_failure_ratio": 0.0,
+        "deontic_quality_requires_validation_loss": 0.0,
+        "deontic_repair_required_rate": 0.0,
+        "external_prover_failure_ratio": 0.0,
+        "external_prover_unavailable_loss": 0.0,
         "flogic_similarity_loss": 0.05,
         "frame_ranking_loss": 0.0,
         "modal_span_coverage_loss": 0.0,
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
         "symbolic_validity_penalty": 0.0,
+        "tdfol_no_formula_loss": 0.0,
+        "tdfol_parse_failure_ratio": 0.0,
         "text_reconstruction_loss": 0.0,
     }
 
@@ -451,6 +579,50 @@ class ModalLossTodoGenerator:
             "text_reconstruction_loss": (
                 "refine_semantic_decompiler_reconstruction",
                 "Fix deterministic decompiler reconstruction so source semantics survive the IR round trip.",
+            ),
+            "cec_dcec_no_formula_loss": (
+                "repair_cec_dcec_bridge",
+                "Add or repair CEC/DCEC event-calculus records for legal text with no event formulas.",
+            ),
+            "cec_dcec_validation_failure_ratio": (
+                "repair_cec_dcec_bridge",
+                "Improve CEC/DCEC bridge validation so event formulas compile as proof inputs.",
+            ),
+            "deontic_bridge_evaluation_failure_loss": (
+                "repair_deontic_bridge_quality_gate",
+                "Fix deontic bridge evaluation so legal text can compile into LegalNormIR diagnostics.",
+            ),
+            "deontic_graph_failure_penalty": (
+                "repair_deontic_graph_bridge",
+                "Project deontic frame logic into Neo4j-compatible graph data without empty graph output.",
+            ),
+            "deontic_proof_failure_ratio": (
+                "repair_deontic_prover_bridge",
+                "Improve deontic prover syntax coverage so LegalNormIR obligations compile cleanly.",
+            ),
+            "deontic_quality_requires_validation_loss": (
+                "repair_deontic_bridge_quality_gate",
+                "Promote deontic LegalNormIR and prover syntax outputs from syntax-only to validated bridge reports.",
+            ),
+            "deontic_repair_required_rate": (
+                "repair_deontic_bridge_quality_gate",
+                "Reduce deontic parser repair requirements before emitting formal LegalNormIR.",
+            ),
+            "external_prover_failure_ratio": (
+                "repair_external_prover_router",
+                "Repair external prover-router proof dispatch for formulas that failed routed validation.",
+            ),
+            "external_prover_unavailable_loss": (
+                "repair_external_prover_router",
+                "Wire lazy prover installation and native fallback so at least one prover is available.",
+            ),
+            "tdfol_no_formula_loss": (
+                "repair_tdfol_bridge_parse",
+                "Add or repair TDFOL formula construction for legal text with no proof obligations.",
+            ),
+            "tdfol_parse_failure_ratio": (
+                "repair_tdfol_bridge_parse",
+                "Improve TDFOL parser compatibility so bridge formulas compile into prover inputs.",
             ),
         }.get(
             loss_name,
@@ -983,6 +1155,8 @@ class ModalTodoSupervisor:
         generator: Optional[ModalLossTodoGenerator] = None,
         policy: Optional[ModalOptimizerPolicy] = None,
         program_synthesis_generator: Optional[ModalProgramSynthesisTodoGenerator] = None,
+        bridge_loss_evaluator: Optional[BridgeLossEvaluator] = None,
+        bridge_names: Sequence[str] = (),
     ) -> None:
         self.policy = policy or ModalOptimizerPolicy()
         self.queue = queue or ModalTodoQueue()
@@ -991,6 +1165,18 @@ class ModalTodoSupervisor:
             program_synthesis_generator
             or ModalProgramSynthesisTodoGenerator(policy=self.policy)
         )
+        self.bridge_loss_evaluator = (
+            bridge_loss_evaluator
+            if bridge_loss_evaluator is not None
+            else (
+                bridge_loss_evaluator_for_names(bridge_names)
+                if bridge_names
+                else None
+            )
+        )
+        self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_signal_count = 0
         self.last_program_synthesis_deduped_count = 0
 
     def seed_from_evaluation(
@@ -1000,10 +1186,57 @@ class ModalTodoSupervisor:
         autoencoder: Optional[AutoencoderEvaluation] = None,
     ) -> List[ModalTodo]:
         """Generate TODOs from a batch and add them to the queue."""
-        snapshots = [LossSnapshot.from_sample(sample, autoencoder=autoencoder) for sample in samples]
+        sample_list = list(samples)
+        bridge_losses_by_sample = self._bridge_losses_for_samples(sample_list)
+        snapshots = [
+            LossSnapshot.from_sample(
+                sample,
+                autoencoder=autoencoder,
+                extra_losses=bridge_losses_by_sample.get(sample.sample_id, {}),
+            )
+            for sample in sample_list
+        ]
         todos = self._bounded_new_todos(self.generator.generate(snapshots))
         self.queue.add_many(todos)
         return todos
+
+    def _bridge_losses_for_samples(
+        self,
+        samples: Sequence[LegalSample],
+    ) -> Dict[str, Dict[str, float]]:
+        self.last_bridge_loss_failure_count = 0
+        self.last_bridge_loss_sample_count = 0
+        self.last_bridge_loss_signal_count = 0
+        if self.bridge_loss_evaluator is None:
+            return {}
+        try:
+            raw = self.bridge_loss_evaluator(samples)
+        except Exception:
+            return {}
+        normalized: Dict[str, Dict[str, float]] = {}
+        for sample_id, losses in dict(raw or {}).items():
+            if not isinstance(losses, Mapping):
+                continue
+            normalized_losses = {
+                str(name): _safe_float(value)
+                for name, value in losses.items()
+            }
+            normalized_losses = {
+                name: value
+                for name, value in normalized_losses.items()
+                if value != 0.0
+            }
+            if normalized_losses:
+                normalized[str(sample_id)] = dict(sorted(normalized_losses.items()))
+        self.last_bridge_loss_sample_count = len(normalized)
+        self.last_bridge_loss_signal_count = sum(len(losses) for losses in normalized.values())
+        self.last_bridge_loss_failure_count = sum(
+            1
+            for losses in normalized.values()
+            for name, value in losses.items()
+            if name.endswith("_bridge_evaluation_failure_loss") and value > 0.0
+        )
+        return normalized
 
     def seed_program_synthesis_from_introspection(
         self,
@@ -1263,6 +1496,9 @@ class ModalTodoSupervisor:
             else None
         )
         loss_seeded = self.seed_from_evaluation(sample_list, autoencoder=before)
+        bridge_loss_failure_count = int(self.last_bridge_loss_failure_count)
+        bridge_loss_sample_count = int(self.last_bridge_loss_sample_count)
+        bridge_loss_signal_count = int(self.last_bridge_loss_signal_count)
         program_synthesis_seeded = self.seed_program_synthesis_from_introspection(
             sample_list,
             autoencoder=autoencoder,
@@ -1342,6 +1578,9 @@ class ModalTodoSupervisor:
             failed_validation_todo_ids=failed_validation_ids,
             applied_updates=applied_updates,
             autoencoder_claimed_count=len(claimed),
+            bridge_loss_failure_count=bridge_loss_failure_count,
+            bridge_loss_sample_count=bridge_loss_sample_count,
+            bridge_loss_signal_count=bridge_loss_signal_count,
             loss_seeded_count=len(loss_seeded),
             program_synthesis_deduped_count=program_synthesis_deduped,
             program_synthesis_pending_count=self.queue.pending_count(

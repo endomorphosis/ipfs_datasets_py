@@ -229,10 +229,18 @@ Notes:
 	at `<output_root>/state_laws_completed_states.json` (default:
 	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json`), and skips
 	those states on later runs unless `--no-skip-completed-states` is set.
+	For long-running daemon shards, use `--progress-heartbeat-seconds` so
+	`state_refresh_progress.json` is updated continuously while states are still
+	in-flight.
 	Examples:
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --no-skip-completed-states --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-registry /tmp/state_laws_completed_states.json --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,ME --progress-heartbeat-seconds 30 --json`
+	When archive providers are rate-limited, set
+	`LEGAL_SCRAPER_DISABLE_ARCHIVE_IS=1` and/or `LEGAL_SCRAPER_DISABLE_WAYBACK=1`,
+	or tune `LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS` and
+	`LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS`.
 - `refresh_state_jsonld_quality.py` now emits structured JSON even on failures
 	(interrupt/exception) so loop wrappers can persist diagnostics to `*.refresh.json`.
 	Exit codes: `0` success, `1` generic error, `130` interrupt.

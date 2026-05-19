@@ -229,6 +229,11 @@ class OklahomaScraper(BaseStateScraper):
         seen: Set[str] = set()
 
         candidate_urls = await self._collect_candidate_document_urls(headers=headers)
+        self.logger.info(
+            "Oklahoma OSCN crawl: discovered_candidate_urls=%s max_statutes=%s",
+            len(candidate_urls),
+            max_statutes,
+        )
         for link in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
@@ -241,6 +246,12 @@ class OklahomaScraper(BaseStateScraper):
             if statute is None:
                 continue
             statutes.append(statute)
+            if len(statutes) == 1 or len(statutes) % 25 == 0:
+                self.logger.info(
+                    "Oklahoma OSCN crawl: statutes_so_far=%s scanned_candidates=%s",
+                    len(statutes),
+                    len(seen),
+                )
 
         return statutes
 
@@ -270,7 +281,15 @@ class OklahomaScraper(BaseStateScraper):
             for seed_url in self._SEED_INDEX_URLS:
                 _add(seed_url)
                 if len(candidates) >= max(1, bounded_limit):
+                    self.logger.info(
+                        "Oklahoma OSCN discovery: bounded_direct_only candidates=%s",
+                        len(candidates),
+                    )
                     return candidates
+            self.logger.info(
+                "Oklahoma OSCN discovery: bounded_direct_only candidates=%s",
+                len(candidates),
+            )
             return candidates
 
         for seed_url in self._SEED_INDEX_URLS:
@@ -287,6 +306,10 @@ class OklahomaScraper(BaseStateScraper):
         for archive_url in await self._discover_oscn_document_urls_via_cdx(headers=headers):
             _add(archive_url)
 
+        self.logger.info(
+            "Oklahoma OSCN discovery: total_candidates=%s",
+            len(candidates),
+        )
         return candidates
 
     def _extract_deliver_document_links(self, *, seed_url: str, html: str) -> List[str]:

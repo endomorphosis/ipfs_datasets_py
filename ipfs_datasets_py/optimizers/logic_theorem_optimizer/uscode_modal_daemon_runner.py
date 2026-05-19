@@ -43,6 +43,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    bridge_loss_evaluator_for_names,
     program_synthesis_todo_embedding_text,
     select_program_synthesis_vector_bundle,
 )
@@ -89,6 +90,20 @@ CODEX_TARGET_FILE_HINTS = {
     for key, value in logic_optimizer_target_file_hints().items()
 }
 CODEX_TARGET_FILE_HINTS.update({
+    "CEC.native": [
+        "ipfs_datasets_py/logic/bridge/cec_dcec.py",
+        "ipfs_datasets_py/logic/bridge/types.py",
+        "ipfs_datasets_py/logic/CEC/cec_framework.py",
+        "ipfs_datasets_py/logic/CEC/dcec_wrapper.py",
+        "ipfs_datasets_py/logic/CEC/native",
+    ],
+    "TDFOL.prover": [
+        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+        "ipfs_datasets_py/logic/bridge/types.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "ipfs_datasets_py/logic/TDFOL/tdfol_prover.py",
+    ],
     "deontic.ir": [
         "ipfs_datasets_py/logic/bridge/deontic_norms.py",
         "ipfs_datasets_py/logic/bridge/types.py",
@@ -126,6 +141,12 @@ CODEX_TARGET_FILE_HINTS.update({
         "ipfs_datasets_py/logic/modal/codec.py",
         "ipfs_datasets_py/logic/modal/decompiler.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
+    ],
+    "external_provers.router": [
+        "ipfs_datasets_py/logic/bridge/external_prover_router.py",
+        "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+        "ipfs_datasets_py/logic/external_provers/prover_router.py",
+        "ipfs_datasets_py/logic/external_provers/lazy_installer.py",
     ],
 })
 
@@ -567,6 +588,19 @@ def update_program_synthesis_summary(
         summary,
         execution_mode=execution_mode or "queued_for_external_codex_worker",
     )
+
+
+def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
+    """Return bridge adapters that should feed optimizer loss TODOs."""
+
+    raw = str(getattr(args, "bridge_loss_adapters", "deontic_norms") or "").strip()
+    if raw.lower() in {"", "none", "off", "false"}:
+        return []
+    return [
+        name
+        for name in (part.strip() for part in raw.split(","))
+        if name and name.lower() not in {"none", "off", "false"}
+    ]
 
 
 def codex_loop_execution_mode(args: argparse.Namespace) -> str:
@@ -1176,6 +1210,8 @@ def build_paired_daemon_commands(
         str(args.max_items),
         "--learning-rate",
         str(args.learning_rate),
+        "--bridge-loss-adapters",
+        str(getattr(args, "bridge_loss_adapters", "deontic_norms")),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
         "--test-every-cycles",
@@ -2555,6 +2591,10 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_ir_reconstruction": 1.0e12,
         "best_validation_ir_text_reconstruction": 1.0e12,
         "best_validation_reconstruction": 1.0e12,
+        "bridge_loss_adapters": bridge_loss_adapter_names(args),
+        "bridge_loss_failures": 0,
+        "bridge_loss_samples": 0,
+        "bridge_loss_signals": 0,
         "cycles": 0,
         "codex_program_synthesis_execution_mode": "queued_for_external_codex_worker",
         "dataset_id": HF_USCODE_DATASET_ID,
@@ -2606,6 +2646,14 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
+    parser.add_argument(
+        "--bridge-loss-adapters",
+        default="deontic_norms",
+        help=(
+            "Comma-separated logic bridge adapters that add compiler/prover/graph "
+            "losses to optimizer TODO generation; use 'none' to disable."
+        ),
+    )
     parser.add_argument(
         "--autoencoder-device",
         default="auto",
@@ -3172,6 +3220,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             state_path=state_path,
         )
         save_summary(summary_path, summary)
+    bridge_adapters = bridge_loss_adapter_names(args)
+    summary["bridge_loss_adapters"] = bridge_adapters
+    summary.setdefault("bridge_loss_failures", 0)
+    summary.setdefault("bridge_loss_samples", 0)
+    summary.setdefault("bridge_loss_signals", 0)
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
     state = ModalAutoencoderTrainingState.load_json(state_path)
@@ -3216,11 +3269,21 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     )
     summary.update(autoencoder.compute_backend_metadata())
     save_summary(summary_path, summary)
-    supervisor = ModalTodoSupervisor(queue=queue)
+    supervisor = ModalTodoSupervisor(
+        queue=queue,
+        bridge_loss_evaluator=bridge_loss_evaluator_for_names(bridge_adapters),
+    )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
 
-    append_event(log_path, args.run_id, {"event": "detached_runner_started"})
+    append_event(
+        log_path,
+        args.run_id,
+        {
+            "bridge_loss_adapters": bridge_adapters,
+            "event": "detached_runner_started",
+        },
+    )
     laws_table = load_laws_table()
     append_event(
         log_path,
@@ -3320,6 +3383,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_deduped_total"] = int(
                 summary.get("program_synthesis_preinsert_deduped", 0)
             ) + int(summary.get("program_synthesis_semantic_deduped", 0))
+            bridge_loss_failures = sum(step.bridge_loss_failure_count for step in run.steps)
+            bridge_loss_samples = sum(step.bridge_loss_sample_count for step in run.steps)
+            bridge_loss_signals = sum(step.bridge_loss_signal_count for step in run.steps)
+            summary["bridge_loss_failures"] = int(
+                summary.get("bridge_loss_failures", 0)
+            ) + int(bridge_loss_failures)
+            summary["bridge_loss_samples"] = int(
+                summary.get("bridge_loss_samples", 0)
+            ) + int(bridge_loss_samples)
+            summary["bridge_loss_signals"] = int(
+                summary.get("bridge_loss_signals", 0)
+            ) + int(bridge_loss_signals)
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
@@ -3373,6 +3448,9 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "duration_seconds": round(time.time() - cycle_started, 3),
                     "event": "cycle",
                     "failed_validation_count": sum(step.failed_validation_count for step in run.steps),
+                    "bridge_loss_failure_count": bridge_loss_failures,
+                    "bridge_loss_sample_count": bridge_loss_samples,
+                    "bridge_loss_signal_count": bridge_loss_signals,
                     "queue_counts": supervisor.queue.status_counts(),
                     "role_queue_counts": supervisor.queue.role_status_counts(),
                     "stopped_reason": run.stopped_reason,

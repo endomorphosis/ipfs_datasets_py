@@ -24,6 +24,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    bridge_loss_evaluator_for_names,
     select_program_synthesis_vector_bundle,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
@@ -127,6 +128,39 @@ def test_loss_generator_routes_text_roundtrip_losses_to_program_synthesis() -> N
     ]
     assert all(todo.metadata["optimizer_role"] == "program_synthesis" for todo in todos)
     assert all(todo.metadata["execution_target"] == "codex_program_repair" for todo in todos)
+
+
+def test_loss_generator_routes_deontic_bridge_losses_to_deontic_scope() -> None:
+    snapshot = LossSnapshot(
+        sample_id="sample-deontic",
+        citation="5 U.S.C. 552",
+        losses={
+            "deontic_graph_failure_penalty": 1.0,
+            "deontic_proof_failure_ratio": 1.0,
+            "deontic_quality_requires_validation_loss": 1.0,
+        },
+        selected_frame="administrative_notice_hearing",
+        parser_formula_count=1,
+    )
+
+    todos = ModalLossTodoGenerator().generate([snapshot])
+
+    assert {
+        todo.action
+        for todo in todos
+    } == {
+        "repair_deontic_bridge_quality_gate",
+        "repair_deontic_graph_bridge",
+        "repair_deontic_prover_bridge",
+    }
+    assert {
+        todo.metadata["target_component"]
+        for todo in todos
+    } == {"deontic.ir"}
+    assert {
+        todo.metadata["program_synthesis_scope"]
+        for todo in todos
+    } == {"deontic"}
 
 
 def test_queue_claims_multiple_pending_todos_at_once() -> None:
@@ -649,6 +683,52 @@ def test_supervisor_seeds_and_claims_loss_todos_from_samples() -> None:
     assert len(seeded) == 1
     assert claimed[0].action == "improve_modal_family_classifier"
     assert claimed[0].claimed_by == "daemon-worker"
+
+
+def test_supervisor_seeds_bridge_loss_todos_from_evaluator() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    def fake_bridge_evaluator(samples):
+        return {
+            samples[0].sample_id: {
+                "deontic_quality_requires_validation_loss": 1.0,
+            }
+        }
+
+    supervisor = ModalTodoSupervisor(bridge_loss_evaluator=fake_bridge_evaluator)
+
+    seeded = supervisor.seed_from_evaluation([sample])
+
+    bridge_todos = [
+        todo
+        for todo in seeded
+        if todo.loss_name == "deontic_quality_requires_validation_loss"
+    ]
+    assert len(bridge_todos) == 1
+    assert bridge_todos[0].action == "repair_deontic_bridge_quality_gate"
+    assert bridge_todos[0].metadata["target_component"] == "deontic.ir"
+    assert bridge_todos[0].metadata["program_synthesis_scope"] == "deontic"
+    assert supervisor.last_bridge_loss_sample_count == 1
+    assert supervisor.last_bridge_loss_signal_count == 1
+    assert supervisor.last_bridge_loss_failure_count == 0
+
+
+def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+
+    losses = bridge_loss_evaluator_for_names(["deontic_norms"])([sample])
+
+    assert sample.sample_id in losses
+    assert "deontic_quality_requires_validation_loss" in losses[sample.sample_id]
+    assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
 
 
 def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:

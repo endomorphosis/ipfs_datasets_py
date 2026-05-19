@@ -142,6 +142,11 @@ class MinnesotaScraper(BaseStateScraper):
                 f"{self.get_base_url()}/statutes/cite/144",
                 f"{self.get_base_url()}/statutes/cite/325F",
             ]
+        self.logger.info(
+            "Minnesota chapter crawl: discovered_chapters=%s max_statutes=%s",
+            len(chapter_urls),
+            limit,
+        )
 
         section_urls: List[str] = []
         seen_urls = set()
@@ -167,7 +172,7 @@ class MinnesotaScraper(BaseStateScraper):
             return []
 
         statutes: List[NormalizedStatute] = []
-        for section_url in section_urls[:limit]:
+        for section_index, section_url in enumerate(section_urls[:limit], start=1):
             try:
                 result = await self._build_statute_from_section_page(code_name, section_url)
             except Exception:
@@ -175,6 +180,13 @@ class MinnesotaScraper(BaseStateScraper):
             if result is None:
                 continue
             statutes.append(result)
+            if len(statutes) == 1 or len(statutes) % 25 == 0:
+                self.logger.info(
+                    "Minnesota chapter crawl: scanned_sections=%s/%s statutes_so_far=%s",
+                    section_index,
+                    min(len(section_urls), limit),
+                    len(statutes),
+                )
             if len(statutes) >= limit:
                 break
 

@@ -90,6 +90,9 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "ipfs_datasets_py/logic/bridge/registry.py",
             "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
             "ipfs_datasets_py/logic/bridge/deontic_norms.py",
+            "ipfs_datasets_py/logic/bridge/fol_tdfol.py",
+            "ipfs_datasets_py/logic/bridge/cec_dcec.py",
+            "ipfs_datasets_py/logic/bridge/external_prover_router.py",
         ),
         ast_scope="bridge",
         public_symbols=(

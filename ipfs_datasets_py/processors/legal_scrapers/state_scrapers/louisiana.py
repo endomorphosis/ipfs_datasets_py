@@ -194,8 +194,14 @@ class LouisianaScraper(BaseStateScraper):
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
         seen_sections = set()
+        self.logger.info(
+            "Louisiana law-page crawl: discovered_law_urls=%s max_statutes=%s source_kind=%s",
+            len(law_urls),
+            max_statutes,
+            source_kind,
+        )
 
-        for law_url in law_urls:
+        for law_index, law_url in enumerate(law_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
 
@@ -236,6 +242,13 @@ class LouisianaScraper(BaseStateScraper):
                 )
             )
             seen_sections.add(section_number)
+            if len(statutes) == 1 or len(statutes) % 50 == 0:
+                self.logger.info(
+                    "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
+                    law_index,
+                    len(law_urls),
+                    len(statutes),
+                )
 
         return statutes
 

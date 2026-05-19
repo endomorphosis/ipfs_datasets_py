@@ -15,6 +15,7 @@ import importlib
 import logging
 import os
 import ssl
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -30,6 +31,16 @@ def _env_flag(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int = 0) -> int:
+    value = str(os.getenv(name) or "").strip()
+    if not value:
+        return int(default)
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
 
 
 @dataclass
@@ -52,6 +63,8 @@ class _HttpResponse:
 class ArchivalFetchClient:
     """Fetch URLs with web-archive fallback support."""
 
+    _stage_backoff_until: Dict[str, float] = {}
+
     def __init__(
         self,
         *,
@@ -66,6 +79,31 @@ class ArchivalFetchClient:
         self.request_timeout_seconds = request_timeout_seconds
         self.delay_seconds = delay_seconds
         self.user_agent = user_agent
+
+    def _stage_backoff_seconds(self, stage: str) -> int:
+        if stage == "wayback":
+            return max(0, _env_int("LEGAL_SCRAPER_WAYBACK_BACKOFF_SECONDS", default=900))
+        if stage == "archive_is":
+            return max(0, _env_int("LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS", default=3600))
+        return max(0, _env_int("LEGAL_SCRAPER_ARCHIVAL_STAGE_BACKOFF_SECONDS", default=600))
+
+    def _is_stage_backed_off(self, stage: str) -> bool:
+        now = time.time()
+        until = float(self._stage_backoff_until.get(stage, 0.0) or 0.0)
+        return until > now
+
+    def _mark_stage_backoff(self, stage: str, *, reason: str) -> None:
+        seconds = self._stage_backoff_seconds(stage)
+        if seconds <= 0:
+            return
+        until = time.time() + float(seconds)
+        self._stage_backoff_until[stage] = until
+        logger.warning(
+            "archival_fetch stage=%s backed_off_for_seconds=%s reason=%s",
+            stage,
+            seconds,
+            reason[:200],
+        )
 
     def _request_with_retries(
         self,
@@ -140,19 +178,31 @@ class ArchivalFetchClient:
             return direct
         logger.info("archival_fetch stage=direct miss url=%s", url)
 
-        logger.info("archival_fetch stage=wayback start url=%s", url)
-        wayback = await self._fetch_from_wayback(url)
-        if wayback is not None:
-            logger.info("archival_fetch stage=wayback done source=%s url=%s", wayback.source, url)
-            return wayback
-        logger.info("archival_fetch stage=wayback miss url=%s", url)
+        disable_wayback = _env_flag("LEGAL_SCRAPER_DISABLE_WAYBACK", default=False)
+        if disable_wayback:
+            logger.info("archival_fetch stage=wayback skipped env=LEGAL_SCRAPER_DISABLE_WAYBACK url=%s", url)
+        elif self._is_stage_backed_off("wayback"):
+            logger.info("archival_fetch stage=wayback skipped backoff_active url=%s", url)
+        else:
+            logger.info("archival_fetch stage=wayback start url=%s", url)
+            wayback = await self._fetch_from_wayback(url)
+            if wayback is not None:
+                logger.info("archival_fetch stage=wayback done source=%s url=%s", wayback.source, url)
+                return wayback
+            logger.info("archival_fetch stage=wayback miss url=%s", url)
 
-        logger.info("archival_fetch stage=archive_is start url=%s", url)
-        archive_is = await self._fetch_from_archive_is(url)
-        if archive_is is not None:
-            logger.info("archival_fetch stage=archive_is done source=%s url=%s", archive_is.source, url)
-            return archive_is
-        logger.info("archival_fetch stage=archive_is miss url=%s", url)
+        disable_archive_is = _env_flag("LEGAL_SCRAPER_DISABLE_ARCHIVE_IS", default=False)
+        if disable_archive_is:
+            logger.info("archival_fetch stage=archive_is skipped env=LEGAL_SCRAPER_DISABLE_ARCHIVE_IS url=%s", url)
+        elif self._is_stage_backed_off("archive_is"):
+            logger.info("archival_fetch stage=archive_is skipped backoff_active url=%s", url)
+        else:
+            logger.info("archival_fetch stage=archive_is start url=%s", url)
+            archive_is = await self._fetch_from_archive_is(url)
+            if archive_is is not None:
+                logger.info("archival_fetch stage=archive_is done source=%s url=%s", archive_is.source, url)
+                return archive_is
+            logger.info("archival_fetch stage=archive_is miss url=%s", url)
 
         raise RuntimeError(f"Unable to fetch URL via direct or archival fallback: {url}")
 
@@ -387,7 +437,8 @@ class ArchivalFetchClient:
                 collapse="timestamp:8",
                 output_format="json",
             )
-        except Exception:
+        except Exception as exc:
+            self._mark_stage_backoff("wayback", reason=str(exc))
             search_result = {"status": "error", "results": []}
 
         captures = search_result.get("results", []) if isinstance(search_result, dict) else []
@@ -414,7 +465,10 @@ class ArchivalFetchClient:
                     archive_url=content_result.get("wayback_url") or capture.get("wayback_url"),
                     archive_timestamp=content_result.get("capture_timestamp") or timestamp,
                 )
-            except Exception:
+            except Exception as exc:
+                err = str(exc).lower()
+                if "timed out" in err or "max retries exceeded" in err or "connection" in err:
+                    self._mark_stage_backoff("wayback", reason=str(exc))
                 continue
 
         return None
@@ -433,10 +487,20 @@ class ArchivalFetchClient:
             submit_result = await archive_to_archive_is(url, wait_for_completion=False)
             archive_url = submit_result.get("archive_url") if isinstance(submit_result, dict) else None
             if not archive_url:
+                status_text = str((submit_result or {}).get("status") if isinstance(submit_result, dict) else "")
+                error_text = str((submit_result or {}).get("error") if isinstance(submit_result, dict) else "")
+                combined = f"{status_text} {error_text}".lower()
+                if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
+                    self._mark_stage_backoff("archive_is", reason=combined or "archive_is_submit_rate_limited")
                 return None
 
             content_result = await get_archive_is_content(archive_url)
             if content_result.get("status") != "success":
+                status_text = str(content_result.get("status") or "")
+                error_text = str(content_result.get("error") or "")
+                combined = f"{status_text} {error_text}".lower()
+                if "429" in combined or "too many" in combined or "rate" in combined or "quota" in combined:
+                    self._mark_stage_backoff("archive_is", reason=combined or "archive_is_content_rate_limited")
                 return None
 
             content = content_result.get("content", b"")
@@ -453,7 +517,10 @@ class ArchivalFetchClient:
                 fetched_at=datetime.now(timezone.utc).isoformat(),
                 archive_url=archive_url,
             )
-        except Exception:
+        except Exception as exc:
+            err = str(exc).lower()
+            if "429" in err or "too many" in err or "rate" in err or "quota" in err:
+                self._mark_stage_backoff("archive_is", reason=str(exc))
             return None
 
     @staticmethod

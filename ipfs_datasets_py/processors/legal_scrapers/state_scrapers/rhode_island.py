@@ -75,6 +75,11 @@ class RhodeIslandScraper(BaseStateScraper):
         try:
             max_title = 60
             consecutive_missing_titles = 0
+            self.logger.info(
+                "Rhode Island custom scraper: max_titles=%s max_sections=%s",
+                max_title,
+                max_sections,
+            )
             for title_num in range(1, max_title + 1):
                 if len(statutes) >= max_sections:
                     break
@@ -149,6 +154,12 @@ class RhodeIslandScraper(BaseStateScraper):
                         )
                         statutes.append(statute)
                         seen_urls.add(section_url)
+                        if len(statutes) == 1 or len(statutes) % 25 == 0:
+                            self.logger.info(
+                                "Rhode Island custom scraper: title=%s statutes_so_far=%s",
+                                title_num,
+                                len(statutes),
+                            )
 
             self.logger.info("Rhode Island custom scraper: Scraped %s sections", len(statutes))
             if not statutes:

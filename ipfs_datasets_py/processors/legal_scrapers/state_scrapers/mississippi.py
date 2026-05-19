@@ -202,7 +202,14 @@ class MississippiScraper(BaseStateScraper):
                     continue
                 history_urls.append(urljoin(index_url, href))
 
-            for history_url in history_urls:
+            self.logger.info(
+                "Mississippi archive history: index_url=%s discovered_history_urls=%s statutes_so_far=%s",
+                index_url,
+                len(history_urls),
+                len(statutes),
+            )
+
+            for history_index, history_url in enumerate(history_urls, start=1):
                 if len(statutes) >= max_statutes:
                     break
                 if history_url in seen_history_urls:
@@ -215,8 +222,22 @@ class MississippiScraper(BaseStateScraper):
                     headers=headers,
                 )
                 if statute is None:
+                    if history_index == 1 or history_index % 100 == 0:
+                        self.logger.info(
+                            "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
+                            history_index,
+                            len(history_urls),
+                            len(statutes),
+                        )
                     continue
                 statutes.append(statute)
+                if len(statutes) == 1 or len(statutes) % 25 == 0:
+                    self.logger.info(
+                        "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
+                        history_index,
+                        len(history_urls),
+                        len(statutes),
+                    )
 
             if statutes:
                 break

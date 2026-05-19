@@ -913,6 +913,20 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
     incremental_publish_results: List[Dict[str, Any]] = []
     incremental_publish_lock = asyncio.Lock()
+    progress_heartbeat_seconds = max(10.0, float(getattr(args, "progress_heartbeat_seconds", 60.0)))
+
+    async def _progress_heartbeat_loop(stop_event: asyncio.Event) -> None:
+        while not stop_event.is_set():
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=progress_heartbeat_seconds)
+                break
+            except asyncio.TimeoutError:
+                pass
+            except Exception:
+                break
+            progress_state["status"] = "running"
+            _recompute_progress_counts()
+            _write_progress_state()
 
     async def _on_state_complete(state_result: Dict[str, Any]) -> None:
         async with incremental_publish_lock:
@@ -1012,6 +1026,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
     scrape_result: Dict[str, Any] | None = None
     full_corpus_guard_audit: Dict[str, Any] | None = None
+    progress_heartbeat_stop: asyncio.Event | None = None
+    progress_heartbeat_task: asyncio.Task[Any] | None = None
     if args.scrape:
         if not states:
             scrape_result = {
@@ -1040,6 +1056,8 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 # sample-sized state shards.
                 os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
                 os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
+            progress_heartbeat_stop = asyncio.Event()
+            progress_heartbeat_task = asyncio.create_task(_progress_heartbeat_loop(progress_heartbeat_stop))
             try:
                 scrape_result = await scrape_state_laws(
                     states=states,
@@ -1063,6 +1081,13 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     retain_state_data=not bool(publish_to_hf and incremental_state_publish),
                 )
             finally:
+                if progress_heartbeat_stop is not None:
+                    progress_heartbeat_stop.set()
+                if progress_heartbeat_task is not None:
+                    try:
+                        await progress_heartbeat_task
+                    except Exception:
+                        pass
                 if scrape_max_statutes is None:
                     if previous_full_corpus_env is None:
                         os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
@@ -1165,6 +1190,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--strict-full-text", action="store_true")
     parser.add_argument("--min-full-text-chars", type=int, default=300)
     parser.add_argument("--no-hydrate-statute-text", action="store_true")
+    parser.add_argument("--progress-heartbeat-seconds", type=float, default=60.0)
     parser.add_argument("--allow-justia-fallback", action="store_true")
     parser.add_argument("--no-merge-existing-local", action="store_true")
     parser.add_argument("--merge-hf-existing", action="store_true", help="Download and merge existing HF state parquet shards")

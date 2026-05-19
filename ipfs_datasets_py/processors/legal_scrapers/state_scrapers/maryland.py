@@ -92,11 +92,23 @@ class MarylandScraper(BaseStateScraper):
         if not isinstance(articles_payload, list):
             return []
 
+        self.logger.info(
+            "Maryland API scrape: discovered_articles=%s max_statutes=%s",
+            len(articles_payload),
+            max_statutes,
+        )
+
         statutes: List[NormalizedStatute] = []
         seen_urls = set()
         sem = asyncio.Semaphore(8)
 
-        async def _build_one(*, article_display: str, section_label: str, section_code: str, section_url: str) -> NormalizedStatute | None:
+        async def _build_one(
+            *,
+            article_display: str,
+            section_label: str,
+            section_code: str,
+            section_url: str,
+        ) -> NormalizedStatute | None:
             async with sem:
                 return await self._build_statute_from_section_page(
                     code_name=code_name,
@@ -157,6 +169,13 @@ class MarylandScraper(BaseStateScraper):
                     )
                 )
 
+            self.logger.info(
+                "Maryland API scrape: article=%s queued_sections=%s statutes_so_far=%s",
+                article_code,
+                len(section_jobs),
+                len(statutes),
+            )
+
             for statute in await asyncio.gather(*section_jobs, return_exceptions=True):
                 if isinstance(statute, Exception):
                     continue
@@ -166,6 +185,11 @@ class MarylandScraper(BaseStateScraper):
                     continue
 
                 statutes.append(statute)
+                if len(statutes) == 1 or len(statutes) % 50 == 0:
+                    self.logger.info(
+                        "Maryland API scrape: statutes_so_far=%s",
+                        len(statutes),
+                    )
                 if len(statutes) >= max_statutes:
                     break
 
