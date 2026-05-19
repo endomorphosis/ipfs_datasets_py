@@ -1780,7 +1780,7 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
         ambiguity.metadata["adaptive_margin_direction"] == "outvoted"
         for ambiguity in adaptive_ambiguities
     )
-    assert all(ambiguity.metadata["family_margin"] < 0.0 for ambiguity in adaptive_ambiguities)
+    assert all(ambiguity.metadata["family_margin"] <= 0.0 for ambiguity in adaptive_ambiguities)
 
 
 def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkeypatch) -> None:

@@ -385,6 +385,11 @@ _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
+_GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT = 0.08
+_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.08
+_DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
+_TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
+_CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -1087,18 +1092,18 @@ def ranked_modal_families(encoding: SpaCyLegalEncoding) -> List[Dict[str, float]
     if total <= 0:
         return []
     ranking: List[Dict[str, float]] = []
-    for family, count in sorted(
-        counts.items(),
+    for family in sorted(
+        weighted_counts,
         key=lambda item: (
-            -float(weighted_counts.get(item[0], 0.0)),
-            item[0],
+            -float(weighted_counts.get(item, 0.0)),
+            item,
         ),
     ):
         share_raw = float(weighted_counts.get(family, 0.0)) / float(total)
         ranking.append(
             {
                 "family": family,
-                "count": int(count),
+                "count": int(counts.get(family, 0)),
                 "share_raw": share_raw,
                 "share": round(share_raw, 6),
             }
@@ -1119,20 +1124,27 @@ def _weighted_modal_family_counts(
         resolved_signals = modal_ambiguity_signals(encoding)
     else:
         resolved_signals = signals
-    if not _is_generic_frame_cue_debias_context(encoding, resolved_signals):
-        _apply_deontic_competing_scope_soft_cap(
+    has_generic_frame_debias_context = _is_generic_frame_cue_debias_context(
+        encoding,
+        resolved_signals,
+    )
+    if has_generic_frame_debias_context:
+        frame_family = ModalLogicFamily.FRAME.value
+        if frame_family in counts:
+            counts[frame_family] *= _GENERIC_FRAME_CUE_DEBIAS_FACTOR
+        _apply_generic_frame_normative_scope_soft_cap(
             counts,
             resolved_signals,
         )
-        return counts
-    frame_family = ModalLogicFamily.FRAME.value
-    if frame_family in counts:
-        counts[frame_family] *= _GENERIC_FRAME_CUE_DEBIAS_FACTOR
-    _apply_generic_frame_normative_scope_soft_cap(
+        _apply_generic_frame_scope_backfill(
+            counts,
+            resolved_signals,
+        )
+    _apply_deontic_competing_scope_soft_cap(
         counts,
         resolved_signals,
     )
-    _apply_deontic_competing_scope_soft_cap(
+    _apply_competing_scope_backfill(
         counts,
         resolved_signals,
     )
@@ -1227,6 +1239,75 @@ def _apply_deontic_competing_scope_soft_cap(
         return
     overflow = deontic_count - _DEONTIC_COMPETING_SCOPE_SOFT_CAP
     counts[deontic_family] = _DEONTIC_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
+
+
+def _apply_generic_frame_scope_backfill(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Backfill small non-frame evidence for generic frame-only cue clusters."""
+    frame_family = ModalLogicFamily.FRAME.value
+    frame_count = float(counts.get(frame_family, 0.0))
+    if frame_count <= 0.0:
+        return
+    non_frame_total = sum(
+        float(value)
+        for family, value in counts.items()
+        if family != frame_family and float(value) > 0.0
+    )
+    if non_frame_total > 0.0:
+        return
+    if bool(signals.get("has_temporal_scope")):
+        counts[ModalLogicFamily.TEMPORAL.value] = max(
+            float(counts.get(ModalLogicFamily.TEMPORAL.value, 0.0)),
+            _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT,
+        )
+    if bool(signals.get("has_condition_or_exception_scope")):
+        counts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = max(
+            float(counts.get(ModalLogicFamily.CONDITIONAL_NORMATIVE.value, 0.0)),
+            _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT,
+        )
+    if bool(signals.get("has_deontic_scope")):
+        counts[ModalLogicFamily.DEONTIC.value] = max(
+            float(counts.get(ModalLogicFamily.DEONTIC.value, 0.0)),
+            _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT,
+        )
+
+
+def _apply_competing_scope_backfill(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Inject small competing-family support in dense scope-heavy clauses."""
+    deontic_family = ModalLogicFamily.DEONTIC.value
+    conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+    temporal_family = ModalLogicFamily.TEMPORAL.value
+    deontic_count = float(counts.get(deontic_family, 0.0))
+    conditional_count = float(counts.get(conditional_family, 0.0))
+    temporal_count = float(counts.get(temporal_family, 0.0))
+    if (
+        deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
+        and conditional_count <= 0.0
+        and bool(signals.get("has_condition_or_exception_scope"))
+    ):
+        counts[conditional_family] = _COMPETING_SCOPE_BACKFILL_WEIGHT
+    if (
+        conditional_count >= _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
+        and deontic_count <= 0.0
+        and bool(signals.get("has_deontic_scope"))
+        and bool(signals.get("has_statutory_scope_reference"))
+    ):
+        counts[deontic_family] = _COMPETING_SCOPE_BACKFILL_WEIGHT
+    if (
+        temporal_count >= _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
+        and deontic_count <= 0.0
+        and bool(signals.get("has_deontic_scope"))
+        and bool(signals.get("has_statutory_scope_reference"))
+    ):
+        counts[deontic_family] = max(
+            float(counts.get(deontic_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
 
 
 def _is_generic_frame_cue_debias_context(

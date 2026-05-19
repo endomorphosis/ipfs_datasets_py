@@ -176,6 +176,10 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         "deontic",
         "conditional_normative",
     )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "conditional_normative",
+        "deontic",
+    )
     assert is_priority_signal_free_adaptive_ambiguity_pair("deontic", "epistemic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("deontic", "temporal")
     assert is_priority_signal_free_adaptive_ambiguity_pair(

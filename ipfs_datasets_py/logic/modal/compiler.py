@@ -813,13 +813,27 @@ class DeterministicModalCompiler:
                 compiled_primary_targets.append(
                     ModalLogicFamily.CONDITIONAL_NORMATIVE.value
                 )
+            if compiled_primary_family == ModalLogicFamily.TEMPORAL.value:
+                # Preserve explicit temporal-vs-deontic coverage when adaptive
+                # ranking predicts a different top family.
+                compiled_primary_targets.append(
+                    ModalLogicFamily.DEONTIC.value
+                )
+            if compiled_primary_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
+                # Preserve explicit conditional-vs-deontic coverage even when
+                # adaptive ranking predicts a different top family.
+                compiled_primary_targets.append(
+                    ModalLogicFamily.DEONTIC.value
+                )
             if compiled_primary_family == ModalLogicFamily.FRAME.value:
-                # Preserve explicit frame-vs-(conditional/deontic) coverage when
-                # adaptive logits favor a different top family.
+                # Preserve explicit frame policy-pair coverage even when adaptive
+                # logits favor a different top family.
                 compiled_primary_targets.extend(
                     (
                         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
                         ModalLogicFamily.DEONTIC.value,
+                        ModalLogicFamily.TEMPORAL.value,
+                        ModalLogicFamily.EPISTEMIC.value,
                     )
                 )
             seen_competing_families: set[str] = set()

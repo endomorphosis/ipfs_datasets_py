@@ -479,6 +479,90 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_temporal_scope_is_pres
     assert logits["temporal"] > logits["frame"]
 
 
+def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="2451",
+        text="The authority applies before each annual review deadline.",
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+
+    assert ranking[0]["family"] == "frame"
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert temporal_share > 0.0
+    assert frame_share > temporal_share
+
+
+def test_spacy_codec_backfills_conditional_share_for_generic_frame_only_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="25",
+        section="5601",
+        text="This authority applies as provided in subsection (b).",
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+
+    assert ranking[0]["family"] == "frame"
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert conditional_share > 0.0
+    assert frame_share > conditional_share
+
+
+def test_spacy_codec_backfills_deontic_share_for_generic_frame_only_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="18",
+        section="336",
+        text="This authority states a prohibition on denial of access.",
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+
+    assert ranking[0]["family"] == "frame"
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert deontic_share > 0.0
+    assert frame_share > deontic_share
+
+
 def test_spacy_decoder_debiases_generic_frame_logits_for_subject_only_to_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
