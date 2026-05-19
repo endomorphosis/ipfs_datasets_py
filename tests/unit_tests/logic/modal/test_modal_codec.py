@@ -2629,6 +2629,182 @@ def test_modal_compiler_surfaces_compiled_primary_deontic_self_pair_adaptive_amb
     )
 
 
+def test_modal_compiler_uses_runner_up_priority_pair_for_compiled_primary_self_pair_zero_margin(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+
+    scenarios = (
+        {
+            "doc_id": "adaptive-compiled-primary-frame-self-vs-deontic-doc",
+            "compiled_primary_family": "frame",
+            "compiled_primary_system": "FRAME_BM25",
+            "compiled_primary_symbol": "Frame",
+            "compiled_primary_label": "frame",
+            "compiled_primary_role": "frame_scope",
+            "compiled_primary_predicate": "editorial_transfer",
+            "runner_up_family": "deontic",
+            "runner_up_cue": SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+            "expected_explicit_type": "adaptive_frame_frame_outvoted_margin_low",
+            "citation": "22 U.S.C. 283k",
+        },
+        {
+            "doc_id": "adaptive-compiled-primary-frame-self-vs-conditional-doc",
+            "compiled_primary_family": "frame",
+            "compiled_primary_system": "FRAME_BM25",
+            "compiled_primary_symbol": "Frame",
+            "compiled_primary_label": "frame",
+            "compiled_primary_role": "frame_scope",
+            "compiled_primary_predicate": "editorial_transfer",
+            "runner_up_family": "conditional_normative",
+            "runner_up_cue": SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="STIT",
+                symbol="O_if",
+                label="conditional_obligation",
+                cue="provided that",
+                start_char=0,
+                end_char=13,
+                token_indices=[],
+            ),
+            "expected_explicit_type": "adaptive_frame_frame_outvoted_margin_low",
+            "citation": "20 U.S.C. 7351d",
+        },
+        {
+            "doc_id": "adaptive-compiled-primary-temporal-self-vs-deontic-doc",
+            "compiled_primary_family": "temporal",
+            "compiled_primary_system": "LTL",
+            "compiled_primary_symbol": "F",
+            "compiled_primary_label": "eventually",
+            "compiled_primary_role": "temporal_scope",
+            "compiled_primary_predicate": "deadline_applies",
+            "runner_up_family": "deontic",
+            "runner_up_cue": SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+            "expected_explicit_type": "adaptive_temporal_temporal_outvoted_margin_low",
+            "citation": "18 U.S.C. 607",
+        },
+    )
+
+    for scenario in scenarios:
+        encoding = SpaCyLegalEncoding(
+            document_id=str(scenario["doc_id"]),
+            text="Provided that the agency shall provide written notice.",
+            normalized_text="Provided that the agency shall provide written notice.",
+            tokens=[],
+            sentences=[],
+            cues=[scenario["runner_up_cue"]],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=str(scenario["doc_id"]),
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-{scenario['compiled_primary_family']}-1",
+                    operator=ModalIROperator(
+                        family=str(scenario["compiled_primary_family"]),
+                        system=str(scenario["compiled_primary_system"]),
+                        symbol=str(scenario["compiled_primary_symbol"]),
+                        label=str(scenario["compiled_primary_label"]),
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=str(scenario["compiled_primary_predicate"]),
+                        arguments=["actor:agency"],
+                        role=str(scenario["compiled_primary_role"]),
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=str(scenario["doc_id"]),
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation=str(scenario["citation"]),
+                    ),
+                ),
+            ],
+        )
+        ranking = [
+            {"family": str(scenario["runner_up_family"]), "count": 1, "share": 0.5},
+            {
+                "family": str(scenario["compiled_primary_family"]),
+                "count": 1,
+                "share": 0.5,
+            },
+        ]
+        family_shares = {
+            str(scenario["runner_up_family"]): 0.5,
+            str(scenario["compiled_primary_family"]): 0.5,
+        }
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+        compiled_primary_self = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == [str(scenario["compiled_primary_family"])]
+            and ambiguity.metadata["adaptive_predicted_family_source"]
+            == "compiled_primary_family"
+        )
+        assert compiled_primary_self.metadata["family_margin"] == 0.0
+        assert compiled_primary_self.metadata["runner_up_family"] == str(
+            scenario["runner_up_family"]
+        )
+        assert compiled_primary_self.metadata["adaptive_policy_pair"] == (
+            f"{scenario['compiled_primary_family']}->{scenario['compiled_primary_family']}"
+        )
+        assert compiled_primary_self.metadata["adaptive_runner_up_policy_pair"] == (
+            f"{scenario['compiled_primary_family']}->{scenario['runner_up_family']}"
+        )
+        assert compiled_primary_self.metadata["runner_up_is_priority_policy_pair"] is True
+        assert compiled_primary_self.metadata["is_priority_policy_pair"] is True
+        assert compiled_primary_self.metadata["adaptive_margin_direction"] == "outvoted"
+        assert (
+            compiled_primary_self.metadata["explicit_ambiguity_type"]
+            == scenario["expected_explicit_type"]
+        )
+        assert compiled_primary_self.severity == "requires_rule"
+        assert any(
+            ambiguity.ambiguity_type == scenario["expected_explicit_type"]
+            and ambiguity.metadata["adaptive_predicted_family_source"]
+            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_runner_up_policy_pair"]
+            == f"{scenario['compiled_primary_family']}->{scenario['runner_up_family']}"
+            and ambiguity.metadata["runner_up_is_priority_policy_pair"] is True
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_surfaces_compiled_primary_deontic_alethic_adaptive_ambiguity_from_signal_targets(
     monkeypatch,
 ) -> None:

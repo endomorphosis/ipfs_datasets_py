@@ -1149,10 +1149,18 @@ class DeterministicModalCompiler:
         )
         if not has_target_signal_evidence and not supports_signal_free_pair_policy:
             return []
+        runner_up_is_priority_policy_pair = bool(
+            is_self_pair
+            and runner_up_family is not None
+            and is_priority_signal_free_adaptive_ambiguity_pair(
+                compiled_primary_family,
+                runner_up_family,
+            )
+        )
         is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
             competing_family,
-        )
+        ) or runner_up_is_priority_policy_pair
         margin_direction = "outvoted" if (
             family_margin < 0.0
             or (family_margin <= 0.0 and is_priority_policy_pair)
@@ -1193,6 +1201,11 @@ class DeterministicModalCompiler:
             ),
             "adaptive_predicted_family_source": "compiled_primary_family",
             "adaptive_policy_pair": f"{compiled_primary_family}->{competing_family}",
+            "adaptive_runner_up_policy_pair": (
+                f"{compiled_primary_family}->{runner_up_family}"
+                if runner_up_family is not None
+                else None
+            ),
             "explicit_ambiguity_type": explicit_type,
             "family_margin_raw": family_margin,
             "family_margin": family_margin_display,
@@ -1207,6 +1220,7 @@ class DeterministicModalCompiler:
             "has_frame_bm25_support": has_frame_bm25_support,
             "lexical_signals": dict(sorted(signals.items())),
             "is_priority_policy_pair": is_priority_policy_pair,
+            "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
             "predicted_family": compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": round(family_margin, 6),
@@ -1295,10 +1309,14 @@ class DeterministicModalCompiler:
         family_margin = primary_share - runner_up_share
         if family_margin > threshold:
             return []
+        runner_up_is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
+            compiled_primary_family,
+            runner_up_family,
+        )
         is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
             compiled_primary_family,
-        )
+        ) or runner_up_is_priority_policy_pair
         margin_direction = "outvoted" if (
             family_margin < 0.0
             or (family_margin <= 0.0 and is_priority_policy_pair)
@@ -1329,6 +1347,9 @@ class DeterministicModalCompiler:
             ),
             "adaptive_predicted_family_source": "compiled_primary_family",
             "adaptive_policy_pair": f"{compiled_primary_family}->{compiled_primary_family}",
+            "adaptive_runner_up_policy_pair": (
+                f"{compiled_primary_family}->{runner_up_family}"
+            ),
             "explicit_ambiguity_type": explicit_type,
             "family_margin_raw": family_margin,
             "family_margin": family_margin_display,
@@ -1342,6 +1363,7 @@ class DeterministicModalCompiler:
             "has_frame_bm25_support": has_frame_bm25_support,
             "lexical_signals": dict(sorted(signals.items())),
             "is_priority_policy_pair": is_priority_policy_pair,
+            "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
             "predicted_family": compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": family_margin_display,
