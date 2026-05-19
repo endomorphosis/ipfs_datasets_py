@@ -921,6 +921,10 @@ class DeterministicModalCompiler:
                 ModalLogicFamily.EPISTEMIC.value: bool(
                     signals.get("has_epistemic_cue")
                 ),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
+                ModalLogicFamily.FRAME.value: has_frame_scope,
             }
         elif predicted_family == ModalLogicFamily.ALETHIC.value:
             target_signal_by_family = {

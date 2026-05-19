@@ -3291,6 +3291,90 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_temporal_ad
     )
 
 
+def test_modal_compiler_uses_temporal_signal_for_conditional_temporal_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {
+            "has_temporal_scope": True,
+        },
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signaled-conditional-temporal-doc",
+        text="Provided that the filing is complete, notice applies.",
+        normalized_text="Provided that the filing is complete, notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="STIT",
+                symbol="O_if",
+                label="conditional_obligation",
+                cue="provided that",
+                start_char=0,
+                end_char=13,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signaled-conditional-temporal-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-conditional-1",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="STIT",
+                    symbol="O_if",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="conditional_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signaled-conditional-temporal-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="11 U.S.C. 547",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "conditional_normative", "count": 1, "share": 1.0}],
+        family_shares={"conditional_normative": 1.0},
+    )
+
+    adaptive_temporal = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative", "temporal"]
+    )
+    assert adaptive_temporal.metadata["has_target_signal_evidence"] is True
+    assert adaptive_temporal.metadata["signal_free_pair_policy_applied"] is False
+    assert adaptive_temporal.metadata["lexical_signals"]["has_temporal_scope"] is True
+    assert (
+        adaptive_temporal.metadata["explicit_ambiguity_type"]
+        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
+    )
+
+
 def test_modal_compiler_treats_zero_margin_conditional_temporal_pair_as_outvoted_adaptive_ambiguity(
     monkeypatch,
 ) -> None:
@@ -3553,6 +3637,90 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_frame_adapt
         == "adaptive_conditional_normative_frame_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_uses_frame_signal_for_conditional_frame_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {
+            "has_frame_context": True,
+        },
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signaled-conditional-frame-doc",
+        text="Provided that the filing is complete, notice applies.",
+        normalized_text="Provided that the filing is complete, notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="STIT",
+                symbol="O_if",
+                label="conditional_obligation",
+                cue="provided that",
+                start_char=0,
+                end_char=13,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signaled-conditional-frame-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-conditional-1",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="STIT",
+                    symbol="O_if",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="conditional_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signaled-conditional-frame-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="11 U.S.C. 547",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "conditional_normative", "count": 1, "share": 1.0}],
+        family_shares={"conditional_normative": 1.0},
+    )
+
+    adaptive_frame = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative", "frame"]
+    )
+    assert adaptive_frame.metadata["has_target_signal_evidence"] is True
+    assert adaptive_frame.metadata["signal_free_pair_policy_applied"] is False
+    assert adaptive_frame.metadata["lexical_signals"]["has_frame_context"] is True
+    assert (
+        adaptive_frame.metadata["explicit_ambiguity_type"]
+        == "adaptive_conditional_normative_frame_outvoted_margin_low"
     )
 
 
