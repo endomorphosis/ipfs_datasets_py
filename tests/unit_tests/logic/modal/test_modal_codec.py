@@ -2783,6 +2783,9 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_conditional_adapt
     )
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_conditional.metadata["adaptive_policy_pair"] == (
+        "frame->conditional_normative"
+    )
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_conditional_normative_outvoted_margin_low"
@@ -2871,6 +2874,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_temporal_adaptive
     assert adaptive_temporal.metadata["has_target_signal_evidence"] is False
     assert adaptive_temporal.metadata["signal_free_pair_policy_applied"] is True
     assert adaptive_temporal.metadata["is_priority_policy_pair"] is True
+    assert adaptive_temporal.metadata["adaptive_policy_pair"] == "frame->temporal"
     assert (
         adaptive_temporal.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_temporal_outvoted_margin_low"
@@ -2879,6 +2883,142 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_temporal_adaptive
         ambiguity.ambiguity_type == "adaptive_frame_temporal_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
         for ambiguity in ambiguities
+    )
+
+
+def test_modal_compiler_emits_explicit_frame_policy_pair_ambiguities_for_evidence_margins(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-evidence-frame-policy-pairs-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-evidence-frame-policy-pairs-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-evidence-frame-policy-pairs-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="43 U.S.C. 156",
+                ),
+            ),
+        ],
+    )
+
+    temporal_ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {
+                "family": "frame",
+                "count": 1,
+                "share_raw": 0.563068740844,
+                "share": 0.563069,
+            },
+            {
+                "family": "temporal",
+                "count": 1,
+                "share_raw": 0.15,
+                "share": 0.15,
+            },
+        ],
+        family_shares={"frame": 0.563068740844, "temporal": 0.15},
+    )
+    adaptive_temporal = next(
+        ambiguity
+        for ambiguity in temporal_ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "temporal"]
+    )
+    assert adaptive_temporal.metadata["adaptive_policy_pair"] == "frame->temporal"
+    assert adaptive_temporal.metadata["family_margin"] == -0.413069
+    assert abs(adaptive_temporal.metadata["family_margin_raw"] + 0.413068740844) < 1e-12
+    assert adaptive_temporal.metadata["explicit_ambiguity_type"] == (
+        "adaptive_frame_temporal_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_frame_temporal_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"] == "frame->temporal"
+        for ambiguity in temporal_ambiguities
+    )
+
+    conditional_ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {
+                "family": "frame",
+                "count": 1,
+                "share_raw": 0.735177285536,
+                "share": 0.735177,
+            },
+        ],
+        family_shares={"frame": 0.735177285536},
+    )
+    adaptive_conditional = next(
+        ambiguity
+        for ambiguity in conditional_ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "conditional_normative"]
+    )
+    assert adaptive_conditional.metadata["adaptive_policy_pair"] == (
+        "frame->conditional_normative"
+    )
+    assert adaptive_conditional.metadata["family_margin"] == -0.735177
+    assert abs(
+        adaptive_conditional.metadata["family_margin_raw"] + 0.735177285536
+    ) < 1e-12
+    assert adaptive_conditional.metadata["explicit_ambiguity_type"] == (
+        "adaptive_frame_conditional_normative_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type
+        == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_policy_pair"]
+        == "frame->conditional_normative"
+        for ambiguity in conditional_ambiguities
     )
 
 
