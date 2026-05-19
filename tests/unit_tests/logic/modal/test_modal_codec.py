@@ -3010,6 +3010,7 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
                 "deontic->frame",
                 "deontic->temporal",
                 "deontic->dynamic",
+                "deontic->epistemic",
             ),
         ),
         (
@@ -12807,6 +12808,13 @@ def test_modal_compiler_surfaces_compiler_ambiguity_pairs_when_other_target_tabl
             "system": "D",
             "symbol": "O",
             "label": "obligation",
+            "target_family": "epistemic",
+        },
+        {
+            "predicted_family": "deontic",
+            "system": "D",
+            "symbol": "O",
+            "label": "obligation",
             "target_family": "temporal",
         },
         {
@@ -12815,6 +12823,13 @@ def test_modal_compiler_surfaces_compiler_ambiguity_pairs_when_other_target_tabl
             "symbol": "Frame",
             "label": "frame",
             "target_family": "conditional_normative",
+        },
+        {
+            "predicted_family": "frame",
+            "system": "FRAME_BM25",
+            "symbol": "Frame",
+            "label": "frame",
+            "target_family": "temporal",
         },
     )
 

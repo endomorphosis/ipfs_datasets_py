@@ -160,6 +160,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
     (

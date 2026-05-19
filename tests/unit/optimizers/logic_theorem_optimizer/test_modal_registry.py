@@ -315,6 +315,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
         ("deontic", "dynamic"),
+        ("deontic", "epistemic"),
         ("deontic", "temporal"),
         ("epistemic", "conditional_normative"),
         ("frame", "conditional_normative"),
@@ -338,6 +339,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("deontic", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
+    assert is_compiler_ambiguity_policy_pair("deontic", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
     assert is_compiler_ambiguity_policy_pair(
         "epistemic",
@@ -413,6 +415,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     assert compiler_ambiguity_policy_targets("deontic") == (
         "conditional_normative",
         "dynamic",
+        "epistemic",
         "deontic",
         "temporal",
     )
