@@ -830,6 +830,17 @@ class DeterministicModalCompiler:
             and compiled_primary_family != predicted_family
         ):
             compiled_primary_targets: List[str] = [predicted_family]
+            compiled_primary_signal_targets = self._adaptive_target_signal_by_family(
+                compiled_primary_family,
+                signals=signals,
+                has_frame_scope=has_frame_scope,
+            )
+            for target_family in compiled_primary_signal_targets:
+                if (
+                    target_family != compiled_primary_family
+                    and target_family not in compiled_primary_targets
+                ):
+                    compiled_primary_targets.append(target_family)
             for target_family in priority_signal_free_adaptive_ambiguity_targets(
                 compiled_primary_family
             ):
@@ -997,11 +1008,10 @@ class DeterministicModalCompiler:
         has_frame_bm25_support: bool,
         compiled_modal_families: Sequence[str],
     ) -> List[ModalCompilationAmbiguity]:
-        if not self._supports_signal_free_adaptive_pair(
+        supports_signal_free_pair_policy = self._supports_signal_free_adaptive_pair(
             compiled_primary_family,
             competing_family,
-        ):
-            return []
+        )
         primary_share = float(family_shares.get(compiled_primary_family, 0.0))
         competing_share = float(family_shares.get(competing_family, 0.0))
         family_margin = primary_share - competing_share
@@ -1019,6 +1029,8 @@ class DeterministicModalCompiler:
             or competing_share > 0.0
             or has_compiled_target_family_formula
         )
+        if not has_target_signal_evidence and not supports_signal_free_pair_policy:
+            return []
         is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
             competing_family,
@@ -1057,6 +1069,7 @@ class DeterministicModalCompiler:
             "has_target_signal_evidence": has_target_signal_evidence,
             "signal_free_pair_policy_applied": (
                 not has_target_signal_evidence
+                and supports_signal_free_pair_policy
             ),
             "has_compiled_target_family_formula": has_compiled_target_family_formula,
             "has_frame_bm25_support": has_frame_bm25_support,
