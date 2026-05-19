@@ -638,6 +638,90 @@ def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_deontic_competition
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
+def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_epistemic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1e",
+        text=(
+            "It is possible and necessary and impossible that the filing proceeds."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="28",
+        section="1f",
+        text=(
+            "It is possible and necessary and impossible that the agency has reason "
+            "to believe the filing proceeds."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("epistemic", "alethic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("epistemic", "alethic", "frame"),
+    )
+
+    assert competing_logits["alethic"] < baseline_logits["alethic"]
+    assert competing_logits["epistemic"] > baseline_logits["epistemic"]
+
+
+def test_spacy_codec_backfills_conditional_and_epistemic_shares_for_alethic_scope_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1g",
+        text=(
+            "It is possible and necessary and impossible that the filing proceeds."
+        ),
+    )
+    conditional_competing = build_us_code_sample(
+        title="28",
+        section="1h",
+        text=(
+            "When designated, it is possible and necessary and impossible that the "
+            "filing proceeds."
+        ),
+    )
+    epistemic_competing = build_us_code_sample(
+        title="28",
+        section="1i",
+        text=(
+            "It is possible and necessary and impossible that a finding that the "
+            "filing proceeds is recorded."
+        ),
+    )
+
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    conditional_ranking = ranked_modal_families(codec.encode_sample(conditional_competing))
+    epistemic_ranking = ranked_modal_families(codec.encode_sample(epistemic_competing))
+
+    def _share(ranking: list[dict[str, float]], family: str) -> float:
+        for item in ranking:
+            if item["family"] == family:
+                return float(item["share"])
+        return 0.0
+
+    baseline_conditional_share = _share(baseline_ranking, "conditional_normative")
+    competing_conditional_share = _share(conditional_ranking, "conditional_normative")
+    baseline_epistemic_share = _share(baseline_ranking, "epistemic")
+    competing_epistemic_share = _share(epistemic_ranking, "epistemic")
+
+    assert competing_conditional_share > baseline_conditional_share
+    assert competing_conditional_share > 0.0
+    assert competing_epistemic_share > baseline_epistemic_share
+    assert competing_epistemic_share > 0.0
+
+
 def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

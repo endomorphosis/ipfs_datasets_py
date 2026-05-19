@@ -278,6 +278,10 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         )
         is True
     )
+    assert is_compiler_required_adaptive_ambiguity_pair(
+        "alethic",
+        "epistemic",
+    ) is True
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "epistemic") is True
     assert is_compiler_required_adaptive_ambiguity_pair(
@@ -362,6 +366,10 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair(
         "alethic",
+        "epistemic",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "alethic",
         "temporal",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair(
@@ -414,6 +422,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
     assert priority_signal_free_adaptive_ambiguity_targets("alethic") == (
         "deontic",
         "conditional_normative",
+        "epistemic",
         "temporal",
         "epistemic",
     )
