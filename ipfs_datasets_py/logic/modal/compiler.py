@@ -991,6 +991,9 @@ class DeterministicModalCompiler:
         elif predicted_family == ModalLogicFamily.ALETHIC.value:
             target_signal_by_family = {
                 ModalLogicFamily.FRAME.value: has_frame_scope,
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
                 ModalLogicFamily.DEONTIC.value: bool(
                     signals.get("has_deontic_scope")
                     or signals.get("has_deontic_cue")
