@@ -2457,6 +2457,8 @@ def test_modal_compiler_marks_conditional_self_pair_as_compiler_required_policy(
     )
     assert conditional_self.metadata["family_margin"] == 0.0
     assert conditional_self.metadata["adaptive_margin_direction"] == "outvoted"
+    assert conditional_self.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert conditional_self.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert conditional_self.metadata["is_compiler_required_policy_pair"] is True
     assert conditional_self.metadata["runner_up_is_compiler_required_policy_pair"] is True
     assert conditional_self.severity == "requires_rule"

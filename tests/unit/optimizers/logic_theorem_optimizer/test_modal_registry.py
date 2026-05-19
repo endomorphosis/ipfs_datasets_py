@@ -310,6 +310,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("alethic", "conditional_normative"),
         ("alethic", "deontic"),
         ("alethic", "frame"),
+        ("conditional_normative", "conditional_normative"),
         ("conditional_normative", "deontic"),
         ("conditional_normative", "frame"),
         ("deontic", "conditional_normative"),
@@ -336,6 +337,13 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     ) is True
     assert is_compiler_ambiguity_policy_pair("alethic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("alethic", "frame") is True
+    assert (
+        is_compiler_ambiguity_policy_pair(
+            "conditional_normative",
+            "conditional_normative",
+        )
+        is True
+    )
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "frame") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "conditional_normative") is True
@@ -431,6 +439,11 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "epistemic",
         "dynamic",
         "temporal",
+    )
+    assert compiler_ambiguity_policy_targets("conditional_normative") == (
+        "deontic",
+        "conditional_normative",
+        "frame",
     )
 
 
