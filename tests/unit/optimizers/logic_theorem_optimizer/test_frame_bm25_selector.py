@@ -977,6 +977,61 @@ def test_frame_ontology_terms_from_feature_keys_preserve_condition_stopword_segm
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_preserve_condition_scope_token_stopwords_for_audits() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_token:is",
+            "flogic:condition_scope_token:an",
+            "slot:condition_scope_token:to",
+            "slot:exception_scope_token:with",
+        ]
+    )
+
+    assert terms == [
+        "is",
+        "an",
+        "to",
+        "with",
+    ]
+    assert frame_ontology_high_signal_terms(terms) == []
+
+
+def test_frame_ontology_terms_from_triples_keep_single_letter_conditional_modal_operators() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "condition_modal_operator",
+                "object": "P",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "exception_modal_operator",
+                "object": "O|",
+            },
+        ]
+    )
+
+    assert terms == [
+        "p",
+        "o",
+    ]
+
+
+def test_frame_ontology_terms_from_feature_keys_keep_single_letter_conditional_modal_operators() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_modal_operator:P",
+            "slot:exception_modal_operator:O|",
+        ]
+    )
+
+    assert terms == [
+        "p",
+        "o",
+    ]
+
+
 def test_frame_ontology_terms_from_feature_keys_preserve_conditional_normative_relation_terms() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [

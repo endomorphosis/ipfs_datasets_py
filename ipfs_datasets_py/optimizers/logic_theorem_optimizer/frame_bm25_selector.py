@@ -1429,6 +1429,8 @@ def _predicate_allows_single_character_alpha_tokens(predicate: str) -> bool:
         return True
     if canonical in _FRAME_ONTOLOGY_SINGLE_CHAR_ALPHA_PREDICATES:
         return True
+    if canonical.endswith("_modal_operator"):
+        return True
     if not any(
         canonical.startswith(prefix)
         for prefix in _FRAME_ONTOLOGY_NUMERIC_VALUE_PREDICATE_PREFIXES
@@ -1450,8 +1452,12 @@ def _predicate_allows_stopword_ontology_tokens(predicate: str) -> bool:
         or canonical.endswith("_conditional_normative")
         or canonical.startswith("condition_alnum_segment")
         or canonical.startswith("condition_scope_alnum_segment")
+        or canonical.startswith("condition_token")
+        or canonical.startswith("condition_scope_token")
         or canonical.startswith("exception_alnum_segment")
         or canonical.startswith("exception_scope_alnum_segment")
+        or canonical.startswith("exception_token")
+        or canonical.startswith("exception_scope_token")
     )
 
 

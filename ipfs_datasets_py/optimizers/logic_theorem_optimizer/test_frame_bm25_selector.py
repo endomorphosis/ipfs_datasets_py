@@ -296,6 +296,47 @@ def test_frame_ontology_terms_preserve_condition_stopword_segments_for_audits() 
     assert frame_ontology_high_signal_terms(feature_terms) == ["if"]
 
 
+def test_frame_ontology_terms_preserve_condition_scope_token_stopwords_for_audits() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "condition_token", "object": "is"},
+            {"predicate": "condition_scope_token", "object": "an"},
+            {"predicate": "condition_scope_token", "object": "to"},
+            {"predicate": "exception_scope_token", "object": "with"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_token:is",
+            "flogic:condition_scope_token:an",
+            "slot:condition_scope_token:to",
+            "slot:exception_scope_token:with",
+        ]
+    )
+
+    assert triple_terms == ["is", "an", "to", "with"]
+    assert feature_terms == ["is", "an", "to", "with"]
+    assert frame_ontology_high_signal_terms(feature_terms) == []
+
+
+def test_frame_ontology_terms_keep_single_letter_conditional_modal_operators() -> None:
+    triple_terms = frame_ontology_terms_from_triples(
+        [
+            {"predicate": "condition_modal_operator", "object": "P"},
+            {"predicate": "exception_modal_operator", "object": "O|"},
+        ]
+    )
+    feature_terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:condition_modal_operator:P",
+            "slot:exception_modal_operator:O|",
+        ]
+    )
+
+    assert triple_terms == ["p", "o"]
+    assert feature_terms == ["p", "o"]
+
+
 def test_frame_ontology_terms_canonicalize_repeated_pair_values() -> None:
     triple_terms = frame_ontology_terms_from_triples(
         [
