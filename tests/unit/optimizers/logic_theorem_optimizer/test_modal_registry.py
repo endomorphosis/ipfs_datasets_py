@@ -272,7 +272,9 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("alethic", "conditional_normative"),
         ("alethic", "deontic"),
         ("alethic", "frame"),
+        ("conditional_normative", "deontic"),
         ("conditional_normative", "frame"),
+        ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
         ("deontic", "dynamic"),
         ("deontic", "temporal"),
@@ -282,6 +284,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("frame", "dynamic"),
         ("frame", "temporal"),
         ("hybrid", "frame"),
+        ("temporal", "deontic"),
         ("temporal", "conditional_normative"),
         ("temporal", "temporal"),
     }
@@ -291,7 +294,9 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     ) is True
     assert is_compiler_ambiguity_policy_pair("alethic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("alethic", "frame") is True
+    assert is_compiler_ambiguity_policy_pair("conditional_normative", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "frame") is True
+    assert is_compiler_ambiguity_policy_pair("deontic", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
@@ -301,6 +306,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("frame", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("hybrid", "frame") is True
+    assert is_compiler_ambiguity_policy_pair("temporal", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "frame") is False

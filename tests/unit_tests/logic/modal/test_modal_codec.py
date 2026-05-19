@@ -5453,6 +5453,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_deontic_ada
     )
     assert adaptive_deontic.metadata["has_target_signal_evidence"] is False
     assert adaptive_deontic.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_deontic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_deontic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_deontic.metadata["explicit_ambiguity_type"]
         == "adaptive_conditional_normative_deontic_outvoted_margin_low"
@@ -7302,6 +7304,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_deontic_conditional_ada
     )
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_conditional.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_conditional.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_deontic_conditional_normative_outvoted_margin_low"
@@ -9415,6 +9419,8 @@ def test_modal_compiler_surfaces_deontic_conditional_adaptive_ambiguity() -> Non
     assert adaptive_conditional.metadata["target_family"] == "conditional_normative"
     assert adaptive_conditional.metadata["adaptive_margin_direction"] == "outvoted"
     assert adaptive_conditional.metadata["family_margin"] < 0.0
+    assert adaptive_conditional.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_conditional.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_deontic_conditional_normative_outvoted_margin_low"
@@ -9961,6 +9967,8 @@ def test_modal_compiler_treats_prohibition_heading_as_adaptive_deontic_signal() 
     assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_cue"] is False
     assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_scope"] is True
     assert adaptive_deontic.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
+    assert adaptive_deontic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_deontic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_deontic.metadata["explicit_ambiguity_type"]
         == "adaptive_temporal_deontic_outvoted_margin_low"
