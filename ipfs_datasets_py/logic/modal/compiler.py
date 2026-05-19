@@ -947,14 +947,9 @@ class DeterministicModalCompiler:
             )
             predicted_share_display = round(predicted_share, 6)
             target_share_display = round(target_share, 6)
-            family_margin_display = (
-                round(family_margin, 6)
-                if is_self_pair
-                else round(
-                    target_share_display - predicted_share_display,
-                    6,
-                )
-            )
+            # Round the raw margin directly so metadata preserves tiny negative/positive
+            # outvote deltas that can disappear when subtracting rounded shares.
+            family_margin_display = round(family_margin, 6)
             candidate_ids = (
                 [predicted_family]
                 if is_self_pair
@@ -1474,14 +1469,9 @@ class DeterministicModalCompiler:
             if runner_up_share is not None
             else None
         )
-        family_margin_display = (
-            round(family_margin, 6)
-            if is_self_pair
-            else round(
-                primary_share_display - competing_share_display,
-                6,
-            )
-        )
+        # Round the raw margin directly so metadata preserves tiny negative/positive
+        # outvote deltas that can disappear when subtracting rounded shares.
+        family_margin_display = round(family_margin, 6)
         candidate_ids = (
             [resolved_compiled_primary_family]
             if is_self_pair
