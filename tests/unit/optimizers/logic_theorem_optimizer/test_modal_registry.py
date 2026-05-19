@@ -271,11 +271,19 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert set(COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS) == {
         ("deontic", "dynamic"),
         ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "alethic"),
+        ("frame", "temporal"),
+        ("temporal", "temporal"),
     }
     assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("frame", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "alethic") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "frame") is False
     assert is_compiler_required_adaptive_ambiguity_pair(
         "frame",
@@ -463,6 +471,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "deontic",
         "temporal",
         "frame",
+        "conditional_normative",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("temporal") == (
         "conditional_normative",
