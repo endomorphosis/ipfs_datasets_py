@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -44,6 +45,156 @@ def _load_flogic_optimizer():
     sys.modules[_MOD_NAME] = mod
     spec.loader.exec_module(mod)
     return mod
+
+
+def test_lazy_installer_recognizes_ergoai_aliases(monkeypatch):
+    from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+        normalize_prover_name,
+        prover_lazy_install_enabled,
+    )
+
+    monkeypatch.delenv("IPFS_DATASETS_PY_MINIMAL_IMPORTS", raising=False)
+    monkeypatch.delenv("IPFS_DATASETS_PY_BENCHMARK", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS", "1")
+    monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", raising=False)
+
+    assert normalize_prover_name("runErgo.sh") == "ergoai"
+    assert normalize_prover_name("ErgoEngine") == "ergoai"
+    assert prover_lazy_install_enabled("ergo") is True
+
+    monkeypatch.setenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", "0")
+
+    assert prover_lazy_install_enabled("ergoai") is False
+
+
+def test_prover_installer_accepts_existing_ergoai_binary(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    fake_binary = tmp_path / "runErgo.sh"
+    fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake_binary.chmod(0o644)
+    monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
+
+    assert prover_installer.ensure_ergoai(yes=False, strict=True) is True
+    assert os.access(fake_binary, os.X_OK)
+
+
+def test_platform_package_plan_uses_passwordless_sudo_for_apt():
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    profile = prover_installer.PlatformInstallProfile(
+        system="linux",
+        architecture="x86_64",
+        package_manager="apt",
+        package_manager_path="/usr/bin/apt-get",
+        is_root=False,
+        sudo_path="/usr/bin/sudo",
+        passwordless_sudo=True,
+    )
+
+    install_cmd, update_cmd, mode = prover_installer._platform_install_command(
+        profile,
+        ["coq"],
+        allow_sudo=False,
+    )
+
+    assert mode == "passwordless sudo"
+    assert update_cmd == ["/usr/bin/sudo", "-n", "/usr/bin/apt-get", "update"]
+    assert install_cmd == [
+        "/usr/bin/sudo",
+        "-n",
+        "/usr/bin/apt-get",
+        "install",
+        "-y",
+        "coq",
+    ]
+
+
+def test_platform_package_plan_uses_homebrew_without_sudo():
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    profile = prover_installer.PlatformInstallProfile(
+        system="darwin",
+        architecture="arm64",
+        package_manager="brew",
+        package_manager_path="/opt/homebrew/bin/brew",
+        is_root=False,
+        sudo_path=None,
+        passwordless_sudo=False,
+    )
+
+    install_cmd, update_cmd, mode = prover_installer._platform_install_command(
+        profile,
+        ["coq"],
+        allow_sudo=False,
+    )
+
+    assert mode == "homebrew"
+    assert update_cmd is None
+    assert install_cmd == ["/opt/homebrew/bin/brew", "install", "coq"]
+
+
+def test_platform_system_install_runs_update_and_install(monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    profile = prover_installer.PlatformInstallProfile(
+        system="linux",
+        architecture="aarch64",
+        package_manager="apt",
+        package_manager_path="/usr/bin/apt-get",
+        is_root=True,
+        sudo_path=None,
+        passwordless_sudo=False,
+    )
+    commands = []
+
+    monkeypatch.setattr(prover_installer, "detect_platform_install_profile", lambda: profile)
+    monkeypatch.setattr(
+        prover_installer,
+        "_run",
+        lambda cmd, **_kwargs: commands.append(cmd) or 0,
+    )
+
+    assert prover_installer._install_system_packages(
+        ["git", "make"],
+        reason="ErgoAI/ErgoEngine build",
+        allow_sudo=False,
+        strict=True,
+    )
+    assert commands == [
+        ["/usr/bin/apt-get", "update"],
+        ["/usr/bin/apt-get", "install", "-y", "git", "make"],
+    ]
+
+
+def test_ergoai_install_attempts_platform_build_dependencies(monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    profile = prover_installer.PlatformInstallProfile(
+        system="linux",
+        architecture="aarch64",
+        package_manager="apt",
+        package_manager_path="/usr/bin/apt-get",
+        is_root=True,
+        sudo_path=None,
+        passwordless_sudo=False,
+    )
+    installed = []
+
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    monkeypatch.setattr(prover_installer, "_find_ergoai_binary", lambda: None)
+    monkeypatch.setattr(prover_installer, "_run_custom_ergoai_installer", lambda **_kwargs: False)
+    monkeypatch.setattr(prover_installer, "detect_platform_install_profile", lambda: profile)
+    monkeypatch.setattr(
+        prover_installer,
+        "_install_system_packages",
+        lambda packages, **_kwargs: installed.extend(packages) or True,
+    )
+    monkeypatch.setattr(prover_installer, "_clone_or_update_ergoai", lambda **_kwargs: False)
+
+    assert prover_installer.ensure_ergoai(yes=True, strict=False) is False
+    assert "git" in installed
+    assert "make" in installed
 
 
 # ---------------------------------------------------------------------------
@@ -183,8 +334,8 @@ class TestErgoAIWrapperSimulation:
         self.FLogicStatus = FLogicStatus
 
     def _make_wrapper(self):
-        # Force simulation mode by passing binary=None
-        return self.ErgoAIWrapper(binary=None)
+        # Force simulation mode without invoking opt-in lazy installers.
+        return self.ErgoAIWrapper(binary=None, lazy_install=False)
 
     def test_simulation_mode_flag(self):
         ergo = self._make_wrapper()
@@ -218,6 +369,35 @@ class TestErgoAIWrapperSimulation:
         ergo = self._make_wrapper()
         ergo.add_rule("?X[barks -> true] :- ?X : Dog.")
         assert ergo.get_statistics()["rules"] == 1
+
+    def test_lazy_installer_can_resolve_missing_ergoai_binary(self, tmp_path, monkeypatch):
+        import ipfs_datasets_py.logic.external_provers.lazy_installer as lazy_installer
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        fake_binary = tmp_path / "runErgo.sh"
+        fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        fake_binary.chmod(0o755)
+        calls = []
+
+        def fake_find_ergo_binary():
+            env_path = os.environ.get("ERGOAI_BINARY")
+            return Path(env_path) if env_path else None
+
+        def fake_lazy_install(prover_name, **kwargs):
+            calls.append((prover_name, kwargs))
+            monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
+            return True
+
+        monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+        monkeypatch.setattr(ergoai_wrapper, "_find_ergo_binary", fake_find_ergo_binary)
+        monkeypatch.setattr(lazy_installer, "lazy_install_prover", fake_lazy_install)
+
+        ergo = ergoai_wrapper.ErgoAIWrapper(lazy_install=True)
+
+        assert ergo.simulation_mode is False
+        assert ergo.binary == fake_binary
+        assert calls
+        assert calls[0][0] == "ergoai"
 
     def test_load_ontology(self):
         ergo = self._make_wrapper()

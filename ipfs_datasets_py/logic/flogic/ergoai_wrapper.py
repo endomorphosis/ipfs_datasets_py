@@ -38,7 +38,7 @@ from .flogic_types import (
 
 logger = logging.getLogger(__name__)
 
-# Path to the ErgoAI submodule (populated by git submodule update --init)
+# Path to the ErgoAI submodule or lazy-installer checkout.
 ERGOAI_SUBMODULE_PATH: Path = Path(__file__).parent.parent / "ErgoAI"
 
 # Default binary name looked up on PATH or inside the submodule
@@ -81,6 +81,44 @@ def _find_ergo_binary() -> Optional[Path]:
     return None
 
 
+def _lazy_install_ergo_binary(reason: str) -> Optional[Path]:
+    """Attempt an opt-in lazy ErgoAI install and return the resolved binary."""
+
+    try:
+        from ipfs_datasets_py.logic.external_provers.lazy_installer import (
+            lazy_install_prover,
+        )
+    except Exception as exc:
+        logger.debug("Could not import lazy prover installer for ErgoAI: %s", exc)
+        return None
+
+    if not lazy_install_prover("ergoai", reason=reason):
+        return None
+    return _find_ergo_binary()
+
+
+def resolve_ergo_binary(
+    binary: Optional[Path] = None,
+    *,
+    lazy_install: bool = True,
+    reason: str = "ErgoAIWrapper requested",
+) -> Optional[Path]:
+    """Resolve an ErgoAI binary, optionally invoking the shared lazy installer."""
+
+    if binary is not None:
+        candidate = Path(binary)
+        if candidate.is_file():
+            return candidate
+
+    found = _find_ergo_binary()
+    if found is not None:
+        return found
+
+    if lazy_install:
+        return _lazy_install_ergo_binary(reason)
+    return None
+
+
 ERGOAI_AVAILABLE: bool = _find_ergo_binary() is not None
 
 
@@ -116,14 +154,20 @@ class ErgoAIWrapper:
         self,
         ontology_name: str = "default",
         binary: Optional[Path] = None,
+        lazy_install: bool = True,
     ) -> None:
         self.ontology: FLogicOntology = FLogicOntology(name=ontology_name)
-        self.binary: Optional[Path] = binary or _find_ergo_binary()
+        self.binary: Optional[Path] = resolve_ergo_binary(
+            binary,
+            lazy_install=lazy_install,
+        )
         self.simulation_mode: bool = self.binary is None
         if self.simulation_mode:
             logger.info(
                 "ErgoAI binary not found — running in simulation mode. "
-                "Install ErgoEngine and set ERGOAI_BINARY to enable full reasoning. "
+                "Install ErgoEngine and set ERGOAI_BINARY, or enable the opt-in "
+                "lazy installer with IPFS_DATASETS_PY_LAZY_INSTALL_PROVERS=1 "
+                "and IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI=1. "
                 "See: https://github.com/ErgoAI/ErgoEngine"
             )
 
@@ -283,4 +327,5 @@ __all__ = [
     "ErgoAIWrapper",
     "ERGOAI_AVAILABLE",
     "ERGOAI_SUBMODULE_PATH",
+    "resolve_ergo_binary",
 ]

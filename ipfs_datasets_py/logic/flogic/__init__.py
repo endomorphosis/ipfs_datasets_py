@@ -41,7 +41,12 @@ import importlib
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .ergoai_wrapper import ErgoAIWrapper, ERGOAI_AVAILABLE, ERGOAI_SUBMODULE_PATH
+    from .ergoai_wrapper import (
+        ErgoAIWrapper,
+        ERGOAI_AVAILABLE,
+        ERGOAI_SUBMODULE_PATH,
+        resolve_ergo_binary,
+    )
     from .flogic_types import (
         FLogicStatus,
         FLogicFrame,
@@ -70,6 +75,7 @@ __all__ = [
     "ErgoAIWrapper",
     "ERGOAI_AVAILABLE",
     "ERGOAI_SUBMODULE_PATH",
+    "resolve_ergo_binary",
     # F-logic types
     "FLogicStatus",
     "FLogicFrame",
@@ -94,6 +100,7 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "ErgoAIWrapper": (".ergoai_wrapper", "ErgoAIWrapper"),
     "ERGOAI_AVAILABLE": (".ergoai_wrapper", "ERGOAI_AVAILABLE"),
     "ERGOAI_SUBMODULE_PATH": (".ergoai_wrapper", "ERGOAI_SUBMODULE_PATH"),
+    "resolve_ergo_binary": (".ergoai_wrapper", "resolve_ergo_binary"),
     "FLogicStatus": (".flogic_types", "FLogicStatus"),
     "FLogicFrame": (".flogic_types", "FLogicFrame"),
     "FLogicClass": (".flogic_types", "FLogicClass"),

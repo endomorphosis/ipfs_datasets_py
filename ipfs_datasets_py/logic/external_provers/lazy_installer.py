@@ -9,6 +9,8 @@ Environment variables:
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>=0/1 overrides a prover.
 - IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1 raises on installer failure.
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1 permits interactive sudo for Coq.
+- IPFS_DATASETS_PY_ERGOAI_GIT_URL overrides the ErgoAI/ErgoEngine source repo.
+- IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND runs a custom ErgoAI installer command.
 """
 
 from __future__ import annotations
@@ -39,6 +41,13 @@ _ALIASES = {
     "symbolicai": "symbolicai",
     "symbolic_ai": "symbolicai",
     "symai": "symbolicai",
+    "ergo": "ergoai",
+    "ergoai": "ergoai",
+    "ergo_ai": "ergoai",
+    "ergoengine": "ergoai",
+    "ergo_engine": "ergoai",
+    "runergo": "ergoai",
+    "runergo.sh": "ergoai",
 }
 
 _ENV_NAMES = {
@@ -47,6 +56,7 @@ _ENV_NAMES = {
     "lean": "LEAN",
     "coq": "COQ",
     "symbolicai": "SYMBOLICAI",
+    "ergoai": "ERGOAI",
 }
 
 

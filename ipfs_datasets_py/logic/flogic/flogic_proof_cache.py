@@ -175,6 +175,8 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
             :class:`~ipfs_datasets_py.logic.flogic.ergoai_wrapper.ErgoAIWrapper`.
         binary: Forwarded to
             :class:`~ipfs_datasets_py.logic.flogic.ergoai_wrapper.ErgoAIWrapper`.
+        lazy_install: Forwarded to
+            :class:`~ipfs_datasets_py.logic.flogic.ergoai_wrapper.ErgoAIWrapper`.
     """
 
     def __init__(
@@ -187,8 +189,13 @@ class CachedErgoAIWrapper(ErgoAIWrapper):
         enable_normalization: bool = True,
         ontology_name: str = "default",
         binary=None,
+        lazy_install: bool = True,
     ) -> None:
-        super().__init__(ontology_name=ontology_name, binary=binary)
+        super().__init__(
+            ontology_name=ontology_name,
+            binary=binary,
+            lazy_install=lazy_install,
+        )
 
         self.enable_caching = enable_caching and _HAVE_CACHE
         self.enable_normalization = enable_normalization
