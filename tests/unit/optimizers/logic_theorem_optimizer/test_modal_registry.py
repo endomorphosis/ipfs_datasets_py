@@ -303,3 +303,25 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "dynamic",
         "deontic",
     )
+
+
+def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs() -> None:
+    recurrent_pairs = (
+        ("alethic", "deontic"),
+        ("deontic", "conditional_normative"),
+        ("deontic", "deontic"),
+        ("deontic", "frame"),
+        ("deontic", "temporal"),
+        ("frame", "conditional_normative"),
+        ("frame", "deontic"),
+        ("frame", "temporal"),
+    )
+    for predicted_family, target_family in recurrent_pairs:
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )

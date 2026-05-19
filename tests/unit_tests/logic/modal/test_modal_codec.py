@@ -2431,6 +2431,160 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_alethic_adapti
     )
 
 
+def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_pairs(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    scenarios = (
+        (
+            "deontic",
+            "D",
+            "O",
+            "shall",
+            [
+                {"family": "deontic", "count": 1, "share": 0.5},
+                {"family": "temporal", "count": 1, "share": 0.5},
+            ],
+            {
+                "deontic": 0.5,
+                "temporal": 0.5,
+            },
+            (
+                "deontic->deontic",
+                "deontic->conditional_normative",
+                "deontic->frame",
+                "deontic->temporal",
+            ),
+        ),
+        (
+            "frame",
+            "FRAME_BM25",
+            "Frame",
+            "authority",
+            [{"family": "frame", "count": 1, "share": 1.0}],
+            {"frame": 1.0},
+            (
+                "frame->conditional_normative",
+                "frame->deontic",
+                "frame->temporal",
+            ),
+        ),
+        (
+            "alethic",
+            "S5",
+            "□",
+            "necessary",
+            [{"family": "alethic", "count": 1, "share": 1.0}],
+            {"alethic": 1.0},
+            ("alethic->deontic",),
+        ),
+    )
+
+    for index, (
+        predicted_family,
+        system,
+        symbol,
+        cue,
+        ranking,
+        family_shares,
+        expected_policy_pairs,
+    ) in enumerate(scenarios, start=1):
+        doc_id = f"adaptive-policy-pairs-{predicted_family}-{index}"
+        encoding = SpaCyLegalEncoding(
+            document_id=doc_id,
+            text=f"Synthetic {predicted_family} clause.",
+            normalized_text=f"Synthetic {predicted_family} clause.",
+            tokens=[],
+            sentences=[],
+            cues=[
+                SpaCyModalCueFeature(
+                    family=predicted_family,
+                    system=system,
+                    symbol=symbol,
+                    label=f"{predicted_family}-label",
+                    cue=cue,
+                    start_char=0,
+                    end_char=max(1, len(cue)),
+                    token_indices=[],
+                ),
+            ],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=doc_id,
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-{predicted_family}-1",
+                    operator=ModalIROperator(
+                        family=predicted_family,
+                        system=system,
+                        symbol=symbol,
+                        label=f"{predicted_family}-label",
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{predicted_family}_predicate",
+                        arguments=["actor:agency"],
+                        role="clause",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=doc_id,
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                        citation="42 U.S.C. 1983",
+                    ),
+                ),
+            ],
+        )
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+        adaptive_base_ambiguities = [
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        ]
+        by_policy_pair = {
+            str(ambiguity.metadata["adaptive_policy_pair"]): ambiguity
+            for ambiguity in adaptive_base_ambiguities
+        }
+        assert set(expected_policy_pairs).issubset(by_policy_pair)
+        for policy_pair in expected_policy_pairs:
+            predicted, target = policy_pair.split("->", maxsplit=1)
+            expected_explicit_type = by_policy_pair[policy_pair].metadata[
+                "explicit_ambiguity_type"
+            ]
+            if predicted == target:
+                assert expected_explicit_type.startswith(
+                    f"adaptive_{predicted}_{target}_"
+                )
+            else:
+                assert (
+                    expected_explicit_type
+                    == f"adaptive_{predicted}_{target}_outvoted_margin_low"
+                )
+            assert any(
+                ambiguity.ambiguity_type == expected_explicit_type
+                and ambiguity.metadata["adaptive_policy_pair"] == policy_pair
+                and ambiguity.metadata["adaptive_base_ambiguity_type"]
+                == "adaptive_family_margin_low"
+                for ambiguity in ambiguities
+            )
+
+
 def test_modal_compiler_treats_alethic_scope_as_temporal_adaptive_target_signal(
     monkeypatch,
 ) -> None:
