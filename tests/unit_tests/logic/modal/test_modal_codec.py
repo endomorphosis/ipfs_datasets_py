@@ -6501,9 +6501,117 @@ def test_modal_compiler_emits_adaptive_priority_metadata_for_frame_deontic_polic
     assert abs(adaptive_deontic.metadata["family_margin_raw"] + 0.99003245694) < 1e-12
     assert abs(adaptive_deontic.metadata["adaptive_margin_abs"] - 0.99003245694) < 1e-12
     assert abs(adaptive_deontic.metadata["adaptive_priority"] - 1.14003245694) < 1e-12
+    assert abs(adaptive_deontic.metadata["priority"] - 1.14003245694) < 1e-12
+    assert adaptive_deontic.metadata["priority"] == adaptive_deontic.metadata["adaptive_priority"]
     assert adaptive_deontic.metadata["explicit_ambiguity_type"] == (
         "adaptive_frame_deontic_outvoted_margin_low"
     )
+
+
+def test_modal_compiler_emits_priority_alias_for_temporal_signal_free_policy_pairs(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-priority-temporal-policy-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-priority-temporal-policy-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-temporal-1",
+                operator=ModalIROperator(
+                    family="temporal",
+                    system="LTL",
+                    symbol="F",
+                    label="eventually",
+                ),
+                predicate=ModalIRPredicate(
+                    name="notice_applies",
+                    arguments=["actor:agency"],
+                    role="temporal_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-priority-temporal-policy-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="12 U.S.C. 2121",
+                ),
+            ),
+        ],
+    )
+    policy_cases = (
+        (
+            "conditional_normative",
+            0.879553798991,
+            1.029553798991,
+            "adaptive_temporal_conditional_normative_outvoted_margin_low",
+        ),
+        (
+            "deontic",
+            0.999862926894,
+            1.149862926894,
+            "adaptive_temporal_deontic_outvoted_margin_low",
+        ),
+    )
+    for target_family, predicted_share, expected_priority, explicit_type in policy_cases:
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=[
+                {
+                    "family": "temporal",
+                    "count": 1,
+                    "share_raw": predicted_share,
+                    "share": round(predicted_share, 6),
+                }
+            ],
+            family_shares={"temporal": predicted_share},
+        )
+        adaptive_pair = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == ["temporal", target_family]
+        )
+        assert abs(adaptive_pair.metadata["family_margin_raw"] + predicted_share) < 1e-12
+        assert abs(adaptive_pair.metadata["adaptive_priority"] - expected_priority) < 1e-12
+        assert abs(adaptive_pair.metadata["priority"] - expected_priority) < 1e-12
+        assert adaptive_pair.metadata["priority"] == adaptive_pair.metadata["adaptive_priority"]
+        assert adaptive_pair.metadata["explicit_ambiguity_type"] == explicit_type
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and abs(ambiguity.metadata["priority"] - expected_priority) < 1e-12
+            for ambiguity in ambiguities
+        )
 
 
 def test_modal_compiler_uses_signal_free_pair_policy_for_deontic_epistemic_adaptive_ambiguity(

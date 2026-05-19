@@ -812,14 +812,16 @@ class DeterministicModalCompiler:
                 if is_self_pair
                 else [predicted_family, target_family]
             )
+            adaptive_priority = self._adaptive_margin_priority(
+                family_margin=family_margin,
+                threshold=threshold,
+            )
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
                 "adaptive_margin_abs": abs(family_margin),
-                "adaptive_priority": self._adaptive_margin_priority(
-                    family_margin=family_margin,
-                    threshold=threshold,
-                ),
+                "adaptive_priority": adaptive_priority,
+                "priority": adaptive_priority,
                 "adaptive_predicted_family_source": predicted_family_source,
                 "adaptive_policy_pair": f"{predicted_family}->{target_family}",
                 "explicit_ambiguity_type": explicit_type,
@@ -1191,14 +1193,16 @@ class DeterministicModalCompiler:
             if is_self_pair
             else [compiled_primary_family, competing_family]
         )
+        adaptive_priority = self._adaptive_margin_priority(
+            family_margin=family_margin,
+            threshold=threshold,
+        )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
             "adaptive_margin_direction": margin_direction,
             "adaptive_margin_abs": abs(family_margin),
-            "adaptive_priority": self._adaptive_margin_priority(
-                family_margin=family_margin,
-                threshold=threshold,
-            ),
+            "adaptive_priority": adaptive_priority,
+            "priority": adaptive_priority,
             "adaptive_predicted_family_source": "compiled_primary_family",
             "adaptive_policy_pair": f"{compiled_primary_family}->{competing_family}",
             "adaptive_runner_up_policy_pair": (
@@ -1337,14 +1341,16 @@ class DeterministicModalCompiler:
             primary_share > 0.0
             or has_compiled_target_family_formula
         )
+        adaptive_priority = self._adaptive_margin_priority(
+            family_margin=family_margin,
+            threshold=threshold,
+        )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
             "adaptive_margin_direction": margin_direction,
             "adaptive_margin_abs": abs(family_margin),
-            "adaptive_priority": self._adaptive_margin_priority(
-                family_margin=family_margin,
-                threshold=threshold,
-            ),
+            "adaptive_priority": adaptive_priority,
+            "priority": adaptive_priority,
             "adaptive_predicted_family_source": "compiled_primary_family",
             "adaptive_policy_pair": f"{compiled_primary_family}->{compiled_primary_family}",
             "adaptive_runner_up_policy_pair": (
