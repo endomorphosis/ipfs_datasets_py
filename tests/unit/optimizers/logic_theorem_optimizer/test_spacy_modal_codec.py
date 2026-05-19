@@ -479,6 +479,118 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_temporal_scope_is_pres
     assert logits["temporal"] > logits["frame"]
 
 
+def test_spacy_decoder_strengthens_conditional_scope_boost_for_statutory_frame_context() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="43",
+        section="1656a",
+        text="As provided in subsection (b), liability applies.",
+    )
+    competing = build_us_code_sample(
+        title="43",
+        section="1656b",
+        text="Authority under this section applies as provided in subsection (b).",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("conditional_normative", "frame", "deontic"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("conditional_normative", "frame", "deontic"),
+    )
+
+    assert competing_logits["conditional_normative"] > baseline_logits["conditional_normative"]
+
+
+def test_spacy_decoder_strengthens_deontic_scope_boost_for_statutory_frame_context() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="16",
+        section="403h-10a",
+        text="Liability for noncompliance applies.",
+    )
+    competing = build_us_code_sample(
+        title="16",
+        section="403h-10b",
+        text="Authority under this section imposes liability for noncompliance.",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
+def test_spacy_decoder_strengthens_deontic_scope_boost_for_temporal_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="29",
+        section="2861a",
+        text="Liability for noncompliance applies.",
+    )
+    competing = build_us_code_sample(
+        title="29",
+        section="2861b",
+        text="Not later than January 1, 2030, liability for noncompliance applies.",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "temporal", "frame"),
+    )
+
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
+def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1a",
+        text="Liability for noncompliance applies.",
+    )
+    competing = build_us_code_sample(
+        title="28",
+        section="1b",
+        text="It is possible that liability for noncompliance applies.",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
 def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

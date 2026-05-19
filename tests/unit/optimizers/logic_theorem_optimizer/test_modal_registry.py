@@ -205,6 +205,10 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
 
 def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() -> None:
     assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "alethic",
+        "deontic",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
         "deontic",
         "conditional_normative",
     )
@@ -252,6 +256,9 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
 
 
 def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets() -> None:
+    assert priority_signal_free_adaptive_ambiguity_targets("alethic") == (
+        "deontic",
+    )
     assert priority_signal_free_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
         "temporal",

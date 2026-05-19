@@ -1668,9 +1668,33 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
     """Return deterministic logit boosts for scope-signaled families without cues."""
     boosts: Dict[str, float] = {}
     if bool(signals.get("has_condition_or_exception_scope")):
-        boosts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = 0.9
+        conditional_bonus = 0.9
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            and (
+                bool(signals.get("has_frame_context"))
+                or bool(signals.get("has_frame_cue"))
+            )
+        ):
+            conditional_bonus += 0.25
+        boosts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = conditional_bonus
     if bool(signals.get("has_deontic_scope")):
-        boosts[ModalLogicFamily.DEONTIC.value] = 0.8
+        deontic_bonus = 0.8
+        if bool(signals.get("has_deontic_scope_phrase")):
+            deontic_bonus += 0.2
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            and (
+                bool(signals.get("has_frame_context"))
+                or bool(signals.get("has_frame_cue"))
+            )
+        ):
+            deontic_bonus += 0.4
+        if bool(signals.get("has_temporal_scope")):
+            deontic_bonus += 0.25
+        if bool(signals.get("has_alethic_scope")) or bool(signals.get("has_alethic_cue")):
+            deontic_bonus += 0.25
+        boosts[ModalLogicFamily.DEONTIC.value] = deontic_bonus
     temporal_bonus = 0.0
     if bool(signals.get("has_temporal_scope")):
         temporal_bonus += 1.2
