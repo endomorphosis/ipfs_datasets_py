@@ -591,6 +591,40 @@ def test_spacy_decoder_strengthens_deontic_scope_boost_for_alethic_competition()
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
+def test_spacy_decoder_soft_caps_repeated_alethic_logits_for_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1c",
+        text=(
+            "It is possible and necessary and impossible that the filing proceeds."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="28",
+        section="1d",
+        text=(
+            "It is possible and necessary and impossible that the agency is under "
+            "an obligation to file notice."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "alethic", "frame"),
+    )
+
+    assert competing_logits["alethic"] < baseline_logits["alethic"]
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
 def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1225,7 +1259,34 @@ def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_
         for item in ranking
         if item["family"] == "deontic"
     )
-    assert deontic_share > 0.0
+    assert deontic_share > 0.05
+
+
+def test_spacy_codec_strengthens_conditional_share_for_dense_deontic_scope_with_condition_clause() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="18",
+        section="1038",
+        text=(
+            "When the application is complete, the agency shall and must and shall "
+            "and must issue notice."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
+    assert signals["has_condition_clause"] is True
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    assert conditional_share > 0.05
 
 
 def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_temporal_scope_phrase() -> None:
