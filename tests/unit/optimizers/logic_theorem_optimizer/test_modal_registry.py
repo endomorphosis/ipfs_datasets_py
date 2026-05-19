@@ -322,6 +322,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
         ("deontic", "deontic"),
         ("deontic", "frame"),
         ("deontic", "temporal"),
+        ("conditional_normative", "temporal"),
         ("temporal", "frame"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),

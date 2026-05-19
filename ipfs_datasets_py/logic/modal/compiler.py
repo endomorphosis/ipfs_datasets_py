@@ -622,10 +622,8 @@ class DeterministicModalCompiler:
         for ambiguity in list(resolved_ambiguities):
             if ambiguity.ambiguity_type != "adaptive_family_margin_low":
                 continue
-            explicit_type = str(
-                ambiguity.metadata.get("explicit_ambiguity_type") or ""
-            ).strip()
-            if not explicit_type or explicit_type == "adaptive_family_margin_low":
+            explicit_type = self._derive_explicit_adaptive_ambiguity_type(ambiguity)
+            if not explicit_type:
                 continue
             explicit_key = (
                 explicit_type,
@@ -658,6 +656,52 @@ class DeterministicModalCompiler:
             )
             existing_explicit_keys.add(explicit_key)
         return resolved_ambiguities
+
+    def _derive_explicit_adaptive_ambiguity_type(
+        self,
+        ambiguity: ModalCompilationAmbiguity,
+    ) -> Optional[str]:
+        """Resolve explicit adaptive ambiguity type from base metadata."""
+        metadata = ambiguity.metadata if isinstance(ambiguity.metadata, dict) else {}
+        explicit_type = str(metadata.get("explicit_ambiguity_type") or "").strip()
+        if explicit_type and explicit_type != "adaptive_family_margin_low":
+            return explicit_type
+
+        predicted_family = str(metadata.get("predicted_family") or "").strip()
+        target_family = str(metadata.get("target_family") or "").strip()
+        if not predicted_family and ambiguity.candidate_ids:
+            predicted_family = str(ambiguity.candidate_ids[0]).strip()
+        if not target_family and len(ambiguity.candidate_ids) > 1:
+            target_family = str(ambiguity.candidate_ids[1]).strip()
+
+        policy_pair = str(metadata.get("adaptive_policy_pair") or "").strip()
+        if "->" in policy_pair:
+            policy_predicted, policy_target = policy_pair.split("->", maxsplit=1)
+            if not predicted_family:
+                predicted_family = policy_predicted.strip()
+            if not target_family:
+                target_family = policy_target.strip()
+
+        is_self_pair = bool(metadata.get("is_self_pair")) or (
+            len(ambiguity.candidate_ids) == 1
+        )
+        if is_self_pair and predicted_family and not target_family:
+            target_family = predicted_family
+        if not predicted_family or not target_family:
+            return None
+
+        margin_direction = str(metadata.get("adaptive_margin_direction") or "").strip().lower()
+        if margin_direction not in {"contested", "outvoted"}:
+            family_margin = metadata.get("family_margin_raw", metadata.get("family_margin"))
+            try:
+                margin_direction = "outvoted" if float(family_margin) <= 0.0 else "contested"
+            except (TypeError, ValueError):
+                margin_direction = "outvoted"
+        return self._adaptive_margin_explicit_type(
+            predicted_family,
+            target_family,
+            margin_direction,
+        )
 
     def _adaptive_family_ranking_from_logits(
         self,
