@@ -27,6 +27,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     DEFAULT_MODAL_REGISTRY,
     ModalLogicFamily,
     ModalRegistry,
+    is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
     priority_signal_free_adaptive_ambiguity_targets,
@@ -807,6 +808,14 @@ class DeterministicModalCompiler:
                     runner_up_family,
                 )
             )
+            runner_up_is_compiler_required_policy_pair = bool(
+                is_self_pair
+                and runner_up_family is not None
+                and is_compiler_required_adaptive_ambiguity_pair(
+                    predicted_family,
+                    runner_up_family,
+                )
+            )
             if is_self_pair and (
                 predicted_margin_to_runner_up is None
                 or predicted_margin_to_runner_up > threshold
@@ -827,6 +836,13 @@ class DeterministicModalCompiler:
                 predicted_family,
                 target_family,
             ) or runner_up_is_priority_policy_pair
+            is_compiler_required_policy_pair = (
+                is_compiler_required_adaptive_ambiguity_pair(
+                    predicted_family,
+                    target_family,
+                )
+                or runner_up_is_compiler_required_policy_pair
+            )
             if (
                 not has_target_signal_evidence
                 and not supports_signal_free_pair_policy
@@ -841,7 +857,13 @@ class DeterministicModalCompiler:
                 continue
             margin_direction = "outvoted" if (
                 family_margin < 0.0
-                or (family_margin <= 0.0 and is_priority_policy_pair)
+                or (
+                    family_margin <= 0.0
+                    and (
+                        is_priority_policy_pair
+                        or is_compiler_required_policy_pair
+                    )
+                )
             ) else "contested"
             requires_rule = margin_direction == "outvoted"
             explicit_type = self._adaptive_margin_explicit_type(
@@ -889,6 +911,10 @@ class DeterministicModalCompiler:
                 "has_compiled_target_family_formula": has_compiled_target_family_formula,
                 "has_frame_bm25_support": has_frame_bm25_support,
                 "lexical_signals": dict(sorted(signals.items())),
+                "is_compiler_required_policy_pair": is_compiler_required_policy_pair,
+                "runner_up_is_compiler_required_policy_pair": (
+                    runner_up_is_compiler_required_policy_pair
+                ),
                 "is_priority_policy_pair": is_priority_policy_pair,
                 "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
                 "predicted_family": predicted_family,
@@ -1225,13 +1251,34 @@ class DeterministicModalCompiler:
                 runner_up_family,
             )
         )
+        runner_up_is_compiler_required_policy_pair = bool(
+            is_self_pair
+            and runner_up_family is not None
+            and is_compiler_required_adaptive_ambiguity_pair(
+                compiled_primary_family,
+                runner_up_family,
+            )
+        )
         is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
             competing_family,
         ) or runner_up_is_priority_policy_pair
+        is_compiler_required_policy_pair = (
+            is_compiler_required_adaptive_ambiguity_pair(
+                compiled_primary_family,
+                competing_family,
+            )
+            or runner_up_is_compiler_required_policy_pair
+        )
         margin_direction = "outvoted" if (
             family_margin < 0.0
-            or (family_margin <= 0.0 and is_priority_policy_pair)
+            or (
+                family_margin <= 0.0
+                and (
+                    is_priority_policy_pair
+                    or is_compiler_required_policy_pair
+                )
+            )
         ) else "contested"
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
@@ -1289,6 +1336,10 @@ class DeterministicModalCompiler:
             "has_compiled_target_family_formula": has_compiled_target_family_formula,
             "has_frame_bm25_support": has_frame_bm25_support,
             "lexical_signals": dict(sorted(signals.items())),
+            "is_compiler_required_policy_pair": is_compiler_required_policy_pair,
+            "runner_up_is_compiler_required_policy_pair": (
+                runner_up_is_compiler_required_policy_pair
+            ),
             "is_priority_policy_pair": is_priority_policy_pair,
             "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
             "predicted_family": compiled_primary_family,
@@ -1383,13 +1434,32 @@ class DeterministicModalCompiler:
             compiled_primary_family,
             runner_up_family,
         )
+        runner_up_is_compiler_required_policy_pair = (
+            is_compiler_required_adaptive_ambiguity_pair(
+                compiled_primary_family,
+                runner_up_family,
+            )
+        )
         is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
             compiled_primary_family,
             compiled_primary_family,
         ) or runner_up_is_priority_policy_pair
+        is_compiler_required_policy_pair = (
+            is_compiler_required_adaptive_ambiguity_pair(
+                compiled_primary_family,
+                compiled_primary_family,
+            )
+            or runner_up_is_compiler_required_policy_pair
+        )
         margin_direction = "outvoted" if (
             family_margin < 0.0
-            or (family_margin <= 0.0 and is_priority_policy_pair)
+            or (
+                family_margin <= 0.0
+                and (
+                    is_priority_policy_pair
+                    or is_compiler_required_policy_pair
+                )
+            )
         ) else "contested"
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
@@ -1434,6 +1504,10 @@ class DeterministicModalCompiler:
             "has_compiled_target_family_formula": has_compiled_target_family_formula,
             "has_frame_bm25_support": has_frame_bm25_support,
             "lexical_signals": dict(sorted(signals.items())),
+            "is_compiler_required_policy_pair": is_compiler_required_policy_pair,
+            "runner_up_is_compiler_required_policy_pair": (
+                runner_up_is_compiler_required_policy_pair
+            ),
             "is_priority_policy_pair": is_priority_policy_pair,
             "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
             "predicted_family": compiled_primary_family,

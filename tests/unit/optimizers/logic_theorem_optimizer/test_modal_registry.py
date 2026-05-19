@@ -6,7 +6,9 @@ import json
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+    compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
+    is_compiler_required_adaptive_ambiguity_pair,
     ModalLogicFamily,
     ModalRegistry,
     ModalSystem,
@@ -177,6 +179,23 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
             predicted_family,
             target_family,
         )
+
+
+def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pairs() -> None:
+    required_pairs = set(COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS)
+
+    assert ("deontic", "deontic") in required_pairs
+    assert ("frame", "deontic") in required_pairs
+    assert ("temporal", "deontic") in required_pairs
+    assert compiler_required_adaptive_ambiguity_targets("deontic") == (
+        "conditional_normative",
+        "deontic",
+        "frame",
+    )
+    assert compiler_required_adaptive_ambiguity_targets("frame") == ("deontic",)
+    assert compiler_required_adaptive_ambiguity_targets("temporal") == ("deontic",)
+    assert is_compiler_required_adaptive_ambiguity_pair("frame", "deontic") is True
+    assert is_compiler_required_adaptive_ambiguity_pair("deontic", "temporal") is False
 
 
 def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:

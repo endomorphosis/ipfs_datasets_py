@@ -48,6 +48,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
         ModalLogicFamily.FRAME.value,
     ),
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
     ),
@@ -664,6 +668,31 @@ def priority_signal_free_adaptive_ambiguity_targets(
     )
 
 
+def compiler_required_adaptive_ambiguity_targets(
+    predicted_family: ModalLogicFamily | str,
+) -> Tuple[str, ...]:
+    """Return ordered compiler-required adaptive ambiguity targets."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    return tuple(
+        target_family
+        for source_family, target_family in COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if source_family == resolved_predicted_family
+    )
+
+
+def is_compiler_required_adaptive_ambiguity_pair(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> bool:
+    """Return whether a pair is in the compiler-required ambiguity policy bundle."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(target_family)
+    return (
+        resolved_predicted_family,
+        resolved_target_family,
+    ) in COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+
+
 def is_priority_signal_free_adaptive_ambiguity_pair(
     predicted_family: ModalLogicFamily | str,
     target_family: ModalLogicFamily | str,
@@ -693,6 +722,8 @@ __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+    "compiler_required_adaptive_ambiguity_targets",
+    "is_compiler_required_adaptive_ambiguity_pair",
     "NORMATIVE_MODAL_FAMILIES",
     "PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
