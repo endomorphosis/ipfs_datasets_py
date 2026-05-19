@@ -7971,6 +7971,123 @@ def test_modal_compiler_emits_adaptive_priority_metadata_for_frame_deontic_polic
     )
 
 
+def test_modal_compiler_canonicalizes_frame_family_tokens_for_priority_policy_margins(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-priority-frame-canonical-token-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-priority-frame-canonical-token-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="ModalLogicFamily.FRAME",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-priority-frame-canonical-token-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="22 U.S.C. 283k",
+                ),
+            ),
+        ],
+    )
+
+    scenarios = (
+        (
+            "deontic",
+            0.999908575942,
+            1.149908575942,
+            "adaptive_frame_deontic_outvoted_margin_low",
+        ),
+        (
+            "epistemic",
+            0.631226929562,
+            0.781226929562,
+            "adaptive_frame_epistemic_outvoted_margin_low",
+        ),
+        (
+            "temporal",
+            0.998544042424,
+            1.148544042424,
+            "adaptive_frame_temporal_outvoted_margin_low",
+        ),
+    )
+    for target_family, predicted_share, expected_priority, explicit_type in scenarios:
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=[
+                {
+                    "family": "ModalLogicFamily.FRAME",
+                    "count": 1,
+                    "share_raw": predicted_share,
+                    "share": round(predicted_share, 6),
+                }
+            ],
+            family_shares={"ModalLogicFamily.FRAME": predicted_share},
+        )
+        adaptive_pair = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == ["frame", target_family]
+        )
+        assert adaptive_pair.metadata["adaptive_policy_pair"] == (
+            f"frame->{target_family}"
+        )
+        assert abs(adaptive_pair.metadata["family_margin_raw"] + predicted_share) < 1e-12
+        assert abs(adaptive_pair.metadata["adaptive_priority"] - expected_priority) < 1e-12
+        assert abs(adaptive_pair.metadata["priority"] - expected_priority) < 1e-12
+        assert adaptive_pair.metadata["priority"] == adaptive_pair.metadata["adaptive_priority"]
+        assert adaptive_pair.metadata["explicit_ambiguity_type"] == explicit_type
+        assert any(
+            ambiguity.ambiguity_type == explicit_type
+            and ambiguity.candidate_ids == ["frame", target_family]
+            and abs(ambiguity.metadata["priority"] - expected_priority) < 1e-12
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_emits_priority_alias_for_temporal_signal_free_policy_pairs(
     monkeypatch,
 ) -> None:

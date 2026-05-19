@@ -800,23 +800,49 @@ class DeterministicModalCompiler:
         """Surface explicit ambiguities when strong legal families compete."""
         if not ranking:
             return []
-        predicted_family = str(ranking[0]["family"])
-        predicted_share = self._ranking_share(ranking[0])
+        canonical_family_shares = self._canonicalized_family_shares(
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+        predicted_family = self._canonical_modal_family_name(
+            ranking[0].get("family")
+        ) or str(ranking[0]["family"])
+        predicted_share = float(
+            canonical_family_shares.get(
+                predicted_family,
+                self._ranking_share(ranking[0]),
+            )
+        )
         runner_up_family: Optional[str] = None
         runner_up_share = 0.0
         predicted_margin_to_runner_up: Optional[float] = None
         if len(ranking) > 1:
-            runner_up_family = str(ranking[1]["family"])
-            runner_up_share = self._ranking_share(ranking[1])
+            runner_up_family = (
+                self._canonical_modal_family_name(ranking[1].get("family"))
+                or str(ranking[1]["family"])
+            )
+            runner_up_share = float(
+                canonical_family_shares.get(
+                    runner_up_family,
+                    self._ranking_share(ranking[1]),
+                )
+            )
             predicted_margin_to_runner_up = predicted_share - runner_up_share
         signals = modal_ambiguity_signals(encoding)
         threshold = float(self.config.modal_adaptive_family_margin)
         has_frame_bm25_support = self._has_frame_bm25_support(frame_selections)
         compiled_modal_families = {
-            str(formula.operator.family) for formula in modal_ir.formulas
+            self._canonical_modal_family_name(formula.operator.family)
+            or str(formula.operator.family)
+            for formula in modal_ir.formulas
         }
         compiled_primary_family = (
-            str(modal_ir.formulas[0].operator.family)
+            (
+                self._canonical_modal_family_name(
+                    modal_ir.formulas[0].operator.family
+                )
+                or str(modal_ir.formulas[0].operator.family)
+            )
             if modal_ir.formulas
             else None
         )
@@ -869,7 +895,7 @@ class DeterministicModalCompiler:
                 )
             ):
                 continue
-            target_share = float(family_shares.get(target_family, 0.0))
+            target_share = float(canonical_family_shares.get(target_family, 0.0))
             has_compiled_target_family_formula = target_family in compiled_modal_families
             has_target_signal_evidence = bool(
                 has_signal
@@ -1094,6 +1120,38 @@ class DeterministicModalCompiler:
                 )
             )
         return ambiguities
+
+    def _canonicalized_family_shares(
+        self,
+        *,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Mapping[str, float],
+    ) -> Dict[str, float]:
+        """Normalize family-share keys so policy matching is resilient to token forms."""
+        canonical_shares: Dict[str, float] = {}
+        for family, share in family_shares.items():
+            canonical_family = self._canonical_modal_family_name(family)
+            if not canonical_family:
+                continue
+            try:
+                resolved_share = float(share)
+            except (TypeError, ValueError):
+                continue
+            canonical_shares[canonical_family] = max(
+                canonical_shares.get(canonical_family, 0.0),
+                resolved_share,
+            )
+        for candidate in ranking:
+            canonical_family = self._canonical_modal_family_name(
+                candidate.get("family")
+            )
+            if not canonical_family:
+                continue
+            canonical_shares[canonical_family] = max(
+                canonical_shares.get(canonical_family, 0.0),
+                self._ranking_share(candidate),
+            )
+        return canonical_shares
 
     @staticmethod
     def _ordered_adaptive_target_families(
