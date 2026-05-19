@@ -189,6 +189,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     required_pairs = set(COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS)
 
     assert ("alethic", "deontic") in required_pairs
+    assert ("alethic", "conditional_normative") in required_pairs
     assert ("alethic", "temporal") in required_pairs
     assert ("conditional_normative", "deontic") in required_pairs
     assert ("deontic", "conditional_normative") in required_pairs
@@ -205,6 +206,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert ("temporal", "temporal") in required_pairs
     assert compiler_required_adaptive_ambiguity_targets("alethic") == (
         "deontic",
+        "conditional_normative",
         "temporal",
     )
     assert compiler_required_adaptive_ambiguity_targets("conditional_normative") == (
@@ -244,6 +246,13 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     ) is True
     assert is_compiler_required_adaptive_ambiguity_pair("deontic", "dynamic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "deontic") is True
+    assert (
+        is_compiler_required_adaptive_ambiguity_pair(
+            "alethic",
+            "conditional_normative",
+        )
+        is True
+    )
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair(
         "temporal",

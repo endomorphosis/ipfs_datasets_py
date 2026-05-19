@@ -12218,6 +12218,29 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "is_self_pair": False,
         },
         {
+            "doc_id": "required-alethic-conditional-margin-doc",
+            "predicted_family": "alethic",
+            "predicted_system": "S5",
+            "predicted_symbol": "◇",
+            "predicted_label": "possible",
+            "target_family": "conditional_normative",
+            "ranking": (
+                {"family": "alethic", "count": 1, "share": 0.999999793443},
+                {
+                    "family": "conditional_normative",
+                    "count": 1,
+                    "share": 0.000000206557,
+                },
+            ),
+            "family_margin": -0.999999586886,
+            "adaptive_priority": 1.149999586886,
+            "expected_explicit_type": (
+                "adaptive_alethic_conditional_normative_outvoted_margin_low"
+            ),
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
             "doc_id": "required-conditional-deontic-margin-doc",
             "predicted_family": "conditional_normative",
             "predicted_system": "STIT",
@@ -12339,6 +12362,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "family_margin": -0.480261147937,
             "adaptive_priority": 0.630261147937,
             "expected_explicit_type": "adaptive_deontic_temporal_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-deontic-frame-margin-doc",
+            "predicted_family": "deontic",
+            "predicted_system": "D",
+            "predicted_symbol": "O",
+            "predicted_label": "obligation",
+            "target_family": "frame",
+            "ranking": (
+                {"family": "deontic", "count": 1, "share": 0.777987422874},
+                {"family": "frame", "count": 1, "share": 0.222012577126},
+            ),
+            "family_margin": -0.555974845748,
+            "adaptive_priority": 0.705974845748,
+            "expected_explicit_type": "adaptive_deontic_frame_outvoted_margin_low",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
