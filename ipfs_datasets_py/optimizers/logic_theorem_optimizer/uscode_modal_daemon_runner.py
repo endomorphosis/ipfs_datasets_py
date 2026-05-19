@@ -29,6 +29,7 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
 )
+from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 from ipfs_datasets_py.logic.submodule_registry import (
     logic_optimizer_target_file_hints,
     logic_submodule_specs,
@@ -64,9 +65,7 @@ LAW_COLUMNS = [
     "citation_text",
     "normalized_citation",
 ]
-DEFAULT_BRIDGE_LOSS_ADAPTERS = (
-    "modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router"
-)
+DEFAULT_BRIDGE_LOSS_ADAPTERS = ",".join(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(

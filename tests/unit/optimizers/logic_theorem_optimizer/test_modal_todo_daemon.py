@@ -760,8 +760,11 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
 
 
 def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
+    from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
+
     names = runner.bridge_loss_adapter_names(SimpleNamespace())
 
+    assert names == list(DEFAULT_LEGAL_IR_BRIDGE_NAMES)
     assert names == [
         "modal_frame_logic",
         "deontic_norms",

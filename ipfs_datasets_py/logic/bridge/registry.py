@@ -159,6 +159,9 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
 )
 
 _SPECS_BY_NAME: Mapping[str, LogicBridgeSpec] = {spec.name: spec for spec in _SPECS}
+DEFAULT_LEGAL_IR_BRIDGE_NAMES: tuple[str, ...] = tuple(
+    spec.name for spec in _SPECS if spec.implemented
+)
 
 
 def logic_bridge_specs(*, implemented_only: bool = False) -> tuple[LogicBridgeSpec, ...]:
@@ -229,6 +232,7 @@ def bridge_name_for_component(target_component: str) -> Optional[str]:
 
 
 __all__ = [
+    "DEFAULT_LEGAL_IR_BRIDGE_NAMES",
     "LogicBridgeSpec",
     "bridge_name_for_component",
     "load_logic_bridge_adapter",

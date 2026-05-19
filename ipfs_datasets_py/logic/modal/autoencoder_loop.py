@@ -41,6 +41,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRDocument,
     ModalIRFrameLogic,
 )
+from ipfs_datasets_py.logic.bridge import DEFAULT_LEGAL_IR_BRIDGE_NAMES
 
 from .codec import (
     DeterministicModalLogicCodec,
@@ -52,13 +53,6 @@ from .kg_bridge import flogic_triples_to_graph_data, import_modal_ir_to_graph_en
 LLMGenerateFn = Callable[..., str]
 _PATCH_PREDICATE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,63}$")
 _WORD_RE = re.compile(r"[A-Za-z0-9]+")
-DEFAULT_LEGAL_IR_BRIDGE_NAMES = (
-    "modal_frame_logic",
-    "deontic_norms",
-    "fol_tdfol",
-    "cec_dcec",
-    "external_prover_router",
-)
 
 
 @dataclass(frozen=True)
