@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from collections.abc import Mapping
 from pathlib import Path
 import re
@@ -8,8 +9,10 @@ from typing import Any
 
 from fastapi.testclient import TestClient
 
+from ipfs_datasets_py.messaging import sms_bridge
 from ipfs_datasets_py.messaging.sms_bridge import (
     MockVoiceReplyProvider,
+    RemoteVoiceProxyProvider,
     SmsBridgeStore,
     VoiceAssistantProfile,
     VoiceCallSessionRecord,
@@ -148,6 +151,7 @@ class StubVoiceReplyProvider:
             text="I can help you find shelter tonight.",
             audio_bytes=b"RIFFstubWAVE",
             mime_type="audio/wav",
+            metadata={"latency": {"total_ms": 7}},
         )
 
 
@@ -213,9 +217,11 @@ def test_sms_bridge_records_outbound_and_twilio_inbound(tmp_path: Path) -> None:
     )
     assert inbound_response.status_code == 200, inbound_response.text
     assert inbound_response.headers["content-type"].startswith("application/xml")
+    assert "<Message>" in inbound_response.text
+    assert "this is Abby from 211 AI" in inbound_response.text
 
     listed_messages = store.list_messages(limit=10)
-    assert len(listed_messages) == 2
+    assert len(listed_messages) == 3
     inbound_message = next(message for message in listed_messages if message.direction == "inbound")
     assert inbound_message.provider == "twilio"
     assert inbound_message.provider_message_id == "SM-inbound-1"
@@ -223,6 +229,15 @@ def test_sms_bridge_records_outbound_and_twilio_inbound(tmp_path: Path) -> None:
     assert inbound_message.message == "I need a bed tonight"
     assert inbound_message.wallet_id == "wallet-123"
     assert inbound_message.external_reference == "sms-notification-1"
+    reply_message = next(
+        message
+        for message in listed_messages
+        if message.direction == "outbound" and message.provider == "twilio-twiml"
+    )
+    assert reply_message.to_phone == "+15035550199"
+    assert reply_message.from_phone == "+15035550100"
+    assert reply_message.wallet_id == "wallet-123"
+    assert reply_message.metadata["reply_to_provider_message_id"] == "SM-inbound-1"
     assert forwarder.payloads[0]["direction"] == "inbound"
     assert forwarder.payloads[0]["provider_message_id"] == "SM-inbound-1"
     assert forwarder.payloads[0]["wallet_id"] == "wallet-123"
@@ -329,6 +344,8 @@ def test_voice_gateway_accepts_inbound_call_and_serves_generated_audio(tmp_path:
     assert inbound_response.status_code == 200, inbound_response.text
     inbound_xml = inbound_response.text
     assert "https://211-ai.com/messaging/providers/twilio/voice/assistant-turn" in inbound_xml
+    assert 'timeout="3"' in inbound_xml
+    assert 'speechTimeout="1"' in inbound_xml
     session_match = re.search(r"session_id=([^&\"]+)", inbound_xml)
     assert session_match, inbound_xml
     session_id = session_match.group(1)
@@ -366,6 +383,8 @@ def test_voice_gateway_accepts_inbound_call_and_serves_generated_audio(tmp_path:
     assert session_body["turns"][0]["role"] == "caller"
     assert session_body["turns"][1]["role"] == "assistant"
     assert session_body["turns"][1]["audio_asset_id"]
+    assert session_body["turns"][1]["metadata"]["latency"]["total_ms"] >= 0
+    assert session_body["turns"][1]["metadata"]["provider_latency"]["total_ms"] >= 0
 
     status_response = client.post(
         "/providers/twilio/voice/status",
@@ -380,6 +399,42 @@ def test_voice_gateway_accepts_inbound_call_and_serves_generated_audio(tmp_path:
     assert status_body["updated"] is True
     assert status_body["voice_session_updated"] is True
     assert status_body["voice_session"]["status"] == "completed"
+
+
+def test_voice_gateway_can_return_openai_realtime_media_stream_twiml(tmp_path: Path) -> None:
+    client, _, _, _, _, _, _ = _client(tmp_path)
+
+    response = client.post(
+        "/providers/twilio/voice/openai-realtime/inbound",
+        data={
+            "CallSid": "CA-openai-realtime-1",
+            "From": "+15035550199",
+            "To": "+15035550100",
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    xml = response.text
+    assert "<Connect><Stream" in xml
+    assert "wss://211-ai.com/messaging/providers/twilio/voice/openai-realtime-stream" in xml
+    assert "session_id=" in xml
+    assert 'name="assistant" value="Abby"' in xml
+
+
+def test_openai_realtime_session_update_uses_twilio_audio_formats(monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_OPENAI_REALTIME_MODEL", "gpt-realtime")
+    monkeypatch.setenv("IPFS_DATASETS_OPENAI_REALTIME_VOICE", "cedar")
+
+    event = sms_bridge._openai_session_update_event(VoiceAssistantProfile(assistant_name="Abby"))
+
+    assert event["type"] == "session.update"
+    session = event["session"]
+    assert session["model"] == "gpt-realtime"
+    assert session["output_modalities"] == ["audio"]
+    assert session["audio"]["input"]["format"] == {"type": "audio/pcmu"}
+    assert session["audio"]["output"]["format"] == {"type": "audio/pcmu"}
+    assert session["audio"]["output"]["voice"] == "cedar"
+    assert session["audio"]["input"]["turn_detection"]["type"] == "server_vad"
 
 
 def test_mock_browser_voice_proxy_routes_return_text_payloads(tmp_path: Path) -> None:
@@ -418,6 +473,56 @@ def test_mock_browser_voice_proxy_routes_return_text_payloads(tmp_path: Path) ->
     assert infer_body["provider"] == "mock-voice-proxy"
     assert infer_body["model"] == "mock-voice"
     assert "Where can I find shelter tonight?" in infer_body["text"]
+
+
+def test_remote_voice_proxy_resolves_relative_urls(monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_VOICE_REPLY_PROVIDER_KIND", "remote-proxy")
+    monkeypatch.setenv("IPFS_DATASETS_VOICE_PROXY_BASE_URL", "http://wallet-api:8000")
+    monkeypatch.setenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL", "/voice/indextts/infer")
+    monkeypatch.setenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL", "/voice/indextts/tts")
+
+    provider = build_voice_reply_provider()
+
+    assert provider is not None
+    assert getattr(provider, "infer_url") == "http://wallet-api:8000/voice/indextts/infer"
+    assert getattr(provider, "tts_url") == "http://wallet-api:8000/voice/indextts/tts"
+
+
+def test_remote_voice_proxy_uses_configured_tts_reference_instead_of_silent_upload(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_request(url, *, body, headers, timeout_seconds):
+        captured["body"] = body
+        payload = {
+            "text": "I can help with food support.",
+            "audioBase64": base64.b64encode(b"RIFFstubWAVE").decode("ascii"),
+            "mimeType": "audio/wav",
+            "model": "IndexTTS",
+            "latency": {"total_ms": 5},
+        }
+        return 200, json.dumps(payload).encode("utf-8"), "application/json"
+
+    monkeypatch.setattr("ipfs_datasets_py.messaging.sms_bridge._perform_request_raw", fake_request)
+    provider = RemoteVoiceProxyProvider(infer_url="http://wallet-api:8000/voice/indextts/infer")
+
+    reply = provider.generate_reply(
+        transcript="I need food help",
+        session=VoiceCallSessionRecord(
+            session_id="session-1",
+            provider="twilio",
+            provider_call_id="call-1",
+            status="active",
+            from_phone="+15035550199",
+            to_phone="+15035550100",
+            assistant_name="Abby",
+            service_name="211 AI",
+            greeting="Hello",
+        ),
+        turns=[],
+    )
+
+    assert reply.audio_bytes == b"RIFFstubWAVE"
+    assert b'name="audio"; filename="input.wav"' not in captured["body"]
 
 
 def test_browser_voice_proxy_routes_are_unavailable_without_mock_provider(tmp_path: Path) -> None:

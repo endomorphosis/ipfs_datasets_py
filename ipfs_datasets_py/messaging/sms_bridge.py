@@ -17,7 +17,10 @@ import json
 import os
 import re
 import smtplib
+import contextlib
+import asyncio
 import threading
+import time
 import uuid
 import wave
 from dataclasses import dataclass, field
@@ -31,7 +34,7 @@ from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
 try:
-    from fastapi import FastAPI, HTTPException, Query, Request
+    from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
     from fastapi.responses import Response
 except Exception:  # pragma: no cover - optional dependency
     FastAPI = None  # type: ignore[assignment]
@@ -39,6 +42,8 @@ except Exception:  # pragma: no cover - optional dependency
     Query = None  # type: ignore[assignment]
     Request = None  # type: ignore[assignment]
     Response = None  # type: ignore[assignment]
+    WebSocket = None  # type: ignore[assignment]
+    WebSocketDisconnect = Exception  # type: ignore[assignment]
 
 from pydantic import BaseModel, Field
 
@@ -46,6 +51,17 @@ try:
     import uvicorn
 except Exception:  # pragma: no cover - optional dependency
     uvicorn = None  # type: ignore[assignment]
+
+try:
+    import websockets
+except Exception:  # pragma: no cover - optional dependency
+    websockets = None  # type: ignore[assignment]
+
+try:
+    from ipfs_datasets_py.utils.secrets import resolve_secret
+except Exception:  # pragma: no cover - optional dependency
+    def resolve_secret(*names: str, explicit: str | None = None) -> str:
+        return str(explicit or "")
 
 
 _PHONE_DIGITS_RE = re.compile(r"\D")
@@ -100,6 +116,15 @@ def normalize_phone_number(phone: str, *, field_name: str = "phone") -> str:
     if len(digits) == 10:
         digits = f"1{digits}"
     return f"+{digits}"
+
+
+def normalize_voice_party_address(value: str, *, field_name: str) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    if raw.lower().startswith("sip:"):
+        return raw
+    return normalize_phone_number(raw, field_name=field_name)
 
 
 def normalize_email_address(email: str, *, field_name: str = "email") -> str:
@@ -259,6 +284,15 @@ def _append_url_path(base_url: str | None, suffix: str) -> str:
     return f"{normalized_base}/{normalized_suffix}"
 
 
+def _resolve_proxy_url(base_url: str, value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    if normalized.startswith(("http://", "https://")):
+        return normalized
+    return _append_url_path(base_url, normalized)
+
+
 def _xml_text(value: str) -> str:
     return html.escape(str(value or ""), quote=True)
 
@@ -271,17 +305,134 @@ def _twiml_say(text: str) -> str:
     return f"<Say>{_xml_text(text)}</Say>"
 
 
+def _twiml_message(text: str) -> str:
+    return f"<Message>{_xml_text(text)}</Message>"
+
+
 def _twiml_play(url: str) -> str:
     return f"<Play>{_xml_text(url)}</Play>"
 
 
+def _twiml_connect_stream(*, stream_url: str, parameters: Mapping[str, str] | None = None) -> str:
+    parameter_nodes = []
+    for name, value in dict(parameters or {}).items():
+        if value is None:
+            continue
+        parameter_nodes.append(f'<Parameter name="{_xml_text(name)}" value="{_xml_text(value)}"/>')
+    return f'<Connect><Stream url="{_xml_text(stream_url)}">{"".join(parameter_nodes)}</Stream></Connect>'
+
+
+def _inbound_sms_reply_text(message: str) -> str:
+    normalized = str(message or "").strip()
+    if not normalized:
+        return ""
+    lowered = normalized.lower()
+    if lowered in {"stop", "stopall", "unsubscribe", "cancel", "end", "quit"}:
+        return ""
+    configured = str(os.getenv("IPFS_DATASETS_SMS_TWILIO_AUTO_REPLY_TEXT") or "").strip()
+    if configured:
+        return configured
+    return (
+        "Hi, this is Abby from 211 AI. I received your message. "
+        "Reply with your city and what you need help with, such as shelter, food, health care, benefits, or transportation."
+    )
+
+
 def _twiml_gather(*, action_url: str, prompt_text: str, language: str = "en-US") -> str:
+    timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_TIMEOUT_SECONDS") or "3").strip() or "3"
+    speech_timeout = str(os.getenv("IPFS_DATASETS_TWILIO_GATHER_SPEECH_TIMEOUT") or "1").strip() or "1"
     return (
         f'<Gather input="speech" action="{_xml_text(action_url)}" method="POST" '
-        f'actionOnEmptyResult="true" timeout="6" speechTimeout="auto" language="{_xml_text(language)}">'
+        f'actionOnEmptyResult="true" timeout="{_xml_text(timeout)}" '
+        f'speechTimeout="{_xml_text(speech_timeout)}" language="{_xml_text(language)}">'
         f"{_twiml_say(prompt_text)}"
         "</Gather>"
     )
+
+
+def _elapsed_ms(start: float) -> int:
+    return max(0, int((time.perf_counter() - start) * 1000))
+
+
+def _public_ws_url(public_base: str, path: str, params: Mapping[str, str] | None = None) -> str:
+    url = _join_public_url(public_base, path)
+    parsed = urllib_parse.urlsplit(url)
+    scheme = "wss" if parsed.scheme == "https" else "ws"
+    query = urllib_parse.urlencode(dict(params or {}))
+    return urllib_parse.urlunsplit((scheme, parsed.netloc, parsed.path, query, ""))
+
+
+def _openai_realtime_model() -> str:
+    return str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MODEL") or "gpt-realtime").strip() or "gpt-realtime"
+
+
+def _openai_realtime_voice() -> str:
+    return str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_VOICE") or "marin").strip() or "marin"
+
+
+def _openai_realtime_url() -> str:
+    configured = str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_WS_URL") or "").strip()
+    if configured:
+        return configured
+    return f"wss://api.openai.com/v1/realtime?{urllib_parse.urlencode({'model': _openai_realtime_model()})}"
+
+
+def _openai_realtime_api_key() -> str:
+    return (
+        resolve_secret(
+            "OPENAI_API_KEY",
+            "OPENAI_KEY",
+            "OPENAI_TOKEN",
+            "IPFS_DATASETS_PY_OPENAI_API_KEY",
+        )
+        or ""
+    ).strip()
+
+
+def _openai_realtime_instructions(profile: "VoiceAssistantProfile") -> str:
+    configured = str(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_INSTRUCTIONS") or "").strip()
+    if configured:
+        return configured
+    lines = [
+        f"You are {profile.assistant_name}, a calm, concise voice assistant for {profile.service_name}.",
+        "Help callers navigate 211-style social services: shelter, food, health, benefits, crisis support, transportation, and local referrals.",
+        "Speak naturally for a phone call. Keep answers under 70 words unless the caller asks for detail.",
+        "Ask one short clarifying question when location, timing, household details, or eligibility facts are missing.",
+        "Do not read URLs, JSON, IDs, or internal metadata aloud.",
+        "If information is uncertain, say what you need next instead of inventing facts.",
+    ]
+    if profile.system_prompt_append.strip():
+        lines.append(profile.system_prompt_append.strip())
+    return " ".join(lines)
+
+
+def _openai_session_update_event(profile: "VoiceAssistantProfile") -> dict[str, Any]:
+    return {
+        "type": "session.update",
+        "session": {
+            "type": "realtime",
+            "model": _openai_realtime_model(),
+            "instructions": _openai_realtime_instructions(profile),
+            "output_modalities": ["audio"],
+            "audio": {
+                "input": {
+                    "format": {"type": "audio/pcmu"},
+                    "turn_detection": {
+                        "type": "server_vad",
+                        "create_response": True,
+                        "interrupt_response": True,
+                        "silence_duration_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_SILENCE_MS") or "450"),
+                        "prefix_padding_ms": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_PREFIX_MS") or "300"),
+                    },
+                },
+                "output": {
+                    "format": {"type": "audio/pcmu"},
+                    "voice": _openai_realtime_voice(),
+                },
+            },
+            "max_output_tokens": int(os.getenv("IPFS_DATASETS_OPENAI_REALTIME_MAX_TOKENS") or "220"),
+        },
+    }
 
 
 def _normalize_turn_text(value: str, *, max_length: int = 480) -> str:
@@ -686,6 +837,7 @@ class VoiceReplyResult:
     text: str = ""
     audio_bytes: bytes = b""
     mime_type: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class SmsBridgeStore:
@@ -1667,8 +1819,8 @@ class SmsBridgeStore:
         greeting: str,
         metadata: Mapping[str, Any] | None = None,
     ) -> VoiceCallSessionRecord:
-        normalized_from_phone = normalize_phone_number(from_phone, field_name="from_phone") if from_phone else ""
-        normalized_to_phone = normalize_phone_number(to_phone, field_name="to_phone") if to_phone else ""
+        normalized_from_phone = normalize_voice_party_address(from_phone, field_name="from_phone")
+        normalized_to_phone = normalize_voice_party_address(to_phone, field_name="to_phone")
         timestamp = _utcnow_iso()
         record = VoiceCallSessionRecord(
             session_id=f"voice-{uuid.uuid4().hex}",
@@ -2976,7 +3128,11 @@ class RemoteVoiceProxyProvider:
         session: VoiceCallSessionRecord,
         turns: Sequence[VoiceCallTurnRecord],
     ) -> VoiceReplyResult:
+        total_start = time.perf_counter()
+        timings: dict[str, int] = {}
+        stage_start = time.perf_counter()
         prompt = self.assistant_profile.build_reply_prompt(transcript=transcript, session=session, turns=turns)
+        timings["prompt_build_ms"] = _elapsed_ms(stage_start)
         body, content_type = _encode_multipart_form(
             fields={
                 "mode": "voice-reply",
@@ -2988,8 +3144,9 @@ class RemoteVoiceProxyProvider:
                 "fallbackText": prompt["fallback_text"],
                 "fallback_text": prompt["fallback_text"],
             },
-            files=[("audio", "input.wav", "audio/wav", _create_silent_wav_bytes())],
+            files=[],
         )
+        stage_start = time.perf_counter()
         _, raw_bytes, response_content_type = _perform_request_raw(
             self.infer_url,
             body=body,
@@ -2999,29 +3156,39 @@ class RemoteVoiceProxyProvider:
             },
             timeout_seconds=self.timeout_seconds,
         )
+        timings["infer_request_ms"] = _elapsed_ms(stage_start)
         if response_content_type.lower().startswith("audio/"):
+            timings["total_ms"] = _elapsed_ms(total_start)
             return VoiceReplyResult(
                 provider=self.provider_name,
                 model_name=self.provider_name,
                 text=prompt["fallback_text"],
                 audio_bytes=raw_bytes,
                 mime_type=response_content_type or "audio/wav",
+                metadata={"latency": timings},
             )
 
         payload = _parse_response_payload(raw_bytes.decode("utf-8", errors="replace"), response_content_type)
         audio_base64 = _first_string(payload, ["audioBase64", "audio_base64", "audio", "wavBase64", "wav_base64"])
         generated_text = _first_string(payload, ["text", "outputText", "output_text"])
         model_name = _first_string(payload, ["model", "modelName", "model_name"]) or self.provider_name
+        remote_latency = payload.get("latency") if isinstance(payload.get("latency"), Mapping) else None
         if audio_base64:
             mime_type = _first_string(payload, ["mimeType", "mime_type"]) or "audio/wav"
+            stage_start = time.perf_counter()
+            audio_bytes = base64.b64decode(audio_base64.split(",")[-1])
+            timings["audio_decode_ms"] = _elapsed_ms(stage_start)
+            timings["total_ms"] = _elapsed_ms(total_start)
             return VoiceReplyResult(
                 provider=self.provider_name,
                 model_name=model_name,
                 text=generated_text or prompt["fallback_text"],
-                audio_bytes=base64.b64decode(audio_base64.split(",")[-1]),
+                audio_bytes=audio_bytes,
                 mime_type=mime_type,
+                metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
             )
         if generated_text and self.tts_url:
+            stage_start = time.perf_counter()
             _, tts_audio, tts_content_type = _perform_request_raw(
                 self.tts_url,
                 body=urllib_parse.urlencode({"text": generated_text}).encode("utf-8"),
@@ -3031,16 +3198,25 @@ class RemoteVoiceProxyProvider:
                 },
                 timeout_seconds=self.timeout_seconds,
             )
+            timings["tts_request_ms"] = _elapsed_ms(stage_start)
             if tts_content_type.lower().startswith("audio/"):
+                timings["total_ms"] = _elapsed_ms(total_start)
                 return VoiceReplyResult(
                     provider=self.provider_name,
                     model_name=model_name,
                     text=generated_text,
                     audio_bytes=tts_audio,
                     mime_type=tts_content_type or "audio/wav",
+                    metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
                 )
         if generated_text:
-            return VoiceReplyResult(provider=self.provider_name, model_name=model_name, text=generated_text)
+            timings["total_ms"] = _elapsed_ms(total_start)
+            return VoiceReplyResult(
+                provider=self.provider_name,
+                model_name=model_name,
+                text=generated_text,
+                metadata={"latency": timings, "remote_latency": dict(remote_latency or {})},
+            )
         raise RuntimeError("voice proxy returned neither audio nor text")
 
 
@@ -3387,6 +3563,7 @@ def build_voice_reply_provider(
         os.getenv("IPFS_DATASETS_VOICE_PROXY_INFER_URL"),
         _append_url_path(resolved_base_url, "infer"),
     )
+    resolved_infer_url = _resolve_proxy_url(resolved_base_url, resolved_infer_url)
     resolved_profile = assistant_profile or build_voice_assistant_profile()
     if resolved_kind and resolved_kind.lower() == "mock":
         return MockVoiceReplyProvider(
@@ -3400,10 +3577,13 @@ def build_voice_reply_provider(
         resolved_timeout = float(_first_non_empty(os.getenv("IPFS_DATASETS_VOICE_PROXY_TIMEOUT_SECONDS"), "45"))
     return RemoteVoiceProxyProvider(
         infer_url=resolved_infer_url,
-        tts_url=_first_non_empty(
-            tts_url,
-            os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL"),
-            _append_url_path(resolved_base_url, "tts"),
+        tts_url=_resolve_proxy_url(
+            resolved_base_url,
+            _first_non_empty(
+                tts_url,
+                os.getenv("IPFS_DATASETS_VOICE_PROXY_TTS_URL"),
+                _append_url_path(resolved_base_url, "tts"),
+            ),
         ),
         timeout_seconds=resolved_timeout,
         assistant_profile=resolved_profile,
@@ -3812,7 +3992,24 @@ def create_sms_bridge_app(
             metadata=metadata,
         )
         _forward_inbound_message(forwarder, record)
-        return Response(content=_TWILIO_EMPTY_RESPONSE, media_type="application/xml")
+        reply_text = _inbound_sms_reply_text(record.message)
+        if not reply_text:
+            return Response(content=_TWILIO_EMPTY_RESPONSE, media_type="application/xml")
+        sms_store.record_outbound(
+            provider="twilio-twiml",
+            status="queued",
+            to_phone=record.from_phone,
+            from_phone=record.to_phone,
+            message=reply_text,
+            wallet_id=record.wallet_id,
+            external_reference=record.external_reference,
+            metadata={
+                "reply_to_message_id": record.message_id,
+                "reply_to_provider_message_id": record.provider_message_id,
+                "delivery": "twiml",
+            },
+        )
+        return Response(content=_twiml_response(_twiml_message(reply_text)), media_type="application/xml")
 
     @app.post("/providers/twilio/status")
     async def receive_twilio_status_callback(request: Request) -> dict[str, Any]:
@@ -3894,6 +4091,24 @@ def create_sms_bridge_app(
             f"/providers/twilio/voice/assistant-turn?{urllib_parse.urlencode({'session_id': session_id})}",
         )
 
+    def _openai_realtime_stream_url(public_base: str, session_id: str) -> str:
+        return _public_ws_url(
+            public_base,
+            "/providers/twilio/voice/openai-realtime-stream",
+            {"session_id": session_id},
+        )
+
+    def _openai_realtime_twiml(public_base: str, session: VoiceCallSessionRecord) -> str:
+        return _twiml_response(
+            _twiml_connect_stream(
+                stream_url=_openai_realtime_stream_url(public_base, session.session_id),
+                parameters={
+                    "session_id": session.session_id,
+                    "assistant": resolved_voice_profile.assistant_name,
+                },
+            )
+        )
+
     def _voice_media_url(public_base: str, asset_id: str) -> str:
         return _join_public_url(public_base, f"/voice/media/{asset_id}")
 
@@ -3962,6 +4177,8 @@ def create_sms_bridge_app(
     @app.post("/providers/twilio/voice/inbound")
     async def receive_twilio_voice_inbound(request: Request) -> Response:
         session, public_base = await _create_or_load_voice_session(request, provider_name="twilio", entrypoint="voice")
+        if _truthy(os.getenv("IPFS_DATASETS_TWILIO_VOICE_OPENAI_REALTIME")):
+            return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
         xml = _twiml_response(
             _twiml_gather(
                 action_url=_voice_turn_action_url(public_base, session.session_id),
@@ -3969,6 +4186,187 @@ def create_sms_bridge_app(
             )
         )
         return Response(content=xml, media_type="application/xml")
+
+    @app.post("/providers/twilio/voice/openai-realtime/inbound")
+    async def receive_twilio_voice_openai_realtime_inbound(request: Request) -> Response:
+        session, public_base = await _create_or_load_voice_session(
+            request,
+            provider_name="twilio-openai-realtime",
+            entrypoint="voice-openai-realtime",
+        )
+        return Response(content=_openai_realtime_twiml(public_base, session), media_type="application/xml")
+
+    @app.websocket("/providers/twilio/voice/openai-realtime-stream")
+    async def twilio_voice_openai_realtime_stream(websocket: WebSocket, session_id: str = "") -> None:
+        await websocket.accept()
+        if websockets is None:
+            await websocket.close(code=1011, reason="websockets dependency is unavailable")
+            return
+        api_key = _openai_realtime_api_key()
+        if not api_key:
+            await websocket.close(code=1011, reason="OPENAI_API_KEY is not configured")
+            return
+        session = sms_store.get_voice_session(session_id) if session_id else None
+        if session is None:
+            await websocket.close(code=1008, reason="voice session not found")
+            return
+
+        stream_sid = ""
+        call_sid = session.provider_call_id
+        started_at = time.perf_counter()
+        openai_event_counts: dict[str, int] = {}
+        transcript_parts: list[str] = []
+        assistant_transcript_parts: list[str] = []
+
+        try:
+            async with websockets.connect(
+                _openai_realtime_url(),
+                additional_headers=[
+                    ("Authorization", f"Bearer {api_key}"),
+                    ("OpenAI-Safety-Identifier", hashlib.sha256(session.session_id.encode("utf-8")).hexdigest()),
+                ],
+                ping_interval=20,
+                ping_timeout=20,
+                max_size=8 * 1024 * 1024,
+            ) as openai_ws:
+                await openai_ws.send(json.dumps(_openai_session_update_event(resolved_voice_profile)))
+
+                async def from_twilio() -> None:
+                    nonlocal stream_sid, call_sid
+                    while True:
+                        try:
+                            raw = await websocket.receive_text()
+                        except WebSocketDisconnect:
+                            break
+                        payload = json.loads(raw)
+                        event_type = str(payload.get("event") or "")
+                        if event_type == "start":
+                            start_payload = payload.get("start") if isinstance(payload.get("start"), Mapping) else {}
+                            stream_sid = str(start_payload.get("streamSid") or payload.get("streamSid") or "")
+                            call_sid = str(start_payload.get("callSid") or call_sid or "")
+                            await openai_ws.send(
+                                json.dumps(
+                                    {
+                                        "type": "response.create",
+                                        "response": {
+                                            "output_modalities": ["audio"],
+                                            "audio": {
+                                                "output": {
+                                                    "format": {"type": "audio/pcmu"},
+                                                    "voice": _openai_realtime_voice(),
+                                                }
+                                            },
+                                            "instructions": session.greeting,
+                                        },
+                                    }
+                                )
+                            )
+                        elif event_type == "media":
+                            media = payload.get("media") if isinstance(payload.get("media"), Mapping) else {}
+                            audio = str(media.get("payload") or "")
+                            if audio:
+                                await openai_ws.send(json.dumps({"type": "input_audio_buffer.append", "audio": audio}))
+                        elif event_type == "stop":
+                            break
+                    with contextlib.suppress(Exception):
+                        await openai_ws.close()
+
+                async def from_openai() -> None:
+                    async for raw in openai_ws:
+                        payload = json.loads(raw)
+                        event_type = str(payload.get("type") or "")
+                        openai_event_counts[event_type] = openai_event_counts.get(event_type, 0) + 1
+                        if event_type in {"response.output_audio.delta", "response.audio.delta"}:
+                            delta = str(payload.get("delta") or "")
+                            if delta and stream_sid:
+                                await websocket.send_json(
+                                    {
+                                        "event": "media",
+                                        "streamSid": stream_sid,
+                                        "media": {"payload": delta},
+                                    }
+                                )
+                        elif event_type == "input_audio_buffer.speech_started" and stream_sid:
+                            with contextlib.suppress(Exception):
+                                await websocket.send_json({"event": "clear", "streamSid": stream_sid})
+                        elif event_type in {
+                            "conversation.item.input_audio_transcription.completed",
+                            "conversation.item.input_audio_transcription.segment",
+                        }:
+                            text = str(payload.get("transcript") or payload.get("text") or "").strip()
+                            if text:
+                                transcript_parts.append(text)
+                        elif event_type == "response.output_audio_transcript.delta":
+                            text = str(payload.get("delta") or "")
+                            if text:
+                                assistant_transcript_parts.append(text)
+                        elif event_type == "error":
+                            print(
+                                json.dumps(
+                                    {
+                                        "event": "openai_realtime_error",
+                                        "session_id": session.session_id,
+                                        "error": payload.get("error") or payload,
+                                    },
+                                    sort_keys=True,
+                                ),
+                                flush=True,
+                            )
+
+                done, pending = await asyncio.wait(
+                    {asyncio.create_task(from_twilio()), asyncio.create_task(from_openai())},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                for task in pending:
+                    task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await task
+                for task in done:
+                    task.result()
+        except Exception as exc:
+            print(
+                json.dumps(
+                    {
+                        "event": "openai_realtime_bridge_error",
+                        "session_id": session.session_id,
+                        "error": str(exc),
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
+        finally:
+            user_text = " ".join(part.strip() for part in transcript_parts if part.strip()).strip()
+            assistant_text = " ".join(part.strip() for part in assistant_transcript_parts if part.strip()).strip()
+            if user_text:
+                sms_store.append_voice_turn(
+                    session.session_id,
+                    role="caller",
+                    text=user_text,
+                    metadata={"provider_call_id": call_sid, "provider": "twilio-media-stream"},
+                )
+            if assistant_text:
+                sms_store.append_voice_turn(
+                    session.session_id,
+                    role="assistant",
+                    text=assistant_text,
+                    metadata={"provider": "openai-realtime", "model_name": _openai_realtime_model()},
+                )
+            sms_store.update_voice_session_status(
+                session.session_id,
+                status="completed",
+                metadata_update={
+                    "openai_realtime": {
+                        "model": _openai_realtime_model(),
+                        "voice": _openai_realtime_voice(),
+                        "stream_sid": stream_sid,
+                        "event_counts": openai_event_counts,
+                        "duration_ms": _elapsed_ms(started_at),
+                    }
+                },
+            )
+            with contextlib.suppress(Exception):
+                await websocket.close()
 
     @app.post("/providers/twilio/sip/inbound")
     async def receive_twilio_sip_inbound(request: Request) -> Response:
@@ -3983,12 +4381,17 @@ def create_sms_bridge_app(
 
     @app.post("/providers/twilio/voice/assistant-turn")
     async def receive_twilio_voice_assistant_turn(request: Request, session_id: str) -> Response:
+        turn_start = time.perf_counter()
+        latency: dict[str, int] = {}
         session = sms_store.get_voice_session(session_id)
+        latency["session_lookup_ms"] = _elapsed_ms(turn_start)
         if session is None:
             xml = _twiml_response(_twiml_say("This call session is no longer available."), "<Hangup/>")
             return Response(content=xml, media_type="application/xml", status_code=404)
 
+        stage_start = time.perf_counter()
         form = _parse_form_body(await request.body())
+        latency["parse_form_ms"] = _elapsed_ms(stage_start)
         transcript = _normalize_turn_text(str(form.get("SpeechResult") or form.get("speech_result") or ""), max_length=480)
         public_base = _resolve_public_base_url(request, configured_public_base_url)
         action_url = _voice_turn_action_url(public_base, session.session_id)
@@ -4003,9 +4406,12 @@ def create_sms_bridge_app(
             metadata={
                 "confidence": str(form.get("Confidence") or ""),
                 "provider_call_id": str(form.get("CallSid") or ""),
+                "latency": {"twilio_stt_completed_before_webhook": True},
             },
         )
+        stage_start = time.perf_counter()
         turns = sms_store.list_voice_turns(session.session_id)
+        latency["load_turns_ms"] = _elapsed_ms(stage_start)
 
         if _should_hangup_from_text(transcript) or len(turns) >= max(1, resolved_voice_profile.max_turns * 2):
             sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.farewell)
@@ -4019,16 +4425,36 @@ def create_sms_bridge_app(
             return Response(content=xml, media_type="application/xml")
 
         try:
+            stage_start = time.perf_counter()
             reply = resolved_voice_reply_provider.generate_reply(transcript=transcript, session=session, turns=turns)
-        except Exception:
+            latency["reply_provider_ms"] = _elapsed_ms(stage_start)
+        except Exception as exc:
+            latency["reply_provider_ms"] = _elapsed_ms(stage_start)
+            latency["total_ms"] = _elapsed_ms(turn_start)
             sms_store.append_voice_turn(session.session_id, role="assistant", text=resolved_voice_profile.unavailable_prompt)
+            print(
+                json.dumps(
+                    {
+                        "event": "voice_turn_latency",
+                        "session_id": session.session_id,
+                        "provider": getattr(resolved_voice_reply_provider, "provider_name", ""),
+                        "status": "reply_error",
+                        "error": str(exc),
+                        "latency": latency,
+                    },
+                    sort_keys=True,
+                ),
+                flush=True,
+            )
             xml = _twiml_response(_twiml_say(resolved_voice_profile.unavailable_prompt), "<Hangup/>")
             return Response(content=xml, media_type="application/xml")
 
         twiml_nodes: list[str] = []
         asset_id = ""
         if reply.audio_bytes:
+            stage_start = time.perf_counter()
             saved_asset = media_store.save(content=reply.audio_bytes, mime_type=reply.mime_type or "audio/wav")
+            latency["media_save_ms"] = _elapsed_ms(stage_start)
             asset_id = saved_asset["asset_id"]
             twiml_nodes.append(_twiml_play(_voice_media_url(public_base, asset_id)))
         elif reply.text:
@@ -4036,12 +4462,35 @@ def create_sms_bridge_app(
         else:
             twiml_nodes.append(_twiml_say(resolved_voice_profile.unavailable_prompt))
 
+        latency["total_ms"] = _elapsed_ms(turn_start)
         sms_store.append_voice_turn(
             session.session_id,
             role="assistant",
             text=reply.text or resolved_voice_profile.follow_up_prompt,
             audio_asset_id=asset_id,
-            metadata={"provider": reply.provider, "model_name": reply.model_name},
+            metadata={
+                "provider": reply.provider,
+                "model_name": reply.model_name,
+                "latency": latency,
+                "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
+                "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+            },
+        )
+        print(
+            json.dumps(
+                {
+                    "event": "voice_turn_latency",
+                    "session_id": session.session_id,
+                    "provider": reply.provider,
+                    "model_name": reply.model_name,
+                    "audio": bool(asset_id),
+                    "latency": latency,
+                    "provider_latency": reply.metadata.get("latency") if isinstance(reply.metadata, Mapping) else {},
+                    "remote_latency": reply.metadata.get("remote_latency") if isinstance(reply.metadata, Mapping) else {},
+                },
+                sort_keys=True,
+            ),
+            flush=True,
         )
         twiml_nodes.append(_twiml_gather(action_url=action_url, prompt_text=resolved_voice_profile.follow_up_prompt))
         xml = _twiml_response(*twiml_nodes)
