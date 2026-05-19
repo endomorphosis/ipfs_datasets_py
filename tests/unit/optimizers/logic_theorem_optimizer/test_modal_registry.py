@@ -220,6 +220,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert ("deontic", "conditional_normative") in required_pairs
     assert ("deontic", "dynamic") in required_pairs
     assert ("deontic", "epistemic") in required_pairs
+    assert ("epistemic", "conditional_normative") in required_pairs
     assert ("deontic", "deontic") in required_pairs
     assert ("deontic", "temporal") in required_pairs
     assert ("epistemic", "conditional_normative") in required_pairs
