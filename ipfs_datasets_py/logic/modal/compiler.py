@@ -790,6 +790,25 @@ class DeterministicModalCompiler:
                     compiled_modal_families=compiled_modal_families,
                 )
             )
+            if (
+                compiled_primary_family == ModalLogicFamily.DEONTIC.value
+                and predicted_family != ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+            ):
+                # Preserve explicit deontic-vs-conditional policy coverage even when
+                # cue ranking predicts a different top family.
+                ambiguities.extend(
+                    self._compiled_primary_family_adaptive_pair_ambiguities(
+                        compiled_primary_family=compiled_primary_family,
+                        competing_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                        ranking=ranking,
+                        family_shares=family_shares,
+                        threshold=threshold,
+                        signals=signals,
+                        has_frame_scope=has_frame_scope,
+                        has_frame_bm25_support=has_frame_bm25_support,
+                        compiled_modal_families=compiled_modal_families,
+                    )
+                )
         return ambiguities
 
     def _adaptive_target_signal_by_family(
