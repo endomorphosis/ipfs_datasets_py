@@ -495,8 +495,10 @@ _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
 _DEONTIC_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _TEMPORAL_COMPETING_SCOPE_SOFT_CAP = 3.0
+_TEMPORAL_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _FRAME_COMPETING_SCOPE_SOFT_CAP = 3.0
+_FRAME_STRONG_COMPETING_SCOPE_SOFT_CAP = 2.5
 _ALETHIC_COMPETING_SCOPE_SOFT_CAP = 2.0
 _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT = 0.12
 _GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT = 0.35
@@ -1524,8 +1526,33 @@ def _apply_temporal_competing_scope_soft_cap(
         or has_dynamic_competition
     ):
         return
-    overflow = temporal_count - _TEMPORAL_COMPETING_SCOPE_SOFT_CAP
-    counts[temporal_family] = _TEMPORAL_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
+    has_strong_deontic_competition = (
+        has_deontic_competition
+        and (
+            bool(signals.get("has_deontic_scope_phrase"))
+            or bool(signals.get("has_deontic_cue"))
+        )
+    )
+    has_strong_conditional_competition = (
+        has_conditional_competition
+        and (
+            bool(signals.get("has_condition_clause"))
+            or bool(signals.get("has_exception_clause"))
+            or bool(signals.get("has_conditional_scope_phrase"))
+            or bool(signals.get("has_conditional_scope_token"))
+            or bool(signals.get("has_statutory_scope_reference"))
+        )
+    )
+    temporal_soft_cap = _TEMPORAL_COMPETING_SCOPE_SOFT_CAP
+    if has_strong_deontic_competition or has_strong_conditional_competition:
+        temporal_soft_cap = min(
+            temporal_soft_cap,
+            _TEMPORAL_STRONG_COMPETING_SCOPE_SOFT_CAP,
+        )
+    if temporal_count <= temporal_soft_cap:
+        return
+    overflow = temporal_count - temporal_soft_cap
+    counts[temporal_family] = temporal_soft_cap + math.log1p(overflow)
 
 
 def _apply_conditional_competing_scope_soft_cap(
@@ -1622,8 +1649,20 @@ def _apply_frame_competing_scope_soft_cap(
         or has_strong_deontic_competition
     ):
         return
-    overflow = frame_count - _FRAME_COMPETING_SCOPE_SOFT_CAP
-    counts[frame_family] = _FRAME_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
+    frame_soft_cap = _FRAME_COMPETING_SCOPE_SOFT_CAP
+    if (
+        has_strong_temporal_competition
+        or has_strong_conditional_competition
+        or has_strong_deontic_competition
+    ):
+        frame_soft_cap = min(
+            frame_soft_cap,
+            _FRAME_STRONG_COMPETING_SCOPE_SOFT_CAP,
+        )
+    if frame_count <= frame_soft_cap:
+        return
+    overflow = frame_count - frame_soft_cap
+    counts[frame_family] = frame_soft_cap + math.log1p(overflow)
 
 
 def _apply_alethic_competing_scope_soft_cap(

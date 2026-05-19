@@ -1443,6 +1443,44 @@ def test_spacy_decoder_soft_caps_repeated_temporal_logits_for_deontic_competitio
     assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
+def test_spacy_decoder_soft_caps_repeated_temporal_logits_for_conditional_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="6",
+        section="609c",
+        text=(
+            "Within 30 days and by January 1, 2030, and no later than the fiscal "
+            "year deadline, submission occurs."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="6",
+        section="609d",
+        text=(
+            "Within 30 days and by January 1, 2030, and no later than the fiscal "
+            "year deadline, if designated under subsection (b), submission occurs."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("temporal", "conditional_normative", "deontic"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("temporal", "conditional_normative", "deontic"),
+    )
+
+    assert competing_logits["temporal"] < baseline_logits["temporal"]
+    assert (
+        competing_logits["conditional_normative"]
+        > baseline_logits["conditional_normative"]
+    )
+
+
 def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1476,6 +1514,79 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition(
 
     assert competing_logits["frame"] < baseline_logits["frame"]
     assert competing_logits["temporal"] > -0.25
+
+
+def test_spacy_decoder_soft_caps_repeated_frame_logits_for_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="43",
+        section="1702",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="43",
+        section="1703",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply, and the agency is required to provide notice."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("frame", "deontic", "temporal"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("frame", "deontic", "temporal"),
+    )
+
+    assert competing_logits["frame"] < baseline_logits["frame"]
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
+def test_spacy_decoder_soft_caps_repeated_frame_logits_for_conditional_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="43",
+        section="1704",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="43",
+        section="1705",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply if designated under subsection (b)."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("frame", "conditional_normative", "temporal"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("frame", "conditional_normative", "temporal"),
+    )
+
+    assert competing_logits["frame"] < baseline_logits["frame"]
+    assert (
+        competing_logits["conditional_normative"]
+        > baseline_logits["conditional_normative"]
+    )
 
 
 def test_spacy_decoder_soft_caps_repeated_conditional_logits_for_deontic_competition() -> None:
