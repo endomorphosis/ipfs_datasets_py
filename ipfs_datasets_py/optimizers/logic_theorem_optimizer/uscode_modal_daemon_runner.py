@@ -89,6 +89,15 @@ CODEX_TARGET_FILE_HINTS = {
     for key, value in logic_optimizer_target_file_hints().items()
 }
 CODEX_TARGET_FILE_HINTS.update({
+    "deontic.ir": [
+        "ipfs_datasets_py/logic/bridge/deontic_norms.py",
+        "ipfs_datasets_py/logic/bridge/types.py",
+        "ipfs_datasets_py/logic/deontic/converter.py",
+        "ipfs_datasets_py/logic/deontic/ir.py",
+        "ipfs_datasets_py/logic/deontic/formula_builder.py",
+        "ipfs_datasets_py/logic/deontic/prover_syntax.py",
+        "ipfs_datasets_py/logic/deontic/metrics.py",
+    ],
     "modal.compiler": [
         "ipfs_datasets_py/logic/modal/compiler.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
@@ -105,7 +114,11 @@ CODEX_TARGET_FILE_HINTS.update({
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/spacy_modal_codec.py",
     ],
     "modal.frame_logic": [
+        "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
+        "ipfs_datasets_py/logic/bridge/types.py",
         "ipfs_datasets_py/logic/modal/codec.py",
+        "ipfs_datasets_py/logic/modal/kg_bridge.py",
+        "ipfs_datasets_py/logic/flogic_optimizer.py",
         "ipfs_datasets_py/optimizers/logic/flogic_optimizer.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/frame_bm25_selector.py",
     ],

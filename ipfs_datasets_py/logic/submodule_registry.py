@@ -79,6 +79,26 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         public_symbols=("Formula", "Predicate", "TranslationResult", "BridgeConfig"),
     ),
     LogicSubmoduleSpec(
+        name="bridge",
+        module="ipfs_datasets_py.logic.bridge",
+        description="Canonical legal IR bridge contracts and adapter registry for optimizer/prover/KG routing.",
+        roles=("bridge", "legal_ir", "loss", "prover", "kg", "optimizer_contract"),
+        optimizer_components=("bridge.contracts", "bridge.registry"),
+        target_files=(
+            "ipfs_datasets_py/logic/bridge/__init__.py",
+            "ipfs_datasets_py/logic/bridge/types.py",
+            "ipfs_datasets_py/logic/bridge/registry.py",
+            "ipfs_datasets_py/logic/bridge/modal_frame_logic.py",
+            "ipfs_datasets_py/logic/bridge/deontic_norms.py",
+        ),
+        ast_scope="bridge",
+        public_symbols=(
+            "LegalIRDocument",
+            "BridgeEvaluationReport",
+            "logic_bridge_manifest",
+        ),
+    ),
+    LogicSubmoduleSpec(
         name="fol",
         module="ipfs_datasets_py.logic.fol",
         description="First-order logic conversion and predicate extraction from natural language.",

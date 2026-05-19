@@ -39,6 +39,7 @@ _SUBMODULE_EXPORTS = {
     "api",
     "batch_processing",
     "benchmarks",
+    "bridge",
     "CEC",
     "cli",
     "common",

@@ -10,6 +10,7 @@ def test_logic_manifest_covers_core_logic_families() -> None:
     expected = {
         "CEC",
         "TDFOL",
+        "bridge",
         "common",
         "deontic",
         "external_provers",
@@ -79,6 +80,7 @@ def test_optimizer_hints_include_non_modal_logic_lanes() -> None:
     hints = logic_optimizer_target_file_hints()
 
     assert "modal.frame_logic" in hints
+    assert "bridge.registry" in hints
     assert "deontic.ir" in hints
     assert "TDFOL.prover" in hints
     assert "CEC.native" in hints
@@ -86,6 +88,7 @@ def test_optimizer_hints_include_non_modal_logic_lanes() -> None:
     assert "knowledge_graphs.neo4j_compat" in hints
 
     assert logic_optimizer_scope_for_component("modal.compiler.registry") == "compiler_registry"
+    assert logic_optimizer_scope_for_component("bridge.registry") == "bridge"
     assert logic_optimizer_scope_for_component("deontic.ir") == "deontic"
     assert logic_optimizer_scope_for_component("TDFOL.prover") == "tdfol"
     assert logic_optimizer_scope_for_component("external_provers.router") == "external_provers"
