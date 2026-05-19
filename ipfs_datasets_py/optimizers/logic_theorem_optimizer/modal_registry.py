@@ -44,6 +44,10 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.DEONTIC.value,
     ),
     (
+        ModalLogicFamily.ALETHIC.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
         ModalLogicFamily.DEONTIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
