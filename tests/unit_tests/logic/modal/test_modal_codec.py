@@ -2715,6 +2715,7 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
             (
                 "alethic->deontic",
                 "alethic->conditional_normative",
+                "alethic->temporal",
             ),
         ),
         (
@@ -7995,6 +7996,93 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_conditional_ada
     )
 
 
+def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_temporal_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-alethic-temporal-doc",
+        text="It is possible to provide written notice.",
+        normalized_text="It is possible to provide written notice.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="alethic",
+                system="S5",
+                symbol="◇",
+                label="possible",
+                cue="possible",
+                start_char=6,
+                end_char=14,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-alethic-temporal-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-alethic-1",
+                operator=ModalIROperator(
+                    family="alethic",
+                    system="S5",
+                    symbol="◇",
+                    label="possible",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-alethic-temporal-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="18 U.S.C. 930",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "alethic", "count": 1, "share": 1.0}],
+        family_shares={"alethic": 1.0},
+    )
+
+    adaptive_temporal = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["alethic", "temporal"]
+    )
+    assert adaptive_temporal.metadata["has_target_signal_evidence"] is False
+    assert adaptive_temporal.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_temporal.metadata["is_priority_policy_pair"] is True
+    assert (
+        adaptive_temporal.metadata["explicit_ambiguity_type"]
+        == "adaptive_alethic_temporal_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_alethic_temporal_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_conditional_signal_for_alethic_conditional_adaptive_ambiguity(
     monkeypatch,
 ) -> None:
@@ -11869,6 +11957,12 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             "family_shares": {"conditional_normative": 0.88, "alethic": 0.03},
             "expected_pair": "alethic->conditional_normative",
             "expected_explicit_type": "adaptive_alethic_conditional_normative_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "alethic",
+            "family_shares": {"temporal": 0.91, "alethic": 0.02},
+            "expected_pair": "alethic->temporal",
+            "expected_explicit_type": "adaptive_alethic_temporal_outvoted_margin_low",
         },
         {
             "compiled_primary_family": "deontic",
