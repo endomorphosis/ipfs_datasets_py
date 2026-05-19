@@ -45,6 +45,9 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "under terms and conditions",
     "under such terms and conditions",
     "on such terms and conditions",
+    "subject only to",
+    "subject, however, to",
+    "subject however to",
     "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
@@ -101,6 +104,7 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "later",
         "month",
         "monthly",
+        "pending",
         "promptly",
         "quarterly",
         "thereafter",
@@ -116,6 +120,7 @@ _TEMPORAL_SCOPE_PHRASES = (
     "as soon as practicable",
     "beginning on or after",
     "calendar year",
+    "during the pendency of",
     "effective date",
     "effective on",
     "effective on first day",
@@ -132,6 +137,7 @@ _TEMPORAL_SCOPE_PHRASES = (
     "on or after",
     "period beginning on",
     "period ending on",
+    "while pending",
 )
 _DYNAMIC_SCOPE_TOKENS = frozenset(
     {

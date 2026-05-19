@@ -479,6 +479,50 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_temporal_scope_is_pres
     assert logits["temporal"] > logits["frame"]
 
 
+def test_spacy_decoder_debiases_generic_frame_logits_for_subject_only_to_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="25",
+        section="967b",
+        text="Authority over the lands is subject only to subsection (b).",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "conditional_normative", "temporal"),
+    )
+
+    assert signals["has_condition_or_exception_scope"] is True
+    assert logits["conditional_normative"] > logits["frame"]
+
+
+def test_spacy_decoder_debiases_generic_frame_logits_for_while_pending_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="156",
+        text="Authority over the lands remains in force while pending adjudication.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "temporal", "conditional_normative"),
+    )
+
+    assert signals["has_temporal_scope"] is True
+    assert logits["temporal"] > logits["frame"]
+
+
 def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_scope_phrase_is_present() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
