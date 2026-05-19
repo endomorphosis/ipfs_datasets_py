@@ -1529,10 +1529,23 @@ def _apply_frame_competing_scope_soft_cap(
         or bool(signals.get("has_alethic_cue"))
         or float(counts.get(ModalLogicFamily.ALETHIC.value, 0.0)) > 0.0
     )
+    has_deontic_competition = (
+        bool(signals.get("has_deontic_scope"))
+        or bool(signals.get("has_deontic_cue"))
+        or float(counts.get(ModalLogicFamily.DEONTIC.value, 0.0)) > 0.0
+    )
+    has_strong_deontic_competition = (
+        has_deontic_competition
+        and (
+            bool(signals.get("has_deontic_cue"))
+            or bool(signals.get("has_deontic_scope_phrase"))
+        )
+    )
     if not (
         has_strong_temporal_competition
         or has_strong_conditional_competition
         or has_alethic_competition
+        or has_strong_deontic_competition
     ):
         return
     overflow = frame_count - _FRAME_COMPETING_SCOPE_SOFT_CAP
@@ -1563,10 +1576,15 @@ def _apply_alethic_competing_scope_soft_cap(
         or bool(signals.get("has_statutory_scope_reference"))
         or float(counts.get(ModalLogicFamily.FRAME.value, 0.0)) > 0.0
     )
+    has_temporal_competition = (
+        bool(signals.get("has_temporal_scope"))
+        or float(counts.get(ModalLogicFamily.TEMPORAL.value, 0.0)) > 0.0
+    )
     if not (
         has_deontic_competition
         or has_conditional_competition
         or has_frame_competition
+        or has_temporal_competition
     ):
         return
     overflow = alethic_count - _ALETHIC_COMPETING_SCOPE_SOFT_CAP
@@ -2120,9 +2138,19 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_statutory_scope_reference"))
         )
     ):
+        frame_backfill = _COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_frame_scope_phrase"))
+            or bool(signals.get("has_frame_editorial_scope_phrase"))
+            or bool(signals.get("has_statutory_scope_reference"))
+        ):
+            frame_backfill = max(
+                frame_backfill,
+                _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[frame_family] = max(
             float(counts.get(frame_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            frame_backfill,
         )
 
 

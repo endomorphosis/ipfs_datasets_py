@@ -1800,6 +1800,50 @@ def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_deontic_tokens
     assert deontic_share > 0.0
 
 
+def test_spacy_codec_soft_caps_repeated_frame_share_for_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="12",
+        section="1822a",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction and "
+            "authority apply."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="12",
+        section="1822b",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction and "
+            "authority shall apply."
+        ),
+    )
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_ranking = ranked_modal_families(codec.encode_sample(competing))
+
+    baseline_frame_share = next(
+        float(item["share"])
+        for item in baseline_ranking
+        if item["family"] == "frame"
+    )
+    competing_frame_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "frame"
+    )
+    competing_deontic_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "deontic"
+    )
+
+    assert competing_frame_share < baseline_frame_share
+    assert competing_deontic_share > 0.15
+
+
 def test_spacy_codec_strengthens_deontic_share_for_generic_frame_scope_with_penalty_terms() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1839,6 +1883,49 @@ def test_spacy_codec_strengthens_deontic_share_for_generic_frame_scope_with_pena
     )
     assert competing_deontic_share > baseline_deontic_share
     assert competing_deontic_share > 0.0
+
+
+def test_spacy_codec_soft_caps_repeated_alethic_share_for_temporal_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="17",
+        section="803",
+        text=(
+            "It is possible and necessary and impossible and possible and cannot comply."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="17",
+        section="803a",
+        text=(
+            "It is possible and necessary and impossible and possible and cannot "
+            "comply after review."
+        ),
+    )
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_ranking = ranked_modal_families(codec.encode_sample(competing))
+
+    baseline_alethic_share = next(
+        float(item["share"])
+        for item in baseline_ranking
+        if item["family"] == "alethic"
+    )
+    competing_alethic_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "alethic"
+    )
+    competing_temporal_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "temporal"
+    )
+
+    assert competing_alethic_share < baseline_alethic_share
+    assert competing_temporal_share > 0.2
 
 
 def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_temporal_tokens() -> None:
