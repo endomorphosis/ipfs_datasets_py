@@ -360,8 +360,11 @@ _FRAME_EDITORIAL_SCOPE_PHRASES = (
 )
 _GENERIC_FRAME_CUE_TERMS = frozenset(
     {
+        "administered by",
         "authority",
+        "is a",
         "jurisdiction",
+        "part of",
     }
 )
 _GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5

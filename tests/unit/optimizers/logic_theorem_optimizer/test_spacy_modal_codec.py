@@ -498,6 +498,54 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_scope_phrase_i
     assert logits["deontic"] > logits["frame"]
 
 
+def test_spacy_codec_debiases_relational_frame_cues_when_deontic_force_is_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="702",
+        text=(
+            "The program is administered by the Secretary under this section "
+            "and shall provide notice."
+        ),
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "frame", "temporal"),
+    )
+
+    assert ranking[0]["family"] == "deontic"
+    assert logits["deontic"] > logits["frame"]
+
+
+def test_spacy_decoder_debiases_relational_frame_cues_when_temporal_scope_is_present() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="42",
+        section="5121",
+        text=(
+            "The program is administered by the Secretary for the period beginning on "
+            "January 1, 2030 and ending on December 31, 2030."
+        ),
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "temporal", "deontic"),
+    )
+
+    assert ranking[0]["family"] == "temporal"
+    assert logits["temporal"] > logits["frame"]
+
+
 def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
