@@ -12129,6 +12129,42 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "is_self_pair": False,
         },
         {
+            "doc_id": "required-deontic-conditional-margin-doc",
+            "predicted_family": "deontic",
+            "predicted_system": "D",
+            "predicted_symbol": "O",
+            "predicted_label": "obligation",
+            "target_family": "conditional_normative",
+            "ranking": (
+                {"family": "deontic", "count": 1, "share": 0.615603838423},
+                {"family": "conditional_normative", "count": 1, "share": 0.384396161578},
+            ),
+            "family_margin": -0.231207676845,
+            "adaptive_priority": 0.381207676845,
+            "expected_explicit_type": (
+                "adaptive_deontic_conditional_normative_outvoted_margin_low"
+            ),
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-deontic-dynamic-margin-doc",
+            "predicted_family": "deontic",
+            "predicted_system": "D",
+            "predicted_symbol": "O",
+            "predicted_label": "obligation",
+            "target_family": "dynamic",
+            "ranking": (
+                {"family": "deontic", "count": 1, "share": 0.715539558963},
+                {"family": "dynamic", "count": 1, "share": 0.284460441037},
+            ),
+            "family_margin": -0.431079117926,
+            "adaptive_priority": 0.581079117926,
+            "expected_explicit_type": "adaptive_deontic_dynamic_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
             "doc_id": "required-deontic-self-margin-doc",
             "predicted_family": "deontic",
             "predicted_system": "D",
