@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import random
 import signal
 import subprocess
@@ -121,6 +122,12 @@ CODEX_SANDBOX_BLOCKER_PATTERNS = (
     "operation not permitted",
 )
 CODEX_COMPLETED_WORK_STATUSES = {"created", "applied_to_main"}
+CODEX_TRANSIENT_FAILURE_PATTERNS = (
+    "selected model is at capacity",
+    "temporarily unavailable",
+    "try again",
+    "rate limit",
+)
 CODEX_BUNDLE_MODES = ("priority", "semantic", "vector")
 CODEX_MERGE_REPAIR_MODES = ("off", "apply_3way")
 CODEX_VECTOR_FALLBACK_MODES = ("hash", "priority")
@@ -129,6 +136,7 @@ CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
     "tests/unit_tests/logic/modal/test_modal_codec.py",
 )
+_ACTIVE_CODEX_EXEC_PROCESSES: List[subprocess.Popen[str]] = []
 CODEX_WORKTREE_ARTIFACT_FILENAMES = {"changes.patch"}
 
 
@@ -2095,6 +2103,25 @@ def _process_text(value: Any) -> str:
     return str(value)
 
 
+def _terminate_process_group(process: subprocess.Popen[str], signum: int) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signum)
+    except ProcessLookupError:
+        return
+    except OSError:
+        try:
+            process.terminate()
+        except OSError:
+            return
+
+
+def _terminate_active_codex_exec_processes(signum: int = signal.SIGTERM) -> None:
+    for process in list(_ACTIVE_CODEX_EXEC_PROCESSES):
+        _terminate_process_group(process, signum)
+
+
 def _run_codex_exec_attempt(
     *,
     codex_command: str,
@@ -2123,21 +2150,28 @@ def _run_codex_exec_attempt(
     cmd.append("-")
 
     started = time.time()
+    process: Optional[subprocess.Popen[str]] = None
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             cmd,
-            input=prompt,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            capture_output=True,
+            start_new_session=True,
+        )
+        _ACTIVE_CODEX_EXEC_PROCESSES.append(process)
+        stdout, stderr = process.communicate(
+            input=prompt,
             timeout=max(1.0, float(timeout_seconds)),
         )
-        stdout_path.write_text(result.stdout or "", encoding="utf-8")
-        stderr_path.write_text(result.stderr or "", encoding="utf-8")
-        status = "succeeded" if result.returncode == 0 else "failed"
+        stdout_path.write_text(stdout or "", encoding="utf-8")
+        stderr_path.write_text(stderr or "", encoding="utf-8")
+        status = "succeeded" if process.returncode == 0 else "failed"
         return {
             "command": cmd,
             "duration_seconds": round(time.time() - started, 3),
-            "exit_code": result.returncode,
+            "exit_code": process.returncode,
             "last_message_path": str(last_message_path),
             "prompt_path": str(prompt_path),
             "sandbox": sandbox,
@@ -2146,12 +2180,21 @@ def _run_codex_exec_attempt(
             "stdout_path": str(stdout_path),
         }
     except subprocess.TimeoutExpired as exc:
-        stdout_path.write_text(_process_text(exc.stdout), encoding="utf-8")
-        stderr_path.write_text(_process_text(exc.stderr), encoding="utf-8")
+        if process is not None:
+            _terminate_process_group(process, signal.SIGTERM)
+            try:
+                stdout, stderr = process.communicate(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                _terminate_process_group(process, signal.SIGKILL)
+                stdout, stderr = process.communicate(timeout=5.0)
+        else:
+            stdout, stderr = exc.stdout, exc.stderr
+        stdout_path.write_text(_process_text(stdout), encoding="utf-8")
+        stderr_path.write_text(_process_text(stderr), encoding="utf-8")
         return {
             "command": cmd,
             "duration_seconds": round(time.time() - started, 3),
-            "exit_code": None,
+            "exit_code": process.returncode if process is not None else None,
             "last_message_path": str(last_message_path),
             "prompt_path": str(prompt_path),
             "sandbox": sandbox,
@@ -2160,6 +2203,9 @@ def _run_codex_exec_attempt(
             "stdout_path": str(stdout_path),
             "timeout_seconds": float(timeout_seconds),
         }
+    finally:
+        if process is not None and process in _ACTIVE_CODEX_EXEC_PROCESSES:
+            _ACTIVE_CODEX_EXEC_PROCESSES.remove(process)
 
 
 def _should_retry_codex_exec_with_fallback(
@@ -2198,6 +2244,37 @@ def _codex_exec_logs_indicate_sandbox_block(exec_result: Mapping[str, Any]) -> b
         return False
     combined = "\n".join(text_chunks)
     return any(pattern in combined for pattern in CODEX_SANDBOX_BLOCKER_PATTERNS)
+
+
+def _codex_exec_logs_indicate_transient_failure(exec_result: Mapping[str, Any]) -> bool:
+    text_chunks: List[str] = []
+    for key in ("stderr_path", "last_message_path"):
+        value = exec_result.get(key)
+        if not value:
+            continue
+        path = Path(str(value))
+        if not path.exists():
+            continue
+        try:
+            text_chunks.append(path.read_text(encoding="utf-8", errors="replace").lower())
+        except OSError:
+            continue
+    if not text_chunks:
+        return False
+    combined = "\n".join(text_chunks)
+    return any(pattern in combined for pattern in CODEX_TRANSIENT_FAILURE_PATTERNS)
+
+
+def _codex_packet_should_requeue_transient(packet: Mapping[str, Any]) -> bool:
+    exec_result = dict(packet.get("codex_exec", {}))
+    exec_status = str(exec_result.get("status") or "").strip().lower()
+    patch_status = str(packet.get("patch_status") or "").strip().lower()
+    main_apply_status = str(packet.get("main_apply_status") or "").strip().lower()
+    if patch_status in CODEX_COMPLETED_WORK_STATUSES or main_apply_status == "applied":
+        return False
+    if exec_status not in {"failed", "timeout"}:
+        return False
+    return _codex_exec_logs_indicate_transient_failure(exec_result)
 
 
 def _suggested_target_files(todos: Sequence[ModalTodo]) -> List[str]:
@@ -2805,6 +2882,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         nonlocal stop_requested, stop_signal
         stop_requested = True
         stop_signal = signum
+        _terminate_active_codex_exec_processes(signal.SIGTERM)
 
     for signum in (signal.SIGINT, signal.SIGTERM):
         previous_signal_handlers[signum] = signal.getsignal(signum)
@@ -2938,7 +3016,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
 
         termination_wait_seconds = max(
             10.0,
-            float(args.paired_grace_seconds),
+            min(60.0, float(args.paired_grace_seconds)),
         )
         for child_run_id, process in process_labels:
             if process is None or process.poll() is not None:
@@ -3348,6 +3426,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
         nonlocal stop_requested, stop_signal
         stop_requested = True
         stop_signal = signum
+        _terminate_active_codex_exec_processes(signal.SIGTERM)
 
     for signum in (signal.SIGINT, signal.SIGTERM):
         previous_signal_handlers[signum] = signal.getsignal(signum)
@@ -3408,6 +3487,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
     summary.setdefault("codex_main_apply_repair_count", 0)
+    summary.setdefault("codex_transient_requeue_count", 0)
 
     started_at = parse_utc(summary["started_at"])
     end_at = started_at + args.duration_seconds
@@ -3502,12 +3582,16 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     exec_status = str(
                         dict(packet.get("codex_exec", {})).get("status", "unknown")
                     )
+                    transient_requeue = _codex_packet_should_requeue_transient(packet)
+                    finalize_exec_status = (
+                        "transient_failure" if transient_requeue else exec_status
+                    )
                     with queue_file_lock(queue_path):
                         queue = ModalTodoQueue.load_jsonl(queue_path)
                         supervisor = ModalTodoSupervisor(queue=queue, policy=policy)
                         finalize_report = supervisor.finalize_program_synthesis_batch(
                             claimed,
-                            codex_exec_status=exec_status,
+                            codex_exec_status=finalize_exec_status,
                             patch_status=(
                                 str(packet.get("patch_status"))
                                 if packet.get("patch_status") is not None
@@ -3521,6 +3605,12 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                             queue,
                             policy,
                             execution_mode=execution_mode,
+                        )
+                    if transient_requeue:
+                        packet["transient_requeue"] = dict(finalize_report)
+                        _save_packet_if_possible(
+                            packet,
+                            Path(str(packet["packet_path"])) if packet.get("packet_path") else None,
                         )
 
             summary["cycles"] = cycle
@@ -3538,10 +3628,17 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                 if (
                     exec_status != "succeeded"
                     and patch_status not in CODEX_COMPLETED_WORK_STATUSES
+                    and not packet.get("transient_requeue")
                 ):
                     summary["codex_execution_failure_count"] = int(
                         summary.get("codex_execution_failure_count", 0)
                     ) + 1
+            if packet.get("transient_requeue"):
+                summary["codex_transient_requeue_count"] = int(
+                    summary.get("codex_transient_requeue_count", 0)
+                ) + int(
+                    dict(packet.get("transient_requeue", {})).get("requeued_count", 0)
+                )
             main_apply_status = str(packet.get("main_apply_status", "")).strip().lower()
             if main_apply_status == "applied":
                 summary["codex_main_apply_count"] = int(
@@ -3601,6 +3698,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
                     "program_synthesis_execution_mode": status["execution_mode"],
                     "program_synthesis_pending_count": status["pending"],
                     "queue_run_id": queue_run_id,
+                    "transient_requeue": packet.get("transient_requeue"),
                     "todo_list_path": packet.get("todo_list_path"),
                     "todo_markdown_path": packet.get("todo_markdown_path"),
                     "worktree_path": packet.get("worktree_path"),

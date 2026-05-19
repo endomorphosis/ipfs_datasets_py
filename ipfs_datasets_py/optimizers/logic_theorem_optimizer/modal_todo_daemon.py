@@ -196,6 +196,16 @@ class ModalTodo:
         self.metadata["failure_reason"] = reason
         self.metadata["failed_validation_at"] = _utc_now()
 
+    def requeue(self, reason: str) -> None:
+        self.status = "pending"
+        self.claimed_by = None
+        self.claimed_at = None
+        self.completed_at = None
+        retry_count = int(self.metadata.get("transient_failure_count", 0)) + 1
+        self.metadata["transient_failure_count"] = retry_count
+        self.metadata["transient_failure_reason"] = reason
+        self.metadata["transient_failure_at"] = _utc_now()
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "action": self.action,
@@ -1184,6 +1194,7 @@ class ModalTodoSupervisor:
         normalized_patch_status = str(patch_status or "").strip().lower()
         completed_count = 0
         failed_validation_count = 0
+        requeued_count = 0
         reason: Optional[str] = None
         outcome = "no_status_change"
 
@@ -1191,6 +1202,20 @@ class ModalTodoSupervisor:
             for todo_id in todo_ids:
                 completed_count += int(self.queue.complete(todo_id))
             outcome = "completed"
+        elif normalized_exec_status == "transient_failure":
+            reason = "codex_exec_transient_failure"
+            for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is None:
+                    continue
+                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
+                todo.requeue(reason)
+                requeued_count += 1
+            outcome = "requeued" if requeued_count else "failed_validation"
         elif normalized_exec_status in {"failed", "timeout"}:
             reason = f"codex_exec_{normalized_exec_status}"
             for todo_id in todo_ids:
@@ -1211,7 +1236,8 @@ class ModalTodoSupervisor:
             "failed_validation_count": failed_validation_count,
             "outcome": outcome,
             "reason": reason,
-            "updated": bool(completed_count or failed_validation_count),
+            "requeued_count": requeued_count,
+            "updated": bool(completed_count or failed_validation_count or requeued_count),
         }
 
     def optimize_once(

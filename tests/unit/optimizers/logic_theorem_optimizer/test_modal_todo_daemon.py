@@ -993,6 +993,91 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert supervisor_applied.queue.get(claimed_applied[0].todo_id).status == "completed"
 
 
+def test_supervisor_finalize_requeues_transient_codex_failure() -> None:
+    samples = [
+        build_us_code_sample(
+            title="5",
+            section="552",
+            text="The agency must provide notice within 30 days.",
+        ),
+        build_us_code_sample(
+            title="5",
+            section="553",
+            text="The agency must provide notice before adopting a rule.",
+        ),
+    ]
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    assert claimed
+
+    requeued = supervisor.finalize_program_synthesis_batch(
+        claimed,
+        codex_exec_status="transient_failure",
+        patch_status="awaiting_codex_changes",
+    )
+
+    todo = supervisor.queue.get(claimed[0].todo_id)
+    assert requeued["updated"] is True
+    assert requeued["outcome"] == "requeued"
+    assert requeued["requeued_count"] == 1
+    assert requeued["failed_validation_count"] == 0
+    assert todo is not None
+    assert todo.status == "pending"
+    assert todo.claimed_by is None
+    assert todo.metadata["transient_failure_count"] == 1
+
+
+def test_supervisor_transient_requeue_has_retry_limit() -> None:
+    samples = [
+        build_us_code_sample(
+            title="5",
+            section="552",
+            text="The agency must provide notice within 30 days.",
+        ),
+        build_us_code_sample(
+            title="5",
+            section="553",
+            text="The agency must provide notice before adopting a rule.",
+        ),
+    ]
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    assert claimed
+    claimed[0].metadata["transient_failure_count"] = 3
+
+    failed = supervisor.finalize_program_synthesis_batch(
+        claimed,
+        codex_exec_status="transient_failure",
+        patch_status="awaiting_codex_changes",
+    )
+
+    todo = supervisor.queue.get(claimed[0].todo_id)
+    assert failed["updated"] is True
+    assert failed["outcome"] == "failed_validation"
+    assert failed["requeued_count"] == 0
+    assert failed["failed_validation_count"] == 1
+    assert todo is not None
+    assert todo.status == "failed_validation"
+
+
 def test_build_paired_daemon_commands_share_autoencoder_queue_run_id() -> None:
     args = SimpleNamespace(
         run_id="paired-run",
@@ -1355,6 +1440,66 @@ def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
         autoencoder_exit_code=1,
         runner_terminated_children=set(),
     )
+
+
+def test_codex_transient_failure_detection_reads_exec_logs(tmp_path) -> None:
+    stderr_path = tmp_path / "codex-stderr.log"
+    stderr_path.write_text(
+        "ERROR: Selected model is at capacity. Please try a different model.\n",
+        encoding="utf-8",
+    )
+    packet = {
+        "codex_exec": {"status": "failed", "stderr_path": str(stderr_path)},
+        "main_apply_status": "no_changes",
+        "patch_status": "awaiting_codex_changes",
+    }
+
+    assert runner._codex_packet_should_requeue_transient(packet)
+
+
+def test_codex_transient_failure_detection_ignores_applied_packets(tmp_path) -> None:
+    stderr_path = tmp_path / "codex-stderr.log"
+    stderr_path.write_text(
+        "ERROR: Selected model is at capacity. Please try a different model.\n",
+        encoding="utf-8",
+    )
+    packet = {
+        "codex_exec": {"status": "failed", "stderr_path": str(stderr_path)},
+        "main_apply_status": "applied",
+        "patch_status": "applied_to_main",
+    }
+
+    assert not runner._codex_packet_should_requeue_transient(packet)
+
+
+def test_run_codex_exec_attempt_timeout_returns_promptly(tmp_path) -> None:
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "import time\n"
+        "sys.stdin.read()\n"
+        "time.sleep(10)\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
+
+    result = runner._run_codex_exec_attempt(
+        codex_command=str(codex_stub),
+        model="gpt-5.3-codex",
+        prompt="do work\n",
+        prompt_path=tmp_path / "prompt.md",
+        sandbox="danger-full-access",
+        stderr_path=tmp_path / "stderr.log",
+        stdout_path=tmp_path / "stdout.log",
+        timeout_seconds=0.1,
+        worktree_path=tmp_path,
+        last_message_path=tmp_path / "last.md",
+    )
+
+    assert result["status"] == "timeout"
+    assert result["duration_seconds"] < 6
+    assert str(codex_stub) in result["command"]
 
 
 def test_codex_task_vector_index_uses_embeddings_router_and_cache(tmp_path, monkeypatch) -> None:
@@ -1988,25 +2133,26 @@ def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_mai
 
 def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, monkeypatch) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
-    original_run = subprocess.run
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "sys.stdin.read()\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\nexecutor changed this packet\\n', encoding='utf-8')\n"
+        "print('ok')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
 
-    def fake_codex_run(cmd, **kwargs):
-        if list(cmd[:2]) != ["codex", "exec"]:
-            return original_run(cmd, **kwargs)
-        worktree = Path(cmd[cmd.index("--cd") + 1])
-        (worktree / "README.md").write_text(
-            "test repo\nexecutor changed this packet\n",
-            encoding="utf-8",
-        )
-        return subprocess.CompletedProcess(cmd, 0, stdout="ok\n", stderr="")
-
-    with monkeypatch.context() as context:
-        context.setattr(subprocess, "run", fake_codex_run)
-        updated = execute_codex_work_packet(
-            packet,
-            codex_command="codex",
-            timeout_seconds=1.0,
-        )
+    updated = execute_codex_work_packet(
+        packet,
+        codex_command=str(codex_stub),
+        timeout_seconds=1.0,
+    )
 
     assert updated["codex_exec"]["status"] == "succeeded"
     assert updated["patch_status"] == "created"
@@ -2025,27 +2171,28 @@ def test_codex_work_packet_executor_writes_prompt_and_refreshes_patch(tmp_path, 
 
 def test_codex_work_packet_executor_can_apply_changes_to_main(tmp_path, monkeypatch) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
-    original_run = subprocess.run
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "sys.stdin.read()\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\nexecutor applied this packet\\n', encoding='utf-8')\n"
+        "print('ok')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
 
-    def fake_codex_run(cmd, **kwargs):
-        if list(cmd[:2]) != ["codex", "exec"]:
-            return original_run(cmd, **kwargs)
-        worktree = Path(cmd[cmd.index("--cd") + 1])
-        (worktree / "README.md").write_text(
-            "test repo\nexecutor applied this packet\n",
-            encoding="utf-8",
-        )
-        return subprocess.CompletedProcess(cmd, 0, stdout="ok\n", stderr="")
-
-    with monkeypatch.context() as context:
-        context.setattr(subprocess, "run", fake_codex_run)
-        updated = execute_codex_work_packet(
-            packet,
-            apply_mode="apply_to_main",
-            codex_command="codex",
-            timeout_seconds=1.0,
-            validation_commands=(),
-        )
+    updated = execute_codex_work_packet(
+        packet,
+        apply_mode="apply_to_main",
+        codex_command=str(codex_stub),
+        timeout_seconds=1.0,
+        validation_commands=(),
+    )
 
     assert updated["codex_exec"]["status"] == "succeeded"
     assert updated["patch_status"] == "applied_to_main"
@@ -2066,47 +2213,41 @@ def test_codex_work_packet_executor_can_apply_changes_to_main(tmp_path, monkeypa
 
 def test_codex_work_packet_executor_retries_with_sandbox_fallback(tmp_path, monkeypatch) -> None:
     repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
-    original_run = subprocess.run
-    codex_calls = []
+    call_log = tmp_path / "codex-calls.log"
+    codex_stub = tmp_path / "codex-stub.py"
+    codex_stub.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "args = sys.argv\n"
+        "sandbox = args[args.index('--sandbox') + 1]\n"
+        "worktree = Path(args[args.index('--cd') + 1])\n"
+        "last_message = Path(args[args.index('--output-last-message') + 1])\n"
+        f"Path({str(call_log)!r}).open('a', encoding='utf-8').write(sandbox + '\\n')\n"
+        "sys.stdin.read()\n"
+        "if sandbox == 'workspace-write':\n"
+        "    last_message.write_text("
+        "'Blocked by the execution sandbox before I could inspect or edit the worktree.\\n', "
+        "encoding='utf-8')\n"
+        "    sys.stderr.write('bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted\\n')\n"
+        "    raise SystemExit(0)\n"
+        "(worktree / 'README.md').write_text("
+        "'test repo\\nfallback sandbox changed this packet\\n', encoding='utf-8')\n"
+        "last_message.write_text('fallback completed\\n', encoding='utf-8')\n"
+        "print('ok')\n",
+        encoding="utf-8",
+    )
+    codex_stub.chmod(0o755)
 
-    def fake_codex_run(cmd, **kwargs):
-        if list(cmd[:2]) != ["codex", "exec"]:
-            return original_run(cmd, **kwargs)
-        codex_calls.append(list(cmd))
-        sandbox_value = cmd[cmd.index("--sandbox") + 1]
-        worktree = Path(cmd[cmd.index("--cd") + 1])
-        last_message_path = Path(cmd[cmd.index("--output-last-message") + 1])
-        if sandbox_value == "workspace-write":
-            last_message_path.write_text(
-                "Blocked by the execution sandbox before I could inspect or edit the worktree.\n",
-                encoding="utf-8",
-            )
-            return subprocess.CompletedProcess(
-                cmd,
-                0,
-                stdout="",
-                stderr="bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted\n",
-            )
+    updated = execute_codex_work_packet(
+        packet,
+        codex_command=str(codex_stub),
+        sandbox="workspace-write",
+        timeout_seconds=1.0,
+    )
 
-        (worktree / "README.md").write_text(
-            "test repo\nfallback sandbox changed this packet\n",
-            encoding="utf-8",
-        )
-        last_message_path.write_text("fallback completed\n", encoding="utf-8")
-        return subprocess.CompletedProcess(cmd, 0, stdout="ok\n", stderr="")
-
-    with monkeypatch.context() as context:
-        context.setattr(subprocess, "run", fake_codex_run)
-        updated = execute_codex_work_packet(
-            packet,
-            codex_command="codex",
-            sandbox="workspace-write",
-            timeout_seconds=1.0,
-        )
-
-    assert len(codex_calls) == 2
-    assert codex_calls[0][codex_calls[0].index("--sandbox") + 1] == "workspace-write"
-    assert codex_calls[1][codex_calls[1].index("--sandbox") + 1] == "danger-full-access"
+    codex_calls = call_log.read_text(encoding="utf-8").splitlines()
+    assert codex_calls == ["workspace-write", "danger-full-access"]
     assert updated["codex_exec"]["status"] == "succeeded"
     assert updated["codex_exec"]["sandbox"] == "danger-full-access"
     assert updated["codex_exec"]["attempt_count"] == 2
