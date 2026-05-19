@@ -865,6 +865,54 @@ def test_spacy_encoder_extracts_conditional_cue_except_as_provided_by() -> None:
     )
 
 
+def test_spacy_codec_collapses_nested_conditional_cues_in_weighted_family_ranking() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Except as provided by subsection (b), this authority applies not later "
+            "than 30 days after enactment."
+        ),
+        document_id="sample-nested-conditional-cues",
+    )
+
+    conditional_cues = [
+        cue for cue in encoding.cues if cue.family == "conditional_normative"
+    ]
+    ranking = ranked_modal_families(encoding)
+    shares = {str(item["family"]): float(item["share"]) for item in ranking}
+
+    assert len(conditional_cues) >= 3
+    assert ranking[0]["family"] == "temporal"
+    assert shares["temporal"] > shares["conditional_normative"]
+
+
+def test_spacy_codec_collapses_nested_same_family_cues_for_weighted_logits() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="5",
+        section="500",
+        text="The agency must not provide notice by January 1, 2030.",
+    )
+    encoding = codec.encode_sample(sample)
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("deontic", "temporal"),
+    )
+
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "must not"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "deontic" and cue.cue.lower() == "must"
+        for cue in encoding.cues
+    )
+    assert logits["deontic"] == logits["temporal"]
+
+
 def test_spacy_encoder_extracts_temporal_cues_from_recurring_effective_date_phrases() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

@@ -1111,10 +1111,7 @@ def _weighted_modal_family_counts(
     *,
     signals: Optional[Mapping[str, bool]] = None,
 ) -> Dict[str, float]:
-    counts = {
-        family: float(count)
-        for family, count in encoding.modal_family_counts().items()
-    }
+    counts = _overlap_aware_modal_family_counts(encoding)
     if not counts:
         return {}
     resolved_signals: Mapping[str, bool]
@@ -1139,6 +1136,44 @@ def _weighted_modal_family_counts(
         counts,
         resolved_signals,
     )
+    return counts
+
+
+def _overlap_aware_modal_family_counts(
+    encoding: SpaCyLegalEncoding,
+) -> Dict[str, float]:
+    """Count family cues while collapsing nested same-family cue spans."""
+    spans_by_family: Dict[str, List[tuple[int, int]]] = {}
+    for cue in encoding.cues:
+        start = int(cue.start_char)
+        end = int(cue.end_char)
+        if start < 0 or end <= start:
+            continue
+        spans_by_family.setdefault(cue.family, []).append((start, end))
+
+    counts: Dict[str, float] = {}
+    for family, spans in spans_by_family.items():
+        if not spans:
+            continue
+        unique_spans = sorted(set(spans))
+        effective_spans: List[tuple[int, int]] = []
+        for start, end in unique_spans:
+            span_len = end - start
+            covered_by_larger_span = False
+            for other_start, other_end in unique_spans:
+                if other_start == start and other_end == end:
+                    continue
+                other_len = other_end - other_start
+                if (
+                    other_start <= start
+                    and other_end >= end
+                    and other_len > span_len
+                ):
+                    covered_by_larger_span = True
+                    break
+            if not covered_by_larger_span:
+                effective_spans.append((start, end))
+        counts[family] = float(len(effective_spans))
     return counts
 
 
