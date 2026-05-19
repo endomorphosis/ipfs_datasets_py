@@ -257,6 +257,7 @@ class ModalOptimizationStep:
     applied_updates: List[Dict[str, Any]] = field(default_factory=list)
     autoencoder_claimed_count: int = 0
     loss_seeded_count: int = 0
+    program_synthesis_deduped_count: int = 0
     program_synthesis_pending_count: int = 0
     program_synthesis_seeded_count: int = 0
     validation_before: Optional[AutoencoderEvaluation] = None
@@ -315,6 +316,7 @@ class ModalOptimizationStep:
             "iteration": self.iteration,
             "loss_seeded_count": self.loss_seeded_count,
             "pending_count": self.pending_count,
+            "program_synthesis_deduped_count": self.program_synthesis_deduped_count,
             "program_synthesis_pending_count": self.program_synthesis_pending_count,
             "program_synthesis_seeded_count": self.program_synthesis_seeded_count,
             "seeded_count": self.seeded_count,
@@ -978,6 +980,7 @@ class ModalTodoSupervisor:
             program_synthesis_generator
             or ModalProgramSynthesisTodoGenerator(policy=self.policy)
         )
+        self.last_program_synthesis_deduped_count = 0
 
     def seed_from_evaluation(
         self,
@@ -1002,11 +1005,17 @@ class ModalTodoSupervisor:
             list(samples),
             autoencoder=autoencoder,
         )
-        todos = self._bounded_new_todos(todos)
+        self.last_program_synthesis_deduped_count = 0
+        todos = self._bounded_new_todos(todos, track_program_deduped=True)
         self.queue.add_many(todos)
         return todos
 
-    def _bounded_new_todos(self, todos: Iterable[ModalTodo]) -> List[ModalTodo]:
+    def _bounded_new_todos(
+        self,
+        todos: Iterable[ModalTodo],
+        *,
+        track_program_deduped: bool = False,
+    ) -> List[ModalTodo]:
         """Drop duplicates and keep program-repair work within the pending cap."""
         program_capacity = max(
             0,
@@ -1016,16 +1025,22 @@ class ModalTodoSupervisor:
             ),
         )
         selected: List[ModalTodo] = []
+        program_deduped_count = 0
         for todo in todos:
+            role = _todo_optimizer_role(todo)
             if self.queue.get(todo.todo_id) is not None:
+                if track_program_deduped and role == self.policy.program_synthesis_role:
+                    program_deduped_count += 1
                 continue
-            if _todo_optimizer_role(todo) == self.policy.program_synthesis_role:
+            if role == self.policy.program_synthesis_role:
                 if self.queue.has_semantic_duplicate(
                     todo,
                     optimizer_role=self.policy.program_synthesis_role,
                     near_duplicate_jaccard=self.policy.program_synthesis_near_duplicate_jaccard,
                     include_bundle_key=True,
                 ):
+                    if track_program_deduped:
+                        program_deduped_count += 1
                     continue
                 if any(
                     _program_todos_duplicate_for_repair(
@@ -1036,11 +1051,15 @@ class ModalTodoSupervisor:
                     for existing in selected
                     if _todo_optimizer_role(existing) == self.policy.program_synthesis_role
                 ):
+                    if track_program_deduped:
+                        program_deduped_count += 1
                     continue
                 if program_capacity < 1:
                     continue
                 program_capacity -= 1
             selected.append(todo)
+        if track_program_deduped:
+            self.last_program_synthesis_deduped_count = program_deduped_count
         return selected
 
     def claim_next_batch(
@@ -1221,6 +1240,7 @@ class ModalTodoSupervisor:
             sample_list,
             autoencoder=autoencoder,
         )
+        program_synthesis_deduped = int(self.last_program_synthesis_deduped_count)
         claimed = self.claim_next_batch(
             worker_id=worker_id,
             max_items=max_items,
@@ -1296,6 +1316,7 @@ class ModalTodoSupervisor:
             applied_updates=applied_updates,
             autoencoder_claimed_count=len(claimed),
             loss_seeded_count=len(loss_seeded),
+            program_synthesis_deduped_count=program_synthesis_deduped,
             program_synthesis_pending_count=self.queue.pending_count(
                 optimizer_role=self.policy.program_synthesis_role
             ),

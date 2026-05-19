@@ -698,6 +698,7 @@ def test_supervisor_caps_program_synthesis_backlog() -> None:
 
     assert len(seeded) == 1
     assert seeded_again == []
+    assert supervisor.last_program_synthesis_deduped_count >= 1
     assert supervisor.queue.pending_count(optimizer_role="program_synthesis") == 1
 
 
@@ -1132,6 +1133,8 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         codex_scope=None,
         codex_parallel_scopes="compiler_parser,ir_decompiler,frame_logic",
         codex_bundle_mode="vector",
+        codex_vector_min_bundle_size=3,
+        codex_vector_max_bundle_wait_seconds=180.0,
         codex_vector_min_similarity=0.81,
         codex_vector_index_path="/tmp/codex-task-vectors.json",
         codex_task_embeddings_provider="local_adapter",
@@ -1159,6 +1162,8 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         command = child["command"]
         assert command[command.index("--codex-bundle-mode") + 1] == "vector"
         assert command[command.index("--codex-vector-min-similarity") + 1] == "0.81"
+        assert command[command.index("--codex-vector-min-bundle-size") + 1] == "3"
+        assert command[command.index("--codex-vector-max-bundle-wait-seconds") + 1] == "180.0"
         assert command[command.index("--codex-task-embeddings-provider") + 1] == "local_adapter"
         assert command[command.index("--codex-task-embeddings-model") + 1] == "thenlper/gte-small"
         assert command[command.index("--codex-task-embeddings-device") + 1] == "cpu"
@@ -1215,6 +1220,124 @@ def test_codex_task_vector_index_uses_embeddings_router_and_cache(tmp_path, monk
     assert cached_report["refreshed_count"] == 0
     assert len(calls) == 1
     assert index_path.exists()
+
+
+def test_vector_claim_waits_for_fresh_undersized_bundle(tmp_path, monkeypatch) -> None:
+    todo = ModalTodo(
+        todo_id="program-vector-singleton",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="temporal deontic modal ambiguity",
+        sample_ids=["a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([todo]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        return (
+            {item.todo_id: [1.0, 0.0] for item in todos},
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(list(todos)),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(list(todos)),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope="compiler_ambiguity",
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.55,
+        codex_vector_min_bundle_size=3,
+        codex_vector_max_bundle_wait_seconds=600.0,
+        max_items=6,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert claimed == []
+    assert queue.get("program-vector-singleton").status == "pending"
+    assert status["pending"] == 1
+    assert report["mode"] == "vector_waiting_for_bundle"
+    assert report["proposed_selected_count"] == 1
+    assert report["selected_count"] == 0
+
+
+def test_vector_claim_allows_stale_undersized_bundle(tmp_path, monkeypatch) -> None:
+    todo = ModalTodo(
+        todo_id="program-vector-stale",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="temporal deontic modal ambiguity",
+        sample_ids=["a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        created_at="2020-01-01T00:00:00+00:00",
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([todo]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        return (
+            {item.todo_id: [1.0, 0.0] for item in todos},
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(list(todos)),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(list(todos)),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope="compiler_ambiguity",
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.55,
+        codex_vector_min_bundle_size=3,
+        codex_vector_max_bundle_wait_seconds=60.0,
+        max_items=6,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert [todo.todo_id for todo in claimed] == ["program-vector-stale"]
+    assert queue.get("program-vector-stale").status == "claimed"
+    assert status["claimed"] == 1
+    assert report["mode"] == "vector"
+    assert report["selected_count"] == 1
 
 
 def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path) -> None:

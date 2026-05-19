@@ -140,6 +140,21 @@ def parse_utc(value: str) -> float:
     return datetime.fromisoformat(value).timestamp()
 
 
+def _todo_age_seconds(todo: ModalTodo, *, now: Optional[float] = None) -> float:
+    try:
+        created_at = parse_utc(str(todo.created_at))
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, float(now if now is not None else time.time()) - created_at)
+
+
+def _oldest_todo_age_seconds(todos: Sequence[ModalTodo]) -> float:
+    if not todos:
+        return 0.0
+    now = time.time()
+    return max(_todo_age_seconds(todo, now=now) for todo in todos)
+
+
 def load_laws_table():
     fs = HfFileSystem()
     path = f"datasets/{HF_USCODE_DATASET_ID}/{USCODE_LAWS_PARQUET}"
@@ -584,7 +599,16 @@ def _claim_vector_program_synthesis_batch(
 
     vector_report: Dict[str, Any] = {
         "candidate_count": len(candidates),
+        "max_bundle_wait_seconds": max(
+            0.0,
+            float(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0) or 0.0),
+        ),
+        "min_bundle_size": max(
+            1,
+            int(getattr(args, "codex_vector_min_bundle_size", 1) or 1),
+        ),
         "mode": "vector",
+        "oldest_candidate_age_seconds": round(_oldest_todo_age_seconds(candidates), 3),
         "selected_count": 0,
     }
     if not candidates:
@@ -640,6 +664,34 @@ def _claim_vector_program_synthesis_batch(
         for item in selected
     }
     anchor_id = selected_ids[0] if selected_ids else ""
+    min_bundle_size = int(vector_report["min_bundle_size"])
+    max_bundle_wait_seconds = float(vector_report["max_bundle_wait_seconds"])
+    oldest_candidate_age_seconds = float(vector_report["oldest_candidate_age_seconds"])
+    if (
+        selected
+        and len(selected) < min_bundle_size
+        and max_bundle_wait_seconds > 0.0
+        and oldest_candidate_age_seconds < max_bundle_wait_seconds
+    ):
+        with queue_file_lock(queue_path):
+            queue = ModalTodoQueue.load_jsonl(queue_path)
+            status = update_program_synthesis_summary(
+                summary,
+                queue,
+                policy,
+                execution_mode=execution_mode,
+            )
+        vector_report.update(
+            {
+                "anchor_id": anchor_id,
+                "mode": "vector_waiting_for_bundle",
+                "proposed_selected_count": len(selected),
+                "proposed_selected_ids": selected_ids,
+                "selected_count": 0,
+                "wait_reason": "selected bundle below minimum and oldest candidate is still fresh",
+            }
+        )
+        return [], queue, status, vector_report
 
     with queue_file_lock(queue_path):
         queue = ModalTodoQueue.load_jsonl(queue_path)
@@ -733,6 +785,10 @@ def _build_codex_child_command(
         str(getattr(args, "codex_bundle_mode", "semantic")),
         "--codex-vector-min-similarity",
         str(getattr(args, "codex_vector_min_similarity", 0.72)),
+        "--codex-vector-min-bundle-size",
+        str(getattr(args, "codex_vector_min_bundle_size", 1)),
+        "--codex-vector-max-bundle-wait-seconds",
+        str(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0)),
         "--codex-task-embeddings-provider",
         str(getattr(args, "codex_task_embeddings_provider", "local_adapter")),
         "--codex-task-embeddings-batch-size",
@@ -2072,9 +2128,12 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "optimizer_policy": "autoencoder_sgd_with_codex_program_synthesis_backlog",
         "program_synthesis_claimed": 0,
         "program_synthesis_completed": 0,
+        "program_synthesis_deduped_total": 0,
         "program_synthesis_pending_cap": ModalOptimizerPolicy().max_program_synthesis_pending,
         "program_synthesis_pending": 0,
+        "program_synthesis_preinsert_deduped": 0,
         "program_synthesis_seeded": 0,
+        "program_synthesis_semantic_deduped": 0,
         "queue_run_id": getattr(args, "queue_run_id", None) or args.run_id,
         "queue_path": str(queue_path),
         "run_id": args.run_id,
@@ -2180,6 +2239,24 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.72,
         help="Minimum cosine similarity for embeddings-router vector bundle neighbors.",
+    )
+    parser.add_argument(
+        "--codex-vector-min-bundle-size",
+        type=int,
+        default=1,
+        help=(
+            "For vector bundles, wait instead of claiming a fresh undersized bundle "
+            "until this many related TODOs are selected."
+        ),
+    )
+    parser.add_argument(
+        "--codex-vector-max-bundle-wait-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "Maximum age for the oldest pending vector candidate before an undersized "
+            "bundle is allowed to run. Zero disables bundle patience."
+        ),
     )
     parser.add_argument(
         "--codex-vector-index-path",
@@ -2719,9 +2796,18 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             summary["program_synthesis_seeded"] = int(
                 summary.get("program_synthesis_seeded", 0)
             ) + sum(step.program_synthesis_seeded_count for step in run.steps)
+            preinsert_deduped_count = sum(
+                step.program_synthesis_deduped_count for step in run.steps
+            )
+            summary["program_synthesis_preinsert_deduped"] = int(
+                summary.get("program_synthesis_preinsert_deduped", 0)
+            ) + int(preinsert_deduped_count)
             summary["program_synthesis_semantic_deduped"] = int(
                 summary.get("program_synthesis_semantic_deduped", 0)
             ) + int(semantic_deduped_count)
+            summary["program_synthesis_deduped_total"] = int(
+                summary.get("program_synthesis_preinsert_deduped", 0)
+            ) + int(summary.get("program_synthesis_semantic_deduped", 0))
             summary["metric_failures"] = int(summary.get("metric_failures", 0)) + int(
                 compiler_ir_train.get("metric_failures", 0)
                 + compiler_ir_validation.get("metric_failures", 0)
@@ -2785,7 +2871,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                     "program_synthesis_seeded_count": sum(
                         step.program_synthesis_seeded_count for step in run.steps
                     ),
+                    "program_synthesis_preinsert_deduped_count": preinsert_deduped_count,
                     "program_synthesis_semantic_deduped_count": semantic_deduped_count,
+                    "program_synthesis_deduped_total": summary.get(
+                        "program_synthesis_deduped_total",
+                        0,
+                    ),
                     "train_cosine_delta": round(train_cos_delta, 9),
                     "train_cross_entropy_delta": round(train_ce_delta, 9),
                     "train_indices": train_indices,
@@ -2874,6 +2965,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
             "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
+            "codex_vector_max_bundle_wait_seconds": args.codex_vector_max_bundle_wait_seconds,
+            "codex_vector_min_bundle_size": args.codex_vector_min_bundle_size,
             "codex_vector_min_similarity": args.codex_vector_min_similarity,
             "codex_execution_count": 0,
             "codex_execution_failure_count": 0,
@@ -2907,6 +3000,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_scope", args.codex_scope)
     summary.setdefault("codex_task_embeddings_provider", args.codex_task_embeddings_provider)
     summary.setdefault("codex_vector_index_path", str(_codex_vector_index_path(args, queue_path)))
+    summary.setdefault("codex_vector_max_bundle_wait_seconds", args.codex_vector_max_bundle_wait_seconds)
+    summary.setdefault("codex_vector_min_bundle_size", args.codex_vector_min_bundle_size)
     summary.setdefault("codex_vector_min_similarity", args.codex_vector_min_similarity)
     summary.setdefault("codex_main_apply_count", 0)
     summary.setdefault("codex_main_apply_failure_count", 0)
@@ -2928,6 +3023,8 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_scope": args.codex_scope,
             "codex_task_embeddings_provider": args.codex_task_embeddings_provider,
             "codex_vector_index_path": str(_codex_vector_index_path(args, queue_path)),
+            "codex_vector_max_bundle_wait_seconds": args.codex_vector_max_bundle_wait_seconds,
+            "codex_vector_min_bundle_size": args.codex_vector_min_bundle_size,
             "codex_vector_min_similarity": args.codex_vector_min_similarity,
             "codex_program_synthesis_execution_mode": execution_mode,
             "event": "codex_program_synthesis_runner_started",
