@@ -1907,6 +1907,10 @@ def _apply_competing_scope_backfill(
         bool(signals.get("has_calendar_date_scope"))
         or bool(signals.get("has_temporal_scope_phrase"))
         or bool(signals.get("has_temporal_within_scope"))
+        or (
+            bool(signals.get("has_temporal_scope_token"))
+            and bool(signals.get("has_statutory_scope_reference"))
+        )
     )
     has_strong_conditional_scope = (
         bool(signals.get("has_exception_clause"))
@@ -2091,12 +2095,48 @@ def _apply_competing_scope_backfill(
         )
     if (
         conditional_count >= _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER
-        and temporal_count <= 0.0
+        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_temporal_scope"))
     ):
+        temporal_backfill = _COMPETING_SCOPE_BACKFILL_WEIGHT
+        if has_strong_temporal_scope:
+            temporal_backfill = max(
+                temporal_backfill,
+                _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+            if bool(
+                signals.get("has_statutory_scope_reference")
+                or signals.get("has_condition_clause")
+                or signals.get("has_exception_clause")
+            ):
+                temporal_backfill = max(
+                    temporal_backfill,
+                    _scaled_competing_scope_backfill(
+                        source_count=conditional_count,
+                        ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
+                        minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+                        maximum=_STATUTORY_GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_MAX,
+                    ),
+                )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            temporal_backfill,
+        )
+    elif (
+        conditional_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_strong_temporal_scope
+        and bool(signals.get("has_statutory_scope_reference"))
+    ):
+        temporal_backfill = _scaled_competing_scope_backfill(
+            source_count=conditional_count,
+            ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
+            minimum=_STRONG_SCOPE_BACKFILL_WEIGHT,
+            maximum=_STATUTORY_GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_MAX,
+        )
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            temporal_backfill,
         )
     if (
         (
@@ -2368,9 +2408,20 @@ def _apply_competing_scope_backfill(
             or bool(signals.get("has_exception_clause"))
         )
     ):
+        conditional_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if has_strong_conditional_scope:
+            conditional_backfill = max(
+                conditional_backfill,
+                _scaled_competing_scope_backfill(
+                    source_count=frame_count,
+                    ratio=_STATUTORY_GENERIC_FRAME_COMPETING_SCOPE_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_STATUTORY_GENERIC_FRAME_CONDITIONAL_SCOPE_MAX,
+                ),
+            )
         counts[conditional_family] = max(
             float(counts.get(conditional_family, 0.0)),
-            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            conditional_backfill,
         )
     elif (
         has_moderate_frame_competition
@@ -2664,6 +2715,14 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             conditional_bonus += 0.15
         if has_statutory_frame_context:
             conditional_bonus += 0.35
+            if (
+                explicit_conditional_scope
+                and not bool(
+                    signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
+                )
+            ):
+                conditional_bonus += 0.1
         if (
             (bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")))
             and (
@@ -2698,6 +2757,10 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         signals.get("has_calendar_date_scope")
         or signals.get("has_temporal_scope_phrase")
         or signals.get("has_temporal_within_scope")
+        or (
+            bool(signals.get("has_temporal_scope_token"))
+            and bool(signals.get("has_statutory_scope_reference"))
+        )
     )
     if bool(signals.get("has_temporal_scope")):
         temporal_bonus += 1.2
@@ -2709,6 +2772,10 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
                     signals.get("has_deontic_scope_phrase")
                 ):
                     temporal_bonus += 0.15
+        if bool(signals.get("has_condition_or_exception_scope")) and has_strong_temporal_scope:
+            temporal_bonus += 0.15
+        if has_statutory_frame_context and has_strong_temporal_scope:
+            temporal_bonus += 0.2
     if has_strong_temporal_scope:
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
