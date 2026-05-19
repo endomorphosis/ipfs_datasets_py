@@ -30,12 +30,24 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
         "fol_tdfol",
         "modal_frame_logic",
     } <= names
-    assert manifest["implemented_bridges"] == ["modal_frame_logic", "deontic_norms"]
+    assert manifest["implemented_bridges"] == [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router",
+    ]
     assert bridge_name_for_component("modal.frame_logic") == "modal_frame_logic"
     assert bridge_name_for_component("modal.frame_logic.audit") == "modal_frame_logic"
     assert logic_bridge_spec("modal_frame_logic").implemented is True
     assert bridge_name_for_component("deontic.ir") == "deontic_norms"
     assert logic_bridge_spec("deontic_norms").implemented is True
+    assert bridge_name_for_component("TDFOL.prover") == "fol_tdfol"
+    assert bridge_name_for_component("CEC.native") == "cec_dcec"
+    assert (
+        bridge_name_for_component("external_provers.router")
+        == "external_prover_router"
+    )
 
 
 def test_bridge_import_is_lightweight() -> None:
@@ -97,6 +109,64 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert report.to_dict()["ir_document"]["views"]["deontic_prover_syntax"][
         "metadata"
     ]["coverage_record_count"] >= 1
+
+
+def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("fol_tdfol")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="tdfol-bridge-smoke",
+        citation="TDFOL Bridge Smoke",
+    )
+
+    assert report.adapter_name == "fol_tdfol"
+    assert report.ir_document.views["tdfol_formula"].metadata["formula_count"] >= 1
+    assert report.ir_document.views["proof_obligations"].metadata[
+        "obligation_count"
+    ] >= 1
+    assert report.ir_document.has_frame_logic is True
+    assert report.graph_projection.neo4j_compatible is True
+    assert report.proof_gate.attempted_count >= 1
+    assert "tdfol_parse_failure_ratio" in report.round_trip.extra_losses
+
+
+def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="cec-bridge-smoke",
+        citation="CEC Bridge Smoke",
+    )
+
+    assert report.adapter_name == "cec_dcec"
+    assert report.ir_document.views["cec_events"].metadata["event_count"] >= 1
+    assert report.ir_document.views["dcec_formula"].metadata["formula_count"] >= 1
+    assert report.ir_document.has_frame_logic is True
+    assert report.graph_projection.neo4j_compatible is True
+    assert report.proof_gate.compiles is True
+    assert "cec_dcec_validation_failure_ratio" in report.round_trip.extra_losses
+
+
+def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("external_prover_router")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-smoke",
+        citation="External Prover Bridge Smoke",
+    )
+
+    assert report.adapter_name == "external_prover_router"
+    assert report.ir_document.views["prover_formulas"].metadata["formula_count"] >= 1
+    assert report.ir_document.has_frame_logic is True
+    assert report.graph_projection.neo4j_compatible is True
+    assert report.proof_gate.attempted_count >= 1
+    assert "external_prover_unavailable_loss" in report.round_trip.extra_losses
 
 
 def test_logic_manifest_includes_bridge_layer() -> None:

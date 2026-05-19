@@ -163,6 +163,31 @@ def test_loss_generator_routes_deontic_bridge_losses_to_deontic_scope() -> None:
     } == {"deontic"}
 
 
+def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None:
+    snapshot = LossSnapshot(
+        sample_id="sample-cross-logic",
+        citation="5 U.S.C. 552",
+        losses={
+            "cec_dcec_validation_failure_ratio": 1.0,
+            "external_prover_unavailable_loss": 1.0,
+            "tdfol_parse_failure_ratio": 1.0,
+        },
+        parser_formula_count=1,
+    )
+
+    todos = ModalLossTodoGenerator().generate([snapshot])
+    actions_by_loss = {todo.loss_name: todo for todo in todos}
+
+    assert actions_by_loss["tdfol_parse_failure_ratio"].action == "repair_tdfol_bridge_parse"
+    assert actions_by_loss["tdfol_parse_failure_ratio"].metadata["program_synthesis_scope"] == "tdfol"
+    assert actions_by_loss["cec_dcec_validation_failure_ratio"].action == "repair_cec_dcec_bridge"
+    assert actions_by_loss["cec_dcec_validation_failure_ratio"].metadata["program_synthesis_scope"] == "cec"
+    assert actions_by_loss["external_prover_unavailable_loss"].action == "repair_external_prover_router"
+    assert actions_by_loss["external_prover_unavailable_loss"].metadata[
+        "program_synthesis_scope"
+    ] == "external_provers"
+
+
 def test_queue_claims_multiple_pending_todos_at_once() -> None:
     generator = ModalLossTodoGenerator()
     snapshots = [

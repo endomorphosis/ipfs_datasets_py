@@ -64,6 +64,7 @@ LAW_COLUMNS = [
     "citation_text",
     "normalized_citation",
 ]
+DEFAULT_BRIDGE_LOSS_ADAPTERS = "deontic_norms,fol_tdfol,cec_dcec,external_prover_router"
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -593,7 +594,9 @@ def update_program_synthesis_summary(
 def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
     """Return bridge adapters that should feed optimizer loss TODOs."""
 
-    raw = str(getattr(args, "bridge_loss_adapters", "deontic_norms") or "").strip()
+    raw = str(
+        getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS) or ""
+    ).strip()
     if raw.lower() in {"", "none", "off", "false"}:
         return []
     return [
@@ -1211,7 +1214,7 @@ def build_paired_daemon_commands(
         "--learning-rate",
         str(args.learning_rate),
         "--bridge-loss-adapters",
-        str(getattr(args, "bridge_loss_adapters", "deontic_norms")),
+        str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
         "--test-every-cycles",
@@ -2648,7 +2651,7 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=0.35)
     parser.add_argument(
         "--bridge-loss-adapters",
-        default="deontic_norms",
+        default=DEFAULT_BRIDGE_LOSS_ADAPTERS,
         help=(
             "Comma-separated logic bridge adapters that add compiler/prover/graph "
             "losses to optimizer TODO generation; use 'none' to disable."
