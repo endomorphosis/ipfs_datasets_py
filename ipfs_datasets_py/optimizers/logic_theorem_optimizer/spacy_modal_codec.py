@@ -139,6 +139,32 @@ _TEMPORAL_SCOPE_PHRASES = (
     "period ending on",
     "while pending",
 )
+_EPISTEMIC_SCOPE_TOKENS = frozenset(
+    {
+        "aware",
+        "determine",
+        "determined",
+        "determines",
+        "determination",
+        "determinations",
+        "find",
+        "finding",
+        "findings",
+        "finds",
+        "found",
+        "knowledge",
+        "known",
+        "knowingly",
+    }
+)
+_EPISTEMIC_SCOPE_PHRASES = (
+    "finding that",
+    "findings that",
+    "has reason to believe",
+    "has reason to know",
+    "knowledge of",
+    "reason to believe",
+)
 _DYNAMIC_SCOPE_TOKENS = frozenset(
     {
         "enforce",
@@ -385,8 +411,10 @@ _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
+_TEMPORAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _CONDITIONAL_COMPETING_SCOPE_SOFT_CAP = 3.0
 _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT = 0.08
+_GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT = 0.35
 _COMPETING_SCOPE_BACKFILL_WEIGHT = 0.08
 _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
@@ -399,6 +427,7 @@ _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER = 2.0
 _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
 _DEONTIC_SCOPE_TOKENS = frozenset(
@@ -1155,6 +1184,10 @@ def _weighted_modal_family_counts(
         counts,
         resolved_signals,
     )
+    _apply_temporal_competing_scope_soft_cap(
+        counts,
+        resolved_signals,
+    )
     _apply_conditional_competing_scope_soft_cap(
         counts,
         resolved_signals,
@@ -1217,6 +1250,7 @@ def _apply_generic_frame_normative_scope_soft_cap(
         bool(signals.get("has_deontic_scope"))
         or bool(signals.get("has_condition_or_exception_scope"))
         or bool(signals.get("has_temporal_scope"))
+        or bool(signals.get("has_epistemic_scope"))
     )
     if not has_competing_scope:
         return
@@ -1248,18 +1282,57 @@ def _apply_deontic_competing_scope_soft_cap(
         or float(counts.get(ModalLogicFamily.CONDITIONAL_NORMATIVE.value, 0.0)) > 0.0
     )
     has_epistemic_competition = (
-        bool(signals.get("has_epistemic_cue"))
+        bool(signals.get("has_epistemic_scope"))
+        or bool(signals.get("has_epistemic_cue"))
         or float(counts.get(ModalLogicFamily.EPISTEMIC.value, 0.0)) > 0.0
+    )
+    has_dynamic_competition = (
+        bool(signals.get("has_dynamic_scope"))
+        or bool(signals.get("has_dynamic_cue"))
+        or float(counts.get(ModalLogicFamily.DYNAMIC.value, 0.0)) > 0.0
     )
     if not (
         has_temporal_competition
         or has_frame_competition
         or has_conditional_competition
         or has_epistemic_competition
+        or has_dynamic_competition
     ):
         return
     overflow = deontic_count - _DEONTIC_COMPETING_SCOPE_SOFT_CAP
     counts[deontic_family] = _DEONTIC_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
+
+
+def _apply_temporal_competing_scope_soft_cap(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Prevent repeated temporal cues from overwhelming competing family evidence."""
+    temporal_family = ModalLogicFamily.TEMPORAL.value
+    temporal_count = float(counts.get(temporal_family, 0.0))
+    if temporal_count <= _TEMPORAL_COMPETING_SCOPE_SOFT_CAP:
+        return
+    has_deontic_competition = (
+        bool(signals.get("has_deontic_scope"))
+        or float(counts.get(ModalLogicFamily.DEONTIC.value, 0.0)) > 0.0
+    )
+    has_conditional_competition = (
+        bool(signals.get("has_condition_or_exception_scope"))
+        or float(counts.get(ModalLogicFamily.CONDITIONAL_NORMATIVE.value, 0.0)) > 0.0
+    )
+    has_dynamic_competition = (
+        bool(signals.get("has_dynamic_scope"))
+        or bool(signals.get("has_dynamic_cue"))
+        or float(counts.get(ModalLogicFamily.DYNAMIC.value, 0.0)) > 0.0
+    )
+    if not (
+        has_deontic_competition
+        or has_conditional_competition
+        or has_dynamic_competition
+    ):
+        return
+    overflow = temporal_count - _TEMPORAL_COMPETING_SCOPE_SOFT_CAP
+    counts[temporal_family] = _TEMPORAL_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)
 
 
 def _apply_conditional_competing_scope_soft_cap(
@@ -1315,9 +1388,16 @@ def _apply_generic_frame_scope_backfill(
     if non_frame_total > 0.0:
         return
     if bool(signals.get("has_temporal_scope")):
+        temporal_backfill = _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_temporal_within_scope"))
+        ):
+            temporal_backfill = _GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT
         counts[ModalLogicFamily.TEMPORAL.value] = max(
             float(counts.get(ModalLogicFamily.TEMPORAL.value, 0.0)),
-            _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT,
+            temporal_backfill,
         )
     if bool(signals.get("has_condition_or_exception_scope")):
         counts[ModalLogicFamily.CONDITIONAL_NORMATIVE.value] = max(
@@ -1328,6 +1408,11 @@ def _apply_generic_frame_scope_backfill(
         counts[ModalLogicFamily.DEONTIC.value] = max(
             float(counts.get(ModalLogicFamily.DEONTIC.value, 0.0)),
             _GENERIC_FRAME_SCOPE_BACKFILL_WEIGHT,
+        )
+    if bool(signals.get("has_epistemic_scope")):
+        counts[ModalLogicFamily.EPISTEMIC.value] = max(
+            float(counts.get(ModalLogicFamily.EPISTEMIC.value, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
 
 
@@ -1341,11 +1426,13 @@ def _apply_competing_scope_backfill(
     temporal_family = ModalLogicFamily.TEMPORAL.value
     frame_family = ModalLogicFamily.FRAME.value
     dynamic_family = ModalLogicFamily.DYNAMIC.value
+    epistemic_family = ModalLogicFamily.EPISTEMIC.value
     deontic_count = float(counts.get(deontic_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
     frame_count = float(counts.get(frame_family, 0.0))
     dynamic_count = float(counts.get(dynamic_family, 0.0))
+    epistemic_count = float(counts.get(epistemic_family, 0.0))
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= 0.0
@@ -1453,6 +1540,15 @@ def _apply_competing_scope_backfill(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
+        frame_count >= _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
+        and epistemic_count <= 0.0
+        and bool(signals.get("has_epistemic_scope"))
+    ):
+        counts[epistemic_family] = max(
+            float(counts.get(epistemic_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
         temporal_count >= _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
         and deontic_count <= 0.0
         and bool(signals.get("has_deontic_scope"))
@@ -1504,6 +1600,7 @@ def _is_generic_frame_cue_debias_context(
         bool(signals.get("has_deontic_scope"))
         or bool(signals.get("has_temporal_scope"))
         or bool(signals.get("has_condition_or_exception_scope"))
+        or bool(signals.get("has_epistemic_scope"))
         or bool(signals.get("has_epistemic_cue"))
     ):
         return False
@@ -1539,6 +1636,13 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
         boosts[ModalLogicFamily.TEMPORAL.value] = temporal_bonus
+    if bool(signals.get("has_epistemic_scope")):
+        epistemic_bonus = (
+            0.7
+            if bool(signals.get("has_epistemic_scope_phrase"))
+            else 0.45
+        )
+        boosts[ModalLogicFamily.EPISTEMIC.value] = epistemic_bonus
     dynamic_bonus = 0.0
     if bool(signals.get("has_dynamic_scope_phrase")):
         dynamic_bonus += 1.0
@@ -1583,6 +1687,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     deontic_scope_phrase = _contains_scope_phrase(
         normalized_text, _DEONTIC_SCOPE_PHRASES
     )
+    epistemic_scope_phrase = _contains_scope_phrase(
+        normalized_text, _EPISTEMIC_SCOPE_PHRASES
+    )
     temporal_scope_phrase = _contains_scope_phrase(
         normalized_text, _TEMPORAL_SCOPE_PHRASES
     )
@@ -1608,6 +1715,11 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         bool(token_terms & _DEONTIC_SCOPE_TOKENS)
         or bool(deontic_scope_phrase)
         or ModalLogicFamily.DEONTIC.value in cue_families
+    )
+    epistemic_scope = (
+        bool(token_terms & _EPISTEMIC_SCOPE_TOKENS)
+        or bool(epistemic_scope_phrase)
+        or ModalLogicFamily.EPISTEMIC.value in cue_families
     )
     dynamic_scope = (
         bool(token_terms & _DYNAMIC_SCOPE_TOKENS)
@@ -1649,6 +1761,8 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_dynamic_scope": dynamic_scope,
         "has_dynamic_scope_phrase": bool(dynamic_scope_phrase),
         "has_epistemic_cue": ModalLogicFamily.EPISTEMIC.value in cue_families,
+        "has_epistemic_scope": epistemic_scope,
+        "has_epistemic_scope_phrase": bool(epistemic_scope_phrase),
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
         "has_temporal_within_scope": temporal_within_scope,

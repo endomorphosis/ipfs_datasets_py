@@ -166,7 +166,7 @@ def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pair
     )
     assert _has_adaptive_explicit_pair(
         temporal_result,
-        predicted_family=ModalLogicFamily.FRAME.value,
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
         target_family=ModalLogicFamily.DEONTIC.value,
     )
     assert _has_adaptive_explicit_pair(

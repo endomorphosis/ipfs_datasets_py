@@ -1048,7 +1048,8 @@ class DeterministicModalCompiler:
                     or signals.get("has_deontic_cue")
                 ),
                 ModalLogicFamily.EPISTEMIC.value: bool(
-                    signals.get("has_epistemic_cue")
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
                 ),
                 ModalLogicFamily.TEMPORAL.value: bool(
                     signals.get("has_temporal_scope")
@@ -1065,7 +1066,8 @@ class DeterministicModalCompiler:
                     or signals.get("has_deontic_cue")
                 ),
                 ModalLogicFamily.EPISTEMIC.value: bool(
-                    signals.get("has_epistemic_cue")
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
                 ),
                 ModalLogicFamily.TEMPORAL.value: bool(
                     signals.get("has_temporal_scope")
@@ -1087,7 +1089,8 @@ class DeterministicModalCompiler:
                     or signals.get("has_deontic_cue")
                 ),
                 ModalLogicFamily.EPISTEMIC.value: bool(
-                    signals.get("has_epistemic_cue")
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
                 ),
                 ModalLogicFamily.DYNAMIC.value: bool(
                     signals.get("has_dynamic_scope")

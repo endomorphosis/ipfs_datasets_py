@@ -507,6 +507,33 @@ def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> 
     assert frame_share > temporal_share
 
 
+def test_spacy_codec_backfills_strong_temporal_share_for_generic_frame_scope_with_calendar_date() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="43",
+        section="2451a",
+        text="The authority takes effect on January 1, 2030.",
+    )
+
+    ranking = ranked_modal_families(codec.encode_sample(sample))
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+
+    assert ranking[0]["family"] == "temporal"
+    assert temporal_share > frame_share
+
+
 def test_spacy_codec_backfills_conditional_share_for_generic_frame_only_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -695,6 +722,32 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_cues_are_pre
     assert logits["epistemic"] > logits["frame"]
 
 
+def test_spacy_decoder_debiases_generic_frame_logits_when_epistemic_scope_is_present_without_epistemic_cues() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="80f",
+        text=(
+            "Authority under this section follows a formal finding that the applicant "
+            "concealed material facts."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+
+    assert not any(cue.family == "epistemic" for cue in encoding.cues)
+    assert signals["has_epistemic_scope"] is True
+    logits = codec.family_logits_for_sample(
+        sample,
+        modal_families=("frame", "epistemic", "deontic"),
+    )
+
+    assert logits["epistemic"] > logits["frame"]
+
+
 def test_spacy_decoder_boosts_temporal_logits_from_scope_without_temporal_cues() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -866,6 +919,72 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_epistemic_competiti
 
     assert competing_logits["deontic"] < baseline_logits["deontic"]
     assert competing_logits["epistemic"] > baseline_logits["epistemic"]
+
+
+def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_dynamic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="18",
+        section="1033",
+        text="Vendor shall and must and shall and must submit reports.",
+    )
+    competing = build_us_code_sample(
+        title="18",
+        section="1034",
+        text=(
+            "Vendor shall and must and shall and must file and serve reports."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "dynamic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "dynamic", "frame"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["dynamic"] > baseline_logits["dynamic"]
+
+
+def test_spacy_decoder_soft_caps_repeated_temporal_logits_for_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="6",
+        section="609a",
+        text=(
+            "Within 30 days and by January 1, 2030, and no later than the fiscal "
+            "year deadline, submission occurs."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="6",
+        section="609b",
+        text=(
+            "Within 30 days and by January 1, 2030, and no later than the fiscal "
+            "year deadline, the agency is required to submit notice."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("temporal", "deontic", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("temporal", "deontic", "frame"),
+    )
+
+    assert competing_logits["temporal"] < baseline_logits["temporal"]
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
 
 
 def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition() -> None:
