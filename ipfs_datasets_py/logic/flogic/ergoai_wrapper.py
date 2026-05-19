@@ -42,7 +42,38 @@ logger = logging.getLogger(__name__)
 ERGOAI_SUBMODULE_PATH: Path = Path(__file__).parent.parent / "ErgoAI"
 
 # Default binary name looked up on PATH or inside the submodule
-_ERGO_BINARY_NAMES = ("ergo", "ergoai", "runErgo.sh")
+_ERGO_BINARY_NAMES = ("ergo", "ergoai", "runErgo.sh", "runergo")
+
+
+def _runner_requires_paths_file(path: Path) -> bool:
+    return path.name.lower() in {"runergo", "runergo.sh"}
+
+
+def _ergo_binary_is_configured(path: Path) -> bool:
+    """Return true when *path* looks like a runnable ErgoAI entrypoint."""
+
+    if not path.is_file():
+        return False
+    if _runner_requires_paths_file(path):
+        return (path.parent / ".ergo_paths").is_file()
+    return True
+
+
+def _ergoai_release_install_root() -> Path:
+    env_path = os.environ.get("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR")
+    if env_path:
+        return Path(env_path).expanduser()
+    return Path.home() / ".local" / "share" / "ipfs_datasets_py" / "provers" / "ergoai"
+
+
+def _ergoai_release_binary_candidates() -> List[Path]:
+    root = _ergoai_release_install_root()
+    candidates = [root / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"]
+    try:
+        candidates.extend(sorted(root.glob("Coherent/ERGOAI_*/ErgoAI/runergo")))
+    except OSError:
+        pass
+    return candidates
 
 
 def _find_ergo_binary() -> Optional[Path]:
@@ -59,16 +90,23 @@ def _find_ergo_binary() -> Optional[Path]:
     env_path = os.environ.get("ERGOAI_BINARY")
     if env_path:
         p = Path(env_path)
-        if p.is_file():
+        if _ergo_binary_is_configured(p):
             return p
+
+    for candidate in _ergoai_release_binary_candidates():
+        if _ergo_binary_is_configured(candidate):
+            return candidate
 
     # Check common locations inside the submodule
     for candidate in (
         ERGOAI_SUBMODULE_PATH / "ErgoAI" / "runErgo.sh",
+        ERGOAI_SUBMODULE_PATH / "ErgoAI" / "runergo",
         ERGOAI_SUBMODULE_PATH / "runErgo.sh",
+        ERGOAI_SUBMODULE_PATH / "runergo",
         ERGOAI_SUBMODULE_PATH / "ergo",
+        ERGOAI_SUBMODULE_PATH / "ergoai",
     ):
-        if candidate.is_file():
+        if _ergo_binary_is_configured(candidate):
             return candidate
 
     # Fall back to PATH
@@ -107,8 +145,9 @@ def resolve_ergo_binary(
 
     if binary is not None:
         candidate = Path(binary)
-        if candidate.is_file():
+        if _ergo_binary_is_configured(candidate):
             return candidate
+        return None
 
     found = _find_ergo_binary()
     if found is not None:
@@ -231,19 +270,17 @@ class ErgoAIWrapper:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _build_ergo_program(self, extra_goal: str) -> str:
-        """Build a complete ``.ergo`` program for a single query."""
-        program = self.ontology.to_ergo_program()
-        # Append a directive to print query results
-        program += f"\n\n?- {extra_goal}.\n"
-        return program
+    def _build_ergo_program(self) -> str:
+        """Build the current ontology as a loadable Ergo source program."""
+        return self.ontology.to_ergo_program()
 
     def _run_ergo_query(self, goal: str) -> FLogicQuery:
         """Invoke the ErgoAI binary and parse its output."""
         assert self.binary is not None  # guaranteed by caller
 
-        program = self._build_ergo_program(goal)
+        program = self._build_ergo_program()
         result = FLogicQuery(goal=goal)
+        tmp_path: Optional[str] = None
 
         try:
             with tempfile.NamedTemporaryFile(
@@ -252,26 +289,37 @@ class ErgoAIWrapper:
                 tmp.write(program)
                 tmp_path = tmp.name
 
+            query_goal = goal.rstrip().rstrip(".")
+            commands = f"load{{'{tmp_path}'}}.\n{query_goal}.\n\\halt.\n"
             proc = subprocess.run(
-                [str(self.binary), tmp_path],
+                [str(self.binary)],
+                input=commands,
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
-            os.unlink(tmp_path)
 
-            if proc.returncode == 0:
+            output = "\n".join(part for part in (proc.stdout, proc.stderr) if part)
+            if proc.returncode == 0 and "++Error" not in output:
                 result.status = FLogicStatus.SUCCESS
                 result.bindings = _parse_ergo_output(proc.stdout)
+                if not result.bindings and "\nNo\n" in output:
+                    result.status = FLogicStatus.FAILURE
             else:
                 result.status = FLogicStatus.FAILURE
-                result.error_message = proc.stderr.strip() or proc.stdout.strip()
+                result.error_message = output.strip()
         except subprocess.TimeoutExpired:
             result.status = FLogicStatus.ERROR
             result.error_message = "ErgoAI subprocess timed out after 30 s"
         except (OSError, ValueError) as exc:
             result.status = FLogicStatus.ERROR
             result.error_message = str(exc)
+        finally:
+            if tmp_path is not None:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
 
         return result
 
@@ -317,7 +365,9 @@ def _parse_ergo_output(output: str) -> List[Dict[str, Any]]:
             part = part.strip()
             if "=" in part:
                 var, _, val = part.partition("=")
-                binding[var.strip()] = val.strip()
+                var = var.strip()
+                if var.startswith("?"):
+                    binding[var] = val.strip()
         if binding:
             bindings.append(binding)
     return bindings

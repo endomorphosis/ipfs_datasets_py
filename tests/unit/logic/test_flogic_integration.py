@@ -59,6 +59,7 @@ def test_lazy_installer_recognizes_ergoai_aliases(monkeypatch):
     monkeypatch.delenv("IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI", raising=False)
 
     assert normalize_prover_name("runErgo.sh") == "ergoai"
+    assert normalize_prover_name("runergo") == "ergoai"
     assert normalize_prover_name("ErgoEngine") == "ergoai"
     assert prover_lazy_install_enabled("ergo") is True
 
@@ -72,11 +73,100 @@ def test_prover_installer_accepts_existing_ergoai_binary(tmp_path, monkeypatch):
 
     fake_binary = tmp_path / "runErgo.sh"
     fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (tmp_path / ".ergo_paths").write_text("PROLOG=/usr/bin/false\n", encoding="utf-8")
     fake_binary.chmod(0o644)
     monkeypatch.setenv("ERGOAI_BINARY", str(fake_binary))
 
     assert prover_installer.ensure_ergoai(yes=False, strict=True) is True
     assert os.access(fake_binary, os.X_OK)
+
+
+def test_prover_installer_discovers_repo_runergo(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    fake_binary = tmp_path / "ErgoAI" / "runergo"
+    fake_binary.parent.mkdir()
+    fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (fake_binary.parent / ".ergo_paths").write_text(
+        "PROLOG=/usr/bin/false\n",
+        encoding="utf-8",
+    )
+    fake_binary.chmod(0o755)
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
+    monkeypatch.setattr(prover_installer, "_ergoai_submodule_path", lambda: tmp_path)
+
+    assert prover_installer._find_ergoai_binary() == fake_binary
+
+
+def test_prover_installer_skips_unconfigured_repo_runergo(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    fake_binary = tmp_path / "ErgoAI" / "runergo"
+    fake_binary.parent.mkdir()
+    fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake_binary.chmod(0o755)
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
+    monkeypatch.setattr(prover_installer, "_ergoai_submodule_path", lambda: tmp_path)
+
+    assert prover_installer._find_ergoai_binary() is None
+
+
+def test_prover_installer_discovers_release_runergo(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    fake_binary = tmp_path / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"
+    fake_binary.parent.mkdir(parents=True)
+    fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    (fake_binary.parent / ".ergo_paths").write_text(
+        "PROLOG=/usr/bin/false\n",
+        encoding="utf-8",
+    )
+    fake_binary.chmod(0o755)
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path))
+
+    assert prover_installer._find_ergoai_binary() == fake_binary
+
+
+def test_ergoai_release_installer_runs_noninteractive(tmp_path, monkeypatch):
+    from ipfs_datasets_py.logic.integration.bridges import prover_installer
+
+    calls = []
+    fake_binary = tmp_path / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"
+
+    def fake_download(url, destination, **_kwargs):
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        return True
+
+    def fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        fake_binary.parent.mkdir(parents=True)
+        fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (fake_binary.parent / ".ergo_paths").write_text(
+            "PROLOG=/usr/bin/false\n",
+            encoding="utf-8",
+        )
+        return 0
+
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+    monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path))
+    monkeypatch.setattr(prover_installer.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(
+        prover_installer,
+        "_which",
+        lambda name: "/bin/sh" if name == "sh" else None,
+    )
+    monkeypatch.setattr(prover_installer, "_download_file", fake_download)
+    monkeypatch.setattr(prover_installer, "_run", fake_run)
+
+    assert prover_installer._install_ergoai_release(strict=True) is True
+    assert os.environ["ERGOAI_BINARY"] == str(fake_binary)
+    assert calls[0][0][-2:] == ["--", "noninteractive"]
+    assert calls[0][1]["cwd"] == tmp_path
+    monkeypatch.delenv("ERGOAI_BINARY", raising=False)
 
 
 def test_platform_package_plan_uses_passwordless_sudo_for_apt():
@@ -190,6 +280,7 @@ def test_ergoai_install_attempts_platform_build_dependencies(monkeypatch):
         "_install_system_packages",
         lambda packages, **_kwargs: installed.extend(packages) or True,
     )
+    monkeypatch.setattr(prover_installer, "_install_ergoai_release", lambda **_kwargs: False)
     monkeypatch.setattr(prover_installer, "_clone_or_update_ergoai", lambda **_kwargs: False)
 
     assert prover_installer.ensure_ergoai(yes=True, strict=False) is False
@@ -335,7 +426,10 @@ class TestErgoAIWrapperSimulation:
 
     def _make_wrapper(self):
         # Force simulation mode without invoking opt-in lazy installers.
-        return self.ErgoAIWrapper(binary=None, lazy_install=False)
+        return self.ErgoAIWrapper(
+            binary=Path("/__missing_ipfs_datasets_py_ergoai__"),
+            lazy_install=False,
+        )
 
     def test_simulation_mode_flag(self):
         ergo = self._make_wrapper()
@@ -376,6 +470,10 @@ class TestErgoAIWrapperSimulation:
 
         fake_binary = tmp_path / "runErgo.sh"
         fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (tmp_path / ".ergo_paths").write_text(
+            "PROLOG=/usr/bin/false\n",
+            encoding="utf-8",
+        )
         fake_binary.chmod(0o755)
         calls = []
 
@@ -398,6 +496,92 @@ class TestErgoAIWrapperSimulation:
         assert ergo.binary == fake_binary
         assert calls
         assert calls[0][0] == "ergoai"
+
+    def test_wrapper_discovers_repo_runergo(self, tmp_path, monkeypatch):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        fake_binary = tmp_path / "ErgoAI" / "runergo"
+        fake_binary.parent.mkdir()
+        fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (fake_binary.parent / ".ergo_paths").write_text(
+            "PROLOG=/usr/bin/false\n",
+            encoding="utf-8",
+        )
+        fake_binary.chmod(0o755)
+        monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+        monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
+        monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+
+        assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
+
+    def test_wrapper_discovers_release_runergo(self, tmp_path, monkeypatch):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        fake_binary = tmp_path / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"
+        fake_binary.parent.mkdir(parents=True)
+        fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (fake_binary.parent / ".ergo_paths").write_text(
+            "PROLOG=/usr/bin/false\n",
+            encoding="utf-8",
+        )
+        fake_binary.chmod(0o755)
+        monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+        monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path))
+
+        assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) == fake_binary
+
+    def test_wrapper_skips_unconfigured_repo_runergo(self, tmp_path, monkeypatch):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        fake_binary = tmp_path / "ErgoAI" / "runergo"
+        fake_binary.parent.mkdir()
+        fake_binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        fake_binary.chmod(0o755)
+        monkeypatch.delenv("ERGOAI_BINARY", raising=False)
+        monkeypatch.setenv("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR", str(tmp_path / "release"))
+        monkeypatch.setattr(ergoai_wrapper, "ERGOAI_SUBMODULE_PATH", tmp_path)
+
+        assert ergoai_wrapper.resolve_ergo_binary(lazy_install=False) is None
+
+    def test_wrapper_feeds_load_command_to_ergo_runner(self, tmp_path):
+        runner = tmp_path / "runergo"
+        stdin_capture = tmp_path / "stdin.txt"
+        argc_capture = tmp_path / "argc.txt"
+        runner.write_text(
+            "#!/bin/sh\n"
+            f"printf '%s\\n' \"$#\" > '{argc_capture}'\n"
+            f"cat > '{stdin_capture}'\n"
+            "printf '%s\\n' '?X = rex'\n",
+            encoding="utf-8",
+        )
+        runner.chmod(0o755)
+        (tmp_path / ".ergo_paths").write_text(
+            "PROLOG=/usr/bin/false\n",
+            encoding="utf-8",
+        )
+
+        ergo = self.ErgoAIWrapper(binary=runner, lazy_install=False)
+        ergo.add_frame(self.FLogicFrame("rex", isa="Dog"))
+        result = ergo.query("?X : Dog")
+
+        assert result.status == self.FLogicStatus.SUCCESS
+        assert result.bindings == [{"?X": "rex"}]
+        assert argc_capture.read_text(encoding="utf-8").strip() == "0"
+        stdin_text = stdin_capture.read_text(encoding="utf-8")
+        assert "load{'" in stdin_text
+        assert "?X : Dog." in stdin_text
+        assert "\\halt." in stdin_text
+
+    def test_ergo_output_parser_ignores_timing_lines(self):
+        import ipfs_datasets_py.logic.flogic.ergoai_wrapper as ergoai_wrapper
+
+        output = (
+            "Times (in seconds): elapsed = 0.420; pure CPU = 0.346\n"
+            "?X = rex\n"
+            "1 solution(s) in 0.000 seconds; elapsed time = 0.001\n"
+        )
+
+        assert ergoai_wrapper._parse_ergo_output(output) == [{"?X": "rex"}]
 
     def test_load_ontology(self):
         ergo = self._make_wrapper()

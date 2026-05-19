@@ -10,6 +10,8 @@ Environment variables:
 - IPFS_DATASETS_PY_LAZY_INSTALL_STRICT=1 raises on installer failure.
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS=1 permits interactive sudo for Coq.
 - IPFS_DATASETS_PY_ERGOAI_GIT_URL overrides the ErgoAI/ErgoEngine source repo.
+- IPFS_DATASETS_PY_ERGOAI_RELEASE_URL overrides the official ErgoAI .run URL.
+- IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR sets the user-local ErgoAI install dir.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND runs a custom ErgoAI installer command.
 """
 

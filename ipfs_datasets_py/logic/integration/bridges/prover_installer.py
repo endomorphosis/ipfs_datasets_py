@@ -22,6 +22,9 @@ Environment variables (all optional):
 - IPFS_DATASETS_PY_LAZY_INSTALL_<PROVER>: per-prover lazy install override (Z3/CVC5/LEAN/COQ/SYMBOLICAI/ERGOAI)
 - IPFS_DATASETS_PY_ALLOW_SUDO_FOR_PROVERS: allow lazy Coq install to use interactive sudo (default: 0)
 - IPFS_DATASETS_PY_ERGOAI_GIT_URL: override ErgoAI/ErgoEngine source repository.
+- IPFS_DATASETS_PY_ERGOAI_RELEASE_URL: override the official ErgoAI .run installer URL.
+- IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR: user-local directory for official ErgoAI release installs.
+- IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE=0: skip the official release installer path.
 - IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND: custom command used before git clone fallback.
 - ERGOAI_BINARY: explicit path to the ErgoAI executable/runErgo.sh.
 
@@ -46,14 +49,24 @@ from shlex import split as shell_split
 
 logger = logging.getLogger(__name__)
 DEFAULT_ERGOAI_GIT_URL = "https://github.com/ErgoAI/ErgoEngine.git"
+DEFAULT_ERGOAI_RELEASE_URL = (
+    "https://github.com/ErgoAI/.github/releases/download/"
+    "v3.0_release/ergoAI_3.0.run"
+)
 
 
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _run(cmd: list[str], *, check: bool, env: dict[str, str] | None = None) -> int:
-    proc = subprocess.run(cmd, text=True, env=env)
+def _run(
+    cmd: list[str],
+    *,
+    check: bool,
+    env: dict[str, str] | None = None,
+    cwd: str | Path | None = None,
+) -> int:
+    proc = subprocess.run(cmd, text=True, env=env, cwd=cwd)
     if check and proc.returncode != 0:
         raise RuntimeError(f"Command failed ({proc.returncode}): {' '.join(cmd)}")
     return proc.returncode
@@ -292,32 +305,65 @@ def _ergoai_submodule_path() -> Path:
     return _logic_root() / "ErgoAI"
 
 
+def _ergoai_release_install_root() -> Path:
+    env_path = os.environ.get("IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR")
+    if env_path:
+        return Path(env_path).expanduser()
+    return Path.home() / ".local" / "share" / "ipfs_datasets_py" / "provers" / "ergoai"
+
+
+def _ergoai_release_binary_candidates() -> list[Path]:
+    root = _ergoai_release_install_root()
+    candidates = [root / "Coherent" / "ERGOAI_3.0" / "ErgoAI" / "runergo"]
+    try:
+        candidates.extend(sorted(root.glob("Coherent/ERGOAI_*/ErgoAI/runergo")))
+    except OSError:
+        pass
+    return candidates
+
+
 def _ergoai_binary_candidates() -> list[Path]:
     candidates: list[Path] = []
     env_path = os.environ.get("ERGOAI_BINARY")
     if env_path:
         candidates.append(Path(env_path).expanduser())
 
+    candidates.extend(_ergoai_release_binary_candidates())
+
     submodule = _ergoai_submodule_path()
     candidates.extend(
         [
             submodule / "ErgoAI" / "runErgo.sh",
+            submodule / "ErgoAI" / "runergo",
             submodule / "runErgo.sh",
+            submodule / "runergo",
             submodule / "ergo",
             submodule / "ergoai",
         ]
     )
-    for name in ("ergo", "ergoai", "runErgo.sh"):
+    for name in ("ergo", "ergoai", "runErgo.sh", "runergo"):
         found = _which(name)
         if found:
             candidates.append(Path(found))
     return candidates
 
 
+def _ergoai_runner_requires_paths_file(path: Path) -> bool:
+    return path.name.lower() in {"runergo", "runergo.sh"}
+
+
+def _is_configured_ergoai_binary(path: Path) -> bool:
+    if not path.is_file():
+        return False
+    if _ergoai_runner_requires_paths_file(path):
+        return (path.parent / ".ergo_paths").is_file()
+    return True
+
+
 def _find_ergoai_binary() -> Path | None:
     for candidate in _ergoai_binary_candidates():
         try:
-            if candidate.is_file():
+            if _is_configured_ergoai_binary(candidate):
                 return candidate
         except OSError:
             continue
@@ -345,6 +391,77 @@ def _run_custom_ergoai_installer(*, strict: bool) -> bool:
         if strict:
             raise
         return False
+
+
+def _download_file(url: str, destination: Path, *, strict: bool) -> bool:
+    try:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.is_file():
+            return True
+        print(f"Downloading ErgoAI release installer from {url}...")
+        urllib.request.urlretrieve(url, destination)
+        _make_executable(destination)
+        return True
+    except Exception as exc:
+        print(f"Failed to download ErgoAI release installer: {exc}")
+        if strict:
+            raise
+        return False
+
+
+def _install_ergoai_release(*, strict: bool) -> bool:
+    """Install the official user-local ErgoAI release when supported."""
+
+    if os.environ.get("IPFS_DATASETS_PY_ERGOAI_INSTALL_RELEASE") == "0":
+        return False
+    if platform.system().lower() not in {"linux", "darwin"}:
+        return False
+
+    shell = _which("sh") or "/bin/sh"
+    if not Path(shell).exists():
+        print("Cannot run the ErgoAI release installer because sh was not found.")
+        return False
+
+    root = _ergoai_release_install_root()
+    existing_target = root / "Coherent"
+    if existing_target.exists() and _find_ergoai_binary() is None:
+        print(
+            f"ErgoAI release install directory exists but is not configured: {existing_target}\n"
+            "Set IPFS_DATASETS_PY_ERGOAI_INSTALL_DIR to a fresh directory, "
+            "or set ERGOAI_BINARY to an existing runergo."
+        )
+        return False
+
+    release_url = str(
+        os.environ.get("IPFS_DATASETS_PY_ERGOAI_RELEASE_URL")
+        or DEFAULT_ERGOAI_RELEASE_URL
+    ).strip()
+    installer_name = release_url.rstrip("/").rsplit("/", 1)[-1] or "ergoAI.run"
+    installer = root / installer_name
+    if not _download_file(release_url, installer, strict=strict):
+        return False
+
+    try:
+        print(f"Installing ErgoAI release into {root}...")
+        rc = _run(
+            [shell, str(installer), "--", "noninteractive"],
+            check=strict,
+            env=os.environ.copy(),
+            cwd=root,
+        )
+        if rc != 0:
+            return False
+        binary = _find_ergoai_binary()
+        if binary is not None:
+            _make_executable(binary)
+            os.environ["ERGOAI_BINARY"] = str(binary)
+            print(f"ErgoAI binary available: {binary}")
+            return True
+    except Exception as exc:
+        print(f"Failed to install ErgoAI release: {exc}")
+        if strict:
+            raise
+    return False
 
 
 def _clone_or_update_ergoai(*, strict: bool) -> bool:
@@ -395,8 +512,8 @@ def _clone_or_update_ergoai(*, strict: bool) -> bool:
             return True
 
         print(
-            "ErgoAI source was hydrated, but no runErgo.sh/ergo binary was found. "
-            "Build ErgoEngine if required, or set ERGOAI_BINARY."
+            "ErgoAI source was hydrated, but no configured runergo/ergo binary "
+            "was found. Build ErgoEngine if required, or set ERGOAI_BINARY."
         )
         return False
     except Exception as exc:
@@ -530,6 +647,7 @@ def ensure_ergoai(*, yes: bool, strict: bool) -> bool:
     Strategy:
     - Respect ``ERGOAI_BINARY`` or an existing ``ergo``/``ergoai``/``runErgo.sh``.
     - Run ``IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND`` when configured.
+    - Install the official user-local ErgoAI release on Linux/macOS when enabled.
     - Hydrate the vendored ``ipfs_datasets_py/logic/ErgoAI`` checkout from
       ErgoAI/ErgoEngine as a best-effort source install.
 
@@ -568,12 +686,15 @@ def ensure_ergoai(*, yes: bool, strict: bool) -> bool:
             strict=strict,
         )
 
+    if _install_ergoai_release(strict=strict):
+        return True
+
     if _clone_or_update_ergoai(strict=strict):
         return True
 
     print(
         "Unable to install ErgoAI automatically. Install ErgoEngine manually and set:\n"
-        "  export ERGOAI_BINARY=/path/to/ErgoAI/runErgo.sh\n"
+        "  export ERGOAI_BINARY=/path/to/ErgoAI/runergo\n"
         "or configure IPFS_DATASETS_PY_ERGOAI_INSTALL_COMMAND for your platform."
     )
     if strict:
