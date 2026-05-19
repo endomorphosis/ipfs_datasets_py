@@ -73,6 +73,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.EPISTEMIC.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.EPISTEMIC.value,
     ),
     (
