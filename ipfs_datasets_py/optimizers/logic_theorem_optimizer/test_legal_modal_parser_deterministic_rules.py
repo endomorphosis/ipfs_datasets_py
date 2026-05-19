@@ -176,6 +176,46 @@ def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pair
     )
 
 
+def test_compiler_emits_explicit_frame_to_alethic_adaptive_pair_from_low_margin_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.3,
+                "share_raw": 0.54,
+                "share": 0.54,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.ALETHIC.value,
+                "count": 0,
+                "logit": 1.1,
+                "share_raw": 0.46,
+                "share": 0.46,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-frame-alethic-logits",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.ALETHIC.value,
+        predicted_family_source="adaptive_logits",
+    )
+
+
 def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -231,6 +271,46 @@ def test_compiler_emits_explicit_temporal_to_deontic_adaptive_pair() -> None:
         result,
         predicted_family=ModalLogicFamily.TEMPORAL.value,
         target_family=ModalLogicFamily.DEONTIC.value,
+    )
+
+
+def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_margin_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.53,
+                "share": 0.53,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.EPISTEMIC.value,
+                "count": 0,
+                "logit": 1.0,
+                "share_raw": 0.47,
+                "share": 0.47,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "Within 30 days after June 1, 2030, annual publication occurs.",
+        document_id="compiler-ambiguity-temporal-epistemic-logits",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+        predicted_family_source="adaptive_logits",
     )
 
 
