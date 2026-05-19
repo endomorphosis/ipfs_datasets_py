@@ -479,7 +479,7 @@ def logic_submodule_import_report(
                 "module": spec.module,
                 "ok": True,
                 "skipped": False,
-                "version": getattr(module, "__version__", None),
+                "version": module.__dict__.get("__version__"),
             }
     return report
 

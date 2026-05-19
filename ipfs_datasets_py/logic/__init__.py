@@ -95,9 +95,10 @@ def __getattr__(name):
             DeprecationWarning,
             stacklevel=2
         )
-        # Redirect to integration module
-        from . import integration
-        return integration
+        # Redirect to integration module without recursive package getattr.
+        module = importlib.import_module(".integration", __name__)
+        globals()["tools"] = module
+        return module
 
     if name in _REGISTRY_EXPORTS:
         registry = importlib.import_module(".submodule_registry", __name__)

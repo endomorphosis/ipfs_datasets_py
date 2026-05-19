@@ -167,15 +167,6 @@ __all__ = [
     "PredicateExtraction",
 ]
 
-# Make canonical types point to the authoritative class objects so that
-# `types.DeonticOperator is integration.deontic_logic_core.DeonticOperator`
-# and similar identity checks pass.
-try:
-    from ..integration.converters.deontic_logic_core import DeonticOperator  # noqa: F811
-except ImportError:
-    pass
-
-try:
-    from ..integration.converters.logic_translation_core import TranslationResult  # noqa: F811
-except ImportError:
-    pass
+# Keep this package import-safe: compatibility shims under ``logic.integration``
+# may import these canonical types, but the shared type package itself must not
+# import integration modules at import time.

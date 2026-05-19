@@ -78,8 +78,10 @@ from .common import (
 	get_global_cache,
 )
 
-# Shared types
-from .types import (
+# Shared types. Import leaf modules directly so the stable API surface does not
+# trigger compatibility shims in ``logic.types.__init__`` that load the heavier
+# integration namespace.
+from .types.deontic_types import (
 	DeonticOperator,
 	DeonticFormula,
 	DeonticRuleSet,
@@ -87,22 +89,30 @@ from .types import (
 	LegalContext,
 	TemporalCondition,
 	TemporalOperator,
+)
+from .types.proof_types import (
 	ProofStatus,
 	ProofResult,
 	ProofStep,
+)
+from .types.translation_types import (
 	LogicTranslationTarget,
 	TranslationResult,
 	AbstractLogicFormula,
+)
+from .TDFOL.tdfol_core import (
 	Formula,
 	Predicate,
 	Variable,
 	Constant,
-	And,
-	Or,
-	Not,
-	Implies,
-	Forall,
-	Exists,
+	create_conjunction,
+	create_disjunction,
+	create_existential,
+	create_implication,
+	create_negation,
+	create_universal,
+)
+from .types.common_types import (
 	LogicOperator,
 	Quantifier,
 	FormulaType,
@@ -111,16 +121,44 @@ from .types import (
 	ComplexityMetrics,
 	Prover,
 	Converter,
+)
+from .types.bridge_types import (
 	BridgeCapability,
 	BridgeMetadata,
 	BridgeConfig,
 	ProverRecommendation,
+)
+from .types.fol_types import (
 	FOLOutputFormat,
 	PredicateCategory,
 	FOLFormula,
 	FOLConversionResult,
 	PredicateExtraction,
 )
+
+
+def And(left: Formula, right: Formula) -> Formula:
+	return create_conjunction(left, right)
+
+
+def Or(left: Formula, right: Formula) -> Formula:
+	return create_disjunction(left, right)
+
+
+def Not(formula: Formula) -> Formula:
+	return create_negation(formula)
+
+
+def Implies(antecedent: Formula, consequent: Formula) -> Formula:
+	return create_implication(antecedent, consequent)
+
+
+def Forall(variable: Variable, formula: Formula) -> Formula:
+	return create_universal(variable, formula)
+
+
+def Exists(variable: Variable, formula: Formula) -> Formula:
+	return create_existential(variable, formula)
 
 # ── NL→UCAN deontic policy pipeline (lazy imports, no hard dependency) ────────
 # These are available when the CEC/nl and integration sub-packages are present.
@@ -187,17 +225,16 @@ compile_nl_to_policy = _api_compile_nl_to_policy
 evaluate_nl_policy = _api_evaluate_nl_policy
 build_signed_delegation = _api_build_signed_delegation
 
-# Populate NL-UCAN names into module namespace (best-effort)
-_nl_ucan_ns = _lazy_nl_ucan()
-if _nl_ucan_ns:
-	NLToDCECCompiler = _nl_ucan_ns["NLToDCECCompiler"]
-	DCECToUCANBridge = _nl_ucan_ns["DCECToUCANBridge"]
-	GrammarNLPolicyCompiler = _nl_ucan_ns["GrammarNLPolicyCompiler"]
-	NLUCANPolicyCompiler = _nl_ucan_ns["NLUCANPolicyCompiler"]
-	UCANPolicyBridge = _nl_ucan_ns["UCANPolicyBridge"]
-	SignedPolicyResult = _nl_ucan_ns["SignedPolicyResult"]
-	BridgeCompileResult = _nl_ucan_ns["BridgeCompileResult"]
-	BridgeEvaluationResult = _nl_ucan_ns["BridgeEvaluationResult"]
+_NL_UCAN_EXPORT_NAMES = {
+	"NLToDCECCompiler",
+	"DCECToUCANBridge",
+	"GrammarNLPolicyCompiler",
+	"NLUCANPolicyCompiler",
+	"UCANPolicyBridge",
+	"SignedPolicyResult",
+	"BridgeCompileResult",
+	"BridgeEvaluationResult",
+}
 
 # BW133: Populate UCAN delegation + conflict detector into namespace (best-effort)
 _BW133_DELEGATION_AVAILABLE = False
@@ -224,15 +261,6 @@ try:
 	_CD140_I18N_AVAILABLE = True  # CD140
 except (ImportError, ModuleNotFoundError):
 	pass  # optional
-
-try:
-	from .integration.ucan_policy_bridge import (  # type: ignore[import-not-found]
-		UCANPolicyBridge as _UCANPolicyBridge_check,  # already imported above
-	)
-	# evaluate_with_manager is a method, not a standalone symbol
-except (ImportError, ModuleNotFoundError):
-	pass
-
 
 __all__ = [
 	# FOL
@@ -398,19 +426,9 @@ def evaluate_with_manager(
         return None
 
 
-# CN150: conditionally extend __all__
-_CN150_BRIDGE_AVAILABLE = False
-try:
-    from ipfs_datasets_py.logic.integration.ucan_policy_bridge import (  # noqa: F811
-        UCANPolicyBridge as _UCANPolicyBridge,
-    )
-    _CN150_BRIDGE_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-    pass
-
-# CN150: extend __all__ only if symbols are loadable
-if _CN150_BRIDGE_AVAILABLE:
-    __all__ += ["evaluate_with_manager"]
+# CN150: expose the wrapper without importing the integration bridge at module
+# import time. The wrapper handles bridge unavailability when it is called.
+__all__ += ["evaluate_with_manager"]
 # CJ146: detect_i18n_clauses
 try:
     from ipfs_datasets_py.logic.CEC.nl.nl_policy_conflict_detector import (  # noqa: F401
@@ -596,38 +614,30 @@ def detect_all_languages(text: str) -> "I18NConflictReport":
 # CT156: extend __all__
 __all__ += ["I18NConflictReport", "detect_all_languages"]
 
-# DW185: compile_explain_iter re-export
-_DW185_COMPILER_AVAILABLE = False
-try:
+# DW185: compile_explain_iter re-export. Import the compiler only when called
+# so importing ``logic.api`` stays lightweight.
+def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
+    """Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`."""
     from ipfs_datasets_py.logic.integration.nl_ucan_policy_compiler import (  # type: ignore[import-not-found]
         NLUCANPolicyCompiler as _NLUCANPolicyCompiler_dw185,
     )
-    # compile_explain_iter is an instance method; expose a module-level wrapper
-    def compile_explain_iter(sentences: _List[str], policy_id: Optional[str] = None, max_lines: Optional[int] = None):  # type: ignore[misc]
-        """DW185: Module-level wrapper for :meth:`NLUCANPolicyCompiler.compile_explain_iter`.
 
-        Creates a fresh :class:`NLUCANPolicyCompiler` and delegates to its
-        ``compile_explain_iter`` method.  Returns a generator of explanation lines.
+    compiler = _NLUCANPolicyCompiler_dw185()
+    yield from compiler.compile_explain_iter(sentences, policy_id=policy_id, max_lines=max_lines)
 
-        Parameters
-        ----------
-        sentences:
-            Plain-English policy statements.
-        policy_id:
-            Optional policy identifier override.
-        max_lines:
-            Optional limit on lines yielded (``None`` = all lines).
 
-        Yields
-        ------
-        str
-            Explanation lines.
-        """
-        compiler = _NLUCANPolicyCompiler_dw185()
-        yield from compiler.compile_explain_iter(sentences, policy_id=policy_id, max_lines=max_lines)
-    _DW185_COMPILER_AVAILABLE = True
-except (ImportError, ModuleNotFoundError):
-    pass
+__all__ += ["compile_explain_iter"]
 
-if _DW185_COMPILER_AVAILABLE:
-    __all__ += ["compile_explain_iter"]
+
+def __getattr__(name: str) -> Any:
+    """Lazily expose optional API classes without import-time side effects."""
+    if name in _NL_UCAN_EXPORT_NAMES:
+        ns = _lazy_nl_ucan()
+        if ns is not None and name in ns:
+            value = ns[name]
+            globals()[name] = value
+            return value
+        raise AttributeError(
+            f"{name} is not available because the NL→UCAN pipeline could not be imported"
+        )
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

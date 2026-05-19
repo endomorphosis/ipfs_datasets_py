@@ -99,7 +99,7 @@ def test_modal_frame_logic_bridge_remains_neo4j_compatible() -> None:
     )
 
     codec = DeterministicModalLogicCodec(
-        ModalLogicCodecConfig(use_flogic=True, include_neo4j_graph=True)
+        ModalLogicCodecConfig(use_flogic=True)
     )
     result = codec.encode(
         "The agency shall publish notice before the permit takes effect.",
