@@ -775,15 +775,7 @@ class DeterministicModalCompiler:
             signals=signals,
             has_frame_scope=has_frame_scope,
         )
-        for policy_target_family in compiler_required_adaptive_ambiguity_targets(
-            predicted_family
-        ):
-            target_signal_by_family.setdefault(policy_target_family, False)
-        for policy_target_family in compiler_ambiguity_policy_targets(
-            predicted_family
-        ):
-            target_signal_by_family.setdefault(policy_target_family, False)
-        for policy_target_family in signal_free_adaptive_ambiguity_targets(
+        for policy_target_family in self._ordered_policy_target_families(
             predicted_family
         ):
             target_signal_by_family.setdefault(policy_target_family, False)
@@ -1006,33 +998,9 @@ class DeterministicModalCompiler:
                     and target_family not in compiled_primary_targets
                 ):
                     compiled_primary_targets.append(target_family)
-            for target_family in priority_signal_free_adaptive_ambiguity_targets(
-                compiled_primary_family
-            ):
-                if (
-                    target_family != compiled_primary_family
-                    and target_family not in compiled_primary_targets
-                ):
-                    compiled_primary_targets.append(target_family)
-            for target_family in compiler_required_adaptive_ambiguity_targets(
-                compiled_primary_family
-            ):
-                if (
-                    target_family != compiled_primary_family
-                    and target_family not in compiled_primary_targets
-                ):
-                    compiled_primary_targets.append(target_family)
-            for target_family in compiler_ambiguity_policy_targets(
-                compiled_primary_family
-            ):
-                if (
-                    target_family != compiled_primary_family
-                    and target_family not in compiled_primary_targets
-                ):
-                    compiled_primary_targets.append(target_family)
             # Preserve all declared directional policy pairs for the compiled
             # primary family, not just a hard-coded subset.
-            for target_family in signal_free_adaptive_ambiguity_targets(
+            for target_family in self._ordered_policy_target_families(
                 compiled_primary_family
             ):
                 if (
@@ -1079,6 +1047,24 @@ class DeterministicModalCompiler:
     ) -> List[str]:
         ordered_targets: List[str] = []
         seen_targets: set[str] = set()
+        for target_family in DeterministicModalCompiler._ordered_policy_target_families(
+            predicted_family
+        ):
+            if target_family not in seen_targets:
+                ordered_targets.append(target_family)
+                seen_targets.add(target_family)
+        for target_family in target_signal_by_family:
+            if target_family not in seen_targets:
+                ordered_targets.append(target_family)
+                seen_targets.add(target_family)
+        return ordered_targets
+
+    @staticmethod
+    def _ordered_policy_target_families(
+        predicted_family: str,
+    ) -> List[str]:
+        ordered_targets: List[str] = []
+        seen_targets: set[str] = set()
         for target_family in priority_signal_free_adaptive_ambiguity_targets(
             predicted_family
         ):
@@ -1097,7 +1083,9 @@ class DeterministicModalCompiler:
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
-        for target_family in target_signal_by_family:
+        for target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        ):
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
