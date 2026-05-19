@@ -3172,6 +3172,93 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_temporal_adaptive
     )
 
 
+def test_modal_compiler_uses_signal_free_pair_policy_for_frame_dynamic_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-signal-free-frame-dynamic-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-signal-free-frame-dynamic-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-signal-free-frame-dynamic-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="11 U.S.C. 1025",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[{"family": "frame", "count": 1, "share": 1.0}],
+        family_shares={"frame": 1.0},
+    )
+
+    adaptive_dynamic = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "dynamic"]
+    )
+    assert adaptive_dynamic.metadata["has_target_signal_evidence"] is False
+    assert adaptive_dynamic.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_dynamic.metadata["is_priority_policy_pair"] is False
+    assert (
+        adaptive_dynamic.metadata["explicit_ambiguity_type"]
+        == "adaptive_frame_dynamic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_frame_dynamic_outvoted_margin_low"
+        and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_emits_explicit_frame_policy_pair_ambiguities_for_evidence_margins(
     monkeypatch,
 ) -> None:
