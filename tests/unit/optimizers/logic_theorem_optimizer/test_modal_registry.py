@@ -87,6 +87,10 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
         "epistemic",
     )
     assert supports_signal_free_adaptive_ambiguity_pair(
+        "alethic",
+        "dynamic",
+    )
+    assert supports_signal_free_adaptive_ambiguity_pair(
         "deontic",
         "conditional_normative",
     )
@@ -135,7 +139,10 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
 
 
 def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:
-    assert signal_free_adaptive_ambiguity_targets("alethic") == ("epistemic",)
+    assert signal_free_adaptive_ambiguity_targets("alethic") == (
+        "epistemic",
+        "dynamic",
+    )
     assert signal_free_adaptive_ambiguity_targets("temporal") == (
         "conditional_normative",
         "deontic",
