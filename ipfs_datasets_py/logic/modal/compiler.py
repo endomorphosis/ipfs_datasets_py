@@ -273,15 +273,6 @@ class DeterministicModalCompiler:
         except (TypeError, ValueError):
             return 0.0
 
-    def _top_family_margin(
-        self,
-        ranking: Sequence[Dict[str, Any]],
-    ) -> Optional[float]:
-        """Return top-to-runner-up margin for a ranking sequence."""
-        if len(ranking) < 2:
-            return None
-        return self._ranking_share(ranking[0]) - self._ranking_share(ranking[1])
-
     def _family_ambiguities(
         self,
         encoding: SpaCyLegalEncoding,
@@ -451,31 +442,20 @@ class DeterministicModalCompiler:
         )
         adaptive_ranking = self._adaptive_family_ranking_from_logits(encoding)
         if adaptive_ranking:
-            ranked_top_family = str(ranking[0]["family"])
-            adaptive_top_family = str(adaptive_ranking[0]["family"])
-            adaptive_top_margin = self._top_family_margin(adaptive_ranking)
-            should_emit_adaptive_logits_ambiguities = (
-                adaptive_top_family != ranked_top_family
-                or (
-                    adaptive_top_margin is not None
-                    and adaptive_top_margin <= self.config.modal_adaptive_family_margin
+            adaptive_family_shares = {
+                str(candidate["family"]): self._ranking_share(candidate)
+                for candidate in adaptive_ranking
+            }
+            ambiguities.extend(
+                self._adaptive_family_margin_ambiguities(
+                    encoding,
+                    modal_ir=modal_ir,
+                    ranking=adaptive_ranking,
+                    family_shares=adaptive_family_shares,
+                    frame_selections=frame_selections,
+                    predicted_family_source="adaptive_logits",
                 )
             )
-            if should_emit_adaptive_logits_ambiguities:
-                adaptive_family_shares = {
-                    str(candidate["family"]): self._ranking_share(candidate)
-                    for candidate in adaptive_ranking
-                }
-                ambiguities.extend(
-                    self._adaptive_family_margin_ambiguities(
-                        encoding,
-                        modal_ir=modal_ir,
-                        ranking=adaptive_ranking,
-                        family_shares=adaptive_family_shares,
-                        frame_selections=frame_selections,
-                        predicted_family_source="adaptive_logits",
-                    )
-                )
         if len(ranking) < 2:
             return self._ensure_explicit_adaptive_ambiguities(ambiguities)
 
