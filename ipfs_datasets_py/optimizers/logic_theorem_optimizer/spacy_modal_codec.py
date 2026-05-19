@@ -45,9 +45,13 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "under terms and conditions",
     "under such terms and conditions",
     "on such terms and conditions",
+    "upon terms and conditions",
+    "upon such terms and conditions",
     "subject only to",
     "subject, however, to",
     "subject however to",
+    "subject to terms and conditions",
+    "subject to such terms and conditions",
     "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
@@ -128,6 +132,27 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "weekly",
         "within",
         "year",
+        "yearly",
+    }
+)
+_TEMPORAL_STRONG_SCOPE_TOKENS = frozenset(
+    {
+        "annual",
+        "annually",
+        "day",
+        "days",
+        "deadline",
+        "deadlines",
+        "fiscal",
+        "hour",
+        "hours",
+        "month",
+        "months",
+        "quarter",
+        "quarters",
+        "weekly",
+        "year",
+        "years",
         "yearly",
     }
 )
@@ -493,6 +518,8 @@ _FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _ALETHIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _ALETHIC_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_ALETHIC_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_EPISTEMIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER = 0.2
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
@@ -1906,6 +1933,24 @@ def _apply_competing_scope_backfill(
             epistemic_backfill,
         )
     if (
+        alethic_count >= _ALETHIC_DEONTIC_SCOPE_BACKFILL_TRIGGER
+        and deontic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
+    ):
+        deontic_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if bool(signals.get("has_deontic_scope_phrase")):
+            deontic_backfill = max(
+                deontic_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[deontic_family] = max(
+            float(counts.get(deontic_family, 0.0)),
+            deontic_backfill,
+        )
+    if (
         conditional_count >= _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER
         and temporal_count <= 0.0
         and bool(signals.get("has_temporal_scope"))
@@ -1984,12 +2029,33 @@ def _apply_competing_scope_backfill(
             deontic_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
             or frame_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
             or conditional_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
+            or epistemic_count > _COMPETING_SCOPE_BACKFILL_WEIGHT
         )
     ):
         temporal_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
         if (
             bool(signals.get("has_calendar_date_scope"))
             or bool(signals.get("has_temporal_scope_phrase"))
+        ):
+            temporal_backfill = max(
+                temporal_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            temporal_backfill,
+        )
+    if (
+        epistemic_count >= _EPISTEMIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER
+        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(signals.get("has_temporal_scope"))
+    ):
+        temporal_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_temporal_scope_token"))
+            or bool(signals.get("has_temporal_within_scope"))
         ):
             temporal_backfill = max(
                 temporal_backfill,
@@ -2313,6 +2379,14 @@ def _is_generic_frame_cue_debias_context(
         or bool(signals.get("has_temporal_scope_phrase"))
         or bool(signals.get("has_temporal_within_scope"))
         or bool(signals.get("has_calendar_date_scope"))
+        or (
+            bool(signals.get("has_temporal_scope_token"))
+            and (
+                bool(signals.get("has_statutory_scope_reference"))
+                or bool(signals.get("has_condition_or_exception_scope"))
+                or bool(signals.get("has_deontic_scope"))
+            )
+        )
         or bool(signals.get("has_epistemic_scope_phrase"))
         or bool(signals.get("has_alethic_scope_phrase"))
         or bool(signals.get("has_dynamic_scope_phrase"))
@@ -2448,6 +2522,9 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         encoding.normalized_text,
         encoding.tokens,
     )
+    temporal_scope_token = bool(
+        token_terms & _TEMPORAL_STRONG_SCOPE_TOKENS
+    )
     alethic_scope = (
         bool(token_terms & _ALETHIC_SCOPE_TOKENS)
         or bool(alethic_scope_phrase)
@@ -2455,6 +2532,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
     temporal_scope = (
         bool(token_terms & (_TEMPORAL_SCOPE_TOKENS - {"within"}))
         or temporal_within_scope
+        or temporal_scope_token
         or bool(temporal_scope_phrase)
         or calendar_date_scope
     )
@@ -2512,6 +2590,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_epistemic_scope_phrase": bool(epistemic_scope_phrase),
         "has_temporal_scope": temporal_scope or ModalLogicFamily.TEMPORAL.value in cue_families,
         "has_temporal_scope_phrase": bool(temporal_scope_phrase),
+        "has_temporal_scope_token": temporal_scope_token,
         "has_temporal_within_scope": temporal_within_scope,
         "has_frame_context": frame_context,
         "has_frame_editorial_scope_phrase": bool(frame_editorial_scope_phrase),

@@ -722,6 +722,47 @@ def test_spacy_codec_backfills_conditional_and_epistemic_shares_for_alethic_scop
     assert competing_epistemic_share > 0.0
 
 
+def test_spacy_codec_backfills_deontic_share_for_alethic_scope_with_deontic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="28",
+        section="1j",
+        text=(
+            "It is possible and necessary and impossible that the filing proceeds."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="28",
+        section="1k",
+        text=(
+            "It is possible and necessary and impossible that the agency is under "
+            "an obligation to provide notice."
+        ),
+    )
+
+    baseline_ranking = ranked_modal_families(codec.encode_sample(baseline))
+    competing_encoding = codec.encode_sample(competing)
+    competing_ranking = ranked_modal_families(competing_encoding)
+    competing_signals = modal_ambiguity_signals(competing_encoding)
+
+    def _share(ranking: list[dict[str, float]], family: str) -> float:
+        for item in ranking:
+            if item["family"] == family:
+                return float(item["share"])
+        return 0.0
+
+    baseline_deontic_share = _share(baseline_ranking, "deontic")
+    competing_deontic_share = _share(competing_ranking, "deontic")
+
+    assert competing_signals["has_deontic_scope"] is True
+    assert competing_signals["has_deontic_scope_phrase"] is True
+    assert competing_deontic_share > baseline_deontic_share
+    assert competing_deontic_share > 0.0
+
+
 def test_spacy_codec_backfills_temporal_share_for_generic_frame_only_scope() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2285,6 +2326,35 @@ def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epi
     assert epistemic_share > 0.0
 
 
+def test_spacy_codec_backfills_temporal_share_for_dense_epistemic_scope_with_temporal_tokens() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="21",
+        section="404b",
+        text=(
+            "Knowledge of the filing exists, and annual reports are due "
+            "each year upon review."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_epistemic_scope"] is True
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_temporal_scope_token"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
 def test_spacy_codec_backfills_frame_share_for_dense_temporal_scope_with_frame_context() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2323,6 +2393,23 @@ def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     assert any(
         cue.family == "conditional_normative"
         and cue.cue.lower() == "under such terms and conditions"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_conditional_subject_to_terms_and_conditions_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The Secretary shall act subject to such terms and conditions as the "
+            "Secretary determines."
+        ),
+        document_id="sample-subject-to-terms-and-conditions-conditional",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "subject to such terms and conditions"
         for cue in encoding.cues
     )
 
