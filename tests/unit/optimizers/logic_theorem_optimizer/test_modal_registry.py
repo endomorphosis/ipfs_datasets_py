@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 
+import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as modal_registry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     compiler_required_adaptive_ambiguity_targets,
@@ -183,6 +184,26 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
             predicted_family,
             target_family,
         )
+
+
+def test_signal_free_support_falls_back_to_compiler_required_policy_pairs(
+    monkeypatch,
+) -> None:
+    trimmed_signal_free_pairs = tuple(
+        pair
+        for pair in modal_registry.SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+        if pair != ("frame", "alethic")
+    )
+    monkeypatch.setattr(
+        modal_registry,
+        "SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+        trimmed_signal_free_pairs,
+    )
+
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        "frame",
+        "alethic",
+    ) is True
 
 
 def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pairs() -> None:

@@ -12011,6 +12011,31 @@ def test_modal_compiler_includes_priority_adaptive_targets_even_when_signal_map_
     assert "frame" in ordered_targets
 
 
+def test_modal_compiler_includes_compiler_required_targets_when_priority_targets_are_missing(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.priority_signal_free_adaptive_ambiguity_targets",
+        lambda _family: (),
+    )
+
+    ordered_targets = DeterministicModalCompiler._ordered_adaptive_target_families(
+        predicted_family="frame",
+        target_signal_by_family={
+            "frame": False,
+        },
+    )
+
+    assert ordered_targets[:5] == [
+        "conditional_normative",
+        "deontic",
+        "alethic",
+        "epistemic",
+        "temporal",
+    ]
+    assert "frame" in ordered_targets
+
+
 def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_bundle(
     monkeypatch,
 ) -> None:

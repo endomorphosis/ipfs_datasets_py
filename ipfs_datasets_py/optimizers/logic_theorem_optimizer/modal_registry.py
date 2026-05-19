@@ -703,8 +703,13 @@ def supports_signal_free_adaptive_ambiguity_pair(
 ) -> bool:
     """Return whether an adaptive pair should emit ambiguity without target cues."""
     resolved_target_family = _resolve_modal_family_name(target_family)
-    return resolved_target_family in signal_free_adaptive_ambiguity_targets(
-        predicted_family
+    return (
+        resolved_target_family in signal_free_adaptive_ambiguity_targets(
+            predicted_family
+        )
+        or resolved_target_family in compiler_required_adaptive_ambiguity_targets(
+            predicted_family
+        )
     )
 
 
