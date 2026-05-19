@@ -3404,6 +3404,94 @@ def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity(
     )
 
 
+def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-epistemic-self-doc",
+        text="The agency knows the duty applies.",
+        normalized_text="The agency knows the duty applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="epistemic",
+                system="S5",
+                symbol="K",
+                label="knowledge",
+                cue="knows",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-epistemic-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-epistemic-1",
+                operator=ModalIROperator(
+                    family="epistemic",
+                    system="S5",
+                    symbol="K",
+                    label="knowledge",
+                ),
+                predicate=ModalIRPredicate(
+                    name="report",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-epistemic-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="5 U.S.C. 552",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "epistemic", "count": 1, "share": 0.5},
+            {"family": "deontic", "count": 1, "share": 0.5},
+        ],
+        family_shares={"epistemic": 0.5, "deontic": 0.5},
+    )
+
+    adaptive_epistemic_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["epistemic"]
+    )
+    assert adaptive_epistemic_self.metadata["predicted_family"] == "epistemic"
+    assert adaptive_epistemic_self.metadata["target_family"] == "epistemic"
+    assert adaptive_epistemic_self.metadata["is_self_pair"] is True
+    assert adaptive_epistemic_self.metadata["predicted_margin_to_runner_up"] == 0.0
+    assert adaptive_epistemic_self.metadata["family_margin"] == 0.0
+    assert adaptive_epistemic_self.metadata["adaptive_margin_direction"] == "contested"
+    assert (
+        adaptive_epistemic_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_epistemic_epistemic_contested_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_epistemic_epistemic_contested_margin_low"
+        and ambiguity.metadata["is_self_pair"] is True
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(

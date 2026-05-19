@@ -101,6 +101,7 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
     assert supports_signal_free_adaptive_ambiguity_pair("deontic", "epistemic")
     assert supports_signal_free_adaptive_ambiguity_pair("deontic", "dynamic")
     assert supports_signal_free_adaptive_ambiguity_pair("epistemic", "deontic")
+    assert supports_signal_free_adaptive_ambiguity_pair("epistemic", "epistemic")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert supports_signal_free_adaptive_ambiguity_pair("temporal", "temporal")
@@ -142,7 +143,10 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "temporal",
         "frame",
     )
-    assert signal_free_adaptive_ambiguity_targets("epistemic") == ("deontic",)
+    assert signal_free_adaptive_ambiguity_targets("epistemic") == (
+        "deontic",
+        "epistemic",
+    )
     assert signal_free_adaptive_ambiguity_targets("frame") == (
         "conditional_normative",
         "deontic",
