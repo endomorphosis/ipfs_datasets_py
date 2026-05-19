@@ -243,6 +243,54 @@ def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pai
     )
 
 
+def test_compiler_emits_explicit_conditional_normative_to_deontic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "In the event that this authority applies, the Secretary shall act.",
+        document_id="compiler-ambiguity-conditional-deontic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.DEONTIC.value,
+    )
+
+
+def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "The Secretary shall file the notice upon service.",
+        document_id="compiler-ambiguity-deontic-dynamic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.DYNAMIC.value,
+    )
+
+
+def test_compiler_emits_explicit_alethic_to_epistemic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    result = compiler.compile(
+        "It is necessary that the Secretary act.",
+        document_id="compiler-ambiguity-alethic-epistemic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.ALETHIC.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+    )
+
+
 def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
