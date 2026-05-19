@@ -1939,6 +1939,15 @@ def _apply_competing_scope_backfill(
                 conditional_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
             )
+        conditional_backfill = max(
+            conditional_backfill,
+            _scaled_competing_scope_backfill(
+                source_count=deontic_count,
+                ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+            ),
+        )
         counts[conditional_family] = max(
             float(counts.get(conditional_family, 0.0)),
             conditional_backfill,
@@ -2021,6 +2030,15 @@ def _apply_competing_scope_backfill(
                 epistemic_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
             )
+        epistemic_backfill = max(
+            epistemic_backfill,
+            _scaled_competing_scope_backfill(
+                source_count=alethic_count,
+                ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STATUTORY_GENERIC_FRAME_EPISTEMIC_SCOPE_MAX,
+            ),
+        )
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
             epistemic_backfill,
@@ -2042,6 +2060,34 @@ def _apply_competing_scope_backfill(
         counts[deontic_family] = max(
             float(counts.get(deontic_family, 0.0)),
             deontic_backfill,
+        )
+    if (
+        alethic_count >= _ALETHIC_DEONTIC_SCOPE_BACKFILL_TRIGGER
+        and frame_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_frame_scope_signal
+    ):
+        frame_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_frame_scope_phrase"))
+            or bool(signals.get("has_frame_editorial_scope_phrase"))
+        ):
+            frame_backfill = max(
+                frame_backfill,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        frame_backfill = max(
+            frame_backfill,
+            _scaled_competing_scope_backfill(
+                source_count=alethic_count,
+                ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_DEONTIC_COMPETING_SCOPE_BACKFILL_MAX,
+            ),
+        )
+        counts[frame_family] = max(
+            float(counts.get(frame_family, 0.0)),
+            frame_backfill,
         )
     if (
         conditional_count >= _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER
@@ -2227,9 +2273,24 @@ def _apply_competing_scope_backfill(
         and deontic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_deontic_scope"))
     ):
+        deontic_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_deontic_scope_phrase"))
+            or bool(signals.get("has_deontic_cue"))
+        ):
+            deontic_backfill = max(
+                deontic_backfill,
+                _scaled_competing_scope_backfill(
+                    source_count=frame_count,
+                    ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                ),
+            )
         counts[deontic_family] = max(
             float(counts.get(deontic_family, 0.0)),
-            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            deontic_backfill,
         )
     elif (
         has_moderate_frame_competition
@@ -2254,6 +2315,23 @@ def _apply_competing_scope_backfill(
             temporal_backfill = max(
                 temporal_backfill,
                 _FRAME_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        if (
+            has_strong_temporal_scope
+            and (
+                bool(signals.get("has_statutory_scope_reference"))
+                or bool(signals.get("has_frame_scope_phrase"))
+                or bool(signals.get("has_frame_editorial_scope_phrase"))
+            )
+        ):
+            temporal_backfill = max(
+                temporal_backfill,
+                _scaled_competing_scope_backfill(
+                    source_count=frame_count,
+                    ratio=_TEMPORAL_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
+                ),
             )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
@@ -2366,11 +2444,15 @@ def _apply_competing_scope_backfill(
         )
     if (
         temporal_count >= _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
-        and deontic_count <= 0.0
-        and bool(signals.get("has_deontic_scope"))
+        and deontic_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
         and (
             bool(signals.get("has_statutory_scope_reference"))
             or bool(signals.get("has_deontic_scope_phrase"))
+            or bool(signals.get("has_deontic_cue"))
         )
     ):
         deontic_backfill = max(
@@ -2382,6 +2464,14 @@ def _apply_competing_scope_backfill(
                 maximum=_DEONTIC_COMPETING_SCOPE_BACKFILL_MAX,
             ),
         )
+        if bool(
+            signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        ):
+            deontic_backfill = max(
+                deontic_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[deontic_family] = max(
             float(counts.get(deontic_family, 0.0)),
             deontic_backfill,
