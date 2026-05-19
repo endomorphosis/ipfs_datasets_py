@@ -2344,6 +2344,100 @@ def test_modal_compiler_marks_temporal_self_pair_as_compiler_required_policy(
     )
 
 
+def test_modal_compiler_marks_conditional_self_pair_as_compiler_required_policy(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-conditional-self-policy-doc",
+        text="Provided that notice applies.",
+        normalized_text="Provided that notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="conditional_normative",
+                system="KD",
+                symbol="O|",
+                label="conditional_obligation",
+                cue="provided that",
+                start_char=0,
+                end_char=13,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-conditional-self-policy-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-conditional-1",
+                operator=ModalIROperator(
+                    family="conditional_normative",
+                    system="KD",
+                    symbol="O|",
+                    label="conditional_obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="conditional_notice_applies",
+                    arguments=["actor:agency"],
+                    role="conditional_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-conditional-self-policy-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="42 U.S.C. 300aa-22",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "conditional_normative", "count": 1, "share": 0.5},
+            {"family": "deontic", "count": 1, "share": 0.5},
+        ],
+        family_shares={"conditional_normative": 0.5, "deontic": 0.5},
+    )
+
+    conditional_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative"]
+        and ambiguity.metadata["adaptive_policy_pair"]
+        == "conditional_normative->conditional_normative"
+    )
+    assert conditional_self.metadata["family_margin"] == 0.0
+    assert conditional_self.metadata["adaptive_margin_direction"] == "outvoted"
+    assert conditional_self.metadata["is_compiler_required_policy_pair"] is True
+    assert conditional_self.metadata["runner_up_is_compiler_required_policy_pair"] is True
+    assert conditional_self.severity == "requires_rule"
+    assert conditional_self.metadata["explicit_ambiguity_type"] == (
+        "adaptive_conditional_normative_conditional_normative_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type
+        == "adaptive_conditional_normative_conditional_normative_outvoted_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative"]
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_includes_temporal_self_pair_when_margin_is_threshold_with_float_noise(
     monkeypatch,
 ) -> None:
