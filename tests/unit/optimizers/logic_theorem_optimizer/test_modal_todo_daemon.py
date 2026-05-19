@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import signal
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -1303,6 +1304,57 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         assert command[command.index("--codex-task-embeddings-device") + 1] == "cpu"
         assert command[command.index("--codex-task-embeddings-batch-size") + 1] == "16"
         assert command[command.index("--codex-vector-index-path") + 1] == "/tmp/codex-task-vectors.json"
+
+
+def test_paired_codex_status_accepts_runner_terminated_children() -> None:
+    assert runner._paired_codex_children_succeeded(
+        {
+            "paired-root-codex-compiler_ambiguity": -signal.SIGTERM,
+            "paired-root-codex-ir_decompiler": 0,
+        },
+        autoencoder_exit_code=0,
+        runner_terminated_children={"paired-root-codex-compiler_ambiguity"},
+        stop_requested=False,
+    )
+
+
+def test_paired_codex_status_rejects_external_or_crashed_children() -> None:
+    assert not runner._paired_codex_children_succeeded(
+        {"paired-root-codex-compiler_ambiguity": -signal.SIGTERM},
+        autoencoder_exit_code=0,
+        runner_terminated_children={"paired-root-codex-compiler_ambiguity"},
+        stop_requested=True,
+    )
+    assert not runner._paired_codex_children_succeeded(
+        {"paired-root-codex-compiler_ambiguity": 2},
+        autoencoder_exit_code=0,
+        runner_terminated_children=set(),
+        stop_requested=False,
+    )
+    assert not runner._paired_codex_children_succeeded(
+        {"paired-root-codex-compiler_ambiguity": -signal.SIGTERM},
+        autoencoder_exit_code=1,
+        runner_terminated_children={"paired-root-codex-compiler_ambiguity"},
+        stop_requested=False,
+    )
+
+
+def test_paired_autoencoder_status_requires_own_clean_stop() -> None:
+    assert runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=0,
+        runner_terminated_children=set(),
+    )
+    assert not runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=0,
+        runner_terminated_children={"paired-root-autoencoder"},
+    )
+    assert not runner._paired_autoencoder_succeeded(
+        autoencoder_run_id="paired-root-autoencoder",
+        autoencoder_exit_code=1,
+        runner_terminated_children=set(),
+    )
 
 
 def test_codex_task_vector_index_uses_embeddings_router_and_cache(tmp_path, monkeypatch) -> None:

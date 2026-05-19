@@ -19,7 +19,7 @@ import time
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
+from typing import AbstractSet, Any, Dict, Iterator, List, Mapping, Optional, Sequence
 
 import pyarrow.parquet as pq
 from huggingface_hub import HfFileSystem
@@ -1208,6 +1208,41 @@ def build_paired_daemon_commands(
         "codex_command": codex_command,
         "codex_children": codex_children,
     }
+
+
+def _paired_codex_children_succeeded(
+    codex_exit_codes: Mapping[str, Optional[int]],
+    *,
+    autoencoder_exit_code: Optional[int],
+    runner_terminated_children: AbstractSet[str],
+    stop_requested: bool,
+) -> bool:
+    """Return whether Codex children finished cleanly for paired-run accounting."""
+
+    if not codex_exit_codes or autoencoder_exit_code != 0:
+        return False
+    for run_id, exit_code in codex_exit_codes.items():
+        if exit_code == 0:
+            continue
+        runner_stopped_child = (
+            not stop_requested
+            and run_id in runner_terminated_children
+            and exit_code in {-signal.SIGTERM, -signal.SIGKILL}
+        )
+        if not runner_stopped_child:
+            return False
+    return True
+
+
+def _paired_autoencoder_succeeded(
+    *,
+    autoencoder_run_id: str,
+    autoencoder_exit_code: Optional[int],
+    runner_terminated_children: AbstractSet[str],
+) -> bool:
+    """Return whether the paired autoencoder child reached its own clean stop."""
+
+    return autoencoder_exit_code == 0 and autoencoder_run_id not in runner_terminated_children
 
 
 def create_codex_work_packet(
@@ -2798,6 +2833,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
     codex_exit_codes: Dict[str, Optional[int]] = {
         str(child["run_id"]): None for child in codex_child_summaries
     }
+    runner_terminated_children: set[str] = set()
 
     try:
         with ExitStack() as stack:
@@ -2890,21 +2926,27 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                     break
                 time.sleep(poll_seconds)
     finally:
-        for process in [auto_process, *codex_processes.values()]:
+        process_labels: List[tuple[str, Optional[subprocess.Popen[str]]]] = [
+            (str(paired["autoencoder_run_id"]), auto_process),
+            *[(run_id, process) for run_id, process in codex_processes.items()],
+        ]
+        for child_run_id, process in process_labels:
             if process is None or process.poll() is not None:
                 continue
+            runner_terminated_children.add(child_run_id)
             process.terminate()
 
         termination_wait_seconds = max(
             10.0,
             float(args.paired_grace_seconds),
         )
-        for process in [auto_process, *codex_processes.values()]:
+        for child_run_id, process in process_labels:
             if process is None or process.poll() is not None:
                 continue
             try:
                 process.wait(timeout=termination_wait_seconds)
             except subprocess.TimeoutExpired:
+                runner_terminated_children.add(child_run_id)
                 process.kill()
                 process.wait(timeout=5.0)
 
@@ -2922,6 +2964,7 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
         summary["autoencoder_exit_code"] = auto_exit_code
         summary["codex_exit_codes"] = codex_exit_codes
         summary["codex_exit_code"] = next(iter(codex_exit_codes.values()), None)
+        summary["runner_terminated_children"] = sorted(runner_terminated_children)
         summary["child_status"] = {
             "autoencoder": "running" if auto_exit_code is None else "exited",
             "codex": {
@@ -2930,12 +2973,24 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
             },
         }
         summary["finished_at"] = utc_now()
-        codex_success = bool(codex_exit_codes) and all(
-            exit_code == 0 for exit_code in codex_exit_codes.values()
+        autoencoder_runner_terminated = (
+            str(paired["autoencoder_run_id"]) in runner_terminated_children
         )
+        autoencoder_success = _paired_autoencoder_succeeded(
+            autoencoder_run_id=str(paired["autoencoder_run_id"]),
+            autoencoder_exit_code=auto_exit_code,
+            runner_terminated_children=runner_terminated_children,
+        )
+        codex_success = _paired_codex_children_succeeded(
+            codex_exit_codes,
+            autoencoder_exit_code=auto_exit_code,
+            runner_terminated_children=runner_terminated_children,
+            stop_requested=stop_requested,
+        )
+        summary["autoencoder_runner_terminated"] = autoencoder_runner_terminated
         summary["status"] = (
             "succeeded"
-            if auto_exit_code == 0 and codex_success
+            if autoencoder_success and codex_success
             else "failed"
         )
         save_summary(summary_path, summary, final=True)
@@ -2948,14 +3003,24 @@ def run_paired_uscode_modal_daemons(args: argparse.Namespace) -> int:
                 "autoencoder_exit_code": auto_exit_code,
                 "codex_exit_codes": codex_exit_codes,
                 "elapsed_seconds": summary["elapsed_seconds"],
+                "runner_terminated_children": sorted(runner_terminated_children),
             },
         )
         for signum, handler in previous_signal_handlers.items():
             signal.signal(signum, handler)
 
-    return 0 if auto_exit_code == 0 and all(
-        exit_code == 0 for exit_code in codex_exit_codes.values()
-    ) else 1
+    codex_success = _paired_codex_children_succeeded(
+        codex_exit_codes,
+        autoencoder_exit_code=auto_exit_code,
+        runner_terminated_children=runner_terminated_children,
+        stop_requested=stop_requested,
+    )
+    autoencoder_success = _paired_autoencoder_succeeded(
+        autoencoder_run_id=str(paired["autoencoder_run_id"]),
+        autoencoder_exit_code=auto_exit_code,
+        runner_terminated_children=runner_terminated_children,
+    )
+    return 0 if autoencoder_success and codex_success else 1
 
 
 def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
