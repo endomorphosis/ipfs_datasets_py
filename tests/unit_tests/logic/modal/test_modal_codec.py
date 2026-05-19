@@ -5823,7 +5823,8 @@ def test_modal_compiler_treats_zero_margin_frame_epistemic_priority_pair_as_outv
     )
 
 
-def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity() -> None:
+def test_modal_compiler_treats_zero_margin_epistemic_deontic_priority_pair_as_outvoted_adaptive_ambiguity(
+) -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",
@@ -5895,14 +5896,14 @@ def test_modal_compiler_surfaces_epistemic_deontic_contested_adaptive_ambiguity(
         and ambiguity.candidate_ids == ["epistemic", "deontic"]
     )
     assert adaptive_deontic.metadata["family_margin"] == 0.0
-    assert adaptive_deontic.metadata["adaptive_margin_direction"] == "contested"
-    assert adaptive_deontic.metadata["is_priority_policy_pair"] is False
+    assert adaptive_deontic.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_deontic.metadata["is_priority_policy_pair"] is True
     assert adaptive_deontic.metadata["explicit_ambiguity_type"] == (
-        "adaptive_epistemic_deontic_contested_margin_low"
+        "adaptive_epistemic_deontic_outvoted_margin_low"
     )
-    assert adaptive_deontic.severity == "review"
+    assert adaptive_deontic.severity == "requires_rule"
     assert any(
-        ambiguity.ambiguity_type == "adaptive_epistemic_deontic_contested_margin_low"
+        ambiguity.ambiguity_type == "adaptive_epistemic_deontic_outvoted_margin_low"
         and ambiguity.metadata["family_margin"] == 0.0
         for ambiguity in ambiguities
     )
