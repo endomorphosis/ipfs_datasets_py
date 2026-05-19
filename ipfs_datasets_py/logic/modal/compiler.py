@@ -838,6 +838,11 @@ class DeterministicModalCompiler:
             and compiled_primary_family != predicted_family
         ):
             compiled_primary_targets: List[str] = [predicted_family]
+            if self._supports_signal_free_adaptive_pair(
+                compiled_primary_family,
+                compiled_primary_family,
+            ):
+                compiled_primary_targets.append(compiled_primary_family)
             compiled_primary_signal_targets = self._adaptive_target_signal_by_family(
                 compiled_primary_family,
                 signals=signals,
@@ -1038,9 +1043,26 @@ class DeterministicModalCompiler:
             compiled_primary_family,
             competing_family,
         )
+        is_self_pair = compiled_primary_family == competing_family
         primary_share = float(family_shares.get(compiled_primary_family, 0.0))
         competing_share = float(family_shares.get(competing_family, 0.0))
-        family_margin = primary_share - competing_share
+        runner_up_family: Optional[str] = competing_family
+        runner_up_share: Optional[float] = competing_share
+        if is_self_pair:
+            runner_up_family = None
+            runner_up_share = None
+            for candidate in ranking:
+                candidate_family = str(candidate.get("family", ""))
+                if candidate_family == compiled_primary_family:
+                    continue
+                runner_up_family = candidate_family
+                runner_up_share = self._ranking_share(candidate)
+                break
+        family_margin = (
+            primary_share - runner_up_share
+            if is_self_pair and runner_up_share is not None
+            else primary_share - competing_share
+        )
         if family_margin > threshold:
             return []
         target_signal_by_family = self._adaptive_target_signal_by_family(
@@ -1073,9 +1095,23 @@ class DeterministicModalCompiler:
         )
         primary_share_display = round(primary_share, 6)
         competing_share_display = round(competing_share, 6)
-        family_margin_display = round(
-            primary_share_display - competing_share_display,
-            6,
+        runner_up_share_display = (
+            round(runner_up_share, 6)
+            if runner_up_share is not None
+            else None
+        )
+        family_margin_display = (
+            round(family_margin, 6)
+            if is_self_pair
+            else round(
+                primary_share_display - competing_share_display,
+                6,
+            )
+        )
+        candidate_ids = (
+            [compiled_primary_family]
+            if is_self_pair
+            else [compiled_primary_family, competing_family]
         )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
@@ -1104,35 +1140,47 @@ class DeterministicModalCompiler:
             "predicted_family": compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": round(family_margin, 6),
-            "runner_up_family": competing_family,
-            "runner_up_share_raw": competing_share,
-            "runner_up_share": competing_share_display,
+            "runner_up_family": runner_up_family,
+            "runner_up_share_raw": runner_up_share,
+            "runner_up_share": runner_up_share_display,
             "predicted_share_raw": primary_share,
             "predicted_share": primary_share_display,
             "target_family": competing_family,
             "target_share_raw": competing_share,
             "target_share": competing_share_display,
-            "is_self_pair": False,
+            "is_self_pair": is_self_pair,
         }
+        base_message = (
+            "The compiled primary modal family has a low lead over competing "
+            "cue evidence; family selection is ambiguous."
+            if is_self_pair
+            else (
+                "The compiled primary modal family is outvoted by competing "
+                "cue evidence; family selection is ambiguous."
+            )
+        )
+        explicit_message = (
+            "Explicit adaptive low-margin ambiguity for the compiled primary "
+            "modal family against close competing families."
+            if is_self_pair
+            else (
+                "Explicit adaptive modal-family conflict between the "
+                "compiled primary family and a competing cue-dominant "
+                "family."
+            )
+        )
         return [
             ModalCompilationAmbiguity(
                 ambiguity_type="adaptive_family_margin_low",
-                message=(
-                    "The compiled primary modal family is outvoted by competing "
-                    "cue evidence; family selection is ambiguous."
-                ),
-                candidate_ids=[compiled_primary_family, competing_family],
+                message=base_message,
+                candidate_ids=candidate_ids,
                 severity="requires_rule" if requires_rule else "review",
                 metadata=dict(base_metadata),
             ),
             ModalCompilationAmbiguity(
                 ambiguity_type=explicit_type,
-                message=(
-                    "Explicit adaptive modal-family conflict between the "
-                    "compiled primary family and a competing cue-dominant "
-                    "family."
-                ),
-                candidate_ids=[compiled_primary_family, competing_family],
+                message=explicit_message,
+                candidate_ids=candidate_ids,
                 severity="requires_rule" if requires_rule else "review",
                 metadata={
                     **base_metadata,

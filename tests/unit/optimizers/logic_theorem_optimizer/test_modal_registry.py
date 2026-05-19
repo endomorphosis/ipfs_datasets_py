@@ -108,6 +108,10 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
         "conditional_normative",
     )
     assert supports_signal_free_adaptive_ambiguity_pair(
+        "deontic",
+        "deontic",
+    )
+    assert supports_signal_free_adaptive_ambiguity_pair(
         "conditional_normative",
         "deontic",
     )
