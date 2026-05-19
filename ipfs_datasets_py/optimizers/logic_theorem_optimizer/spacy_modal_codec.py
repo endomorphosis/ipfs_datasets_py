@@ -383,6 +383,7 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
 _GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.25
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
+_GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
@@ -1130,11 +1131,33 @@ def _weighted_modal_family_counts(
     frame_family = ModalLogicFamily.FRAME.value
     if frame_family in counts:
         counts[frame_family] *= _GENERIC_FRAME_CUE_DEBIAS_FACTOR
+    _apply_generic_frame_normative_scope_soft_cap(
+        counts,
+        resolved_signals,
+    )
     _apply_deontic_competing_scope_soft_cap(
         counts,
         resolved_signals,
     )
     return counts
+
+
+def _apply_generic_frame_normative_scope_soft_cap(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Limit repeated generic frame cues when normative scope is present."""
+    frame_family = ModalLogicFamily.FRAME.value
+    frame_count = float(counts.get(frame_family, 0.0))
+    if frame_count <= _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP:
+        return
+    has_normative_competition = (
+        bool(signals.get("has_deontic_scope"))
+        or bool(signals.get("has_condition_or_exception_scope"))
+    )
+    if not has_normative_competition:
+        return
+    counts[frame_family] = _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP
 
 
 def _apply_deontic_competing_scope_soft_cap(

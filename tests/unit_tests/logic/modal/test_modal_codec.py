@@ -43,6 +43,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     SpaCyLegalEncoding,
     SpaCyModalCueFeature,
+    ranked_modal_families,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
     DataType,
@@ -2798,6 +2799,97 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_conditional_adapt
     )
 
 
+def test_modal_compiler_treats_zero_margin_frame_conditional_priority_pair_as_outvoted_adaptive_ambiguity(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-zero-margin-frame-conditional-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-zero-margin-frame-conditional-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-zero-margin-frame-conditional-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="20 U.S.C. 7351d",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "frame", "count": 1, "share": 0.5},
+            {"family": "conditional_normative", "count": 1, "share": 0.5},
+        ],
+        family_shares={"frame": 0.5, "conditional_normative": 0.5},
+    )
+
+    adaptive_conditional = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["frame", "conditional_normative"]
+    )
+    assert adaptive_conditional.metadata["family_margin"] == 0.0
+    assert adaptive_conditional.metadata["adaptive_margin_direction"] == "outvoted"
+    assert adaptive_conditional.metadata["is_priority_policy_pair"] is True
+    assert adaptive_conditional.metadata["explicit_ambiguity_type"] == (
+        "adaptive_frame_conditional_normative_outvoted_margin_low"
+    )
+    assert adaptive_conditional.severity == "requires_rule"
+    assert any(
+        ambiguity.ambiguity_type
+        == "adaptive_frame_conditional_normative_outvoted_margin_low"
+        and ambiguity.metadata["family_margin"] == 0.0
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_signal_free_pair_policy_for_frame_temporal_adaptive_ambiguity(
     monkeypatch,
 ) -> None:
@@ -4803,6 +4895,44 @@ def test_modal_compiler_treats_under_this_section_as_deontic_frame_adaptive_sign
         adaptive_frame.metadata["lexical_signals"]["has_statutory_scope_reference"]
         is True
     )
+
+
+def test_modal_codec_caps_repeated_generic_frame_cues_against_deontic_scope() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The authority, authority, authority, authority, authority may act."
+    )
+    ranking = ranked_modal_families(encoding)
+
+    assert ranking[0]["family"] == "deontic"
+    assert ranking[1]["family"] == "frame"
+    assert ranking[0]["share"] == 0.5
+    assert ranking[1]["share"] == 0.5
+
+
+def test_modal_codec_caps_repeated_generic_frame_cues_against_conditional_scope() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The authority, authority, authority, authority, authority, subject to subsection (b)."
+    )
+    ranking = ranked_modal_families(encoding)
+
+    assert ranking[0]["family"] == "conditional_normative"
+    assert ranking[1]["family"] == "frame"
+    assert ranking[0]["share"] == 0.5
+    assert ranking[1]["share"] == 0.5
 
 
 def test_modal_compiler_surfaces_deontic_temporal_adaptive_ambiguity() -> None:
