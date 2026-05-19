@@ -1555,12 +1555,16 @@ def select_program_synthesis_vector_bundle(
     vectors_by_todo_id: Mapping[str, Sequence[float]],
     max_items: int,
     min_similarity: float = 0.72,
+    fill_min_similarity: Optional[float] = None,
 ) -> List[Dict[str, Any]]:
     """Select a vector-nearest program-synthesis bundle from pending candidates.
 
     The first item is always the highest-priority anchor. Neighbors must remain
     in the same program_synthesis_scope so parallel Codex workers stay inside
-    their AST/write lanes.
+    their AST/write lanes.  When ``fill_min_similarity`` is set lower than the
+    strict threshold, remaining slots may be filled from the same target
+    component so one Codex call can handle adjacent repairs without crossing
+    write-lane boundaries.
     """
     if max_items < 1:
         return []
@@ -1581,6 +1585,13 @@ def select_program_synthesis_vector_bundle(
         {"similarity": 1.0, "todo": anchor},
     ]
     scored: List[tuple[float, tuple[float, str, str], ModalTodo]] = []
+    fill_scored: List[tuple[float, tuple[float, str, str], ModalTodo]] = []
+    fill_threshold = (
+        float(fill_min_similarity)
+        if fill_min_similarity is not None
+        else float(min_similarity)
+    )
+    allow_fill = fill_threshold < float(min_similarity)
     for todo in candidates[1:]:
         if not _program_todo_vector_bundle_compatible(anchor, todo):
             continue
@@ -1588,14 +1599,27 @@ def select_program_synthesis_vector_bundle(
         if not vector:
             continue
         similarity = _cosine_similarity(anchor_vector, vector)
-        if similarity < float(min_similarity):
+        if similarity >= float(min_similarity):
+            scored.append((similarity, _todo_priority_key(todo), todo))
             continue
-        scored.append((similarity, _todo_priority_key(todo), todo))
+        if not allow_fill or similarity < fill_threshold:
+            continue
+        if _todo_target_component(anchor) != _todo_target_component(todo):
+            continue
+        fill_scored.append((similarity, _todo_priority_key(todo), todo))
 
     for similarity, _, todo in sorted(scored, key=lambda item: (-item[0], item[1])):
         if len(selected) >= max_items:
             break
         selected.append({"similarity": similarity, "todo": todo})
+    selected_ids = {str(item["todo"].todo_id) for item in selected}
+    for similarity, _, todo in sorted(fill_scored, key=lambda item: (-item[0], item[1])):
+        if len(selected) >= max_items:
+            break
+        if todo.todo_id in selected_ids:
+            continue
+        selected.append({"similarity": similarity, "todo": todo, "fill_reason": "same_target"})
+        selected_ids.add(todo.todo_id)
     return selected
 
 

@@ -155,6 +155,183 @@ def _oldest_todo_age_seconds(todos: Sequence[ModalTodo]) -> float:
     return max(_todo_age_seconds(todo, now=now) for todo in todos)
 
 
+def _claimed_todo_age_seconds(todo: ModalTodo, *, now: Optional[float] = None) -> float:
+    try:
+        claimed_at = parse_utc(str(todo.claimed_at or ""))
+    except (TypeError, ValueError):
+        return 0.0
+    return max(0.0, float(now if now is not None else time.time()) - claimed_at)
+
+
+def _todo_target_file_hints(todo: ModalTodo) -> List[str]:
+    target_component = str(todo.metadata.get("target_component") or "")
+    files: List[str] = []
+    for file_path in CODEX_TARGET_FILE_HINTS.get(target_component, []):
+        if file_path not in files:
+            files.append(file_path)
+    if not files:
+        for file_path in CODEX_ACTION_FILE_HINTS.get(todo.action, []):
+            if file_path not in files:
+                files.append(file_path)
+    return files
+
+
+def _todo_program_synthesis_scope(todo: ModalTodo) -> str:
+    return str(todo.metadata.get("program_synthesis_scope") or "").strip()
+
+
+def _codex_target_file_lane_lock_scopes(args: argparse.Namespace) -> Optional[set[str]]:
+    raw = str(
+        getattr(args, "codex_target_file_lane_lock_scopes", "compiler_registry") or ""
+    ).strip()
+    if not raw:
+        return set()
+    if raw.lower() == "all":
+        return None
+    return {scope.strip() for scope in raw.split(",") if scope.strip()}
+
+
+def _target_file_lane_lock_enabled_for(
+    todo: ModalTodo,
+    lock_scopes: Optional[set[str]],
+) -> bool:
+    if lock_scopes is None:
+        return True
+    if not lock_scopes:
+        return False
+    return _todo_program_synthesis_scope(todo) in lock_scopes
+
+
+def _active_target_file_locks(
+    queue: ModalTodoQueue,
+    *,
+    optimizer_role: str,
+    worker_id: str,
+    max_age_seconds: float,
+    lock_scopes: Optional[set[str]],
+) -> Dict[str, List[str]]:
+    """Return currently claimed target-file lanes that should block new work."""
+    if max_age_seconds <= 0.0:
+        return {}
+    now = time.time()
+    locks: Dict[str, List[str]] = {}
+    for todo in queue.claimed(optimizer_role=optimizer_role):
+        if str(todo.claimed_by or "") == worker_id:
+            continue
+        if not _target_file_lane_lock_enabled_for(todo, lock_scopes):
+            continue
+        if todo.claimed_at and _claimed_todo_age_seconds(todo, now=now) > max_age_seconds:
+            continue
+        for file_path in _todo_target_file_hints(todo):
+            locks.setdefault(file_path, []).append(todo.todo_id)
+    return locks
+
+
+def _target_file_lane_conflicts(
+    todo: ModalTodo,
+    active_locks: Mapping[str, Sequence[str]],
+) -> List[str]:
+    if not active_locks:
+        return []
+    return sorted(set(_todo_target_file_hints(todo)) & set(active_locks))
+
+
+def _codex_stale_bundle_lease_path(queue_path: Path) -> Path:
+    return queue_path.with_suffix(queue_path.suffix + ".stale-bundle-leases.json")
+
+
+def _stale_bundle_lease_key(
+    *,
+    args: argparse.Namespace,
+    selected: Sequence[Mapping[str, Any]],
+) -> str:
+    anchor = selected[0].get("todo") if selected else None
+    if not isinstance(anchor, ModalTodo):
+        return str(getattr(args, "codex_scope", None) or "all")
+    scope = str(
+        getattr(args, "codex_scope", None)
+        or anchor.metadata.get("program_synthesis_scope")
+        or "all"
+    )
+    target_component = str(anchor.metadata.get("target_component") or anchor.action or "")
+    semantic_key = str(anchor.metadata.get("semantic_bundle_key") or "")
+    return "|".join(part for part in (scope, target_component, semantic_key) if part)
+
+
+def _try_acquire_stale_bundle_lease(
+    *,
+    queue_path: Path,
+    lease_key: str,
+    worker_id: str,
+    cooldown_seconds: float,
+    anchor_id: str,
+    selected_count: int,
+) -> Dict[str, Any]:
+    """Throttle stale undersized vector bundles so one lane drains at a time."""
+    cooldown_seconds = max(0.0, float(cooldown_seconds))
+    if cooldown_seconds <= 0.0:
+        return {"acquired": True, "enabled": False}
+
+    lease_path = _codex_stale_bundle_lease_path(queue_path)
+    now = time.time()
+    try:
+        leases = json.loads(lease_path.read_text(encoding="utf-8")) if lease_path.exists() else {}
+        if not isinstance(leases, dict):
+            leases = {}
+    except (OSError, json.JSONDecodeError):
+        leases = {}
+
+    pruned: Dict[str, Any] = {}
+    for key, value in leases.items():
+        if not isinstance(value, Mapping):
+            continue
+        expires_at_epoch = float(value.get("expires_at_epoch") or 0.0)
+        if expires_at_epoch > now:
+            pruned[str(key)] = dict(value)
+
+    existing = pruned.get(lease_key)
+    if existing and str(existing.get("worker_id") or "") != worker_id:
+        return {
+            "acquired": False,
+            "anchor_id": str(existing.get("anchor_id") or ""),
+            "enabled": True,
+            "expires_at": str(existing.get("expires_at") or ""),
+            "held_by": str(existing.get("worker_id") or ""),
+            "key": lease_key,
+            "path": str(lease_path),
+            "remaining_seconds": round(float(existing.get("expires_at_epoch") or now) - now, 3),
+        }
+
+    expires_at_epoch = now + cooldown_seconds
+    pruned[lease_key] = {
+        "anchor_id": anchor_id,
+        "expires_at": datetime.fromtimestamp(expires_at_epoch, timezone.utc)
+        .replace(microsecond=0)
+        .isoformat(),
+        "expires_at_epoch": expires_at_epoch,
+        "selected_count": int(selected_count),
+        "worker_id": worker_id,
+    }
+    try:
+        lease_path.parent.mkdir(parents=True, exist_ok=True)
+        lease_path.write_text(json.dumps(pruned, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    except OSError as exc:
+        return {
+            "acquired": True,
+            "enabled": True,
+            "error": str(exc),
+            "key": lease_key,
+            "path": str(lease_path),
+        }
+    return {
+        "acquired": True,
+        "enabled": True,
+        "expires_at": str(pruned[lease_key]["expires_at"]),
+        "key": lease_key,
+        "path": str(lease_path),
+    }
+
+
 def load_laws_table():
     fs = HfFileSystem()
     path = f"datasets/{HF_USCODE_DATASET_ID}/{USCODE_LAWS_PARQUET}"
@@ -587,10 +764,30 @@ def _claim_vector_program_synthesis_batch(
     metadata_filter = _codex_scope_filter(getattr(args, "codex_scope", None))
     with queue_file_lock(queue_path):
         snapshot_queue = ModalTodoQueue.load_jsonl(queue_path)
-        candidates = [
+        raw_candidates = [
             todo
             for todo in snapshot_queue.pending(optimizer_role=policy.program_synthesis_role)
             if _metadata_matches(todo, metadata_filter)
+        ]
+        target_lane_lock_seconds = max(
+            0.0,
+            float(getattr(args, "codex_target_file_lane_lock_seconds", 0.0) or 0.0),
+        )
+        target_lane_lock_scopes = _codex_target_file_lane_lock_scopes(args)
+        active_target_locks = _active_target_file_locks(
+            snapshot_queue,
+            optimizer_role=policy.program_synthesis_role,
+            worker_id=worker_id,
+            max_age_seconds=target_lane_lock_seconds,
+            lock_scopes=target_lane_lock_scopes,
+        )
+        candidates = [
+            todo
+            for todo in raw_candidates
+            if not (
+                _target_file_lane_lock_enabled_for(todo, target_lane_lock_scopes)
+                and _target_file_lane_conflicts(todo, active_target_locks)
+            )
         ]
         all_program_todos = _program_synthesis_queue_todos(
             snapshot_queue,
@@ -598,7 +795,9 @@ def _claim_vector_program_synthesis_batch(
         )
 
     vector_report: Dict[str, Any] = {
-        "candidate_count": len(candidates),
+        "active_target_file_lane_count": len(active_target_locks),
+        "available_candidate_count": len(candidates),
+        "candidate_count": len(raw_candidates),
         "max_bundle_wait_seconds": max(
             0.0,
             float(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0) or 0.0),
@@ -610,6 +809,11 @@ def _claim_vector_program_synthesis_batch(
         "mode": "vector",
         "oldest_candidate_age_seconds": round(_oldest_todo_age_seconds(candidates), 3),
         "selected_count": 0,
+        "target_file_lane_lock_seconds": target_lane_lock_seconds,
+        "target_file_lane_lock_scopes": (
+            "all" if target_lane_lock_scopes is None else sorted(target_lane_lock_scopes)
+        ),
+        "target_file_lane_locked_count": len(raw_candidates) - len(candidates),
     }
     if not candidates:
         with queue_file_lock(queue_path):
@@ -620,6 +824,9 @@ def _claim_vector_program_synthesis_batch(
                 policy,
                 execution_mode=execution_mode,
             )
+        if raw_candidates:
+            vector_report["mode"] = "vector_target_file_lanes_busy"
+            vector_report["wait_reason"] = "all scope candidates overlap active target-file lanes"
         return [], queue, status, vector_report
 
     index_path = _codex_vector_index_path(args, queue_path)
@@ -657,16 +864,28 @@ def _claim_vector_program_synthesis_batch(
         vectors_by_todo_id=vectors_by_id,
         max_items=args.max_items,
         min_similarity=float(getattr(args, "codex_vector_min_similarity", 0.72)),
+        fill_min_similarity=getattr(args, "codex_vector_fill_min_similarity", None),
     )
     selected_ids = [str(item["todo"].todo_id) for item in selected]
     similarity_by_id = {
         str(item["todo"].todo_id): float(item["similarity"])
         for item in selected
     }
+    fill_reason_by_id = {
+        str(item["todo"].todo_id): str(item.get("fill_reason") or "")
+        for item in selected
+        if item.get("fill_reason")
+    }
     anchor_id = selected_ids[0] if selected_ids else ""
     min_bundle_size = int(vector_report["min_bundle_size"])
     max_bundle_wait_seconds = float(vector_report["max_bundle_wait_seconds"])
     oldest_candidate_age_seconds = float(vector_report["oldest_candidate_age_seconds"])
+    undersized_stale_bundle = (
+        bool(selected)
+        and len(selected) < min_bundle_size
+        and max_bundle_wait_seconds > 0.0
+        and oldest_candidate_age_seconds >= max_bundle_wait_seconds
+    )
     if (
         selected
         and len(selected) < min_bundle_size
@@ -695,6 +914,36 @@ def _claim_vector_program_synthesis_batch(
 
     with queue_file_lock(queue_path):
         queue = ModalTodoQueue.load_jsonl(queue_path)
+        if undersized_stale_bundle:
+            lease_report = _try_acquire_stale_bundle_lease(
+                queue_path=queue_path,
+                lease_key=_stale_bundle_lease_key(args=args, selected=selected),
+                worker_id=worker_id,
+                cooldown_seconds=float(
+                    getattr(args, "codex_vector_stale_drain_cooldown_seconds", 0.0) or 0.0
+                ),
+                anchor_id=anchor_id,
+                selected_count=len(selected),
+            )
+            vector_report["stale_drain_lease"] = dict(lease_report)
+            if not lease_report.get("acquired", False):
+                status = update_program_synthesis_summary(
+                    summary,
+                    queue,
+                    policy,
+                    execution_mode=execution_mode,
+                )
+                vector_report.update(
+                    {
+                        "anchor_id": anchor_id,
+                        "mode": "vector_waiting_for_stale_drain_lease",
+                        "proposed_selected_count": len(selected),
+                        "proposed_selected_ids": selected_ids,
+                        "selected_count": 0,
+                        "wait_reason": "another worker is draining a stale undersized bundle in this lane",
+                    }
+                )
+                return [], queue, status, vector_report
         claimed = queue.claim_todo_ids(
             worker_id=worker_id,
             todo_ids=selected_ids,
@@ -707,6 +956,8 @@ def _claim_vector_program_synthesis_batch(
                 similarity_by_id.get(todo.todo_id, 0.0),
                 6,
             )
+            if fill_reason_by_id.get(todo.todo_id):
+                todo.metadata["vector_bundle_fill_reason"] = fill_reason_by_id[todo.todo_id]
             todo.metadata["vector_bundle_index_path"] = str(index_path)
             todo.metadata["vector_bundle_backend"] = str(vector_report.get("backend") or "")
         if claimed:
@@ -721,6 +972,14 @@ def _claim_vector_program_synthesis_batch(
     vector_report["anchor_id"] = anchor_id
     vector_report["selected_count"] = len(claimed)
     vector_report["selected_ids"] = [todo.todo_id for todo in claimed]
+    vector_report["fill_selected_count"] = sum(
+        1 for todo in claimed if todo.metadata.get("vector_bundle_fill_reason")
+    )
+    vector_report["fill_min_similarity"] = getattr(
+        args,
+        "codex_vector_fill_min_similarity",
+        None,
+    )
     vector_report["min_similarity"] = float(getattr(args, "codex_vector_min_similarity", 0.72))
     return claimed, queue, status, vector_report
 
@@ -741,6 +1000,27 @@ def _codex_parallel_scope_values(args: argparse.Namespace) -> List[str]:
             + ", ".join(CODEX_AST_SCOPES)
         )
     return list(dict.fromkeys(scopes))
+
+
+def _codex_scope_worker_overrides(args: argparse.Namespace) -> Dict[str, int]:
+    raw = str(getattr(args, "codex_scope_worker_map", "") or "").strip()
+    if not raw:
+        return {}
+    overrides: Dict[str, int] = {}
+    for chunk in raw.split(","):
+        item = chunk.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            raise ValueError("codex scope worker map entries must use scope=count")
+        scope, count = [part.strip() for part in item.split("=", 1)]
+        if scope not in CODEX_AST_SCOPES:
+            raise ValueError(
+                f"unknown codex scope worker map scope: {scope}; expected one of "
+                + ", ".join(CODEX_AST_SCOPES)
+            )
+        overrides[scope] = max(0, int(count))
+    return overrides
 
 
 def _build_codex_child_command(
@@ -785,10 +1065,18 @@ def _build_codex_child_command(
         str(getattr(args, "codex_bundle_mode", "semantic")),
         "--codex-vector-min-similarity",
         str(getattr(args, "codex_vector_min_similarity", 0.72)),
+        "--codex-vector-fill-min-similarity",
+        str(getattr(args, "codex_vector_fill_min_similarity", 0.45)),
         "--codex-vector-min-bundle-size",
         str(getattr(args, "codex_vector_min_bundle_size", 1)),
         "--codex-vector-max-bundle-wait-seconds",
         str(getattr(args, "codex_vector_max_bundle_wait_seconds", 0.0)),
+        "--codex-vector-stale-drain-cooldown-seconds",
+        str(getattr(args, "codex_vector_stale_drain_cooldown_seconds", 0.0)),
+        "--codex-target-file-lane-lock-seconds",
+        str(getattr(args, "codex_target_file_lane_lock_seconds", 0.0)),
+        "--codex-target-file-lane-lock-scopes",
+        str(getattr(args, "codex_target_file_lane_lock_scopes", "compiler_registry")),
         "--codex-task-embeddings-provider",
         str(getattr(args, "codex_task_embeddings_provider", "local_adapter")),
         "--codex-task-embeddings-batch-size",
@@ -862,9 +1150,15 @@ def build_paired_daemon_commands(
     if parallel_scopes:
         codex_children = []
         scope_workers = max(1, int(getattr(args, "codex_scope_workers", 1) or 1))
+        worker_overrides = _codex_scope_worker_overrides(args)
         for scope in parallel_scopes:
-            for worker_index in range(1, scope_workers + 1):
-                worker_suffix = scope if scope_workers == 1 else f"{scope}-{worker_index:02d}"
+            scope_worker_count = worker_overrides.get(scope, scope_workers)
+            if scope_worker_count < 1:
+                continue
+            for worker_index in range(1, scope_worker_count + 1):
+                worker_suffix = (
+                    scope if scope_worker_count == 1 else f"{scope}-{worker_index:02d}"
+                )
                 child_run_id = f"{codex_run_id}-{worker_suffix}"
                 child_worker_id = (
                     f"{args.worker_id}-{worker_suffix}"
@@ -2226,6 +2520,14 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--codex-scope-worker-map",
+        default="",
+        help=(
+            "Optional comma-separated per-scope worker override, e.g. "
+            "compiler_ambiguity=2,compiler_registry=1,frame_logic=0."
+        ),
+    )
+    parser.add_argument(
         "--codex-bundle-mode",
         choices=CODEX_BUNDLE_MODES,
         default="semantic",
@@ -2239,6 +2541,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.72,
         help="Minimum cosine similarity for embeddings-router vector bundle neighbors.",
+    )
+    parser.add_argument(
+        "--codex-vector-fill-min-similarity",
+        type=float,
+        default=0.45,
+        help=(
+            "Lower cosine threshold for filling remaining vector bundle slots from "
+            "the same target component after strict neighbors are selected."
+        ),
     )
     parser.add_argument(
         "--codex-vector-min-bundle-size",
@@ -2256,6 +2567,32 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Maximum age for the oldest pending vector candidate before an undersized "
             "bundle is allowed to run. Zero disables bundle patience."
+        ),
+    )
+    parser.add_argument(
+        "--codex-vector-stale-drain-cooldown-seconds",
+        type=float,
+        default=120.0,
+        help=(
+            "Cooldown per vector bundle lane after one stale undersized bundle is "
+            "claimed, preventing parallel workers from all draining singletons."
+        ),
+    )
+    parser.add_argument(
+        "--codex-target-file-lane-lock-seconds",
+        type=float,
+        default=1200.0,
+        help=(
+            "Skip pending Codex TODOs whose suggested files overlap another active "
+            "claimed packet for this many seconds. Zero disables target-file lanes."
+        ),
+    )
+    parser.add_argument(
+        "--codex-target-file-lane-lock-scopes",
+        default="compiler_registry",
+        help=(
+            "Comma-separated program_synthesis_scope values that use target-file "
+            "lane locks, or 'all'. Default focuses the conflict-prone registry lane."
         ),
     )
     parser.add_argument(

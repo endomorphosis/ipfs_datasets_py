@@ -23,6 +23,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
     ModalTodo,
     ModalTodoQueue,
     ModalTodoSupervisor,
+    select_program_synthesis_vector_bundle,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_modal_daemon_runner as runner
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner import (
@@ -532,6 +533,82 @@ def test_queue_can_claim_vector_program_synthesis_bundle_by_ast_scope() -> None:
     assert queue.get("program-frame").status == "pending"
     assert claimed[1].metadata["vector_bundle_anchor_id"] == "program-anchor"
     assert claimed[1].metadata["vector_bundle_similarity"] >= 0.9
+
+
+def test_vector_bundle_fill_uses_same_target_component_only() -> None:
+    shared_metadata = {
+        "optimizer_role": "program_synthesis",
+        "program_synthesis_scope": "compiler_registry",
+        "target_component": "modal.compiler.registry",
+    }
+    anchor = ModalTodo(
+        todo_id="program-anchor",
+        action="refine_modal_family_cue_rules",
+        objective="registry cue repair",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata=shared_metadata,
+    )
+    strict_neighbor = ModalTodo(
+        todo_id="program-strict",
+        action="refine_modal_family_cue_rules",
+        objective="near registry cue repair",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        metadata=shared_metadata,
+    )
+    fill_neighbor = ModalTodo(
+        todo_id="program-fill",
+        action="refine_modal_family_cue_rules",
+        objective="adjacent registry cue repair",
+        sample_ids=["c"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=8.0,
+        metadata=shared_metadata,
+    )
+    different_target = ModalTodo(
+        todo_id="program-ambiguity",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="ambiguity repair",
+        sample_ids=["d"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=7.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+            "target_component": "modal.compiler.ambiguity",
+        },
+    )
+
+    selected = select_program_synthesis_vector_bundle(
+        [anchor, strict_neighbor, fill_neighbor, different_target],
+        vectors_by_todo_id={
+            "program-anchor": [1.0, 0.0],
+            "program-strict": [0.95, 0.05],
+            "program-fill": [0.6, 0.8],
+            "program-ambiguity": [0.6, 0.8],
+        },
+        max_items=4,
+        min_similarity=0.9,
+        fill_min_similarity=0.5,
+    )
+
+    assert [item["todo"].todo_id for item in selected] == [
+        "program-anchor",
+        "program-strict",
+        "program-fill",
+    ]
+    assert selected[2]["fill_reason"] == "same_target"
 
 
 def test_queue_jsonl_roundtrip_preserves_claim_state(tmp_path) -> None:
@@ -1111,6 +1188,55 @@ def test_build_paired_daemon_commands_can_launch_multiple_workers_per_scope() ->
     } == {"compiler_ambiguity", "frame_logic"}
 
 
+def test_build_paired_daemon_commands_accepts_per_scope_worker_map() -> None:
+    args = SimpleNamespace(
+        run_id="parallel-root",
+        autoencoder_run_id=None,
+        codex_run_id=None,
+        duration_seconds=60.0,
+        train_count=2,
+        validation_count=1,
+        max_inner_iterations=1,
+        max_items=3,
+        learning_rate=0.1,
+        test_every_cycles=50,
+        poll_seconds=2.0,
+        worker_id="codex-worker",
+        codex_exec_mode="codex_cli",
+        codex_command="codex",
+        codex_model="gpt-5.3-codex",
+        codex_apply_mode="apply_to_main",
+        codex_commit_mode="commit_applied",
+        codex_scope=None,
+        codex_parallel_scopes="compiler_ambiguity,compiler_registry,frame_logic",
+        codex_scope_workers=2,
+        codex_scope_worker_map="compiler_ambiguity=2,compiler_registry=1,frame_logic=0",
+        codex_bundle_mode="semantic",
+        codex_sandbox="workspace-write",
+        codex_timeout_seconds=45.0,
+        paired_grace_seconds=120.0,
+        warm_start_run_id=[],
+        warm_start_state=[],
+    )
+
+    paired = build_paired_daemon_commands(
+        args,
+        module_name="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_modal_daemon_runner",
+    )
+
+    children = paired["codex_children"]
+    assert [child["run_id"] for child in children] == [
+        "parallel-root-codex-compiler_ambiguity-01",
+        "parallel-root-codex-compiler_ambiguity-02",
+        "parallel-root-codex-compiler_registry",
+    ]
+    assert [child["scope"] for child in children] == [
+        "compiler_ambiguity",
+        "compiler_ambiguity",
+        "compiler_registry",
+    ]
+
+
 def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -> None:
     args = SimpleNamespace(
         run_id="vector-root",
@@ -1136,6 +1262,10 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         codex_vector_min_bundle_size=3,
         codex_vector_max_bundle_wait_seconds=180.0,
         codex_vector_min_similarity=0.81,
+        codex_vector_fill_min_similarity=0.52,
+        codex_vector_stale_drain_cooldown_seconds=90.0,
+        codex_target_file_lane_lock_seconds=300.0,
+        codex_target_file_lane_lock_scopes="compiler_registry",
         codex_vector_index_path="/tmp/codex-task-vectors.json",
         codex_task_embeddings_provider="local_adapter",
         codex_task_embeddings_model="thenlper/gte-small",
@@ -1162,8 +1292,12 @@ def test_build_paired_daemon_commands_pass_vector_bundle_options_to_children() -
         command = child["command"]
         assert command[command.index("--codex-bundle-mode") + 1] == "vector"
         assert command[command.index("--codex-vector-min-similarity") + 1] == "0.81"
+        assert command[command.index("--codex-vector-fill-min-similarity") + 1] == "0.52"
         assert command[command.index("--codex-vector-min-bundle-size") + 1] == "3"
         assert command[command.index("--codex-vector-max-bundle-wait-seconds") + 1] == "180.0"
+        assert command[command.index("--codex-vector-stale-drain-cooldown-seconds") + 1] == "90.0"
+        assert command[command.index("--codex-target-file-lane-lock-seconds") + 1] == "300.0"
+        assert command[command.index("--codex-target-file-lane-lock-scopes") + 1] == "compiler_registry"
         assert command[command.index("--codex-task-embeddings-provider") + 1] == "local_adapter"
         assert command[command.index("--codex-task-embeddings-model") + 1] == "thenlper/gte-small"
         assert command[command.index("--codex-task-embeddings-device") + 1] == "cpu"
@@ -1338,6 +1472,175 @@ def test_vector_claim_allows_stale_undersized_bundle(tmp_path, monkeypatch) -> N
     assert status["claimed"] == 1
     assert report["mode"] == "vector"
     assert report["selected_count"] == 1
+
+
+def test_vector_claim_target_file_lane_waits_when_claimed_packet_overlaps(tmp_path, monkeypatch) -> None:
+    claimed_todo = ModalTodo(
+        todo_id="program-registry-active",
+        action="refine_modal_family_cue_rules",
+        objective="active registry repair",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+            "target_component": "modal.compiler.registry",
+        },
+    )
+    claimed_todo.claim("other-codex-worker")
+    pending_todo = ModalTodo(
+        todo_id="program-registry-pending",
+        action="refine_modal_family_cue_rules",
+        objective="pending registry repair",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+            "target_component": "modal.compiler.registry",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([claimed_todo, pending_todo]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        return (
+            {item.todo_id: [1.0, 0.0] for item in todos},
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(list(todos)),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(list(todos)),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope="compiler_registry",
+        codex_target_file_lane_lock_seconds=600.0,
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.55,
+        codex_vector_fill_min_similarity=None,
+        codex_vector_min_bundle_size=1,
+        codex_vector_max_bundle_wait_seconds=0.0,
+        max_items=3,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert claimed == []
+    assert queue.get("program-registry-pending").status == "pending"
+    assert status["pending"] == 1
+    assert report["mode"] == "vector_target_file_lanes_busy"
+    assert report["target_file_lane_locked_count"] == 1
+
+
+def test_vector_claim_stale_drain_lease_throttles_parallel_singletons(tmp_path, monkeypatch) -> None:
+    first = ModalTodo(
+        todo_id="program-registry-first",
+        action="refine_modal_family_cue_rules",
+        objective="first stale registry repair",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        created_at="2020-01-01T00:00:00+00:00",
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+            "target_component": "modal.compiler.registry",
+            "semantic_bundle_key": "registry:modal-cue",
+        },
+    )
+    second = ModalTodo(
+        todo_id="program-registry-second",
+        action="refine_modal_family_cue_rules",
+        objective="second stale registry repair",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        created_at="2020-01-01T00:00:00+00:00",
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_registry",
+            "target_component": "modal.compiler.registry",
+            "semantic_bundle_key": "registry:modal-cue",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([first, second]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        return (
+            {
+                "program-registry-first": [1.0, 0.0],
+                "program-registry-second": [0.0, 1.0],
+            },
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(list(todos)),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(list(todos)),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope="compiler_registry",
+        codex_target_file_lane_lock_seconds=0.0,
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.99,
+        codex_vector_fill_min_similarity=None,
+        codex_vector_min_bundle_size=3,
+        codex_vector_max_bundle_wait_seconds=60.0,
+        codex_vector_stale_drain_cooldown_seconds=300.0,
+        max_items=3,
+    )
+
+    claimed_first, _, _, first_report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker-1",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+    claimed_second, queue, status, second_report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker-2",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert [todo.todo_id for todo in claimed_first] == ["program-registry-first"]
+    assert first_report["stale_drain_lease"]["acquired"] is True
+    assert claimed_second == []
+    assert queue.get("program-registry-second").status == "pending"
+    assert status["pending"] == 1
+    assert second_report["mode"] == "vector_waiting_for_stale_drain_lease"
+    assert second_report["stale_drain_lease"]["held_by"] == "codex-worker-1"
 
 
 def test_codex_worktree_repo_root_prefers_nested_ipfs_dataset_checkout(tmp_path) -> None:
