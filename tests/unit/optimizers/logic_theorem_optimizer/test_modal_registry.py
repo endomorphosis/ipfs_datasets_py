@@ -281,6 +281,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
 def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets() -> None:
     assert priority_signal_free_adaptive_ambiguity_targets("alethic") == (
         "deontic",
+        "conditional_normative",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
@@ -312,10 +313,12 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
 def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs() -> None:
     recurrent_pairs = (
         ("alethic", "deontic"),
+        ("alethic", "conditional_normative"),
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
         ("deontic", "frame"),
         ("deontic", "temporal"),
+        ("temporal", "frame"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "temporal"),

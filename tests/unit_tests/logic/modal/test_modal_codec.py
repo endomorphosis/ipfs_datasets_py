@@ -2486,7 +2486,10 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
             "necessary",
             [{"family": "alethic", "count": 1, "share": 1.0}],
             {"alethic": 1.0},
-            ("alethic->deontic",),
+            (
+                "alethic->deontic",
+                "alethic->conditional_normative",
+            ),
         ),
     )
 
