@@ -965,11 +965,6 @@ class DeterministicModalCompiler:
             and compiled_primary_family != predicted_family
         ):
             compiled_primary_targets: List[str] = [predicted_family]
-            if self._supports_signal_free_adaptive_pair(
-                compiled_primary_family,
-                compiled_primary_family,
-            ):
-                compiled_primary_targets.append(compiled_primary_family)
             compiled_primary_signal_targets = self._adaptive_target_signal_by_family(
                 compiled_primary_family,
                 signals=signals,

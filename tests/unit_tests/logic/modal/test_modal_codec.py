@@ -2192,6 +2192,17 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
         and ambiguity.metadata["adaptive_predicted_family_source"]
         == "compiled_primary_family"
     )
+    assert (
+        sum(
+            1
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == ["deontic"]
+            and ambiguity.metadata["adaptive_predicted_family_source"]
+            == "compiled_primary_family"
+        )
+        == 1
+    )
     assert compiled_primary_self.metadata["is_self_pair"] is True
     assert compiled_primary_self.metadata["adaptive_policy_pair"] == "deontic->deontic"
     assert compiled_primary_self.metadata["runner_up_family"] == "temporal"
@@ -2206,6 +2217,17 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
         and ambiguity.metadata["adaptive_predicted_family_source"]
         == "compiled_primary_family"
         for ambiguity in ambiguities
+    )
+    assert (
+        sum(
+            1
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type
+            == "adaptive_deontic_deontic_outvoted_margin_low"
+            and ambiguity.metadata["adaptive_predicted_family_source"]
+            == "compiled_primary_family"
+        )
+        == 1
     )
 
 
