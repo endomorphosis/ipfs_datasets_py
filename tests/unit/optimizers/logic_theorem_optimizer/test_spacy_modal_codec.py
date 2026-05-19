@@ -289,6 +289,19 @@ def test_spacy_encoder_treats_deadline_by_as_temporal_cue() -> None:
     )
 
 
+def test_spacy_encoder_treats_deadline_by_with_dotted_month_as_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The Secretary shall provide notice by Oct. 6, 2006.",
+        document_id="sample-by-deadline-dotted-month",
+    )
+
+    assert any(
+        cue.family == "temporal" and cue.cue.lower() == "by"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_treats_within_department_as_non_temporal_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -1545,6 +1558,31 @@ def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_calen
         title="20",
         section="9150",
         text="The agency shall issue notice on January 1, 2030.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_deontic_cue"] is True
+    assert signals["has_calendar_date_scope"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
+def test_spacy_codec_backfills_temporal_share_for_deontic_competition_with_dotted_month_calendar_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="9150A",
+        text="The agency shall issue notice on Oct. 6, 2006.",
     )
     encoding = codec.encode_sample(sample)
     signals = modal_ambiguity_signals(encoding)

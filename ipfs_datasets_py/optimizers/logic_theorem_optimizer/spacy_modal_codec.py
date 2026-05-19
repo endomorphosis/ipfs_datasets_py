@@ -216,38 +216,65 @@ _DYNAMIC_SCOPE_PHRASES = (
     "upon service",
     "upon transfer",
 )
+_MONTH_NAME_DATE_PATTERN = (
+    r"(?:jan(?:uary)?\.?|feb(?:ruary)?\.?|mar(?:ch)?\.?|apr(?:il)?\.?|"
+    r"may\.?|jun(?:e)?\.?|jul(?:y)?\.?|aug(?:ust)?\.?|sep(?:t(?:ember)?)?\.?|"
+    r"oct(?:ober)?\.?|nov(?:ember)?\.?|dec(?:ember)?\.?)"
+)
 _CALENDAR_DATE_RE = re.compile(
-    r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
-    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
-    r"dec(?:ember)?)\s+\d{1,2}(?:,\s*|\s+)\d{4}\b",
+    rf"\b{_MONTH_NAME_DATE_PATTERN}\s+\d{{1,2}}(?:,\s*|\s+)\d{{4}}\b",
     re.IGNORECASE,
 )
 _MONTH_NAME_TOKENS = frozenset(
     {
         "jan",
+        "jan.",
         "january",
+        "january.",
         "feb",
+        "feb.",
         "february",
+        "february.",
         "mar",
+        "mar.",
         "march",
+        "march.",
         "apr",
+        "apr.",
         "april",
+        "april.",
         "may",
+        "may.",
         "jun",
+        "jun.",
         "june",
+        "june.",
         "jul",
+        "jul.",
         "july",
+        "july.",
         "aug",
+        "aug.",
         "august",
+        "august.",
         "sep",
+        "sep.",
         "sept",
+        "sept.",
         "september",
+        "september.",
         "oct",
+        "oct.",
         "october",
+        "october.",
         "nov",
+        "nov.",
         "november",
+        "november.",
         "dec",
+        "dec.",
         "december",
+        "december.",
     }
 )
 _TEMPORAL_BY_CONTEXT_TOKENS = frozenset(
@@ -278,15 +305,13 @@ _TEMPORAL_BY_PHRASE_RE = re.compile(
     re.IGNORECASE,
 )
 _TEMPORAL_WITHIN_PHRASE_RE = re.compile(
-    r"^\s+(?:"
-    r"\d{1,4}\b|"
-    r"(?:a|an)\s+(?:day|days|month|months|year|years|week|weeks|hour|hours)\b|"
-    r"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
-    r"(?:next|following)\b|"
-    r"(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
-    r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|"
-    r"dec(?:ember)?)\s+\d{1,2}(?:,\s*|\s+)\d{4}\b"
-    r")",
+    rf"^\s+(?:"
+    rf"\d{{1,4}}\b|"
+    rf"(?:a|an)\s+(?:day|days|month|months|year|years|week|weeks|hour|hours)\b|"
+    rf"(?:the\s+)?(?:end|close|beginning|start|deadline|expiration)\b|"
+    rf"(?:next|following)\b|"
+    rf"{_MONTH_NAME_DATE_PATTERN}\s+\d{{1,2}}(?:,\s*|\s+)\d{{4}}\b"
+    rf")",
     re.IGNORECASE,
 )
 _NON_TEMPORAL_WITHIN_PREFIX_TOKENS = frozenset(
