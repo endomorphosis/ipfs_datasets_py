@@ -880,6 +880,12 @@ class DeterministicModalCompiler:
                     signals.get("has_epistemic_cue")
                 ),
             }
+        elif predicted_family == ModalLogicFamily.ALETHIC.value:
+            target_signal_by_family = {
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_cue")
+                ),
+            }
         else:
             target_signal_by_family = {}
         return target_signal_by_family
