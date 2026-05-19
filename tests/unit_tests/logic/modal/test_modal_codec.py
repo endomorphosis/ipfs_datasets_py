@@ -2010,6 +2010,101 @@ def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkey
     )
 
 
+def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margin(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-compiled-primary-self-doc",
+        text="Within 30 days notice applies.",
+        normalized_text="Within 30 days notice applies.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="temporal",
+                system="LTL",
+                symbol="F",
+                label="eventually",
+                cue="within",
+                start_char=0,
+                end_char=6,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-compiled-primary-self-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-deontic-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="provide_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-compiled-primary-self-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="20 U.S.C. 7261",
+                ),
+            ),
+        ],
+    )
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {"family": "temporal", "count": 1, "share": 0.52},
+            {"family": "deontic", "count": 1, "share": 0.48},
+        ],
+        family_shares={"temporal": 0.52, "deontic": 0.48},
+    )
+
+    compiled_primary_self = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic"]
+        and ambiguity.metadata["adaptive_predicted_family_source"]
+        == "compiled_primary_family"
+    )
+    assert compiled_primary_self.metadata["is_self_pair"] is True
+    assert compiled_primary_self.metadata["adaptive_policy_pair"] == "deontic->deontic"
+    assert compiled_primary_self.metadata["runner_up_family"] == "temporal"
+    assert compiled_primary_self.metadata["family_margin"] == -0.04
+    assert compiled_primary_self.metadata["adaptive_margin_direction"] == "outvoted"
+    assert (
+        compiled_primary_self.metadata["explicit_ambiguity_type"]
+        == "adaptive_deontic_deontic_outvoted_margin_low"
+    )
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_deontic_outvoted_margin_low"
+        and ambiguity.metadata["adaptive_predicted_family_source"]
+        == "compiled_primary_family"
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_deontic_adaptive_ambiguity(
     monkeypatch,
 ) -> None:

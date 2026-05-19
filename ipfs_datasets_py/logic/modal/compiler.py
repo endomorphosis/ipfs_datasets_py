@@ -885,6 +885,17 @@ class DeterministicModalCompiler:
                         compiled_modal_families=compiled_modal_families,
                     )
                 )
+            ambiguities.extend(
+                self._compiled_primary_family_self_adaptive_pair_ambiguities(
+                    compiled_primary_family=compiled_primary_family,
+                    ranking=ranking,
+                    family_shares=family_shares,
+                    threshold=threshold,
+                    signals=signals,
+                    has_frame_bm25_support=has_frame_bm25_support,
+                    compiled_modal_families=compiled_modal_families,
+                )
+            )
         return ambiguities
 
     @staticmethod
@@ -1122,6 +1133,128 @@ class DeterministicModalCompiler:
                     "family."
                 ),
                 candidate_ids=[compiled_primary_family, competing_family],
+                severity="requires_rule" if requires_rule else "review",
+                metadata={
+                    **base_metadata,
+                    "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
+                },
+            ),
+        ]
+
+    def _compiled_primary_family_self_adaptive_pair_ambiguities(
+        self,
+        *,
+        compiled_primary_family: str,
+        ranking: Sequence[Dict[str, Any]],
+        family_shares: Dict[str, float],
+        threshold: float,
+        signals: Mapping[str, bool],
+        has_frame_bm25_support: bool,
+        compiled_modal_families: Sequence[str],
+    ) -> List[ModalCompilationAmbiguity]:
+        if not self._supports_signal_free_adaptive_pair(
+            compiled_primary_family,
+            compiled_primary_family,
+        ):
+            return []
+        runner_up = max(
+            (
+                candidate
+                for candidate in ranking
+                if str(candidate["family"]) != compiled_primary_family
+            ),
+            key=lambda candidate: (
+                self._ranking_share(candidate),
+                str(candidate["family"]),
+            ),
+            default=None,
+        )
+        if runner_up is None:
+            return []
+        primary_share = float(family_shares.get(compiled_primary_family, 0.0))
+        runner_up_family = str(runner_up["family"])
+        runner_up_share = self._ranking_share(runner_up)
+        family_margin = primary_share - runner_up_share
+        if family_margin > threshold:
+            return []
+        is_priority_policy_pair = is_priority_signal_free_adaptive_ambiguity_pair(
+            compiled_primary_family,
+            compiled_primary_family,
+        )
+        margin_direction = "outvoted" if (
+            family_margin < 0.0
+            or (family_margin <= 0.0 and is_priority_policy_pair)
+        ) else "contested"
+        requires_rule = margin_direction == "outvoted"
+        explicit_type = self._adaptive_margin_explicit_type(
+            compiled_primary_family,
+            compiled_primary_family,
+            margin_direction,
+        )
+        primary_share_display = round(primary_share, 6)
+        runner_up_share_display = round(runner_up_share, 6)
+        family_margin_display = round(family_margin, 6)
+        has_compiled_target_family_formula = (
+            compiled_primary_family in compiled_modal_families
+        )
+        has_target_signal_evidence = bool(
+            primary_share > 0.0
+            or has_compiled_target_family_formula
+        )
+        base_metadata = {
+            "adaptive_family_margin_threshold": threshold,
+            "adaptive_margin_direction": margin_direction,
+            "adaptive_margin_abs": abs(family_margin),
+            "adaptive_priority": self._adaptive_margin_priority(
+                family_margin=family_margin,
+                threshold=threshold,
+            ),
+            "adaptive_predicted_family_source": "compiled_primary_family",
+            "adaptive_policy_pair": f"{compiled_primary_family}->{compiled_primary_family}",
+            "explicit_ambiguity_type": explicit_type,
+            "family_margin_raw": family_margin,
+            "family_margin": family_margin_display,
+            "family_ranking": list(ranking),
+            "compiled_modal_families": sorted(compiled_modal_families),
+            "has_target_signal_evidence": has_target_signal_evidence,
+            "signal_free_pair_policy_applied": (
+                not has_target_signal_evidence
+            ),
+            "has_compiled_target_family_formula": has_compiled_target_family_formula,
+            "has_frame_bm25_support": has_frame_bm25_support,
+            "lexical_signals": dict(sorted(signals.items())),
+            "is_priority_policy_pair": is_priority_policy_pair,
+            "predicted_family": compiled_primary_family,
+            "predicted_margin_to_runner_up_raw": family_margin,
+            "predicted_margin_to_runner_up": family_margin_display,
+            "runner_up_family": runner_up_family,
+            "runner_up_share_raw": runner_up_share,
+            "runner_up_share": runner_up_share_display,
+            "predicted_share_raw": primary_share,
+            "predicted_share": primary_share_display,
+            "target_family": compiled_primary_family,
+            "target_share_raw": primary_share,
+            "target_share": primary_share_display,
+            "is_self_pair": True,
+        }
+        return [
+            ModalCompilationAmbiguity(
+                ambiguity_type="adaptive_family_margin_low",
+                message=(
+                    "A predicted modal family has a low lead over competing legal "
+                    "families; family selection is ambiguous."
+                ),
+                candidate_ids=[compiled_primary_family],
+                severity="requires_rule" if requires_rule else "review",
+                metadata=dict(base_metadata),
+            ),
+            ModalCompilationAmbiguity(
+                ambiguity_type=explicit_type,
+                message=(
+                    "Explicit adaptive low-margin ambiguity for the predicted modal "
+                    "family against close competing families."
+                ),
+                candidate_ids=[compiled_primary_family],
                 severity="requires_rule" if requires_rule else "review",
                 metadata={
                     **base_metadata,
