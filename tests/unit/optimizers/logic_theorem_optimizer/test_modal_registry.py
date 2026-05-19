@@ -309,9 +309,11 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert set(COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS) == {
         ("alethic", "conditional_normative"),
         ("alethic", "deontic"),
+        ("alethic", "epistemic"),
         ("alethic", "frame"),
         ("conditional_normative", "conditional_normative"),
         ("conditional_normative", "deontic"),
+        ("conditional_normative", "temporal"),
         ("conditional_normative", "frame"),
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
@@ -336,6 +338,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         "conditional_normative",
     ) is True
     assert is_compiler_ambiguity_policy_pair("alethic", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("alethic", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("alethic", "frame") is True
     assert (
         is_compiler_ambiguity_policy_pair(
@@ -345,6 +348,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         is True
     )
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("conditional_normative", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("conditional_normative", "frame") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "deontic") is True
@@ -422,6 +426,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     assert compiler_ambiguity_policy_targets("alethic") == (
         "deontic",
         "conditional_normative",
+        "epistemic",
         "frame",
     )
     assert compiler_ambiguity_policy_targets("deontic") == (
@@ -442,6 +447,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     )
     assert compiler_ambiguity_policy_targets("conditional_normative") == (
         "deontic",
+        "temporal",
         "conditional_normative",
         "frame",
     )
