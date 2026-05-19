@@ -95,6 +95,64 @@ def synthesis_hints_from_autoencoder_introspection(
             )
         )
 
+    if "repair_multiview_legal_ir_loss" in focus:
+        target_distribution = dict(
+            introspection.get("legal_ir_view_distribution") or {}
+        )
+        predicted_distribution = dict(
+            introspection.get("legal_ir_predicted_view_distribution") or {}
+        )
+        hints.append(
+            _hint(
+                sample_id,
+                action="repair_multiview_legal_ir_loss",
+                target_component="bridge.contracts",
+                rationale="Adaptive LegalIR evidence shows the compiler/decompiler view distribution is not aligned with the canonical multiview target.",
+                priority=max(
+                    0.05,
+                    float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
+                ),
+                evidence={
+                    "legal_ir_predicted_view_distribution": predicted_distribution,
+                    "legal_ir_view_cross_entropy_loss": introspection.get(
+                        "legal_ir_view_cross_entropy_loss"
+                    ),
+                    "legal_ir_view_distribution": target_distribution,
+                    "top_predicted_views": _top_distribution_names(
+                        predicted_distribution,
+                    ),
+                    "top_target_views": _top_distribution_names(
+                        target_distribution,
+                    ),
+                },
+            )
+        )
+
+    if "repair_deontic_bridge_quality_gate" in focus:
+        hints.append(
+            _hint(
+                sample_id,
+                action="repair_deontic_bridge_quality_gate",
+                target_component="deontic.ir",
+                rationale="The canonical multiview LegalIR target includes deontic structure that the adaptive view model cannot yet reconstruct confidently.",
+                priority=max(
+                    0.05,
+                    float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
+                ),
+                evidence={
+                    "legal_ir_predicted_view_distribution": dict(
+                        introspection.get("legal_ir_predicted_view_distribution") or {}
+                    ),
+                    "legal_ir_view_cross_entropy_loss": introspection.get(
+                        "legal_ir_view_cross_entropy_loss"
+                    ),
+                    "legal_ir_view_distribution": dict(
+                        introspection.get("legal_ir_view_distribution") or {}
+                    ),
+                },
+            )
+        )
+
     if "audit_frame_logic_terms" in focus:
         frame_features = _frame_features(introspection)
         hints.append(
@@ -193,6 +251,19 @@ def _frame_features(introspection: Mapping[str, Any]) -> List[str]:
             if feature and feature not in features:
                 features.append(feature)
     return frame_ontology_feature_keys(features)
+
+
+def _top_distribution_names(distribution: Mapping[str, Any], *, limit: int = 5) -> List[str]:
+    scored: List[tuple[float, str]] = []
+    for name, value in dict(distribution or {}).items():
+        try:
+            scored.append((float(value), str(name)))
+        except (TypeError, ValueError):
+            continue
+    return [
+        name
+        for _value, name in sorted(scored, key=lambda item: (-item[0], item[1]))[:limit]
+    ]
 
 
 def _priority_from_probability_gap(introspection: Mapping[str, Any]) -> float:

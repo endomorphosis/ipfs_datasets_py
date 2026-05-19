@@ -67,11 +67,13 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
     "improve_encoder_decoder_reconstruction",
+    "improve_legal_ir_view_distribution",
     "improve_modal_family_classifier",
 }
 AUTOENCODER_TRAINABLE_LOSSES = {
     "cosine_loss",
     "cross_entropy_loss",
+    "legal_ir_view_cross_entropy_loss",
     "reconstruction_loss",
 }
 BridgeLossEvaluator = Callable[
@@ -151,6 +153,12 @@ class LossSnapshot:
                     "frame_ranking_loss": autoencoder.frame_ranking_loss,
                     "reconstruction_loss": autoencoder.reconstruction_loss,
                     "symbolic_validity_penalty": autoencoder.symbolic_validity_penalty,
+                }
+            )
+            losses.update(
+                {
+                    str(name): float(value)
+                    for name, value in autoencoder.legal_ir_losses.items()
                 }
             )
         losses.update({name: float(value) for name, value in sample.losses.items()})
@@ -525,6 +533,7 @@ class ModalLossTodoGenerator:
         "legal_ir_multiview_text_reconstruction_loss": 0.0,
         "legal_ir_multiview_total_loss": 0.05,
         "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_loss": 0.05,
         "modal_span_coverage_loss": 0.0,
         "ontology_violation_count": 0.0,
         "reconstruction_loss": 0.05,
@@ -577,6 +586,10 @@ class ModalLossTodoGenerator:
             "frame_ranking_loss": (
                 "improve_bm25_frame_selector",
                 "Add ontology frame vocabulary or weights so the expected frame ranks first.",
+            ),
+            "legal_ir_view_cross_entropy_loss": (
+                "improve_legal_ir_view_distribution",
+                "Use SGD to align the adaptive IR view distribution with the canonical multiview LegalIR target.",
             ),
             "flogic_similarity_loss": (
                 "improve_flogic_frame_alignment",
@@ -1227,12 +1240,20 @@ class ModalTodoSupervisor:
             program_synthesis_generator
             or ModalProgramSynthesisTodoGenerator(policy=self.policy)
         )
+        self.bridge_names = tuple(
+            dict.fromkeys(
+                str(name).strip()
+                for name in bridge_names
+                if str(name).strip()
+                and str(name).strip().lower() not in {"none", "off", "false"}
+            )
+        )
         self.bridge_loss_evaluator = (
             bridge_loss_evaluator
             if bridge_loss_evaluator is not None
             else (
-                bridge_loss_evaluator_for_names(bridge_names)
-                if bridge_names
+                bridge_loss_evaluator_for_names(self.bridge_names)
+                if self.bridge_names
                 else None
             )
         )
@@ -1299,6 +1320,18 @@ class ModalTodoSupervisor:
             if name.endswith("_bridge_evaluation_failure_loss") and value > 0.0
         )
         return normalized
+
+    def _autoencoder_evaluation(
+        self,
+        autoencoder: AdaptiveModalAutoencoder,
+        samples: Sequence[LegalSample],
+        *,
+        use_sample_memory: bool = True,
+    ) -> AutoencoderEvaluation:
+        kwargs: Dict[str, Any] = {"use_sample_memory": use_sample_memory}
+        if self.bridge_names:
+            kwargs["legal_ir_bridge_names"] = self.bridge_names
+        return autoencoder.evaluate(list(samples), **kwargs)
 
     def seed_program_synthesis_from_introspection(
         self,
@@ -1551,9 +1584,13 @@ class ModalTodoSupervisor:
         sample_list = list(samples)
         validation_list = list(validation_samples or [])
         samples_by_id = {sample.sample_id: sample for sample in sample_list}
-        before = autoencoder.evaluate(sample_list)
+        before = self._autoencoder_evaluation(autoencoder, sample_list)
         validation_before = (
-            autoencoder.evaluate(validation_list, use_sample_memory=False)
+            self._autoencoder_evaluation(
+                autoencoder,
+                validation_list,
+                use_sample_memory=False,
+            )
             if validation_list
             else None
         )
@@ -1582,9 +1619,13 @@ class ModalTodoSupervisor:
         failed_validation_ids: List[str] = []
         for todo in claimed:
             state_before_todo = autoencoder.state.copy()
-            todo_before = autoencoder.evaluate(sample_list)
+            todo_before = self._autoencoder_evaluation(autoencoder, sample_list)
             todo_validation_before = (
-                autoencoder.evaluate(validation_list, use_sample_memory=False)
+                self._autoencoder_evaluation(
+                    autoencoder,
+                    validation_list,
+                    use_sample_memory=False,
+                )
                 if validation_list
                 else None
             )
@@ -1593,9 +1634,13 @@ class ModalTodoSupervisor:
                 samples_by_id,
                 learning_rate=learning_rate,
             )
-            todo_after = autoencoder.evaluate(sample_list)
+            todo_after = self._autoencoder_evaluation(autoencoder, sample_list)
             todo_validation_after = (
-                autoencoder.evaluate(validation_list, use_sample_memory=False)
+                self._autoencoder_evaluation(
+                    autoencoder,
+                    validation_list,
+                    use_sample_memory=False,
+                )
                 if validation_list
                 else None
             )
@@ -1617,9 +1662,13 @@ class ModalTodoSupervisor:
                 )
                 failed_validation_ids.append(todo.todo_id)
 
-        after = autoencoder.evaluate(sample_list)
+        after = self._autoencoder_evaluation(autoencoder, sample_list)
         validation_after = (
-            autoencoder.evaluate(validation_list, use_sample_memory=False)
+            self._autoencoder_evaluation(
+                autoencoder,
+                validation_list,
+                use_sample_memory=False,
+            )
             if validation_list
             else None
         )
@@ -1669,9 +1718,13 @@ class ModalTodoSupervisor:
         """Run bounded daemon iterations until targets are met or progress stops."""
         steps: List[ModalOptimizationStep] = []
         stopped_reason = "max_iterations"
-        final_evaluation = autoencoder.evaluate(samples)
+        final_evaluation = self._autoencoder_evaluation(autoencoder, list(samples))
         validation_final_evaluation = (
-            autoencoder.evaluate(validation_samples, use_sample_memory=False)
+            self._autoencoder_evaluation(
+                autoencoder,
+                list(validation_samples),
+                use_sample_memory=False,
+            )
             if validation_samples is not None and len(validation_samples) > 0
             else None
         )
@@ -2222,7 +2275,7 @@ def _todo_validation(
 
 
 def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[float]:
-    return {
+    metric = {
         "cosine_loss": evaluation.cosine_loss,
         "cross_entropy_loss": evaluation.cross_entropy_loss,
         "embedding_cosine_similarity": evaluation.embedding_cosine_similarity,
@@ -2230,6 +2283,11 @@ def _metric_value(evaluation: AutoencoderEvaluation, name: str) -> Optional[floa
         "reconstruction_loss": evaluation.reconstruction_loss,
         "symbolic_validity_penalty": evaluation.symbolic_validity_penalty,
     }.get(name)
+    if metric is not None:
+        return metric
+    if name in evaluation.legal_ir_losses:
+        return float(evaluation.legal_ir_losses[name])
+    return None
 
 
 __all__ = [

@@ -64,7 +64,9 @@ LAW_COLUMNS = [
     "citation_text",
     "normalized_citation",
 ]
-DEFAULT_BRIDGE_LOSS_ADAPTERS = "deontic_norms,fol_tdfol,cec_dcec,external_prover_router"
+DEFAULT_BRIDGE_LOSS_ADAPTERS = (
+    "modal_frame_logic,deontic_norms,fol_tdfol,cec_dcec,external_prover_router"
+)
 
 CODEX_AST_SCOPES = tuple(
     dict.fromkeys(
@@ -478,7 +480,7 @@ def sample_train_validation_rows(
 
 
 def metric_block(evaluation) -> Dict[str, Any]:
-    return {
+    block = {
         "cosine_loss": round(evaluation.cosine_loss, 9),
         "cosine_similarity": round(evaluation.embedding_cosine_similarity, 9),
         "cross_entropy_loss": round(evaluation.cross_entropy_loss, 9),
@@ -486,6 +488,38 @@ def metric_block(evaluation) -> Dict[str, Any]:
         "sample_count": evaluation.sample_count,
         "symbolic_validity_penalty": round(evaluation.symbolic_validity_penalty, 9),
     }
+    legal_ir_losses = dict(getattr(evaluation, "legal_ir_losses", {}) or {})
+    if legal_ir_losses:
+        block["legal_ir_losses"] = {
+            name: round(float(value), 9)
+            for name, value in sorted(legal_ir_losses.items())
+        }
+        block["legal_ir_target_count"] = int(
+            getattr(evaluation, "legal_ir_target_count", 0) or 0
+        )
+        block["legal_ir_target_hashes"] = dict(
+            sorted(dict(getattr(evaluation, "legal_ir_target_hashes", {}) or {}).items())
+        )
+        block["legal_ir_view_distribution"] = {
+            name: round(float(value), 9)
+            for name, value in sorted(
+                dict(getattr(evaluation, "legal_ir_view_distribution", {}) or {}).items()
+            )
+        }
+        block["legal_ir_predicted_view_distribution"] = {
+            name: round(float(value), 9)
+            for name, value in sorted(
+                dict(
+                    getattr(
+                        evaluation,
+                        "legal_ir_predicted_view_distribution",
+                        {},
+                    )
+                    or {}
+                ).items()
+            )
+        }
+    return block
 
 
 def compiler_ir_metric_block(
@@ -3530,6 +3564,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     save_summary(summary_path, summary)
     supervisor = ModalTodoSupervisor(
         queue=queue,
+        bridge_names=bridge_adapters,
         bridge_loss_evaluator=bridge_loss_evaluator_for_names(bridge_adapters),
     )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
@@ -3567,9 +3602,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_count=args.validation_count,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
             )
-            before_train = autoencoder.evaluate(train_samples)
+            before_train = autoencoder.evaluate(
+                train_samples,
+                legal_ir_bridge_names=bridge_adapters,
+            )
             before_validation = autoencoder.evaluate(
                 validation_samples,
+                legal_ir_bridge_names=bridge_adapters,
                 use_sample_memory=False,
             )
             compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
@@ -3590,9 +3629,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 target_cross_entropy_loss=0.001,
                 target_cosine_similarity=0.999999,
             )
-            after_train = run.final_evaluation
-            after_validation = run.validation_final_evaluation or autoencoder.evaluate(
+            after_train = autoencoder.evaluate(
+                train_samples,
+                legal_ir_bridge_names=bridge_adapters,
+            )
+            after_validation = autoencoder.evaluate(
                 validation_samples,
+                legal_ir_bridge_names=bridge_adapters,
                 use_sample_memory=False,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)

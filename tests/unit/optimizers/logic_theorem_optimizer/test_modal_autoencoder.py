@@ -63,6 +63,93 @@ def test_modal_autoencoder_baseline_reports_fixture_losses() -> None:
     assert evaluation.to_dict()["sample_count"] == 1
 
 
+def test_autoencoder_evaluation_carries_legal_ir_training_target_losses() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    target = evaluate_legal_ir_multiview(
+        sample.text,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    ).training_target()
+    autoencoder = AdaptiveModalAutoencoder()
+
+    evaluation = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={sample.sample_id: target},
+    )
+
+    assert evaluation.legal_ir_target_count == 1
+    assert evaluation.legal_ir_losses["legal_ir_multiview_total_loss"] > 0.0
+    assert evaluation.legal_ir_losses["legal_ir_multiview_view_coverage_loss"] == 0.0
+    assert evaluation.legal_ir_losses["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert evaluation.legal_ir_target_hashes[sample.sample_id] == target.document.canonical_hash()
+    assert evaluation.legal_ir_view_distribution
+    assert evaluation.legal_ir_predicted_view_distribution
+    payload = evaluation.to_dict()
+    assert payload["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert payload["legal_ir_predicted_view_distribution"]
+
+
+def test_adaptive_autoencoder_sgd_lowers_legal_ir_view_cross_entropy() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    target = evaluate_legal_ir_multiview(
+        sample.text,
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id=sample.sample_id,
+        citation=sample.citation,
+        source=sample.source,
+        source_embedding=sample.embedding_vector,
+    ).training_target()
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    before = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={sample.sample_id: target},
+    )
+    todo = type(
+        "Todo",
+        (),
+        {
+            "action": "improve_legal_ir_view_distribution",
+            "loss_name": "legal_ir_view_cross_entropy_loss",
+            "sample_ids": [sample.sample_id],
+            "todo_id": "legal-ir-view-ce",
+        },
+    )()
+
+    report = autoencoder.apply_todo(
+        todo,
+        {sample.sample_id: sample},
+        learning_rate=0.5,
+    )
+    after = autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={sample.sample_id: target},
+    )
+    introspection = autoencoder.introspect_sample(sample)
+
+    assert report["changed"] == ["legal_ir_view_logits"]
+    assert (
+        after.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+        < before.legal_ir_losses["legal_ir_view_cross_entropy_loss"]
+    )
+    assert "repair_multiview_legal_ir_loss" in introspection.synthesis_focus
+    assert introspection.legal_ir_view_distribution
+
+
 def test_modal_autoencoder_empty_dataset_returns_zero_metrics() -> None:
     evaluation = ModalAutoencoderBaseline().evaluate([])
 

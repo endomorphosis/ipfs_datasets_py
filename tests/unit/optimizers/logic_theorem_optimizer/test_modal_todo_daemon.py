@@ -759,6 +759,18 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
     assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
 
 
+def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
+    names = runner.bridge_loss_adapter_names(SimpleNamespace())
+
+    assert names == [
+        "modal_frame_logic",
+        "deontic_norms",
+        "fol_tdfol",
+        "cec_dcec",
+        "external_prover_router",
+    ]
+
+
 def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
     sample = build_us_code_sample(
         title="5",
@@ -788,6 +800,34 @@ def test_supervisor_seeds_canonical_multiview_loss_todos() -> None:
     assert by_action["repair_multiview_legal_ir_loss"].metadata[
         "program_synthesis_scope"
     ] == "bridge"
+
+
+def test_supervisor_seeds_legal_ir_view_cross_entropy_sgd_todo() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder()
+    evaluation = autoencoder.evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+    supervisor = ModalTodoSupervisor(
+        bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+
+    seeded = supervisor.seed_from_evaluation([sample], autoencoder=evaluation)
+
+    view_todos = [
+        todo
+        for todo in seeded
+        if todo.loss_name == "legal_ir_view_cross_entropy_loss"
+    ]
+    assert len(view_todos) == 1
+    assert view_todos[0].action == "improve_legal_ir_view_distribution"
+    assert view_todos[0].metadata["optimizer_role"] == "autoencoder_sgd"
+    assert view_todos[0].metadata["execution_target"] == "adaptive_autoencoder"
 
 
 def test_supervisor_caps_loss_derived_program_synthesis_todos() -> None:
@@ -845,6 +885,39 @@ def test_program_synthesis_generator_clusters_stable_autoencoder_residuals() -> 
             evidence.get("sample_id") in todo.sample_ids
             for evidence in todo.metadata["hint_evidence"]
         )
+
+
+def test_program_synthesis_generator_uses_legal_ir_view_introspection() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    autoencoder.evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=1),
+        bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+
+    seeded = supervisor.seed_program_synthesis_from_introspection(
+        [sample],
+        autoencoder=autoencoder,
+    )
+
+    actions = {todo.action for todo in seeded}
+    assert "repair_multiview_legal_ir_loss" in actions
+    assert "repair_deontic_bridge_quality_gate" in actions
+    by_action = {todo.action: todo for todo in seeded}
+    assert by_action["repair_multiview_legal_ir_loss"].metadata[
+        "target_component"
+    ] == "bridge.contracts"
+    assert by_action["repair_deontic_bridge_quality_gate"].metadata[
+        "program_synthesis_scope"
+    ] == "deontic"
 
 
 def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_backlog() -> None:
@@ -2641,6 +2714,28 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
     assert tdfol["views"]["tdfol_formula"]["metadata"]["formula_count"] >= 1
     assert tdfol["views"]["proof_obligations"]["metadata"]["obligation_count"] >= 1
     assert "tdfol_parse_failure_ratio" in tdfol
+
+
+def test_metric_block_includes_autoencoder_legal_ir_target_losses() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    evaluation = AdaptiveModalAutoencoder().evaluate(
+        [sample],
+        legal_ir_bridge_names=("deontic_norms", "fol_tdfol"),
+    )
+
+    block = runner.metric_block(evaluation)
+
+    assert block["legal_ir_target_count"] == 1
+    assert block["legal_ir_losses"]["legal_ir_multiview_total_loss"] > 0.0
+    assert block["legal_ir_losses"]["legal_ir_multiview_view_coverage_loss"] == 0.0
+    assert block["legal_ir_losses"]["legal_ir_view_cross_entropy_loss"] > 0.0
+    assert block["legal_ir_target_hashes"][sample.sample_id]
+    assert block["legal_ir_view_distribution"]
+    assert block["legal_ir_predicted_view_distribution"]
 
 
 def test_supervisor_optimization_run_reduces_ce_and_reconstruction_loss(tmp_path) -> None:

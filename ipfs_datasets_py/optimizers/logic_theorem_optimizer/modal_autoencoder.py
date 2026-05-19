@@ -74,6 +74,11 @@ class AutoencoderEvaluation:
     frame_ranking_loss: float
     symbolic_validity_penalty: float
     decoded_embeddings: Dict[str, List[float]]
+    legal_ir_target_count: int = 0
+    legal_ir_losses: Dict[str, float] = field(default_factory=dict)
+    legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
+    legal_ir_target_hashes: Dict[str, str] = field(default_factory=dict)
+    legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -82,6 +87,13 @@ class AutoencoderEvaluation:
             "decoded_embeddings": self.decoded_embeddings,
             "embedding_cosine_similarity": self.embedding_cosine_similarity,
             "frame_ranking_loss": self.frame_ranking_loss,
+            "legal_ir_losses": dict(sorted(self.legal_ir_losses.items())),
+            "legal_ir_predicted_view_distribution": dict(
+                sorted(self.legal_ir_predicted_view_distribution.items())
+            ),
+            "legal_ir_target_count": self.legal_ir_target_count,
+            "legal_ir_target_hashes": dict(sorted(self.legal_ir_target_hashes.items())),
+            "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "reconstruction_loss": self.reconstruction_loss,
             "sample_count": self.sample_count,
             "symbolic_validity_penalty": self.symbolic_validity_penalty,
@@ -130,6 +142,9 @@ class AutoencoderIntrospection:
     top_family_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     top_embedding_contributions: List[AutoencoderFeatureContribution] = field(default_factory=list)
     synthesis_focus: List[str] = field(default_factory=list)
+    legal_ir_view_cross_entropy_loss: float = 0.0
+    legal_ir_view_distribution: Dict[str, float] = field(default_factory=dict)
+    legal_ir_predicted_view_distribution: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -138,6 +153,11 @@ class AutoencoderIntrospection:
             "decoded_embedding": list(self.decoded_embedding),
             "family_margin": self.family_margin,
             "feature_count": self.feature_count,
+            "legal_ir_predicted_view_distribution": dict(
+                sorted(self.legal_ir_predicted_view_distribution.items())
+            ),
+            "legal_ir_view_cross_entropy_loss": self.legal_ir_view_cross_entropy_loss,
+            "legal_ir_view_distribution": dict(sorted(self.legal_ir_view_distribution.items())),
             "predicted_family": self.predicted_family,
             "predicted_probability": self.predicted_probability,
             "reconstruction_loss": self.reconstruction_loss,
@@ -464,7 +484,13 @@ class ModalAutoencoderTrainingState:
 class ModalAutoencoderBaseline:
     """Dependency-free baseline for the future encoder/decoder pair."""
 
-    def evaluate(self, samples: Iterable[LegalSample]) -> AutoencoderEvaluation:
+    def evaluate(
+        self,
+        samples: Iterable[LegalSample],
+        *,
+        legal_ir_bridge_names: Sequence[str] = (),
+        legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+    ) -> AutoencoderEvaluation:
         """Evaluate deterministic reconstruction and modal-family losses."""
         sample_list = list(samples)
         if not sample_list:
@@ -478,6 +504,11 @@ class ModalAutoencoderBaseline:
                 symbolic_validity_penalty=0.0,
                 decoded_embeddings={},
             )
+        legal_ir_payload = _legal_ir_target_payload(
+            sample_list,
+            bridge_names=legal_ir_bridge_names,
+            legal_ir_targets=legal_ir_targets,
+        )
 
         cosine_scores: List[float] = []
         cosine_losses: List[float] = []
@@ -511,6 +542,10 @@ class ModalAutoencoderBaseline:
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            legal_ir_target_count=legal_ir_payload["target_count"],
+            legal_ir_losses=legal_ir_payload["losses"],
+            legal_ir_target_hashes=legal_ir_payload["target_hashes"],
+            legal_ir_view_distribution=legal_ir_payload["view_distribution"],
         )
 
     def encode(self, sample: LegalSample) -> Dict[str, object]:
@@ -570,11 +605,14 @@ class AdaptiveModalAutoencoder:
             self._torch,
         ) = _resolve_vector_compute_backend(compute_device)
         self._sample_feature_cache: Dict[tuple[str, int], Dict[str, Any]] = {}
+        self._legal_ir_view_target_cache: Dict[str, Dict[str, float]] = {}
 
     def evaluate(
         self,
         samples: Iterable[LegalSample],
         *,
+        legal_ir_bridge_names: Sequence[str] = (),
+        legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         use_sample_memory: bool = True,
     ) -> AutoencoderEvaluation:
         """Evaluate current encoder/decoder state against legal samples."""
@@ -590,6 +628,14 @@ class AdaptiveModalAutoencoder:
                 symbolic_validity_penalty=0.0,
                 decoded_embeddings={},
             )
+        legal_ir_payload = _legal_ir_target_payload(
+            sample_list,
+            bridge_names=legal_ir_bridge_names,
+            legal_ir_targets=legal_ir_targets,
+        )
+        legal_ir_target_distributions: Mapping[str, Mapping[str, float]] = legal_ir_payload[
+            "target_view_distributions_by_sample"
+        ]
 
         cosine_scores: List[float] = []
         cosine_losses: List[float] = []
@@ -616,6 +662,12 @@ class AdaptiveModalAutoencoder:
             target_maps.append(_observed_family_distribution(sample))
             frame_losses.append(frame_ranking_loss(sample))
             symbolic_penalties.append(symbolic_validity_penalty(sample))
+            target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
+            if target_view_distribution:
+                self._legal_ir_view_target_cache[sample.sample_id] = {
+                    str(name): float(value)
+                    for name, value in target_view_distribution.items()
+                }
 
         cosine_scores, reconstruction_losses = self._embedding_metrics(
             target_vectors,
@@ -626,6 +678,29 @@ class AdaptiveModalAutoencoder:
             probability_maps,
             target_maps,
         )
+        legal_ir_losses = dict(legal_ir_payload["losses"])
+        legal_ir_view_ce_losses: List[float] = []
+        predicted_view_distributions: List[Mapping[str, float]] = []
+        for sample in sample_list:
+            target_view_distribution = legal_ir_target_distributions.get(sample.sample_id)
+            if not target_view_distribution:
+                continue
+            predicted_view_distribution = self._legal_ir_view_distribution(
+                sample,
+                target_view_distribution,
+                use_sample_memory=use_sample_memory,
+            )
+            predicted_view_distributions.append(predicted_view_distribution)
+            legal_ir_view_ce_losses.append(
+                cross_entropy_distribution_loss(
+                    predicted_view_distribution,
+                    target_view_distribution,
+                )
+            )
+        if legal_ir_view_ce_losses:
+            legal_ir_losses["legal_ir_view_cross_entropy_loss"] = _mean(
+                legal_ir_view_ce_losses
+            )
 
         return AutoencoderEvaluation(
             sample_count=len(sample_list),
@@ -636,6 +711,13 @@ class AdaptiveModalAutoencoder:
             frame_ranking_loss=_mean(frame_losses),
             symbolic_validity_penalty=_mean(symbolic_penalties),
             decoded_embeddings=decoded_embeddings,
+            legal_ir_target_count=legal_ir_payload["target_count"],
+            legal_ir_losses=legal_ir_losses,
+            legal_ir_predicted_view_distribution=_mean_distributions(
+                predicted_view_distributions
+            ),
+            legal_ir_target_hashes=legal_ir_payload["target_hashes"],
+            legal_ir_view_distribution=legal_ir_payload["view_distribution"],
         )
 
     def encode(self, sample: LegalSample, *, use_sample_memory: bool = True) -> Dict[str, object]:
@@ -700,6 +782,19 @@ class AdaptiveModalAutoencoder:
             residual,
             dimensions=len(sample.embedding_vector),
         )
+        legal_ir_view_distribution = self._legal_ir_view_target_cache.get(sample.sample_id, {})
+        legal_ir_predicted_view_distribution: Dict[str, float] = {}
+        legal_ir_view_cross_entropy_loss = 0.0
+        if legal_ir_view_distribution:
+            legal_ir_predicted_view_distribution = self._legal_ir_view_distribution(
+                sample,
+                legal_ir_view_distribution,
+                use_sample_memory=use_sample_memory,
+            )
+            legal_ir_view_cross_entropy_loss = cross_entropy_distribution_loss(
+                legal_ir_predicted_view_distribution,
+                legal_ir_view_distribution,
+            )
         return AutoencoderIntrospection(
             sample_id=sample.sample_id,
             target_family=target_family,
@@ -716,12 +811,23 @@ class AdaptiveModalAutoencoder:
             sample_memory_used=use_sample_memory,
             top_family_contributions=family_contributions[:max(top_k, 0)],
             top_embedding_contributions=embedding_contributions[:max(top_k, 0)],
+            legal_ir_view_cross_entropy_loss=round(legal_ir_view_cross_entropy_loss, 12),
+            legal_ir_view_distribution={
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_view_distribution.items())
+            },
+            legal_ir_predicted_view_distribution={
+                key: round(float(value), 12)
+                for key, value in sorted(legal_ir_predicted_view_distribution.items())
+            },
             synthesis_focus=self._synthesis_focus_for(
                 sample,
                 target_family=target_family,
                 predicted_family=predicted_family,
                 target_probability=target_probability,
                 reconstruction_loss=mse_loss(sample.embedding_vector, decoded),
+                legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
+                legal_ir_view_distribution=legal_ir_view_distribution,
             ),
         )
 
@@ -852,12 +958,14 @@ class AdaptiveModalAutoencoder:
             action
             in {
                 "improve_encoder_decoder_reconstruction",
+                "improve_legal_ir_view_distribution",
                 "improve_modal_family_classifier",
             }
             or loss_name
             in {
                 "cosine_loss",
                 "cross_entropy_loss",
+                "legal_ir_view_cross_entropy_loss",
                 "reconstruction_loss",
             }
         )
@@ -878,6 +986,12 @@ class AdaptiveModalAutoencoder:
             if action == "improve_modal_family_classifier" or loss_name == "cross_entropy_loss":
                 self._nudge_family_logits(sample, learning_rate=learning_rate)
                 changed.append("family_logits")
+            if (
+                action == "improve_legal_ir_view_distribution"
+                or loss_name == "legal_ir_view_cross_entropy_loss"
+            ):
+                if self._nudge_legal_ir_view_logits(sample, learning_rate=learning_rate):
+                    changed.append("legal_ir_view_logits")
             if (
                 action == "improve_encoder_decoder_reconstruction"
                 or loss_name in {"cosine_loss", "reconstruction_loss"}
@@ -935,6 +1049,37 @@ class AdaptiveModalAutoencoder:
     ) -> Dict[str, float]:
         return _softmax(self._logits_for(sample, use_sample_memory=use_sample_memory))
 
+    def _legal_ir_view_distribution(
+        self,
+        sample: LegalSample,
+        target_distribution: Mapping[str, float],
+        *,
+        use_sample_memory: bool = True,
+    ) -> Dict[str, float]:
+        families = _unique_preserve_order(
+            [str(name) for name in target_distribution.keys()]
+            + [
+                str(family)
+                for logits in self.state.feature_family_logits.values()
+                for family in logits.keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+            + [
+                str(family)
+                for family in self.state.family_logits.get(sample.sample_id, {}).keys()
+                if self._is_legal_ir_view_family(str(family))
+            ]
+        )
+        logits = self._logits_for_families(
+            sample,
+            families,
+            use_sample_memory=use_sample_memory,
+        )
+        return _softmax(logits)
+
+    def _is_legal_ir_view_family(self, family: str) -> bool:
+        return str(family) not in self.modal_families
+
     def _logits_for(
         self,
         sample: LegalSample,
@@ -948,6 +1093,30 @@ class AdaptiveModalAutoencoder:
                     logits[family] += float(value) * self.feature_family_logit_scale
         if use_sample_memory:
             for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                if family in logits:
+                    logits[family] += float(value)
+        return logits
+
+    def _logits_for_families(
+        self,
+        sample: LegalSample,
+        families: Sequence[str],
+        *,
+        use_sample_memory: bool,
+    ) -> Dict[str, float]:
+        base = self._base_logits_for(sample)
+        logits = {
+            str(family): float(base.get(str(family), 0.0))
+            for family in families
+        }
+        for feature in self._feature_keys_for(sample):
+            for family, value in self.state.feature_family_logits.get(feature, {}).items():
+                family = str(family)
+                if family in logits:
+                    logits[family] += float(value) * self.feature_family_logit_scale
+        if use_sample_memory:
+            for family, value in self.state.family_logits.get(sample.sample_id, {}).items():
+                family = str(family)
                 if family in logits:
                     logits[family] += float(value)
         return logits
@@ -1028,6 +1197,42 @@ class AdaptiveModalAutoencoder:
                     feature_logits[family] = feature_logits.get(family, 0.0) - (
                         feature_step / max(len(self.modal_families) - 1, 1)
                     )
+
+    def _nudge_legal_ir_view_logits(
+        self,
+        sample: LegalSample,
+        *,
+        learning_rate: float,
+    ) -> bool:
+        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        if not target_distribution:
+            return False
+        step = _clamp_learning_rate(learning_rate)
+        predicted = self._legal_ir_view_distribution(sample, target_distribution)
+        families = _unique_preserve_order(
+            list(predicted.keys()) + list(target_distribution.keys())
+        )
+        logits = self.state.family_logits.setdefault(sample.sample_id, {})
+        for family in families:
+            gradient = float(target_distribution.get(family, 0.0)) - float(
+                predicted.get(family, 0.0)
+            )
+            logits[family] = logits.get(family, 0.0) + (2.0 * step * gradient)
+
+        feature_keys = self._feature_keys_for(sample)
+        if not feature_keys:
+            return True
+        feature_step = step / len(feature_keys)
+        for feature in feature_keys:
+            feature_logits = self.state.feature_family_logits.setdefault(feature, {})
+            for family in families:
+                gradient = float(target_distribution.get(family, 0.0)) - float(
+                    predicted.get(family, 0.0)
+                )
+                feature_logits[family] = feature_logits.get(family, 0.0) + (
+                    2.0 * feature_step * gradient
+                )
+        return True
 
     def _feature_embedding_adjustment(self, sample: LegalSample, *, dimensions: int) -> List[float]:
         vectors = [
@@ -1367,6 +1572,8 @@ class AdaptiveModalAutoencoder:
         predicted_family: str,
         target_probability: float,
         reconstruction_loss: float,
+        legal_ir_view_cross_entropy_loss: float = 0.0,
+        legal_ir_view_distribution: Optional[Mapping[str, float]] = None,
     ) -> List[str]:
         focus: List[str] = []
         if not sample.modal_ir.formulas:
@@ -1375,6 +1582,11 @@ class AdaptiveModalAutoencoder:
             focus.append("refine_modal_family_cue_rules")
         if reconstruction_loss > 0.05:
             focus.append("refine_typed_ir_or_decompiler_slots")
+        if legal_ir_view_cross_entropy_loss > 0.05:
+            distribution = legal_ir_view_distribution or {}
+            focus.append("repair_multiview_legal_ir_loss")
+            if any(str(name).startswith("deontic.") for name in distribution):
+                focus.append("repair_deontic_bridge_quality_gate")
         if sample.selected_frame:
             focus.append("audit_frame_logic_terms")
         return _unique_preserve_order(focus)
@@ -1389,6 +1601,110 @@ def _observed_family_distribution(sample: LegalSample) -> Dict[str, float]:
         counts[family] = counts.get(family, 0) + 1
     total = float(sum(counts.values()))
     return {family: count / total for family, count in sorted(counts.items())}
+
+
+def _legal_ir_target_payload(
+    samples: Sequence[LegalSample],
+    *,
+    bridge_names: Sequence[str] = (),
+    legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+) -> Dict[str, Any]:
+    target_items = _legal_ir_target_items(
+        samples,
+        bridge_names=bridge_names,
+        legal_ir_targets=legal_ir_targets,
+    )
+    loss_values: Dict[str, List[float]] = {}
+    view_distribution_values: Dict[str, List[float]] = {}
+    target_view_distributions_by_sample: Dict[str, Dict[str, float]] = {}
+    target_hashes: Dict[str, str] = {}
+
+    for sample_id, target in target_items:
+        for name, value in dict(getattr(target, "losses", {}) or {}).items():
+            loss_values.setdefault(str(name), []).append(_float_or_zero(value))
+        target_view_distribution: Dict[str, float] = {}
+        for name, value in dict(getattr(target, "view_distribution", {}) or {}).items():
+            view_value = _float_or_zero(value)
+            view_distribution_values.setdefault(str(name), []).append(view_value)
+            if view_value > 0.0:
+                target_view_distribution[str(name)] = view_value
+        if sample_id and target_view_distribution:
+            target_view_distributions_by_sample[str(sample_id)] = dict(
+                sorted(target_view_distribution.items())
+            )
+        document = getattr(target, "document", None)
+        document_id = str(getattr(document, "document_id", "") or "")
+        if document_id and hasattr(document, "canonical_hash"):
+            target_hashes[document_id] = str(document.canonical_hash())
+
+    return {
+        "losses": {
+            name: _mean(values)
+            for name, values in sorted(loss_values.items())
+            if values
+        },
+        "target_view_distributions_by_sample": dict(
+            sorted(target_view_distributions_by_sample.items())
+        ),
+        "target_count": len(target_items),
+        "target_hashes": dict(sorted(target_hashes.items())),
+        "view_distribution": {
+            name: _mean(values)
+            for name, values in sorted(view_distribution_values.items())
+            if values
+        },
+    }
+
+
+def _legal_ir_target_items(
+    samples: Sequence[LegalSample],
+    *,
+    bridge_names: Sequence[str],
+    legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
+) -> List[tuple[str, Any]]:
+    if legal_ir_targets is not None:
+        if isinstance(legal_ir_targets, Mapping):
+            return [
+                (sample.sample_id, target)
+                for sample in samples
+                for target in [legal_ir_targets.get(sample.sample_id)]
+                if target is not None
+            ]
+        target_items: List[tuple[str, Any]] = []
+        for index, target in enumerate(legal_ir_targets):
+            if target is None:
+                continue
+            document = getattr(target, "document", None)
+            sample_id = str(getattr(document, "document_id", "") or "")
+            if not sample_id and index < len(samples):
+                sample_id = samples[index].sample_id
+            target_items.append((sample_id, target))
+        return target_items
+
+    names = tuple(
+        dict.fromkeys(
+            str(name).strip()
+            for name in bridge_names
+            if str(name).strip() and str(name).strip().lower() not in {"none", "off", "false"}
+        )
+    )
+    if not names:
+        return []
+
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    target_items: List[tuple[str, Any]] = []
+    for sample in samples:
+        report = evaluate_legal_ir_multiview(
+            sample.text,
+            bridge_names=names,
+            document_id=sample.sample_id,
+            citation=sample.citation,
+            source=sample.source,
+            source_embedding=sample.embedding_vector,
+        )
+        target_items.append((sample.sample_id, report.training_target()))
+    return target_items
 
 
 @dataclass(frozen=True)
@@ -1631,6 +1947,27 @@ def _resolve_vector_compute_backend(
 
 def _mean(values: Sequence[float]) -> float:
     return sum(values) / len(values) if values else 0.0
+
+
+def _mean_distributions(
+    distributions: Sequence[Mapping[str, float]],
+) -> Dict[str, float]:
+    values_by_name: Dict[str, List[float]] = {}
+    for distribution in distributions:
+        for name, value in dict(distribution or {}).items():
+            values_by_name.setdefault(str(name), []).append(_float_or_zero(value))
+    return {
+        name: _mean(values)
+        for name, values in sorted(values_by_name.items())
+        if values
+    }
+
+
+def _float_or_zero(value: Any) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _vector_norm(values: Sequence[float]) -> float:
