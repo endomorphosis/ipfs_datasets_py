@@ -836,6 +836,98 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_conditional_competi
     assert competing_logits["conditional_normative"] > -0.25
 
 
+def test_spacy_decoder_soft_caps_repeated_frame_logits_for_temporal_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="43",
+        section="1700",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="43",
+        section="1701",
+        text=(
+            "Authority and jurisdiction and authority and jurisdiction "
+            "apply before each annual review deadline."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("frame", "temporal", "deontic"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("frame", "temporal", "deontic"),
+    )
+
+    assert competing_logits["frame"] < baseline_logits["frame"]
+    assert competing_logits["temporal"] > -0.25
+
+
+def test_spacy_codec_backfills_deontic_share_for_conditional_scope_with_deontic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="20",
+        section="1415",
+        text=(
+            "If designated and subject to subsection (b), liability for "
+            "noncompliance applies."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "deontic" for cue in encoding.cues)
+    assert signals["has_deontic_scope"] is True
+    assert signals["has_deontic_scope_phrase"] is True
+    assert signals["has_statutory_scope_reference"] is False
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+    assert deontic_share > 0.0
+
+
+def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_temporal_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="30",
+        section="1352",
+        text=(
+            "If designated and subject to subsection (b), this authority "
+            "applies while pending review."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_temporal_scope_phrase"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
