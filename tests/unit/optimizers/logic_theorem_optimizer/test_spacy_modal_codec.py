@@ -763,6 +763,42 @@ def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
     )
 
 
+def test_spacy_encoder_extracts_conditional_cue_except_as_provided_by() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Except as provided by subsection (b), the Secretary shall issue a determination.",
+        document_id="sample-except-as-provided-by",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "except as provided by"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_temporal_cues_from_recurring_effective_date_phrases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "The amendment shall apply from time to time and take effect on first day "
+            "of each applicable pay period beginning on or after January 1, 2030."
+        ),
+        document_id="sample-temporal-recurring-effective-date-phrases",
+    )
+
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "from time to time"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() in {"on or after", "beginning on or after"}
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_extracts_epistemic_cues_for_knowledge_and_belief() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

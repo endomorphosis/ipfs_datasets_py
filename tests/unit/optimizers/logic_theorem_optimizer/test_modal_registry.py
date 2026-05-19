@@ -49,6 +49,8 @@ def test_conditional_profile_includes_terms_and_conditions_cues() -> None:
     assert "under such terms and conditions" in cue_terms
     assert "subject to the terms and conditions" in cue_terms
     assert "notwithstanding" in cue_terms
+    assert "except as provided by" in cue_terms
+    assert "as provided by" in cue_terms
 
 
 def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
@@ -58,6 +60,8 @@ def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
     assert "not later than" in cue_terms
     assert "effective date" in cue_terms
     assert "fiscal year" in cue_terms
+    assert "from time to time" in cue_terms
+    assert "on or after" in cue_terms
 
 
 def test_registry_serialization_is_stable_json_ready() -> None:

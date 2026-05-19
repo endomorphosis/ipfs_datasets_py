@@ -31,6 +31,8 @@ _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _CONDITIONAL_SCOPE_PHRASES = (
+    "as provided by",
+    "except as provided by",
     "in the case of",
     "in the event that",
     "notwithstanding",
@@ -46,6 +48,7 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
+    "as provided by",
     "as provided in",
     "in accordance with",
     "pursuant to",
@@ -111,18 +114,22 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
 )
 _TEMPORAL_SCOPE_PHRASES = (
     "as soon as practicable",
+    "beginning on or after",
     "calendar year",
     "effective date",
     "effective on",
+    "effective on first day",
     "for any fiscal year",
     "for each fiscal year",
     "for that fiscal year",
+    "from time to time",
     "for the period beginning",
     "fiscal year",
     "no earlier than",
     "no later than",
     "not earlier than",
     "not later than",
+    "on or after",
     "period beginning on",
     "period ending on",
 )
