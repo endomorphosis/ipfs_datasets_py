@@ -718,6 +718,11 @@ class DeterministicModalCompiler:
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
+                "adaptive_margin_abs": abs(family_margin),
+                "adaptive_priority": self._adaptive_margin_priority(
+                    family_margin=family_margin,
+                    threshold=threshold,
+                ),
                 "adaptive_predicted_family_source": predicted_family_source,
                 "adaptive_policy_pair": f"{predicted_family}->{target_family}",
                 "explicit_ambiguity_type": explicit_type,
@@ -977,6 +982,11 @@ class DeterministicModalCompiler:
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
             "adaptive_margin_direction": margin_direction,
+            "adaptive_margin_abs": abs(family_margin),
+            "adaptive_priority": self._adaptive_margin_priority(
+                family_margin=family_margin,
+                threshold=threshold,
+            ),
             "adaptive_predicted_family_source": "compiled_primary_family",
             "adaptive_policy_pair": f"{compiled_primary_family}->{competing_family}",
             "explicit_ambiguity_type": explicit_type,
@@ -1058,6 +1068,11 @@ class DeterministicModalCompiler:
                 "margin_low",
             )
         )
+
+    @staticmethod
+    def _adaptive_margin_priority(*, family_margin: float, threshold: float) -> float:
+        """Return deterministic ambiguity priority from policy margin settings."""
+        return abs(float(family_margin)) + max(0.0, float(threshold))
 
     def _supports_signal_free_adaptive_pair(
         self,
