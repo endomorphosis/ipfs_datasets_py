@@ -3055,6 +3055,7 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
                 "frame->conditional_normative",
                 "frame->deontic",
                 "frame->alethic",
+                "frame->epistemic",
                 "frame->temporal",
             ),
         ),
@@ -6004,6 +6005,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_epistemic_adaptiv
     )
     assert adaptive_epistemic.metadata["has_target_signal_evidence"] is False
     assert adaptive_epistemic.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_epistemic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_epistemic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_epistemic.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_epistemic_outvoted_margin_low"
@@ -6011,6 +6014,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_epistemic_adaptiv
     assert any(
         ambiguity.ambiguity_type == "adaptive_frame_epistemic_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        and ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         for ambiguity in ambiguities
     )
 
@@ -6092,6 +6096,8 @@ def test_modal_compiler_uses_epistemic_signal_for_frame_epistemic_adaptive_ambig
     )
     assert adaptive_epistemic.metadata["has_target_signal_evidence"] is True
     assert adaptive_epistemic.metadata["signal_free_pair_policy_applied"] is False
+    assert adaptive_epistemic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_epistemic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_epistemic.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_epistemic_outvoted_margin_low"
@@ -6177,6 +6183,8 @@ def test_modal_compiler_treats_zero_margin_frame_epistemic_priority_pair_as_outv
     assert adaptive_epistemic.metadata["family_margin"] == 0.0
     assert adaptive_epistemic.metadata["adaptive_margin_direction"] == "outvoted"
     assert adaptive_epistemic.metadata["is_priority_policy_pair"] is True
+    assert adaptive_epistemic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_epistemic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert adaptive_epistemic.metadata["explicit_ambiguity_type"] == (
         "adaptive_frame_epistemic_outvoted_margin_low"
     )
@@ -12862,6 +12870,13 @@ def test_modal_compiler_surfaces_compiler_ambiguity_pairs_when_other_target_tabl
             "system": "FRAME_BM25",
             "symbol": "Frame",
             "label": "frame",
+            "target_family": "epistemic",
+        },
+        {
+            "predicted_family": "frame",
+            "system": "FRAME_BM25",
+            "symbol": "Frame",
+            "label": "frame",
             "target_family": "temporal",
         },
     )
@@ -12977,6 +12992,12 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             "family_shares": {"alethic": 0.78, "frame": 0.22},
             "expected_pair": "frame->alethic",
             "expected_explicit_type": "adaptive_frame_alethic_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "frame",
+            "family_shares": {"epistemic": 0.79, "frame": 0.21},
+            "expected_pair": "frame->epistemic",
+            "expected_explicit_type": "adaptive_frame_epistemic_outvoted_margin_low",
         },
         {
             "compiled_primary_family": "frame",
@@ -13648,6 +13669,15 @@ def test_modal_compiler_emits_explicit_ambiguity_for_todo_evidence_margin_pairs(
             "priority": 1.14240219376,
         },
         {
+            "predicted_family": "frame",
+            "predicted_label": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "target_family": "epistemic",
+            "family_margin": -0.957919173467,
+            "priority": 1.107919173467,
+        },
+        {
             "predicted_family": "temporal",
             "predicted_label": "eventually",
             "predicted_system": "LTL",
@@ -13879,6 +13909,15 @@ def test_modal_compiler_marks_todo_policy_pairs_as_compiler_ambiguity_bundle(
             "predicted_system": "D",
             "predicted_symbol": "O",
             "predicted_label": "obligation",
+            "target_family": "temporal",
+            "family_margin": -0.87157850633,
+            "priority": 1.02157850633,
+        },
+        {
+            "predicted_family": "deontic",
+            "predicted_system": "D",
+            "predicted_symbol": "O",
+            "predicted_label": "obligation",
             "target_family": "frame",
             "family_margin": -0.58228743692,
             "priority": 0.73228743692,
@@ -13891,6 +13930,15 @@ def test_modal_compiler_marks_todo_policy_pairs_as_compiler_ambiguity_bundle(
             "target_family": "deontic",
             "family_margin": -0.99126278774,
             "priority": 1.14126278774,
+        },
+        {
+            "predicted_family": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "predicted_label": "frame",
+            "target_family": "epistemic",
+            "family_margin": -0.957919173467,
+            "priority": 1.107919173467,
         },
         {
             "predicted_family": "frame",

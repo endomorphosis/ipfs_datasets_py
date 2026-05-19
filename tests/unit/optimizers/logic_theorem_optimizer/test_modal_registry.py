@@ -317,10 +317,12 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("deontic", "dynamic"),
         ("deontic", "epistemic"),
         ("deontic", "temporal"),
+        ("deontic", "frame"),
         ("epistemic", "conditional_normative"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
         ("frame", "alethic"),
+        ("frame", "epistemic"),
         ("frame", "dynamic"),
         ("frame", "temporal"),
         ("hybrid", "frame"),
@@ -341,6 +343,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("deontic", "frame") is True
     assert is_compiler_ambiguity_policy_pair(
         "epistemic",
         "conditional_normative",
@@ -348,13 +351,14 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("frame", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("frame", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "alethic") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("hybrid", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
-    assert is_compiler_ambiguity_policy_pair("deontic", "frame") is False
+    assert is_compiler_ambiguity_policy_pair("frame", "hybrid") is False
     assert is_compiler_required_adaptive_ambiguity_pair(
         "frame",
         "conditional_normative",
@@ -418,11 +422,13 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "epistemic",
         "deontic",
         "temporal",
+        "frame",
     )
     assert compiler_ambiguity_policy_targets("frame") == (
         "conditional_normative",
         "deontic",
         "alethic",
+        "epistemic",
         "dynamic",
         "temporal",
     )
