@@ -26,6 +26,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
+    is_compiler_ambiguity_policy_pair,
     ModalLogicFamily,
     ModalRegistry,
     is_compiler_required_adaptive_ambiguity_pair,
@@ -880,6 +881,10 @@ class DeterministicModalCompiler:
                 if is_self_pair
                 else [predicted_family, target_family]
             )
+            is_compiler_ambiguity_bundle_pair = is_compiler_ambiguity_policy_pair(
+                predicted_family,
+                target_family,
+            )
             adaptive_priority = self._adaptive_margin_priority(
                 family_margin=family_margin,
                 threshold=threshold,
@@ -911,6 +916,12 @@ class DeterministicModalCompiler:
                 ),
                 "is_priority_policy_pair": is_priority_policy_pair,
                 "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
+                "is_compiler_ambiguity_bundle_pair": is_compiler_ambiguity_bundle_pair,
+                "ambiguity_policy_bundle": (
+                    "compiler_ambiguity"
+                    if is_compiler_ambiguity_bundle_pair
+                    else None
+                ),
                 "predicted_family": predicted_family,
                 "predicted_margin_to_runner_up_raw": predicted_margin_to_runner_up,
                 "predicted_margin_to_runner_up": (
@@ -1312,6 +1323,10 @@ class DeterministicModalCompiler:
             if is_self_pair
             else [compiled_primary_family, competing_family]
         )
+        is_compiler_ambiguity_bundle_pair = is_compiler_ambiguity_policy_pair(
+            compiled_primary_family,
+            competing_family,
+        )
         adaptive_priority = self._adaptive_margin_priority(
             family_margin=family_margin,
             threshold=threshold,
@@ -1348,6 +1363,12 @@ class DeterministicModalCompiler:
             ),
             "is_priority_policy_pair": is_priority_policy_pair,
             "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
+            "is_compiler_ambiguity_bundle_pair": is_compiler_ambiguity_bundle_pair,
+            "ambiguity_policy_bundle": (
+                "compiler_ambiguity"
+                if is_compiler_ambiguity_bundle_pair
+                else None
+            ),
             "predicted_family": compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": round(family_margin, 6),
@@ -1487,6 +1508,10 @@ class DeterministicModalCompiler:
             family_margin=family_margin,
             threshold=threshold,
         )
+        is_compiler_ambiguity_bundle_pair = is_compiler_ambiguity_policy_pair(
+            compiled_primary_family,
+            compiled_primary_family,
+        )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
             "adaptive_margin_direction": margin_direction,
@@ -1516,6 +1541,12 @@ class DeterministicModalCompiler:
             ),
             "is_priority_policy_pair": is_priority_policy_pair,
             "runner_up_is_priority_policy_pair": runner_up_is_priority_policy_pair,
+            "is_compiler_ambiguity_bundle_pair": is_compiler_ambiguity_bundle_pair,
+            "ambiguity_policy_bundle": (
+                "compiler_ambiguity"
+                if is_compiler_ambiguity_bundle_pair
+                else None
+            ),
             "predicted_family": compiled_primary_family,
             "predicted_margin_to_runner_up_raw": family_margin,
             "predicted_margin_to_runner_up": family_margin_display,

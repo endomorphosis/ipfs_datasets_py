@@ -137,6 +137,21 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
 )
 
+COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.DYNAMIC.value,
+    ),
+    (
+        ModalLogicFamily.DEONTIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+)
+
 ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.EPISTEMIC.value,
@@ -805,6 +820,19 @@ def is_compiler_required_adaptive_ambiguity_pair(
     ) in COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
 
 
+def is_compiler_ambiguity_policy_pair(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> bool:
+    """Return whether a pair is part of the compiler_ambiguity synthesis bundle."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(target_family)
+    return (
+        resolved_predicted_family,
+        resolved_target_family,
+    ) in COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
+
+
 def is_priority_signal_free_adaptive_ambiguity_pair(
     predicted_family: ModalLogicFamily | str,
     target_family: ModalLogicFamily | str,
@@ -846,7 +874,9 @@ DEFAULT_MODAL_REGISTRY = ModalRegistry()
 __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
+    "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
+    "is_compiler_ambiguity_policy_pair",
     "ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "compiler_required_adaptive_ambiguity_targets",
     "is_compiler_required_adaptive_ambiguity_pair",

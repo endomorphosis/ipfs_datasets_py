@@ -6,9 +6,11 @@ import json
 
 import ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry as modal_registry
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
     COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
+    is_compiler_ambiguity_policy_pair,
     is_compiler_required_adaptive_ambiguity_pair,
     ModalLogicFamily,
     ModalRegistry,
@@ -263,6 +265,18 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "frame",
         "temporal",
     )
+
+
+def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None:
+    assert set(COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS) == {
+        ("deontic", "dynamic"),
+        ("deontic", "temporal"),
+        ("frame", "deontic"),
+    }
+    assert is_compiler_ambiguity_policy_pair("deontic", "dynamic") is True
+    assert is_compiler_ambiguity_policy_pair("deontic", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("deontic", "frame") is False
     assert is_compiler_required_adaptive_ambiguity_pair(
         "frame",
         "conditional_normative",

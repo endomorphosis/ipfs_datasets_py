@@ -240,6 +240,15 @@ def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() 
         predicted_family=ModalLogicFamily.DEONTIC.value,
         target_family=ModalLogicFamily.TEMPORAL.value,
     )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in temporal_result.ambiguities
+    )
 
 
 def test_compiler_emits_explicit_deontic_to_conditional_normative_adaptive_pair() -> None:
@@ -448,6 +457,15 @@ def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
         predicted_family=ModalLogicFamily.DEONTIC.value,
         target_family=ModalLogicFamily.DYNAMIC.value,
     )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DYNAMIC.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in result.ambiguities
+    )
 
 
 def test_compiler_emits_explicit_pair_from_adaptive_logits_disagreement() -> None:
@@ -556,6 +574,17 @@ def test_compiler_preserves_frame_to_conditional_and_deontic_pairs_from_compiled
         predicted_family=ModalLogicFamily.FRAME.value,
         target_family=ModalLogicFamily.DEONTIC.value,
         predicted_family_source="compiled_primary_family",
+    )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "compiled_primary_family"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in result.ambiguities
     )
 
 
