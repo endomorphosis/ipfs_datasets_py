@@ -8,6 +8,9 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import bu
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import AdaptiveModalAutoencoder
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
+    _apply_competing_scope_backfill,
+    _apply_frame_competing_scope_soft_cap,
+    _scope_signal_family_logit_boosts,
     SpaCyLegalEncoder,
     SpaCyModalCodec,
     SpaCyModalDecoder,
@@ -1586,6 +1589,57 @@ def test_spacy_decoder_soft_caps_repeated_frame_logits_for_conditional_competiti
     assert (
         competing_logits["conditional_normative"]
         > baseline_logits["conditional_normative"]
+    )
+
+
+def test_spacy_frame_soft_cap_treats_strong_epistemic_scope_as_competing_signal() -> None:
+    counts = {
+        "frame": 4.0,
+        "epistemic": 0.0,
+    }
+    signals = {
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+    }
+
+    _apply_frame_competing_scope_soft_cap(counts, signals)
+
+    assert counts["frame"] < 4.0
+
+
+def test_spacy_frame_backfill_strengthens_existing_low_epistemic_weight() -> None:
+    counts = {
+        "frame": 0.6,
+        "epistemic": 0.12,
+    }
+    signals = {
+        "has_epistemic_scope": True,
+    }
+
+    _apply_competing_scope_backfill(counts, signals)
+
+    assert counts["epistemic"] > 0.12
+
+
+def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
+    base_signals = {
+        "has_temporal_scope": True,
+        "has_calendar_date_scope": True,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+    }
+    cue_competing_signals = {
+        **base_signals,
+        "has_deontic_cue": True,
+    }
+
+    base_boosts = _scope_signal_family_logit_boosts(base_signals)
+    cue_competing_boosts = _scope_signal_family_logit_boosts(cue_competing_signals)
+
+    assert (
+        cue_competing_boosts["temporal"]
+        > base_boosts["temporal"]
     )
 
 

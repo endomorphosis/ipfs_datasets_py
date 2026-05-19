@@ -1642,11 +1642,24 @@ def _apply_frame_competing_scope_soft_cap(
             or bool(signals.get("has_deontic_scope_phrase"))
         )
     )
+    has_epistemic_competition = (
+        bool(signals.get("has_epistemic_scope"))
+        or bool(signals.get("has_epistemic_cue"))
+        or float(counts.get(ModalLogicFamily.EPISTEMIC.value, 0.0)) > 0.0
+    )
+    has_strong_epistemic_competition = (
+        has_epistemic_competition
+        and (
+            bool(signals.get("has_epistemic_cue"))
+            or bool(signals.get("has_epistemic_scope_phrase"))
+        )
+    )
     if not (
         has_strong_temporal_competition
         or has_strong_conditional_competition
         or has_alethic_competition
         or has_strong_deontic_competition
+        or has_strong_epistemic_competition
     ):
         return
     frame_soft_cap = _FRAME_COMPETING_SCOPE_SOFT_CAP
@@ -1654,6 +1667,7 @@ def _apply_frame_competing_scope_soft_cap(
         has_strong_temporal_competition
         or has_strong_conditional_competition
         or has_strong_deontic_competition
+        or has_strong_epistemic_competition
     ):
         frame_soft_cap = min(
             frame_soft_cap,
@@ -2066,6 +2080,14 @@ def _apply_competing_scope_backfill(
                 temporal_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
             )
+            if bool(
+                signals.get("has_deontic_cue")
+                or signals.get("has_deontic_scope_phrase")
+            ):
+                temporal_backfill = max(
+                    temporal_backfill,
+                    _FRAME_STRONG_TEMPORAL_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,
@@ -2276,17 +2298,29 @@ def _apply_competing_scope_backfill(
         )
     if (
         frame_count >= _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
-        and epistemic_count <= 0.0
-        and bool(signals.get("has_epistemic_scope"))
+        and epistemic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_epistemic_scope")
+            or signals.get("has_epistemic_cue")
+        )
     ):
+        epistemic_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if not bool(
+            signals.get("has_epistemic_scope_phrase")
+            or signals.get("has_epistemic_cue")
+        ):
+            epistemic_backfill = _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
-            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            epistemic_backfill,
         )
     elif (
         has_moderate_frame_competition
-        and epistemic_count <= 0.0
-        and bool(signals.get("has_epistemic_scope"))
+        and epistemic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_epistemic_scope")
+            or signals.get("has_epistemic_cue")
+        )
     ):
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
@@ -2567,6 +2601,10 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             temporal_bonus += 0.2
             if has_strong_temporal_scope:
                 temporal_bonus += 0.15
+                if bool(signals.get("has_deontic_cue")) and not bool(
+                    signals.get("has_deontic_scope_phrase")
+                ):
+                    temporal_bonus += 0.15
     if has_strong_temporal_scope:
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
