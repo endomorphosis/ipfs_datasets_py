@@ -188,12 +188,22 @@ def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies
 def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pairs() -> None:
     required_pairs = set(COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS)
 
+    assert ("alethic", "temporal") in required_pairs
+    assert ("conditional_normative", "deontic") in required_pairs
     assert ("deontic", "deontic") in required_pairs
     assert ("frame", "conditional_normative") in required_pairs
     assert ("frame", "deontic") in required_pairs
+    assert ("frame", "epistemic") in required_pairs
     assert ("frame", "temporal") in required_pairs
     assert ("temporal", "conditional_normative") in required_pairs
     assert ("temporal", "deontic") in required_pairs
+    assert compiler_required_adaptive_ambiguity_targets("alethic") == (
+        "temporal",
+    )
+    assert compiler_required_adaptive_ambiguity_targets("conditional_normative") == (
+        "deontic",
+        "temporal",
+    )
     assert compiler_required_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
         "deontic",
@@ -202,6 +212,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert compiler_required_adaptive_ambiguity_targets("frame") == (
         "conditional_normative",
         "deontic",
+        "epistemic",
         "temporal",
     )
     assert compiler_required_adaptive_ambiguity_targets("temporal") == (
@@ -213,7 +224,13 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "conditional_normative",
     ) is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "deontic") is True
+    assert is_compiler_required_adaptive_ambiguity_pair("frame", "epistemic") is True
     assert is_compiler_required_adaptive_ambiguity_pair("frame", "temporal") is True
+    assert is_compiler_required_adaptive_ambiguity_pair(
+        "conditional_normative",
+        "deontic",
+    ) is True
+    assert is_compiler_required_adaptive_ambiguity_pair("alethic", "temporal") is True
     assert is_compiler_required_adaptive_ambiguity_pair(
         "temporal",
         "conditional_normative",
@@ -384,6 +401,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
         ("alethic", "deontic"),
         ("alethic", "conditional_normative"),
         ("alethic", "temporal"),
+        ("conditional_normative", "deontic"),
         ("deontic", "conditional_normative"),
         ("deontic", "deontic"),
         ("deontic", "frame"),
@@ -394,6 +412,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
         ("epistemic", "deontic"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "epistemic"),
         ("frame", "temporal"),
     )
     for predicted_family, target_family in recurrent_pairs:

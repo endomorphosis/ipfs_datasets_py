@@ -12057,6 +12057,42 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
     )
     scenarios = (
         {
+            "doc_id": "required-alethic-temporal-margin-doc",
+            "predicted_family": "alethic",
+            "predicted_system": "S5",
+            "predicted_symbol": "◇",
+            "predicted_label": "possible",
+            "target_family": "temporal",
+            "ranking": (
+                {"family": "alethic", "count": 1, "share": 0.977709660314},
+                {"family": "temporal", "count": 1, "share": 0.022290339686},
+            ),
+            "family_margin": -0.955419320628,
+            "adaptive_priority": 1.105419320628,
+            "expected_explicit_type": "adaptive_alethic_temporal_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-conditional-deontic-margin-doc",
+            "predicted_family": "conditional_normative",
+            "predicted_system": "STIT",
+            "predicted_symbol": "O_if",
+            "predicted_label": "conditional_obligation",
+            "target_family": "deontic",
+            "ranking": (
+                {"family": "conditional_normative", "count": 1, "share": 0.590486507},
+                {"family": "deontic", "count": 1, "share": 0.409513493},
+            ),
+            "family_margin": -0.180973014,
+            "adaptive_priority": 0.330973014,
+            "expected_explicit_type": (
+                "adaptive_conditional_normative_deontic_outvoted_margin_low"
+            ),
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
             "doc_id": "required-temporal-deontic-margin-doc",
             "predicted_family": "temporal",
             "predicted_system": "LTL",
@@ -12142,6 +12178,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "expected_explicit_type": (
                 "adaptive_frame_conditional_normative_outvoted_margin_low"
             ),
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-frame-epistemic-margin-doc",
+            "predicted_family": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "predicted_label": "frame",
+            "target_family": "epistemic",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 0.726803583105},
+                {"family": "epistemic", "count": 1, "share": 0.273196416896},
+            ),
+            "family_margin": -0.453607166209,
+            "adaptive_priority": 0.603607166209,
+            "expected_explicit_type": "adaptive_frame_epistemic_outvoted_margin_low",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
         },
