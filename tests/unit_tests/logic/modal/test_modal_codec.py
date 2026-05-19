@@ -9149,6 +9149,75 @@ def test_modal_codec_upgrades_generic_frame_conditional_and_temporal_backfill_fl
     assert ranking[2]["share"] == 0.269231
 
 
+def test_modal_codec_treats_powers_and_duties_as_deontic_scope_phrase() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The powers and duties of the Corporation are as provided in this section."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_deontic_scope"] is True
+    assert signals["has_deontic_scope_phrase"] is True
+
+
+def test_modal_codec_treats_deemed_to_as_epistemic_scope_phrase_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The Secretary deems necessary that the plan is deemed to satisfy this section."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_epistemic_scope"] is True
+    assert signals["has_epistemic_scope_phrase"] is True
+
+
+def test_modal_codec_backfills_epistemic_share_under_dense_deontic_scope() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "The agency shall and must, and shall and must, issue the order as the Secretary deems necessary."
+    )
+    ranking = ranked_modal_families(encoding)
+    shares = {row["family"]: float(row["share"]) for row in ranking}
+
+    assert shares["deontic"] > 0.0
+    assert shares["epistemic"] > 0.0
+
+
+def test_modal_codec_treats_date_of_enactment_as_temporal_scope_signal() -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+        )
+    )
+
+    encoding = compiler.encoder.encode(
+        "This authority expires on the date of enactment."
+    )
+    signals = modal_ambiguity_signals(encoding)
+
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_temporal_scope_phrase"] is True
+
+
 def test_modal_codec_marks_at_any_time_phrase_as_temporal_scope_signal() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(

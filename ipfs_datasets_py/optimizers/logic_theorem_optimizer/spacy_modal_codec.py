@@ -102,6 +102,10 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "deadline",
         "during",
         "effective",
+        "expiration",
+        "expire",
+        "expires",
+        "expiring",
         "fiscal",
         "hour",
         "hours",
@@ -139,6 +143,7 @@ _TEMPORAL_SCOPE_PHRASES = (
     "effective date",
     "effective on",
     "effective on first day",
+    "expiration of",
     "for any fiscal year",
     "for each fiscal year",
     "for that fiscal year",
@@ -153,11 +158,17 @@ _TEMPORAL_SCOPE_PHRASES = (
     "on or after",
     "period beginning on",
     "period ending on",
+    "date of enactment",
+    "on the date of enactment",
     "while pending",
 )
 _EPISTEMIC_SCOPE_TOKENS = frozenset(
     {
         "aware",
+        "deem",
+        "deemed",
+        "deeming",
+        "deems",
         "determine",
         "determined",
         "determines",
@@ -174,10 +185,14 @@ _EPISTEMIC_SCOPE_TOKENS = frozenset(
     }
 )
 _EPISTEMIC_SCOPE_PHRASES = (
+    "are deemed",
+    "deemed to",
+    "deems necessary",
     "finding that",
     "findings that",
     "has reason to believe",
     "has reason to know",
+    "is deemed",
     "knowledge of",
     "reason to believe",
 )
@@ -467,6 +482,7 @@ _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 3.0
+_DEONTIC_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER = 2.0
 _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.35
@@ -545,7 +561,10 @@ _DEONTIC_SCOPE_PHRASES = (
     "is guilty of",
     "has a duty to",
     "have a duty to",
+    "duty of",
     "liability for",
+    "powers and duties",
+    "powers or duties",
     "prohibition of",
     "prohibition on",
     "requirement that",
@@ -1931,6 +1950,32 @@ def _apply_competing_scope_backfill(
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,
+        )
+    if (
+        deontic_count >= _DEONTIC_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
+        and epistemic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and bool(
+            signals.get("has_epistemic_scope")
+            or signals.get("has_epistemic_cue")
+        )
+    ):
+        epistemic_backfill = max(
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _scaled_competing_scope_backfill(
+                source_count=deontic_count,
+                ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                maximum=_STATUTORY_GENERIC_FRAME_EPISTEMIC_SCOPE_MAX,
+            ),
+        )
+        if bool(signals.get("has_epistemic_scope_phrase")):
+            epistemic_backfill = max(
+                epistemic_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[epistemic_family] = max(
+            float(counts.get(epistemic_family, 0.0)),
+            epistemic_backfill,
         )
     if (
         temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
