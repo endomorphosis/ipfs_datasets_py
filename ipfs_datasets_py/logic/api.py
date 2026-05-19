@@ -33,6 +33,18 @@ if BeartypeDecorHintPep585DeprecationWarning is not None:
 
 from typing import Any, Optional
 
+# Lightweight topology/introspection helpers
+from .submodule_registry import (
+	LogicSubmoduleSpec,
+	logic_integration_manifest,
+	logic_optimizer_scope_for_component,
+	logic_optimizer_target_file_hints,
+	logic_submodule_import_report,
+	logic_submodule_names,
+	logic_submodule_spec,
+	logic_submodule_specs,
+)
+
 # Core converters
 from .fol import FOLConverter, convert_text_to_fol
 from .deontic import DeonticConverter, convert_legal_text_to_deontic
@@ -299,6 +311,15 @@ __all__ = [
 	"FOLFormula",
 	"FOLConversionResult",
 	"PredicateExtraction",
+	# Logic submodule topology
+	"LogicSubmoduleSpec",
+	"logic_integration_manifest",
+	"logic_optimizer_scope_for_component",
+	"logic_optimizer_target_file_hints",
+	"logic_submodule_import_report",
+	"logic_submodule_names",
+	"logic_submodule_spec",
+	"logic_submodule_specs",
 	# NL→UCAN policy pipeline (Phase 1-3)
 	"compile_nl_to_policy",
 	"evaluate_nl_policy",

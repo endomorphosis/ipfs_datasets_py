@@ -14,6 +14,7 @@ from ipfs_datasets_py.logic.modal.synthesis import (
     ModalProgramSynthesisHint,
     synthesis_hints_from_autoencoder_introspections,
 )
+from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_scope_for_component
 
 from .legal_samples import LegalSample
 from .modal_autoencoder import AdaptiveModalAutoencoder, AutoencoderEvaluation
@@ -1821,17 +1822,7 @@ def _todo_target_component(todo: ModalTodo) -> str:
 
 def _program_synthesis_scope(*, action: str, target_component: str) -> str:
     target = target_component or PROGRAM_SYNTHESIS_ACTION_TARGETS.get(action, "")
-    if target.startswith("modal.frame_logic"):
-        return "frame_logic"
-    if target.startswith("modal.ir_decompiler"):
-        return "ir_decompiler"
-    if target.startswith("modal.compiler.ambiguity"):
-        return "compiler_ambiguity"
-    if target.startswith("modal.compiler.registry"):
-        return "compiler_registry"
-    if target.startswith("modal.compiler"):
-        return "compiler_parser"
-    return action.replace("-", "_").replace(".", "_")
+    return logic_optimizer_scope_for_component(target, action=action)
 
 
 def _sample_id_from_hint(hint: ModalProgramSynthesisHint) -> str:

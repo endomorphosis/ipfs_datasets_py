@@ -672,31 +672,42 @@ def _list_legal_scraper_daemons() -> List[Dict[str, Any]]:
         except Exception:
             continue
         # Ignore the current supervisor/watch process and other wrappers that
-        # may mention run_legal_scraper_daemon.py only as an argument string.
+        # may mention daemon entrypoints only as an argument string.
         if pid == this_pid:
             continue
         if "legal_scraper_todo_supervisor.py" in args:
             continue
         if "watch_legal_scraper_daemon.py" in args:
             continue
-        if "rg -n" in args and "run_legal_scraper_daemon.py" in args:
+        if "rg -n" in args and (
+            "run_legal_scraper_daemon.py" in args or "refresh_state_laws_corpus.py" in args
+        ):
             continue
-        if "grep" in args and "run_legal_scraper_daemon.py" in args:
+        if "grep" in args and (
+            "run_legal_scraper_daemon.py" in args or "refresh_state_laws_corpus.py" in args
+        ):
             continue
-        if "run_legal_scraper_daemon.py" in args or "processors.legal_scrapers.legal_scraper_daemon" in args:
+        if (
+            "run_legal_scraper_daemon.py" in args
+            or "processors.legal_scrapers.legal_scraper_daemon" in args
+            or "refresh_state_laws_corpus.py" in args
+        ):
             try:
                 tokens = shlex.split(args)
             except Exception:
                 tokens = args.split()
             output_dir = _extract_flag_value(tokens, "--output-dir")
+            output_root = _extract_flag_value(tokens, "--output-root")
             states = _extract_flag_value(tokens, "--states")
+            daemon_kind = "refresh_state_laws_corpus" if "refresh_state_laws_corpus.py" in args else "legal_scraper_daemon"
             daemons.append(
                 {
                     "pid": pid,
                     "args": args,
-                    "output_dir": _norm_path(output_dir),
+                    "output_dir": _norm_path(output_dir or output_root),
                     "states": _normalize_states(states.split(",")) if states else [],
                     "include_dc": "--include-dc" in tokens,
+                    "daemon_kind": daemon_kind,
                 }
             )
     return sorted(daemons, key=lambda row: int(row.get("pid") or 0))
@@ -775,13 +786,27 @@ def _compute_samples_rate_per_minute(samples: List[Tuple[float, int]], *, now: f
 
 
 def _load_state_refresh_progress_payload(output_dir: Path, phase_path: Optional[Path]) -> Tuple[Dict[str, Any], Optional[Path]]:
-    cycle_dir = phase_path.parent if phase_path is not None else (output_dir / "cycles")
-    if not cycle_dir.exists():
-        return {}, None
-    progress_path = cycle_dir / "state_laws_refresh" / "state_refresh_progress.json"
-    if not progress_path.exists():
-        return {}, None
-    return _read_json(progress_path), progress_path
+    candidates: List[Path] = []
+    if phase_path is not None:
+        candidates.append(phase_path.parent / "state_laws_refresh" / "state_refresh_progress.json")
+    # Direct refresh_state_laws_corpus runs typically write progress directly
+    # under the output root without creating daemon phase artifacts.
+    candidates.extend(
+        [
+            output_dir / "state_refresh_progress.json",
+            output_dir / "state_laws_refresh" / "state_refresh_progress.json",
+            output_dir / "cycles" / "state_laws_refresh" / "state_refresh_progress.json",
+        ]
+    )
+    seen: set[str] = set()
+    for path in candidates:
+        key = str(path)
+        if key in seen:
+            continue
+        seen.add(key)
+        if path.exists():
+            return _read_json(path), path
+    return {}, None
 
 
 def _collect_state_rate_analytics(
@@ -797,6 +822,11 @@ def _collect_state_rate_analytics(
 ) -> Dict[str, Any]:
     progress_payload, progress_path = _load_state_refresh_progress_payload(output_dir, phase_path)
     progress_state_results = progress_payload.get("state_results") if isinstance(progress_payload.get("state_results"), dict) else {}
+    progress_states = _normalize_states(
+        progress_payload.get("active_states")
+        or progress_payload.get("states")
+        or []
+    )
     progress_started_epoch = _safe_iso_to_epoch(progress_payload.get("started_at"))
     completed_states = {
         str(code).upper()
@@ -873,7 +903,7 @@ def _collect_state_rate_analytics(
             row["scraped_event_count"] = int(row.get("scraped_event_count", 0)) + 1
             row["scraped_event_max"] = max(int(row.get("scraped_event_max", 0)), _safe_int(scraped_match.group(1), 0))
 
-    all_states = _normalize_states(states) or sorted(log_data.keys())
+    all_states = _normalize_states(states) or progress_states or sorted(log_data.keys())
     state_rows: List[Dict[str, Any]] = []
     started_states: List[str] = []
     completed_from_progress: List[str] = []
@@ -983,6 +1013,8 @@ def _collect_state_rate_analytics(
         "rate_window_seconds": max(60.0, float(rate_window_seconds)),
         "state_stall_seconds": max(300.0, float(state_stall_seconds)),
         "progress_path": str(progress_path) if progress_path else "",
+        "progress_status": str(progress_payload.get("status") or ""),
+        "progress_updated_at": str(progress_payload.get("updated_at") or ""),
         "states_total": len(all_states),
         "states_started_count": len(started_states),
         "states_completed_count": len(completed_from_progress),
@@ -1074,10 +1106,28 @@ def _collect_parallel_watch_payload(
         shard_pid = _safe_int(daemon_row.get("pid"), 0) or None
         pid_alive = _pid_alive(shard_pid) if shard_pid else None
 
-        if not phase_path:
-            shard_status = "missing_phase"
-        elif shard_pid and pid_alive is False:
+        state_rate_analytics = _collect_state_rate_analytics(
+            shard_name=shard_name,
+            states=states,
+            log_path=run_dir / "logs" / f"{shard_name}.log",
+            output_dir=output_dir,
+            phase_path=phase_path,
+            now_epoch=now,
+            rate_window_seconds=max(60.0, float(state_rate_window_seconds)),
+            state_stall_seconds=max(300.0, float(state_stall_seconds)),
+        )
+        progress_path_text = str(state_rate_analytics.get("progress_path") or "").strip()
+
+        if shard_pid and pid_alive is False:
             shard_status = "dead_pid"
+        elif not phase_path and progress_path_text:
+            shard_status = "running"
+            if not phase_status:
+                phase_status = str(state_rate_analytics.get("progress_status") or "running")
+            if not updated_at:
+                updated_at = str(state_rate_analytics.get("progress_updated_at") or "")
+        elif not phase_path:
+            shard_status = "missing_phase"
         elif heartbeat_age is not None and heartbeat_age > stale_after_seconds:
             shard_status = "stale"
         elif phase_status.lower() in {"success", "complete"}:
@@ -1101,16 +1151,6 @@ def _collect_parallel_watch_payload(
                 "pid_alive": pid_alive,
                 "states": states,
             }
-        )
-        state_rate_analytics = _collect_state_rate_analytics(
-            shard_name=shard_name,
-            states=states,
-            log_path=run_dir / "logs" / f"{shard_name}.log",
-            output_dir=output_dir,
-            phase_path=phase_path,
-            now_epoch=now,
-            rate_window_seconds=max(60.0, float(state_rate_window_seconds)),
-            state_stall_seconds=max(300.0, float(state_stall_seconds)),
         )
         shards[-1]["state_rate_analytics"] = state_rate_analytics
         low_confidence_inactive_state_count += _safe_int(

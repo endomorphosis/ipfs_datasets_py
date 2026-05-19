@@ -29,6 +29,10 @@ from ipfs_datasets_py.logic.modal import (
     DeterministicModalLogicCodec,
     ModalLogicCodecConfig,
 )
+from ipfs_datasets_py.logic.submodule_registry import (
+    logic_optimizer_target_file_hints,
+    logic_submodule_specs,
+)
 from ipfs_datasets_py.optimizers.agentic.patch_control import PatchManager, WorktreeManager
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     AdaptiveModalAutoencoder,
@@ -60,16 +64,31 @@ LAW_COLUMNS = [
     "normalized_citation",
 ]
 
-CODEX_AST_SCOPES = (
-    "compiler_parser",
-    "compiler_registry",
-    "compiler_ambiguity",
-    "ir_decompiler",
-    "frame_logic",
+CODEX_AST_SCOPES = tuple(
+    dict.fromkeys(
+        scope
+        for scope in (
+            "compiler_parser",
+            "compiler_registry",
+            "compiler_ambiguity",
+            "ir_decompiler",
+            "frame_logic",
+            *(
+                spec.ast_scope
+                for spec in logic_submodule_specs()
+                if spec.ast_scope
+            ),
+        )
+        if scope
+    )
 )
 
 
 CODEX_TARGET_FILE_HINTS = {
+    key: list(value)
+    for key, value in logic_optimizer_target_file_hints().items()
+}
+CODEX_TARGET_FILE_HINTS.update({
     "modal.compiler": [
         "ipfs_datasets_py/logic/modal/compiler.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
@@ -95,7 +114,7 @@ CODEX_TARGET_FILE_HINTS = {
         "ipfs_datasets_py/logic/modal/decompiler.py",
         "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_ir.py",
     ],
-}
+})
 
 CODEX_ACTION_FILE_HINTS = {
     "add_deterministic_parser_rule": [

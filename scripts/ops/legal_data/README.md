@@ -225,6 +225,14 @@ Notes:
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --min-records 20`
 	`python3 scripts/ops/legal_data/check_state_law_coverage.py --states AL,CT,GA,NM --min-records 5`
+- `refresh_state_laws_corpus.py` now keeps a persistent completed-state registry
+	at `<output_root>/state_laws_completed_states.json` (default:
+	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json`), and skips
+	those states on later runs unless `--no-skip-completed-states` is set.
+	Examples:
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --no-skip-completed-states --json`
+	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-registry /tmp/state_laws_completed_states.json --json`
 - `refresh_state_jsonld_quality.py` now emits structured JSON even on failures
 	(interrupt/exception) so loop wrappers can persist diagnostics to `*.refresh.json`.
 	Exit codes: `0` success, `1` generic error, `130` interrupt.

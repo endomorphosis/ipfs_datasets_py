@@ -423,6 +423,135 @@ def test_refresh_state_laws_corpus_preserves_bounded_scrape_env(tmp_path, monkey
     assert __import__("os").environ.get("STATE_SCRAPER_FULL_CORPUS") == "0"
 
 
+def test_refresh_state_laws_corpus_dry_run_skips_completed_states_from_registry(tmp_path):
+    registry_path = tmp_path / "state_laws_completed_states.json"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "schema": "ipfs_datasets_py.state_laws_refresh.completed_states.v1",
+                "updated_at": "2026-05-19T00:00:00+00:00",
+                "states": {
+                    "MN": {
+                        "status": "success",
+                        "statutes_count": 100,
+                        "completed_at": "2026-05-18T00:00:00+00:00",
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    args = argparse.Namespace(
+        states="MN,WI",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=False,
+        max_statutes=0,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=True,
+        json=True,
+        completed_states_registry=str(registry_path),
+        skip_completed_states=True,
+        persist_completed_states_registry=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "dry_run"
+    assert result["plan"]["requested_states"] == ["MN", "WI"]
+    assert result["plan"]["states"] == ["WI"]
+    assert result["plan"]["skipped_completed_states"] == ["MN"]
+
+
+def test_refresh_state_laws_corpus_persists_completed_states_registry(tmp_path, monkeypatch):
+    registry_path = tmp_path / "state_laws_completed_states.json"
+
+    async def _fake_scrape_state_laws(**kwargs):
+        callback = kwargs["state_completion_callback"]
+        await callback(
+            {
+                "state_code": "WI",
+                "state_name": "Wisconsin",
+                "statutes_count": 1,
+                "statute_data": {"state_name": "Wisconsin", "statutes": [{"id": "WI-1"}]},
+            }
+        )
+        return {"status": "success", "data": [], "metadata": {"coverage_summary": {"coverage_gap_states": []}}}
+
+    monkeypatch.setattr(refresh_state_laws_corpus, "scrape_state_laws", _fake_scrape_state_laws)
+    monkeypatch.setattr(
+        refresh_state_laws_corpus,
+        "build_state_laws_parquet_artifacts",
+        lambda **kwargs: {
+            "status": "success",
+            "states": ["WI"],
+            "state_count": 1,
+            "missing_jsonld_states": [],
+            "combined_row_count": 1,
+        },
+    )
+
+    args = argparse.Namespace(
+        states="WI",
+        include_dc=False,
+        output_root=str(tmp_path),
+        jsonld_dir="",
+        parquet_dir="",
+        scrape=True,
+        max_statutes=1,
+        rate_limit_delay=0.0,
+        parallel_workers=1,
+        per_state_retry_attempts=0,
+        per_state_timeout_seconds=1.0,
+        strict_full_text=False,
+        min_full_text_chars=300,
+        no_hydrate_statute_text=False,
+        allow_justia_fallback=False,
+        no_merge_existing_local=False,
+        merge_hf_existing=False,
+        publish_to_hf=False,
+        allow_incomplete_publish=False,
+        repo_id="justicedao/ipfs_state_laws",
+        hf_token="",
+        create_repo=False,
+        verify=False,
+        commit_message="test",
+        dry_run=False,
+        json=True,
+        completed_states_registry=str(registry_path),
+        skip_completed_states=True,
+        persist_completed_states_registry=True,
+    )
+
+    result = asyncio.run(refresh_state_laws_corpus.refresh_state_laws_corpus(args))
+
+    assert result["status"] == "success"
+    assert registry_path.exists()
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    wi_entry = registry.get("states", {}).get("WI", {})
+    assert wi_entry.get("status") == "success"
+    assert int(wi_entry.get("statutes_count") or 0) == 1
+
+
 def test_all_state_jurisdictions_have_registered_scrapers():
     registered = set(StateScraperRegistry.get_all_registered_states())
 

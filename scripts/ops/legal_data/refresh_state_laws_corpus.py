@@ -54,6 +54,173 @@ STATE_CODES_50: List[str] = [
 ]
 
 _CORPUS = get_canonical_legal_corpus("state_laws")
+_COMPLETED_STATES_SCHEMA = "ipfs_datasets_py.state_laws_refresh.completed_states.v1"
+_COMPLETE_STATE_STATUSES = {"success", "zero_statutes"}
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _default_completed_states_registry_path(output_root: Path) -> Path:
+    return output_root / "state_laws_completed_states.json"
+
+
+def _empty_completed_states_registry() -> Dict[str, Any]:
+    return {
+        "schema": _COMPLETED_STATES_SCHEMA,
+        "updated_at": "",
+        "states": {},
+    }
+
+
+def _normalize_completed_states_registry(payload: Any) -> Dict[str, Any]:
+    normalized = _empty_completed_states_registry()
+    if not isinstance(payload, Mapping):
+        return normalized
+
+    allowed_states = set(US_STATES)
+    raw_states = payload.get("states")
+    if not isinstance(raw_states, Mapping):
+        raw_states = {}
+
+    normalized_states: Dict[str, Dict[str, Any]] = {}
+    for raw_code, raw_entry in raw_states.items():
+        state_code = str(raw_code or "").strip().upper()
+        if not state_code or state_code not in allowed_states:
+            continue
+        if not isinstance(raw_entry, Mapping):
+            continue
+        status = str(raw_entry.get("status") or "").strip().lower()
+        if status not in _COMPLETE_STATE_STATUSES:
+            continue
+        entry: Dict[str, Any] = {"status": status}
+        completed_at = str(raw_entry.get("completed_at") or "").strip()
+        if completed_at:
+            entry["completed_at"] = completed_at
+        first_completed_at = str(raw_entry.get("first_completed_at") or "").strip()
+        if first_completed_at:
+            entry["first_completed_at"] = first_completed_at
+        updated_at = str(raw_entry.get("updated_at") or "").strip()
+        if updated_at:
+            entry["updated_at"] = updated_at
+        try:
+            statutes_count = int(raw_entry.get("statutes_count") or 0)
+        except Exception:
+            statutes_count = 0
+        entry["statutes_count"] = statutes_count
+        for key in ("output_root", "source_progress_path"):
+            value = str(raw_entry.get(key) or "").strip()
+            if value:
+                entry[key] = value
+        normalized_states[state_code] = entry
+
+    normalized["states"] = dict(sorted(normalized_states.items()))
+    normalized["updated_at"] = str(payload.get("updated_at") or "").strip()
+    return normalized
+
+
+def _load_completed_states_registry(path: Path) -> Dict[str, Any]:
+    if not path.exists():
+        return _empty_completed_states_registry()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return _empty_completed_states_registry()
+    return _normalize_completed_states_registry(payload)
+
+
+def _write_completed_states_registry(path: Path, registry: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    normalized = _normalize_completed_states_registry(registry)
+    normalized["updated_at"] = _utc_now_iso()
+    path.write_text(
+        json.dumps(normalized, indent=2, sort_keys=True, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+
+
+def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]) -> List[str]:
+    entries = registry.get("states")
+    if not isinstance(entries, Mapping):
+        return []
+    skipped: List[str] = []
+    for state in states:
+        entry = entries.get(state)
+        if not isinstance(entry, Mapping):
+            continue
+        status = str(entry.get("status") or "").strip().lower()
+        if status in _COMPLETE_STATE_STATUSES:
+            skipped.append(state)
+    return skipped
+
+
+def _prefill_state_results_from_registry(
+    *,
+    states: Sequence[str],
+    registry: Mapping[str, Any],
+) -> Dict[str, Dict[str, Any]]:
+    entries = registry.get("states")
+    if not isinstance(entries, Mapping):
+        return {}
+    prefilled: Dict[str, Dict[str, Any]] = {}
+    for state in states:
+        entry = entries.get(state)
+        if not isinstance(entry, Mapping):
+            continue
+        status = str(entry.get("status") or "").strip().lower()
+        if status not in _COMPLETE_STATE_STATUSES:
+            continue
+        try:
+            statutes_count = int(entry.get("statutes_count") or 0)
+        except Exception:
+            statutes_count = 0
+        prefilled[state] = {
+            "state_code": state,
+            "status": status,
+            "statutes_count": statutes_count,
+            "completed_at": str(entry.get("completed_at") or ""),
+            "skip_reason": "already_completed_registry",
+        }
+    return prefilled
+
+
+def _merge_completed_states_registry(
+    *,
+    existing_registry: Mapping[str, Any],
+    state_results: Mapping[str, Any],
+    output_root: Path,
+    progress_path: Path,
+) -> Dict[str, Any]:
+    merged = _normalize_completed_states_registry(existing_registry)
+    states_map = dict(merged.get("states") or {})
+    now = _utc_now_iso()
+    for state_code, raw_entry in state_results.items():
+        code = str(state_code or "").strip().upper()
+        if code not in US_STATES or not isinstance(raw_entry, Mapping):
+            continue
+        status = str(raw_entry.get("status") or "").strip().lower()
+        if status not in _COMPLETE_STATE_STATUSES:
+            continue
+        prior = states_map.get(code) if isinstance(states_map.get(code), Mapping) else {}
+        try:
+            statutes_count = int(raw_entry.get("statutes_count") or 0)
+        except Exception:
+            statutes_count = 0
+        completed_at = str(raw_entry.get("completed_at") or "").strip() or now
+        entry: Dict[str, Any] = {
+            "status": status,
+            "statutes_count": statutes_count,
+            "completed_at": completed_at,
+            "first_completed_at": str(prior.get("first_completed_at") or completed_at),
+            "updated_at": now,
+            "output_root": str(output_root),
+            "source_progress_path": str(progress_path),
+        }
+        states_map[code] = entry
+    merged["states"] = dict(sorted(states_map.items()))
+    merged["updated_at"] = now
+    return merged
 
 
 def _normalize_states(value: str, *, include_dc: bool = False) -> List[str]:
@@ -605,11 +772,26 @@ def _run_full_corpus_guard_audit(*, states: Sequence[str]) -> Dict[str, Any]:
 
 
 async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
-    states = _normalize_states(args.states, include_dc=bool(args.include_dc))
+    requested_states = _normalize_states(args.states, include_dc=bool(args.include_dc))
     output_root = Path(args.output_root).expanduser().resolve() if args.output_root else _CORPUS.default_local_root()
     jsonld_dir = Path(args.jsonld_dir).expanduser().resolve() if args.jsonld_dir else _CORPUS.jsonld_dir(str(output_root))
     parquet_dir = Path(args.parquet_dir).expanduser().resolve() if args.parquet_dir else _CORPUS.parquet_dir(str(output_root))
     repo_id = str(args.repo_id or _CORPUS.hf_dataset_id).strip()
+    completed_registry_raw = str(getattr(args, "completed_states_registry", "") or "").strip()
+    completed_states_registry_path = (
+        Path(completed_registry_raw).expanduser().resolve()
+        if completed_registry_raw
+        else _default_completed_states_registry_path(output_root)
+    )
+    skip_completed_states = bool(getattr(args, "skip_completed_states", True))
+    persist_completed_states_registry = bool(getattr(args, "persist_completed_states_registry", True))
+    completed_states_registry = _load_completed_states_registry(completed_states_registry_path)
+    skipped_completed_states = (
+        _completed_states_to_skip(requested_states, completed_states_registry)
+        if skip_completed_states
+        else []
+    )
+    states = [state for state in requested_states if state not in set(skipped_completed_states)]
     needs_hf_token = bool(args.merge_hf_existing or args.publish_to_hf or args.verify)
     hf_token = (
         _resolve_hf_token(str(args.hf_token or "").strip() or None)
@@ -618,8 +800,15 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     )
 
     plan = {
+        "requested_states": requested_states,
+        "requested_state_count": len(requested_states),
         "states": states,
         "state_count": len(states),
+        "skipped_completed_states": skipped_completed_states,
+        "skipped_completed_count": len(skipped_completed_states),
+        "skip_completed_states": skip_completed_states,
+        "completed_states_registry_path": str(completed_states_registry_path),
+        "persist_completed_states_registry": persist_completed_states_registry,
         "scrape": bool(args.scrape),
         "jsonld_dir": str(jsonld_dir),
         "parquet_dir": str(parquet_dir),
@@ -635,18 +824,22 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
     startup_stale_sync = bool(getattr(args, "startup_stale_sync", bool(args.scrape)))
     incremental_state_publish = bool(getattr(args, "incremental_state_publish", bool(args.scrape)))
 
-    def _utc_now() -> str:
-        return datetime.now(timezone.utc).isoformat()
-
     progress_path = output_root / "state_refresh_progress.json"
+    prefilled_state_results = _prefill_state_results_from_registry(
+        states=skipped_completed_states,
+        registry=completed_states_registry,
+    )
     progress_state: Dict[str, Any] = {
         "schema": "ipfs_datasets_py.state_laws_refresh.progress.v1",
         "status": "running",
-        "started_at": _utc_now(),
-        "updated_at": _utc_now(),
-        "states": states,
-        "states_total": len(states),
-        "state_results": {},
+        "started_at": _utc_now_iso(),
+        "updated_at": _utc_now_iso(),
+        "states": requested_states,
+        "active_states": states,
+        "states_total": len(requested_states),
+        "active_states_total": len(states),
+        "skipped_completed_states": skipped_completed_states,
+        "state_results": prefilled_state_results,
         "states_completed": [],
         "completed_count": 0,
         "success_count": 0,
@@ -656,7 +849,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
 
     def _recompute_progress_counts() -> None:
         results = progress_state.get("state_results") if isinstance(progress_state.get("state_results"), dict) else {}
-        completed_states = [state for state in states if state in results]
+        completed_states = [state for state in requested_states if state in results]
         success_count = 0
         error_count = 0
         zero_statute_count = 0
@@ -674,7 +867,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         progress_state["success_count"] = success_count
         progress_state["error_count"] = error_count
         progress_state["zero_statute_count"] = zero_statute_count
-        progress_state["updated_at"] = _utc_now()
+        progress_state["updated_at"] = _utc_now_iso()
 
     def _write_progress_state() -> None:
         progress_path.parent.mkdir(parents=True, exist_ok=True)
@@ -683,14 +876,31 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
             encoding="utf-8",
         )
 
+    def _write_completed_states_registry_snapshot() -> None:
+        nonlocal completed_states_registry
+        if not persist_completed_states_registry:
+            return
+        state_results = progress_state.get("state_results")
+        if not isinstance(state_results, Mapping):
+            return
+        completed_states_registry = _merge_completed_states_registry(
+            existing_registry=completed_states_registry,
+            state_results=state_results,
+            output_root=output_root,
+            progress_path=progress_path,
+        )
+        _write_completed_states_registry(completed_states_registry_path, completed_states_registry)
+
+    _recompute_progress_counts()
     _write_progress_state()
+    _write_completed_states_registry_snapshot()
 
     if publish_to_hf and startup_stale_sync:
         # Reconcile stale HF state shards before the long scrape starts, but do
         # it one state at a time so a large local corpus does not have to be
         # loaded into a combined in-memory table.
         startup_sync_result = _build_and_sync_stale_local_state_shards_to_hf(
-            states=states,
+            states=requested_states,
             jsonld_dir=jsonld_dir,
             parquet_dir=parquet_dir,
             merge_existing_local=not bool(args.no_merge_existing_local),
@@ -720,7 +930,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     "state_name": state_name,
                     "status": state_status,
                     "statutes_count": statutes_count,
-                    "completed_at": _utc_now(),
+                    "completed_at": _utc_now_iso(),
                 }
                 if error_text:
                     state_entry["error"] = error_text
@@ -729,6 +939,7 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     results[state_code] = state_entry
                 _recompute_progress_counts()
                 _write_progress_state()
+                _write_completed_states_registry_snapshot()
 
             if not publish_to_hf or not incremental_state_publish:
                 return
@@ -775,9 +986,10 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 state_result_entry = progress_state.get("state_results", {}).get(state_code) if isinstance(progress_state.get("state_results"), dict) else None
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "success"
-                    state_result_entry["incremental_publish_at"] = _utc_now()
+                    state_result_entry["incremental_publish_at"] = _utc_now_iso()
                     _recompute_progress_counts()
                     _write_progress_state()
+                    _write_completed_states_registry_snapshot()
                 print(f"[state_laws_refresh] incremental_publish state={state_code} stage=done", flush=True)
             except Exception as exc:
                 incremental_publish_results.append(
@@ -793,67 +1005,76 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 if isinstance(state_result_entry, dict):
                     state_result_entry["incremental_publish_status"] = "error"
                     state_result_entry["incremental_publish_error"] = str(exc)
-                    state_result_entry["incremental_publish_at"] = _utc_now()
+                    state_result_entry["incremental_publish_at"] = _utc_now_iso()
                     _recompute_progress_counts()
                     _write_progress_state()
+                    _write_completed_states_registry_snapshot()
 
     scrape_result: Dict[str, Any] | None = None
     full_corpus_guard_audit: Dict[str, Any] | None = None
     if args.scrape:
-        scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
-        if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
-            full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
-            if str(full_corpus_guard_audit.get("status")) != "pass":
-                return {
-                    "status": "failed_preflight",
-                    "reason": "full_corpus_guard_audit_failed",
-                    "plan": plan,
-                    "full_corpus_guard_audit": full_corpus_guard_audit,
-                }
-        previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
-        previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
-        if scrape_max_statutes is None:
-            # Several state scrapers intentionally keep normal probes bounded
-            # unless this flag is set.  Treat an uncapped refresh as an
-            # explicit full-corpus scrape so the daemon cannot silently publish
-            # sample-sized state shards.
-            os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
-            os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
-        try:
-            scrape_result = await scrape_state_laws(
-                states=states,
-                legal_areas=None,
-                output_format="json",
-                include_metadata=True,
-                rate_limit_delay=float(args.rate_limit_delay),
-                max_statutes=scrape_max_statutes,
-                use_state_specific_scrapers=True,
-                allow_justia_fallback=bool(args.allow_justia_fallback),
-                output_dir=str(output_root),
-                write_jsonld=True,
-                strict_full_text=bool(args.strict_full_text),
-                min_full_text_chars=int(args.min_full_text_chars),
-                hydrate_statute_text=not bool(args.no_hydrate_statute_text),
-                parallel_workers=int(args.parallel_workers),
-                per_state_retry_attempts=int(args.per_state_retry_attempts),
-                retry_zero_statute_states=True,
-                per_state_timeout_seconds=float(args.per_state_timeout_seconds),
-                state_completion_callback=_on_state_complete,
-                retain_state_data=not bool(publish_to_hf and incremental_state_publish),
-            )
-        finally:
+        if not states:
+            scrape_result = {
+                "status": "skipped",
+                "reason": "all_requested_states_already_completed",
+                "requested_states": requested_states,
+                "skipped_completed_states": skipped_completed_states,
+            }
+        else:
+            scrape_max_statutes = int(args.max_statutes) if int(args.max_statutes or 0) > 0 else None
+            if scrape_max_statutes is None and not bool(getattr(args, "skip_full_corpus_guard_audit", False)):
+                full_corpus_guard_audit = _run_full_corpus_guard_audit(states=states)
+                if str(full_corpus_guard_audit.get("status")) != "pass":
+                    return {
+                        "status": "failed_preflight",
+                        "reason": "full_corpus_guard_audit_failed",
+                        "plan": plan,
+                        "full_corpus_guard_audit": full_corpus_guard_audit,
+                    }
+            previous_full_corpus_env = os.environ.get("STATE_SCRAPER_FULL_CORPUS")
+            previous_checkpoint_dir_env = os.environ.get("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR")
             if scrape_max_statutes is None:
-                if previous_full_corpus_env is None:
-                    os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
-                else:
-                    os.environ["STATE_SCRAPER_FULL_CORPUS"] = previous_full_corpus_env
-                if previous_checkpoint_dir_env is None:
-                    os.environ.pop("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", None)
-                else:
-                    os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
+                # Several state scrapers intentionally keep normal probes bounded
+                # unless this flag is set.  Treat an uncapped refresh as an
+                # explicit full-corpus scrape so the daemon cannot silently publish
+                # sample-sized state shards.
+                os.environ["STATE_SCRAPER_FULL_CORPUS"] = "1"
+                os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = str(output_root / "partial_checkpoints")
+            try:
+                scrape_result = await scrape_state_laws(
+                    states=states,
+                    legal_areas=None,
+                    output_format="json",
+                    include_metadata=True,
+                    rate_limit_delay=float(args.rate_limit_delay),
+                    max_statutes=scrape_max_statutes,
+                    use_state_specific_scrapers=True,
+                    allow_justia_fallback=bool(args.allow_justia_fallback),
+                    output_dir=str(output_root),
+                    write_jsonld=True,
+                    strict_full_text=bool(args.strict_full_text),
+                    min_full_text_chars=int(args.min_full_text_chars),
+                    hydrate_statute_text=not bool(args.no_hydrate_statute_text),
+                    parallel_workers=int(args.parallel_workers),
+                    per_state_retry_attempts=int(args.per_state_retry_attempts),
+                    retry_zero_statute_states=True,
+                    per_state_timeout_seconds=float(args.per_state_timeout_seconds),
+                    state_completion_callback=_on_state_complete,
+                    retain_state_data=not bool(publish_to_hf and incremental_state_publish),
+                )
+            finally:
+                if scrape_max_statutes is None:
+                    if previous_full_corpus_env is None:
+                        os.environ.pop("STATE_SCRAPER_FULL_CORPUS", None)
+                    else:
+                        os.environ["STATE_SCRAPER_FULL_CORPUS"] = previous_full_corpus_env
+                    if previous_checkpoint_dir_env is None:
+                        os.environ.pop("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", None)
+                    else:
+                        os.environ["STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR"] = previous_checkpoint_dir_env
 
     build_result = build_state_laws_parquet_artifacts(
-        states=states,
+        states=requested_states,
         jsonld_dir=jsonld_dir,
         parquet_dir=parquet_dir,
         merge_existing_local=not bool(args.no_merge_existing_local),
@@ -888,12 +1109,19 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         }
 
     progress_state["status"] = "success" if is_complete else "partial_success"
-    progress_state["finished_at"] = _utc_now()
+    progress_state["finished_at"] = _utc_now_iso()
     progress_state["scrape_gap_states"] = list(scrape_gaps)
     progress_state["build_gap_states"] = list(build_gaps)
     progress_state["is_complete"] = bool(is_complete)
     _recompute_progress_counts()
     _write_progress_state()
+    _write_completed_states_registry_snapshot()
+
+    completed_registry_states = (
+        completed_states_registry.get("states")
+        if isinstance(completed_states_registry.get("states"), Mapping)
+        else {}
+    )
 
     return {
         "status": "success" if is_complete else "partial_success",
@@ -912,6 +1140,12 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
         "publish": publish_result,
         "scrape_gap_states": scrape_gaps,
         "build_gap_states": build_gaps,
+        "completed_states_registry": {
+            "path": str(completed_states_registry_path),
+            "persisted": bool(persist_completed_states_registry),
+            "completed_state_count": len(completed_registry_states),
+            "skipped_completed_states": skipped_completed_states,
+        },
     }
 
 
@@ -935,6 +1169,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-merge-existing-local", action="store_true")
     parser.add_argument("--merge-hf-existing", action="store_true", help="Download and merge existing HF state parquet shards")
     parser.add_argument("--publish-to-hf", action="store_true")
+    parser.add_argument(
+        "--completed-states-registry",
+        default="",
+        help="Path to persistent completed-state registry JSON (default: <output_root>/state_laws_completed_states.json).",
+    )
+    parser.add_argument(
+        "--no-skip-completed-states",
+        dest="skip_completed_states",
+        action="store_false",
+        default=True,
+        help="Do not skip states already marked complete in the completed-state registry.",
+    )
+    parser.add_argument(
+        "--no-persist-completed-states-registry",
+        dest="persist_completed_states_registry",
+        action="store_false",
+        default=True,
+        help="Do not update the completed-state registry for this run.",
+    )
     parser.add_argument(
         "--no-startup-stale-sync",
         dest="startup_stale_sync",

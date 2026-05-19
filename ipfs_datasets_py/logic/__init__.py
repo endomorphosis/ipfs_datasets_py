@@ -16,6 +16,7 @@ Use integration/ or module-specific imports instead.
 """
 
 from __future__ import annotations
+import importlib
 import warnings
 
 
@@ -34,7 +35,46 @@ if BeartypeDecorHintPep585DeprecationWarning is not None:
         category=BeartypeDecorHintPep585DeprecationWarning,  # type: ignore[arg-type]
     )
 
-__all__ = ["api", "integrations", "tools", "integration", "cli", "flogic", "modal"]
+_SUBMODULE_EXPORTS = {
+    "api",
+    "batch_processing",
+    "benchmarks",
+    "CEC",
+    "cli",
+    "common",
+    "config",
+    "deontic",
+    "e2e_validation",
+    "external_provers",
+    "flogic",
+    "flogic_optimizer",
+    "fol",
+    "integration",
+    "integrations",
+    "ml_confidence",
+    "modal",
+    "monitoring",
+    "observability",
+    "security",
+    "submodule_registry",
+    "TDFOL",
+    "tools",
+    "types",
+    "zkp",
+}
+
+_REGISTRY_EXPORTS = {
+    "LogicSubmoduleSpec",
+    "logic_integration_manifest",
+    "logic_optimizer_scope_for_component",
+    "logic_optimizer_target_file_hints",
+    "logic_submodule_import_report",
+    "logic_submodule_names",
+    "logic_submodule_spec",
+    "logic_submodule_specs",
+}
+
+__all__ = sorted(_SUBMODULE_EXPORTS | _REGISTRY_EXPORTS)
 
 
 def __getattr__(name):
@@ -59,16 +99,15 @@ def __getattr__(name):
         from . import integration
         return integration
 
-    if name == "api":
-        from . import api
-        return api
+    if name in _REGISTRY_EXPORTS:
+        registry = importlib.import_module(".submodule_registry", __name__)
+        value = getattr(registry, name)
+        globals()[name] = value
+        return value
 
-    if name == "cli":
-        from . import cli
-        return cli
-
-    if name == "modal":
-        from . import modal
-        return modal
+    if name in _SUBMODULE_EXPORTS:
+        module = importlib.import_module(f".{name}", __name__)
+        globals()[name] = module
+        return module
     
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
