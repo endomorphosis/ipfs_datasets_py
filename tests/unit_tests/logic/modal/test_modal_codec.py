@@ -2227,6 +2227,8 @@ def test_modal_compiler_emits_compiled_primary_self_pair_ambiguity_for_low_margi
     )
     assert compiled_primary_self.metadata["is_self_pair"] is True
     assert compiled_primary_self.metadata["adaptive_policy_pair"] == "deontic->deontic"
+    assert compiled_primary_self.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert compiled_primary_self.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert compiled_primary_self.metadata["runner_up_family"] == "temporal"
     assert compiled_primary_self.metadata["family_margin"] == -0.04
     assert compiled_primary_self.metadata["adaptive_margin_direction"] == "outvoted"
@@ -3802,6 +3804,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_temporal_conditional_ad
     )
     assert adaptive_conditional.metadata["has_target_signal_evidence"] is False
     assert adaptive_conditional.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_conditional.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_conditional.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_conditional.metadata["explicit_ambiguity_type"]
         == "adaptive_temporal_conditional_normative_outvoted_margin_low"
@@ -4779,6 +4783,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_frame_dynamic_adaptive_
     assert adaptive_dynamic.metadata["has_target_signal_evidence"] is False
     assert adaptive_dynamic.metadata["signal_free_pair_policy_applied"] is True
     assert adaptive_dynamic.metadata["is_priority_policy_pair"] is False
+    assert adaptive_dynamic.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_dynamic.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_dynamic.metadata["explicit_ambiguity_type"]
         == "adaptive_frame_dynamic_outvoted_margin_low"
@@ -5531,6 +5537,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_conditional_frame_adapt
     )
     assert adaptive_frame.metadata["has_target_signal_evidence"] is False
     assert adaptive_frame.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_frame.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_frame.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_frame.metadata["explicit_ambiguity_type"]
         == "adaptive_conditional_normative_frame_outvoted_margin_low"
@@ -8879,6 +8887,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_alethic_frame_adaptive_
     )
     assert adaptive_frame.metadata["has_target_signal_evidence"] is False
     assert adaptive_frame.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_frame.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_frame.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_frame.metadata["explicit_ambiguity_type"]
         == "adaptive_alethic_frame_outvoted_margin_low"
