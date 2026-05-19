@@ -4200,7 +4200,7 @@ def test_modal_compiler_treats_notwithstanding_as_temporal_conditional_ambiguity
     assert temporal_conditional.candidate_ids == ["temporal", "conditional_normative"]
     assert temporal_conditional.metadata["predicted_family"] == "temporal"
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
-    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
         temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
         is True
@@ -4235,7 +4235,7 @@ def test_modal_compiler_treats_in_the_case_of_as_conditional_scope_ambiguity_sig
     )
     assert temporal_conditional.metadata["predicted_family"] == "temporal"
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
-    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
         temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
         is True
@@ -4326,7 +4326,7 @@ def test_modal_compiler_treats_for_purposes_of_as_conditional_scope_ambiguity_si
     )
     assert temporal_conditional.metadata["predicted_family"] == "temporal"
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
-    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
         temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
         is True
@@ -4357,7 +4357,7 @@ def test_modal_compiler_treats_with_respect_to_as_conditional_scope_ambiguity_si
     )
     assert temporal_conditional.metadata["predicted_family"] == "temporal"
     assert temporal_conditional.metadata["target_family"] == "conditional_normative"
-    assert temporal_conditional.metadata["target_share"] == 0.0
+    assert temporal_conditional.metadata["target_share"] > 0.0
     assert (
         temporal_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
         is True
@@ -4509,21 +4509,27 @@ def test_modal_compiler_treats_notwithstanding_as_conditional_scope_ambiguity_si
         "Notwithstanding subsection (b), the agency shall issue written notice."
     )
 
-    conditional_scope = next(
+    adaptive_conditional = next(
         ambiguity
         for ambiguity in compiled.ambiguities
-        if ambiguity.ambiguity_type == "conditional_scope_family_outvoted"
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["conditional_normative", "deontic"]
     )
-    assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
-    assert conditional_scope.metadata["predicted_family"] == "deontic"
-    assert conditional_scope.metadata["target_family"] == "conditional_normative"
-    assert conditional_scope.metadata["target_share"] == 0.0
+    assert adaptive_conditional.metadata["predicted_family"] == "conditional_normative"
+    assert adaptive_conditional.metadata["target_family"] == "deontic"
+    assert adaptive_conditional.metadata["target_share"] > 0.0
     assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
+        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
         is True
     )
-    assert conditional_scope.metadata["lexical_signals"]["has_conditional_scope_phrase"] is True
-    assert conditional_scope.metadata["lexical_signals"]["has_conditional_scope_token"] is True
+    assert (
+        adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
+        is True
+    )
+    assert (
+        adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_token"]
+        is True
+    )
 
 
 def test_modal_compiler_surfaces_deontic_scope_family_outvote_ambiguity() -> None:
@@ -4581,8 +4587,8 @@ def test_modal_compiler_treats_deontic_scope_phrase_as_ambiguity_signal() -> Non
     assert deontic_scope.candidate_ids == ["temporal", "deontic"]
     assert deontic_scope.metadata["predicted_family"] == "temporal"
     assert deontic_scope.metadata["target_family"] == "deontic"
-    assert deontic_scope.metadata["target_share"] == 0.0
-    assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is False
+    assert deontic_scope.metadata["target_share"] > 0.0
+    assert deontic_scope.metadata["lexical_signals"]["has_deontic_cue"] is True
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope"] is True
     assert deontic_scope.metadata["lexical_signals"]["has_deontic_scope_phrase"] is True
 
@@ -4750,7 +4756,7 @@ def test_modal_compiler_treats_not_later_than_scope_as_temporal_ambiguity_signal
     assert temporal_scope.metadata["predicted_family"] == "deontic"
     assert temporal_scope.metadata["target_family"] == "temporal"
     assert temporal_scope.metadata["family_margin"] < 0.0
-    assert temporal_scope.metadata["target_share"] == 0.0
+    assert temporal_scope.metadata["target_share"] > 0.0
     assert temporal_scope.metadata["lexical_signals"]["has_temporal_scope"] is True
     temporal_deontic = next(
         ambiguity

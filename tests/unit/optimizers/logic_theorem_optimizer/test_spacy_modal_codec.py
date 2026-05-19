@@ -584,6 +584,38 @@ def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_frame_competition()
     assert competing_logits["frame"] > -0.25
 
 
+def test_spacy_decoder_soft_caps_repeated_deontic_logits_for_conditional_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="18",
+        section="924",
+        text="The vendor shall and must and shall and must issue notice.",
+    )
+    competing = build_us_code_sample(
+        title="18",
+        section="924",
+        text=(
+            "The vendor shall and must and shall and must issue notice "
+            "as provided in subsection (b)."
+        ),
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("deontic", "conditional_normative", "frame"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("deontic", "conditional_normative", "frame"),
+    )
+
+    assert competing_logits["deontic"] < baseline_logits["deontic"]
+    assert competing_logits["conditional_normative"] > -0.25
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
@@ -594,6 +626,64 @@ def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     assert any(
         cue.family == "conditional_normative"
         and cue.cue.lower() == "under such terms and conditions"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_conditional_scope_cues_from_statutory_phrases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Notwithstanding subsection (b), for purposes of this section the agency "
+            "shall act."
+        ),
+        document_id="sample-conditional-statutory-phrases",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "notwithstanding"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "for purposes of"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_temporal_scope_cues_from_deadline_phrases() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        (
+            "Authority under this section applies not later than 30 days after the "
+            "effective date."
+        ),
+        document_id="sample-temporal-deadline-phrases",
+    )
+
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "not later than"
+        for cue in encoding.cues
+    )
+    assert any(
+        cue.family == "temporal"
+        and cue.cue.lower() == "effective date"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_deontic_obligation_phrase_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The agency is under an obligation to provide notice.",
+        document_id="sample-deontic-obligation-phrase",
+    )
+
+    assert any(
+        cue.family == "deontic"
+        and cue.cue.lower() == "under an obligation to"
         for cue in encoding.cues
     )
 

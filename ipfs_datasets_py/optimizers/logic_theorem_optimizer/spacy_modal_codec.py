@@ -1141,7 +1141,15 @@ def _apply_deontic_competing_scope_soft_cap(
         or bool(signals.get("has_statutory_scope_reference"))
         or float(counts.get(ModalLogicFamily.FRAME.value, 0.0)) > 0.0
     )
-    if not (has_temporal_competition or has_frame_competition):
+    has_conditional_competition = (
+        bool(signals.get("has_condition_or_exception_scope"))
+        or float(counts.get(ModalLogicFamily.CONDITIONAL_NORMATIVE.value, 0.0)) > 0.0
+    )
+    if not (
+        has_temporal_competition
+        or has_frame_competition
+        or has_conditional_competition
+    ):
         return
     overflow = deontic_count - _DEONTIC_COMPETING_SCOPE_SOFT_CAP
     counts[deontic_family] = _DEONTIC_COMPETING_SCOPE_SOFT_CAP + math.log1p(overflow)

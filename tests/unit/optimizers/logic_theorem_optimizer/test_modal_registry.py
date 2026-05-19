@@ -31,6 +31,7 @@ def test_deontic_profile_has_expected_operators_and_serial_semantics() -> None:
     assert profile.semantics.serial is True
     assert {"O", "P", "F"}.issubset(symbols)
     assert {"shall", "must", "may", "prohibited"}.issubset(cue_terms)
+    assert {"has a duty to", "under an obligation to"}.issubset(cue_terms)
 
 
 def test_frame_profile_is_bm25_ontology_grounded() -> None:
@@ -47,6 +48,16 @@ def test_conditional_profile_includes_terms_and_conditions_cues() -> None:
 
     assert "under such terms and conditions" in cue_terms
     assert "subject to the terms and conditions" in cue_terms
+    assert "notwithstanding" in cue_terms
+
+
+def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
+    profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.TEMPORAL)
+    cue_terms = {cue for operator in profile.operators for cue in operator.cue_terms}
+
+    assert "not later than" in cue_terms
+    assert "effective date" in cue_terms
+    assert "fiscal year" in cue_terms
 
 
 def test_registry_serialization_is_stable_json_ready() -> None:
