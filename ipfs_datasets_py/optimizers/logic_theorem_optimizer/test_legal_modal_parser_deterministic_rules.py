@@ -307,6 +307,53 @@ def test_compiler_emits_explicit_conditional_normative_to_temporal_adaptive_pair
     )
 
 
+def test_compiler_emits_explicit_conditional_normative_to_dynamic_adaptive_pair() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.53,
+                "share": 0.53,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DYNAMIC.value,
+                "count": 0,
+                "logit": 1.1,
+                "share_raw": 0.47,
+                "share": 0.47,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "In the event that this authority applies, publication follows.",
+        document_id="compiler-ambiguity-conditional-dynamic",
+    )
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.DYNAMIC.value,
+    )
+    assert any(
+        ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DYNAMIC.value
+        for ambiguity in result.ambiguities
+        if ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+    )
+
+
 def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -628,6 +675,70 @@ def test_compiler_preserves_conditional_to_temporal_pair_from_compiled_primary_p
         result,
         predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         target_family=ModalLogicFamily.TEMPORAL.value,
+        predicted_family_source="compiled_primary_family",
+    )
+
+
+def test_compiler_preserves_conditional_to_dynamic_pair_from_compiled_primary_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.65,
+                "share_raw": 0.45,
+                "share": 0.45,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.55,
+                "share_raw": 0.35,
+                "share": 0.35,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.45,
+                "share_raw": 0.31,
+                "share": 0.31,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                "count": 0,
+                "logit": 1.35,
+                "share_raw": 0.24,
+                "share": 0.24,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DYNAMIC.value,
+                "count": 0,
+                "logit": 1.30,
+                "share_raw": 0.18,
+                "share": 0.18,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "In the event that the authority applies, publication follows.",
+        document_id="compiler-ambiguity-conditional-dynamic-compiled-primary-policy",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.DYNAMIC.value,
         predicted_family_source="compiled_primary_family",
     )
 
