@@ -203,6 +203,14 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
         "conditional_normative",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "deontic",
+        "deontic",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "deontic",
+        "dynamic",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
         "conditional_normative",
         "deontic",
     )
@@ -215,6 +223,10 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     assert is_priority_signal_free_adaptive_ambiguity_pair(
         "conditional_normative",
         "frame",
+    )
+    assert is_priority_signal_free_adaptive_ambiguity_pair(
+        "temporal",
+        "conditional_normative",
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "frame")
@@ -238,6 +250,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "frame",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("temporal") == (
+        "conditional_normative",
         "deontic",
         "frame",
     )
@@ -251,4 +264,6 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "epistemic",
         "frame",
         "temporal",
+        "dynamic",
+        "deontic",
     )
