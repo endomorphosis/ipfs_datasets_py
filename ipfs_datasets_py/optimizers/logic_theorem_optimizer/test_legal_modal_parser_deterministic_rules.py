@@ -868,6 +868,53 @@ def test_compiler_emits_explicit_alethic_to_epistemic_adaptive_pair() -> None:
     )
 
 
+def test_compiler_marks_alethic_to_deontic_pair_as_compiler_ambiguity_bundle_from_adaptive_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.ALETHIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "It is necessary that the Secretary shall act.",
+        document_id="compiler-ambiguity-alethic-deontic-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.ALETHIC.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        for ambiguity in result.ambiguities
+    )
+
+
 def test_compiler_emits_explicit_deontic_self_pair_for_low_family_margin() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -1065,6 +1112,54 @@ def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_witho
         and ambiguity.metadata.get("target_family")
         == ModalLogicFamily.TEMPORAL.value
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
+        and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
+        for ambiguity in result.ambiguities
+    )
+
+
+def test_compiler_marks_frame_to_dynamic_pair_as_compiler_ambiguity_signal_free_policy_without_target_evidence() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-frame-dynamic-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.DYNAMIC.value
+        and ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        and ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
         and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
         for ambiguity in result.ambiguities
     )
