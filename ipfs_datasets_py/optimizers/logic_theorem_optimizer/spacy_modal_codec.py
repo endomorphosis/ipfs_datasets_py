@@ -391,6 +391,10 @@ _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 2.0
+_DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 3.0
+_CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER = 2.0
+_FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -1284,15 +1288,26 @@ def _apply_competing_scope_backfill(
     deontic_family = ModalLogicFamily.DEONTIC.value
     conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
     temporal_family = ModalLogicFamily.TEMPORAL.value
+    frame_family = ModalLogicFamily.FRAME.value
     deontic_count = float(counts.get(deontic_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
+    frame_count = float(counts.get(frame_family, 0.0))
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= 0.0
         and bool(signals.get("has_condition_or_exception_scope"))
     ):
         counts[conditional_family] = _COMPETING_SCOPE_BACKFILL_WEIGHT
+    if (
+        conditional_count >= _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER
+        and frame_count <= 0.0
+        and bool(signals.get("has_statutory_scope_reference"))
+    ):
+        counts[frame_family] = max(
+            float(counts.get(frame_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
     if (
         conditional_count >= _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
         and deontic_count <= 0.0
@@ -1305,6 +1320,49 @@ def _apply_competing_scope_backfill(
         counts[deontic_family] = _COMPETING_SCOPE_BACKFILL_WEIGHT
     if (
         conditional_count >= _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER
+        and temporal_count <= 0.0
+        and bool(signals.get("has_temporal_scope"))
+        and (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_within_scope"))
+        )
+    ):
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        deontic_count >= _DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER
+        and temporal_count <= 0.0
+        and bool(signals.get("has_temporal_scope"))
+        and (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_within_scope"))
+        )
+    ):
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        frame_count >= _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER
+        and deontic_count <= 0.0
+        and bool(signals.get("has_deontic_scope"))
+        and (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_deontic_scope_phrase"))
+        )
+    ):
+        counts[deontic_family] = max(
+            float(counts.get(deontic_family, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        frame_count >= _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER
         and temporal_count <= 0.0
         and bool(signals.get("has_temporal_scope"))
         and (

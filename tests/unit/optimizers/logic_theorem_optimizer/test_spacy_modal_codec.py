@@ -928,6 +928,116 @@ def test_spacy_codec_backfills_temporal_share_for_conditional_scope_with_tempora
     assert temporal_share > 0.0
 
 
+def test_spacy_codec_backfills_frame_share_for_conditional_scope_with_statutory_reference() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="7",
+        section="8321",
+        text=(
+            "If designated and except as otherwise provided, as provided in "
+            "subsection (b), this provision applies."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "frame" for cue in encoding.cues)
+    assert signals["has_statutory_scope_reference"] is True
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert frame_share > 0.0
+
+
+def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_conditional_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="28",
+        section="2345",
+        text=(
+            "Authority and jurisdiction apply if designated under subsection (b), "
+            "and liability for noncompliance applies."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "deontic" for cue in encoding.cues)
+    assert signals["has_deontic_scope"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+    deontic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "deontic"
+    )
+    assert deontic_share > 0.0
+
+
+def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_conditional_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="46",
+        section="60104",
+        text=(
+            "Authority and jurisdiction apply if designated under subsection (b) "
+            "while pending review."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_condition_or_exception_scope"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
+def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_temporal_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="12",
+        section="4405",
+        text=(
+            "The Secretary shall and must and shall and must issue notice "
+            "while pending review."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(
