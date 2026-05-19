@@ -604,21 +604,26 @@ class DeterministicModalCompiler:
         for ambiguity in list(resolved_ambiguities):
             if ambiguity.ambiguity_type != "adaptive_family_margin_low":
                 continue
+            metadata = (
+                ambiguity.metadata
+                if isinstance(ambiguity.metadata, dict)
+                else {}
+            )
             explicit_type = self._derive_explicit_adaptive_ambiguity_type(ambiguity)
             if not explicit_type:
                 continue
             explicit_key = (
                 explicit_type,
                 tuple(str(candidate_id) for candidate_id in ambiguity.candidate_ids),
-                str(ambiguity.metadata.get("adaptive_policy_pair") or ""),
-                str(ambiguity.metadata.get("adaptive_predicted_family_source") or ""),
+                str(metadata.get("adaptive_policy_pair") or ""),
+                str(metadata.get("adaptive_predicted_family_source") or ""),
             )
             if explicit_key in existing_explicit_keys:
                 continue
             explicit_message = (
                 "Explicit adaptive low-margin ambiguity for the predicted modal "
                 "family against close competing families."
-                if bool(ambiguity.metadata.get("is_self_pair"))
+                if bool(metadata.get("is_self_pair"))
                 else (
                     "Explicit adaptive modal-family conflict between the predicted "
                     "family and a competing legal family."
@@ -631,7 +636,7 @@ class DeterministicModalCompiler:
                     candidate_ids=list(ambiguity.candidate_ids),
                     severity=ambiguity.severity,
                     metadata={
-                        **ambiguity.metadata,
+                        **metadata,
                         "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                     },
                 )
