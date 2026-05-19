@@ -204,6 +204,22 @@ def test_sms_bridge_records_outbound_and_twilio_inbound(tmp_path: Path) -> None:
         }
     ]
 
+    magic_link_response = client.post(
+        "/auth/magic-link/sms",
+        json={
+            "to_phone": "(503) 555-0199",
+            "magic_link": "https://211-ai.com/?abbyLogin=example#/home",
+            "one_time_pad": "123456",
+            "portal": "client",
+        },
+    )
+    assert magic_link_response.status_code == 200, magic_link_response.text
+    assert provider.calls[-1]["to_phone"] == "+15035550199"
+    assert "211 AI / Abby login" in provider.calls[-1]["message"]
+    assert "123456" in provider.calls[-1]["message"]
+    assert "https://211-ai.com/?abbyLogin=example#/home" in provider.calls[-1]["message"]
+    assert provider.calls[-1]["metadata"]["message_type"] == "magic_login"
+
     inbound_response = client.post(
         "/providers/twilio/inbound",
         data={
@@ -221,7 +237,7 @@ def test_sms_bridge_records_outbound_and_twilio_inbound(tmp_path: Path) -> None:
     assert "this is Abby from 211 AI" in inbound_response.text
 
     listed_messages = store.list_messages(limit=10)
-    assert len(listed_messages) == 3
+    assert len(listed_messages) == 4
     inbound_message = next(message for message in listed_messages if message.direction == "inbound")
     assert inbound_message.provider == "twilio"
     assert inbound_message.provider_message_id == "SM-inbound-1"

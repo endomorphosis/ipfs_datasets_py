@@ -35,6 +35,7 @@ from urllib import request as urllib_request
 
 try:
     from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+    from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import Response
 except Exception:  # pragma: no cover - optional dependency
     FastAPI = None  # type: ignore[assignment]
@@ -44,6 +45,7 @@ except Exception:  # pragma: no cover - optional dependency
     Response = None  # type: ignore[assignment]
     WebSocket = None  # type: ignore[assignment]
     WebSocketDisconnect = Exception  # type: ignore[assignment]
+    CORSMiddleware = None  # type: ignore[assignment]
 
 from pydantic import BaseModel, Field
 
@@ -3229,6 +3231,15 @@ class OutboundSmsRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class MagicLinkSmsRequest(BaseModel):
+    to_phone: str
+    magic_link: str
+    one_time_pad: str
+    portal: str = "client"
+    expires_in_minutes: int = 10
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class OutboundEmailRequest(BaseModel):
     to_email: str
     subject: str
@@ -3618,6 +3629,54 @@ def _forward_inbound_message(
     return forwarder.forward(record.to_dict())
 
 
+def _sms_bridge_cors_origins() -> list[str]:
+    raw = str(os.getenv("IPFS_DATASETS_SMS_BRIDGE_CORS_ORIGINS") or "").strip()
+    if not raw:
+        return [
+            "https://211-ai.com",
+            "https://www.211-ai.com",
+            "https://211-ai.github.io",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:5174",
+        ]
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+def _allowed_magic_link_hosts() -> set[str]:
+    raw = str(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_ALLOWED_HOSTS") or "").strip()
+    values = raw.split(",") if raw else ["211-ai.com", "www.211-ai.com", "211-ai.github.io", "localhost", "127.0.0.1"]
+    return {value.strip().lower() for value in values if value.strip()}
+
+
+def _validate_magic_login_link(value: str) -> str:
+    link = str(value or "").strip()
+    parsed = urllib_parse.urlparse(link)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("magic_link must be an absolute http(s) URL")
+    hostname = str(parsed.hostname or "").lower()
+    if hostname not in _allowed_magic_link_hosts():
+        raise ValueError("magic_link host is not allowed")
+    if len(link) > 1800:
+        raise ValueError("magic_link is too long")
+    return link
+
+
+def _format_magic_link_sms(payload: Mapping[str, Any]) -> str:
+    one_time_pad = str(payload.get("one_time_pad") or "").strip()
+    if not re.fullmatch(r"\d{6}", one_time_pad):
+        raise ValueError("one_time_pad must be a 6 digit code")
+    magic_link = _validate_magic_login_link(str(payload.get("magic_link") or ""))
+    expires_in_minutes = int(payload.get("expires_in_minutes") or 10)
+    if expires_in_minutes < 1 or expires_in_minutes > 60:
+        raise ValueError("expires_in_minutes must be between 1 and 60")
+    return (
+        f"211 AI / Abby login: use code {one_time_pad} or open {magic_link} "
+        f"This link expires in {expires_in_minutes} minutes. Reply HELP for help or STOP to opt out."
+    )
+
+
 def create_sms_bridge_app(
     *,
     repository: SmsBridgeStore | None = None,
@@ -3649,6 +3708,15 @@ def create_sms_bridge_app(
     configured_public_base_url = str(public_base_url or os.getenv("IPFS_DATASETS_VOICE_PUBLIC_BASE_URL") or "").strip()
 
     app = FastAPI(title="IPFS Datasets Messaging Bridge", version="0.1.0")
+    if CORSMiddleware is not None:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=_sms_bridge_cors_origins(),
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["content-type", "authorization"],
+        )
+    magic_link_sms_attempts: dict[str, list[float]] = {}
 
     @app.on_event("startup")
     async def _startup_archive_exporter() -> None:
@@ -3847,6 +3915,79 @@ def create_sms_bridge_app(
                 wallet_id=payload.get("wallet_id", ""),
                 external_reference=payload.get("external_reference", ""),
                 metadata={**dict(payload.get("metadata") or {}), "error": str(exc)},
+            )
+            raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+
+    @app.post("/auth/magic-link/sms")
+    def send_magic_link_sms(request: MagicLinkSmsRequest) -> dict[str, Any]:
+        payload = _model_dump(request)
+        try:
+            normalized_to_phone = normalize_phone_number(payload["to_phone"], field_name="to_phone")
+            message = _format_magic_link_sms(payload)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        now = time.monotonic()
+        window_seconds = float(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_WINDOW_SECONDS", "900") or "900")
+        max_attempts = int(os.getenv("IPFS_DATASETS_MAGIC_LOGIN_SMS_RATE_LIMIT", "3") or "3")
+        recent_attempts = [timestamp for timestamp in magic_link_sms_attempts.get(normalized_to_phone, []) if now - timestamp < window_seconds]
+        if len(recent_attempts) >= max_attempts:
+            raise HTTPException(status_code=429, detail="too many magic-link SMS requests for this phone number")
+        recent_attempts.append(now)
+        magic_link_sms_attempts[normalized_to_phone] = recent_attempts
+
+        metadata = {
+            **dict(payload.get("metadata") or {}),
+            "message_type": "magic_login",
+            "portal": str(payload.get("portal") or "client"),
+        }
+        if delivery_provider is None:
+            failed_record = sms_store.record_outbound(
+                provider="unconfigured",
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": "SMS provider not configured"},
+            )
+            raise HTTPException(
+                status_code=503,
+                detail={"message": "SMS provider not configured", "record": failed_record.to_dict()},
+            )
+        try:
+            delivery = delivery_provider.send_sms(
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata=metadata,
+            )
+            record = sms_store.record_outbound(
+                provider=str(delivery.get("provider") or getattr(delivery_provider, "provider_name", "unknown")),
+                status=str(delivery.get("provider_status") or "sent"),
+                provider_message_id=str(delivery.get("provider_message_id") or ""),
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata=metadata,
+            )
+            return {
+                "status": "ok",
+                "message": record.to_dict(),
+                **delivery,
+            }
+        except ValueError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": str(exc)},
+            )
+            raise HTTPException(status_code=400, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
+        except RuntimeError as exc:
+            failed_record = sms_store.record_outbound(
+                provider=getattr(delivery_provider, "provider_name", "unknown"),
+                status="failed",
+                to_phone=normalized_to_phone,
+                message=message,
+                metadata={**metadata, "error": str(exc)},
             )
             raise HTTPException(status_code=502, detail={"message": str(exc), "record": failed_record.to_dict()}) from exc
 
