@@ -30,6 +30,13 @@ _STATUTES_EQ_RE = re.compile(r"\bstatutes=(\d+)\b", re.IGNORECASE)
 _TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)")
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default
+
+
 def _read_json(path: Path) -> Dict[str, Any]:
     if not path.exists():
         return {}
@@ -152,6 +159,155 @@ def _collect_log_progress(log_path: Path) -> Dict[str, Dict[str, Any]]:
     return out
 
 
+def _percentile_int(values: Sequence[int], q: float) -> int:
+    ordered = sorted(int(v) for v in values if int(v) >= 0)
+    if not ordered:
+        return 0
+    if len(ordered) == 1:
+        return ordered[0]
+    quantile = min(1.0, max(0.0, float(q)))
+    index = int(round((len(ordered) - 1) * quantile))
+    index = max(0, min(len(ordered) - 1, index))
+    return ordered[index]
+
+
+def _discover_state_statute_baselines(
+    *,
+    run_dir: Path,
+    max_runs: int,
+    include_current_run: bool,
+) -> Dict[str, Dict[str, Any]]:
+    parallel_root = run_dir.parent
+    if not parallel_root.exists():
+        return {}
+    run_dirs = [item for item in parallel_root.iterdir() if item.is_dir()]
+    run_dirs = sorted(run_dirs, key=lambda path: path.name, reverse=True)
+    baselines: Dict[str, Dict[str, Any]] = {}
+    seen_runs = 0
+    current_run_norm = str(run_dir.resolve())
+
+    for candidate_run in run_dirs:
+        run_norm = str(candidate_run.resolve())
+        is_current_run = run_norm == current_run_norm
+        if (not include_current_run) and run_norm == current_run_norm:
+            continue
+        seen_runs += 1
+        if seen_runs > max(1, int(max_runs)):
+            break
+
+        progress_paths = sorted(candidate_run.glob("shard*/output/cycles/cycle_*/state_laws_refresh/state_refresh_progress.json"))
+        for progress_path in progress_paths:
+            payload = _read_json(progress_path)
+            state_results = payload.get("state_results") if isinstance(payload.get("state_results"), dict) else {}
+            for code, raw_row in state_results.items():
+                state = str(code or "").strip().upper()
+                row = raw_row if isinstance(raw_row, dict) else {}
+                if len(state) != 2:
+                    continue
+                status = str(row.get("status") or "").strip().lower()
+                statutes_count = _safe_int(row.get("statutes_count"), 0)
+                if status != "success" or statutes_count <= 0:
+                    continue
+                baseline = baselines.setdefault(
+                    state,
+                    {
+                        "sample_count": 0,
+                        "max_statutes_count": 0,
+                        "samples": [],
+                    },
+                )
+                baseline["sample_count"] = _safe_int(baseline.get("sample_count"), 0) + 1
+                baseline["max_statutes_count"] = max(_safe_int(baseline.get("max_statutes_count"), 0), statutes_count)
+                samples = list(baseline.get("samples") or [])
+                samples.append(statutes_count)
+                if len(samples) > 400:
+                    samples = samples[-400:]
+                baseline["samples"] = samples
+
+        logs_dir = candidate_run / "logs"
+        if logs_dir.exists() and (not is_current_run):
+            for log_path in sorted(logs_dir.glob("shard*.log")):
+                log_progress = _collect_log_progress(log_path)
+                for state, row in log_progress.items():
+                    if len(str(state or "").strip().upper()) != 2:
+                        continue
+                    statutes_count = max(
+                        _safe_int(row.get("latest_statutes_so_far"), 0),
+                        _safe_int(row.get("latest_scraped_statutes"), 0),
+                    )
+                    if statutes_count <= 0:
+                        continue
+                    baseline = baselines.setdefault(
+                        str(state).strip().upper(),
+                        {
+                            "sample_count": 0,
+                            "max_statutes_count": 0,
+                            "samples": [],
+                        },
+                    )
+                    baseline["sample_count"] = _safe_int(baseline.get("sample_count"), 0) + 1
+                    baseline["max_statutes_count"] = max(_safe_int(baseline.get("max_statutes_count"), 0), statutes_count)
+                    samples = list(baseline.get("samples") or [])
+                    samples.append(statutes_count)
+                    if len(samples) > 400:
+                        samples = samples[-400:]
+                    baseline["samples"] = samples
+
+    for state, baseline in baselines.items():
+        samples = [int(value) for value in list(baseline.get("samples") or []) if int(value) > 0]
+        baseline["median_statutes_count"] = _percentile_int(samples, 0.50)
+        baseline["p90_statutes_count"] = _percentile_int(samples, 0.90)
+        baseline["p95_statutes_count"] = _percentile_int(samples, 0.95)
+        baseline.pop("samples", None)
+        baseline["state"] = state
+
+    return baselines
+
+
+def _row_current_statutes_estimate(row: Mapping[str, Any]) -> int:
+    return max(
+        _safe_int(row.get("statutes_count"), 0),
+        _safe_int(row.get("latest_statutes_so_far"), 0),
+        _safe_int(row.get("latest_scraped_statutes"), 0),
+        _safe_int(row.get("scraped_row_count"), 0),
+        _safe_int(row.get("merged_row_count"), 0),
+    )
+
+
+def _annotate_rows_with_baselines(
+    rows: Sequence[Dict[str, Any]],
+    baselines: Mapping[str, Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    out: List[Dict[str, Any]] = []
+    for original in rows:
+        row = dict(original)
+        state = str(row.get("state") or "").strip().upper()
+        baseline = baselines.get(state) if isinstance(baselines.get(state), Mapping) else {}
+        baseline_max = _safe_int((baseline or {}).get("max_statutes_count"), 0)
+        baseline_samples = _safe_int((baseline or {}).get("sample_count"), 0)
+        current_estimate = _row_current_statutes_estimate(row)
+        progress_pct: Optional[float] = None
+        if baseline_max > 0:
+            progress_pct = round(min(100.0, (100.0 * float(current_estimate)) / float(baseline_max)), 2)
+
+        confidence = "none"
+        if baseline_max > 0:
+            if baseline_samples >= 3:
+                confidence = "high"
+            elif baseline_samples >= 1:
+                confidence = "medium"
+            else:
+                confidence = "low"
+        row["current_statutes_estimate"] = current_estimate
+        row["baseline_statutes_count"] = baseline_max
+        row["baseline_sample_count"] = baseline_samples
+        row["baseline_progress_pct"] = progress_pct
+        row["baseline_progress_confidence"] = confidence
+        row["baseline_p95_statutes_count"] = _safe_int((baseline or {}).get("p95_statutes_count"), 0)
+        out.append(row)
+    return out
+
+
 def _build_final_state_rows(
     *,
     states: Sequence[str],
@@ -226,12 +382,14 @@ def _build_live_progress_rows(
     shard: str,
     phase_path: Path,
     progress_payload: Mapping[str, Any],
+    log_progress: Mapping[str, Mapping[str, Any]],
 ) -> List[Dict[str, Any]]:
     results = progress_payload.get("state_results")
     state_results = results if isinstance(results, dict) else {}
     out: List[Dict[str, Any]] = []
     for state in states:
         row = state_results.get(state) if isinstance(state_results.get(state), dict) else {}
+        lp = log_progress.get(state) if isinstance(log_progress.get(state), dict) else {}
         status = str(row.get("status") or "")
         statutes_count = _safe_int(row.get("statutes_count"), 0)
         provisional_complete = status == "success" and statutes_count > 0
@@ -247,6 +405,12 @@ def _build_live_progress_rows(
                 "strict_complete": None,
                 "provisional_complete": provisional_complete,
                 "statutes_count": statutes_count,
+                "started": bool(lp.get("started")),
+                "scraped_event": bool(lp.get("scraped_event")),
+                "scraped_event_count": _safe_int(lp.get("scraped_event_count"), 0),
+                "latest_statutes_so_far": _safe_int(lp.get("latest_statutes_so_far"), 0),
+                "latest_scraped_statutes": _safe_int(lp.get("latest_scraped_statutes"), 0),
+                "last_log_at": str(lp.get("last_log_at") or ""),
                 "completed_at": str(row.get("completed_at") or ""),
                 "error": str(row.get("error") or ""),
             }
@@ -298,13 +462,14 @@ def _collect_rows_for_shard(
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     output_dir = run_dir / shard / "output"
     log_path = run_dir / "logs" / f"{shard}.log"
+    log_progress = _collect_log_progress(log_path)
     phase_path = _latest_phase_path(output_dir)
     if phase_path is None:
         rows = _build_log_rows(
             states=list(default_states),
             shard=shard,
             phase_path=output_dir / "state_refresh_phase.json",
-            log_progress=_collect_log_progress(log_path),
+            log_progress=log_progress,
         )
         return rows, {"shard": shard, "phase_status": "missing_phase", "signal_mode": "log_fallback"}
 
@@ -337,6 +502,7 @@ def _collect_rows_for_shard(
             shard=shard,
             phase_path=phase_path,
             progress_payload=progress_payload,
+            log_progress=log_progress,
         )
         return rows, {
             "shard": shard,
@@ -351,7 +517,7 @@ def _collect_rows_for_shard(
         states=states,
         shard=shard,
         phase_path=phase_path,
-        log_progress=_collect_log_progress(log_path),
+        log_progress=log_progress,
     )
     return rows, {
         "shard": shard,
@@ -370,12 +536,20 @@ def _summarize(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
     strict_incomplete_count = 0
     strict_unknown_count = 0
     provisional_complete_count = 0
+    baseline_evaluable_count = 0
+    baseline_reached_95_count = 0
+    baseline_reached_100_count = 0
+    baseline_progress_sum = 0.0
 
     for row in rows:
         status = str(row.get("status") or "")
-        if status in {"started", "scraped_event_seen", "success", "complete", "incomplete"}:
+        if (
+            status in {"started", "scraped_event_seen", "success", "complete", "incomplete"}
+            or bool(row.get("started"))
+            or _safe_int(row.get("current_statutes_estimate"), 0) > 0
+        ):
             started_count += 1
-        if status == "scraped_event_seen":
+        if status == "scraped_event_seen" or _safe_int(row.get("scraped_event_count"), 0) > 0:
             scraped_event_count += 1
 
         strict = row.get("strict_complete")
@@ -388,6 +562,19 @@ def _summarize(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
 
         if bool(row.get("provisional_complete")):
             provisional_complete_count += 1
+
+        baseline_progress = row.get("baseline_progress_pct")
+        if baseline_progress is None:
+            continue
+        baseline_progress_f = _safe_float(baseline_progress, -1.0)
+        if baseline_progress_f < 0.0:
+            continue
+        baseline_evaluable_count += 1
+        baseline_progress_sum += baseline_progress_f
+        if baseline_progress_f >= 95.0:
+            baseline_reached_95_count += 1
+        if baseline_progress_f >= 100.0:
+            baseline_reached_100_count += 1
 
     strict_evaluable = strict_complete_count + strict_incomplete_count
     return {
@@ -403,6 +590,14 @@ def _summarize(rows: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
             round((100.0 * strict_complete_count / strict_evaluable), 1) if strict_evaluable else None
         ),
         "provisional_complete_count": provisional_complete_count,
+        "baseline_evaluable_count": baseline_evaluable_count,
+        "baseline_reached_95_count": baseline_reached_95_count,
+        "baseline_reached_100_count": baseline_reached_100_count,
+        "baseline_avg_progress_pct": (
+            round((baseline_progress_sum / float(baseline_evaluable_count)), 2)
+            if baseline_evaluable_count > 0
+            else None
+        ),
     }
 
 
@@ -415,6 +610,22 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--output-json", default="", help="Optional output JSON file path.")
     p.add_argument("--json", action="store_true", help="Print JSON payload.")
+    p.add_argument(
+        "--baseline-max-runs",
+        type=int,
+        default=24,
+        help="How many historical parallel runs to scan for baseline statute counts.",
+    )
+    p.add_argument(
+        "--baseline-include-current-run",
+        action="store_true",
+        help="Include the current run when computing baseline statute counts.",
+    )
+    p.add_argument(
+        "--no-baseline",
+        action="store_true",
+        help="Skip historical baseline discovery and progress-percentage estimation.",
+    )
     return p.parse_args()
 
 
@@ -434,12 +645,39 @@ def main() -> int:
         rows.extend(shard_rows)
         shard_summaries.append(shard_summary)
 
-    rows_sorted = sorted(rows, key=lambda row: (str(row.get("shard") or ""), str(row.get("state") or "")))
+    baseline_meta: Dict[str, Any] = {"enabled": not bool(args.no_baseline)}
+    baseline_auto_fallback_used = False
+    if args.no_baseline:
+        baselines: Dict[str, Dict[str, Any]] = {}
+    else:
+        baselines = _discover_state_statute_baselines(
+            run_dir=run_dir,
+            max_runs=max(1, int(args.baseline_max_runs or 1)),
+            include_current_run=bool(args.baseline_include_current_run),
+        )
+        if (not baselines) and (not bool(args.baseline_include_current_run)):
+            baselines = _discover_state_statute_baselines(
+                run_dir=run_dir,
+                max_runs=max(1, int(args.baseline_max_runs or 1)),
+                include_current_run=True,
+            )
+            baseline_auto_fallback_used = True
+    baseline_meta["states_with_baseline"] = len(baselines)
+    baseline_meta["max_runs_scanned"] = max(1, int(args.baseline_max_runs or 1))
+    baseline_meta["include_current_run"] = bool(args.baseline_include_current_run)
+    baseline_meta["auto_fallback_include_current_run"] = baseline_auto_fallback_used
+
+    rows_with_baseline = _annotate_rows_with_baselines(rows, baselines)
+    rows_sorted = sorted(rows_with_baseline, key=lambda row: (str(row.get("shard") or ""), str(row.get("state") or "")))
     payload = {
         "run_dir": str(run_dir),
         "summary": _summarize(rows_sorted),
         "shards": shard_summaries,
         "states": rows_sorted,
+        "baselines": {
+            "meta": baseline_meta,
+            "states": baselines,
+        },
     }
 
     if str(args.output_json or "").strip():
@@ -456,6 +694,16 @@ def main() -> int:
             "states_total={states_total} started={started_count} ({started_pct}%) strict_complete={strict_complete_count} "
             "strict_incomplete={strict_incomplete_count} strict_unknown={strict_unknown_count}".format(**summary)
         )
+        baseline_avg = summary.get("baseline_avg_progress_pct")
+        if baseline_avg is not None:
+            print(
+                "baseline_progress_avg={avg}% reached95={reached95}/{evaluable} reached100={reached100}/{evaluable}".format(
+                    avg=baseline_avg,
+                    reached95=summary.get("baseline_reached_95_count"),
+                    reached100=summary.get("baseline_reached_100_count"),
+                    evaluable=summary.get("baseline_evaluable_count"),
+                )
+            )
         if summary.get("strict_complete_pct") is not None:
             print(
                 f"strict_complete_pct={summary['strict_complete_pct']}% "

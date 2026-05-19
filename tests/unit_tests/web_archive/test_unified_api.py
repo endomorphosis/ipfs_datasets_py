@@ -349,6 +349,42 @@ def test_unified_api_health_snapshot_contains_metrics() -> None:
     assert "brave:search" in health["metrics_5m"]
 
 
+def test_unified_api_build_engine_config_uses_conservative_defaults(monkeypatch) -> None:
+    for key in [
+        "IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE",
+        "LEGAL_SCRAPER_SEARCH_RATE_LIMIT_PER_MINUTE",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS",
+        "IPFS_DATASETS_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS",
+        "LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
+    config = api._build_engine_config("duckduckgo")
+
+    assert config.engine_type == "duckduckgo"
+    assert config.rate_limit_per_minute == 25
+    assert config.retry_attempts == 2
+    assert config.retry_delay_seconds == 2.0
+
+
+def test_unified_api_build_engine_config_prefers_engine_specific_env(monkeypatch) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE", "18")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RATE_LIMIT_PER_MINUTE", "11")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_ATTEMPTS", "4")
+    monkeypatch.setenv("LEGAL_SCRAPER_SEARCH_DUCKDUCKGO_RETRY_DELAY_SECONDS", "3.5")
+
+    api = UnifiedWebArchivingAPI(orchestrator=FakeOrchestratorSuccess())
+    config = api._build_engine_config("duckduckgo")
+
+    assert config.rate_limit_per_minute == 11
+    assert config.retry_attempts == 4
+    assert config.retry_delay_seconds == 3.5
+
+
 def test_unified_api_search_uses_throughput_ranked_provider_order() -> None:
     orchestrator = FakeOrchestratorCapture()
     api = UnifiedWebArchivingAPI(orchestrator=orchestrator)

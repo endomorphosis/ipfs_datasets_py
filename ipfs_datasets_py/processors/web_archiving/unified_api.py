@@ -36,6 +36,7 @@ from .orchestration.planner import SearchPlanner
 from .orchestration.scoring import ProviderScorer
 from .structured_schema_compat import normalize_domain, normalize_structured_fields
 from .search_engines.orchestrator import MultiEngineOrchestrator, OrchestratorConfig
+from .search_engines.base import SearchEngineConfig
 from ..legal_scrapers.shared_fetch_cache import (
     SharedFetchCache,
     decode_cache_json_value,
@@ -46,6 +47,27 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_SEARCH_ENGINES = ["brave", "duckduckgo", "google_cse"]
+DEFAULT_ENGINE_SEARCH_CONFIGS: Dict[str, Dict[str, Any]] = {
+    "brave": {
+        "rate_limit_per_minute": 20,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 2.0,
+        "timeout_seconds": 30,
+    },
+    "duckduckgo": {
+        "rate_limit_per_minute": 25,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 2.0,
+        "timeout_seconds": 30,
+    },
+    "google_cse": {
+        "rate_limit_per_minute": 20,
+        "retry_attempts": 2,
+        "retry_delay_seconds": 1.5,
+        "timeout_seconds": 30,
+        "max_results_per_request": 10,
+    },
+}
 
 STATE_ABBREVIATION_TERMS: Dict[str, List[str]] = {
     "al": ["alabama"],
@@ -355,6 +377,106 @@ class UnifiedWebArchivingAPI:
                 return values
         return []
 
+    @staticmethod
+    def _env_int(*names: str) -> Optional[int]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return int(raw)
+            except ValueError:
+                logger.warning("Ignoring non-integer environment value %s=%s", name, raw)
+        return None
+
+    @staticmethod
+    def _env_float(*names: str) -> Optional[float]:
+        for name in names:
+            raw = str(os.environ.get(name) or "").strip()
+            if not raw:
+                continue
+            try:
+                return float(raw)
+            except ValueError:
+                logger.warning("Ignoring non-float environment value %s=%s", name, raw)
+        return None
+
+    @staticmethod
+    def _engine_env_token(engine_name: str) -> str:
+        token = re.sub(r"[^A-Z0-9]+", "_", str(engine_name or "").upper()).strip("_")
+        return token or "GENERIC"
+
+    def _build_engine_config(self, engine_name: str) -> SearchEngineConfig:
+        engine_key = str(engine_name or "").strip().lower()
+        defaults = dict(DEFAULT_ENGINE_SEARCH_CONFIGS.get(engine_key) or {})
+        env_token = self._engine_env_token(engine_key)
+
+        rate_limit = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RATE_LIMIT_PER_MINUTE",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RATE_LIMIT_PER_MINUTE",
+            "IPFS_DATASETS_SEARCH_RATE_LIMIT_PER_MINUTE",
+            "LEGAL_SCRAPER_SEARCH_RATE_LIMIT_PER_MINUTE",
+        )
+        if rate_limit is None:
+            rate_limit = int(defaults.get("rate_limit_per_minute", 60) or 60)
+
+        timeout_seconds = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_TIMEOUT_SECONDS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_TIMEOUT_SECONDS",
+            "IPFS_DATASETS_SEARCH_TIMEOUT_SECONDS",
+            "LEGAL_SCRAPER_SEARCH_TIMEOUT_SECONDS",
+        )
+        if timeout_seconds is None:
+            timeout_seconds = int(defaults.get("timeout_seconds", 30) or 30)
+
+        retry_attempts = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RETRY_ATTEMPTS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RETRY_ATTEMPTS",
+            "IPFS_DATASETS_SEARCH_RETRY_ATTEMPTS",
+            "LEGAL_SCRAPER_SEARCH_RETRY_ATTEMPTS",
+        )
+        if retry_attempts is None:
+            retry_attempts = int(defaults.get("retry_attempts", 3) or 3)
+
+        retry_delay_seconds = self._env_float(
+            f"IPFS_DATASETS_SEARCH_{env_token}_RETRY_DELAY_SECONDS",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_RETRY_DELAY_SECONDS",
+            "IPFS_DATASETS_SEARCH_RETRY_DELAY_SECONDS",
+            "LEGAL_SCRAPER_SEARCH_RETRY_DELAY_SECONDS",
+        )
+        if retry_delay_seconds is None:
+            retry_delay_seconds = float(defaults.get("retry_delay_seconds", 1.0) or 1.0)
+
+        max_results_per_request = self._env_int(
+            f"IPFS_DATASETS_SEARCH_{env_token}_MAX_RESULTS_PER_REQUEST",
+            f"LEGAL_SCRAPER_SEARCH_{env_token}_MAX_RESULTS_PER_REQUEST",
+            "IPFS_DATASETS_SEARCH_MAX_RESULTS_PER_REQUEST",
+            "LEGAL_SCRAPER_SEARCH_MAX_RESULTS_PER_REQUEST",
+        )
+        if max_results_per_request is None:
+            max_results_per_request = int(defaults.get("max_results_per_request", 20) or 20)
+
+        api_key: Optional[str] = None
+        extra_params: Dict[str, Any] = {}
+        if engine_key == "brave":
+            api_key = str(os.getenv("BRAVE_API_KEY") or os.getenv("BRAVE_SEARCH_API_KEY") or "").strip() or None
+        elif engine_key == "google_cse":
+            api_key = str(os.getenv("GOOGLE_API_KEY") or os.getenv("GOOGLE_SEARCH_API_KEY") or "").strip() or None
+            cse_id = str(os.getenv("GOOGLE_CSE_ID") or "").strip()
+            if cse_id:
+                extra_params["cse_id"] = cse_id
+
+        return SearchEngineConfig(
+            engine_type=engine_key,
+            api_key=api_key,
+            rate_limit_per_minute=max(0, int(rate_limit)),
+            timeout_seconds=max(1, int(timeout_seconds)),
+            max_results_per_request=max(1, int(max_results_per_request)),
+            retry_attempts=max(1, int(retry_attempts)),
+            retry_delay_seconds=max(0.0, float(retry_delay_seconds)),
+            extra_params=extra_params,
+        )
+
     def _apply_env_overrides_to_config(self) -> None:
         search_engines = self._env_list(
             "IPFS_DATASETS_SEARCH_ENGINES",
@@ -379,8 +501,13 @@ class UnifiedWebArchivingAPI:
             self.config.parallel_enabled = parallel_enabled
 
     def _build_orchestrator(self) -> MultiEngineOrchestrator:
+        engine_configs = {
+            engine_name: self._build_engine_config(engine_name)
+            for engine_name in list(self.config.default_search_engines)
+        }
         orchestrator_config = OrchestratorConfig(
             engines=list(self.config.default_search_engines),
+            engine_configs=engine_configs,
             parallel_enabled=bool(self.config.parallel_enabled),
             fallback_enabled=bool(self.config.fallback_enabled),
             timeout_seconds=int(self.config.orchestrator_timeout_seconds),

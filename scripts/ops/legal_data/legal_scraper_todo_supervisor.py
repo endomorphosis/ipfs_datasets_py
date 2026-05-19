@@ -47,6 +47,13 @@ STATUS_ORDER = {
     "complete": 3,
 }
 
+_LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+)")
+_LOG_STATE_RE = re.compile(r"base_scraper\.([A-Z]{2})\]")
+_LOG_STATE_START_RE = re.compile(r"Scraping\s+\d+\s+codes\s+for\s+", flags=re.IGNORECASE)
+_LOG_SCRAPED_STATUTES_RE = re.compile(r"Scraped\s+(\d+)\s+statutes\s+from\s+", flags=re.IGNORECASE)
+_LOG_STATUTES_SOFAR_RE = re.compile(r"statutes_so_far=(\d+)", flags=re.IGNORECASE)
+_LOG_STATUTES_EQ_RE = re.compile(r"\bstatutes=(\d+)\b", flags=re.IGNORECASE)
+
 
 def utc_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -717,12 +724,288 @@ def _latest_phase_path(output_dir: Path, phase_filename: str) -> Optional[Path]:
     return None
 
 
+def _parse_log_timestamp_epoch(line: str) -> Optional[float]:
+    match = _LOG_TS_RE.match(line)
+    if not match:
+        return None
+    text = match.group(1)
+    try:
+        parsed = datetime.strptime(text, "%Y-%m-%d %H:%M:%S,%f").replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+    return float(parsed.timestamp())
+
+
+def _read_tail_text(path: Path, *, max_bytes: int = 4_000_000) -> str:
+    if not path.exists():
+        return ""
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            if size <= 0:
+                return ""
+            seek_to = max(0, size - max(1024, int(max_bytes)))
+            handle.seek(seek_to, os.SEEK_SET)
+            data = handle.read()
+    except Exception:
+        return ""
+    text = data.decode("utf-8", errors="ignore")
+    if seek_to > 0:
+        newline = text.find("\n")
+        if newline >= 0:
+            text = text[newline + 1 :]
+    return text
+
+
+def _compute_samples_rate_per_minute(samples: List[Tuple[float, int]], *, now: float, window_seconds: float) -> Optional[float]:
+    if len(samples) < 2:
+        return None
+    window_start = now - max(60.0, float(window_seconds))
+    filtered = [item for item in samples if item[0] >= window_start]
+    if len(filtered) < 2:
+        return None
+    filtered.sort(key=lambda item: item[0])
+    first_ts, first_count = filtered[0]
+    last_ts, _ = filtered[-1]
+    max_count = max(count for _, count in filtered)
+    delta = max(0, int(max_count) - int(first_count))
+    span_seconds = max(1.0, float(last_ts - first_ts))
+    return round((float(delta) * 60.0) / span_seconds, 4)
+
+
+def _load_state_refresh_progress_payload(output_dir: Path, phase_path: Optional[Path]) -> Tuple[Dict[str, Any], Optional[Path]]:
+    cycle_dir = phase_path.parent if phase_path is not None else (output_dir / "cycles")
+    if not cycle_dir.exists():
+        return {}, None
+    progress_path = cycle_dir / "state_laws_refresh" / "state_refresh_progress.json"
+    if not progress_path.exists():
+        return {}, None
+    return _read_json(progress_path), progress_path
+
+
+def _collect_state_rate_analytics(
+    *,
+    shard_name: str,
+    states: List[str],
+    log_path: Path,
+    output_dir: Path,
+    phase_path: Optional[Path],
+    now_epoch: float,
+    rate_window_seconds: float,
+    state_stall_seconds: float,
+) -> Dict[str, Any]:
+    progress_payload, progress_path = _load_state_refresh_progress_payload(output_dir, phase_path)
+    progress_state_results = progress_payload.get("state_results") if isinstance(progress_payload.get("state_results"), dict) else {}
+    progress_started_epoch = _safe_iso_to_epoch(progress_payload.get("started_at"))
+    completed_states = {
+        str(code).upper()
+        for code, row in progress_state_results.items()
+        if isinstance(row, dict)
+        and str(row.get("status") or "").strip().lower() in {"success", "error", "zero_statutes"}
+    }
+    signal_mode = "live_progress" if progress_path else "log_only"
+
+    log_data: Dict[str, Dict[str, Any]] = {}
+    tail_text = _read_tail_text(log_path)
+    for line in tail_text.splitlines():
+        match = _LOG_STATE_RE.search(line)
+        if not match:
+            continue
+        ts_epoch = _parse_log_timestamp_epoch(line)
+        # When live progress tracking is active, ignore stale log lines from
+        # earlier daemon generations so restart loops do not inherit old
+        # stalled-state signals.
+        if (
+            signal_mode == "live_progress"
+            and progress_started_epoch is not None
+            and ts_epoch is not None
+            and ts_epoch < (progress_started_epoch - 1.0)
+        ):
+            continue
+        state = str(match.group(1) or "").upper().strip()
+        if not state:
+            continue
+        row = log_data.setdefault(
+            state,
+            {
+                "started": False,
+                "line_count": 0,
+                "scraped_event_count": 0,
+                "scraped_event_max": 0,
+                "last_seen_epoch": None,
+                "last_progress_epoch": None,
+                "max_counter": 0,
+                "samples": [],
+            },
+        )
+        row["line_count"] = int(row.get("line_count", 0)) + 1
+        if ts_epoch is not None:
+            prev_seen = row.get("last_seen_epoch")
+            if prev_seen is None or ts_epoch >= float(prev_seen):
+                row["last_seen_epoch"] = float(ts_epoch)
+        if _LOG_STATE_START_RE.search(line):
+            row["started"] = True
+
+        counter: Optional[int] = None
+        so_far_match = _LOG_STATUTES_SOFAR_RE.search(line)
+        if so_far_match:
+            counter = _safe_int(so_far_match.group(1), 0)
+        else:
+            eq_match = _LOG_STATUTES_EQ_RE.search(line)
+            if eq_match:
+                counter = _safe_int(eq_match.group(1), 0)
+
+        if counter is not None:
+            row["max_counter"] = max(int(row.get("max_counter", 0)), int(counter))
+            if ts_epoch is not None:
+                samples = list(row.get("samples") or [])
+                samples.append((float(ts_epoch), int(counter)))
+                if len(samples) > 256:
+                    samples = samples[-256:]
+                row["samples"] = samples
+                prev_progress = row.get("last_progress_epoch")
+                if prev_progress is None or ts_epoch >= float(prev_progress):
+                    row["last_progress_epoch"] = float(ts_epoch)
+
+        scraped_match = _LOG_SCRAPED_STATUTES_RE.search(line)
+        if scraped_match:
+            row["scraped_event_count"] = int(row.get("scraped_event_count", 0)) + 1
+            row["scraped_event_max"] = max(int(row.get("scraped_event_max", 0)), _safe_int(scraped_match.group(1), 0))
+
+    all_states = _normalize_states(states) or sorted(log_data.keys())
+    state_rows: List[Dict[str, Any]] = []
+    started_states: List[str] = []
+    completed_from_progress: List[str] = []
+    inflight_states: List[str] = []
+    stalled_states: List[Dict[str, Any]] = []
+    high_confidence_stalled_states: List[Dict[str, Any]] = []
+    low_confidence_inactive_state_count = 0
+
+    for state in all_states:
+        row = log_data.get(state, {})
+        is_completed = state in completed_states
+        started = bool(row.get("started")) or (int(row.get("line_count", 0)) > 0) or is_completed
+        if started:
+            started_states.append(state)
+        if is_completed:
+            completed_from_progress.append(state)
+        is_inflight = started and (not is_completed)
+        if is_inflight:
+            inflight_states.append(state)
+
+        last_seen_epoch = row.get("last_seen_epoch")
+        last_progress_epoch = row.get("last_progress_epoch")
+        last_seen_age = (
+            max(0.0, now_epoch - float(last_seen_epoch))
+            if last_seen_epoch is not None
+            else -1.0
+        )
+        last_progress_age = (
+            max(0.0, now_epoch - float(last_progress_epoch))
+            if last_progress_epoch is not None
+            else -1.0
+        )
+        samples = list(row.get("samples") or [])
+        rate_per_minute = _compute_samples_rate_per_minute(
+            samples,
+            now=now_epoch,
+            window_seconds=rate_window_seconds,
+        )
+        scraped_event_count = _safe_int(row.get("scraped_event_count"), 0)
+        max_counter = _safe_int(row.get("max_counter"), 0)
+
+        likely_stalled = (
+            is_inflight
+            and last_seen_age >= state_stall_seconds
+            and (last_progress_age < 0 or last_progress_age >= state_stall_seconds)
+        )
+        confidence = "low"
+        reason = ""
+        if likely_stalled:
+            if signal_mode == "live_progress":
+                confidence = "high"
+                reason = "no_recent_log_or_progress_for_inflight_state"
+            elif scraped_event_count <= 0 and max_counter <= 0:
+                confidence = "medium"
+                reason = "started_state_without_progress_signals_for_stall_window"
+            else:
+                confidence = "low"
+                reason = "inflight_state_inactive_but_completion_status_unknown_without_live_progress"
+
+        state_entry = {
+            "state": state,
+            "started": started,
+            "completed": is_completed,
+            "inflight": is_inflight,
+            "line_count": _safe_int(row.get("line_count"), 0),
+            "scraped_event_count": scraped_event_count,
+            "max_counter": max_counter,
+            "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
+            "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+            "rate_counter_per_minute": rate_per_minute,
+            "likely_stalled": bool(likely_stalled),
+            "stall_confidence": confidence if likely_stalled else "",
+            "stall_reason": reason if likely_stalled else "",
+        }
+        state_rows.append(state_entry)
+
+        if likely_stalled:
+            stalled_row = {
+                "state": state,
+                "shard": shard_name,
+                "confidence": confidence,
+                "reason": reason,
+                "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
+                "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+                "rate_counter_per_minute": rate_per_minute,
+                "scraped_event_count": scraped_event_count,
+                "max_counter": max_counter,
+            }
+            if confidence in {"high", "medium"}:
+                stalled_states.append(stalled_row)
+                if confidence == "high":
+                    high_confidence_stalled_states.append(stalled_row)
+            else:
+                low_confidence_inactive_state_count += 1
+
+    stalled_states.sort(
+        key=lambda row: (
+            0 if str(row.get("confidence")) == "high" else 1,
+            -_safe_float(row.get("last_progress_age_seconds"), -1.0),
+            -_safe_float(row.get("last_seen_age_seconds"), -1.0),
+            str(row.get("state") or ""),
+        )
+    )
+
+    return {
+        "signal_mode": signal_mode,
+        "rate_window_seconds": max(60.0, float(rate_window_seconds)),
+        "state_stall_seconds": max(300.0, float(state_stall_seconds)),
+        "progress_path": str(progress_path) if progress_path else "",
+        "states_total": len(all_states),
+        "states_started_count": len(started_states),
+        "states_completed_count": len(completed_from_progress),
+        "states_inflight_count": len(inflight_states),
+        "stalled_state_count": len(stalled_states),
+        "high_confidence_stalled_state_count": len(high_confidence_stalled_states),
+        "low_confidence_inactive_state_count": int(low_confidence_inactive_state_count),
+        "started_states": started_states,
+        "completed_states": completed_from_progress,
+        "inflight_states": inflight_states,
+        "stalled_states": stalled_states,
+        "states": state_rows,
+    }
+
+
 def _collect_parallel_watch_payload(
     *,
     parallel_run_dir: Path,
     parallel_output_glob: str,
     phase_filename: str,
     stale_after_seconds: float,
+    state_stall_seconds: float,
+    state_rate_window_seconds: float,
 ) -> Dict[str, Any]:
     run_dir = parallel_run_dir.expanduser().resolve()
     if not run_dir.exists():
@@ -739,6 +1022,9 @@ def _collect_parallel_watch_payload(
             "daemon_pids": [],
             "pid_alive": False,
             "heartbeat_age_seconds": -1.0,
+            "stalled_state_count": 0,
+            "high_confidence_stalled_state_count": 0,
+            "stalled_states": [],
         }
 
     daemon_rows = _list_legal_scraper_daemons()
@@ -750,6 +1036,9 @@ def _collect_parallel_watch_payload(
     now = time.time()
     shards: List[Dict[str, Any]] = []
     max_age = -1.0
+    stalled_states: List[Dict[str, Any]] = []
+    high_confidence_stalled_count = 0
+    low_confidence_inactive_state_count = 0
 
     for output_dir in sorted(run_dir.glob(parallel_output_glob)):
         if not output_dir.is_dir():
@@ -813,6 +1102,27 @@ def _collect_parallel_watch_payload(
                 "states": states,
             }
         )
+        state_rate_analytics = _collect_state_rate_analytics(
+            shard_name=shard_name,
+            states=states,
+            log_path=run_dir / "logs" / f"{shard_name}.log",
+            output_dir=output_dir,
+            phase_path=phase_path,
+            now_epoch=now,
+            rate_window_seconds=max(60.0, float(state_rate_window_seconds)),
+            state_stall_seconds=max(300.0, float(state_stall_seconds)),
+        )
+        shards[-1]["state_rate_analytics"] = state_rate_analytics
+        low_confidence_inactive_state_count += _safe_int(
+            state_rate_analytics.get("low_confidence_inactive_state_count"),
+            0,
+        )
+        for stalled in list(state_rate_analytics.get("stalled_states") or []):
+            if not isinstance(stalled, dict):
+                continue
+            stalled_states.append(stalled)
+            if str(stalled.get("confidence") or "") == "high":
+                high_confidence_stalled_count += 1
 
     stale_shards = [row for row in shards if str(row.get("status")) == "stale"]
     dead_shards = [row for row in shards if str(row.get("status")) == "dead_pid"]
@@ -849,6 +1159,10 @@ def _collect_parallel_watch_payload(
         "stale_shard_count": len(stale_shards),
         "dead_shard_count": len(dead_shards),
         "missing_phase_shard_count": len(missing_phase_shards),
+        "stalled_state_count": len(stalled_states),
+        "high_confidence_stalled_state_count": int(high_confidence_stalled_count),
+        "low_confidence_inactive_state_count": int(low_confidence_inactive_state_count),
+        "stalled_states": stalled_states[:80],
     }
 
 
@@ -861,6 +1175,8 @@ def _collect_watch_payload(args: argparse.Namespace) -> Dict[str, Any]:
             parallel_output_glob=str(getattr(args, "parallel_output_glob", "shard*/output") or "shard*/output"),
             phase_filename=str(getattr(args, "parallel_phase_filename", "state_refresh_phase.json") or "state_refresh_phase.json"),
             stale_after_seconds=stale_after_seconds,
+            state_stall_seconds=max(300.0, float(getattr(args, "state_stall_seconds", 3600.0))),
+            state_rate_window_seconds=max(60.0, float(getattr(args, "state_rate_window_seconds", 1800.0))),
         )
 
     daemon_log_path = Path(args.daemon_log_path).expanduser().resolve()
@@ -901,6 +1217,54 @@ def _pid_alive(pid: int) -> bool:
         return False
 
 
+def _mark_task_complete(task: Dict[str, Any], *, note: str) -> None:
+    if _normalize_status(task.get("status")) == "complete":
+        return
+    task["status"] = "complete"
+    task["updated_at"] = utc_now()
+    notes = list(task.get("notes") or [])
+    if note:
+        notes.append(note)
+    task["notes"] = _uniq(str(item) for item in notes)
+
+
+def _complete_watch_tasks_with_prefix(
+    backlog: Dict[str, Any],
+    *,
+    prefix: str,
+    active_task_ids: set[str],
+    note: str,
+) -> None:
+    tasks = backlog.get("tasks")
+    if not isinstance(tasks, list):
+        return
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        if str(task.get("source") or "") != "watch_status":
+            continue
+        task_id = str(task.get("task_id") or "").strip()
+        if not task_id.startswith(prefix):
+            continue
+        if task_id in active_task_ids:
+            continue
+        _mark_task_complete(task, note=note)
+
+
+def _complete_watch_task_if_inactive(
+    backlog: Dict[str, Any],
+    *,
+    task_id: str,
+    active: bool,
+    note: str,
+) -> None:
+    if active:
+        return
+    task = _task_map(backlog).get(task_id)
+    if isinstance(task, dict):
+        _mark_task_complete(task, note=note)
+
+
 def _ingest_watch_status(
     backlog: Dict[str, Any],
     watch_payload: Dict[str, Any],
@@ -916,9 +1280,18 @@ def _ingest_watch_status(
         stale_count = _safe_int(watch_payload.get("stale_shard_count"), 0)
         dead_count = _safe_int(watch_payload.get("dead_shard_count"), 0)
         missing_phase_count = _safe_int(watch_payload.get("missing_phase_shard_count"), 0)
+        stalled_state_count = _safe_int(watch_payload.get("stalled_state_count"), 0)
+        high_conf_stalled_state_count = _safe_int(watch_payload.get("high_confidence_stalled_state_count"), 0)
+        low_conf_inactive_state_count = _safe_int(watch_payload.get("low_confidence_inactive_state_count"), 0)
         heartbeat_age = _safe_float(watch_payload.get("heartbeat_age_seconds"), -1.0)
         shards = list(watch_payload.get("shards") or [])
+        stalled_states = list(watch_payload.get("stalled_states") or [])
         daemon_pids = [int(pid) for pid in list(watch_payload.get("daemon_pids") or []) if _safe_int(pid, 0) > 0]
+        active_stale_shard_task_ids: set[str] = set()
+        active_dead_shard_task_ids: set[str] = set()
+        active_missing_phase_task_ids: set[str] = set()
+        active_state_stall_task_ids: set[str] = set()
+        parallel_run_not_detected_active = status in {"missing_parallel_run_dir", "no_shards"}
 
         for shard in shards:
             if not isinstance(shard, dict):
@@ -929,10 +1302,12 @@ def _ingest_watch_status(
             shard_age = _safe_float(shard.get("heartbeat_age_seconds"), -1.0)
             shard_phase_status = str(shard.get("phase_status") or "")
             if shard_status == "stale":
+                task_id = f"ops:stale-daemon-heartbeat:{shard_name}"
+                active_stale_shard_task_ids.add(task_id)
                 _upsert_task(
                     backlog,
                     {
-                        "task_id": f"ops:stale-daemon-heartbeat:{shard_name}",
+                        "task_id": task_id,
                         "title": f"Resolve stale legal-scraper heartbeat for {shard_name}.",
                         "status": "blocked",
                         "priority": 7,
@@ -949,10 +1324,12 @@ def _ingest_watch_status(
                     reopen_complete=reopen_complete,
                 )
             elif shard_status == "dead_pid":
+                task_id = f"ops:daemon-pid-dead:{shard_name}"
+                active_dead_shard_task_ids.add(task_id)
                 _upsert_task(
                     backlog,
                     {
-                        "task_id": f"ops:daemon-pid-dead:{shard_name}",
+                        "task_id": task_id,
                         "title": f"Restart dead legal-scraper shard daemon for {shard_name}.",
                         "status": "blocked",
                         "priority": 8,
@@ -968,10 +1345,12 @@ def _ingest_watch_status(
                     reopen_complete=reopen_complete,
                 )
             elif shard_status == "missing_phase":
+                task_id = f"ops:missing-phase:{shard_name}"
+                active_missing_phase_task_ids.add(task_id)
                 _upsert_task(
                     backlog,
                     {
-                        "task_id": f"ops:missing-phase:{shard_name}",
+                        "task_id": task_id,
                         "title": f"Restore phase checkpoint emission for {shard_name}.",
                         "status": "blocked",
                         "priority": 8,
@@ -987,7 +1366,47 @@ def _ingest_watch_status(
                     reopen_complete=reopen_complete,
                 )
 
-        if status in {"missing_parallel_run_dir", "no_shards"}:
+        for stalled in stalled_states[:80]:
+            if not isinstance(stalled, dict):
+                continue
+            state = str(stalled.get("state") or "").strip().upper()
+            shard_name = str(stalled.get("shard") or "unknown").strip() or "unknown"
+            if len(state) != 2:
+                continue
+            confidence = str(stalled.get("confidence") or "").strip().lower()
+            if confidence not in {"high", "medium"}:
+                continue
+            reason = str(stalled.get("reason") or "").strip()
+            last_seen_age = _safe_float(stalled.get("last_seen_age_seconds"), -1.0)
+            last_progress_age = _safe_float(stalled.get("last_progress_age_seconds"), -1.0)
+            rate = stalled.get("rate_counter_per_minute")
+            task_id = f"ops:state-likely-stalled:{shard_name}:{state}"
+            active_state_stall_task_ids.add(task_id)
+            _upsert_task(
+                backlog,
+                {
+                    "task_id": task_id,
+                    "title": f"Investigate likely stalled scraper activity for {state} on {shard_name}.",
+                    "status": "blocked",
+                    "priority": 6 if confidence == "high" else 7,
+                    "category": "ops",
+                    "source": "watch_status",
+                    "states": [state],
+                    "evidence": [
+                        f"shard={shard_name}",
+                        f"confidence={confidence}",
+                        f"reason={reason}",
+                        f"last_seen_age_seconds={last_seen_age:.1f}",
+                        f"last_progress_age_seconds={last_progress_age:.1f}",
+                        f"rate_counter_per_minute={rate}",
+                        f"scraped_event_count={_safe_int(stalled.get('scraped_event_count'), 0)}",
+                        f"max_counter={_safe_int(stalled.get('max_counter'), 0)}",
+                    ],
+                },
+                reopen_complete=reopen_complete,
+            )
+
+        if parallel_run_not_detected_active:
             _upsert_task(
                 backlog,
                 {
@@ -1005,6 +1424,37 @@ def _ingest_watch_status(
                 reopen_complete=reopen_complete,
             )
 
+        _complete_watch_tasks_with_prefix(
+            backlog,
+            prefix="ops:stale-daemon-heartbeat:",
+            active_task_ids=active_stale_shard_task_ids,
+            note="Auto-resolved: shard heartbeat no longer stale in latest watch status.",
+        )
+        _complete_watch_tasks_with_prefix(
+            backlog,
+            prefix="ops:daemon-pid-dead:",
+            active_task_ids=active_dead_shard_task_ids,
+            note="Auto-resolved: shard daemon PID is healthy in latest watch status.",
+        )
+        _complete_watch_tasks_with_prefix(
+            backlog,
+            prefix="ops:missing-phase:",
+            active_task_ids=active_missing_phase_task_ids,
+            note="Auto-resolved: shard phase checkpoint is present in latest watch status.",
+        )
+        _complete_watch_tasks_with_prefix(
+            backlog,
+            prefix="ops:state-likely-stalled:",
+            active_task_ids=active_state_stall_task_ids,
+            note="Auto-resolved: state is no longer marked stalled in latest watch status.",
+        )
+        _complete_watch_task_if_inactive(
+            backlog,
+            task_id="ops:parallel-run-not-detected",
+            active=parallel_run_not_detected_active,
+            note="Auto-resolved: parallel run directory and shard outputs are now detected.",
+        )
+
         return {
             "mode": "parallel",
             "status": status,
@@ -1018,6 +1468,10 @@ def _ingest_watch_status(
             "stale_shard_count": stale_count,
             "dead_shard_count": dead_count,
             "missing_phase_shard_count": missing_phase_count,
+            "stalled_state_count": stalled_state_count,
+            "high_confidence_stalled_state_count": high_conf_stalled_state_count,
+            "low_confidence_inactive_state_count": low_conf_inactive_state_count,
+            "stalled_states": stalled_states,
             "parallel_run_dir": str(watch_payload.get("parallel_run_dir") or ""),
             "shards": shards,
         }
@@ -1301,6 +1755,9 @@ def _collect_metrics(
         "parallel_stale_shard_count": _safe_int(watch_status.get("stale_shard_count"), 0),
         "parallel_dead_shard_count": _safe_int(watch_status.get("dead_shard_count"), 0),
         "parallel_missing_phase_shard_count": _safe_int(watch_status.get("missing_phase_shard_count"), 0),
+        "parallel_stalled_state_count": _safe_int(watch_status.get("stalled_state_count"), 0),
+        "parallel_high_confidence_stalled_state_count": _safe_int(watch_status.get("high_confidence_stalled_state_count"), 0),
+        "parallel_low_confidence_inactive_state_count": _safe_int(watch_status.get("low_confidence_inactive_state_count"), 0),
     }
 
 
@@ -1502,6 +1959,18 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--daemon-log-path", default=f"{default_daemon_dir}/daemon.log")
         p.add_argument("--daemon-phase-json-path", default=f"{default_daemon_dir}/state_refresh_phase.json")
         p.add_argument("--stale-heartbeat-seconds", type=float, default=180.0)
+        p.add_argument(
+            "--state-stall-seconds",
+            type=float,
+            default=3600.0,
+            help="Likely-stall threshold (seconds) for per-state rate/activity analytics.",
+        )
+        p.add_argument(
+            "--state-rate-window-seconds",
+            type=float,
+            default=1800.0,
+            help="Window (seconds) used when estimating per-state progress rates from log counters.",
+        )
         p.add_argument("--reopen-complete-tasks", action="store_true", help="Allow ingestion to reopen completed tasks when gaps reappear.")
         p.add_argument("--llm-provider", default="", help="Optional llm_router provider override.")
         p.add_argument("--llm-model", default="", help="Optional llm_router model override.")

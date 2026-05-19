@@ -6,6 +6,8 @@ unified SearchEngineAdapter interface.
 """
 
 import logging
+import os
+import re
 import time
 from typing import Dict, Optional, Any
 from urllib.parse import urlparse
@@ -76,6 +78,17 @@ class BraveSearchEngine(SearchEngineAdapter):
         self.client = BraveSearchClient(api_key=api_key)
         self._disabled_until: float = 0.0
         self._quota_exhausted: bool = False
+        configured_backoff = config.extra_params.get("rate_limit_backoff_seconds")
+        env_backoff = (
+            os.getenv("IPFS_DATASETS_SEARCH_BRAVE_RATE_LIMIT_BACKOFF_SECONDS")
+            or os.getenv("LEGAL_SCRAPER_SEARCH_BRAVE_RATE_LIMIT_BACKOFF_SECONDS")
+            or ""
+        )
+        try:
+            backoff_value = float(configured_backoff if configured_backoff is not None else env_backoff or 300.0)
+        except Exception:
+            backoff_value = 300.0
+        self._rate_limit_backoff_seconds = max(5.0, backoff_value)
         
         logger.info("Brave search engine initialized")
     
@@ -279,4 +292,26 @@ class BraveSearchEngine(SearchEngineAdapter):
             self._disabled_until = float("inf")
             return
         if "RATE_LIMITED" in upper_message or "RATE LIMIT" in upper_message or "HTTP 429" in upper_message:
-            self._disabled_until = max(self._disabled_until, time.time() + 300.0)
+            retry_after_seconds = self._extract_retry_after_seconds(message)
+            cooldown_seconds = (
+                max(5.0, float(retry_after_seconds))
+                if retry_after_seconds is not None
+                else float(self._rate_limit_backoff_seconds)
+            )
+            self._disabled_until = max(self._disabled_until, time.time() + cooldown_seconds)
+
+    @staticmethod
+    def _extract_retry_after_seconds(message: str) -> Optional[float]:
+        patterns = (
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b",
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\b",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, message or "", flags=re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                return max(0.0, float(match.group(1)))
+            except Exception:
+                continue
+        return None

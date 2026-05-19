@@ -8,6 +8,8 @@ Note: DuckDuckGo doesn't require an API key but has rate limiting.
 """
 
 import logging
+import random
+import re
 import time
 from typing import Optional, Dict, Any
 from urllib.parse import urlparse
@@ -78,12 +80,15 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
                 "ddgs library not available. Install with: pip install ddgs"
             )
 
+        self._disabled_until: float = 0.0
+
         # Set conservative defaults for DuckDuckGo.
         if config.rate_limit_per_minute > 30:
             logger.warning(
                 f"DuckDuckGo rate limit {config.rate_limit_per_minute} "
-                "may be too high. Recommended: 30 or less."
+                "may be too high. Clamping to 30 requests/minute."
             )
+            config.rate_limit_per_minute = 30
 
         logger.info("DuckDuckGo search engine initialized")
     
@@ -111,6 +116,13 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
         Raises:
             SearchEngineError: On search failure
         """
+        now = time.time()
+        if self._disabled_until > now:
+            retry_after = max(0.0, self._disabled_until - now)
+            raise SearchEngineRateLimitError(
+                f"DuckDuckGo search temporarily rate limited; retry after {retry_after:.1f}s"
+            )
+
         # Check cache first
         cache_key = self._get_cache_key(
             query,
@@ -163,10 +175,23 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
                 logger.warning(
                     f"DuckDuckGo search attempt {attempt + 1} failed: {e}"
                 )
+
+                if self._is_rate_limited_error(e):
+                    retry_after = self._extract_retry_after_seconds(e)
+                    cooldown_seconds = max(
+                        float(self.config.retry_delay_seconds or 0.0),
+                        float(retry_after if retry_after is not None else 60.0),
+                    )
+                    self._disabled_until = max(self._disabled_until, time.time() + cooldown_seconds)
+                    raise SearchEngineRateLimitError(
+                        f"DuckDuckGo search rate limited; retry after {cooldown_seconds:.1f}s"
+                    ) from e
                 
                 if attempt < self.config.retry_attempts - 1:
                     # Wait before retry
-                    time.sleep(self.config.retry_delay_seconds * (attempt + 1))
+                    base_delay = float(self.config.retry_delay_seconds) * float(attempt + 1)
+                    jitter = random.uniform(0.0, float(self.config.retry_delay_seconds))
+                    time.sleep(max(0.0, base_delay + jitter))
                 else:
                     # Final attempt failed
                     raise SearchEngineError(
@@ -238,6 +263,34 @@ class DuckDuckGoSearchEngine(SearchEngineAdapter):
                 results.append(normalized)
         
         return results
+
+    @staticmethod
+    def _is_rate_limited_error(error: Exception) -> bool:
+        text = f"{type(error).__name__} {error}".lower()
+        return (
+            "ratelimit" in text
+            or "rate limit" in text
+            or "too many requests" in text
+            or "http 429" in text
+            or "status code 429" in text
+        )
+
+    @staticmethod
+    def _extract_retry_after_seconds(error: Exception) -> Optional[float]:
+        text = str(error or "")
+        patterns = (
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b",
+            r"retry(?:\s|-)?after\s*[:=]?\s*(\d+(?:\.\d+)?)\b",
+        )
+        for pattern in patterns:
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if not match:
+                continue
+            try:
+                return max(0.0, float(match.group(1)))
+            except Exception:
+                continue
+        return None
     
     def test_connection(self) -> bool:
         """Test if DuckDuckGo search is accessible.
