@@ -6272,7 +6272,8 @@ def test_modal_compiler_treats_zero_margin_epistemic_deontic_priority_pair_as_ou
     )
 
 
-def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_low_runner_up_margin() -> None:
+def test_modal_compiler_surfaces_epistemic_self_pair_adaptive_ambiguity_for_zero_margin_tie(
+) -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
             parser_backend="regex",

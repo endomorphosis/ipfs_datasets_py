@@ -31,6 +31,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
+    prefers_contested_zero_margin_adaptive_ambiguity_pair,
     priority_signal_free_adaptive_ambiguity_targets,
     signal_free_adaptive_ambiguity_targets,
     supports_signal_free_adaptive_ambiguity_pair,
@@ -851,16 +852,13 @@ class DeterministicModalCompiler:
                 threshold=threshold,
             ):
                 continue
-            margin_direction = "outvoted" if (
-                family_margin < 0.0
-                or (
-                    family_margin <= 0.0
-                    and (
-                        is_priority_policy_pair
-                        or is_compiler_required_policy_pair
-                    )
-                )
-            ) else "contested"
+            margin_direction = self._adaptive_margin_direction(
+                family_margin=family_margin,
+                predicted_family=predicted_family,
+                target_family=target_family,
+                is_priority_policy_pair=is_priority_policy_pair,
+                is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+            )
             requires_rule = margin_direction == "outvoted"
             explicit_type = self._adaptive_margin_explicit_type(
                 predicted_family,
@@ -1281,16 +1279,13 @@ class DeterministicModalCompiler:
             )
             or runner_up_is_compiler_required_policy_pair
         )
-        margin_direction = "outvoted" if (
-            family_margin < 0.0
-            or (
-                family_margin <= 0.0
-                and (
-                    is_priority_policy_pair
-                    or is_compiler_required_policy_pair
-                )
-            )
-        ) else "contested"
+        margin_direction = self._adaptive_margin_direction(
+            family_margin=family_margin,
+            predicted_family=compiled_primary_family,
+            target_family=competing_family,
+            is_priority_policy_pair=is_priority_policy_pair,
+            is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+        )
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
             compiled_primary_family,
@@ -1465,16 +1460,13 @@ class DeterministicModalCompiler:
             )
             or runner_up_is_compiler_required_policy_pair
         )
-        margin_direction = "outvoted" if (
-            family_margin < 0.0
-            or (
-                family_margin <= 0.0
-                and (
-                    is_priority_policy_pair
-                    or is_compiler_required_policy_pair
-                )
-            )
-        ) else "contested"
+        margin_direction = self._adaptive_margin_direction(
+            family_margin=family_margin,
+            predicted_family=compiled_primary_family,
+            target_family=compiled_primary_family,
+            is_priority_policy_pair=is_priority_policy_pair,
+            is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+        )
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
             compiled_primary_family,
@@ -1589,6 +1581,36 @@ class DeterministicModalCompiler:
                 "margin_low",
             )
         )
+
+    def _adaptive_margin_direction(
+        self,
+        *,
+        family_margin: float,
+        predicted_family: str,
+        target_family: str,
+        is_priority_policy_pair: bool,
+        is_compiler_required_policy_pair: bool,
+        epsilon: float = 1e-12,
+    ) -> str:
+        """Classify adaptive low-margin conflicts as contested vs. outvoted."""
+        resolved_margin = float(family_margin)
+        resolved_epsilon = max(0.0, float(epsilon))
+        if (
+            abs(resolved_margin) <= resolved_epsilon
+            and prefers_contested_zero_margin_adaptive_ambiguity_pair(
+                predicted_family,
+                target_family,
+            )
+        ):
+            return "contested"
+        if resolved_margin < -resolved_epsilon:
+            return "outvoted"
+        if resolved_margin <= resolved_epsilon and (
+            is_priority_policy_pair
+            or is_compiler_required_policy_pair
+        ):
+            return "outvoted"
+        return "contested"
 
     @staticmethod
     def _adaptive_margin_priority(*, family_margin: float, threshold: float) -> float:
