@@ -765,6 +765,35 @@ def test_spacy_decoder_debiases_generic_frame_logits_when_deontic_scope_phrase_i
     assert logits["deontic"] > logits["frame"]
 
 
+def test_spacy_decoder_debiases_generic_frame_logits_in_editorial_scope_with_deontic_cue() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="12",
+        section="1822b",
+        text="Authority and jurisdiction in this former section apply.",
+    )
+    competing = build_us_code_sample(
+        title="12",
+        section="1822c",
+        text="Authority and jurisdiction in this former section shall apply.",
+    )
+
+    baseline_logits = codec.family_logits_for_sample(
+        baseline,
+        modal_families=("frame", "deontic", "temporal"),
+    )
+    competing_logits = codec.family_logits_for_sample(
+        competing,
+        modal_families=("frame", "deontic", "temporal"),
+    )
+
+    assert competing_logits["frame"] < baseline_logits["frame"]
+    assert competing_logits["deontic"] > baseline_logits["deontic"]
+
+
 def test_spacy_codec_debiases_relational_frame_cues_when_deontic_force_is_present() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

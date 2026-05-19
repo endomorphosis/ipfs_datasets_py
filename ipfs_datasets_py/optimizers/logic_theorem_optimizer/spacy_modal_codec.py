@@ -409,6 +409,7 @@ _GENERIC_FRAME_CUE_TERMS = frozenset(
 _GENERIC_FRAME_DEBIASED_LOGIT_BASE = 0.5
 _GENERIC_FRAME_CUE_DEBIAS_FACTOR = 0.2
 _GENERIC_FRAME_STRUCTURAL_BONUS_DEBIAS_FACTOR = 0.25
+_GENERIC_FRAME_PRESENT_CUE_SCOPE_BONUS_FACTOR = 0.35
 _GENERIC_FRAME_NORMATIVE_SCOPE_SOFT_CAP = 1.0
 _DEONTIC_COMPETING_SCOPE_SOFT_CAP = 3.0
 _TEMPORAL_COMPETING_SCOPE_SOFT_CAP = 3.0
@@ -995,6 +996,10 @@ class SpaCyModalDecoder:
             if family not in logits:
                 continue
             if float(raw_counts.get(family, 0.0)) > 0.0:
+                if generic_frame_debias_context:
+                    logits[family] = float(logits[family]) + (
+                        float(bonus) * _GENERIC_FRAME_PRESENT_CUE_SCOPE_BONUS_FACTOR
+                    )
                 continue
             logits[family] = max(float(logits[family]), 0.25) + float(bonus)
         frame_bonus = _frame_logit_bonus(signals)
@@ -1734,7 +1739,7 @@ def _is_generic_frame_cue_debias_context(
     encoding: SpaCyLegalEncoding,
     signals: Mapping[str, bool],
 ) -> bool:
-    if not (
+    has_competing_non_frame_scope = (
         bool(signals.get("has_deontic_scope"))
         or bool(signals.get("has_temporal_scope"))
         or bool(signals.get("has_condition_or_exception_scope"))
@@ -1744,11 +1749,28 @@ def _is_generic_frame_cue_debias_context(
         or bool(signals.get("has_alethic_cue"))
         or bool(signals.get("has_dynamic_scope"))
         or bool(signals.get("has_dynamic_cue"))
+    )
+    if not has_competing_non_frame_scope:
+        return False
+    has_compelling_non_frame_scope = (
+        bool(signals.get("has_deontic_cue"))
+        or bool(signals.get("has_deontic_scope_phrase"))
+        or bool(signals.get("has_condition_or_exception_scope"))
+        or bool(signals.get("has_conditional_scope_phrase"))
+        or bool(signals.get("has_conditional_scope_token"))
+        or bool(signals.get("has_temporal_scope_phrase"))
+        or bool(signals.get("has_temporal_within_scope"))
+        or bool(signals.get("has_calendar_date_scope"))
+        or bool(signals.get("has_epistemic_scope_phrase"))
+        or bool(signals.get("has_alethic_scope_phrase"))
+        or bool(signals.get("has_dynamic_scope_phrase"))
+    )
+    if bool(signals.get("has_frame_scope_phrase")) and not has_compelling_non_frame_scope:
+        return False
+    if (
+        bool(signals.get("has_frame_editorial_scope_phrase"))
+        and not has_compelling_non_frame_scope
     ):
-        return False
-    if bool(signals.get("has_frame_scope_phrase")):
-        return False
-    if bool(signals.get("has_frame_editorial_scope_phrase")):
         return False
     frame_cues = [
         str(cue.cue).strip().lower()
