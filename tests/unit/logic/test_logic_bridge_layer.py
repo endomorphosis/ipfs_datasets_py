@@ -98,6 +98,16 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert report.ir_document.views["deontic_formula_records"].metadata[
         "proof_ready_count"
     ] >= 1
+    assert report.ir_document.views["deontic_decoder_reconstructions"].metadata[
+        "decoder_record_count"
+    ] >= 1
+    assert report.ir_document.views["deontic_ir_slot_provenance"].metadata[
+        "provenance_record_count"
+    ] >= 1
+    assert report.ir_document.views["deontic_phase8_quality"].metadata[
+        "quality_record_count"
+    ] >= 1
+    assert report.ir_document.views["deontic_graph"].metadata["rule_count"] >= 1
     assert report.ir_document.has_frame_logic is True
     assert report.graph_projection.neo4j_compatible is True
     assert report.graph_projection.node_count > 0
@@ -105,6 +115,8 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     assert report.proof_gate.attempted_count >= 5
     assert report.proof_gate.valid_count >= 5
     assert report.round_trip.cosine_similarity >= 0.0
+    assert "deontic_decoder_slot_loss" in report.round_trip.extra_losses
+    assert "deontic_ir_slot_provenance_loss" in report.round_trip.extra_losses
     assert "deontic_quality_requires_validation_loss" in report.round_trip.extra_losses
     assert report.total_loss >= report.round_trip.extra_losses[
         "deontic_quality_requires_validation_loss"
@@ -187,6 +199,9 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert report.document.has_frame_logic is True
     assert "deontic_norms.deontic_ir" in report.document.views
     assert "deontic_norms.deontic_prover_syntax" in report.document.views
+    assert "deontic_norms.deontic_decoder_reconstructions" in report.document.views
+    assert "deontic_norms.deontic_ir_slot_provenance" in report.document.views
+    assert "deontic_norms.deontic_graph" in report.document.views
     assert "fol_tdfol.tdfol_formula" in report.document.views
     assert "fol_tdfol.proof_obligations" in report.document.views
     assert report.document.metadata["view_count"] == report.view_count
@@ -198,6 +213,8 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert report.loss_vector()[
         "deontic_norms.deontic_quality_requires_validation_loss"
     ] == 1.0
+    assert "deontic_norms.deontic_decoder_slot_loss" in report.loss_vector()
+    assert "deontic_norms.deontic_ir_slot_provenance_loss" in report.loss_vector()
     target = report.training_target()
     assert target.document is report.document
     assert target.losses["legal_ir_multiview_total_loss"] == report.total_loss

@@ -754,6 +754,9 @@ def test_bridge_loss_evaluator_for_names_runs_deontic_adapter() -> None:
 
     assert sample.sample_id in losses
     assert "deontic_quality_requires_validation_loss" in losses[sample.sample_id]
+    assert "deontic_decoder_slot_loss" in losses[sample.sample_id]
+    assert "deontic_ir_slot_provenance_loss" in losses[sample.sample_id]
+    assert "deontic_phase8_quality_incomplete_loss" in losses[sample.sample_id]
     assert "legal_ir_multiview_total_loss" in losses[sample.sample_id]
     assert "legal_ir_multiview_view_coverage_loss" in losses[sample.sample_id]
     assert "deontic_graph_failure_penalty" not in losses[sample.sample_id]
@@ -2710,7 +2713,16 @@ def test_bridge_ir_metric_block_reports_per_adapter_views() -> None:
 
     deontic = block["adapters"]["deontic_norms"]
     assert deontic["views"]["deontic_ir"]["metadata"]["norm_count"] >= 1
+    assert deontic["views"]["deontic_decoder_reconstructions"]["metadata"][
+        "decoder_record_count"
+    ] >= 1
+    assert deontic["views"]["deontic_ir_slot_provenance"]["metadata"][
+        "provenance_record_count"
+    ] >= 1
+    assert deontic["views"]["deontic_graph"]["metadata"]["rule_count"] >= 1
     assert deontic["views"]["frame_logic"]["metadata"]["triple_count"] >= 1
+    assert "deontic_decoder_slot_loss" in deontic
+    assert "deontic_ir_slot_provenance_loss" in deontic
     assert "deontic_quality_requires_validation_loss" in deontic
 
     tdfol = block["adapters"]["fol_tdfol"]

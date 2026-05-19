@@ -514,9 +514,17 @@ class ModalLossTodoGenerator:
         "cosine_loss": 0.05,
         "cross_entropy_loss": 0.05,
         "deontic_bridge_evaluation_failure_loss": 0.0,
+        "deontic_decoder_requires_validation_rate": 0.0,
+        "deontic_decoder_slot_loss": 0.0,
+        "deontic_graph_build_error_loss": 0.0,
+        "deontic_graph_conflict_loss": 0.0,
         "deontic_graph_failure_penalty": 0.0,
+        "deontic_graph_source_gap_loss": 0.0,
+        "deontic_ir_slot_provenance_loss": 0.0,
+        "deontic_phase8_quality_incomplete_loss": 0.0,
         "deontic_proof_failure_ratio": 0.0,
         "deontic_quality_requires_validation_loss": 0.0,
+        "deontic_repair_queue_rate": 0.0,
         "deontic_repair_required_rate": 0.0,
         "external_prover_failure_ratio": 0.0,
         "external_prover_unavailable_loss": 0.0,
@@ -623,9 +631,37 @@ class ModalLossTodoGenerator:
                 "repair_deontic_bridge_quality_gate",
                 "Fix deontic bridge evaluation so legal text can compile into LegalNormIR diagnostics.",
             ),
+            "deontic_decoder_requires_validation_rate": (
+                "repair_deontic_bridge_quality_gate",
+                "Improve deontic decoder reconstruction rows so LegalNormIR round trips do not require validation.",
+            ),
+            "deontic_decoder_slot_loss": (
+                "repair_deontic_bridge_quality_gate",
+                "Recover legally salient deontic slots in decoder reconstruction records.",
+            ),
+            "deontic_graph_build_error_loss": (
+                "repair_deontic_graph_bridge",
+                "Repair the deontic graph projection built from LegalNormIR records.",
+            ),
+            "deontic_graph_conflict_loss": (
+                "repair_deontic_graph_bridge",
+                "Reduce conflicting deontic graph rules emitted from equivalent LegalNormIR slots.",
+            ),
             "deontic_graph_failure_penalty": (
                 "repair_deontic_graph_bridge",
                 "Project deontic frame logic into Neo4j-compatible graph data without empty graph output.",
+            ),
+            "deontic_graph_source_gap_loss": (
+                "repair_deontic_graph_bridge",
+                "Source-ground deontic graph rule support nodes so graph diagnostics stay complete.",
+            ),
+            "deontic_ir_slot_provenance_loss": (
+                "repair_deontic_bridge_quality_gate",
+                "Preserve source provenance for legally salient LegalNormIR slots.",
+            ),
+            "deontic_phase8_quality_incomplete_loss": (
+                "repair_deontic_bridge_quality_gate",
+                "Complete Phase 8 deontic quality records across decoder, prover syntax, and IR provenance.",
             ),
             "deontic_proof_failure_ratio": (
                 "repair_deontic_prover_bridge",
@@ -634,6 +670,10 @@ class ModalLossTodoGenerator:
             "deontic_quality_requires_validation_loss": (
                 "repair_deontic_bridge_quality_gate",
                 "Promote deontic LegalNormIR and prover syntax outputs from syntax-only to validated bridge reports.",
+            ),
+            "deontic_repair_queue_rate": (
+                "repair_deontic_bridge_quality_gate",
+                "Reduce deterministic deontic repair queue rows before emitting proof obligations.",
             ),
             "deontic_repair_required_rate": (
                 "repair_deontic_bridge_quality_gate",

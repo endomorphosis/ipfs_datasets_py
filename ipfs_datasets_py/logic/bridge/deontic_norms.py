@@ -54,6 +54,7 @@ class DeonticNormsBridgeAdapter:
         capability_records = _list_of_dicts(
             metadata.get("legal_parser_capability_profile_records")
         )
+        deontic_exports = _deontic_export_context_from_parser_elements(parser_elements)
         parser_metrics = _summarize_parser_metrics(parser_elements)
         resolved_document_id = document_id or _document_id_from_norms(norms, text)
         triples = tuple(
@@ -113,6 +114,86 @@ class DeonticNormsBridgeAdapter:
                 payload={"records": capability_records},
                 metadata={"capability_record_count": len(capability_records)},
             ),
+            "deontic_decoder_reconstructions": LogicIRView(
+                name="deontic_decoder_reconstructions",
+                format="deontic-decoder-reconstructions",
+                source_component="deontic.decoder",
+                payload={"records": deontic_exports["decoder_records"]},
+                metadata={
+                    "decoder_record_count": len(deontic_exports["decoder_records"]),
+                },
+            ),
+            "deontic_proof_obligations": LogicIRView(
+                name="deontic_proof_obligations",
+                format="deontic-proof-obligations",
+                source_component="deontic.exports",
+                payload={"records": deontic_exports["proof_obligation_records"]},
+                metadata={
+                    "proof_obligation_count": len(
+                        deontic_exports["proof_obligation_records"]
+                    ),
+                },
+            ),
+            "deontic_repair_queue": LogicIRView(
+                name="deontic_repair_queue",
+                format="deontic-repair-queue",
+                source_component="deontic.exports",
+                payload={"records": deontic_exports["repair_queue_records"]},
+                metadata={
+                    "repair_record_count": len(
+                        deontic_exports["repair_queue_records"]
+                    ),
+                },
+            ),
+            "deontic_reconstruction_slot_loss": LogicIRView(
+                name="deontic_reconstruction_slot_loss",
+                format="deontic-reconstruction-slot-loss",
+                source_component="deontic.metrics",
+                payload={
+                    "records": deontic_exports["reconstruction_slot_loss_records"],
+                    "summary": deontic_exports["reconstruction_slot_loss_summary"],
+                },
+                metadata={
+                    "slot_loss_record_count": len(
+                        deontic_exports["reconstruction_slot_loss_records"]
+                    ),
+                },
+            ),
+            "deontic_ir_slot_provenance": LogicIRView(
+                name="deontic_ir_slot_provenance",
+                format="deontic-ir-slot-provenance-audits",
+                source_component="deontic.ir",
+                payload={
+                    "records": deontic_exports["ir_slot_provenance_records"],
+                    "summary": deontic_exports["ir_slot_provenance_summary"],
+                },
+                metadata={
+                    "provenance_record_count": len(
+                        deontic_exports["ir_slot_provenance_records"]
+                    ),
+                },
+            ),
+            "deontic_phase8_quality": LogicIRView(
+                name="deontic_phase8_quality",
+                format="deontic-phase8-quality-summaries",
+                source_component="deontic.metrics",
+                payload={
+                    "records": deontic_exports["phase8_quality_records"],
+                    "summary": deontic_exports["phase8_quality_summary"],
+                },
+                metadata={
+                    "quality_record_count": len(
+                        deontic_exports["phase8_quality_records"]
+                    ),
+                },
+            ),
+            "deontic_graph": LogicIRView(
+                name="deontic_graph",
+                format="deontic-graph-v1",
+                source_component="deontic.graph",
+                payload=deontic_exports["deontic_graph"],
+                metadata=deontic_exports["deontic_graph_metadata"],
+            ),
             "frame_logic": LogicIRView(
                 name="frame_logic",
                 format="flogic-triples-v1",
@@ -154,6 +235,7 @@ class DeonticNormsBridgeAdapter:
             {
                 "conversion_result": result,
                 "coverage_records": coverage_records,
+                "deontic_exports": deontic_exports,
                 "graph_data": graph_data,
                 "parser_metrics": parser_metrics,
             },
@@ -180,7 +262,10 @@ class DeonticNormsBridgeAdapter:
         )
         proof_gate = _proof_gate_from_coverage_records(context["coverage_records"])
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
-        round_trip = _round_trip_from_parser_metrics(context["parser_metrics"])
+        round_trip = _round_trip_from_deontic_context(
+            context["parser_metrics"],
+            context["deontic_exports"],
+        )
         status = "ok"
         if not ir_document.views["deontic_ir"].metadata.get("norm_count"):
             status = "partial"
@@ -222,13 +307,341 @@ def _summarize_parser_metrics(parser_elements: Sequence[Mapping[str, Any]]) -> d
     return summarize_parser_elements([dict(item) for item in parser_elements])
 
 
-def _round_trip_from_parser_metrics(metrics: Mapping[str, Any]) -> RoundTripMetrics:
+def _deontic_export_context_from_parser_elements(
+    parser_elements: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    context = _empty_deontic_export_context()
+    norm_objects = _legal_norm_objects_from_parser_elements(parser_elements)
+    context["norm_count"] = len(norm_objects)
+    if not norm_objects:
+        return context
+
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_decoder_records_from_irs,
+        build_ir_slot_provenance_audit_records,
+        build_phase8_quality_summary_records,
+        build_proof_obligation_record_from_ir,
+        build_prover_syntax_records_from_ir,
+        build_reconstruction_slot_loss_records,
+        build_repair_queue_record_from_ir,
+        summarize_ir_slot_provenance_audit_records,
+        summarize_phase8_quality_records,
+        summarize_reconstruction_slot_loss,
+    )
+
+    try:
+        decoder_records = build_decoder_records_from_irs(norm_objects)
+        context["decoder_records"] = decoder_records
+        context["reconstruction_slot_loss_records"] = (
+            build_reconstruction_slot_loss_records(decoder_records)
+        )
+        context["reconstruction_slot_loss_summary"] = (
+            summarize_reconstruction_slot_loss(decoder_records)
+        )
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        _record_export_context_error(context, "decoder_reconstruction", exc)
+        decoder_records = []
+
+    try:
+        ir_slot_provenance_records = build_ir_slot_provenance_audit_records(norm_objects)
+        context["ir_slot_provenance_records"] = ir_slot_provenance_records
+        context["ir_slot_provenance_summary"] = (
+            summarize_ir_slot_provenance_audit_records(ir_slot_provenance_records)
+        )
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        _record_export_context_error(context, "ir_slot_provenance", exc)
+        ir_slot_provenance_records = []
+
+    try:
+        prover_syntax_records: list[dict[str, Any]] = []
+        for norm in norm_objects:
+            prover_syntax_records.extend(build_prover_syntax_records_from_ir(norm))
+        context["prover_syntax_records"] = prover_syntax_records
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        _record_export_context_error(context, "prover_syntax_records", exc)
+        prover_syntax_records = []
+
+    try:
+        proof_records = [
+            build_proof_obligation_record_from_ir(norm)
+            for norm in norm_objects
+        ]
+        context["proof_obligation_records"] = proof_records
+        context["repair_queue_records"] = [
+            build_repair_queue_record_from_ir(norm)
+            for norm, proof_record in zip(norm_objects, proof_records)
+            if proof_record.get("requires_validation") is True
+        ]
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        _record_export_context_error(context, "proof_and_repair_records", exc)
+
+    try:
+        phase8_records = build_phase8_quality_summary_records(
+            decoder_records=decoder_records,
+            prover_syntax_records=prover_syntax_records,
+            ir_slot_provenance_records=ir_slot_provenance_records,
+        )
+        context["phase8_quality_records"] = phase8_records
+        context["phase8_quality_summary"] = summarize_phase8_quality_records(
+            decoder_records=decoder_records,
+            prover_syntax_records=prover_syntax_records,
+            ir_slot_provenance_records=ir_slot_provenance_records,
+        )
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        _record_export_context_error(context, "phase8_quality", exc)
+
+    graph_payload, graph_metadata = _deontic_graph_payload_from_norm_objects(norm_objects)
+    context["deontic_graph"] = graph_payload
+    context["deontic_graph_metadata"] = graph_metadata
+    return context
+
+
+def _empty_deontic_export_context() -> dict[str, Any]:
+    return {
+        "decoder_records": [],
+        "deontic_graph": {},
+        "deontic_graph_metadata": {
+            "build_error_count": 0,
+            "conflict_count": 0,
+            "node_count": 0,
+            "rule_count": 0,
+            "source_gap_count": 0,
+        },
+        "export_build_errors": {},
+        "ir_slot_provenance_records": [],
+        "ir_slot_provenance_summary": {},
+        "norm_count": 0,
+        "phase8_quality_records": [],
+        "phase8_quality_summary": {},
+        "proof_obligation_records": [],
+        "prover_syntax_records": [],
+        "reconstruction_slot_loss_records": [],
+        "reconstruction_slot_loss_summary": {},
+        "repair_queue_records": [],
+    }
+
+
+def _record_export_context_error(
+    context: dict[str, Any],
+    name: str,
+    exc: Exception,
+) -> None:
+    errors = dict(context.get("export_build_errors") or {})
+    errors[name] = f"{type(exc).__name__}: {exc}"
+    context["export_build_errors"] = errors
+
+
+def _legal_norm_objects_from_parser_elements(
+    parser_elements: Sequence[Mapping[str, Any]],
+) -> list[Any]:
+    if not parser_elements:
+        return []
+    from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+
+    norms: list[Any] = []
+    for element in parser_elements:
+        try:
+            norms.append(LegalNormIR.from_parser_element(dict(element)))
+        except Exception:
+            continue
+    return norms
+
+
+def _deontic_graph_payload_from_norm_objects(
+    norm_objects: Sequence[Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    if not norm_objects:
+        return {}, dict(_empty_deontic_export_context()["deontic_graph_metadata"])
+    try:
+        from ipfs_datasets_py.logic.deontic.graph import DeonticGraphBuilder
+
+        rows = [_deontic_graph_row_from_norm(norm) for norm in norm_objects]
+        graph = DeonticGraphBuilder().build_from_matrix(rows)
+        conflicts = [item.to_dict() for item in graph.detect_conflicts(only_active=False)]
+        gap_summary = graph.source_gap_summary()
+        payload = graph.to_dict()
+        payload["conflicts"] = conflicts
+        payload["source_gap_summary"] = gap_summary
+        metadata = {
+            "build_error_count": 0,
+            "conflict_count": len(conflicts),
+            "node_count": len(graph.nodes),
+            "rule_count": len(graph.rules),
+            "source_gap_count": len(gap_summary.get("rules_with_gaps") or []),
+        }
+        return payload, metadata
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        return {}, {
+            "build_error": f"{type(exc).__name__}: {exc}",
+            "build_error_count": 1,
+            "conflict_count": 0,
+            "node_count": 0,
+            "rule_count": 0,
+            "source_gap_count": 0,
+        }
+
+
+def _deontic_graph_row_from_norm(norm: Any) -> dict[str, Any]:
+    source_id = str(getattr(norm, "source_id", "") or "")
+    base_id = source_id or _stable_norm_id(norm)
+    actor = str(getattr(norm, "actor", "") or "").strip()
+    action = str(getattr(norm, "action", "") or "").strip()
+    citation = str(getattr(norm, "canonical_citation", "") or "").strip()
+    source_nodes: list[dict[str, Any]] = []
+    if actor:
+        source_nodes.append(
+            {
+                "id": f"{base_id}:actor",
+                "label": actor,
+                "node_type": "actor",
+                "active": True,
+                "confidence": 1.0,
+            }
+        )
+    for index, condition in enumerate(
+        _string_list(getattr(norm, "conditions", ())),
+        start=1,
+    ):
+        source_nodes.append(
+            {
+                "id": f"{base_id}:condition:{index}",
+                "label": condition,
+                "node_type": "condition",
+                "active": True,
+                "confidence": 1.0,
+            }
+        )
+    authority_nodes = (
+        [
+            {
+                "id": f"{base_id}:authority",
+                "label": citation,
+                "attributes": {"canonical_citation": citation},
+            }
+        ]
+        if citation
+        else []
+    )
+    return {
+        "rule_id": base_id,
+        "modality": _graph_modality(getattr(norm, "modality", "")),
+        "predicate": _safe_predicate(
+            action or getattr(norm, "norm_type", "") or "governs"
+        ),
+        "target_id": f"{base_id}:action",
+        "target_label": action
+        or str(getattr(norm, "support_text", "") or "Governed action"),
+        "target_type": "action",
+        "target_active": True,
+        "sources": source_nodes,
+        "authorities": authority_nodes,
+        "evidence_ids": [source_id] if source_id else [],
+        "active": True,
+        "confidence": 1.0,
+        "attributes": {
+            "blockers": list(getattr(norm, "blockers", []) or []),
+            "canonical_citation": citation,
+            "norm_type": str(getattr(norm, "norm_type", "") or ""),
+            "proof_ready": bool(getattr(norm, "proof_ready", False)),
+            "source_id": source_id,
+        },
+    }
+
+
+def _graph_modality(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    if text in {"obligation", "prohibition", "permission", "entitlement"}:
+        return text
+    if text in {"must_not", "shall_not", "forbidden", "prohibited"}:
+        return "prohibition"
+    if text in {"may", "authorized", "allowed"}:
+        return "permission"
+    return "obligation"
+
+
+def _stable_norm_id(norm: Any) -> str:
+    seed = "|".join(
+        str(getattr(norm, name, "") or "")
+        for name in ("source_id", "canonical_citation", "support_text", "action")
+    )
+    digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+    return f"deontic-norm:{digest}"
+
+
+def _safe_predicate(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    tokens = [
+        "".join(char for char in token if char.isalnum())
+        for token in text.split()
+    ]
+    predicate = "_".join(token for token in tokens if token)
+    return predicate or "governs"
+
+
+def _string_list(value: Any) -> list[str]:
+    if isinstance(value, Mapping):
+        value = value.values()
+    if isinstance(value, str):
+        value = [value]
+    try:
+        candidates = list(value)
+    except TypeError:
+        return []
+    return [str(item).strip() for item in candidates if str(item).strip()]
+
+
+def _round_trip_from_deontic_context(
+    metrics: Mapping[str, Any],
+    deontic_exports: Mapping[str, Any],
+) -> RoundTripMetrics:
     grounded_phrase_rate = _float(metrics.get("phase8_decoder_grounded_phrase_rate"))
     grounded_slot_rate = _float(metrics.get("phase8_parser_capability_decoder_grounding_rate"))
     if grounded_phrase_rate <= 0.0:
         grounded_phrase_rate = grounded_slot_rate
     syntax_valid_rate = _float(metrics.get("phase8_prover_syntax_valid_rate"))
     quality_requires_validation_rate = _float(metrics.get("phase8_quality_requires_validation_rate"))
+    norm_count = int(deontic_exports.get("norm_count") or 0)
+    reconstruction_summary = _mapping(
+        deontic_exports.get("reconstruction_slot_loss_summary")
+    )
+    provenance_summary = _mapping(deontic_exports.get("ir_slot_provenance_summary"))
+    graph_metadata = _mapping(deontic_exports.get("deontic_graph_metadata"))
+    phase8_quality_records = _list_of_dicts(deontic_exports.get("phase8_quality_records"))
+    decoder_records = _list_of_dicts(deontic_exports.get("decoder_records"))
+    repair_queue_records = _list_of_dicts(deontic_exports.get("repair_queue_records"))
+    quality_incomplete_rate = _record_validation_rate(phase8_quality_records)
+    decoder_requires_validation_rate = _record_validation_rate(decoder_records)
+    extra_losses = {
+        "deontic_decoder_requires_validation_rate": decoder_requires_validation_rate,
+        "deontic_decoder_slot_loss": max(
+            0.0,
+            1.0 - _float(reconstruction_summary.get("grounded_required_slot_rate")),
+        )
+        if reconstruction_summary
+        else (1.0 if norm_count else 0.0),
+        "deontic_graph_build_error_loss": min(
+            1.0,
+            _float(graph_metadata.get("build_error_count")),
+        ),
+        "deontic_graph_conflict_loss": _rate(
+            graph_metadata.get("conflict_count"),
+            graph_metadata.get("rule_count"),
+        ),
+        "deontic_graph_source_gap_loss": _rate(
+            graph_metadata.get("source_gap_count"),
+            graph_metadata.get("rule_count"),
+        ),
+        "deontic_ir_slot_provenance_loss": max(
+            0.0,
+            1.0 - _float(provenance_summary.get("grounded_slot_rate")),
+        )
+        if provenance_summary
+        else (1.0 if norm_count else 0.0),
+        "deontic_phase8_quality_incomplete_loss": quality_incomplete_rate,
+        "deontic_quality_requires_validation_loss": quality_requires_validation_rate,
+        "deontic_repair_queue_rate": _rate(len(repair_queue_records), norm_count),
+        "deontic_repair_required_rate": _float(metrics.get("repair_required_rate")),
+    }
     return RoundTripMetrics(
         cosine_similarity=grounded_phrase_rate,
         cosine_loss=max(0.0, 1.0 - grounded_phrase_rate),
@@ -236,10 +649,7 @@ def _round_trip_from_parser_metrics(metrics: Mapping[str, Any]) -> RoundTripMetr
         reconstruction_loss=max(0.0, 1.0 - grounded_slot_rate),
         text_reconstruction_loss=max(0.0, 1.0 - grounded_phrase_rate),
         symbolic_validity_penalty=max(0.0, 1.0 - syntax_valid_rate),
-        extra_losses={
-            "deontic_quality_requires_validation_loss": quality_requires_validation_rate,
-            "deontic_repair_required_rate": _float(metrics.get("repair_required_rate")),
-        },
+        extra_losses=extra_losses,
     )
 
 
@@ -387,6 +797,27 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _mapping(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _rate(numerator: Any, denominator: Any) -> float:
+    top = _float(numerator)
+    bottom = _float(denominator)
+    if bottom <= 0.0:
+        return 0.0
+    return max(0.0, min(1.0, top / bottom))
+
+
+def _record_validation_rate(records: Sequence[Mapping[str, Any]]) -> float:
+    if not records:
+        return 0.0
+    requires_validation = sum(
+        1 for record in records if record.get("requires_validation") is True
+    )
+    return requires_validation / len(records)
 
 
 def _float(value: Any) -> float:
