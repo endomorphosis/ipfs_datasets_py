@@ -2311,7 +2311,7 @@ def test_modal_compiler_marks_temporal_self_pair_as_compiler_required_policy(
     assert temporal_self.metadata["family_margin"] == 0.0
     assert temporal_self.metadata["adaptive_margin_direction"] == "outvoted"
     assert temporal_self.metadata["is_compiler_required_policy_pair"] is True
-    assert temporal_self.metadata["runner_up_is_compiler_required_policy_pair"] is False
+    assert temporal_self.metadata["runner_up_is_compiler_required_policy_pair"] is True
     assert temporal_self.metadata["explicit_ambiguity_type"] == (
         "adaptive_temporal_temporal_outvoted_margin_low"
     )
@@ -12248,6 +12248,12 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             "expected_explicit_type": "adaptive_frame_alethic_outvoted_margin_low",
         },
         {
+            "compiled_primary_family": "frame",
+            "family_shares": {"deontic": 0.57, "frame": 0.43},
+            "expected_pair": "frame->frame",
+            "expected_explicit_type": "adaptive_frame_frame_outvoted_margin_low",
+        },
+        {
             "compiled_primary_family": "deontic",
             "family_shares": {"epistemic": 0.73, "deontic": 0.27},
             "expected_pair": "deontic->epistemic",
@@ -12276,6 +12282,12 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             "family_shares": {"temporal": 0.58, "frame": 0.54},
             "expected_pair": "frame->temporal",
             "expected_explicit_type": "adaptive_frame_temporal_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "temporal",
+            "family_shares": {"frame": 0.73, "temporal": 0.27},
+            "expected_pair": "temporal->frame",
+            "expected_explicit_type": "adaptive_temporal_frame_outvoted_margin_low",
         },
         {
             "compiled_primary_family": "alethic",
@@ -12499,6 +12511,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "is_self_pair": False,
         },
         {
+            "doc_id": "required-temporal-frame-margin-doc",
+            "predicted_family": "temporal",
+            "predicted_system": "LTL",
+            "predicted_symbol": "F",
+            "predicted_label": "eventually",
+            "target_family": "frame",
+            "ranking": (
+                {"family": "temporal", "count": 1, "share": 0.6786708848205},
+                {"family": "frame", "count": 1, "share": 0.3213291151795},
+            ),
+            "family_margin": -0.357341769641,
+            "adaptive_priority": 0.507341769641,
+            "expected_explicit_type": "adaptive_temporal_frame_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
             "doc_id": "required-deontic-conditional-margin-doc",
             "predicted_family": "deontic",
             "predicted_system": "D",
@@ -12671,6 +12700,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "expected_explicit_type": "adaptive_frame_temporal_outvoted_margin_low",
             "expected_severity": "requires_rule",
             "is_self_pair": False,
+        },
+        {
+            "doc_id": "required-frame-self-margin-doc",
+            "predicted_family": "frame",
+            "predicted_system": "FRAME_BM25",
+            "predicted_symbol": "Frame",
+            "predicted_label": "frame",
+            "target_family": "frame",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 0.522970476002},
+                {"family": "temporal", "count": 1, "share": 0.477029523998},
+            ),
+            "family_margin": 0.045940952004,
+            "adaptive_priority": 0.104059047996,
+            "expected_explicit_type": "adaptive_frame_frame_contested_margin_low",
+            "expected_severity": "review",
+            "is_self_pair": True,
         },
     )
     for scenario in scenarios:
