@@ -1596,6 +1596,32 @@ def test_spacy_codec_backfills_frame_share_for_statutory_reference_conditional_c
     assert conditional_share > frame_share
 
 
+def test_spacy_codec_backfills_frame_share_for_dense_deontic_scope_with_frame_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="22",
+        section="1642e-1",
+        text=(
+            "The Secretary shall and must and shall provide notice in this former section."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "frame" for cue in encoding.cues)
+    assert signals["has_frame_scope_phrase"] is True
+    frame_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "frame"
+    )
+    assert frame_share > 0.0
+
+
 def test_spacy_codec_backfills_deontic_share_for_frame_scope_with_deontic_tokens() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1761,6 +1787,32 @@ def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_tempo
         text=(
             "The Secretary shall and must and shall and must issue notice "
             "while pending review."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "temporal" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    temporal_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "temporal"
+    )
+    assert temporal_share > 0.0
+
+
+def test_spacy_codec_treats_during_as_temporal_scope_for_deontic_competition() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="12",
+        section="4405a",
+        text=(
+            "The Secretary shall and must and shall provide notice during review."
         ),
     )
     encoding = codec.encode_sample(sample)

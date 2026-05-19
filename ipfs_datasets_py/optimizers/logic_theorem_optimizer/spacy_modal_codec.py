@@ -98,6 +98,7 @@ _TEMPORAL_SCOPE_TOKENS = frozenset(
         "daily",
         "day",
         "deadline",
+        "during",
         "effective",
         "fiscal",
         "immediately",
@@ -1585,12 +1586,34 @@ def _apply_competing_scope_backfill(
     has_moderate_frame_competition = (
         frame_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER
     )
+    has_frame_scope_signal = (
+        bool(signals.get("has_frame_context"))
+        or bool(signals.get("has_frame_scope_phrase"))
+        or bool(signals.get("has_frame_editorial_scope_phrase"))
+        or bool(signals.get("has_statutory_scope_reference"))
+        or bool(signals.get("has_frame_cue"))
+    )
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
-        and conditional_count <= 0.0
+        and conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_condition_or_exception_scope"))
     ):
-        counts[conditional_family] = _COMPETING_SCOPE_BACKFILL_WEIGHT
+        conditional_backfill = _COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_conditional_scope_phrase"))
+            or bool(signals.get("has_conditional_scope_token"))
+            or bool(signals.get("has_condition_clause"))
+            or bool(signals.get("has_exception_clause"))
+        ):
+            conditional_backfill = max(
+                conditional_backfill,
+                _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[conditional_family] = max(
+            float(counts.get(conditional_family, 0.0)),
+            conditional_backfill,
+        )
     if (
         conditional_count >= _CONDITIONAL_FRAME_SCOPE_BACKFILL_TRIGGER
         and frame_count <= 0.0
@@ -1636,14 +1659,8 @@ def _apply_competing_scope_backfill(
         )
     if (
         deontic_count >= _DEONTIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER
-        and temporal_count <= 0.0
+        and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_temporal_scope"))
-        and (
-            bool(signals.get("has_statutory_scope_reference"))
-            or bool(signals.get("has_temporal_scope_phrase"))
-            or bool(signals.get("has_calendar_date_scope"))
-            or bool(signals.get("has_temporal_within_scope"))
-        )
     ):
         temporal_backfill = max(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
@@ -1657,6 +1674,25 @@ def _apply_competing_scope_backfill(
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,
+        )
+    if (
+        deontic_count >= _DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER
+        and frame_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
+        and has_frame_scope_signal
+    ):
+        frame_backfill = _COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_frame_scope_phrase"))
+            or bool(signals.get("has_frame_editorial_scope_phrase"))
+        ):
+            frame_backfill = max(
+                frame_backfill,
+                _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            )
+        counts[frame_family] = max(
+            float(counts.get(frame_family, 0.0)),
+            frame_backfill,
         )
     if (
         deontic_count >= _DEONTIC_DYNAMIC_SCOPE_BACKFILL_TRIGGER
