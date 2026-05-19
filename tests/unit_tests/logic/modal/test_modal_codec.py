@@ -6026,6 +6026,143 @@ def test_modal_compiler_treats_zero_margin_frame_epistemic_priority_pair_as_outv
     )
 
 
+def test_modal_compiler_emits_explicit_frame_bundle_ambiguities_for_autoencoder_margins(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-frame-margin-bundle-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-frame-margin-bundle-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-frame-1",
+                operator=ModalIROperator(
+                    family="frame",
+                    system="FRAME_BM25",
+                    symbol="Frame",
+                    label="frame",
+                ),
+                predicate=ModalIRPredicate(
+                    name="editorial_transfer",
+                    arguments=["section:ref"],
+                    role="frame_scope",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-frame-margin-bundle-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="40 U.S.C. 6501",
+                ),
+            ),
+        ],
+    )
+
+    scenarios = (
+        {
+            "target_family": "conditional_normative",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 0.994306102841},
+                {"family": "conditional_normative", "count": 1, "share": 0.005693897159},
+            ),
+            "expected_margin": -0.988612205682,
+            "expected_priority": 1.138612205682,
+            "expected_explicit_type": (
+                "adaptive_frame_conditional_normative_outvoted_margin_low"
+            ),
+        },
+        {
+            "target_family": "epistemic",
+            "ranking": (
+                {"family": "frame", "count": 1, "share": 0.990483348015},
+                {"family": "epistemic", "count": 1, "share": 0.009516651985},
+            ),
+            "expected_margin": -0.98096669603,
+            "expected_priority": 1.13096669603,
+            "expected_explicit_type": "adaptive_frame_epistemic_outvoted_margin_low",
+        },
+    )
+
+    for scenario in scenarios:
+        target_family = str(scenario["target_family"])
+        ranking = [dict(item) for item in tuple(scenario["ranking"])]
+        family_shares = {
+            str(item["family"]): float(item["share"]) for item in ranking
+        }
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+
+        base_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+            and ambiguity.candidate_ids == ["frame", target_family]
+        )
+        assert base_ambiguity.metadata["adaptive_policy_pair"] == (
+            f"frame->{target_family}"
+        )
+        assert base_ambiguity.metadata["is_compiler_required_policy_pair"] is True
+        assert (
+            abs(
+                float(base_ambiguity.metadata["family_margin_raw"])
+                - float(scenario["expected_margin"])
+            )
+            < 1e-12
+        )
+        assert (
+            abs(
+                float(base_ambiguity.metadata["adaptive_priority"])
+                - float(scenario["expected_priority"])
+            )
+            < 1e-12
+        )
+        assert (
+            base_ambiguity.metadata["explicit_ambiguity_type"]
+            == scenario["expected_explicit_type"]
+        )
+        assert base_ambiguity.severity == "requires_rule"
+        assert any(
+            ambiguity.ambiguity_type == scenario["expected_explicit_type"]
+            and ambiguity.candidate_ids == ["frame", target_family]
+            and ambiguity.metadata["adaptive_base_ambiguity_type"]
+            == "adaptive_family_margin_low"
+            for ambiguity in ambiguities
+        )
+
+
 def test_modal_compiler_treats_zero_margin_epistemic_deontic_priority_pair_as_outvoted_adaptive_ambiguity(
 ) -> None:
     compiler = DeterministicModalCompiler(
