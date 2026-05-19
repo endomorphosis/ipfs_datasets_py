@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
+    COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
     DEFAULT_MODAL_REGISTRY,
     ModalLogicFamily,
     ModalRegistry,
@@ -162,6 +163,20 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
         )
         is False
     )
+
+
+def test_compiler_required_adaptive_ambiguity_pairs_are_covered_by_both_policies() -> None:
+    for predicted_family, target_family in (
+        COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    ):
+        assert supports_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
+        assert is_priority_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            target_family,
+        )
 
 
 def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:
