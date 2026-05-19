@@ -428,8 +428,12 @@ _FRAME_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
+_TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 3.0
+_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.2
 _STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
 _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT = 0.6
 _DEONTIC_SCOPE_TOKENS = frozenset(
@@ -1420,6 +1424,16 @@ def _apply_generic_frame_scope_backfill(
             float(counts.get(ModalLogicFamily.EPISTEMIC.value, 0.0)),
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
+    if bool(signals.get("has_alethic_scope")):
+        counts[ModalLogicFamily.ALETHIC.value] = max(
+            float(counts.get(ModalLogicFamily.ALETHIC.value, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if bool(signals.get("has_dynamic_scope")):
+        counts[ModalLogicFamily.DYNAMIC.value] = max(
+            float(counts.get(ModalLogicFamily.DYNAMIC.value, 0.0)),
+            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
 
 
 def _apply_competing_scope_backfill(
@@ -1433,12 +1447,14 @@ def _apply_competing_scope_backfill(
     frame_family = ModalLogicFamily.FRAME.value
     dynamic_family = ModalLogicFamily.DYNAMIC.value
     epistemic_family = ModalLogicFamily.EPISTEMIC.value
+    alethic_family = ModalLogicFamily.ALETHIC.value
     deontic_count = float(counts.get(deontic_family, 0.0))
     conditional_count = float(counts.get(conditional_family, 0.0))
     temporal_count = float(counts.get(temporal_family, 0.0))
     frame_count = float(counts.get(frame_family, 0.0))
     dynamic_count = float(counts.get(dynamic_family, 0.0))
     epistemic_count = float(counts.get(epistemic_family, 0.0))
+    alethic_count = float(counts.get(alethic_family, 0.0))
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= 0.0
@@ -1470,7 +1486,13 @@ def _apply_competing_scope_backfill(
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
-        conditional_count >= _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER
+        (
+            conditional_count >= _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER
+            or (
+                conditional_count > 0.0
+                and bool(signals.get("has_dynamic_scope_phrase"))
+            )
+        )
         and dynamic_count <= 0.0
         and bool(signals.get("has_dynamic_scope"))
         and (
@@ -1518,16 +1540,26 @@ def _apply_competing_scope_backfill(
     ):
         counts[deontic_family] = max(
             float(counts.get(deontic_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
         frame_count >= _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER
         and temporal_count <= 0.0
         and bool(signals.get("has_temporal_scope"))
     ):
+        temporal_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if (
+            bool(signals.get("has_calendar_date_scope"))
+            or bool(signals.get("has_temporal_scope_phrase"))
+            or bool(signals.get("has_temporal_within_scope"))
+        ):
+            temporal_backfill = max(
+                temporal_backfill,
+                _GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[temporal_family] = max(
             float(counts.get(temporal_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            temporal_backfill,
         )
     if (
         frame_count >= _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
@@ -1543,7 +1575,7 @@ def _apply_competing_scope_backfill(
     ):
         counts[conditional_family] = max(
             float(counts.get(conditional_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
         frame_count >= _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
@@ -1552,7 +1584,31 @@ def _apply_competing_scope_backfill(
     ):
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
-            _COMPETING_SCOPE_BACKFILL_WEIGHT,
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        frame_count >= _FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER
+        and alethic_count <= 0.0
+        and bool(
+            signals.get("has_alethic_scope")
+            or signals.get("has_alethic_cue")
+        )
+    ):
+        counts[alethic_family] = max(
+            float(counts.get(alethic_family, 0.0)),
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        frame_count >= _FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER
+        and dynamic_count <= 0.0
+        and bool(
+            signals.get("has_dynamic_scope")
+            or signals.get("has_dynamic_cue")
+        )
+    ):
+        counts[dynamic_family] = max(
+            float(counts.get(dynamic_family, 0.0)),
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
         temporal_count >= _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
@@ -1581,6 +1637,18 @@ def _apply_competing_scope_backfill(
         counts[conditional_family] = max(
             float(counts.get(conditional_family, 0.0)),
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    if (
+        temporal_count >= _TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
+        and epistemic_count <= 0.0
+        and bool(
+            signals.get("has_epistemic_scope")
+            or signals.get("has_epistemic_cue")
+        )
+    ):
+        counts[epistemic_family] = max(
+            float(counts.get(epistemic_family, 0.0)),
+            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
         temporal_count >= _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER
@@ -1648,6 +1716,10 @@ def _is_generic_frame_cue_debias_context(
         or bool(signals.get("has_condition_or_exception_scope"))
         or bool(signals.get("has_epistemic_scope"))
         or bool(signals.get("has_epistemic_cue"))
+        or bool(signals.get("has_alethic_scope"))
+        or bool(signals.get("has_alethic_cue"))
+        or bool(signals.get("has_dynamic_scope"))
+        or bool(signals.get("has_dynamic_cue"))
     ):
         return False
     if bool(signals.get("has_frame_scope_phrase")):
@@ -1713,6 +1785,13 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             else 0.45
         )
         boosts[ModalLogicFamily.EPISTEMIC.value] = epistemic_bonus
+    if bool(signals.get("has_alethic_scope")):
+        alethic_bonus = (
+            0.7
+            if bool(signals.get("has_alethic_scope_phrase"))
+            else 0.45
+        )
+        boosts[ModalLogicFamily.ALETHIC.value] = alethic_bonus
     dynamic_bonus = 0.0
     if bool(signals.get("has_dynamic_scope_phrase")):
         dynamic_bonus += 1.0

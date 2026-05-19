@@ -1038,6 +1038,10 @@ class DeterministicModalCompiler:
                     signals.get("has_alethic_scope")
                     or signals.get("has_alethic_cue")
                 ),
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
+                ),
             }
         elif predicted_family == ModalLogicFamily.HYBRID.value:
             target_signal_by_family = {
@@ -1051,6 +1055,10 @@ class DeterministicModalCompiler:
                 ModalLogicFamily.DEONTIC.value: bool(
                     signals.get("has_deontic_scope")
                     or signals.get("has_deontic_cue")
+                ),
+                ModalLogicFamily.ALETHIC.value: bool(
+                    signals.get("has_alethic_scope")
+                    or signals.get("has_alethic_cue")
                 ),
                 ModalLogicFamily.EPISTEMIC.value: bool(
                     signals.get("has_epistemic_scope")

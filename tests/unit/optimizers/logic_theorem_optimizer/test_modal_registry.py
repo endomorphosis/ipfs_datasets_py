@@ -146,6 +146,7 @@ def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs
     )
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "deontic")
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "frame")
+    assert supports_signal_free_adaptive_ambiguity_pair("frame", "alethic")
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "epistemic")
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "alethic")
     assert supports_signal_free_adaptive_ambiguity_pair("frame", "dynamic")
@@ -198,6 +199,7 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "conditional_normative",
         "deontic",
         "frame",
+        "alethic",
         "epistemic",
         "alethic",
         "dynamic",

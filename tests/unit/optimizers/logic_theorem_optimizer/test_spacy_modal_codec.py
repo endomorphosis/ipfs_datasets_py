@@ -1525,6 +1525,61 @@ def test_spacy_codec_backfills_temporal_share_for_frame_scope_with_temporal_toke
     assert temporal_share > 0.0
 
 
+def test_spacy_codec_backfills_alethic_share_for_frame_scope_with_alethic_tokens() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="12",
+        section="1823a",
+        text=(
+            "Authority and jurisdiction in this former section apply while the "
+            "agency is unable to comply."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "alethic" for cue in encoding.cues)
+    assert signals["has_frame_scope_phrase"] is True
+    assert signals["has_alethic_scope"] is True
+    alethic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "alethic"
+    )
+    assert alethic_share > 0.0
+
+
+def test_spacy_codec_backfills_dynamic_share_for_frame_scope_with_dynamic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="12",
+        section="1823b",
+        text=(
+            "Authority and jurisdiction in this former section apply upon service."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "dynamic" for cue in encoding.cues)
+    assert signals["has_frame_scope_phrase"] is True
+    assert signals["has_dynamic_scope"] is True
+    dynamic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "dynamic"
+    )
+    assert dynamic_share > 0.0
+
+
 def test_spacy_codec_backfills_temporal_share_for_dense_deontic_scope_with_temporal_scope_phrase() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -1572,6 +1627,31 @@ def test_spacy_codec_backfills_dynamic_share_for_conditional_scope_with_dynamic_
     assert not any(cue.family == "dynamic" for cue in encoding.cues)
     assert signals["has_dynamic_scope"] is True
     assert signals["has_condition_or_exception_scope"] is True
+    dynamic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "dynamic"
+    )
+    assert dynamic_share > 0.0
+
+
+def test_spacy_codec_backfills_dynamic_share_for_single_conditional_scope_with_dynamic_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="14",
+        section="905a",
+        text="If designated, the notice applies upon service.",
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "dynamic" for cue in encoding.cues)
+    assert signals["has_condition_or_exception_scope"] is True
+    assert signals["has_dynamic_scope_phrase"] is True
     dynamic_share = next(
         float(item["share"])
         for item in ranking
@@ -1633,6 +1713,34 @@ def test_spacy_codec_backfills_conditional_share_for_dense_temporal_scope_with_c
         if item["family"] == "conditional_normative"
     )
     assert conditional_share > 0.0
+
+
+def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="21",
+        section="404a",
+        text=(
+            "Within 30 days and no later than January 1, 2030, the effective date "
+            "is on or after review, and knowledge exists that filing is complete."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "epistemic" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_epistemic_scope"] is True
+    epistemic_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "epistemic"
+    )
+    assert epistemic_share > 0.0
 
 
 def test_spacy_codec_backfills_frame_share_for_dense_temporal_scope_with_frame_context() -> None:
