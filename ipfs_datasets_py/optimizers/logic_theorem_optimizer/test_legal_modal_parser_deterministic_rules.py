@@ -151,6 +151,11 @@ def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pair
         predicted_family=ModalLogicFamily.FRAME.value,
         target_family=ModalLogicFamily.DEONTIC.value,
     )
+    assert _has_adaptive_explicit_pair(
+        conditional_result,
+        predicted_family=ModalLogicFamily.FRAME.value,
+        target_family=ModalLogicFamily.EPISTEMIC.value,
+    )
 
 
 def test_compiler_emits_explicit_deontic_to_frame_and_temporal_adaptive_pairs() -> None:
@@ -272,6 +277,53 @@ def test_compiler_emits_explicit_deontic_to_dynamic_adaptive_pair() -> None:
         result,
         predicted_family=ModalLogicFamily.DEONTIC.value,
         target_family=ModalLogicFamily.DYNAMIC.value,
+    )
+
+
+def test_compiler_emits_explicit_pair_from_adaptive_logits_disagreement() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.25,
+                "share_raw": 0.56,
+                "share": 0.56,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DYNAMIC.value,
+                "count": 0,
+                "logit": 1.05,
+                "share_raw": 0.44,
+                "share": 0.44,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-adaptive-logits-disagreement",
+    )
+
+    assert _has_adaptive_explicit_pair(
+        result,
+        predicted_family=ModalLogicFamily.DEONTIC.value,
+        target_family=ModalLogicFamily.DYNAMIC.value,
+    )
+    assert any(
+        ambiguity.metadata.get("adaptive_predicted_family_source") == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family") == ModalLogicFamily.DEONTIC.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.DYNAMIC.value
+        for ambiguity in result.ambiguities
+        if ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
     )
 
 

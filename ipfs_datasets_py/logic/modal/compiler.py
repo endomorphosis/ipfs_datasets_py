@@ -295,6 +295,7 @@ class DeterministicModalCompiler:
                 ranking=adaptive_ranking,
                 family_shares=adaptive_family_shares,
                 frame_selections=frame_selections,
+                predicted_family_source="adaptive_logits_fallback",
             )
 
         ambiguities: List[ModalCompilationAmbiguity] = []
@@ -432,8 +433,28 @@ class DeterministicModalCompiler:
                 ranking=ranking,
                 family_shares=family_shares,
                 frame_selections=frame_selections,
+                predicted_family_source="ranked_modal_families",
             )
         )
+        adaptive_ranking = self._adaptive_family_ranking_from_logits(encoding)
+        if adaptive_ranking:
+            ranked_top_family = str(ranking[0]["family"])
+            adaptive_top_family = str(adaptive_ranking[0]["family"])
+            if adaptive_top_family != ranked_top_family:
+                adaptive_family_shares = {
+                    str(candidate["family"]): self._ranking_share(candidate)
+                    for candidate in adaptive_ranking
+                }
+                ambiguities.extend(
+                    self._adaptive_family_margin_ambiguities(
+                        encoding,
+                        modal_ir=modal_ir,
+                        ranking=adaptive_ranking,
+                        family_shares=adaptive_family_shares,
+                        frame_selections=frame_selections,
+                        predicted_family_source="adaptive_logits",
+                    )
+                )
         if len(ranking) < 2:
             return ambiguities
 
@@ -600,6 +621,7 @@ class DeterministicModalCompiler:
         ranking: Sequence[Dict[str, Any]],
         family_shares: Dict[str, float],
         frame_selections: Sequence[FrameSelection] = (),
+        predicted_family_source: str = "ranked_modal_families",
     ) -> List[ModalCompilationAmbiguity]:
         """Surface explicit ambiguities when strong legal families compete."""
         if not ranking:
@@ -696,6 +718,7 @@ class DeterministicModalCompiler:
             base_metadata = {
                 "adaptive_family_margin_threshold": threshold,
                 "adaptive_margin_direction": margin_direction,
+                "adaptive_predicted_family_source": predicted_family_source,
                 "explicit_ambiguity_type": explicit_type,
                 "family_margin_raw": family_margin,
                 "family_margin": family_margin_display,
