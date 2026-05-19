@@ -1011,6 +1011,10 @@ class DeterministicModalCompiler:
                 ModalLogicFamily.TEMPORAL.value: bool(
                     signals.get("has_temporal_scope")
                 ),
+                ModalLogicFamily.EPISTEMIC.value: bool(
+                    signals.get("has_epistemic_scope")
+                    or signals.get("has_epistemic_cue")
+                ),
                 ModalLogicFamily.ALETHIC.value: bool(
                     signals.get("has_alethic_scope")
                     or signals.get("has_alethic_cue")
@@ -1028,6 +1032,7 @@ class DeterministicModalCompiler:
                 ),
                 ModalLogicFamily.DEONTIC.value: bool(
                     signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
                 ),
                 ModalLogicFamily.ALETHIC.value: bool(
                     signals.get("has_alethic_scope")
@@ -1677,7 +1682,10 @@ class DeterministicModalCompiler:
         predicted_share = self._ranking_share(ranking[0])
         target_share = float(family_shares.get(target_family, 0.0))
         signals = modal_ambiguity_signals(encoding)
-        has_deontic_scope = bool(signals.get("has_deontic_scope"))
+        has_deontic_scope = bool(
+            signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
+        )
         if not has_deontic_scope and target_share <= 0.0:
             return []
         family_margin = target_share - predicted_share
@@ -1776,6 +1784,7 @@ class DeterministicModalCompiler:
         signals = modal_ambiguity_signals(encoding)
         has_target_scope = bool(
             signals.get("has_deontic_scope")
+            or signals.get("has_deontic_cue")
             if target_family == ModalLogicFamily.DEONTIC.value
             else signals.get("has_temporal_scope")
         )
