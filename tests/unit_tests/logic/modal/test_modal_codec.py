@@ -1847,6 +1847,37 @@ def test_modal_compiler_derives_missing_explicit_adaptive_ambiguity_type_from_po
     )
 
 
+def test_modal_compiler_canonicalizes_policy_pair_families_when_backfilling_explicit_adaptive_ambiguity() -> None:
+    compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
+    base_ambiguity = ModalCompilationAmbiguity(
+        ambiguity_type="adaptive_family_margin_low",
+        message="base adaptive ambiguity",
+        candidate_ids=[],
+        severity="requires_rule",
+        metadata={
+            "adaptive_margin_direction": "outvoted",
+            "adaptive_policy_pair": "ModalLogicFamily.FRAME->DEONTIC",
+            "adaptive_predicted_family_source": "ranked_modal_families",
+            "is_self_pair": False,
+        },
+    )
+
+    ambiguities = compiler._ensure_explicit_adaptive_ambiguities([base_ambiguity])
+
+    explicit = [
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_frame_deontic_outvoted_margin_low"
+    ]
+    assert len(explicit) == 1
+    assert explicit[0].candidate_ids == ["frame", "deontic"]
+    assert explicit[0].metadata["predicted_family"] == "frame"
+    assert explicit[0].metadata["target_family"] == "deontic"
+    assert explicit[0].metadata["adaptive_base_ambiguity_type"] == (
+        "adaptive_family_margin_low"
+    )
+
+
 def test_modal_compiler_does_not_duplicate_existing_explicit_adaptive_ambiguity_record() -> None:
     compiler = DeterministicModalCompiler(ModalCompilerConfig(parser_backend="regex"))
     base_ambiguity = ModalCompilationAmbiguity(

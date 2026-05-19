@@ -615,9 +615,19 @@ class DeterministicModalCompiler:
             explicit_type = self._derive_explicit_adaptive_ambiguity_type(ambiguity)
             if not explicit_type:
                 continue
+            predicted_family, target_family, is_self_pair = (
+                self._adaptive_policy_families(ambiguity)
+            )
+            explicit_candidate_ids = list(ambiguity.candidate_ids)
+            if predicted_family and target_family:
+                explicit_candidate_ids = (
+                    [predicted_family]
+                    if is_self_pair or predicted_family == target_family
+                    else [predicted_family, target_family]
+                )
             explicit_key = (
                 explicit_type,
-                tuple(str(candidate_id) for candidate_id in ambiguity.candidate_ids),
+                tuple(str(candidate_id) for candidate_id in explicit_candidate_ids),
                 str(metadata.get("adaptive_policy_pair") or ""),
                 str(metadata.get("adaptive_predicted_family_source") or ""),
             )
@@ -636,10 +646,16 @@ class DeterministicModalCompiler:
                 ModalCompilationAmbiguity(
                     ambiguity_type=explicit_type,
                     message=explicit_message,
-                    candidate_ids=list(ambiguity.candidate_ids),
+                    candidate_ids=explicit_candidate_ids,
                     severity=ambiguity.severity,
                     metadata={
                         **metadata,
+                        "predicted_family": (
+                            predicted_family or metadata.get("predicted_family")
+                        ),
+                        "target_family": (
+                            target_family or metadata.get("target_family")
+                        ),
                         "adaptive_base_ambiguity_type": "adaptive_family_margin_low",
                     },
                 )
@@ -657,23 +673,8 @@ class DeterministicModalCompiler:
         if explicit_type and explicit_type != "adaptive_family_margin_low":
             return explicit_type
 
-        predicted_family = str(metadata.get("predicted_family") or "").strip()
-        target_family = str(metadata.get("target_family") or "").strip()
-        if not predicted_family and ambiguity.candidate_ids:
-            predicted_family = str(ambiguity.candidate_ids[0]).strip()
-        if not target_family and len(ambiguity.candidate_ids) > 1:
-            target_family = str(ambiguity.candidate_ids[1]).strip()
-
-        policy_pair = str(metadata.get("adaptive_policy_pair") or "").strip()
-        if "->" in policy_pair:
-            policy_predicted, policy_target = policy_pair.split("->", maxsplit=1)
-            if not predicted_family:
-                predicted_family = policy_predicted.strip()
-            if not target_family:
-                target_family = policy_target.strip()
-
-        is_self_pair = bool(metadata.get("is_self_pair")) or (
-            len(ambiguity.candidate_ids) == 1
+        predicted_family, target_family, is_self_pair = (
+            self._adaptive_policy_families(ambiguity)
         )
         if is_self_pair and predicted_family and not target_family:
             target_family = predicted_family
@@ -692,6 +693,61 @@ class DeterministicModalCompiler:
             target_family,
             margin_direction,
         )
+
+    @staticmethod
+    def _canonical_modal_family_name(value: Any) -> str:
+        """Normalize modal family tokens for stable explicit ambiguity typing."""
+        resolved = str(value or "").strip()
+        if not resolved:
+            return ""
+        leaf = resolved.rsplit(".", maxsplit=1)[-1].strip()
+        for candidate in (
+            resolved,
+            resolved.lower(),
+            leaf,
+            leaf.lower(),
+        ):
+            if not candidate:
+                continue
+            try:
+                return ModalLogicFamily(candidate).value
+            except ValueError:
+                continue
+        return leaf.lower()
+
+    def _adaptive_policy_families(
+        self,
+        ambiguity: ModalCompilationAmbiguity,
+    ) -> tuple[str, str, bool]:
+        """Resolve canonical predicted/target family names from ambiguity metadata."""
+        metadata = ambiguity.metadata if isinstance(ambiguity.metadata, dict) else {}
+        predicted_family = self._canonical_modal_family_name(
+            metadata.get("predicted_family")
+        )
+        target_family = self._canonical_modal_family_name(
+            metadata.get("target_family")
+        )
+        if not predicted_family and ambiguity.candidate_ids:
+            predicted_family = self._canonical_modal_family_name(
+                ambiguity.candidate_ids[0]
+            )
+        if not target_family and len(ambiguity.candidate_ids) > 1:
+            target_family = self._canonical_modal_family_name(
+                ambiguity.candidate_ids[1]
+            )
+
+        policy_pair = str(metadata.get("adaptive_policy_pair") or "").strip()
+        if "->" in policy_pair:
+            policy_predicted, policy_target = policy_pair.split("->", maxsplit=1)
+            if not predicted_family:
+                predicted_family = self._canonical_modal_family_name(policy_predicted)
+            if not target_family:
+                target_family = self._canonical_modal_family_name(policy_target)
+
+        is_self_pair = bool(metadata.get("is_self_pair")) or (
+            len(ambiguity.candidate_ids) == 1
+        )
+        return predicted_family, target_family, is_self_pair
 
     def _adaptive_family_ranking_from_logits(
         self,
