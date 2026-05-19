@@ -471,6 +471,54 @@ def test_compiler_preserves_temporal_to_deontic_pair_from_compiled_primary_polic
     )
 
 
+def test_compiler_preserves_temporal_to_frame_pair_from_compiled_primary_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.7,
+                "share_raw": 0.44,
+                "share": 0.44,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.5,
+                "share_raw": 0.32,
+                "share": 0.32,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.4,
+                "share_raw": 0.24,
+                "share": 0.24,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "Within 30 days after review, annual publication occurs.",
+        document_id="compiler-ambiguity-temporal-frame-compiled-primary-policy",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.FRAME.value,
+        predicted_family_source="compiled_primary_family",
+    )
+
+
 def test_compiler_preserves_conditional_to_deontic_pair_from_compiled_primary_policy() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -515,6 +563,62 @@ def test_compiler_preserves_conditional_to_deontic_pair_from_compiled_primary_po
         result,
         predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         target_family=ModalLogicFamily.DEONTIC.value,
+        predicted_family_source="compiled_primary_family",
+    )
+
+
+def test_compiler_preserves_conditional_to_temporal_pair_from_compiled_primary_policy() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.65,
+                "share_raw": 0.45,
+                "share": 0.45,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.55,
+                "share_raw": 0.35,
+                "share": 0.35,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.45,
+                "share_raw": 0.31,
+                "share": 0.31,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+                "count": 0,
+                "logit": 1.35,
+                "share_raw": 0.24,
+                "share": 0.24,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "In the event that the authority applies, publication follows.",
+        document_id="compiler-ambiguity-conditional-temporal-compiled-primary-policy",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        target_family=ModalLogicFamily.TEMPORAL.value,
         predicted_family_source="compiled_primary_family",
     )
 

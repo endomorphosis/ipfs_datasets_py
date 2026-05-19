@@ -807,35 +807,15 @@ class DeterministicModalCompiler:
             and compiled_primary_family != predicted_family
         ):
             compiled_primary_targets: List[str] = [predicted_family]
-            if compiled_primary_family == ModalLogicFamily.DEONTIC.value:
-                # Preserve explicit deontic-vs-conditional policy coverage even when
-                # cue ranking predicts a different top family.
-                compiled_primary_targets.append(
-                    ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+            # Preserve all declared directional policy pairs for the compiled
+            # primary family, not just a hard-coded subset.
+            compiled_primary_targets.extend(
+                target_family
+                for target_family in signal_free_adaptive_ambiguity_targets(
+                    compiled_primary_family
                 )
-            if compiled_primary_family == ModalLogicFamily.TEMPORAL.value:
-                # Preserve explicit temporal-vs-deontic coverage when adaptive
-                # ranking predicts a different top family.
-                compiled_primary_targets.append(
-                    ModalLogicFamily.DEONTIC.value
-                )
-            if compiled_primary_family == ModalLogicFamily.CONDITIONAL_NORMATIVE.value:
-                # Preserve explicit conditional-vs-deontic coverage even when
-                # adaptive ranking predicts a different top family.
-                compiled_primary_targets.append(
-                    ModalLogicFamily.DEONTIC.value
-                )
-            if compiled_primary_family == ModalLogicFamily.FRAME.value:
-                # Preserve explicit frame policy-pair coverage even when adaptive
-                # logits favor a different top family.
-                compiled_primary_targets.extend(
-                    (
-                        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-                        ModalLogicFamily.DEONTIC.value,
-                        ModalLogicFamily.TEMPORAL.value,
-                        ModalLogicFamily.EPISTEMIC.value,
-                    )
-                )
+                if target_family != compiled_primary_family
+            )
             seen_competing_families: set[str] = set()
             for competing_family in compiled_primary_targets:
                 if competing_family in seen_competing_families:
