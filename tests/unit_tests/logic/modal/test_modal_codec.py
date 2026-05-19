@@ -4682,6 +4682,7 @@ def test_modal_compiler_surfaces_temporal_self_pair_adaptive_ambiguity_for_low_r
     assert adaptive_temporal_self.metadata["predicted_margin_to_runner_up"] == 0.04
     assert adaptive_temporal_self.metadata["family_margin"] == 0.04
     assert adaptive_temporal_self.metadata["adaptive_margin_direction"] == "contested"
+    assert abs(adaptive_temporal_self.metadata["adaptive_priority"] - 0.11) < 1e-12
     assert (
         adaptive_temporal_self.metadata["explicit_ambiguity_type"]
         == "adaptive_temporal_temporal_contested_margin_low"

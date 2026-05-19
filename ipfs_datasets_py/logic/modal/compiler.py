@@ -1152,8 +1152,17 @@ class DeterministicModalCompiler:
 
     @staticmethod
     def _adaptive_margin_priority(*, family_margin: float, threshold: float) -> float:
-        """Return deterministic ambiguity priority from policy margin settings."""
-        return abs(float(family_margin)) + max(0.0, float(threshold))
+        """Return deterministic ambiguity priority from policy margin settings.
+
+        For contested low-margin cases (positive margin below threshold), a
+        smaller gap to the threshold carries higher urgency. For outvoted
+        cases (zero/negative margin), severity increases with outvote depth.
+        """
+        resolved_margin = float(family_margin)
+        resolved_threshold = max(0.0, float(threshold))
+        if resolved_margin > 0.0:
+            return max(0.0, resolved_threshold - resolved_margin)
+        return abs(resolved_margin) + resolved_threshold
 
     def _supports_signal_free_adaptive_pair(
         self,
