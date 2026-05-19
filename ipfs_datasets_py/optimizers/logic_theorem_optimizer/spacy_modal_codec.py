@@ -431,10 +431,12 @@ _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.35
 _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 0.5
+_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER = 0.2
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
+_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.18
 _STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
 _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT = 0.6
 _DEONTIC_SCOPE_TOKENS = frozenset(
@@ -1484,6 +1486,9 @@ def _apply_competing_scope_backfill(
     dynamic_count = float(counts.get(dynamic_family, 0.0))
     epistemic_count = float(counts.get(epistemic_family, 0.0))
     alethic_count = float(counts.get(alethic_family, 0.0))
+    has_moderate_frame_competition = (
+        frame_count >= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER
+    )
     if (
         deontic_count >= _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= 0.0
@@ -1571,6 +1576,15 @@ def _apply_competing_scope_backfill(
             float(counts.get(deontic_family, 0.0)),
             _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
+    elif (
+        has_moderate_frame_competition
+        and deontic_count <= 0.0
+        and bool(signals.get("has_deontic_scope"))
+    ):
+        counts[deontic_family] = max(
+            float(counts.get(deontic_family, 0.0)),
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
     if (
         frame_count >= _FRAME_TEMPORAL_SCOPE_BACKFILL_TRIGGER
         and temporal_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
@@ -1590,6 +1604,15 @@ def _apply_competing_scope_backfill(
             float(counts.get(temporal_family, 0.0)),
             temporal_backfill,
         )
+    elif (
+        has_moderate_frame_competition
+        and temporal_count <= 0.0
+        and bool(signals.get("has_temporal_scope"))
+    ):
+        counts[temporal_family] = max(
+            float(counts.get(temporal_family, 0.0)),
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
     if (
         frame_count >= _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
         and conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
@@ -1606,6 +1629,22 @@ def _apply_competing_scope_backfill(
             float(counts.get(conditional_family, 0.0)),
             _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
+    elif (
+        has_moderate_frame_competition
+        and conditional_count <= 0.0
+        and bool(signals.get("has_condition_or_exception_scope"))
+        and (
+            bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_conditional_scope_phrase"))
+            or bool(signals.get("has_conditional_scope_token"))
+            or bool(signals.get("has_condition_clause"))
+            or bool(signals.get("has_exception_clause"))
+        )
+    ):
+        counts[conditional_family] = max(
+            float(counts.get(conditional_family, 0.0)),
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
     if (
         frame_count >= _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER
         and epistemic_count <= 0.0
@@ -1614,6 +1653,15 @@ def _apply_competing_scope_backfill(
         counts[epistemic_family] = max(
             float(counts.get(epistemic_family, 0.0)),
             _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+    elif (
+        has_moderate_frame_competition
+        and epistemic_count <= 0.0
+        and bool(signals.get("has_epistemic_scope"))
+    ):
+        counts[epistemic_family] = max(
+            float(counts.get(epistemic_family, 0.0)),
+            _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
         )
     if (
         frame_count >= _FRAME_ALETHIC_SCOPE_BACKFILL_TRIGGER
