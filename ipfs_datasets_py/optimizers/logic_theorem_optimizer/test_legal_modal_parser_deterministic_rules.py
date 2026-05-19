@@ -248,6 +248,15 @@ def test_compiler_emits_explicit_conditional_normative_to_frame_adaptive_pair() 
         predicted_family=ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         target_family=ModalLogicFamily.FRAME.value,
     )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+        and ambiguity.metadata.get("target_family") == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("is_priority_policy_pair") is True
+        for ambiguity in result.ambiguities
+    )
 
 
 def test_compiler_emits_explicit_conditional_normative_to_epistemic_adaptive_pair() -> None:
