@@ -211,6 +211,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
 
     assert ("alethic", "deontic") in required_pairs
     assert ("alethic", "conditional_normative") in required_pairs
+    assert ("alethic", "epistemic") in required_pairs
     assert ("alethic", "temporal") in required_pairs
     assert ("conditional_normative", "deontic") in required_pairs
     assert ("deontic", "conditional_normative") in required_pairs
@@ -228,6 +229,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert compiler_required_adaptive_ambiguity_targets("alethic") == (
         "deontic",
         "conditional_normative",
+        "epistemic",
         "temporal",
     )
     assert compiler_required_adaptive_ambiguity_targets("conditional_normative") == (
@@ -247,10 +249,12 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "alethic",
         "epistemic",
         "temporal",
+        "frame",
     )
     assert compiler_required_adaptive_ambiguity_targets("temporal") == (
         "deontic",
         "conditional_normative",
+        "frame",
         "temporal",
     )
     assert is_compiler_required_adaptive_ambiguity_pair(
@@ -275,6 +279,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         is True
     )
     assert is_compiler_required_adaptive_ambiguity_pair("alethic", "temporal") is True
+    assert is_compiler_required_adaptive_ambiguity_pair("alethic", "epistemic") is True
     assert is_compiler_required_adaptive_ambiguity_pair(
         "temporal",
         "conditional_normative",
@@ -410,6 +415,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "deontic",
         "conditional_normative",
         "temporal",
+        "epistemic",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
@@ -429,6 +435,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "epistemic",
         "temporal",
         "alethic",
+        "frame",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("deontic") == (
         "conditional_normative",
@@ -448,6 +455,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
     recurrent_pairs = (
         ("alethic", "deontic"),
         ("alethic", "conditional_normative"),
+        ("alethic", "epistemic"),
         ("alethic", "temporal"),
         ("conditional_normative", "deontic"),
         ("deontic", "conditional_normative"),
