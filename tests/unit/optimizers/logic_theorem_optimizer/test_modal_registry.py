@@ -186,7 +186,6 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "epistemic",
         "dynamic",
         "frame",
-        "dynamic",
     )
     assert signal_free_adaptive_ambiguity_targets("epistemic") == (
         "deontic",
@@ -201,6 +200,20 @@ def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() ->
         "temporal",
     )
     assert signal_free_adaptive_ambiguity_targets("hybrid") == ("frame",)
+
+
+def test_signal_free_adaptive_ambiguity_targets_do_not_repeat_pairs() -> None:
+    for family in (
+        "alethic",
+        "conditional_normative",
+        "deontic",
+        "epistemic",
+        "frame",
+        "hybrid",
+        "temporal",
+    ):
+        targets = signal_free_adaptive_ambiguity_targets(family)
+        assert len(targets) == len(set(targets))
 
 
 def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() -> None:

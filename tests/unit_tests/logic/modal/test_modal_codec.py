@@ -11124,6 +11124,127 @@ def test_modal_compiler_orders_priority_adaptive_targets_before_non_priority_tar
     ]
 
 
+def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_bundle(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    policy_scenarios = (
+        {
+            "compiled_primary_family": "frame",
+            "family_shares": {"deontic": 0.85, "frame": 0.15},
+            "expected_pair": "frame->deontic",
+            "expected_explicit_type": "adaptive_frame_deontic_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "deontic",
+            "family_shares": {"frame": 0.83, "deontic": 0.17},
+            "expected_pair": "deontic->frame",
+            "expected_explicit_type": "adaptive_deontic_frame_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "conditional_normative",
+            "family_shares": {"dynamic": 0.76, "conditional_normative": 0.22},
+            "expected_pair": "conditional_normative->dynamic",
+            "expected_explicit_type": "adaptive_conditional_normative_dynamic_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "frame",
+            "family_shares": {"temporal": 0.58, "frame": 0.54},
+            "expected_pair": "frame->temporal",
+            "expected_explicit_type": "adaptive_frame_temporal_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "alethic",
+            "family_shares": {"conditional_normative": 0.88, "alethic": 0.03},
+            "expected_pair": "alethic->conditional_normative",
+            "expected_explicit_type": "adaptive_alethic_conditional_normative_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "deontic",
+            "family_shares": {"frame": 0.61, "deontic": 0.15},
+            "expected_pair": "deontic->deontic",
+            "expected_explicit_type": "adaptive_deontic_deontic_outvoted_margin_low",
+        },
+    )
+
+    for scenario in policy_scenarios:
+        compiled_primary_family = str(scenario["compiled_primary_family"])
+        family_shares = {
+            str(family): float(share)
+            for family, share in dict(scenario["family_shares"]).items()
+        }
+        ranking = [
+            {"family": family, "count": 1, "share": share}
+            for family, share in sorted(
+                family_shares.items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ]
+        encoding = SpaCyLegalEncoding(
+            document_id=f"compiled-primary-policy-{compiled_primary_family}-doc",
+            text=f"{compiled_primary_family} scope test text.",
+            normalized_text=f"{compiled_primary_family} scope test text.",
+            tokens=[],
+            sentences=[],
+            cues=[],
+        )
+        modal_ir = ModalIRDocument(
+            document_id=f"compiled-primary-policy-{compiled_primary_family}-doc",
+            source="us_code",
+            normalized_text=encoding.normalized_text,
+            formulas=[
+                ModalIRFormula(
+                    formula_id=f"f-{compiled_primary_family}-1",
+                    operator=ModalIROperator(
+                        family=compiled_primary_family,
+                        system="D",
+                        symbol="O",
+                        label=compiled_primary_family,
+                    ),
+                    predicate=ModalIRPredicate(
+                        name=f"{compiled_primary_family}_policy_scope",
+                        arguments=["scope:test"],
+                        role="clause",
+                    ),
+                    provenance=ModalIRProvenance(
+                        source_id=f"compiled-primary-policy-{compiled_primary_family}-doc",
+                        start_char=0,
+                        end_char=len(encoding.normalized_text),
+                    ),
+                )
+            ],
+        )
+
+        ambiguities = compiler._adaptive_family_margin_ambiguities(
+            encoding,
+            modal_ir=modal_ir,
+            ranking=ranking,
+            family_shares=family_shares,
+        )
+
+        explicit_ambiguity = next(
+            ambiguity
+            for ambiguity in ambiguities
+            if ambiguity.ambiguity_type == scenario["expected_explicit_type"]
+            and ambiguity.metadata["adaptive_predicted_family_source"]
+            == "compiled_primary_family"
+            and ambiguity.metadata["adaptive_policy_pair"] == scenario["expected_pair"]
+        )
+        assert explicit_ambiguity.metadata["adaptive_base_ambiguity_type"] == (
+            "adaptive_family_margin_low"
+        )
+
+
 def _token_overlap_ratio(left: str, right: str) -> float:
     left_tokens = {
         token.lower()

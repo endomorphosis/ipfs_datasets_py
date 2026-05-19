@@ -96,10 +96,6 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
     ),
     (
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-        ModalLogicFamily.DYNAMIC.value,
-    ),
-    (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.DEONTIC.value,
     ),
@@ -155,6 +151,27 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
+)
+
+
+def _ordered_unique_adaptive_ambiguity_family_pairs(
+    pairs: Iterable[Tuple[str, str]],
+) -> Tuple[Tuple[str, str], ...]:
+    """Return a stable pair table with duplicates removed and order preserved."""
+    unique_pairs: list[Tuple[str, str]] = []
+    seen_pairs: set[Tuple[str, str]] = set()
+    for pair in pairs:
+        if pair in seen_pairs:
+            continue
+        seen_pairs.add(pair)
+        unique_pairs.append(pair)
+    return tuple(unique_pairs)
+
+
+SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    )
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
@@ -234,6 +251,12 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
+)
+
+PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    )
 )
 
 

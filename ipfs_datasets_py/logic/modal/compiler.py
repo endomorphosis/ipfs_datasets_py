@@ -745,12 +745,12 @@ class DeterministicModalCompiler:
             predicted_family
         ):
             target_signal_by_family.setdefault(policy_target_family, False)
-        if not target_signal_by_family:
-            return []
-        ordered_target_families = self._ordered_adaptive_target_families(
-            predicted_family=predicted_family,
-            target_signal_by_family=target_signal_by_family,
-        )
+        ordered_target_families: List[str] = []
+        if target_signal_by_family:
+            ordered_target_families = self._ordered_adaptive_target_families(
+                predicted_family=predicted_family,
+                target_signal_by_family=target_signal_by_family,
+            )
         ambiguities: List[ModalCompilationAmbiguity] = []
         for target_family in ordered_target_families:
             has_signal = bool(target_signal_by_family.get(target_family, False))
