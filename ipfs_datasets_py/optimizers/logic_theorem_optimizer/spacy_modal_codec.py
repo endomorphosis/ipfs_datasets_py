@@ -430,6 +430,8 @@ _FRAME_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
+_STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
+_STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT = 0.6
 _DEONTIC_SCOPE_TOKENS = frozenset(
     {
         "duty",
@@ -1196,6 +1198,10 @@ def _weighted_modal_family_counts(
         counts,
         resolved_signals,
     )
+    _apply_statutory_reference_frame_scope_backfill(
+        counts,
+        resolved_signals,
+    )
     return counts
 
 
@@ -1589,6 +1595,46 @@ def _apply_competing_scope_backfill(
         counts[frame_family] = max(
             float(counts.get(frame_family, 0.0)),
             _COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+
+
+def _apply_statutory_reference_frame_scope_backfill(
+    counts: Dict[str, float],
+    signals: Mapping[str, bool],
+) -> None:
+    """Backfill frame-family support for statutory-reference scope conflicts."""
+    if not bool(signals.get("has_statutory_scope_reference")):
+        return
+    has_frame_signal = (
+        bool(signals.get("has_frame_context"))
+        or bool(signals.get("has_frame_scope_phrase"))
+        or bool(signals.get("has_frame_editorial_scope_phrase"))
+    )
+    if not has_frame_signal:
+        return
+    frame_family = ModalLogicFamily.FRAME.value
+    frame_count = float(counts.get(frame_family, 0.0))
+    conditional_family = ModalLogicFamily.CONDITIONAL_NORMATIVE.value
+    deontic_family = ModalLogicFamily.DEONTIC.value
+    conditional_count = float(counts.get(conditional_family, 0.0))
+    deontic_count = float(counts.get(deontic_family, 0.0))
+    if (
+        conditional_count > 0.0
+        and not bool(signals.get("has_condition_clause"))
+        and not bool(signals.get("has_exception_clause"))
+    ):
+        counts[frame_family] = max(
+            frame_count,
+            _STATUTORY_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+        )
+        frame_count = float(counts.get(frame_family, 0.0))
+    if (
+        deontic_count > 0.0
+        and not bool(signals.get("has_deontic_scope_phrase"))
+    ):
+        counts[frame_family] = max(
+            frame_count,
+            _STATUTORY_FRAME_DEONTIC_SCOPE_BACKFILL_WEIGHT,
         )
 
 
