@@ -770,6 +770,72 @@ def test_frame_ontology_terms_from_triples_support_modal_family_count_features()
     ]
 
 
+def test_frame_ontology_terms_from_feature_keys_support_selected_frame_modal_family_count_features() -> None:
+    terms = frame_ontology_terms_from_feature_keys(
+        [
+            "flogic:selected_frame_modal_family:deontic",
+            "flogic:selected_frame_modal_family_ranked:1:frame",
+            "flogic:selected_frame_modal_family_count:temporal:2",
+            "flogic:selected_frame_modal_family_count_ranked:2:dynamic:3",
+            "flogic:selected_frame_modal_family_count_value:9",
+            "flogic:selected_frame_modal_family_epistemic:4",
+        ]
+    )
+
+    assert terms == [
+        "deontic",
+        "frame",
+        "temporal",
+        "dynamic",
+        "epistemic",
+    ]
+
+
+def test_frame_ontology_terms_from_triples_support_selected_frame_modal_family_count_features() -> None:
+    terms = frame_ontology_terms_from_triples(
+        [
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family",
+                "object": "deontic",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family_ranked",
+                "object": "1:frame",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family_count",
+                "object": "temporal:2",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family_count_ranked",
+                "object": "2:dynamic:3",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family_count_value",
+                "object": "9",
+            },
+            {
+                "subject": "doc-1",
+                "predicate": "selected_frame_modal_family_epistemic",
+                "object": "4",
+            },
+        ]
+    )
+
+    assert terms == [
+        "deontic",
+        "frame",
+        "temporal",
+        "dynamic",
+        "epistemic",
+    ]
+
+
 def test_frame_ontology_terms_from_triples_preserve_tail_contextual_terms_for_dense_inputs() -> None:
     labels = [
         f"{left}{right}"

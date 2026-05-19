@@ -122,6 +122,7 @@ _FRAME_ONTOLOGY_CONTEXTUAL_FLOGIC_PREDICATE_PREFIXES: tuple[str, ...] = (
     "source_id_section",
     "source_id_citation",
     "source_id_title",
+    "selected_frame_modal_family",
     "statement_hint_",
     "statutory_scope_",
     "status_keyword_",
@@ -180,6 +181,19 @@ _FRAME_ONTOLOGY_RANGE_CONNECTOR_ALIASES = {
     "through": "through",
     "to": "through",
 }
+_FRAME_ONTOLOGY_MODAL_FAMILY_VALUES = frozenset(
+    {
+        "alethic",
+        "conditional_normative",
+        "deontic",
+        "doxastic",
+        "dynamic",
+        "epistemic",
+        "frame",
+        "hybrid",
+        "temporal",
+    }
+)
 _FRAME_ONTOLOGY_PREDICATE_ALIASES = {
     "candidate_frame": "candidate_ontology_frame",
     "candidate_term": "candidate_ontology_term",
@@ -1007,6 +1021,11 @@ def _normalized_frame_ontology_value(predicate: str, value: str) -> str:
             normalized_predicate=normalized_predicate,
             raw_value=raw_value,
         )
+    if normalized_predicate.startswith("selected_frame_modal_family"):
+        return _normalized_selected_frame_modal_family_value(
+            normalized_predicate=normalized_predicate,
+            raw_value=raw_value,
+        )
     if normalized_predicate.endswith("_range_connector"):
         normalized_range_connector = _normalized_range_connector_ontology_value(raw_value)
         if normalized_range_connector:
@@ -1203,6 +1222,40 @@ def _normalized_modal_family_count_value(
     if normalized_predicate.startswith("modal_family_count_"):
         family = normalized_predicate[len("modal_family_count_") :].strip("_")
         if family and family not in {"family", "ranked", "value"}:
+            return family
+    return raw_value
+
+
+def _normalized_selected_frame_modal_family_value(
+    *,
+    normalized_predicate: str,
+    raw_value: str,
+) -> str:
+    if normalized_predicate == "selected_frame_modal_family":
+        return raw_value
+    if normalized_predicate == "selected_frame_modal_family_ranked":
+        _rank, separator, family = raw_value.partition(":")
+        if separator:
+            return family.strip()
+        return raw_value
+    if normalized_predicate == "selected_frame_modal_family_count":
+        family, separator, _count = raw_value.partition(":")
+        if separator:
+            return family.strip()
+        return raw_value
+    if normalized_predicate == "selected_frame_modal_family_count_ranked":
+        _rank, separator, remainder = raw_value.partition(":")
+        if not separator:
+            return raw_value
+        family, separator, _count = remainder.partition(":")
+        if separator:
+            return family.strip()
+        return family.strip() or raw_value
+    if normalized_predicate == "selected_frame_modal_family_count_value":
+        return ""
+    if normalized_predicate.startswith("selected_frame_modal_family_"):
+        family = normalized_predicate[len("selected_frame_modal_family_") :].strip("_")
+        if family in _FRAME_ONTOLOGY_MODAL_FAMILY_VALUES:
             return family
     return raw_value
 
