@@ -4022,6 +4022,56 @@ def _citation_section_components(section: str) -> List[tuple[str, str]]:
                 "true" if suffix_component_count > 0 else "false",
             )
         )
+    has_hyphen_subsection = (
+        not is_range
+        and total_parts == 2
+        and delimiter_pattern == "hyphen"
+        and bool(primary_number)
+        and bool(primary_suffix)
+        and bool(terminal_number)
+        and not terminal_suffix
+    )
+    components.append(
+        (
+            "citation_section_has_hyphen_subsection",
+            "true" if has_hyphen_subsection else "false",
+        )
+    )
+    if has_hyphen_subsection:
+        normalized_primary_suffix = primary_suffix.lower()
+        hyphen_subsection_signature = (
+            f"{primary_number}{normalized_primary_suffix}-{terminal_number}"
+        )
+        components.append(
+            (
+                "citation_section_hyphen_subsection_primary_number",
+                primary_number,
+            )
+        )
+        components.append(
+            (
+                "citation_section_hyphen_subsection_primary_suffix",
+                normalized_primary_suffix,
+            )
+        )
+        components.append(
+            (
+                "citation_section_hyphen_subsection_terminal_number",
+                terminal_number,
+            )
+        )
+        components.append(
+            (
+                "citation_section_hyphen_subsection_signature",
+                hyphen_subsection_signature,
+            )
+        )
+        components.extend(
+            _typed_identifier_components(
+                hyphen_subsection_signature,
+                slot_prefix="citation_section_hyphen_subsection_signature",
+            )
+        )
     components.append(
         ("citation_section_numeric_component_count", str(numeric_component_count))
     )

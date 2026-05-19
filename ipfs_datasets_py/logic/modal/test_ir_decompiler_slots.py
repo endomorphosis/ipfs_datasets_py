@@ -2396,6 +2396,16 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
         "descending"
     ]
     assert mixed_slot_map["source_id_section_primary_terminal_number_span"] == ["360"]
+    assert mixed_slot_map["citation_section_has_hyphen_subsection"] == ["true"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_primary_number"] == ["360"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_primary_suffix"] == ["bbb"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_terminal_number"] == ["0"]
+    assert mixed_slot_map["citation_section_hyphen_subsection_signature"] == ["360bbb-0"]
+    assert mixed_slot_map["source_id_section_has_hyphen_subsection"] == ["true"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_primary_number"] == ["360"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_primary_suffix"] == ["bbb"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_terminal_number"] == ["0"]
+    assert mixed_slot_map["source_id_section_hyphen_subsection_signature"] == ["360bbb-0"]
 
     single_alnum_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_single_component_sample_document())
@@ -2436,6 +2446,8 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     assert single_alnum_slot_map["source_id_section_primary_terminal_number_span"] == [
         "0"
     ]
+    assert single_alnum_slot_map["citation_section_has_hyphen_subsection"] == ["false"]
+    assert single_alnum_slot_map["source_id_section_has_hyphen_subsection"] == ["false"]
 
     single_numeric_slot_map = decoded_modal_phrase_slot_text_map(
         decode_modal_ir_document(_trailing_punct_sample_document())
@@ -2465,6 +2477,12 @@ def test_decode_modal_ir_document_emits_section_profile_and_number_relation_slot
     ]
     assert single_numeric_slot_map["source_id_section_component_profile"] == [
         "single_numeric"
+    ]
+    assert single_numeric_slot_map["citation_section_has_hyphen_subsection"] == [
+        "false"
+    ]
+    assert single_numeric_slot_map["source_id_section_has_hyphen_subsection"] == [
+        "false"
     ]
 
     range_slot_map = decoded_modal_phrase_slot_text_map(
@@ -2555,6 +2573,40 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(mixed_triples, "source_id_section_primary_terminal_number_span") == [
         "360"
     ]
+    assert objects(mixed_triples, "citation_section_has_hyphen_subsection") == ["true"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_primary_number",
+    ) == ["360"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_primary_suffix",
+    ) == ["bbb"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_terminal_number",
+    ) == ["0"]
+    assert objects(
+        mixed_triples,
+        "citation_section_hyphen_subsection_signature",
+    ) == ["360bbb-0"]
+    assert objects(mixed_triples, "source_id_section_has_hyphen_subsection") == ["true"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_primary_number",
+    ) == ["360"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_primary_suffix",
+    ) == ["bbb"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_terminal_number",
+    ) == ["0"]
+    assert objects(
+        mixed_triples,
+        "source_id_section_hyphen_subsection_signature",
+    ) == ["360bbb-0"]
 
     assert objects(single_alnum_triples, "citation_section_component_profile") == [
         "single_alphanumeric"
@@ -2596,6 +2648,12 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     assert objects(single_alnum_triples, "source_id_section_primary_terminal_number_span") == [
         "0"
     ]
+    assert objects(single_alnum_triples, "citation_section_has_hyphen_subsection") == [
+        "false"
+    ]
+    assert objects(single_alnum_triples, "source_id_section_has_hyphen_subsection") == [
+        "false"
+    ]
 
     assert objects(single_numeric_triples, "citation_section_component_profile") == [
         "single_numeric"
@@ -2628,6 +2686,12 @@ def test_modal_ir_to_flogic_triples_emit_section_profile_and_number_relation_slo
     ]
     assert objects(single_numeric_triples, "source_id_section_component_profile") == [
         "single_numeric"
+    ]
+    assert objects(single_numeric_triples, "citation_section_has_hyphen_subsection") == [
+        "false"
+    ]
+    assert objects(single_numeric_triples, "source_id_section_has_hyphen_subsection") == [
+        "false"
     ]
 
     assert objects(range_triples, "citation_section_component_profile") == ["range"]
