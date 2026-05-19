@@ -945,3 +945,97 @@ def test_compiler_marks_epistemic_to_deontic_pair_as_compiler_required_policy() 
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         for ambiguity in result.ambiguities
     )
+
+
+def test_compiler_marks_epistemic_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.EPISTEMIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "The Secretary determines eligibility.",
+        document_id="compiler-ambiguity-epistemic-temporal-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.EPISTEMIC.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
+        and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
+        for ambiguity in result.ambiguities
+    )
+
+
+def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_without_target_evidence() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "As provided in section 3, this authority applies.",
+        document_id="compiler-ambiguity-frame-temporal-policy",
+    )
+
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("adaptive_predicted_family_source")
+        == "adaptive_logits"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
+        and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
+        for ambiguity in result.ambiguities
+    )
