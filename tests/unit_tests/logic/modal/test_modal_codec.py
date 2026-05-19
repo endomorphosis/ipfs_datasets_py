@@ -2946,6 +2946,28 @@ def test_modal_compiler_uses_runner_up_priority_pair_for_compiled_primary_self_p
             "expected_explicit_type": "adaptive_temporal_temporal_outvoted_margin_low",
             "citation": "18 U.S.C. 607",
         },
+        {
+            "doc_id": "adaptive-compiled-primary-conditional-self-vs-deontic-doc",
+            "compiled_primary_family": "conditional_normative",
+            "compiled_primary_system": "STIT",
+            "compiled_primary_symbol": "O_if",
+            "compiled_primary_label": "conditional_obligation",
+            "compiled_primary_role": "conditional_scope",
+            "compiled_primary_predicate": "conditional_notice_obligation",
+            "runner_up_family": "deontic",
+            "runner_up_cue": SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+            "expected_explicit_type": "adaptive_conditional_normative_conditional_normative_outvoted_margin_low",
+            "citation": "42 U.S.C. 300aa-22",
+        },
     )
 
     for scenario in scenarios:
@@ -11310,6 +11332,12 @@ def test_modal_compiler_compiled_primary_policy_pairs_cover_compiler_ambiguity_b
             "family_shares": {"dynamic": 0.76, "conditional_normative": 0.22},
             "expected_pair": "conditional_normative->dynamic",
             "expected_explicit_type": "adaptive_conditional_normative_dynamic_outvoted_margin_low",
+        },
+        {
+            "compiled_primary_family": "conditional_normative",
+            "family_shares": {"deontic": 0.64, "conditional_normative": 0.51},
+            "expected_pair": "conditional_normative->conditional_normative",
+            "expected_explicit_type": "adaptive_conditional_normative_conditional_normative_outvoted_margin_low",
         },
         {
             "compiled_primary_family": "frame",
