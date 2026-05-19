@@ -1783,6 +1783,103 @@ def test_modal_compiler_surfaces_adaptive_family_margin_ambiguity_for_temporal_c
     assert all(ambiguity.metadata["family_margin"] <= 0.0 for ambiguity in adaptive_ambiguities)
 
 
+def test_modal_compiler_emits_adaptive_logits_ambiguity_for_same_top_low_margin(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.ranked_modal_families",
+        lambda _: [
+            {"family": "deontic", "count": 2, "share_raw": 0.74, "share": 0.74},
+            {"family": "frame", "count": 1, "share_raw": 0.11, "share": 0.11},
+        ],
+    )
+    monkeypatch.setattr(
+        compiler,
+        "_adaptive_family_ranking_from_logits",
+        lambda _: [
+            {"family": "deontic", "count": 0, "share_raw": 0.51, "share": 0.51},
+            {"family": "frame", "count": 0, "share_raw": 0.49, "share": 0.49},
+        ],
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-same-top-low-margin-doc",
+        text="The agency shall issue notice.",
+        normalized_text="The agency shall issue notice.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="deontic",
+                system="D",
+                symbol="O",
+                label="obligation",
+                cue="shall",
+                start_char=11,
+                end_char=16,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-same-top-low-margin-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-deontic-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="issue_notice",
+                    arguments=["actor:agency"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-same-top-low-margin-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="18 U.S.C. 930",
+                ),
+            ),
+        ],
+    )
+
+    ambiguities = compiler._family_ambiguities(encoding, modal_ir=modal_ir)
+
+    adaptive_logits_pair = next(
+        ambiguity
+        for ambiguity in ambiguities
+        if ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "frame"]
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "adaptive_logits"
+    )
+    assert adaptive_logits_pair.metadata["explicit_ambiguity_type"] == (
+        "adaptive_deontic_frame_outvoted_margin_low"
+    )
+    assert adaptive_logits_pair.metadata["family_margin"] == -0.02
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_deontic_frame_outvoted_margin_low"
+        and ambiguity.candidate_ids == ["deontic", "frame"]
+        and ambiguity.metadata["adaptive_predicted_family_source"] == "adaptive_logits"
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_uses_compiled_family_as_adaptive_ambiguity_signal(monkeypatch) -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
