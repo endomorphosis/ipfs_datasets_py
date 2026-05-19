@@ -200,10 +200,6 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-    ),
-    (
-        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.FRAME.value,
     ),
     (
@@ -221,10 +217,6 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
-    ),
-    (
-        ModalLogicFamily.DEONTIC.value,
-        ModalLogicFamily.DEONTIC.value,
     ),
 )
 
