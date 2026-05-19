@@ -8088,6 +8088,114 @@ def test_modal_compiler_canonicalizes_frame_family_tokens_for_priority_policy_ma
         )
 
 
+def test_modal_compiler_canonicalizes_compiled_primary_family_shares_for_policy_margin_filtering(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        ModalCompilerConfig(
+            parser_backend="regex",
+            frame_score_margin=0.0,
+            modal_adaptive_family_margin=0.15,
+        )
+    )
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.modal.compiler.modal_ambiguity_signals",
+        lambda _: {},
+    )
+    encoding = SpaCyLegalEncoding(
+        document_id="adaptive-compiled-primary-canonical-share-doc",
+        text="Transferred editorial notes.",
+        normalized_text="Transferred editorial notes.",
+        tokens=[],
+        sentences=[],
+        cues=[
+            SpaCyModalCueFeature(
+                family="frame",
+                system="FRAME_BM25",
+                symbol="Frame",
+                label="frame",
+                cue="transferred",
+                start_char=0,
+                end_char=11,
+                token_indices=[],
+            ),
+        ],
+    )
+    modal_ir = ModalIRDocument(
+        document_id="adaptive-compiled-primary-canonical-share-doc",
+        source="us_code",
+        normalized_text=encoding.normalized_text,
+        formulas=[
+            ModalIRFormula(
+                formula_id="f-deontic-1",
+                operator=ModalIROperator(
+                    family="deontic",
+                    system="D",
+                    symbol="O",
+                    label="obligation",
+                ),
+                predicate=ModalIRPredicate(
+                    name="obligation_scope",
+                    arguments=["scope:test"],
+                    role="clause",
+                ),
+                provenance=ModalIRProvenance(
+                    source_id="adaptive-compiled-primary-canonical-share-doc",
+                    start_char=0,
+                    end_char=len(encoding.normalized_text),
+                    citation="15 U.S.C. 7106",
+                ),
+            ),
+        ],
+    )
+
+    ambiguities = compiler._adaptive_family_margin_ambiguities(
+        encoding,
+        modal_ir=modal_ir,
+        ranking=[
+            {
+                "family": "ModalLogicFamily.FRAME",
+                "count": 1,
+                "share_raw": 0.95,
+                "share": 0.95,
+            },
+            {
+                "family": "DEONTIC",
+                "count": 1,
+                "share_raw": 0.90,
+                "share": 0.90,
+            },
+            {
+                "family": "TEMPORAL",
+                "count": 1,
+                "share_raw": 0.10,
+                "share": 0.10,
+            },
+        ],
+        family_shares={
+            "ModalLogicFamily.FRAME": 0.95,
+            "DEONTIC": 0.90,
+            "TEMPORAL": 0.10,
+        },
+    )
+
+    assert any(
+        ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_predicted_family_source"]
+        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_policy_pair"] == "deontic->frame"
+        and ambiguity.candidate_ids == ["deontic", "frame"]
+        for ambiguity in ambiguities
+    )
+    assert not any(
+        ambiguity.ambiguity_type == "adaptive_family_margin_low"
+        and ambiguity.metadata["adaptive_predicted_family_source"]
+        == "compiled_primary_family"
+        and ambiguity.metadata["adaptive_policy_pair"] == "deontic->temporal"
+        for ambiguity in ambiguities
+    )
+
+
 def test_modal_compiler_emits_priority_alias_for_temporal_signal_free_policy_pairs(
     monkeypatch,
 ) -> None:
