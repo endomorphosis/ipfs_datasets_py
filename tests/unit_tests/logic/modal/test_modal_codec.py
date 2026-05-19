@@ -4251,6 +4251,8 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_hybrid_frame_adaptive_a
     )
     assert adaptive_frame.metadata["has_target_signal_evidence"] is False
     assert adaptive_frame.metadata["signal_free_pair_policy_applied"] is True
+    assert adaptive_frame.metadata["is_compiler_ambiguity_bundle_pair"] is True
+    assert adaptive_frame.metadata["ambiguity_policy_bundle"] == "compiler_ambiguity"
     assert (
         adaptive_frame.metadata["explicit_ambiguity_type"]
         == "adaptive_hybrid_frame_outvoted_margin_low"
@@ -4258,6 +4260,7 @@ def test_modal_compiler_uses_signal_free_pair_policy_for_hybrid_frame_adaptive_a
     assert any(
         ambiguity.ambiguity_type == "adaptive_hybrid_frame_outvoted_margin_low"
         and ambiguity.metadata["signal_free_pair_policy_applied"] is True
+        and ambiguity.metadata["is_compiler_ambiguity_bundle_pair"] is True
         for ambiguity in ambiguities
     )
 

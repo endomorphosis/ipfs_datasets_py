@@ -279,6 +279,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("frame", "alethic"),
         ("frame", "dynamic"),
         ("frame", "temporal"),
+        ("hybrid", "frame"),
         ("temporal", "conditional_normative"),
         ("temporal", "temporal"),
     }
@@ -292,6 +293,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("frame", "alethic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("hybrid", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("deontic", "frame") is False

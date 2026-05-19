@@ -179,6 +179,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.TEMPORAL.value,
     ),
     (
+        ModalLogicFamily.HYBRID.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
