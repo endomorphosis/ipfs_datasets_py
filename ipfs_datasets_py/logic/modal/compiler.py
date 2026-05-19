@@ -1175,6 +1175,9 @@ class DeterministicModalCompiler:
                     signals.get("has_epistemic_scope")
                     or signals.get("has_epistemic_cue")
                 ),
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
                 ModalLogicFamily.DYNAMIC.value: bool(
                     signals.get("has_dynamic_scope")
                     or signals.get("has_dynamic_cue")
