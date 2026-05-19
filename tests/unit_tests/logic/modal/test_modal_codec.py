@@ -12182,6 +12182,23 @@ def test_modal_compiler_emits_explicit_ambiguity_for_required_margin_bundle_pair
             "is_self_pair": True,
         },
         {
+            "doc_id": "required-deontic-temporal-margin-doc",
+            "predicted_family": "deontic",
+            "predicted_system": "D",
+            "predicted_symbol": "O",
+            "predicted_label": "obligation",
+            "target_family": "temporal",
+            "ranking": (
+                {"family": "deontic", "count": 1, "share": 0.740130573968},
+                {"family": "temporal", "count": 1, "share": 0.259869426031},
+            ),
+            "family_margin": -0.480261147937,
+            "adaptive_priority": 0.630261147937,
+            "expected_explicit_type": "adaptive_deontic_temporal_outvoted_margin_low",
+            "expected_severity": "requires_rule",
+            "is_self_pair": False,
+        },
+        {
             "doc_id": "required-frame-deontic-margin-doc",
             "predicted_family": "frame",
             "predicted_system": "FRAME_BM25",

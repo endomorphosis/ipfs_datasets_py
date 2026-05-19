@@ -193,6 +193,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert ("deontic", "conditional_normative") in required_pairs
     assert ("deontic", "dynamic") in required_pairs
     assert ("deontic", "deontic") in required_pairs
+    assert ("deontic", "temporal") in required_pairs
     assert ("frame", "conditional_normative") in required_pairs
     assert ("frame", "deontic") in required_pairs
     assert ("frame", "epistemic") in required_pairs
@@ -210,6 +211,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "conditional_normative",
         "dynamic",
         "deontic",
+        "temporal",
         "frame",
     )
     assert compiler_required_adaptive_ambiguity_targets("frame") == (
@@ -239,7 +241,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "temporal",
         "conditional_normative",
     ) is True
-    assert is_compiler_required_adaptive_ambiguity_pair("deontic", "temporal") is False
+    assert is_compiler_required_adaptive_ambiguity_pair("deontic", "temporal") is True
 
 
 def test_signal_free_adaptive_ambiguity_targets_are_ordered_and_directional() -> None:
