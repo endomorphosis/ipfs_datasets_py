@@ -48,6 +48,7 @@ except ImportError:  # pragma: no cover - optional dependency
     HAVE_UVICORN = False
 
 logger = logging.getLogger(__name__)
+wallet_router = None
 
 # Import our modules
 try:
@@ -124,6 +125,14 @@ except ImportError:
                 self.secret_key = os.environ["SECRET_KEY"]
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
+
+try:
+    from ..wallet.api import router as wallet_router
+except ImportError:
+    try:
+        from wallet.api import router as wallet_router
+    except ImportError:
+        wallet_router = None
 
 # Load configuration (SECRET_KEY may be absent in test environments)
 try:
@@ -278,6 +287,9 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan
 )
+
+if wallet_router is not None:
+    app.include_router(wallet_router)
 
 # Middleware configuration
 app.add_middleware(
