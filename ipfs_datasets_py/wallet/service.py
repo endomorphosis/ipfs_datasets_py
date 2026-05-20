@@ -55,7 +55,12 @@ from .models import (
     GrantReceipt,
     KeyWrap,
     LocationClaim,
+    MissingPersonDeadDropRecord,
     ProofReceipt,
+    SavedServiceRecord,
+    ServiceInteractionRecord,
+    ServicePlanRecord,
+    ServicePlanShareGrantResult,
     StorageHealthReport,
     StorageRef,
     StorageReplicaStatus,
@@ -86,6 +91,23 @@ from .ucan import (
     resource_for_record,
     resource_for_wallet,
 )
+
+SERVICE_PLAN_SHARE_DEFAULT_SCOPES = ("service_summary",)
+SERVICE_PLAN_SHARE_SCOPE_FIELDS: Dict[str, List[str]] = {
+    "service_summary": [
+        "service_doc_id",
+        "source_content_cid",
+        "source_page_cid",
+        "service_title",
+        "provider_name",
+        "goal",
+        "status",
+    ],
+    "checklist": ["steps", "documents_needed", "questions_to_ask"],
+    "schedule": ["appointment_at", "reminder_at", "travel_target"],
+    "worker_assignment": ["assigned_worker_recipient_id"],
+    "interaction_history": ["related_interaction_ids"],
+}
 
 
 class DataWalletService:
@@ -120,6 +142,43 @@ class DataWalletService:
         "income": ("benefit", "unemployment", "income", "job", "wage", "ssi", "disability"),
     }
 
+
+    def _safe_document_profile_public_inputs(public_inputs: Mapping[str, Any]) -> Dict[str, Any]:
+        allowed_keys = {
+            "artifact_ids",
+            "chunk_count",
+            "edge_count",
+            "graph_type",
+            "mime_family",
+            "mime_type",
+            "node_count",
+            "openrouter_model",
+            "organizer_labels",
+            "organizer_summary",
+            "output_policies",
+            "privacy_policy",
+            "profile_methods",
+            "redaction_count",
+            "size_bucket",
+            "summary",
+        }
+        safe: Dict[str, Any] = {}
+        for key in allowed_keys:
+            if key not in public_inputs:
+                continue
+            value = public_inputs[key]
+            if isinstance(value, (str, int, float, bool)) or value is None:
+                safe[key] = value
+            elif isinstance(value, list):
+                safe[key] = [
+                    item
+                    for item in value[:12]
+                    if isinstance(item, (str, int, float, bool)) or item is None
+                ]
+        if "privacy_policy" not in safe:
+            safe["privacy_policy"] = "no_plaintext_public_inputs"
+        return safe
+
     def __init__(
         self,
         storage_dir: Optional[str | Path] = None,
@@ -148,6 +207,10 @@ class DataWalletService:
         self.approval_requests: Dict[str, ApprovalRequest] = {}
         self.recovery_bundles: Dict[str, WalletRecoveryBundleRecord] = {}
         self.record_metadata: Dict[str, WalletRecordMetadataRecord] = {}
+        self.missing_person_dead_drops: Dict[str, MissingPersonDeadDropRecord] = {}
+        self.saved_services: Dict[str, SavedServiceRecord] = {}
+        self.service_interactions: Dict[str, ServiceInteractionRecord] = {}
+        self.service_plans: Dict[str, ServicePlanRecord] = {}
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
 
@@ -198,6 +261,50 @@ class DataWalletService:
     @staticmethod
     def _record_metadata_key(wallet_id: str, record_id: str) -> str:
         return f"{wallet_id}:{record_id}"
+
+    @staticmethod
+    def _missing_person_dead_drop_resource(wallet_id: str) -> str:
+        return f"wallet://{wallet_id}/dead-drops/missing-person"
+
+    @staticmethod
+    def _saved_service_resource(wallet_id: str, saved_service_id: str) -> str:
+        return f"wallet://{wallet_id}/portal/saved-services/{saved_service_id}"
+
+    @staticmethod
+    def _service_interaction_resource(wallet_id: str, interaction_id: str) -> str:
+        return f"wallet://{wallet_id}/portal/interactions/{interaction_id}"
+
+    @staticmethod
+    def _service_plan_resource(wallet_id: str, plan_id: str) -> str:
+        return f"wallet://{wallet_id}/portal/plans/{plan_id}"
+    @staticmethod
+    def _unique_nonempty_strings(values: List[str] | None) -> List[str]:
+        result: List[str] = []
+        seen: set[str] = set()
+        for value in values or []:
+            item = str(value or "").strip()
+            if not item or item in seen:
+                continue
+            seen.add(item)
+            result.append(item)
+        return result
+
+    @classmethod
+    def _normalize_service_plan_share_scopes(cls, scopes: List[str] | None) -> List[str]:
+        normalized = cls._unique_nonempty_strings(list(SERVICE_PLAN_SHARE_DEFAULT_SCOPES if scopes is None else scopes))
+        if not normalized:
+            raise ValueError("at least one service plan share scope is required")
+        unsupported = [scope for scope in normalized if scope not in SERVICE_PLAN_SHARE_SCOPE_FIELDS]
+        if unsupported:
+            raise ValueError(f"unsupported service plan share scope: {unsupported[0]}")
+        return normalized
+
+    @classmethod
+    def _service_plan_share_fields(cls, scopes: List[str]) -> List[str]:
+        fields: List[str] = []
+        for scope in scopes:
+            fields.extend(SERVICE_PLAN_SHARE_SCOPE_FIELDS[scope])
+        return cls._unique_nonempty_strings(fields)
 
     def add_controller(
         self,
@@ -510,6 +617,642 @@ class DataWalletService:
             },
         )
         return record
+
+    def get_missing_person_dead_drop(self, wallet_id: str) -> MissingPersonDeadDropRecord:
+        self._wallet(wallet_id)
+        record = self.missing_person_dead_drops.get(wallet_id)
+        if record is not None:
+            return record
+        return MissingPersonDeadDropRecord(wallet_id=wallet_id)
+
+    def save_missing_person_dead_drop(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        enabled: bool,
+        to_email: str,
+        subject: str,
+        body: str,
+        bundle: Mapping[str, Any] | None,
+        bundle_filename: str,
+        due_at: str = "",
+        last_check_in_at: str = "",
+    ) -> MissingPersonDeadDropRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        now = utc_now()
+        current = self.missing_person_dead_drops.get(wallet_id)
+        normalized_body = str(body or "")
+        normalized_bundle = dict(bundle or {})
+        if enabled:
+            if not normalized_body.strip():
+                raise ValueError("body is required when missing-person dead drop is enabled")
+            if not normalized_bundle:
+                raise ValueError("bundle is required when missing-person dead drop is enabled")
+        armed_at = ""
+        if enabled:
+            armed_at = current.armed_at if current is not None and current.enabled and current.armed_at else now
+        record = MissingPersonDeadDropRecord(
+            wallet_id=wallet_id,
+            actor_did=actor,
+            enabled=bool(enabled),
+            to_email=str(to_email or "missing@police.portlandoregon.gov"),
+            subject=str(subject or "Missing person report dead drop bundle"),
+            body=normalized_body,
+            bundle=normalized_bundle,
+            bundle_filename=str(bundle_filename or "abby-missing-person-wallet-dead-drop.json"),
+            armed_at=armed_at,
+            due_at=str(due_at or ""),
+            last_check_in_at=str(last_check_in_at or ""),
+            last_sent_at=str(current.last_sent_at if current is not None else ""),
+            last_sent_for_check_in_at=str(current.last_sent_for_check_in_at if current is not None else ""),
+            last_message_id=str(current.last_message_id if current is not None else ""),
+            last_error="",
+            last_dispatched_reason=str(current.last_dispatched_reason if current is not None else ""),
+            updated_at=now,
+        )
+        self.missing_person_dead_drops[wallet_id] = record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="dead_drop/arm" if enabled else "dead_drop/disable",
+            resource=self._missing_person_dead_drop_resource(wallet_id),
+            decision="allow",
+            details={
+                "enabled": enabled,
+                "due_at": record.due_at,
+                "last_check_in_at": record.last_check_in_at,
+                "to_email": record.to_email,
+            },
+        )
+        return record
+
+    def get_missing_person_dead_drop_for_dispatch(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str | None = None,
+    ) -> MissingPersonDeadDropRecord:
+        self._wallet(wallet_id)
+        if actor_did is not None:
+            actor = str(actor_did or "").strip()
+            if not actor:
+                raise ValueError("actor_did is required")
+            if actor not in self._wallet_principals(wallet_id):
+                raise AccessDeniedError("actor_did is not authorized for this wallet")
+        record = self.missing_person_dead_drops.get(wallet_id)
+        if record is None or not record.enabled:
+            raise ValueError("missing-person dead drop is not armed")
+        if not record.body.strip():
+            raise ValueError("missing-person dead drop email body is missing")
+        if not record.bundle:
+            raise ValueError("missing-person dead drop bundle is missing")
+        return record
+
+    def mark_missing_person_dead_drop_sent(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        message_id: str,
+        dispatched_reason: str,
+        dispatched_at: str | None = None,
+    ) -> MissingPersonDeadDropRecord:
+        record = self.get_missing_person_dead_drop_for_dispatch(wallet_id)
+        now = str(dispatched_at or utc_now())
+        record.last_sent_at = now
+        record.last_sent_for_check_in_at = record.last_check_in_at
+        record.last_message_id = str(message_id or "")
+        record.last_error = ""
+        record.last_dispatched_reason = str(dispatched_reason or "")
+        record.updated_at = now
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="dead_drop/dispatch",
+            resource=self._missing_person_dead_drop_resource(wallet_id),
+            decision="allow",
+            details={
+                "reason": record.last_dispatched_reason,
+                "message_id": record.last_message_id,
+                "last_check_in_at": record.last_check_in_at,
+            },
+        )
+        return record
+
+    def mark_missing_person_dead_drop_failed(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        error: str,
+        dispatched_reason: str,
+        failed_at: str | None = None,
+    ) -> MissingPersonDeadDropRecord:
+        record = self.get_missing_person_dead_drop(wallet_id)
+        now = str(failed_at or utc_now())
+        record.last_error = str(error or "")
+        record.last_dispatched_reason = str(dispatched_reason or "")
+        record.updated_at = now
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor_did,
+            action="dead_drop/error",
+            resource=self._missing_person_dead_drop_resource(wallet_id),
+            decision="allow",
+            details={
+                "reason": record.last_dispatched_reason,
+                "error": record.last_error,
+                "last_check_in_at": record.last_check_in_at,
+            },
+        )
+        return record
+
+    def list_saved_services(self, wallet_id: str, *, status: str | None = None) -> List[SavedServiceRecord]:
+        self._wallet(wallet_id)
+        records = [record for record in self.saved_services.values() if record.wallet_id == wallet_id]
+        if status is not None:
+            records = [record for record in records if record.status == status]
+        return sorted(records, key=lambda item: (item.updated_at or item.created_at, item.saved_service_id))
+
+    def save_service_for_wallet(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        service_doc_id: str,
+        source_content_cid: str,
+        source_page_cid: str = "",
+        title: str = "",
+        provider_name: str = "",
+        program_name: str = "",
+        source_url: str = "",
+        label: str = "",
+        reason: str = "",
+        priority: str = "normal",
+        status: str = "saved",
+        private_notes_record_id: str = "",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> SavedServiceRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        service_doc = str(service_doc_id or "").strip()
+        content_cid = str(source_content_cid or "").strip()
+        if not service_doc:
+            raise ValueError("service_doc_id is required")
+        if not content_cid:
+            raise ValueError("source_content_cid is required")
+        now = utc_now()
+        existing = next(
+            (
+                record
+                for record in self.saved_services.values()
+                if record.wallet_id == wallet_id and record.service_doc_id == service_doc
+            ),
+            None,
+        )
+        record = SavedServiceRecord(
+            saved_service_id=(existing.saved_service_id if existing is not None else f"saved-service-{uuid.uuid4().hex}"),
+            wallet_id=wallet_id,
+            service_doc_id=service_doc,
+            source_content_cid=content_cid,
+            source_page_cid=str(source_page_cid or (existing.source_page_cid if existing else "")),
+            title=str(title or (existing.title if existing else "")),
+            provider_name=str(provider_name or (existing.provider_name if existing else "")),
+            program_name=str(program_name or (existing.program_name if existing else "")),
+            source_url=str(source_url or (existing.source_url if existing else "")),
+            label=str(label or (existing.label if existing else "")),
+            reason=str(reason or (existing.reason if existing else "")),
+            priority=str(priority or (existing.priority if existing else "normal")),
+            status=str(status or (existing.status if existing else "saved")),
+            created_at=existing.created_at if existing is not None else now,
+            updated_at=now,
+            private_notes_record_id=str(
+                private_notes_record_id or (existing.private_notes_record_id if existing else "")
+            ),
+            metadata={**(existing.metadata if existing else {}), **dict(metadata or {})},
+        )
+        self.saved_services[record.saved_service_id] = record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="service/save" if existing is None else "service/update",
+            resource=self._saved_service_resource(wallet_id, record.saved_service_id),
+            decision="allow",
+            details={
+                "service_doc_id": record.service_doc_id,
+                "status": record.status,
+                "priority": record.priority,
+            },
+        )
+        return record
+
+    def create_service_interaction(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        service_doc_id: str,
+        source_content_cid: str = "",
+        source_page_cid: str = "",
+        provider_name: str = "",
+        program_name: str = "",
+        interaction_type: str,
+        channel: str = "",
+        counterparty_name: str = "",
+        counterparty_contact: str = "",
+        timestamp: str = "",
+        status: str = "",
+        outcome: str = "",
+        notes_record_id: str = "",
+        next_action: str = "",
+        next_follow_up_at: str = "",
+        source_action_url: str = "",
+        related_grant_ids: List[str] | None = None,
+        related_record_ids: List[str] | None = None,
+        privacy_level: str = "private",
+        metadata: Mapping[str, Any] | None = None,
+    ) -> ServiceInteractionRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        if not str(service_doc_id or "").strip():
+            raise ValueError("service_doc_id is required")
+        if not str(interaction_type or "").strip():
+            raise ValueError("interaction_type is required")
+        now = utc_now()
+        record = ServiceInteractionRecord(
+            interaction_id=f"interaction-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            service_doc_id=str(service_doc_id),
+            source_content_cid=str(source_content_cid or ""),
+            source_page_cid=str(source_page_cid or ""),
+            provider_name=str(provider_name or ""),
+            program_name=str(program_name or ""),
+            interaction_type=str(interaction_type),
+            channel=str(channel or ""),
+            actor_did=actor,
+            counterparty_name=str(counterparty_name or ""),
+            counterparty_contact=str(counterparty_contact or ""),
+            timestamp=str(timestamp or now),
+            status=str(status or ""),
+            outcome=str(outcome or ""),
+            notes_record_id=str(notes_record_id or ""),
+            next_action=str(next_action or ""),
+            next_follow_up_at=str(next_follow_up_at or ""),
+            source_action_url=str(source_action_url or ""),
+            related_grant_ids=[str(item) for item in (related_grant_ids or []) if str(item).strip()],
+            related_record_ids=[str(item) for item in (related_record_ids or []) if str(item).strip()],
+            privacy_level=str(privacy_level or "private"),
+            created_at=now,
+            updated_at=now,
+            metadata=dict(metadata or {}),
+        )
+        self.service_interactions[record.interaction_id] = record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="interaction/create",
+            resource=self._service_interaction_resource(wallet_id, record.interaction_id),
+            decision="allow",
+            details={
+                "service_doc_id": record.service_doc_id,
+                "interaction_type": record.interaction_type,
+                "channel": record.channel,
+            },
+        )
+        return record
+
+    def list_service_interactions(
+        self,
+        wallet_id: str,
+        *,
+        service_doc_id: str | None = None,
+        interaction_type: str | None = None,
+        status: str | None = None,
+    ) -> List[ServiceInteractionRecord]:
+        self._wallet(wallet_id)
+        records = [record for record in self.service_interactions.values() if record.wallet_id == wallet_id]
+        if service_doc_id is not None:
+            records = [record for record in records if record.service_doc_id == service_doc_id]
+        if interaction_type is not None:
+            records = [record for record in records if record.interaction_type == interaction_type]
+        if status is not None:
+            records = [record for record in records if record.status == status]
+        return sorted(records, key=lambda item: (item.timestamp or item.created_at, item.interaction_id))
+
+    def create_service_plan(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        service_doc_id: str,
+        source_content_cid: str = "",
+        source_page_cid: str = "",
+        service_title: str = "",
+        provider_name: str = "",
+        goal: str = "",
+        steps: List[str] | None = None,
+        documents_needed: List[str] | None = None,
+        questions_to_ask: List[str] | None = None,
+        appointment_at: str = "",
+        reminder_at: str = "",
+        travel_target: str = "",
+        assigned_worker_recipient_id: str = "",
+        status: str = "active",
+        related_interaction_ids: List[str] | None = None,
+        private_notes_record_id: str = "",
+    ) -> ServicePlanRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        if not str(service_doc_id or "").strip():
+            raise ValueError("service_doc_id is required")
+        now = utc_now()
+        record = ServicePlanRecord(
+            plan_id=f"service-plan-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            service_doc_id=str(service_doc_id),
+            source_content_cid=str(source_content_cid or ""),
+            source_page_cid=str(source_page_cid or ""),
+            service_title=str(service_title or ""),
+            provider_name=str(provider_name or ""),
+            goal=str(goal or ""),
+            steps=[str(item) for item in (steps or []) if str(item).strip()],
+            documents_needed=[str(item) for item in (documents_needed or []) if str(item).strip()],
+            questions_to_ask=[str(item) for item in (questions_to_ask or []) if str(item).strip()],
+            appointment_at=str(appointment_at or ""),
+            reminder_at=str(reminder_at or ""),
+            travel_target=str(travel_target or ""),
+            assigned_worker_recipient_id=str(assigned_worker_recipient_id or ""),
+            status=str(status or "active"),
+            related_interaction_ids=[str(item) for item in (related_interaction_ids or []) if str(item).strip()],
+            private_notes_record_id=str(private_notes_record_id or ""),
+            created_at=now,
+            updated_at=now,
+        )
+        self.service_plans[record.plan_id] = record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="service_plan/create",
+            resource=self._service_plan_resource(wallet_id, record.plan_id),
+            decision="allow",
+            details={"service_doc_id": record.service_doc_id, "status": record.status},
+        )
+        return record
+
+    def update_service_plan(
+        self,
+        wallet_id: str,
+        plan_id: str,
+        *,
+        actor_did: str,
+        source_content_cid: str | None = None,
+        source_page_cid: str | None = None,
+        service_title: str | None = None,
+        provider_name: str | None = None,
+        goal: str | None = None,
+        steps: List[str] | None = None,
+        documents_needed: List[str] | None = None,
+        questions_to_ask: List[str] | None = None,
+        appointment_at: str | None = None,
+        reminder_at: str | None = None,
+        travel_target: str | None = None,
+        assigned_worker_recipient_id: str | None = None,
+        status: str | None = None,
+        related_interaction_ids: List[str] | None = None,
+        private_notes_record_id: str | None = None,
+    ) -> ServicePlanRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        record = self.service_plans.get(plan_id)
+        if record is None or record.wallet_id != wallet_id:
+            raise ValueError("service plan not found")
+        if source_content_cid is not None:
+            record.source_content_cid = str(source_content_cid or "")
+        if source_page_cid is not None:
+            record.source_page_cid = str(source_page_cid or "")
+        if service_title is not None:
+            record.service_title = str(service_title or "")
+        if provider_name is not None:
+            record.provider_name = str(provider_name or "")
+        if goal is not None:
+            record.goal = str(goal or "")
+        if steps is not None:
+            record.steps = [str(item) for item in steps if str(item).strip()]
+        if documents_needed is not None:
+            record.documents_needed = [str(item) for item in documents_needed if str(item).strip()]
+        if questions_to_ask is not None:
+            record.questions_to_ask = [str(item) for item in questions_to_ask if str(item).strip()]
+        if appointment_at is not None:
+            record.appointment_at = str(appointment_at or "")
+        if reminder_at is not None:
+            record.reminder_at = str(reminder_at or "")
+        if travel_target is not None:
+            record.travel_target = str(travel_target or "")
+        if assigned_worker_recipient_id is not None:
+            record.assigned_worker_recipient_id = str(assigned_worker_recipient_id or "")
+        if status is not None:
+            record.status = str(status or "")
+        if related_interaction_ids is not None:
+            record.related_interaction_ids = [
+                str(item) for item in related_interaction_ids if str(item).strip()
+            ]
+        if private_notes_record_id is not None:
+            record.private_notes_record_id = str(private_notes_record_id or "")
+        record.updated_at = utc_now()
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="service_plan/update",
+            resource=self._service_plan_resource(wallet_id, record.plan_id),
+            decision="allow",
+            details={"service_doc_id": record.service_doc_id, "status": record.status},
+        )
+        return record
+
+    def list_service_plans(
+        self,
+        wallet_id: str,
+        *,
+        service_doc_id: str | None = None,
+        status: str | None = None,
+    ) -> List[ServicePlanRecord]:
+        self._wallet(wallet_id)
+        records = [record for record in self.service_plans.values() if record.wallet_id == wallet_id]
+        if service_doc_id is not None:
+            records = [record for record in records if record.service_doc_id == service_doc_id]
+        if status is not None:
+            records = [record for record in records if record.status == status]
+        return sorted(records, key=lambda item: (item.updated_at or item.created_at, item.plan_id))
+    def create_service_plan_share_grant(
+        self,
+        wallet_id: str,
+        plan_id: str,
+        *,
+        issuer_did: str,
+        audience_did: str,
+        scopes: List[str] | None = None,
+        purpose: str = "service_plan_collaboration",
+        worker_recipient_id: str = "",
+        worker_name: str = "",
+        expires_at: str | None = None,
+        approval_id: str | None = None,
+        issuer_secret: bytes | None = None,
+        audience_secret: bytes | None = None,
+        extra_caveats: Mapping[str, Any] | None = None,
+    ) -> ServicePlanShareGrantResult:
+        issuer = str(issuer_did or "").strip()
+        if not issuer:
+            raise ValueError("issuer_did is required")
+        if issuer not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("issuer_did is not authorized for this wallet")
+        plan = self.service_plans.get(plan_id)
+        if plan is None or plan.wallet_id != wallet_id:
+            raise ValueError("service plan not found")
+        audience = str(audience_did or "").strip()
+        if not audience:
+            raise ValueError("audience_did is required")
+        normalized_scopes = self._normalize_service_plan_share_scopes(scopes)
+        resource = self._service_plan_resource(wallet_id, plan.plan_id)
+        allowed_fields = self._service_plan_share_fields(normalized_scopes)
+        caveats: Dict[str, Any] = dict(extra_caveats or {})
+        caveats.update(
+            {
+                "purpose": purpose or caveats.get("purpose") or "service_plan_collaboration",
+                "portal_collection": "service_plans",
+                "service_plan_id": plan.plan_id,
+                "service_doc_id": plan.service_doc_id,
+                "source_content_cid": plan.source_content_cid,
+                "source_page_cid": plan.source_page_cid,
+                "service_plan_scopes": normalized_scopes,
+                "allowed_fields": allowed_fields,
+                "redacted_by_default": True,
+                "privacy_level": "restricted",
+            }
+        )
+        if worker_recipient_id:
+            caveats["worker_recipient_id"] = str(worker_recipient_id)
+        if worker_name:
+            caveats["worker_name"] = str(worker_name)
+        if approval_id:
+            caveats["approval_id"] = approval_id
+
+        grant = self.create_grant(
+            wallet_id=wallet_id,
+            issuer_did=issuer,
+            audience_did=audience,
+            resources=[resource],
+            abilities=["service_plan/read"],
+            caveats=caveats,
+            expires_at=expires_at,
+            approval_id=approval_id,
+            issuer_secret=issuer_secret,
+            audience_secret=audience_secret,
+        )
+        now = utc_now()
+        interaction = ServiceInteractionRecord(
+            interaction_id=f"interaction-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            service_doc_id=plan.service_doc_id,
+            source_content_cid=plan.source_content_cid,
+            source_page_cid=plan.source_page_cid,
+            provider_name=plan.provider_name,
+            program_name=plan.service_title,
+            interaction_type="shared_service_plan",
+            channel="wallet_grant",
+            actor_did=issuer,
+            counterparty_name=str(worker_name or worker_recipient_id or audience),
+            counterparty_contact=audience,
+            timestamp=now,
+            status="grant_active",
+            outcome="Scoped service plan grant created",
+            related_grant_ids=[grant.grant_id],
+            privacy_level="restricted",
+            created_at=now,
+            updated_at=now,
+            metadata={
+                "plan_id": plan.plan_id,
+                "resource": resource,
+                "scopes": normalized_scopes,
+                "allowed_fields": allowed_fields,
+                "worker_recipient_id": str(worker_recipient_id or ""),
+            },
+        )
+        self.service_interactions[interaction.interaction_id] = interaction
+        plan.assigned_worker_recipient_id = str(worker_recipient_id or plan.assigned_worker_recipient_id or audience)
+        plan.related_interaction_ids = self._unique_nonempty_strings(
+            [*plan.related_interaction_ids, interaction.interaction_id]
+        )
+        plan.updated_at = now
+        receipt = next(
+            (
+                item
+                for item in self.grant_receipts.values()
+                if item.wallet_id == wallet_id and item.grant_id == grant.grant_id
+            ),
+            None,
+        )
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=issuer,
+            action="interaction/create",
+            resource=self._service_interaction_resource(wallet_id, interaction.interaction_id),
+            decision="allow",
+            details={
+                "service_doc_id": plan.service_doc_id,
+                "interaction_type": interaction.interaction_type,
+                "channel": interaction.channel,
+                "related_grant_ids": [grant.grant_id],
+            },
+        )
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=issuer,
+            action="service_plan/share",
+            resource=resource,
+            decision="allow",
+            details={
+                "service_doc_id": plan.service_doc_id,
+                "grant_id": grant.grant_id,
+                "audience_did": audience,
+                "worker_recipient_id": worker_recipient_id,
+                "scopes": normalized_scopes,
+                "allowed_fields": allowed_fields,
+                "interaction_id": interaction.interaction_id,
+                "privacy_level": "restricted",
+            },
+        )
+        return ServicePlanShareGrantResult(
+            grant=grant,
+            receipt=receipt,
+            plan=plan,
+            interaction=interaction,
+        )
 
     def update_record_metadata(
         self,
@@ -1867,6 +2610,56 @@ class DataWalletService:
             grant_id=grant_id,
         )
         return receipt
+
+    def create_document_profile_proof(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        public_inputs: Mapping[str, Any],
+    ) -> ProofReceipt:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        self._wallet(wallet_id)
+        record = self._record(wallet_id, record_id)
+        if record.data_type != "document":
+            raise ValueError("document profile proofs require a document record")
+        safe_public_inputs = type(self)._safe_document_profile_public_inputs(public_inputs)
+        proof = create_simulated_proof_receipt(
+            wallet_id=wallet_id,
+            proof_type="document_privacy_profile",
+            statement={
+                "claim": "A wallet document was profiled with redacted GraphRAG, redacted vector metadata, and encrypted derived artifacts.",
+                "record_id": record_id,
+                "privacy_policy": "no_plaintext_public_inputs",
+            },
+            public_inputs={
+                "claim": "Document profile generated without exposing plaintext",
+                "record_id": record_id,
+                **safe_public_inputs,
+            },
+            witness_record_ids=[record_id],
+            circuit_id="document-privacy-profile-v1",
+        )
+        self.proofs[proof.proof_id] = proof
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="proof/document_privacy_profile",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={
+                "proof_id": proof.proof_id,
+                "proof_type": proof.proof_type,
+                "public_input_keys": sorted(proof.public_inputs.keys()),
+            },
+        )
+        return proof
 
     @staticmethod
     def _caveat_value_set(value: object) -> set[str]:
@@ -3617,6 +4410,28 @@ class DataWalletService:
             for key, record in self.record_metadata.items()
             if record.wallet_id == wallet_id
         )
+        saved_service_ids = sorted(
+            saved_service.saved_service_id
+            for saved_service in self.saved_services.values()
+            if saved_service.wallet_id == wallet_id
+        )
+        interaction_ids = sorted(
+            interaction.interaction_id
+            for interaction in self.service_interactions.values()
+            if interaction.wallet_id == wallet_id
+        )
+        plan_ids = sorted(
+            plan.plan_id
+            for plan in self.service_plans.values()
+            if plan.wallet_id == wallet_id
+        )
+        missing_person_dead_drop = self.missing_person_dead_drops.get(wallet_id)
+        principal_secret_dids = sorted(
+            did
+            for did in self._principal_secrets
+            if did in set(wallet.controller_dids + wallet.device_dids)
+            or any(self.grants[grant_id].audience_did == did for grant_id in grant_ids)
+        )
         return {
             "wallet": wallet.to_dict(),
             "records": [self.records[record_id].to_dict() for record_id in record_ids],
@@ -3661,15 +4476,25 @@ class DataWalletService:
             "record_metadata": [
                 self.record_metadata[key].to_dict() for key in record_metadata_ids
             ],
+            "saved_services": [
+                self.saved_services[saved_service_id].to_dict() for saved_service_id in saved_service_ids
+            ],
+            "service_interactions": [
+                self.service_interactions[interaction_id].to_dict() for interaction_id in interaction_ids
+            ],
+            "service_plans": [
+                self.service_plans[plan_id].to_dict() for plan_id in plan_ids
+            ],
+            "missing_person_dead_drop": (
+                missing_person_dead_drop.to_dict() if missing_person_dead_drop is not None else None
+            ),
             "audit_events": [
                 event.to_dict() for event in self.audit_events.get(wallet_id, [])
             ],
-            "principal_secret_dids": sorted(
-                did
-                for did in self._principal_secrets
-                if did in set(wallet.controller_dids + wallet.device_dids)
-                or any(self.grants[grant_id].audience_did == did for grant_id in grant_ids)
-            ),
+            "principal_secret_dids": principal_secret_dids,
+            "principal_secrets": {
+                did: self._principal_secrets[did].hex() for did in principal_secret_dids
+            },
         }
 
     def export_analytics_ledger(self, *, redact_subjects: bool = True) -> Dict[str, Any]:
@@ -4091,8 +4916,11 @@ class DataWalletService:
         self.audit_events[wallet.wallet_id] = [
             AuditEvent(**event_data) for event_data in snapshot.get("audit_events", [])
         ]
+        for did, secret_hex in snapshot.get("principal_secrets", {}).items():
+            self.set_principal_secret(str(did), bytes.fromhex(str(secret_hex)))
         for did in snapshot.get("principal_secret_dids", []):
-            self._ensure_principal_secret(str(did))
+            if str(did) not in self._principal_secrets:
+                self._ensure_principal_secret(str(did))
         for record_data in snapshot.get("records", []):
             self.records[record_data["record_id"]] = DataRecord(**record_data)
         for version_data in snapshot.get("versions", []):
@@ -4142,6 +4970,21 @@ class DataWalletService:
         for metadata_data in snapshot.get("record_metadata", []):
             key = self._record_metadata_key(metadata_data["wallet_id"], metadata_data["record_id"])
             self.record_metadata[key] = WalletRecordMetadataRecord(**metadata_data)
+        for saved_service_data in snapshot.get("saved_services", []):
+            self.saved_services[saved_service_data["saved_service_id"]] = SavedServiceRecord(
+                **saved_service_data
+            )
+        for interaction_data in snapshot.get("service_interactions", []):
+            self.service_interactions[interaction_data["interaction_id"]] = ServiceInteractionRecord(
+                **interaction_data
+            )
+        for plan_data in snapshot.get("service_plans", []):
+            self.service_plans[plan_data["plan_id"]] = ServicePlanRecord(**plan_data)
+        dead_drop_data = snapshot.get("missing_person_dead_drop")
+        if isinstance(dead_drop_data, dict) and dead_drop_data.get("wallet_id"):
+            self.missing_person_dead_drops[dead_drop_data["wallet_id"]] = MissingPersonDeadDropRecord(
+                **dead_drop_data
+            )
         return wallet
 
     def get_wallet_manifest_canonical(self, wallet_id: str) -> str:

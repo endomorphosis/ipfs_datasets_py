@@ -12,8 +12,13 @@ import hmac
 import json
 import os
 from pathlib import Path
+import re
+import smtplib
 import time
 from typing import Any, Dict, List, Mapping, Optional
+from email.message import EmailMessage
+from email.utils import make_msgid
+from urllib import request as urllib_request
 
 from fastapi import APIRouter, File, Form, HTTPException, Header, Query, UploadFile
 from pydantic import BaseModel, Field
@@ -21,9 +26,11 @@ from pydantic import BaseModel, Field
 from . import DataWalletError, WalletService
 from .crypto import sha256_hex
 from .manifest import canonical_bytes
-from .models import AccessRequest, ApprovalRequest, AuditEvent, GrantReceipt, ProofReceipt
+from .models import AnalyticsTemplate, AccessRequest, ApprovalRequest, AuditEvent, GrantReceipt, ProofReceipt
 from .storage import LocalEncryptedBlobStore
 from .ucan import invocation_from_token, invocation_to_token, resource_for_export, resource_for_record
+
+PORTLAND_POLICE_MISSING_EMAIL = "missing@police.portlandoregon.gov"
 
 
 class CreateWalletRequest(BaseModel):
@@ -50,6 +57,18 @@ class WalletRecordsResponse(BaseModel):
 
 class WalletProofsResponse(BaseModel):
     proofs: List[Dict[str, Any]]
+
+
+class SavedServicesResponse(BaseModel):
+    saved_services: List[Dict[str, Any]]
+
+
+class ServiceInteractionsResponse(BaseModel):
+    interactions: List[Dict[str, Any]]
+
+
+class ServicePlansResponse(BaseModel):
+    plans: List[Dict[str, Any]]
 
 
 class WalletApprovalsResponse(BaseModel):
@@ -81,6 +100,173 @@ class WalletRecordMetadataRequest(BaseModel):
 class DeleteWalletRecordRequest(BaseModel):
     actor_did: str
     unpin_ipfs: bool = True
+
+
+class LocationRegionProofRequest(BaseModel):
+    actor_did: str
+    region_id: str
+    grant_id: str | None = None
+
+
+class LocationDistanceProofRequest(BaseModel):
+    actor_did: str
+    target_id: str
+    target_lat: float
+    target_lon: float
+    max_distance_km: float
+    grant_id: str | None = None
+
+
+class DocumentPrivacyProfileProofRequest(BaseModel):
+    actor_did: str
+    public_inputs: Dict[str, Any] = Field(default_factory=dict)
+
+
+class WalletRecordMetadataGenerationRequest(BaseModel):
+    actor_did: str
+    actor_key_hex: str | None = None
+    wallet_cid: str | None = None
+    provider: str | None = "hf_inference_api"
+    model_name: str | None = None
+    kwargs: Dict[str, Any] = Field(default_factory=dict)
+    grant_id: str | None = None
+    invocation_token: str | None = None
+    file_name: str | None = None
+    mime_type: str | None = None
+    max_chars_per_record: int = 20_000
+    max_bytes_per_record: int = 200_000
+    use_ocr: bool = True
+
+
+class AnalyticsConsentFromTemplateRequest(BaseModel):
+    actor_did: str
+    template_id: str
+    expires_at: str | None = None
+
+
+class AnalyticsConsentRevokeRequest(BaseModel):
+    actor_did: str
+
+
+class MissingPersonDeadDropEmailRequest(BaseModel):
+    actor_did: str
+    to_email: str = PORTLAND_POLICE_MISSING_EMAIL
+    subject: str = "Missing person report dead drop bundle"
+    body: str
+    bundle: Dict[str, Any]
+    bundle_filename: str = "abby-missing-person-wallet-dead-drop.json"
+
+
+class MissingPersonDeadDropConfigRequest(BaseModel):
+    actor_did: str
+    enabled: bool = False
+    to_email: str = PORTLAND_POLICE_MISSING_EMAIL
+    subject: str = "Missing person report dead drop bundle"
+    body: str = ""
+    bundle: Dict[str, Any] = Field(default_factory=dict)
+    bundle_filename: str = "abby-missing-person-wallet-dead-drop.json"
+    due_at: str = ""
+    last_check_in_at: str = ""
+
+
+class MissingPersonDeadDropDispatchRequest(BaseModel):
+    actor_did: str
+
+
+class SavedServiceRequest(BaseModel):
+    actor_did: str
+    service_doc_id: str
+    source_content_cid: str
+    source_page_cid: str = ""
+    title: str = ""
+    provider_name: str = ""
+    program_name: str = ""
+    source_url: str = ""
+    label: str = ""
+    reason: str = ""
+    priority: str = "normal"
+    status: str = "saved"
+    private_notes_record_id: str = ""
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ServiceInteractionRequest(BaseModel):
+    actor_did: str
+    service_doc_id: str
+    source_content_cid: str = ""
+    source_page_cid: str = ""
+    provider_name: str = ""
+    program_name: str = ""
+    interaction_type: str
+    channel: str = ""
+    counterparty_name: str = ""
+    counterparty_contact: str = ""
+    timestamp: str = ""
+    status: str = ""
+    outcome: str = ""
+    notes_record_id: str = ""
+    next_action: str = ""
+    next_follow_up_at: str = ""
+    source_action_url: str = ""
+    related_grant_ids: List[str] = Field(default_factory=list)
+    related_record_ids: List[str] = Field(default_factory=list)
+    privacy_level: str = "private"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ServicePlanRequest(BaseModel):
+    actor_did: str
+    service_doc_id: str
+    source_content_cid: str = ""
+    source_page_cid: str = ""
+    service_title: str = ""
+    provider_name: str = ""
+    goal: str = ""
+    steps: List[str] = Field(default_factory=list)
+    documents_needed: List[str] = Field(default_factory=list)
+    questions_to_ask: List[str] = Field(default_factory=list)
+    appointment_at: str = ""
+    reminder_at: str = ""
+    travel_target: str = ""
+    assigned_worker_recipient_id: str = ""
+    status: str = "active"
+    related_interaction_ids: List[str] = Field(default_factory=list)
+    private_notes_record_id: str = ""
+
+
+class ServicePlanUpdateRequest(BaseModel):
+    actor_did: str
+    source_content_cid: str | None = None
+    source_page_cid: str | None = None
+    service_title: str | None = None
+    provider_name: str | None = None
+    goal: str | None = None
+    steps: List[str] | None = None
+    documents_needed: List[str] | None = None
+    questions_to_ask: List[str] | None = None
+    appointment_at: str | None = None
+    reminder_at: str | None = None
+    travel_target: str | None = None
+    assigned_worker_recipient_id: str | None = None
+    status: str | None = None
+    related_interaction_ids: List[str] | None = None
+    private_notes_record_id: str | None = None
+
+
+class ServicePlanShareGrantRequest(BaseModel):
+    actor_did: str = ""
+    issuer_did: str = ""
+    audience_did: str = ""
+    worker_did: str = ""
+    scopes: List[str] = Field(default_factory=lambda: ["service_summary"])
+    purpose: str = "service_plan_collaboration"
+    worker_recipient_id: str = ""
+    worker_name: str = ""
+    expires_at: str | None = None
+    approval_id: str | None = None
+    issuer_key_hex: str | None = None
+    audience_key_hex: str | None = None
+    caveats: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RecordGrantRequest(BaseModel):
@@ -434,6 +620,185 @@ def _load_wallet_service(wallet_id: str, wallet_dir: Path | None = None, blob_di
     return service
 
 
+def _require_portland_police_missing_email(to_email: str) -> str:
+    normalized = str(to_email or "").strip().lower()
+    if normalized != PORTLAND_POLICE_MISSING_EMAIL:
+        raise ValueError(
+            f"missing-person dead drop recipient must be {PORTLAND_POLICE_MISSING_EMAIL}"
+        )
+    return PORTLAND_POLICE_MISSING_EMAIL
+
+
+def _send_webhook_notification(
+    *,
+    env_prefix: str,
+    required_key: str,
+    required_value: str,
+    extra_payload: Dict[str, Any] | None = None,
+) -> Dict[str, str]:
+    webhook_url = str(os.getenv(f"{env_prefix}_WEBHOOK_URL") or "").strip()
+    backend = str(os.getenv(f"{env_prefix}_BACKEND") or ("http" if webhook_url else "")).strip().lower()
+    if not backend or not webhook_url:
+        raise RuntimeError(
+            f"{env_prefix}_WEBHOOK_URL environment variable is required for delivery but is not configured"
+        )
+    if backend != "http":
+        raise RuntimeError(f"{env_prefix}_BACKEND must be http when delivery is enabled")
+
+    extra_headers: Dict[str, str] = {}
+    if bearer_token := str(os.getenv(f"{env_prefix}_BEARER_TOKEN") or "").strip():
+        extra_headers["authorization"] = f"Bearer {bearer_token}"
+    if header_name := str(os.getenv(f"{env_prefix}_HTTP_HEADER_NAME") or "").strip():
+        header_value = str(os.getenv(f"{env_prefix}_HTTP_HEADER_VALUE") or "").strip()
+        if not header_value:
+            raise RuntimeError(f"{env_prefix}_HTTP_HEADER_VALUE is required when header name is set")
+        extra_headers[header_name] = header_value
+
+    timeout_seconds = float(str(os.getenv(f"{env_prefix}_TIMEOUT_SECONDS") or "15").strip())
+    if timeout_seconds <= 0:
+        raise RuntimeError(f"{env_prefix}_TIMEOUT_SECONDS must be positive")
+
+    payload = {required_key: required_value, **dict(extra_payload or {})}
+    request_headers = {"content-type": "application/json", **extra_headers}
+    body = json.dumps(payload, sort_keys=True).encode("utf-8")
+    req = urllib_request.Request(webhook_url, data=body, headers=request_headers, method="POST")
+    with urllib_request.urlopen(req, timeout=timeout_seconds) as response:
+        raw = response.read().decode("utf-8")
+        content_type = str(getattr(response, "headers", {}).get("content-type", ""))
+        status = str(getattr(response, "status", getattr(response, "code", 200)))
+
+    response_payload: Dict[str, Any] = {}
+    if raw and ("json" in content_type.lower() or raw.lstrip().startswith("{")):
+        parsed = json.loads(raw)
+        if not isinstance(parsed, dict):
+            raise ValueError("dead-drop delivery response must be a JSON object")
+        response_payload = parsed
+
+    provider_message_id = str(
+        response_payload.get("provider_message_id")
+        or response_payload.get("message_id")
+        or response_payload.get("email_id")
+        or response_payload.get("id")
+        or ""
+    )
+    result = {
+        "provider": str(response_payload.get("provider") or "http"),
+        "provider_status": str(response_payload.get("status") or status),
+    }
+    if provider_message_id:
+        result["provider_message_id"] = provider_message_id
+    return result
+
+
+def _send_dead_drop_email(
+    *,
+    to_email: str,
+    subject: str,
+    body: str,
+    bundle: Dict[str, Any],
+    bundle_filename: str,
+) -> Dict[str, Any]:
+    normalized_to_email = str(to_email or "").strip()
+    normalized_subject = str(subject or "").strip()
+    normalized_body = str(body or "")
+    bundle_json = json.dumps(bundle, indent=2, sort_keys=True)
+    sender = str(os.getenv("WALLET_DEAD_DROP_FROM_EMAIL") or "no-reply@211-ai.org").strip()
+
+    webhook_url = str(os.getenv("WALLET_DEAD_DROP_WEBHOOK_URL") or "").strip()
+    backend = str(os.getenv("WALLET_DEAD_DROP_BACKEND") or ("http" if webhook_url else "")).strip().lower()
+    if backend or webhook_url:
+        if backend != "http" or not webhook_url:
+            raise RuntimeError(
+                "WALLET_DEAD_DROP_WEBHOOK_URL environment variable is required for dead-drop delivery when WALLET_DEAD_DROP_BACKEND is enabled"
+            )
+        delivery = _send_webhook_notification(
+            env_prefix="WALLET_DEAD_DROP",
+            required_key="to_email",
+            required_value=normalized_to_email,
+            extra_payload={
+                "subject": normalized_subject,
+                "body": normalized_body,
+                "from_email": sender,
+                "attachment_base64": base64.b64encode(bundle_json.encode("utf-8")).decode("ascii"),
+                "attachment_filename": str(bundle_filename or "abby-missing-person-wallet-dead-drop.json"),
+                "attachment_mime_type": "application/json",
+            },
+        )
+        return {"message_id": str(delivery.get("provider_message_id") or "")}
+
+    smtp_host = str(os.getenv("WALLET_DEAD_DROP_SMTP_HOST") or "").strip()
+    if not smtp_host:
+        raise RuntimeError(
+            "WALLET_DEAD_DROP_SMTP_HOST environment variable is required for dead-drop email delivery but is not configured"
+        )
+    smtp_port = int(str(os.getenv("WALLET_DEAD_DROP_SMTP_PORT") or "587").strip())
+    smtp_use_ssl = str(os.getenv("WALLET_DEAD_DROP_SMTP_USE_SSL") or "").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_starttls = str(os.getenv("WALLET_DEAD_DROP_SMTP_STARTTLS") or "true").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_username = str(os.getenv("WALLET_DEAD_DROP_SMTP_USERNAME") or "").strip()
+    smtp_password = str(os.getenv("WALLET_DEAD_DROP_SMTP_PASSWORD") or "")
+
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = normalized_to_email
+    message["Subject"] = normalized_subject
+    sender_domain = sender.rsplit("@", 1)[-1].strip() if "@" in sender else ""
+    message["Message-Id"] = make_msgid(domain=sender_domain or None)
+    message.set_content(normalized_body)
+    message.add_attachment(
+        bundle_json.encode("utf-8"),
+        maintype="application",
+        subtype="json",
+        filename=bundle_filename,
+    )
+
+    smtp_factory = smtplib.SMTP_SSL if smtp_use_ssl else smtplib.SMTP
+    with smtp_factory(smtp_host, smtp_port, timeout=20) as smtp:
+        if not smtp_use_ssl and smtp_starttls:
+            smtp.starttls()
+        if smtp_username:
+            smtp.login(smtp_username, smtp_password)
+        rejected = smtp.send_message(message)
+    if rejected:
+        raise RuntimeError(f"Dead-drop email delivery rejected recipients: {sorted(rejected)}")
+    return {"message_id": str(message.get('Message-Id') or '')}
+
+
+def _inject_shared_analytics_templates(service: WalletService, wallet_dir: Path) -> None:
+    for wallet_snapshot_id in _list_wallet_snapshot_ids(wallet_dir):
+        path = wallet_path(wallet_dir, wallet_snapshot_id)
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for template_data in payload.get("analytics_templates", []):
+            if not isinstance(template_data, Mapping):
+                continue
+            template_id = str(template_data.get("template_id") or "").strip()
+            if not template_id or template_id in service.analytics_templates:
+                continue
+            try:
+                service.analytics_templates[template_id] = AnalyticsTemplate(**dict(template_data))
+            except Exception:
+                continue
+
+
+def _list_shared_analytics_templates(wallet_dir: Path) -> List[Dict[str, Any]]:
+    templates: Dict[str, Dict[str, Any]] = {}
+    for wallet_snapshot_id in _list_wallet_snapshot_ids(wallet_dir):
+        path = wallet_path(wallet_dir, wallet_snapshot_id)
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        for template_data in payload.get("analytics_templates", []):
+            if not isinstance(template_data, Mapping):
+                continue
+            template_id = str(template_data.get("template_id") or "").strip()
+            if template_id:
+                templates[template_id] = dict(template_data)
+    return [templates[template_id] for template_id in sorted(templates)]
+
+
 def _sorted_records(service: WalletService, wallet_id: str, data_type: str | None = None) -> List[Dict[str, Any]]:
     records = []
     for record in sorted(service.records.values(), key=lambda item: item.record_id):
@@ -481,6 +846,165 @@ def _optional_hex_key(value: str | None) -> bytes | None:
     return bytes.fromhex(raw)
 
 
+def _ops_health_shared_secret() -> str:
+    return str(os.getenv("WALLET_OPS_HEALTH_SHARED_SECRET") or "").strip()
+
+
+def _ops_health_report(*, verify_storage: bool = False) -> Dict[str, Any]:
+    wallet_dir = default_wallet_dir()
+    blob_dir = default_blob_dir()
+    wallet_ids = _list_wallet_snapshot_ids(wallet_dir)
+    services: List[WalletService] = []
+    for wallet_id in wallet_ids:
+        try:
+            services.append(_load_wallet_service(wallet_id, wallet_dir=wallet_dir, blob_dir=blob_dir))
+        except Exception:
+            continue
+
+    checks: List[Dict[str, Any]] = []
+
+    def add_check(name: str, status: str, summary: str, **details: Any) -> None:
+        checks.append({"name": name, "status": status, "summary": summary, "details": details})
+
+    add_check(
+        "repository",
+        "ok",
+        "Wallet snapshot repository is available." if wallet_dir.exists() else "Wallet snapshot repository directory does not exist yet.",
+        configured=True,
+        wallet_snapshot_count=len(wallet_ids),
+        live_wallet_count=len(wallet_ids),
+        missing_snapshot_wallet_ids=[],
+    )
+
+    active_record_count = sum(
+        len([record for record in service.records.values() if record.status == "active"])
+        for service in services
+    )
+    storage_failures: List[Dict[str, Any]] = []
+    if verify_storage:
+        for wallet_id, service in zip(wallet_ids, services):
+            for record in service.records.values():
+                if record.status != "active":
+                    continue
+                try:
+                    report = service.verify_record_storage(wallet_id, record.record_id)
+                except Exception as exc:
+                    storage_failures.append(
+                        {"wallet_id": wallet_id, "record_id": record.record_id, "error": str(exc)}
+                    )
+                    continue
+                if not report.ok:
+                    storage_failures.append(
+                        {
+                            "wallet_id": wallet_id,
+                            "record_id": record.record_id,
+                            "payload_failures": [status.to_dict() for status in report.payload if not status.ok],
+                            "metadata_failures": [status.to_dict() for status in report.metadata if not status.ok],
+                        }
+                    )
+    storage_backend_name = services[0].storage.__class__.__name__ if services else "LocalEncryptedBlobStore"
+    add_check(
+        "storage_availability",
+        "error" if storage_failures else "ok",
+        (
+            f"{len(storage_failures)} active records failed encrypted storage verification."
+            if storage_failures
+            else "Encrypted storage backend is configured and no verified records failed."
+        ),
+        backend=storage_backend_name,
+        active_record_count=active_record_count,
+        verified=verify_storage,
+        failures=storage_failures,
+    )
+
+    proof_backend = services[0].proof_backend if services else _new_service(blob_dir).proof_backend
+    simulated_enabled = services[0].allow_simulated_proofs if services else True
+    proof_status = "warning" if simulated_enabled else "ok"
+    proof_summary = (
+        "Simulated proof receipts are enabled; configure a production proof backend before launch."
+        if simulated_enabled
+        else "Production proof mode rejects simulated proof receipts."
+    )
+    add_check(
+        "proof_registry",
+        proof_status,
+        proof_summary,
+        backend=proof_backend.__class__.__name__,
+        verifier_id=getattr(proof_backend, "verifier_id", None),
+        proof_system=getattr(proof_backend, "proof_system", None),
+        backend_mode=getattr(proof_backend, "mode", None),
+        is_simulated_backend=bool(getattr(proof_backend, "is_simulated", False)),
+        backend_health=None,
+        allow_simulated_proofs=simulated_enabled,
+        env_vars=["WALLET_PROOF_MODE", "WALLET_PROOF_BACKEND", "WALLET_ALLOW_SIMULATED_PROOFS"],
+    )
+
+    revoked_grant_ids = {
+        grant.grant_id
+        for service in services
+        for grant in service.grants.values()
+        if grant.status == "revoked"
+    }
+    dangling_key_wraps: List[Dict[str, Any]] = []
+    for service in services:
+        for version in service.versions.values():
+            for key_wrap in version.key_wraps:
+                if key_wrap.grant_id in revoked_grant_ids and key_wrap.status == "active":
+                    dangling_key_wraps.append(
+                        {
+                            "record_id": key_wrap.record_id,
+                            "version_id": key_wrap.version_id,
+                            "recipient_did": key_wrap.recipient_did,
+                            "grant_id": key_wrap.grant_id,
+                        }
+                    )
+    add_check(
+        "revocation_propagation",
+        "error" if dangling_key_wraps else "ok",
+        (
+            f"{len(dangling_key_wraps)} active key wraps still reference revoked grants."
+            if dangling_key_wraps
+            else "Revoked grants do not have active delegated key wraps."
+        ),
+        revoked_grant_count=len(revoked_grant_ids),
+        dangling_key_wraps=dangling_key_wraps,
+    )
+
+    budget_spent: Dict[str, float] = {}
+    for service in services:
+        for key, value in service.analytics_query_budget_spent.items():
+            budget_spent[str(key)] = float(value)
+    budget_spent = dict(sorted(budget_spent.items()))
+    negative_budgets = {key: value for key, value in budget_spent.items() if value < 0}
+    add_check(
+        "privacy_budget",
+        "error" if negative_budgets else "ok",
+        (
+            "Privacy budget ledger contains invalid negative spend values."
+            if negative_budgets
+            else "Privacy budget ledger is readable."
+        ),
+        budget_key_count=len(budget_spent),
+        spent=budget_spent,
+        invalid_negative_spend=negative_budgets,
+    )
+
+    if any(check["status"] == "error" for check in checks):
+        status = "error"
+    elif any(check["status"] == "warning" for check in checks):
+        status = "warning"
+    else:
+        status = "ok"
+
+    return {
+        "status": status,
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "wallet_count": len(wallet_ids),
+        "check_count": len(checks),
+        "checks": checks,
+    }
+
+
 def _list_wallet_snapshot_ids(wallet_dir: Path) -> List[str]:
     if not wallet_dir.exists():
         return []
@@ -524,6 +1048,206 @@ def _analysis_result_to_dict(result: Dict[str, Any]) -> Dict[str, Any]:
         "artifact": artifact_data,
         "output": result["output"],
     }
+
+
+def _derived_output(result: Mapping[str, Any]) -> Dict[str, Any]:
+    output = result.get("output")
+    return dict(output) if isinstance(output, Mapping) else {}
+
+
+def _derived_artifact_id(result: Mapping[str, Any]) -> str:
+    artifact = result.get("artifact")
+    if hasattr(artifact, "artifact_id"):
+        return str(getattr(artifact, "artifact_id") or "")
+    if hasattr(artifact, "id"):
+        return str(getattr(artifact, "id") or "")
+    if isinstance(artifact, Mapping):
+        return str(artifact.get("artifact_id") or artifact.get("id") or "")
+    return ""
+
+
+def _record_metadata_value(record: Mapping[str, Any], key: str) -> str:
+    metadata = record.get("metadata")
+    if isinstance(metadata, Mapping):
+        value = metadata.get(key)
+        if isinstance(value, str):
+            return value
+    return ""
+
+
+def _safe_short_text(value: Any, *, limit: int = 240) -> str:
+    text = str(value or "")
+    text = re.sub(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", "[email]", text, flags=re.IGNORECASE)
+    text = re.sub(r"\b(?:\+?1[\s.-]?)?(?:\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}\b", "[phone]", text)
+    text = re.sub(r"\b\d{4,}\b", "[number]", text)
+    return text.strip()[:limit]
+
+
+def _read_string_list(value: Any, *, limit: int = 12) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    return [_safe_short_text(item, limit=80) for item in value if _safe_short_text(item, limit=80)][:limit]
+
+
+def _read_number(record: Mapping[str, Any] | None, key: str) -> int | float | None:
+    if not isinstance(record, Mapping):
+        return None
+    value = record.get(key)
+    return value if isinstance(value, (int, float)) else None
+
+
+def _read_string(record: Mapping[str, Any] | None, key: str) -> str:
+    if not isinstance(record, Mapping):
+        return ""
+    value = record.get(key)
+    return str(value).strip() if isinstance(value, str) else ""
+
+
+def _default_labels_for_mime_type(mime_type: str) -> List[str]:
+    normalized = str(mime_type or "").lower()
+    if normalized == "application/pdf":
+        return ["pdf", "document"]
+    if normalized.startswith("image/"):
+        return ["image", "visual file"]
+    if normalized.startswith("text/"):
+        return ["text", "document"]
+    if "json" in normalized:
+        return ["json", "structured data"]
+    if "spreadsheet" in normalized or "excel" in normalized or "csv" in normalized:
+        return ["spreadsheet", "tabular data"]
+    if "wordprocessing" in normalized or "msword" in normalized:
+        return ["word document", "document"]
+    if normalized.startswith("audio/"):
+        return ["audio"]
+    if normalized.startswith("video/"):
+        return ["video"]
+    return ["wallet file"]
+
+
+def _display_mime_type(mime_type: str) -> str:
+    normalized = str(mime_type or "").strip().lower()
+    if not normalized:
+        return "Unknown file"
+    if normalized == "application/pdf":
+        return "PDF document"
+    if normalized.startswith("image/"):
+        return f"{normalized.split('/', 1)[1].upper()} image"
+    if normalized.startswith("text/"):
+        return "Text document"
+    if "json" in normalized:
+        return "JSON data"
+    if "spreadsheet" in normalized or "excel" in normalized or "csv" in normalized:
+        return "Spreadsheet"
+    if "wordprocessing" in normalized or "msword" in normalized:
+        return "Word document"
+    if normalized.startswith("audio/"):
+        return "Audio file"
+    if normalized.startswith("video/"):
+        return "Video file"
+    if normalized == "application/octet-stream":
+        return "Encrypted/binary file"
+    return normalized
+
+
+def _fallback_document_profile_output(*, file_name: str, mime_type: str) -> Dict[str, Any]:
+    return {
+        "output_policy": "local_metadata_only",
+        "profile": {"chunk_count": 0, "profile_type": "metadata fallback"},
+        "summary": f"{_display_mime_type(mime_type)} wallet file queued for redacted profiling.",
+        "upload_state": {"fileName": file_name, "mimeType": mime_type},
+    }
+
+
+def _build_document_profile_public_inputs(
+    *,
+    artifact_ids: Sequence[str],
+    file_name: str,
+    mime_type: str,
+    outputs: Sequence[Mapping[str, Any]],
+) -> Dict[str, Any]:
+    graphs = [output.get("graph") for output in outputs]
+    graph = next((item for item in graphs if isinstance(item, Mapping)), {})
+    profiles = [output.get("profile") for output in outputs]
+    profile = next((item for item in profiles if isinstance(item, Mapping)), {})
+    redaction_count = 0
+    for output in outputs:
+        counts = output.get("redaction_counts")
+        if isinstance(counts, Mapping):
+            redaction_count += sum(value for value in counts.values() if isinstance(value, (int, float)))
+    public_mime_type = mime_type or "application/octet-stream"
+    labels = _default_labels_for_mime_type(public_mime_type)
+    return {
+        "artifact_ids": list(artifact_ids),
+        "chunk_count": _read_number(profile, "chunk_count"),
+        "edge_count": _read_number(graph, "edge_count"),
+        "file_name_profile": file_name,
+        "graph_type": _read_string(graph, "graph_type"),
+        "mime_family": public_mime_type.split("/", 1)[0] or "application",
+        "mime_type": public_mime_type,
+        "node_count": _read_number(graph, "node_count"),
+        "organizer_labels": labels,
+        "organizer_summary": _display_mime_type(public_mime_type),
+        "output_policies": sorted({str(output.get("output_policy")) for output in outputs if output.get("output_policy")}),
+        "privacy_policy": "no_plaintext_public_inputs",
+        "profile_methods": sorted({str(output.get("output_policy")) for output in outputs if output.get("output_policy")}),
+        "redaction_count": redaction_count,
+        "size_bucket": "server-side",
+        "summary": "Redacted GraphRAG, vector metadata, and derived descriptors created inside the wallet boundary.",
+    }
+
+
+def _classify_document_profile(public_inputs: Mapping[str, Any]) -> str:
+    summary = _read_string(public_inputs, "organizer_summary")
+    if summary:
+        return summary
+    labels = _read_string_list(public_inputs.get("organizer_labels"), limit=3)
+    if labels:
+        return ", ".join(labels[:3])
+    return _display_mime_type(str(public_inputs.get("mime_type") or ""))
+
+
+def _summarize_document_profile(public_inputs: Mapping[str, Any]) -> str:
+    mime_type = str(public_inputs.get("mime_type") or "document")
+    graph_type = str(public_inputs.get("graph_type") or "redacted graph")
+    nodes = public_inputs.get("node_count")
+    chunks = public_inputs.get("chunk_count")
+    nodes_text = f"{nodes} nodes" if isinstance(nodes, (int, float)) else "safe graph"
+    chunks_text = f"{chunks} chunks" if isinstance(chunks, (int, float)) else "vector metadata"
+    return f"{mime_type} · {graph_type} · {nodes_text} · {chunks_text}"
+
+
+def _build_privacy_search_text(outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]) -> str:
+    parts: List[str] = [
+        _classify_document_profile(public_inputs),
+        _summarize_document_profile(public_inputs),
+        " ".join(_read_string_list(public_inputs.get("organizer_labels"), limit=12)),
+        " ".join(str(policy) for policy in public_inputs.get("output_policies", []) if isinstance(policy, str)),
+    ]
+    for output in outputs:
+        parts.append(_safe_short_text(output.get("summary")))
+        parts.append(_safe_short_text(output.get("text")))
+    return " ".join(part for part in parts if part).strip()
+
+
+def _build_privacy_vector_terms(outputs: Sequence[Mapping[str, Any]], public_inputs: Mapping[str, Any]) -> List[str]:
+    terms: List[str] = []
+    terms.extend(_read_string_list(public_inputs.get("organizer_labels"), limit=12))
+    for key in ("mime_type", "mime_family", "graph_type", "organizer_summary"):
+        value = public_inputs.get(key)
+        if isinstance(value, str) and value.strip():
+            terms.append(value.strip())
+    for output in outputs:
+        policy = output.get("output_policy")
+        if isinstance(policy, str) and policy.strip():
+            terms.append(policy.strip())
+    normalized: List[str] = []
+    seen = set()
+    for term in terms:
+        safe = _safe_short_text(term, limit=80).lower()
+        if safe and safe not in seen:
+            normalized.append(safe)
+            seen.add(safe)
+    return normalized[:24]
 
 
 def _invocation_caveats(
@@ -999,6 +1723,216 @@ def delete_wallet_record(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@router.post("/wallets/{wallet_id}/locations/{location_record_id}/region-proofs")
+def create_location_region_proof(
+    wallet_id: str,
+    location_record_id: str,
+    request: LocationRegionProofRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        proof = service.create_location_region_proof(
+            wallet_id,
+            location_record_id,
+            actor_did=request.actor_did,
+            region_id=request.region_id,
+            grant_id=request.grant_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return proof.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/locations/{location_record_id}/distance-proofs")
+def create_location_distance_proof(
+    wallet_id: str,
+    location_record_id: str,
+    request: LocationDistanceProofRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        proof = service.create_location_distance_proof(
+            wallet_id,
+            location_record_id,
+            actor_did=request.actor_did,
+            target_id=request.target_id,
+            target_lat=request.target_lat,
+            target_lon=request.target_lon,
+            max_distance_km=request.max_distance_km,
+            grant_id=request.grant_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return proof.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/records/{record_id}/document-profile-proofs")
+def create_document_profile_proof(
+    wallet_id: str,
+    record_id: str,
+    request: DocumentPrivacyProfileProofRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        proof = service.create_document_profile_proof(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            public_inputs=request.public_inputs,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return proof.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/records/{record_id}/metadata/generate")
+def generate_wallet_record_metadata(
+    wallet_id: str,
+    record_id: str,
+    request: WalletRecordMetadataGenerationRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    actor_secret = _optional_hex_key(request.actor_key_hex)
+    invocation = invocation_from_token(request.invocation_token) if request.invocation_token else None
+    try:
+        if invocation is not None:
+            service.verify_invocation(
+                wallet_id,
+                invocation,
+                actor_did=request.actor_did,
+                resource=resource_for_record(wallet_id, record_id),
+                ability="record/analyze",
+                actor_secret=actor_secret,
+            )
+
+        metadata_status = service.update_record_metadata(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            metadata={
+                "privacyProfileMessage": "Creating redacted GraphRAG, vector metadata, and wallet router labels.",
+                "privacyProfileStatus": "profiling",
+                **({"privacyProfileMimeType": request.mime_type} if request.mime_type else {}),
+            },
+        )
+
+        derived_results: List[Dict[str, Any]] = []
+        result_errors: List[str] = []
+        shared_kwargs = {
+            "wallet_id": wallet_id,
+            "record_id": record_id,
+            "actor_did": request.actor_did,
+            "grant_id": invocation.grant_id if invocation is not None else request.grant_id,
+            "actor_secret": actor_secret,
+        }
+        for create_result in (
+            lambda: service.analyze_document_with_redaction(
+                **shared_kwargs,
+                max_chars=500,
+                **({"invocation_caveats": invocation.caveats} if invocation is not None else {}),
+            ),
+            lambda: service.create_document_vector_profile(
+                **shared_kwargs,
+                chunk_size_words=80,
+                **({"invocation_caveats": invocation.caveats} if invocation is not None else {}),
+            ),
+            lambda: service.create_redacted_graphrag(
+                wallet_id,
+                [record_id],
+                actor_did=request.actor_did,
+                grant_id=invocation.grant_id if invocation is not None else request.grant_id,
+                actor_secret=actor_secret,
+                max_chars_per_record=request.max_chars_per_record,
+                max_bytes_per_record=request.max_bytes_per_record,
+                use_ocr=request.use_ocr,
+                **({"invocation_caveats": invocation.caveats} if invocation is not None else {}),
+            ),
+            lambda: service.extract_document_text_with_redaction(
+                **shared_kwargs,
+                max_chars=12_000,
+                max_bytes=request.max_bytes_per_record,
+                use_ocr=request.use_ocr,
+                **({"invocation_caveats": invocation.caveats} if invocation is not None else {}),
+            ),
+            lambda: service.analyze_document_form_with_redaction(
+                **shared_kwargs,
+                max_fields=100,
+                use_ocr=request.use_ocr,
+                **({"invocation_caveats": invocation.caveats} if invocation is not None else {}),
+            ),
+        ):
+            try:
+                derived_results.append(create_result())
+            except Exception as exc:
+                result_errors.append(str(exc))
+
+        outputs = [_derived_output(result) for result in derived_results if _derived_output(result)]
+        if not outputs:
+            outputs.append(
+                _fallback_document_profile_output(
+                    file_name=request.file_name or record_id,
+                    mime_type=request.mime_type or _record_metadata_value(metadata_status, "privacyProfileMimeType") or "application/octet-stream",
+                )
+            )
+        artifact_ids = [_derived_artifact_id(result) for result in derived_results]
+        artifact_ids = [artifact_id for artifact_id in artifact_ids if artifact_id]
+        public_inputs = _build_document_profile_public_inputs(
+            artifact_ids=artifact_ids,
+            file_name=request.file_name or _record_metadata_value(metadata_status, "fileName") or record_id,
+            mime_type=request.mime_type or _record_metadata_value(metadata_status, "privacyProfileMimeType") or "application/octet-stream",
+            outputs=outputs,
+        )
+        proof = service.create_document_profile_proof(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            public_inputs=public_inputs,
+        )
+        metadata_patch: Dict[str, Any] = {
+            "privacyProfileArtifactIds": artifact_ids,
+            "privacyProfileClassification": _classify_document_profile(public_inputs),
+            "privacyProfileLabels": _read_string_list(public_inputs.get("organizer_labels")) or _default_labels_for_mime_type(str(public_inputs.get("mime_type") or "")),
+            "privacyProfileMessage": "Safe document profile and proof are attached to this wallet record.",
+            "privacyProfileMimeType": public_inputs.get("mime_type"),
+            "privacyProfileNeedsRefresh": False,
+            "privacyProfileProofId": proof.proof_id,
+            "privacyProfilePublicInputs": public_inputs,
+            "privacyProfileSearchText": _build_privacy_search_text(outputs, public_inputs),
+            "privacyProfileStatus": "profiled",
+            "privacyProfileSummary": _summarize_document_profile(public_inputs),
+            "privacyProfileVectorTerms": _build_privacy_vector_terms(outputs, public_inputs),
+        }
+        if result_errors:
+            metadata_patch["privacyProfileWarnings"] = result_errors[:5]
+        record = service.update_record_metadata(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            metadata=metadata_patch,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return {
+            "record": record,
+            "metadata": record.get("metadata", {}),
+            "proof": proof.to_dict(),
+            "router": {
+                "wallet_id": wallet_id,
+                "wallet_cid": request.wallet_cid,
+                "provider": request.provider,
+                "model_name": request.model_name,
+            },
+        }
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.post("/wallets/{wallet_id}/snapshot")
 def save_wallet_snapshot(wallet_id: str) -> Dict[str, Any]:
     service = _load_wallet_service(wallet_id)
@@ -1030,10 +1964,413 @@ def list_wallet_proofs(wallet_id: str) -> WalletProofsResponse:
     return WalletProofsResponse(proofs=_wallet_proofs(service, wallet_id))
 
 
+@router.get("/analytics/templates")
+def list_analytics_templates(include_inactive: bool = False) -> Dict[str, Any]:
+    templates = _list_shared_analytics_templates(default_wallet_dir())
+    if not include_inactive:
+        templates = [
+            template
+            for template in templates
+            if str(template.get("status") or "approved") == "approved"
+        ]
+    return {"templates": templates}
+
+
+@router.get("/wallets/{wallet_id}/analytics/consents")
+def list_wallet_analytics_consents(wallet_id: str, status: str = "all") -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    normalized_status = str(status or "all").strip().lower() or "all"
+    consents = [
+        consent.to_dict()
+        for consent in sorted(service.analytics_consents.values(), key=lambda item: item.created_at)
+        if consent.wallet_id == wallet_id and (normalized_status == "all" or consent.status == normalized_status)
+    ]
+    return {"consents": consents}
+
+
+@router.post("/wallets/{wallet_id}/analytics/consents/from-template")
+def create_wallet_analytics_consent_from_template(
+    wallet_id: str,
+    request: AnalyticsConsentFromTemplateRequest,
+) -> Dict[str, Any]:
+    wallet_dir = default_wallet_dir()
+    service = _load_wallet_service(wallet_id, wallet_dir=wallet_dir)
+    _inject_shared_analytics_templates(service, wallet_dir)
+    try:
+        template = service._analytics_template(request.template_id)
+        consent = service.create_analytics_consent(
+            wallet_id,
+            actor_did=request.actor_did,
+            template_id=template.template_id,
+            allowed_record_types=list(template.allowed_record_types),
+            allowed_derived_fields=list(template.allowed_derived_fields),
+            aggregation_policy=dict(template.aggregation_policy),
+            expires_at=request.expires_at,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return consent.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/analytics/consents/{consent_id}/revoke")
+def revoke_wallet_analytics_consent(
+    wallet_id: str,
+    consent_id: str,
+    request: AnalyticsConsentRevokeRequest,
+) -> Dict[str, Any]:
+    wallet_dir = default_wallet_dir()
+    service = _load_wallet_service(wallet_id, wallet_dir=wallet_dir)
+    try:
+        consent = service.revoke_analytics_consent(wallet_id, consent_id, actor_did=request.actor_did)
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return consent.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/wallets/{wallet_id}/audit", response_model=WalletAuditEventsResponse)
 def list_wallet_audit(wallet_id: str) -> WalletAuditEventsResponse:
     service = _load_wallet_service(wallet_id)
     return WalletAuditEventsResponse(events=_serialize_many(service.get_audit_log(wallet_id)))
+
+
+@router.post("/wallets/{wallet_id}/dead-drops/missing-person")
+def send_missing_person_dead_drop_email(
+    wallet_id: str,
+    request: MissingPersonDeadDropEmailRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    actor = str(request.actor_did or "").strip()
+    if not actor:
+        raise HTTPException(status_code=400, detail="actor_did is required")
+    if actor not in service._wallet_principals(wallet_id):
+        raise HTTPException(status_code=400, detail="actor_did is not authorized for this wallet")
+    try:
+        to_email = _require_portland_police_missing_email(request.to_email)
+        envelope = _send_dead_drop_email(
+            to_email=to_email,
+            subject=request.subject,
+            body=request.body,
+            bundle=request.bundle,
+            bundle_filename=request.bundle_filename,
+        )
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "wallet_id": wallet_id,
+        "status": "sent",
+        "to_email": to_email,
+        "subject": request.subject,
+        "bundle_filename": request.bundle_filename,
+        **envelope,
+    }
+
+
+@router.get("/wallets/{wallet_id}/dead-drops/missing-person")
+def get_missing_person_dead_drop(wallet_id: str) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    return service.get_missing_person_dead_drop(wallet_id).to_dict()
+
+
+@router.put("/wallets/{wallet_id}/dead-drops/missing-person")
+def save_missing_person_dead_drop(
+    wallet_id: str,
+    request: MissingPersonDeadDropConfigRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.save_missing_person_dead_drop(
+            wallet_id,
+            actor_did=request.actor_did,
+            enabled=request.enabled,
+            to_email=_require_portland_police_missing_email(request.to_email),
+            subject=request.subject,
+            body=request.body,
+            bundle=request.bundle,
+            bundle_filename=request.bundle_filename,
+            due_at=request.due_at,
+            last_check_in_at=request.last_check_in_at,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/dead-drops/missing-person/dispatch")
+def dispatch_missing_person_dead_drop(
+    wallet_id: str,
+    request: MissingPersonDeadDropDispatchRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.get_missing_person_dead_drop_for_dispatch(wallet_id, actor_did=request.actor_did)
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    try:
+        envelope = _send_dead_drop_email(
+            to_email=_require_portland_police_missing_email(record.to_email),
+            subject=record.subject,
+            body=record.body,
+            bundle=record.bundle,
+            bundle_filename=record.bundle_filename,
+        )
+        updated = service.mark_missing_person_dead_drop_sent(
+            wallet_id,
+            actor_did=request.actor_did,
+            message_id=str(envelope.get("message_id") or ""),
+            dispatched_reason="manual",
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return {
+            "wallet_id": wallet_id,
+            "status": "sent",
+            "to_email": updated.to_email,
+            "subject": updated.subject,
+            "bundle_filename": updated.bundle_filename,
+            **envelope,
+        }
+    except Exception as exc:
+        service.mark_missing_person_dead_drop_failed(
+            wallet_id,
+            actor_did=request.actor_did,
+            error=str(exc),
+            dispatched_reason="manual",
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/wallets/{wallet_id}/portal/saved-services", response_model=SavedServicesResponse)
+def list_saved_services(wallet_id: str, status: str | None = None) -> SavedServicesResponse:
+    try:
+        service = _load_wallet_service(wallet_id)
+        return SavedServicesResponse(
+            saved_services=[record.to_dict() for record in service.list_saved_services(wallet_id, status=status)]
+        )
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/portal/saved-services")
+def save_service(wallet_id: str, request: SavedServiceRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.save_service_for_wallet(
+            wallet_id,
+            actor_did=request.actor_did,
+            service_doc_id=request.service_doc_id,
+            source_content_cid=request.source_content_cid,
+            source_page_cid=request.source_page_cid,
+            title=request.title,
+            provider_name=request.provider_name,
+            program_name=request.program_name,
+            source_url=request.source_url,
+            label=request.label,
+            reason=request.reason,
+            priority=request.priority,
+            status=request.status,
+            private_notes_record_id=request.private_notes_record_id,
+            metadata=request.metadata,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/wallets/{wallet_id}/portal/interactions", response_model=ServiceInteractionsResponse)
+def list_service_interactions(
+    wallet_id: str,
+    service_doc_id: str | None = None,
+    interaction_type: str | None = None,
+    status: str | None = None,
+) -> ServiceInteractionsResponse:
+    try:
+        service = _load_wallet_service(wallet_id)
+        return ServiceInteractionsResponse(
+            interactions=[
+                record.to_dict()
+                for record in service.list_service_interactions(
+                    wallet_id,
+                    service_doc_id=service_doc_id,
+                    interaction_type=interaction_type,
+                    status=status,
+                )
+            ]
+        )
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/portal/interactions")
+def create_service_interaction(wallet_id: str, request: ServiceInteractionRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.create_service_interaction(
+            wallet_id,
+            actor_did=request.actor_did,
+            service_doc_id=request.service_doc_id,
+            source_content_cid=request.source_content_cid,
+            source_page_cid=request.source_page_cid,
+            provider_name=request.provider_name,
+            program_name=request.program_name,
+            interaction_type=request.interaction_type,
+            channel=request.channel,
+            counterparty_name=request.counterparty_name,
+            counterparty_contact=request.counterparty_contact,
+            timestamp=request.timestamp,
+            status=request.status,
+            outcome=request.outcome,
+            notes_record_id=request.notes_record_id,
+            next_action=request.next_action,
+            next_follow_up_at=request.next_follow_up_at,
+            source_action_url=request.source_action_url,
+            related_grant_ids=request.related_grant_ids,
+            related_record_ids=request.related_record_ids,
+            privacy_level=request.privacy_level,
+            metadata=request.metadata,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/wallets/{wallet_id}/portal/plans", response_model=ServicePlansResponse)
+def list_service_plans(
+    wallet_id: str,
+    service_doc_id: str | None = None,
+    status: str | None = None,
+) -> ServicePlansResponse:
+    try:
+        service = _load_wallet_service(wallet_id)
+        return ServicePlansResponse(
+            plans=[
+                record.to_dict()
+                for record in service.list_service_plans(
+                    wallet_id,
+                    service_doc_id=service_doc_id,
+                    status=status,
+                )
+            ]
+        )
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/portal/plans")
+def create_service_plan(wallet_id: str, request: ServicePlanRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.create_service_plan(
+            wallet_id,
+            actor_did=request.actor_did,
+            service_doc_id=request.service_doc_id,
+            source_content_cid=request.source_content_cid,
+            source_page_cid=request.source_page_cid,
+            service_title=request.service_title,
+            provider_name=request.provider_name,
+            goal=request.goal,
+            steps=request.steps,
+            documents_needed=request.documents_needed,
+            questions_to_ask=request.questions_to_ask,
+            appointment_at=request.appointment_at,
+            reminder_at=request.reminder_at,
+            travel_target=request.travel_target,
+            assigned_worker_recipient_id=request.assigned_worker_recipient_id,
+            status=request.status,
+            related_interaction_ids=request.related_interaction_ids,
+            private_notes_record_id=request.private_notes_record_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.patch("/wallets/{wallet_id}/portal/plans/{plan_id}")
+def update_service_plan(wallet_id: str, plan_id: str, request: ServicePlanUpdateRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.update_service_plan(
+            wallet_id,
+            plan_id,
+            actor_did=request.actor_did,
+            source_content_cid=request.source_content_cid,
+            source_page_cid=request.source_page_cid,
+            service_title=request.service_title,
+            provider_name=request.provider_name,
+            goal=request.goal,
+            steps=request.steps,
+            documents_needed=request.documents_needed,
+            questions_to_ask=request.questions_to_ask,
+            appointment_at=request.appointment_at,
+            reminder_at=request.reminder_at,
+            travel_target=request.travel_target,
+            assigned_worker_recipient_id=request.assigned_worker_recipient_id,
+            status=request.status,
+            related_interaction_ids=request.related_interaction_ids,
+            private_notes_record_id=request.private_notes_record_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/portal/plans/{plan_id}/share-grants")
+def create_service_plan_share_grant(
+    wallet_id: str,
+    plan_id: str,
+    request: ServicePlanShareGrantRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        result = service.create_service_plan_share_grant(
+            wallet_id,
+            plan_id,
+            issuer_did=request.actor_did or request.issuer_did,
+            audience_did=request.audience_did or request.worker_did,
+            scopes=request.scopes,
+            purpose=request.purpose,
+            worker_recipient_id=request.worker_recipient_id,
+            worker_name=request.worker_name,
+            expires_at=request.expires_at,
+            approval_id=request.approval_id,
+            issuer_secret=_optional_hex_key(request.issuer_key_hex),
+            audience_secret=_optional_hex_key(request.audience_key_hex),
+            extra_caveats=request.caveats,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return result.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/ops/health")
+def ops_health(
+    verify_storage: bool = False,
+    authorization: str | None = Header(default=None),
+    x_wallet_ops_shared_secret: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    expected_secret = _ops_health_shared_secret()
+    if expected_secret:
+        supplied_secret = _extract_bearer_token(authorization) or str(x_wallet_ops_shared_secret or "").strip()
+        if supplied_secret != expected_secret:
+            raise HTTPException(status_code=401, detail="ops health authorization required")
+    try:
+        return _ops_health_report(verify_storage=verify_storage)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/wallets/{wallet_id}/access-requests", response_model=WalletAccessRequestsResponse)

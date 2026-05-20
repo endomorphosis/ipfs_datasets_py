@@ -46,6 +46,134 @@ class StorageReplicaStatus:
 
 
 @dataclass
+class MissingPersonDeadDropRecord:
+    wallet_id: str
+    actor_did: str = ""
+    enabled: bool = False
+    to_email: str = "missing@police.portlandoregon.gov"
+    subject: str = "Missing person report dead drop bundle"
+    body: str = ""
+    bundle: Dict[str, Any] = field(default_factory=dict)
+    bundle_filename: str = "abby-missing-person-wallet-dead-drop.json"
+    armed_at: str = ""
+    due_at: str = ""
+    last_check_in_at: str = ""
+    last_sent_at: str = ""
+    last_sent_for_check_in_at: str = ""
+    last_message_id: str = ""
+    last_error: str = ""
+    last_dispatched_reason: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class SavedServiceRecord:
+    saved_service_id: str
+    wallet_id: str
+    service_doc_id: str
+    source_content_cid: str
+    source_page_cid: str = ""
+    title: str = ""
+    provider_name: str = ""
+    program_name: str = ""
+    source_url: str = ""
+    label: str = ""
+    reason: str = ""
+    priority: str = "normal"
+    status: str = "saved"
+    created_at: str = ""
+    updated_at: str = ""
+    private_notes_record_id: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ServiceInteractionRecord:
+    interaction_id: str
+    wallet_id: str
+    service_doc_id: str
+    source_content_cid: str = ""
+    source_page_cid: str = ""
+    provider_name: str = ""
+    program_name: str = ""
+    interaction_type: str = ""
+    channel: str = ""
+    actor_did: str = ""
+    counterparty_name: str = ""
+    counterparty_contact: str = ""
+    timestamp: str = ""
+    status: str = ""
+    outcome: str = ""
+    notes_record_id: str = ""
+    next_action: str = ""
+    next_follow_up_at: str = ""
+    source_action_url: str = ""
+    related_grant_ids: List[str] = field(default_factory=list)
+    related_record_ids: List[str] = field(default_factory=list)
+    privacy_level: str = "private"
+    created_at: str = ""
+    updated_at: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ServicePlanRecord:
+    plan_id: str
+    wallet_id: str
+    service_doc_id: str
+    source_content_cid: str = ""
+    source_page_cid: str = ""
+    service_title: str = ""
+    provider_name: str = ""
+    goal: str = ""
+    steps: List[str] = field(default_factory=list)
+    documents_needed: List[str] = field(default_factory=list)
+    questions_to_ask: List[str] = field(default_factory=list)
+    appointment_at: str = ""
+    reminder_at: str = ""
+    travel_target: str = ""
+    assigned_worker_recipient_id: str = ""
+    status: str = "active"
+    related_interaction_ids: List[str] = field(default_factory=list)
+    private_notes_record_id: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class ServicePlanShareGrantResult:
+    grant: Any
+    receipt: Any | None
+    plan: ServicePlanRecord
+    interaction: ServiceInteractionRecord
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = {
+            "grant_id": self.grant.grant_id,
+            "plan_id": self.plan.plan_id,
+            "interaction_id": self.interaction.interaction_id,
+            "grant": self.grant.to_dict(),
+            "plan": self.plan.to_dict(),
+            "interaction": self.interaction.to_dict(),
+        }
+        if self.receipt is not None:
+            payload["receipt"] = self.receipt.to_dict()
+        return payload
+
+
+@dataclass
 class StorageHealthReport:
     """Integrity report for encrypted payload and metadata replicas."""
 
