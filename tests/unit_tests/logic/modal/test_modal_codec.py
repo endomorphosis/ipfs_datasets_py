@@ -10028,36 +10028,6 @@ def test_modal_codec_marks_at_any_time_phrase_as_temporal_scope_signal() -> None
     assert signals["has_temporal_scope"] is True
 
 
-def test_modal_codec_treats_effective_dates_as_temporal_scope_signal() -> None:
-    compiler = DeterministicModalCompiler(
-        ModalCompilerConfig(
-            parser_backend="regex",
-            frame_score_margin=0.0,
-        )
-    )
-
-    encoding = compiler.encoder.encode(
-        "Codification section authority reclassified as section 5301 effective dates."
-    )
-    signals = modal_ambiguity_signals(encoding)
-    logits = compiler.decoder.family_logits(
-        encoding,
-        modal_families=["frame", "temporal", "conditional_normative"],
-    )
-
-    max_logit = max(float(value) for value in logits.values())
-    exp_by_family = {
-        family: pow(2.718281828459045, float(logit) - max_logit)
-        for family, logit in logits.items()
-    }
-    total = sum(exp_by_family.values())
-    temporal_probability = exp_by_family["temporal"] / total if total > 0.0 else 0.0
-
-    assert signals["has_temporal_scope"] is True
-    assert signals["has_temporal_scope_phrase"] is True
-    assert temporal_probability > 0.03
-
-
 def test_modal_codec_marks_requires_token_as_deontic_scope_signal_without_cue() -> None:
     compiler = DeterministicModalCompiler(
         ModalCompilerConfig(
@@ -10361,70 +10331,6 @@ def test_modal_compiler_treats_terms_and_conditions_as_conditional_scope_cue() -
     assert conditional_scope.metadata["target_share"] > 0.0
     assert (
         conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
-
-
-def test_modal_compiler_treats_terms_or_conditions_as_conditional_scope_cue() -> None:
-    compiler = DeterministicModalCompiler(
-        ModalCompilerConfig(
-            parser_backend="regex",
-            frame_score_margin=0.0,
-            modal_conditional_target_family_outvote_margin=0.0,
-        )
-    )
-
-    compiled = compiler.compile(
-        "The Secretary shall and must act under such terms or conditions as the Secretary prescribes."
-    )
-
-    conditional_scope = next(
-        ambiguity
-        for ambiguity in compiled.ambiguities
-        if ambiguity.ambiguity_type == "conditional_scope_family_outvoted"
-    )
-    assert conditional_scope.candidate_ids == ["deontic", "conditional_normative"]
-    assert conditional_scope.metadata["predicted_family"] == "deontic"
-    assert conditional_scope.metadata["target_family"] == "conditional_normative"
-    assert conditional_scope.metadata["target_share"] > 0.0
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
-    assert (
-        conditional_scope.metadata["lexical_signals"]["has_conditional_scope_phrase"]
-        is True
-    )
-
-
-def test_modal_compiler_treats_application_of_as_conditional_scope_ambiguity_signal() -> None:
-    compiler = DeterministicModalCompiler(
-        ModalCompilerConfig(
-            parser_backend="regex",
-            frame_score_margin=0.0,
-            modal_temporal_target_family_outvote_margin=0.0,
-        )
-    )
-
-    compiled = compiler.compile(
-        "Application of this section requires annual reporting before the fiscal year ends."
-    )
-
-    adaptive_conditional = next(
-        ambiguity
-        for ambiguity in compiled.ambiguities
-        if ambiguity.ambiguity_type
-        == "adaptive_conditional_normative_temporal_outvoted_margin_low"
-    )
-    assert adaptive_conditional.metadata["predicted_family"] == "conditional_normative"
-    assert adaptive_conditional.metadata["target_family"] == "temporal"
-    assert adaptive_conditional.metadata["target_share"] > 0.0
-    assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_condition_or_exception_scope"]
-        is True
-    )
-    assert (
-        adaptive_conditional.metadata["lexical_signals"]["has_conditional_scope_phrase"]
         is True
     )
 

@@ -31,10 +31,6 @@ _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _CONDITIONAL_SCOPE_PHRASES = (
-    "application of",
-    "application to",
-    "applicability of",
-    "applicable to",
     "any person who",
     "any person that",
     "any individual who",
@@ -53,24 +49,16 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
-    "under terms or conditions",
     "under terms and conditions",
-    "under such terms or conditions",
     "under such terms and conditions",
-    "on such terms or conditions",
     "on such terms and conditions",
-    "upon terms or conditions",
     "upon terms and conditions",
-    "upon such terms or conditions",
     "upon such terms and conditions",
     "subject only to",
     "subject, however, to",
     "subject however to",
-    "subject to terms or conditions",
     "subject to terms and conditions",
-    "subject to such terms or conditions",
     "subject to such terms and conditions",
-    "subject to the terms or conditions",
     "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
@@ -211,7 +199,6 @@ _TEMPORAL_SCOPE_PHRASES = (
     "on or after",
     "period beginning on",
     "period ending on",
-    "effective dates",
     "date of enactment",
     "on the date of enactment",
     "while pending",

@@ -30,6 +30,17 @@ NORMATIVE_MODAL_FAMILIES: Tuple[ModalLogicFamily, ...] = (
     ModalLogicFamily.CONDITIONAL_NORMATIVE,
 )
 
+COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+)
+
 COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.ALETHIC.value,
@@ -478,15 +489,37 @@ def _ordered_unique_adaptive_ambiguity_family_pairs(
     return tuple(unique_pairs)
 
 
+def _append_required_adaptive_ambiguity_family_pairs(
+    pairs: Iterable[Tuple[str, str]],
+    required_pairs: Iterable[Tuple[str, str]],
+) -> Tuple[Tuple[str, str], ...]:
+    """Append required policy pairs while preserving existing order."""
+    return _ordered_unique_adaptive_ambiguity_family_pairs(
+        (
+            *tuple(pairs),
+            *tuple(required_pairs),
+        )
+    )
+
+
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _append_required_adaptive_ambiguity_family_pairs(
+        COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
+    )
+)
+
 COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
-    _ordered_unique_adaptive_ambiguity_family_pairs(
-        COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
+    _append_required_adaptive_ambiguity_family_pairs(
+        COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
     )
 )
 
 SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
-    _ordered_unique_adaptive_ambiguity_family_pairs(
-        SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    _append_required_adaptive_ambiguity_family_pairs(
+        SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
     )
 )
 
@@ -603,8 +636,9 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
-    _ordered_unique_adaptive_ambiguity_family_pairs(
-        PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    _append_required_adaptive_ambiguity_family_pairs(
+        PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
+        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
     )
 )
 
@@ -765,7 +799,6 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "within",
                     "by",
                     "effective date",
-                    "effective dates",
                     "effective on first day",
                     "fiscal year",
                     "calendar year",
@@ -876,10 +909,6 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "to the extent that",
                     "in the event that",
                     "in the case of",
-                    "application of",
-                    "application to",
-                    "applicability of",
-                    "applicable to",
                     "provided, however, that",
                     "only if",
                     "for purposes of",
@@ -888,21 +917,13 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "notwithstanding",
                     "pursuant to",
                     "under terms and conditions",
-                    "under terms or conditions",
                     "under such terms and conditions",
-                    "under such terms or conditions",
                     "on such terms and conditions",
-                    "on such terms or conditions",
                     "upon terms and conditions",
-                    "upon terms or conditions",
                     "upon such terms and conditions",
-                    "upon such terms or conditions",
                     "subject to terms and conditions",
-                    "subject to terms or conditions",
                     "subject to such terms and conditions",
-                    "subject to such terms or conditions",
                     "subject to the terms and conditions",
-                    "subject to the terms or conditions",
                     "subject only to",
                     "subject, however, to",
                     "subject however to",
@@ -1108,6 +1129,7 @@ DEFAULT_MODAL_REGISTRY = ModalRegistry()
 __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
+    "COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "compiler_ambiguity_policy_targets",

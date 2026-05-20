@@ -8,6 +8,7 @@ os.environ.setdefault("IPFS_DATASETS_PY_MINIMAL_IMPORTS", "1")
 os.environ.setdefault("IPFS_DATASETS_AUTO_INSTALL", "false")
 os.environ.setdefault("IPFS_KIT_AUTO_INSTALL_DEPS", "0")
 
+import ipfs_datasets_py.logic.modal.compiler as modal_compiler_module  # noqa: E402
 from ipfs_datasets_py.logic.modal.compiler import (  # noqa: E402
     DeterministicModalCompiler,
     ModalCompilerConfig,
@@ -1475,6 +1476,114 @@ def test_compiler_marks_frame_to_temporal_pair_as_compiler_required_policy_witho
         and ambiguity.metadata.get("is_compiler_required_policy_pair") is True
         and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
         for ambiguity in result.ambiguities
+    )
+
+
+def test_compiler_preserves_directional_frame_temporal_core_pairs_when_policy_hooks_are_overridden(
+    monkeypatch,
+) -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "priority_signal_free_adaptive_ambiguity_targets",
+        lambda _family: (),
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "compiler_required_adaptive_ambiguity_targets",
+        lambda _family: (),
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "signal_free_adaptive_ambiguity_targets",
+        lambda _family: (),
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "compiler_ambiguity_policy_targets",
+        lambda _family: (),
+    )
+    monkeypatch.setattr(
+        modal_compiler_module,
+        "is_compiler_ambiguity_policy_pair",
+        lambda _predicted, _target: False,
+    )
+
+    compiler._has_frame_bm25_support = lambda _selections: False  # type: ignore[method-assign]
+
+    def _mock_frame_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.FRAME.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_frame_logits  # type: ignore[method-assign]
+    frame_result = compiler.compile(
+        "Authority applies.",
+        document_id="compiler-ambiguity-frame-temporal-core-fallback",
+    )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
+        for ambiguity in frame_result.ambiguities
+    )
+
+    def _mock_temporal_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DEONTIC.value,
+                "count": 0,
+                "logit": 1.2,
+                "share_raw": 0.5,
+                "share": 0.5,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_temporal_logits  # type: ignore[method-assign]
+    temporal_result = compiler.compile(
+        "Within 30 days, publication occurs.",
+        document_id="compiler-ambiguity-temporal-frame-core-fallback",
+    )
+    assert any(
+        ambiguity.ambiguity_type.startswith("adaptive_")
+        and ambiguity.ambiguity_type != "adaptive_family_margin_low"
+        and ambiguity.metadata.get("predicted_family")
+        == ModalLogicFamily.TEMPORAL.value
+        and ambiguity.metadata.get("target_family")
+        == ModalLogicFamily.FRAME.value
+        and ambiguity.metadata.get("signal_free_pair_policy_applied") is True
+        for ambiguity in temporal_result.ambiguities
     )
 
 
