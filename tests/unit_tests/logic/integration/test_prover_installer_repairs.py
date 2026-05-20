@@ -225,3 +225,30 @@ def test_router_native_prover_accepts_router_signature() -> None:
 
     assert result.prover_used == "native"
     assert result.is_proved is True
+
+
+def test_router_accepts_string_strategy_names() -> None:
+    from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+    from ipfs_datasets_py.logic.external_provers import prover_router
+
+    formula = parse_tdfol("O(action)")
+    router = prover_router.ProverRouter(
+        enable_z3=False,
+        enable_cvc5=False,
+        enable_lean=False,
+        enable_coq=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_cache=False,
+    )
+
+    result = router.prove(
+        formula,
+        axioms=[formula],
+        strategy="sequential",
+        timeout=1.0,
+    )
+
+    assert result.prover_used == "native"
+    assert result.strategy_used == "sequential"
+    assert result.is_proved is True

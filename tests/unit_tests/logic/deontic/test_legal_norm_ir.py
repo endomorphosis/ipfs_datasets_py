@@ -42,3 +42,25 @@ def test_parser_element_to_ir_function_is_deterministic() -> None:
     assert first["quality"]["promotable_to_theorem"] is True
     assert first["proof_ready"] is True
     assert first["blockers"] == []
+
+
+def test_legal_norm_ir_recovers_textual_modalities_from_legacy_rows() -> None:
+    base = {
+        "schema_version": "legal_norm_ir-v1",
+        "source_id": "legacy:modal",
+        "subject": ["agency"],
+        "action": ["publish notice"],
+        "text": "The agency shall publish notice.",
+        "support_text": "The agency shall publish notice.",
+        "support_span": [0, 31],
+    }
+    rows = [
+        ({**base, "deontic_operator": "shall", "norm_type": ""}, "O"),
+        ({**base, "modality": "permission", "norm_type": ""}, "P"),
+        ({**base, "norm_type": "violation"}, "F"),
+        ({**base, "deontic_operator": "", "norm_type": "", "text": "The agency shall not disclose records."}, "F"),
+    ]
+
+    for row, expected in rows:
+        ir = LegalNormIR.from_parser_element(row)
+        assert ir.modality == expected

@@ -111,7 +111,7 @@ class ProverRouter:
         self.enable_coq = enable_coq
         self.enable_native = enable_native
         self.enable_symbolicai = enable_symbolicai
-        self.default_strategy = default_strategy
+        self.default_strategy = self._coerce_strategy(default_strategy)
         self.default_timeout = default_timeout
         self.enable_cache = enable_cache
         
@@ -225,6 +225,22 @@ class ProverRouter:
     def route(self, formula, **kwargs) -> RouterProofResult:
         """Public compatibility wrapper for proving through the router."""
         return self.prove(formula, **kwargs)
+
+    @staticmethod
+    def _coerce_strategy(strategy: Any) -> ProverStrategy:
+        """Normalize string/enum strategy inputs to ProverStrategy values."""
+
+        if isinstance(strategy, ProverStrategy):
+            return strategy
+        if strategy is None:
+            return ProverStrategy.AUTO
+        text = str(strategy or "").strip().lower()
+        if not text:
+            return ProverStrategy.AUTO
+        for candidate in ProverStrategy:
+            if text in {candidate.value, candidate.name.lower()}:
+                return candidate
+        raise ValueError(f"Unknown strategy: {strategy}")
 
     def _call_prover(
         self,
@@ -348,7 +364,7 @@ class ProverRouter:
         Returns:
             RouterProofResult with proof status
         """
-        strategy = strategy or self.default_strategy
+        strategy = self._coerce_strategy(strategy or self.default_strategy)
         timeout = timeout or self.default_timeout
         
         if strategy == ProverStrategy.AUTO:

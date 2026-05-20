@@ -126,6 +126,54 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     ]["coverage_record_count"] >= 1
 
 
+def test_deontic_bridge_recovers_coverage_from_single_parser_element_metadata() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:1",
+                "canonical_citation": "25 U.S.C. 640d-28",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["submit report"],
+                "text": "The Secretary shall submit report.",
+                "support_text": "The Secretary shall submit report.",
+                "support_span": [0, 33],
+                "norm_type": "obligation",
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            }
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        "The Secretary shall submit report.",
+        document_id="deontic-bridge-legacy-fallback",
+        citation="Deontic Bridge Legacy Fallback",
+    )
+
+    assert report.ir_document.views["deontic_ir"].metadata["norm_count"] == 1
+    assert report.ir_document.views["deontic_prover_syntax"].metadata[
+        "coverage_record_count"
+    ] >= 1
+    assert report.proof_gate.attempted_count >= 5
+    assert report.proof_gate.valid_count >= 5
+    assert report.proof_gate.compiles is True
+
+
 def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -234,6 +282,80 @@ def test_external_prover_router_bridge_proof_gate_routes_external_when_native_di
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.compiles is True
     assert "external_provers:symbolicai" in report.proof_gate.verified_by
+
+
+def test_external_prover_router_bridge_recovers_formulas_without_formula_objects() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _StringOnlyFolAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            stripped_records = []
+            for record in context["formula_records"]:
+                next_record = dict(record)
+                next_record.pop("formula_object", None)
+                stripped_records.append(next_record)
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": stripped_records,
+                },
+            )
+
+    adapter = ExternalProverRouterBridgeAdapter(tdfol_adapter=_StringOnlyFolAdapter())
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-string-only",
+        citation="External Prover Bridge String Only",
+    )
+
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.compiles is True
+    assert report.ir_document.metadata["router_resolved_formula_count"] >= 1
+
+
+def test_external_prover_router_bridge_proof_gate_supports_legacy_prove_signature(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _LegacyRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["legacy"]
+
+        @staticmethod
+        def prove(formula, axioms=None, strategy="auto", timeout=1.0):
+            if strategy != "sequential":
+                raise ValueError("legacy routers expect a string strategy")
+            return False
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _LegacyRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-legacy-signature",
+        citation="External Prover Bridge Legacy Signature",
+    )
+
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["compiled"] is True
+    assert report.proof_gate.details[0]["proved"] is False
 
 
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:

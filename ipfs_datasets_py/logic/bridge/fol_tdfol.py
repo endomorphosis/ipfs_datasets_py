@@ -247,11 +247,27 @@ def _tdfol_formula_from_norm(norm: Mapping[str, Any]) -> Any:
     return DeonticFormula(operator, inner, agent=Constant(actor))
 
 
-def _tdfol_parse_ok(formula: str) -> bool:
+def coerce_tdfol_formula(formula: Any) -> Optional[Any]:
+    """Return a TDFOL formula object from either object or parser-friendly text."""
+
+    if formula is None:
+        return None
+    if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
+        return formula
+    text = str(formula or "").strip()
+    if not text:
+        return None
     try:
         from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol_safe
 
-        return parse_tdfol_safe(formula) is not None
+        return parse_tdfol_safe(text)
+    except Exception:
+        return None
+
+
+def _tdfol_parse_ok(formula: str) -> bool:
+    try:
+        return coerce_tdfol_formula(formula) is not None
     except Exception:
         return False
 
@@ -363,4 +379,4 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
     return [dict(item) for item in value if isinstance(item, Mapping)]
 
 
-__all__ = ["FolTdfolBridgeAdapter"]
+__all__ = ["FolTdfolBridgeAdapter", "coerce_tdfol_formula"]

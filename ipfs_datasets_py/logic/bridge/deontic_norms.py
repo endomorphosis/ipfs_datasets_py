@@ -47,6 +47,18 @@ class DeonticNormsBridgeAdapter:
         metadata = dict(getattr(result, "metadata", {}) or {})
         norms = _list_of_dicts(metadata.get("legal_norm_irs"))
         parser_elements = _list_of_dicts(metadata.get("parser_elements"))
+        if not parser_elements:
+            parser_element = metadata.get("parser_element")
+            if isinstance(parser_element, Mapping):
+                parser_elements = [dict(parser_element)]
+        if not norms:
+            legal_norm_ir = metadata.get("legal_norm_ir")
+            if isinstance(legal_norm_ir, Mapping):
+                norms = [dict(legal_norm_ir)]
+        deontic_source_rows = parser_elements if parser_elements else norms
+        norm_objects = _legal_norm_objects_from_parser_elements(deontic_source_rows)
+        if not norms and norm_objects:
+            norms = [norm.to_dict() for norm in norm_objects]
         formula_records = _list_of_dicts(metadata.get("legal_formula_records"))
         coverage_records = _list_of_dicts(
             metadata.get("legal_prover_syntax_target_coverage_records")
@@ -54,8 +66,14 @@ class DeonticNormsBridgeAdapter:
         capability_records = _list_of_dicts(
             metadata.get("legal_parser_capability_profile_records")
         )
-        deontic_exports = _deontic_export_context_from_parser_elements(parser_elements)
-        parser_metrics = _summarize_parser_metrics(parser_elements)
+        if not formula_records and norm_objects:
+            formula_records = _formula_records_from_norm_objects(norm_objects)
+        if not coverage_records and norm_objects:
+            coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        if not capability_records and norm_objects:
+            capability_records = _capability_records_from_norm_objects(norm_objects)
+        deontic_exports = _deontic_export_context_from_parser_elements(deontic_source_rows)
+        parser_metrics = _summarize_parser_metrics(deontic_source_rows)
         resolved_document_id = document_id or _document_id_from_norms(norms, text)
         triples = tuple(
             _frame_logic_triples_from_deontic_records(
@@ -218,7 +236,10 @@ class DeonticNormsBridgeAdapter:
             LegalIRDocument(
                 document_id=resolved_document_id,
                 source_text=text,
-                normalized_text=str(parser_elements[0].get("text") or text) if parser_elements else text,
+                normalized_text=_normalized_text_from_deontic_rows(
+                    deontic_source_rows,
+                    text,
+                ),
                 source=source,
                 citation=citation or _citation_from_norms(norms),
                 views=views,
@@ -229,7 +250,7 @@ class DeonticNormsBridgeAdapter:
                         metadata.get("legal_formula_record_proof_ready_count") or 0
                     ),
                     "deontic_norm_count": len(norms),
-                    "parser_element_count": len(parser_elements),
+                    "parser_element_count": len(deontic_source_rows),
                 },
             ),
             {
@@ -306,6 +327,36 @@ def _summarize_parser_metrics(parser_elements: Sequence[Mapping[str, Any]]) -> d
     from ipfs_datasets_py.logic.deontic.metrics import summarize_parser_elements
 
     return summarize_parser_elements([dict(item) for item in parser_elements])
+
+
+def _formula_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dict[str, Any]]:
+    if not norm_objects:
+        return []
+    from ipfs_datasets_py.logic.deontic.formula_builder import (
+        build_deontic_formula_records_from_irs,
+    )
+
+    return build_deontic_formula_records_from_irs(norm_objects)
+
+
+def _coverage_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dict[str, Any]]:
+    if not norm_objects:
+        return []
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_prover_syntax_target_coverage_records_from_irs,
+    )
+
+    return build_prover_syntax_target_coverage_records_from_irs(norm_objects)
+
+
+def _capability_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dict[str, Any]]:
+    if not norm_objects:
+        return []
+    from ipfs_datasets_py.logic.deontic.exports import (
+        build_deterministic_parser_capability_profile_records,
+    )
+
+    return build_deterministic_parser_capability_profile_records(norm_objects)
 
 
 def _deontic_export_context_from_parser_elements(
@@ -806,6 +857,20 @@ def _document_id_from_norms(norms: Sequence[Mapping[str, Any]], text: str) -> st
         return str(norms[0]["source_id"])
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
     return f"deontic:{digest}"
+
+
+def _normalized_text_from_deontic_rows(
+    rows: Sequence[Mapping[str, Any]],
+    source_text: str,
+) -> str:
+    if not rows:
+        return source_text
+    head = rows[0]
+    for key in ("text", "source_text", "support_text"):
+        value = str(head.get(key) or "").strip()
+        if value:
+            return value
+    return source_text
 
 
 def _citation_from_norms(norms: Sequence[Mapping[str, Any]]) -> Optional[str]:

@@ -611,6 +611,93 @@ def _enumeration_index(value: Any) -> Optional[int]:
     return roman_values.get(text.lower())
 
 
+_CANONICAL_MODALITY_OPERATORS = {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}
+_NORM_TYPE_MODALITY_MAP = {
+    "obligation": "O",
+    "mandatory_obligation": "O",
+    "duty": "O",
+    "requirement": "O",
+    "penalty": "O",
+    "sanction": "O",
+    "permission": "P",
+    "entitlement": "P",
+    "authorization": "P",
+    "prohibition": "F",
+    "violation": "F",
+    "offense": "F",
+    "infraction": "F",
+    "definition": "DEF",
+    "applicability": "APP",
+    "exemption": "EXEMPT",
+    "instrument_lifecycle": "LIFE",
+}
+_TEXTUAL_MODALITY_MAP = {
+    "obligation": "O",
+    "obligatory": "O",
+    "duty": "O",
+    "must": "O",
+    "shall": "O",
+    "required": "O",
+    "requirement": "O",
+    "mandatory": "O",
+    "permission": "P",
+    "permitted": "P",
+    "may": "P",
+    "authorized": "P",
+    "allowed": "P",
+    "entitled": "P",
+    "entitlement": "P",
+    "prohibition": "F",
+    "prohibited": "F",
+    "forbidden": "F",
+    "must not": "F",
+    "shall not": "F",
+    "may not": "F",
+    "cannot": "F",
+    "can not": "F",
+    "not permitted": "F",
+    "not allowed": "F",
+    "violation": "F",
+    "offense": "F",
+    "infraction": "F",
+    "definition": "DEF",
+    "applicability": "APP",
+    "exemption": "EXEMPT",
+    "instrument lifecycle": "LIFE",
+}
+_PROHIBITION_MODALITY_RE = re.compile(
+    r"\b(?:shall|must|may|can)\s+not\b|\b(?:prohibit(?:ed|ion)?|forbid(?:den)?|ban(?:ned)?|disallow(?:ed)?)\b",
+    re.IGNORECASE,
+)
+_OBLIGATION_MODALITY_RE = re.compile(
+    r"\b(?:shall|required?|must|obligat(?:ion|ory)?|mandatory|duty)\b",
+    re.IGNORECASE,
+)
+_PERMISSION_MODALITY_RE = re.compile(
+    r"\b(?:may|permit(?:ted|s)?|allow(?:ed|s)?|authoriz(?:e|ed|es)|entitl(?:e|ed|ement))\b",
+    re.IGNORECASE,
+)
+
+
+def _modality_from_textual_value(value: Any) -> str:
+    """Return a canonical modality inferred from textual modal cues."""
+
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    normalized = re.sub(r"\s+", " ", text.lower().replace("_", " ").replace("-", " ")).strip()
+    mapped = _TEXTUAL_MODALITY_MAP.get(normalized)
+    if mapped:
+        return mapped
+    if _PROHIBITION_MODALITY_RE.search(text):
+        return "F"
+    if _OBLIGATION_MODALITY_RE.search(text):
+        return "O"
+    if _PERMISSION_MODALITY_RE.search(text):
+        return "P"
+    return ""
+
+
 def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     """Return a stable deontic operator for parser and detail-only rows.
 
@@ -621,21 +708,27 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     """
 
     for key in ("deontic_operator", "modality"):
-        value = str(element.get(key) or "").strip().upper()
-        if value in {"O", "P", "F", "DEF", "APP", "EXEMPT", "LIFE"}:
+        raw_value = element.get(key)
+        value = str(raw_value or "").strip().upper()
+        if value in _CANONICAL_MODALITY_OPERATORS:
             return value
+        inferred = _modality_from_textual_value(raw_value)
+        if inferred:
+            return inferred
 
     norm_type = str(element.get("norm_type") or "").strip().lower()
-    return {
-        "obligation": "O",
-        "penalty": "O",
-        "permission": "P",
-        "prohibition": "F",
-        "definition": "DEF",
-        "applicability": "APP",
-        "exemption": "EXEMPT",
-        "instrument_lifecycle": "LIFE",
-    }.get(norm_type, "")
+    mapped_norm_type = _NORM_TYPE_MODALITY_MAP.get(norm_type)
+    if mapped_norm_type:
+        return mapped_norm_type
+    inferred_norm_type = _modality_from_textual_value(norm_type)
+    if inferred_norm_type:
+        return inferred_norm_type
+
+    for key in ("text", "support_text", "action"):
+        inferred = _modality_from_textual_value(element.get(key))
+        if inferred:
+            return inferred
+    return ""
 
 
 def _slot_detail_records(

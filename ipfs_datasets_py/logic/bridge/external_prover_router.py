@@ -6,7 +6,7 @@ import hashlib
 from dataclasses import dataclass
 from typing import Any, Mapping, Optional, Sequence
 
-from .fol_tdfol import FolTdfolBridgeAdapter
+from .fol_tdfol import FolTdfolBridgeAdapter, coerce_tdfol_formula
 from .types import (
     BridgeEvaluationReport,
     GraphProjectionResult,
@@ -48,11 +48,7 @@ class ExternalProverRouterBridgeAdapter:
             source_embedding=source_embedding,
         )
         records = list(context["formula_records"])
-        formulas = [
-            record.get("formula_object")
-            for record in records
-            if record.get("formula_object") is not None
-        ]
+        formulas = _router_formulas_from_records(records)
         resolved_document_id = document_id or _document_id("external-prover", text)
         triples = tuple(
             _router_frame_logic_triples(
@@ -112,7 +108,10 @@ class ExternalProverRouterBridgeAdapter:
                 citation=citation,
                 views=views,
                 frame_logic_triples=triples,
-                metadata={"router_formula_count": len(records)},
+                metadata={
+                    "router_formula_count": len(records),
+                    "router_resolved_formula_count": len(formulas),
+                },
             ),
             {
                 "formula_records": records,
@@ -225,12 +224,9 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
             )
             continue
         try:
-            # Route via the canonical router API and provide the formula itself as
-            # a temporary axiom to keep proof-gate checks focused on prover-path
-            # viability rather than theorem strength.
-            result = router.route(
+            result = _route_formula_with_compat(
+                router,
                 formula,
-                axioms=[formula],
                 strategy=ProverStrategy.SEQUENTIAL,
                 timeout=1.0,
             )
@@ -259,21 +255,21 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
             )
             continue
 
-        proved = bool(getattr(result, "is_proved", False))
-        prover_used = str(getattr(result, "prover_used", "") or "")
-        result_reason = str(getattr(result, "reason", "") or "")
-        all_results = dict(getattr(result, "all_results", {}) or {})
+        proved = _result_proved(result)
+        prover_used = _result_text(result, "prover_used")
+        result_reason = _result_text(result, "reason")
+        all_results = _result_mapping(result, "all_results")
         completed_provers = sorted(
             str(name)
             for name, prover_result in all_results.items()
             if not isinstance(prover_result, str)
         )
-        compiled = bool(
-            proved
-            or (
-                (prover_used or completed_provers)
-                and not result_reason.lower().startswith("error:")
-            )
+        compiled = _result_compiled(
+            result,
+            proved=proved,
+            prover_used=prover_used,
+            completed_provers=completed_provers,
+            reason=result_reason,
         )
         valid += int(compiled)
         failed += int(not compiled)
@@ -291,12 +287,12 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
                 "compiled": compiled,
                 "completed_provers": completed_provers,
                 "formula": str(formula),
-                "proof_time": float(getattr(result, "proof_time", 0.0) or 0.0),
+                "proof_time": _result_float(result, "proof_time"),
                 "proved": proved,
                 "prover_used": prover_used,
                 "reason": result_reason,
                 "source_index": index,
-                "strategy_used": str(getattr(result, "strategy_used", "") or ""),
+                "strategy_used": _result_text(result, "strategy_used"),
             }
         )
     return ProofGateResult(
@@ -308,6 +304,116 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
         verified_by=tuple(sorted(verified_by)),
         details=tuple(details),
     )
+
+
+def _router_formulas_from_records(records: Sequence[Mapping[str, Any]]) -> list[Any]:
+    formulas: list[Any] = []
+    for record in records:
+        formula_object = coerce_tdfol_formula(record.get("formula_object"))
+        if formula_object is None:
+            formula_object = coerce_tdfol_formula(record.get("formula"))
+        if formula_object is not None:
+            formulas.append(formula_object)
+    return formulas
+
+
+def _route_formula_with_compat(
+    router: Any,
+    formula: Any,
+    *,
+    strategy: Any,
+    timeout: float,
+) -> Any:
+    """Call a router using route/prove compatibility fallbacks."""
+
+    attempts: list[Exception] = []
+    for method_name in ("route", "prove"):
+        method = getattr(router, method_name, None)
+        if not callable(method):
+            continue
+        for kwargs in (
+            {"axioms": [formula], "strategy": strategy, "timeout": timeout},
+            {"axioms": [formula], "strategy": str(getattr(strategy, "value", strategy) or "sequential"), "timeout": timeout},
+            {"axioms": [formula], "timeout": timeout},
+            {"timeout": timeout},
+            {},
+        ):
+            try:
+                return method(formula, **kwargs)
+            except (TypeError, ValueError) as exc:
+                attempts.append(exc)
+                continue
+            except Exception as exc:
+                raise exc
+    if attempts:
+        raise attempts[-1]
+    raise RuntimeError("router_missing_route_and_prove")
+
+
+def _result_compiled(
+    result: Any,
+    *,
+    proved: bool,
+    prover_used: str,
+    completed_provers: Sequence[str],
+    reason: str,
+) -> bool:
+    if proved:
+        return True
+    if str(reason or "").strip().lower().startswith("error:"):
+        return False
+    if prover_used or completed_provers:
+        return True
+    if result is None:
+        return False
+    # Legacy routers may return booleans/dicts without explicit prover metadata.
+    return not isinstance(result, Exception)
+
+
+def _result_mapping(result: Any, key: str) -> dict[str, Any]:
+    value = _result_value(result, key, {})
+    if not isinstance(value, Mapping):
+        return {}
+    return {str(name): item for name, item in value.items()}
+
+
+def _result_text(result: Any, key: str) -> str:
+    value = _result_value(result, key, "")
+    return str(value or "")
+
+
+def _result_float(result: Any, key: str) -> float:
+    value = _result_value(result, key, 0.0)
+    try:
+        return float(value or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _result_proved(result: Any) -> bool:
+    if isinstance(result, bool):
+        return result
+    value = _result_value(result, "is_proved", False)
+    if callable(value):
+        try:
+            return bool(value())
+        except Exception:
+            return False
+    if value not in (None, ""):
+        return bool(value)
+    value = _result_value(result, "is_valid", False)
+    if callable(value):
+        try:
+            return bool(value())
+        except Exception:
+            return False
+    return bool(value)
+
+
+def _result_value(result: Any, key: str, default: Any) -> Any:
+    if isinstance(result, Mapping):
+        return result.get(key, default)
+    return getattr(result, key, default)
 
 
 def _router_frame_logic_triples(
