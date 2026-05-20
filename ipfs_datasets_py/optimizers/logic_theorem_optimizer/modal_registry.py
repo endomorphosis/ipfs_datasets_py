@@ -30,17 +30,6 @@ NORMATIVE_MODAL_FAMILIES: Tuple[ModalLogicFamily, ...] = (
     ModalLogicFamily.CONDITIONAL_NORMATIVE,
 )
 
-COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
-    (
-        ModalLogicFamily.FRAME.value,
-        ModalLogicFamily.TEMPORAL.value,
-    ),
-    (
-        ModalLogicFamily.TEMPORAL.value,
-        ModalLogicFamily.FRAME.value,
-    ),
-)
-
 COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.ALETHIC.value,
@@ -489,37 +478,15 @@ def _ordered_unique_adaptive_ambiguity_family_pairs(
     return tuple(unique_pairs)
 
 
-def _append_required_adaptive_ambiguity_family_pairs(
-    pairs: Iterable[Tuple[str, str]],
-    required_pairs: Iterable[Tuple[str, str]],
-) -> Tuple[Tuple[str, str], ...]:
-    """Append required policy pairs while preserving existing order."""
-    return _ordered_unique_adaptive_ambiguity_family_pairs(
-        (
-            *tuple(pairs),
-            *tuple(required_pairs),
-        )
-    )
-
-
-COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
-    _append_required_adaptive_ambiguity_family_pairs(
-        COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
-        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
-    )
-)
-
 COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
-    _append_required_adaptive_ambiguity_family_pairs(
-        COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS,
-        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
     )
 )
 
 SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
-    _append_required_adaptive_ambiguity_family_pairs(
-        SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
-        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
     )
 )
 
@@ -636,9 +603,8 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
-    _append_required_adaptive_ambiguity_family_pairs(
-        PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
-        COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
     )
 )
 
@@ -1129,7 +1095,6 @@ DEFAULT_MODAL_REGISTRY = ModalRegistry()
 __all__ = [
     "DEFAULT_MODAL_PROFILES",
     "DEFAULT_MODAL_REGISTRY",
-    "COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS",
     "COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS",
     "COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS",
     "compiler_ambiguity_policy_targets",

@@ -25,7 +25,6 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_ir import (
     ModalIRFrame,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
-    COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS,
     compiler_ambiguity_policy_targets,
     compiler_required_adaptive_ambiguity_targets,
     DEFAULT_MODAL_REGISTRY,
@@ -151,54 +150,7 @@ def _supports_signal_free_adaptive_ambiguity_pair(
         or target_family
         in _signal_free_adaptive_ambiguity_targets(predicted_family)
         or _is_compiler_ambiguity_policy_pair(predicted_family, target_family)
-        or _is_compiler_directional_core_ambiguity_pair(
-            predicted_family,
-            target_family,
-        )
     )
-
-
-def _resolve_compiler_modal_family_name(value: Any) -> str:
-    resolved = str(value or "").strip()
-    if not resolved:
-        return ""
-    leaf = resolved.rsplit(".", maxsplit=1)[-1].strip()
-    for candidate in (
-        resolved,
-        resolved.lower(),
-        leaf,
-        leaf.lower(),
-    ):
-        if not candidate:
-            continue
-        try:
-            return ModalLogicFamily(candidate).value
-        except ValueError:
-            continue
-    return leaf.lower()
-
-
-def _compiler_directional_core_ambiguity_targets(
-    predicted_family: str,
-) -> Sequence[str]:
-    resolved_predicted = _resolve_compiler_modal_family_name(predicted_family)
-    return tuple(
-        target_family
-        for source_family, target_family in COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS
-        if source_family == resolved_predicted
-    )
-
-
-def _is_compiler_directional_core_ambiguity_pair(
-    predicted_family: str,
-    target_family: str,
-) -> bool:
-    resolved_predicted = _resolve_compiler_modal_family_name(predicted_family)
-    resolved_target = _resolve_compiler_modal_family_name(target_family)
-    return (
-        resolved_predicted,
-        resolved_target,
-    ) in COMPILER_AMBIGUITY_DIRECTIONAL_CORE_FAMILY_PAIRS
 
 
 @dataclass(frozen=True)
@@ -1340,12 +1292,6 @@ class DeterministicModalCompiler:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
         for target_family in compiler_ambiguity_policy_targets(
-            predicted_family
-        ):
-            if target_family not in seen_targets:
-                ordered_targets.append(target_family)
-                seen_targets.add(target_family)
-        for target_family in _compiler_directional_core_ambiguity_targets(
             predicted_family
         ):
             if target_family not in seen_targets:
