@@ -59,6 +59,7 @@ def test_conditional_profile_includes_terms_and_conditions_cues() -> None:
     assert "notwithstanding" in cue_terms
     assert "except as provided by" in cue_terms
     assert "as provided by" in cue_terms
+    assert "does not affect" in cue_terms
 
 
 def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
@@ -70,6 +71,19 @@ def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
     assert "fiscal year" in cue_terms
     assert "from time to time" in cue_terms
     assert "on or after" in cue_terms
+
+
+def test_doxastic_profile_includes_belief_and_intent_inflections() -> None:
+    profile = DEFAULT_MODAL_REGISTRY.get_profile(ModalLogicFamily.DOXASTIC)
+    cue_terms = {cue for operator in profile.operators for cue in operator.cue_terms}
+
+    assert "believe" in cue_terms
+    assert "believed" in cue_terms
+    assert "belief" in cue_terms
+    assert "intend" in cue_terms
+    assert "intended" in cue_terms
+    assert "suspect" in cue_terms
+    assert "suspected" in cue_terms
 
 
 def test_registry_serialization_is_stable_json_ready() -> None:
@@ -269,6 +283,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
         "conditional_normative",
         "epistemic",
         "temporal",
+        "frame",
     )
     assert compiler_required_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",
@@ -324,13 +339,16 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("epistemic", "conditional_normative"),
         ("frame", "conditional_normative"),
         ("frame", "deontic"),
+        ("frame", "frame"),
         ("frame", "alethic"),
         ("frame", "epistemic"),
         ("frame", "dynamic"),
         ("frame", "temporal"),
+        ("frame", "frame"),
         ("hybrid", "frame"),
         ("temporal", "deontic"),
         ("temporal", "conditional_normative"),
+        ("temporal", "frame"),
         ("temporal", "temporal"),
     }
     assert is_compiler_ambiguity_policy_pair(
@@ -362,13 +380,16 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     ) is True
     assert is_compiler_ambiguity_policy_pair("frame", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("frame", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "frame") is True
     assert is_compiler_ambiguity_policy_pair("frame", "alethic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "dynamic") is True
     assert is_compiler_ambiguity_policy_pair("frame", "temporal") is True
+    assert is_compiler_ambiguity_policy_pair("frame", "frame") is True
     assert is_compiler_ambiguity_policy_pair("hybrid", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "deontic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
+    assert is_compiler_ambiguity_policy_pair("temporal", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
     assert is_compiler_ambiguity_policy_pair("frame", "hybrid") is False
     assert is_compiler_required_adaptive_ambiguity_pair(
@@ -440,9 +461,23 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     assert compiler_ambiguity_policy_targets("frame") == (
         "conditional_normative",
         "deontic",
+        "frame",
         "alethic",
         "epistemic",
         "dynamic",
+        "temporal",
+        "frame",
+    )
+    assert compiler_ambiguity_policy_targets("temporal") == (
+        "deontic",
+        "conditional_normative",
+        "frame",
+        "temporal",
+    )
+    assert compiler_ambiguity_policy_targets("temporal") == (
+        "deontic",
+        "conditional_normative",
+        "frame",
         "temporal",
     )
     assert compiler_ambiguity_policy_targets("conditional_normative") == (
@@ -450,6 +485,12 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "temporal",
         "conditional_normative",
         "frame",
+    )
+    assert compiler_ambiguity_policy_targets("temporal") == (
+        "deontic",
+        "conditional_normative",
+        "frame",
+        "temporal",
     )
 
 
@@ -592,6 +633,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "conditional_normative",
         "epistemic",
         "temporal",
+        "frame",
     )
     assert priority_signal_free_adaptive_ambiguity_targets("conditional_normative") == (
         "deontic",

@@ -40,6 +40,7 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "except as provided by",
     "in the case of",
     "in the event that",
+    "does not affect",
     "notwithstanding",
     "for purposes of",
     "for the purposes of",
@@ -517,7 +518,7 @@ _GENERIC_FRAME_STRONG_TEMPORAL_SCOPE_BACKFILL_WEIGHT = 0.35
 _COMPETING_SCOPE_BACKFILL_WEIGHT = 0.12
 _STRONG_SCOPE_BACKFILL_WEIGHT = 0.26
 _DEONTIC_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
-_TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 3.0
+_TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.5
 _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 2.0
 _CONDITIONAL_DYNAMIC_SCOPE_BACKFILL_TRIGGER = 2.0
@@ -536,7 +537,7 @@ _ALETHIC_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _ALETHIC_DEONTIC_SCOPE_BACKFILL_TRIGGER = 0.5
 _EPISTEMIC_TEMPORAL_SCOPE_BACKFILL_TRIGGER = 0.5
 _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER = 0.2
-_TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 3.0
+_TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER = 2.5
 _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER = 3.0
 _TEMPORAL_EPISTEMIC_SCOPE_BACKFILL_TRIGGER = 3.0
 _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT = 0.35
@@ -1106,6 +1107,24 @@ class SpaCyModalIRCompiler:
                     allow_modal_cues=True,
                 )
                 if residual_fallback_formula is not None:
+                    residual_segments_after_fallback = self._fallback_parser._segments_excluding_spans(
+                        residual_segments,
+                        spans=[
+                            (
+                                int(residual_fallback_formula.provenance.start_char),
+                                int(residual_fallback_formula.provenance.end_char),
+                            )
+                        ],
+                    )
+                    formulas.extend(
+                        self._fallback_parser.residual_span_coverage_formulas(
+                            document_id=encoding.document_id,
+                            text=encoding.normalized_text,
+                            citation=encoding.citation,
+                            start_index=len(formulas) + 2,
+                            segments=residual_segments_after_fallback,
+                        )
+                    )
                     formulas.append(residual_fallback_formula)
                 else:
                     formulas.extend(
@@ -1584,10 +1603,18 @@ def _apply_temporal_competing_scope_soft_cap(
         or bool(signals.get("has_dynamic_cue"))
         or float(counts.get(ModalLogicFamily.DYNAMIC.value, 0.0)) > 0.0
     )
+    has_frame_competition = (
+        bool(signals.get("has_frame_context"))
+        or bool(signals.get("has_frame_scope_phrase"))
+        or bool(signals.get("has_frame_editorial_scope_phrase"))
+        or bool(signals.get("has_statutory_scope_reference"))
+        or float(counts.get(ModalLogicFamily.FRAME.value, 0.0)) > 0.0
+    )
     if not (
         has_deontic_competition
         or has_conditional_competition
         or has_dynamic_competition
+        or has_frame_competition
     ):
         return
     has_strong_deontic_competition = (
@@ -1607,8 +1634,21 @@ def _apply_temporal_competing_scope_soft_cap(
             or bool(signals.get("has_statutory_scope_reference"))
         )
     )
+    has_strong_frame_competition = (
+        has_frame_competition
+        and (
+            bool(signals.get("has_frame_scope_phrase"))
+            or bool(signals.get("has_frame_editorial_scope_phrase"))
+            or bool(signals.get("has_statutory_scope_reference"))
+            or bool(signals.get("has_frame_cue"))
+        )
+    )
     temporal_soft_cap = _TEMPORAL_COMPETING_SCOPE_SOFT_CAP
-    if has_strong_deontic_competition or has_strong_conditional_competition:
+    if (
+        has_strong_deontic_competition
+        or has_strong_conditional_competition
+        or has_strong_frame_competition
+    ):
         temporal_soft_cap = min(
             temporal_soft_cap,
             _TEMPORAL_STRONG_COMPETING_SCOPE_SOFT_CAP,
@@ -1718,12 +1758,25 @@ def _apply_frame_competing_scope_soft_cap(
             or bool(signals.get("has_epistemic_scope_phrase"))
         )
     )
+    has_dynamic_competition = (
+        bool(signals.get("has_dynamic_scope"))
+        or bool(signals.get("has_dynamic_cue"))
+        or float(counts.get(ModalLogicFamily.DYNAMIC.value, 0.0)) > 0.0
+    )
+    has_strong_dynamic_competition = (
+        has_dynamic_competition
+        and (
+            bool(signals.get("has_dynamic_cue"))
+            or bool(signals.get("has_dynamic_scope_phrase"))
+        )
+    )
     if not (
         has_strong_temporal_competition
         or has_strong_conditional_competition
         or has_alethic_competition
         or has_strong_deontic_competition
         or has_strong_epistemic_competition
+        or has_strong_dynamic_competition
     ):
         return
     frame_soft_cap = _FRAME_COMPETING_SCOPE_SOFT_CAP
@@ -1732,6 +1785,7 @@ def _apply_frame_competing_scope_soft_cap(
         or has_strong_conditional_competition
         or has_strong_deontic_competition
         or has_strong_epistemic_competition
+        or has_strong_dynamic_competition
     ):
         frame_soft_cap = min(
             frame_soft_cap,
@@ -2035,14 +2089,31 @@ def _apply_competing_scope_backfill(
         )
     if (
         conditional_count >= _CONDITIONAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
-        and deontic_count <= 0.0
+        and deontic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_deontic_scope"))
     ):
         deontic_backfill = _COMPETING_SCOPE_BACKFILL_WEIGHT
-        if bool(signals.get("has_deontic_scope_phrase")):
+        if bool(
+            signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        ):
             deontic_backfill = max(
                 deontic_backfill,
                 _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
+        if bool(
+            signals.get("has_statutory_scope_reference")
+            or signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        ):
+            deontic_backfill = max(
+                deontic_backfill,
+                _scaled_competing_scope_backfill(
+                    source_count=conditional_count,
+                    ratio=_DEONTIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_DEONTIC_COMPETING_SCOPE_BACKFILL_MAX,
+                ),
             )
         counts[deontic_family] = max(
             float(counts.get(deontic_family, 0.0)),
@@ -2533,15 +2604,29 @@ def _apply_competing_scope_backfill(
         )
     if (
         frame_count >= _FRAME_DYNAMIC_SCOPE_BACKFILL_TRIGGER
-        and dynamic_count <= 0.0
+        and dynamic_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(
             signals.get("has_dynamic_scope")
             or signals.get("has_dynamic_cue")
         )
     ):
+        dynamic_backfill = _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT
+        if bool(
+            signals.get("has_dynamic_scope_phrase")
+            or signals.get("has_dynamic_cue")
+        ):
+            dynamic_backfill = max(
+                dynamic_backfill,
+                _scaled_competing_scope_backfill(
+                    source_count=frame_count,
+                    ratio=_DYNAMIC_COMPETING_SCOPE_BACKFILL_RATIO,
+                    minimum=_FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                    maximum=_DYNAMIC_COMPETING_SCOPE_BACKFILL_MAX,
+                ),
+            )
         counts[dynamic_family] = max(
             float(counts.get(dynamic_family, 0.0)),
-            _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
+            dynamic_backfill,
         )
     if (
         temporal_count >= _TEMPORAL_DEONTIC_SCOPE_BACKFILL_TRIGGER
@@ -2579,7 +2664,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         temporal_count >= _TEMPORAL_CONDITIONAL_SCOPE_BACKFILL_TRIGGER
-        and conditional_count <= 0.0
+        and conditional_count <= _COMPETING_SCOPE_BACKFILL_WEIGHT
         and bool(signals.get("has_condition_or_exception_scope"))
         and (
             bool(signals.get("has_statutory_scope_reference"))
@@ -2598,6 +2683,14 @@ def _apply_competing_scope_backfill(
                 maximum=_TEMPORAL_COMPETING_SCOPE_BACKFILL_MAX,
             ),
         )
+        if bool(
+            signals.get("has_condition_clause")
+            or signals.get("has_exception_clause")
+        ):
+            conditional_backfill = max(
+                conditional_backfill,
+                _STRONG_SCOPE_BACKFILL_WEIGHT,
+            )
         counts[conditional_family] = max(
             float(counts.get(conditional_family, 0.0)),
             conditional_backfill,
@@ -2752,6 +2845,13 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
     """Return deterministic logit boosts for scope-signaled families without cues."""
     boosts: Dict[str, float] = {}
     explicit_conditional_scope = _has_explicit_conditional_scope(signals)
+    has_frame_context_signal = bool(
+        signals.get("has_frame_context")
+        or signals.get("has_frame_cue")
+    )
+    has_editorial_frame_context = bool(
+        signals.get("has_frame_editorial_scope_phrase")
+    )
     has_statutory_frame_context = bool(
         signals.get("has_statutory_scope_reference")
         and (
@@ -2763,6 +2863,12 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         conditional_bonus = 0.9
         if explicit_conditional_scope:
             conditional_bonus += 0.15
+        if (
+            has_frame_context_signal
+            and explicit_conditional_scope
+            and not has_statutory_frame_context
+        ):
+            conditional_bonus += 0.1
         if has_statutory_frame_context:
             conditional_bonus += 0.35
             if (
@@ -2773,6 +2879,11 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
                 )
             ):
                 conditional_bonus += 0.1
+            if (
+                explicit_conditional_scope
+                and bool(signals.get("has_temporal_scope"))
+            ):
+                conditional_bonus += 0.15
         if (
             (bool(signals.get("has_deontic_scope")) or bool(signals.get("has_deontic_cue")))
             and (
@@ -2786,10 +2897,32 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
         deontic_bonus = 0.8
         if bool(signals.get("has_deontic_scope_phrase")):
             deontic_bonus += 0.2
+        if (
+            has_frame_context_signal
+            and not has_statutory_frame_context
+            and bool(
+                signals.get("has_deontic_scope_phrase")
+                or signals.get("has_deontic_cue")
+            )
+        ):
+            deontic_bonus += 0.15
         if has_statutory_frame_context:
             deontic_bonus += 0.4
+        if (
+            bool(signals.get("has_condition_or_exception_scope"))
+            and bool(
+                signals.get("has_deontic_scope_phrase")
+                or signals.get("has_deontic_cue")
+            )
+        ):
+            deontic_bonus += 0.1
         if bool(signals.get("has_temporal_scope")):
-            deontic_bonus += 0.25
+            deontic_bonus += 0.35
+        if has_statutory_frame_context and bool(
+            signals.get("has_deontic_scope_phrase")
+            or signals.get("has_deontic_cue")
+        ):
+            deontic_bonus += 0.15
         has_alethic_competition = bool(
             signals.get("has_alethic_scope")
             or signals.get("has_alethic_cue")
@@ -2824,8 +2957,21 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
                     temporal_bonus += 0.15
         if bool(signals.get("has_condition_or_exception_scope")) and has_strong_temporal_scope:
             temporal_bonus += 0.15
-        if has_statutory_frame_context and has_strong_temporal_scope:
+        if (
+            has_statutory_frame_context
+            and has_strong_temporal_scope
+            and not has_editorial_frame_context
+        ):
             temporal_bonus += 0.2
+    if (
+        temporal_bonus > 0.0
+        and has_editorial_frame_context
+        and not bool(
+            signals.get("has_temporal_scope_phrase")
+            or signals.get("has_temporal_within_scope")
+        )
+    ):
+        temporal_bonus = max(0.0, temporal_bonus - 0.35)
     if has_strong_temporal_scope:
         temporal_bonus += 0.3
     if temporal_bonus > 0.0:
@@ -2836,6 +2982,15 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             if bool(signals.get("has_epistemic_scope_phrase"))
             else 0.45
         )
+        if has_frame_context_signal:
+            epistemic_bonus += (
+                0.15
+                if bool(
+                    signals.get("has_epistemic_scope_phrase")
+                    or signals.get("has_epistemic_cue")
+                )
+                else 0.1
+            )
         boosts[ModalLogicFamily.EPISTEMIC.value] = epistemic_bonus
     if bool(signals.get("has_alethic_scope")):
         alethic_bonus = (
@@ -2930,6 +3085,7 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         or bool(epistemic_scope_phrase)
         or ModalLogicFamily.EPISTEMIC.value in cue_families
     )
+    doxastic_scope = ModalLogicFamily.DOXASTIC.value in cue_families
     dynamic_scope = (
         bool(token_terms & _DYNAMIC_SCOPE_TOKENS)
         or bool(dynamic_scope_phrase)
@@ -2966,6 +3122,8 @@ def modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Dict[str, bool]:
         "has_deontic_cue": ModalLogicFamily.DEONTIC.value in cue_families,
         "has_deontic_scope": deontic_scope,
         "has_deontic_scope_phrase": bool(deontic_scope_phrase),
+        "has_doxastic_cue": ModalLogicFamily.DOXASTIC.value in cue_families,
+        "has_doxastic_scope": doxastic_scope,
         "has_dynamic_cue": ModalLogicFamily.DYNAMIC.value in cue_families,
         "has_dynamic_scope": dynamic_scope,
         "has_dynamic_scope_phrase": bool(dynamic_scope_phrase),
@@ -2997,6 +3155,8 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
         or signals.get("has_temporal_scope")
         or signals.get("has_temporal_scope_phrase")
         or signals.get("has_temporal_within_scope")
+        or signals.get("has_dynamic_scope")
+        or signals.get("has_dynamic_cue")
         or explicit_conditional_scope
     )
     bonus = 0.0
@@ -3006,7 +3166,7 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
             not has_editorial_or_direct_frame_signal
             and has_non_frame_scope_competition
         ):
-            frame_context_bonus = 0.35
+            frame_context_bonus = 0.2
         bonus += frame_context_bonus
     if bool(signals.get("has_statutory_scope_reference")):
         statutory_bonus = 0.8
@@ -3016,9 +3176,11 @@ def _frame_logit_bonus(signals: Mapping[str, bool]) -> float:
                 explicit_conditional_scope
                 or bool(signals.get("has_deontic_scope"))
                 or bool(signals.get("has_temporal_scope"))
+                or bool(signals.get("has_dynamic_scope"))
+                or bool(signals.get("has_dynamic_cue"))
             )
         ):
-            statutory_bonus = 0.35
+            statutory_bonus = 0.2
         bonus += statutory_bonus
     if bool(signals.get("has_frame_scope_phrase")):
         bonus += 1.2

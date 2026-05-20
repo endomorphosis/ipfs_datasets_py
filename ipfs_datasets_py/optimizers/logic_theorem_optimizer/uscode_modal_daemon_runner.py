@@ -1327,6 +1327,41 @@ def _claim_vector_program_synthesis_batch(
         min_similarity=float(getattr(args, "codex_vector_min_similarity", 0.72)),
         fill_min_similarity=getattr(args, "codex_vector_fill_min_similarity", None),
     )
+    skipped_fresh_undersized_anchor_ids: List[str] = []
+    min_bundle_size = int(vector_report["min_bundle_size"])
+    max_bundle_wait_seconds = float(vector_report["max_bundle_wait_seconds"])
+    oldest_candidate_age_seconds = float(vector_report["oldest_candidate_age_seconds"])
+    if (
+        selected
+        and len(selected) < min_bundle_size
+        and max_bundle_wait_seconds > 0.0
+        and oldest_candidate_age_seconds < max_bundle_wait_seconds
+    ):
+        skipped_ids = {str(selected[0]["todo"].todo_id)}
+        skipped_fresh_undersized_anchor_ids.append(str(selected[0]["todo"].todo_id))
+        while True:
+            alternate_candidates = [
+                todo for todo in candidates if str(todo.todo_id) not in skipped_ids
+            ]
+            alternate_selected = select_program_synthesis_vector_bundle(
+                alternate_candidates,
+                vectors_by_todo_id=vectors_by_id,
+                max_items=args.max_items,
+                min_similarity=float(getattr(args, "codex_vector_min_similarity", 0.72)),
+                fill_min_similarity=getattr(args, "codex_vector_fill_min_similarity", None),
+            )
+            if not alternate_selected:
+                break
+            if len(alternate_selected) >= min_bundle_size:
+                selected = alternate_selected
+                vector_report["mode"] = "vector_skipped_fresh_undersized_anchor"
+                break
+            alternate_anchor_id = str(alternate_selected[0]["todo"].todo_id)
+            if alternate_anchor_id in skipped_ids:
+                break
+            skipped_ids.add(alternate_anchor_id)
+            skipped_fresh_undersized_anchor_ids.append(alternate_anchor_id)
+
     selected_ids = [str(item["todo"].todo_id) for item in selected]
     similarity_by_id = {
         str(item["todo"].todo_id): float(item["similarity"])
@@ -1338,9 +1373,10 @@ def _claim_vector_program_synthesis_batch(
         if item.get("fill_reason")
     }
     anchor_id = selected_ids[0] if selected_ids else ""
-    min_bundle_size = int(vector_report["min_bundle_size"])
-    max_bundle_wait_seconds = float(vector_report["max_bundle_wait_seconds"])
-    oldest_candidate_age_seconds = float(vector_report["oldest_candidate_age_seconds"])
+    if skipped_fresh_undersized_anchor_ids:
+        vector_report["skipped_fresh_undersized_anchor_ids"] = (
+            skipped_fresh_undersized_anchor_ids
+        )
     undersized_stale_bundle = (
         bool(selected)
         and len(selected) < min_bundle_size

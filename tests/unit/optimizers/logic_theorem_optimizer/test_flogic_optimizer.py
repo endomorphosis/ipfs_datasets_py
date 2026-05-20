@@ -520,6 +520,35 @@ def test_flogic_optimizer_tracks_zero_digit_count_frame_terms() -> None:
     ]
 
 
+def test_flogic_optimizer_tracks_contextualized_modal_cue_terms() -> None:
+    optimizer = FLogicSemanticOptimizer(
+        FLogicOptimizerConfig(
+            similarity_threshold=0.0,
+            check_ontology_consistency=False,
+        )
+    )
+
+    result = optimizer.evaluate(
+        source_text="source",
+        decoded_text="decoded",
+        source_embedding=[1.0, 0.0],
+        decoded_embedding=[1.0, 0.0],
+        kg_triples=[],
+        frame_feature_keys=[
+            "flogic:modal_cue:after",
+            "flogic:modal_cue:by",
+            "flogic:citation_title_number_leading_digit:2",
+        ],
+    )
+
+    assert "modal_cue_after" in result.metadata["frame_ontology_contextualized_terms"]
+    assert "modal_cue_by" in result.metadata["frame_ontology_contextualized_terms"]
+    assert (
+        "citation_title_number_leading_digit_2"
+        in result.metadata["frame_ontology_contextualized_terms"]
+    )
+
+
 def test_flogic_optimizer_extracts_frame_features_from_structured_hint_evidence() -> None:
     optimizer = FLogicSemanticOptimizer(
         FLogicOptimizerConfig(

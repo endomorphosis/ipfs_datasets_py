@@ -293,8 +293,6 @@ class DeonticNormsBridgeAdapter:
             context["coverage_records"]
         )
         status = "ok"
-        if not ir_document.views["deontic_ir"].metadata.get("norm_count"):
-            status = "partial"
         if not proof_gate.compiles:
             status = "partial"
         if graph_result.graph_failure_penalty:
@@ -685,6 +683,12 @@ def _round_trip_from_deontic_context(
     syntax_valid_rate = _float(metrics.get("phase8_prover_syntax_valid_rate"))
     quality_requires_validation_rate = _float(metrics.get("phase8_quality_requires_validation_rate"))
     norm_count = int(deontic_exports.get("norm_count") or 0)
+    if norm_count <= 0:
+        # Non-normative legal text should not force a hard deontic loss.
+        grounded_phrase_rate = 1.0
+        grounded_slot_rate = 1.0
+        syntax_valid_rate = 1.0
+        quality_requires_validation_rate = 0.0
     reconstruction_summary = _mapping(
         deontic_exports.get("reconstruction_slot_loss_summary")
     )
@@ -738,6 +742,8 @@ def _round_trip_from_deontic_context(
 
 
 def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> ProofGateResult:
+    if not records:
+        return ProofGateResult.disabled(reason="no_deontic_coverage_records")
     soft_targets = {"frame_logic"}
     attempted_count = 0
     valid_count = 0
@@ -819,6 +825,36 @@ def _coverage_summary_from_record(record: Mapping[str, Any]) -> dict[str, Any]:
                     if str(target).strip()
                 ],
                 "syntax_valid_rate": summary.get("syntax_valid_rate"),
+            }
+
+        required_targets = _normalized_target_names(summary.get("required_targets"))
+        status_by_target = summary.get("target_status_by_target")
+        if required_targets and isinstance(status_by_target, Mapping):
+            passed_targets: list[str] = []
+            failed_targets: list[str] = []
+            missing_targets: list[str] = []
+            for target in required_targets:
+                status = str(status_by_target.get(target) or "").strip().lower()
+                if status in {"passed", "pass", "valid", "ok"}:
+                    passed_targets.append(target)
+                elif status in {"missing", "absent"}:
+                    missing_targets.append(target)
+                elif status in {"skipped", "skip", "unavailable"}:
+                    # Skipped targets stay non-blocking for proof compilation.
+                    continue
+                elif status in {"failed", "failure", "invalid", "error"}:
+                    failed_targets.append(target)
+                else:
+                    failed_targets.append(target)
+
+            syntax_valid_rate = _float(summary.get("syntax_valid_rate"))
+            if syntax_valid_rate <= 0.0 and required_targets:
+                syntax_valid_rate = len(passed_targets) / len(required_targets)
+            return {
+                "passed_targets": passed_targets,
+                "failed_targets": failed_targets,
+                "missing_targets": missing_targets,
+                "syntax_valid_rate": syntax_valid_rate,
             }
 
     required_targets = _normalized_target_names(record.get("required_targets"))

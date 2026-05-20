@@ -1069,6 +1069,23 @@ def test_ir_proof_record_uses_formula_level_resolution_for_local_applicability()
     assert "cross_reference_requires_resolution" in record["blockers"]
 
 
+def test_ir_proof_record_reuses_export_readiness_resolution_when_blockers_are_missing():
+    element = dict(extract_normative_elements("This section applies to food carts.")[0])
+    readiness = dict(element.get("export_readiness") or {})
+    readiness["blockers"] = []
+    element["export_readiness"] = readiness
+
+    norm = LegalNormIR.from_parser_element(element)
+    record = build_proof_obligation_record_from_ir(norm)
+
+    assert norm.proof_ready is False
+    assert record["formula"] == "AppliesTo(ThisSection, FoodCarts)"
+    assert record["proof_ready"] is True
+    assert record["requires_validation"] is False
+    assert record["repair_required"] is False
+    assert record["deterministic_resolution"]["type"] == "local_scope_applicability"
+
+
 def test_canonical_rows_expose_export_repair_status_without_relaxing_parser_gate():
     elements = [
         extract_normative_elements("This section applies to food carts.")[0],

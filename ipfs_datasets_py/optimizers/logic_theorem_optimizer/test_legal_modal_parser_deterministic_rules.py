@@ -184,6 +184,64 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_
     assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
 
 
+def test_parser_adds_residual_span_coverage_after_residual_fallback_formula() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall publish the annual report. "
+            "Administrative notice and hearing procedures apply to petitions under this section. "
+            "Additional implementation details are provided for regional offices and contractors."
+        ),
+        document_id="us-code-15-1431-ae0d9e64b8a5c0a7",
+        citation="15 U.S.C. 1431",
+    )
+
+    procedural_fallbacks = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+    ]
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert procedural_fallbacks
+    assert residual_formulas
+    assert modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+
+
+def test_compiler_spacy_backend_adds_residual_span_coverage_after_residual_fallback_formula() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The Secretary shall publish the annual report. "
+            "Administrative notice and hearing procedures apply to petitions under this section. "
+            "Additional implementation details are provided for regional offices and contractors."
+        ),
+        document_id="us-code-15-1431-ae0d9e64b8a5c0a7",
+        citation="15 U.S.C. 1431",
+    )
+
+    procedural_fallbacks = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+    ]
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+
+    assert procedural_fallbacks
+    assert residual_formulas
+    assert result.modal_ir.formulas[-1].metadata.get("fallback_rule") == "uscode_procedural_clause_v1"
+
+
 def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
@@ -393,6 +451,46 @@ def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_ma
         result,
         predicted_family=ModalLogicFamily.TEMPORAL.value,
         target_family=ModalLogicFamily.EPISTEMIC.value,
+        predicted_family_source="adaptive_logits",
+    )
+
+
+def test_compiler_emits_explicit_temporal_to_doxastic_adaptive_pair_from_low_margin_logits() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+
+    def _mock_adaptive_family_ranking_from_logits(_encoding):
+        return [
+            {
+                "family": ModalLogicFamily.TEMPORAL.value,
+                "count": 0,
+                "logit": 1.3,
+                "share_raw": 0.56,
+                "share": 0.56,
+                "source": "logit_softmax_fallback",
+            },
+            {
+                "family": ModalLogicFamily.DOXASTIC.value,
+                "count": 0,
+                "logit": 1.05,
+                "share_raw": 0.44,
+                "share": 0.44,
+                "source": "logit_softmax_fallback",
+            },
+        ]
+
+    compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+    result = compiler.compile(
+        "Within 30 days after June 1, 2030, annual publication occurs.",
+        document_id="compiler-ambiguity-temporal-doxastic-logits",
+    )
+
+    assert _has_adaptive_explicit_pair_from_source(
+        result,
+        predicted_family=ModalLogicFamily.TEMPORAL.value,
+        target_family=ModalLogicFamily.DOXASTIC.value,
         predicted_family_source="adaptive_logits",
     )
 

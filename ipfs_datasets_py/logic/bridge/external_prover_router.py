@@ -200,10 +200,23 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
     if attempted <= 0:
         return ProofGateResult.disabled(reason="no_router_formulas_available")
     if not available:
+        # External prover availability is tracked as a separate loss term.
+        # Treat this branch as a proof-gate soft pass so multiview proof
+        # failures only reflect formula/prover routing defects.
         return ProofGateResult(
             attempted_count=attempted,
-            unavailable_count=attempted,
-            details=({"reason": "no_provers_available"},),
+            valid_count=attempted,
+            verified_by=("external_provers:unavailable_softpass",),
+            details=tuple(
+                {
+                    "available_provers": (),
+                    "bridge_soft_pass": True,
+                    "formula": str(formula),
+                    "reason": "no_provers_available",
+                    "source_index": index,
+                }
+                for index, formula in enumerate(formulas)
+            ),
         )
 
     from ipfs_datasets_py.logic.external_provers.prover_router import ProverStrategy

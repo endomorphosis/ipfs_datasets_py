@@ -2202,6 +2202,8 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
     if not deterministic_resolution:
         deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(norm, blockers)
+    if not deterministic_resolution:
+        deterministic_resolution = _readiness_formula_resolution(norm)
     deterministic_resolution = _normalize_formula_resolution(deterministic_resolution)
     proof_ready = norm.proof_ready or bool(deterministic_resolution)
     requires_validation = not proof_ready
@@ -3478,6 +3480,46 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
         "scope": norm.actor,
         "reason": "local self-scope applicability formula is source-grounded",
     }
+
+
+_READINESS_FORMULA_RESOLUTION_TYPES = {
+    "local_scope_applicability",
+    "local_scope_reference_condition",
+    "local_scope_reference_exception",
+    "pure_precedence_override",
+    "resolved_same_document_reference_condition",
+    "resolved_same_document_reference_exception",
+    "standard_substantive_exception",
+}
+
+
+def _readiness_formula_resolution(norm: LegalNormIR) -> Dict[str, Any]:
+    """Reuse persisted deterministic formula readiness when it is explicit.
+
+    Legacy/rehydrated rows may preserve export-level deterministic resolution
+    evidence while omitting parser blocker lists. When readiness explicitly
+    marks the formula proof-ready without validation, keep that resolution so
+    proof obligations and repair queues remain stable after IR hydration.
+    """
+
+    readiness = norm.quality.export_readiness
+    if not isinstance(readiness, Mapping):
+        return {}
+    if readiness.get("formula_proof_ready") is not True:
+        return {}
+    if readiness.get("formula_requires_validation") is True:
+        return {}
+    if readiness.get("formula_repair_required") is True:
+        return {}
+
+    resolution = readiness.get("deterministic_resolution")
+    if not isinstance(resolution, Mapping):
+        return {}
+    normalized = _normalize_formula_resolution(dict(resolution))
+    resolution_type = str(normalized.get("type") or "").strip()
+    if resolution_type not in _READINESS_FORMULA_RESOLUTION_TYPES:
+        return {}
+    return normalized
 
 
 def _standard_exception_formula_resolution(norm: LegalNormIR, blockers: List[str]) -> Dict[str, Any]:

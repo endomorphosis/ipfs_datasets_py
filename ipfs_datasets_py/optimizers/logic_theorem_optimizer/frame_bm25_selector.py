@@ -348,6 +348,7 @@ _FRAME_ONTOLOGY_STRUCTURAL_CONTEXTUAL_PREDICATE_SUFFIXES: tuple[str, ...] = (
     "_unique_char_count",
 )
 _FRAME_ONTOLOGY_CONTEXTUAL_ALWAYS_PREDICATE_FRAGMENTS: tuple[str, ...] = (
+    "modal_cue",
     "_conditional_normative",
     "_distance_profile",
     "_magnitude_bucket",

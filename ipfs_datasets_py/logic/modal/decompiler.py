@@ -3090,6 +3090,41 @@ def _formula_cues(formula: ModalIRFormula) -> List[str]:
         normalized_existing = {value.lower() for value in cues}
         if derived_cue.lower() not in normalized_existing:
             cues.append(derived_cue)
+    normalized_existing = {value.lower() for value in cues}
+    for temporal_prefix_cue in _temporal_prefix_cues(formula):
+        if temporal_prefix_cue in normalized_existing:
+            continue
+        cues.append(temporal_prefix_cue)
+        normalized_existing.add(temporal_prefix_cue)
+    return cues
+
+
+def _temporal_prefix_cues(formula: ModalIRFormula) -> List[str]:
+    cues: List[str] = []
+    for clause in formula.conditions:
+        parsed_clause = _typed_clause_slot(clause, slot="condition")
+        if parsed_clause is None:
+            continue
+        _, prefix_key, _ = parsed_clause
+        normalized_prefix_key = _clean_text(prefix_key).lower()
+        if (
+            normalized_prefix_key
+            and _temporal_clause_prefix_relation(normalized_prefix_key)
+            and normalized_prefix_key not in cues
+        ):
+            cues.append(normalized_prefix_key)
+    for clause in formula.exceptions:
+        parsed_clause = _typed_clause_slot(clause, slot="exception")
+        if parsed_clause is None:
+            continue
+        _, prefix_key, _ = parsed_clause
+        normalized_prefix_key = _clean_text(prefix_key).lower()
+        if (
+            normalized_prefix_key
+            and _temporal_clause_prefix_relation(normalized_prefix_key)
+            and normalized_prefix_key not in cues
+        ):
+            cues.append(normalized_prefix_key)
     return cues
 
 

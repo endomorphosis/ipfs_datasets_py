@@ -10,6 +10,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     _apply_competing_scope_backfill,
     _apply_frame_competing_scope_soft_cap,
+    _apply_temporal_competing_scope_soft_cap,
     _scope_signal_family_logit_boosts,
     SpaCyLegalEncoder,
     SpaCyModalCodec,
@@ -1607,6 +1608,21 @@ def test_spacy_frame_soft_cap_treats_strong_epistemic_scope_as_competing_signal(
     assert counts["frame"] < 4.0
 
 
+def test_spacy_frame_soft_cap_treats_strong_dynamic_scope_as_competing_signal() -> None:
+    counts = {
+        "frame": 4.0,
+        "dynamic": 0.12,
+    }
+    signals = {
+        "has_dynamic_scope": True,
+        "has_dynamic_scope_phrase": True,
+    }
+
+    _apply_frame_competing_scope_soft_cap(counts, signals)
+
+    assert counts["frame"] < 4.0
+
+
 def test_spacy_frame_backfill_strengthens_existing_low_epistemic_weight() -> None:
     counts = {
         "frame": 0.6,
@@ -1619,6 +1635,42 @@ def test_spacy_frame_backfill_strengthens_existing_low_epistemic_weight() -> Non
     _apply_competing_scope_backfill(counts, signals)
 
     assert counts["epistemic"] > 0.12
+
+
+def test_spacy_backfill_strengthens_existing_low_deontic_weight_for_conditional_scope() -> None:
+    counts = {
+        "conditional_normative": 2.4,
+        "deontic": 0.12,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_competing_scope_backfill(counts, signals)
+
+    assert counts["deontic"] > 0.12
+
+
+def test_spacy_backfill_strengthens_existing_low_conditional_weight_for_temporal_scope() -> None:
+    counts = {
+        "temporal": 3.6,
+        "conditional_normative": 0.12,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_competing_scope_backfill(counts, signals)
+
+    assert counts["conditional_normative"] > 0.12
 
 
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
@@ -1641,6 +1693,50 @@ def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -
         cue_competing_boosts["temporal"]
         > base_boosts["temporal"]
     )
+
+
+def test_spacy_temporal_soft_cap_treats_strong_frame_scope_as_competing_signal() -> None:
+    counts = {
+        "temporal": 4.0,
+        "frame": 1.0,
+    }
+    signals = {
+        "has_frame_context": True,
+        "has_frame_scope_phrase": True,
+    }
+
+    _apply_temporal_competing_scope_soft_cap(counts, signals)
+
+    assert counts["temporal"] < 4.0
+
+
+def test_spacy_scope_boost_strengthens_deontic_and_epistemic_in_frame_context() -> None:
+    deontic_base_signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+    }
+    deontic_frame_signals = {
+        **deontic_base_signals,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+    }
+    epistemic_base_signals = {
+        "has_epistemic_scope": True,
+        "has_epistemic_scope_phrase": True,
+    }
+    epistemic_frame_signals = {
+        **epistemic_base_signals,
+        "has_frame_context": True,
+        "has_frame_cue": True,
+    }
+
+    deontic_base_boosts = _scope_signal_family_logit_boosts(deontic_base_signals)
+    deontic_frame_boosts = _scope_signal_family_logit_boosts(deontic_frame_signals)
+    epistemic_base_boosts = _scope_signal_family_logit_boosts(epistemic_base_signals)
+    epistemic_frame_boosts = _scope_signal_family_logit_boosts(epistemic_frame_signals)
+
+    assert deontic_frame_boosts["deontic"] > deontic_base_boosts["deontic"]
+    assert epistemic_frame_boosts["epistemic"] > epistemic_base_boosts["epistemic"]
 
 
 def test_spacy_decoder_soft_caps_repeated_conditional_logits_for_deontic_competition() -> None:
@@ -2894,6 +2990,20 @@ def test_spacy_encoder_extracts_conditional_cue_except_as_provided_by() -> None:
     assert any(
         cue.family == "conditional_normative"
         and cue.cue.lower() == "except as provided by"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_extracts_conditional_cue_does_not_affect() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "This subchapter does not affect chapter 5 of title 5.",
+        document_id="sample-does-not-affect-conditional",
+    )
+
+    assert any(
+        cue.family == "conditional_normative"
+        and cue.cue.lower() == "does not affect"
         for cue in encoding.cues
     )
 

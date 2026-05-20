@@ -1353,6 +1353,10 @@ class DeterministicModalCompiler:
                     signals.get("has_epistemic_scope")
                     or signals.get("has_epistemic_cue")
                 ),
+                ModalLogicFamily.DOXASTIC.value: bool(
+                    signals.get("has_doxastic_scope")
+                    or signals.get("has_doxastic_cue")
+                ),
             }
         elif predicted_family == ModalLogicFamily.HYBRID.value:
             target_signal_by_family = {

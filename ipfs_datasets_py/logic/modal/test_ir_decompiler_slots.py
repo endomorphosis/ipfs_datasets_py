@@ -3606,29 +3606,39 @@ def test_decode_modal_ir_document_emits_cue_modal_signature_and_temporal_prefix_
     decoded = decode_modal_ir_document(_cue_signature_temporal_clause_sample_document())
     slot_map = decoded_modal_phrase_slot_text_map(decoded)
 
-    assert slot_map["cue_modal_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["cue_modal_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
     assert slot_map["cue_modal_canonical_signature"] == [
         "deontic:O:shall",
         "temporal:F:by",
+        "temporal:X:after",
     ]
     assert slot_map["cue_modal_family"] == ["deontic", "temporal"]
     assert slot_map["cue_modal_operator"] == ["O", "F"]
-    assert slot_map["cue_modal_canonical_operator"] == ["O", "F"]
-    assert slot_map["cue_modal_lexeme"] == ["shall", "by"]
-    assert slot_map["cue_modal_operator_alignment"] == ["aligned"]
-    assert slot_map["cue_modal_temporal_relation"] == ["deadline"]
-    assert slot_map["modal_cue"] == ["shall", "by"]
-    assert slot_map["modal_cue_signature"] == ["deontic:O:shall", "temporal:F:by"]
+    assert slot_map["cue_modal_canonical_operator"] == ["O", "F", "X"]
+    assert slot_map["cue_modal_lexeme"] == ["shall", "by", "after"]
+    assert slot_map["cue_modal_operator_alignment"] == ["aligned", "divergent"]
+    assert slot_map["cue_modal_temporal_relation"] == ["deadline", "after"]
+    assert slot_map["modal_cue"] == ["shall", "by", "after"]
+    assert slot_map["modal_cue_signature"] == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
     assert slot_map["modal_cue_canonical_signature"] == [
         "deontic:O:shall",
         "temporal:F:by",
+        "temporal:X:after",
     ]
     assert slot_map["modal_cue_family"] == ["deontic", "temporal"]
     assert slot_map["modal_cue_operator"] == ["O", "F"]
-    assert slot_map["modal_cue_canonical_operator"] == ["O", "F"]
-    assert slot_map["modal_cue_lexeme"] == ["shall", "by"]
-    assert slot_map["modal_cue_operator_alignment"] == ["aligned"]
-    assert slot_map["modal_cue_temporal_relation"] == ["deadline"]
+    assert slot_map["modal_cue_canonical_operator"] == ["O", "F", "X"]
+    assert slot_map["modal_cue_lexeme"] == ["shall", "by", "after"]
+    assert slot_map["modal_cue_operator_alignment"] == ["aligned", "divergent"]
+    assert slot_map["modal_cue_temporal_relation"] == ["deadline", "after"]
     assert slot_map["condition_prefix_key"] == ["if", "after", "by"]
     assert slot_map["condition_modal_signature"] == [
         "deontic:O:if",
@@ -3661,29 +3671,47 @@ def test_modal_ir_to_flogic_triples_emits_cue_modal_signature_and_temporal_prefi
             if triple.get("predicate") == predicate
         ]
 
-    assert objects("cue_modal_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("cue_modal_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
     assert objects("cue_modal_canonical_signature") == [
         "deontic:O:shall",
         "temporal:F:by",
+        "temporal:X:after",
     ]
     assert objects("cue_modal_family") == ["deontic", "temporal"]
     assert objects("cue_modal_operator") == ["O", "F"]
-    assert objects("cue_modal_canonical_operator") == ["O", "F"]
-    assert objects("cue_modal_lexeme") == ["shall", "by"]
-    assert objects("cue_modal_operator_alignment") == ["aligned", "aligned"]
-    assert objects("cue_modal_temporal_relation") == ["deadline"]
-    assert objects("modal_cue") == ["shall", "by"]
-    assert objects("modal_cue_signature") == ["deontic:O:shall", "temporal:F:by"]
+    assert objects("cue_modal_canonical_operator") == ["O", "F", "X"]
+    assert objects("cue_modal_lexeme") == ["shall", "by", "after"]
+    assert objects("cue_modal_operator_alignment") == [
+        "aligned",
+        "aligned",
+        "divergent",
+    ]
+    assert objects("cue_modal_temporal_relation") == ["deadline", "after"]
+    assert objects("modal_cue") == ["shall", "by", "after"]
+    assert objects("modal_cue_signature") == [
+        "deontic:O:shall",
+        "temporal:F:by",
+        "temporal:F:after",
+    ]
     assert objects("modal_cue_canonical_signature") == [
         "deontic:O:shall",
         "temporal:F:by",
+        "temporal:X:after",
     ]
     assert objects("modal_cue_family") == ["deontic", "temporal"]
     assert objects("modal_cue_operator") == ["O", "F"]
-    assert objects("modal_cue_canonical_operator") == ["O", "F"]
-    assert objects("modal_cue_lexeme") == ["shall", "by"]
-    assert objects("modal_cue_operator_alignment") == ["aligned", "aligned"]
-    assert objects("modal_cue_temporal_relation") == ["deadline"]
+    assert objects("modal_cue_canonical_operator") == ["O", "F", "X"]
+    assert objects("modal_cue_lexeme") == ["shall", "by", "after"]
+    assert objects("modal_cue_operator_alignment") == [
+        "aligned",
+        "aligned",
+        "divergent",
+    ]
+    assert objects("modal_cue_temporal_relation") == ["deadline", "after"]
     assert objects("condition_prefix_key") == ["if", "after", "by"]
     assert objects("condition_modal_signature") == [
         "deontic:O:if",

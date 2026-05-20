@@ -1830,6 +1830,109 @@ def test_vector_claim_waits_for_fresh_undersized_bundle(tmp_path, monkeypatch) -
     assert report["selected_count"] == 0
 
 
+def test_vector_claim_skips_fresh_singleton_when_later_bundle_is_ready(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    singleton = ModalTodo(
+        todo_id="program-parser-singleton",
+        action="increase_modal_ir_span_coverage",
+        objective="single parser repair",
+        sample_ids=["a"],
+        citations=["5 U.S.C. 552"],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_parser",
+            "target_component": "modal.compiler",
+        },
+    )
+    deontic_one = ModalTodo(
+        todo_id="program-deontic-one",
+        action="repair_deontic_bridge_quality_gate",
+        objective="deontic bridge quality repair one",
+        sample_ids=["b"],
+        citations=["5 U.S.C. 552"],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=0.9,
+        priority=5.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "deontic",
+            "target_component": "deontic.ir",
+        },
+    )
+    deontic_two = ModalTodo(
+        todo_id="program-deontic-two",
+        action="repair_deontic_prover_bridge",
+        objective="deontic bridge quality repair two",
+        sample_ids=["c"],
+        citations=["5 U.S.C. 552"],
+        loss_name="legal_ir_multiview_total_loss",
+        loss_value=0.8,
+        priority=4.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "deontic",
+            "target_component": "deontic.ir",
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([singleton, deontic_one, deontic_two]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        return (
+            {
+                "program-parser-singleton": [1.0, 0.0],
+                "program-deontic-one": [0.0, 1.0],
+                "program-deontic-two": [0.0, 0.99],
+            },
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(list(todos)),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(list(todos)),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope=None,
+        codex_target_file_lane_lock_seconds=0.0,
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.55,
+        codex_vector_fill_min_similarity=None,
+        codex_vector_min_bundle_size=2,
+        codex_vector_max_bundle_wait_seconds=600.0,
+        max_items=6,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert [todo.todo_id for todo in claimed] == [
+        "program-deontic-one",
+        "program-deontic-two",
+    ]
+    assert queue.get("program-parser-singleton").status == "pending"
+    assert status["claimed"] == 2
+    assert report["mode"] == "vector_skipped_fresh_undersized_anchor"
+    assert report["skipped_fresh_undersized_anchor_ids"] == [
+        "program-parser-singleton"
+    ]
+    assert report["selected_count"] == 2
+
+
 def test_vector_claim_allows_stale_undersized_bundle(tmp_path, monkeypatch) -> None:
     todo = ModalTodo(
         todo_id="program-vector-stale",

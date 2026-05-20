@@ -126,6 +126,26 @@ def test_deontic_bridge_evaluates_legal_norm_ir_and_prover_syntax() -> None:
     ]["coverage_record_count"] >= 1
 
 
+def test_deontic_bridge_soft_accepts_non_normative_statutory_text() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("deontic_norms")
+    report = adapter.evaluate(
+        "Congress finds that unfair methods of competition burden commerce.",
+        document_id="deontic-bridge-non-normative",
+        citation="15 U.S.C. 1431",
+    )
+
+    assert report.ir_document.views["deontic_ir"].metadata["norm_count"] == 0
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.details[0]["reason"] == "no_deontic_coverage_records"
+    assert report.round_trip.cosine_similarity == 1.0
+    assert report.round_trip.reconstruction_loss == 0.0
+    assert report.round_trip.symbolic_validity_penalty == 0.0
+    assert report.status == "ok"
+    assert report.accepted is True
+
+
 def test_deontic_bridge_recovers_coverage_from_single_parser_element_metadata() -> None:
     from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
 
@@ -237,6 +257,77 @@ def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> Non
     ] >= 1
     coverage_records = report.ir_document.views["deontic_prover_syntax"].payload["records"]
     assert isinstance(coverage_records[0].get("coverage_summary"), dict)
+    assert report.proof_gate.attempted_count >= 5
+    assert report.proof_gate.valid_count >= 5
+    assert report.proof_gate.compiles is True
+
+
+def test_deontic_bridge_rehydrates_legacy_coverage_status_map_without_target_lists() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:status-map",
+                "canonical_citation": "15 U.S.C. 1431",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["submit report"],
+                "text": "The Secretary shall submit report.",
+                "support_text": "The Secretary shall submit report.",
+                "support_span": [0, 33],
+                "norm_type": "obligation",
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            },
+            "legal_prover_syntax_target_coverage_records": [
+                {
+                    "source_id": "legacy:deontic:status-map",
+                    "target_logic": "local_prover_syntax",
+                    "coverage_summary": {
+                        "required_targets": [
+                            "frame_logic",
+                            "deontic_cec",
+                            "fol",
+                            "deontic_fol",
+                            "deontic_temporal_fol",
+                        ],
+                        "target_status_by_target": {
+                            "frame_logic": "passed",
+                            "deontic_cec": "passed",
+                            "fol": "passed",
+                            "deontic_fol": "passed",
+                            "deontic_temporal_fol": "passed",
+                        },
+                        "syntax_valid_rate": 1.0,
+                    },
+                    "coverage_blockers": [],
+                }
+            ],
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        "The Secretary shall submit report.",
+        document_id="deontic-bridge-legacy-coverage-status-map",
+        citation="Deontic Bridge Legacy Coverage Status Map",
+    )
+
+    assert report.ir_document.views["deontic_prover_syntax"].metadata[
+        "coverage_record_count"
+    ] >= 1
     assert report.proof_gate.attempted_count >= 5
     assert report.proof_gate.valid_count >= 5
     assert report.proof_gate.compiles is True
@@ -529,6 +620,41 @@ def test_external_prover_router_bridge_soft_passes_when_no_formulas_available() 
     assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
 
 
+def test_external_prover_router_bridge_soft_passes_when_no_provers_available(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _NoProverRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return []
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _NoProverRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=False,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-no-provers",
+        citation="External Prover Bridge No Provers",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.failure_ratio == 0.0
+    assert report.proof_gate.details[0]["bridge_soft_pass"] is True
+    assert report.proof_gate.details[0]["reason"] == "no_provers_available"
+    assert report.round_trip.extra_losses["external_prover_unavailable_loss"] == 1.0
+
+
 def test_external_prover_router_bridge_supports_route_signature_without_axioms(
     monkeypatch,
 ) -> None:
@@ -638,6 +764,22 @@ def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
     assert fol_records
     assert fol_records[0]["parse_ok"] is True
     assert "n_25_usc_640d_28" in fol_records[0]["formula"]
+
+
+def test_multiview_bridge_accepts_non_normative_statutory_text() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    report = evaluate_legal_ir_multiview(
+        "15 U.S.C. 1431: Congress finds that unfair methods of competition burden commerce.",
+        bridge_names=("deontic_norms", "fol_tdfol", "cec_dcec"),
+        document_id="multiview-non-normative",
+        citation="15 U.S.C. 1431",
+    )
+
+    assert report.accepted_count == 3
+    assert report.acceptance_rate == 1.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+    assert report.reports["deontic_norms"].accepted is True
 
 
 def test_logic_manifest_includes_bridge_layer() -> None:

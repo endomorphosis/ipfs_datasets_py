@@ -224,6 +224,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
         ModalLogicFamily.ALETHIC.value,
     ),
     (
@@ -239,6 +243,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.TEMPORAL.value,
     ),
     (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
         ModalLogicFamily.HYBRID.value,
         ModalLogicFamily.FRAME.value,
     ),
@@ -249,6 +257,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -753,7 +765,24 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
         family=ModalLogicFamily.DOXASTIC,
         system=ModalSystem.KD45,
         operators=(
-            _op("B", ("believes", "belief"), ("believes", "reasonably believes", "intends", "suspects"), (ModalSystem.KD45,)),
+            _op(
+                "B",
+                ("believes", "belief"),
+                (
+                    "believe",
+                    "believed",
+                    "belief",
+                    "believes",
+                    "intend",
+                    "intended",
+                    "intends",
+                    "reasonably believes",
+                    "suspect",
+                    "suspected",
+                    "suspects",
+                ),
+                (ModalSystem.KD45,),
+            ),
         ),
         semantics=ModalSemanticsSpec(serial=True, transitive=True, euclidean=True),
         description="Belief and intent-style legal states.",
@@ -784,6 +813,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "except as otherwise provided",
                     "except as provided in",
                     "except as provided by",
+                    "does not affect",
                     "except to the extent",
                     "to the extent provided",
                     "to the extent that",

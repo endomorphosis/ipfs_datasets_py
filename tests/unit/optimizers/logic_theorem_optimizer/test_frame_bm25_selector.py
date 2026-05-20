@@ -1152,6 +1152,29 @@ def test_frame_ontology_contextualized_terms_contextualize_predicate_token_and_m
     assert "citation_section_primary_number_magnitude_bucket_lt_1k" in terms
 
 
+def test_frame_ontology_contextualized_terms_contextualize_modal_cues_and_low_signal_digit_signatures() -> None:
+    terms = frame_ontology_contextualized_terms(
+        feature_keys=[
+            "flogic:citation_section_number_parity_positioned:2:even",
+            "flogic:source_id_section_number_parity_positioned:2:even",
+            "slot:citation_section_number_parity_positioned:2_even",
+            "slot:source_id_section_number_parity_positioned:2_even",
+            "flogic:citation_source_id_title_number_signature_leading_digit_pair:2|2",
+            "flogic:citation_title_number_leading_digit:2",
+            "flogic:source_id_title_number_leading_digit:2",
+            "slot:citation_source_id_title_number_signature_leading_digit_pair:2_2",
+            "flogic:modal_cue:after",
+        ]
+    )
+
+    assert "citation_section_number_parity_positioned_even" in terms
+    assert "source_id_section_number_parity_positioned_even" in terms
+    assert "citation_source_id_title_number_signature_leading_digit_pair_2" in terms
+    assert "citation_title_number_leading_digit_2" in terms
+    assert "source_id_title_number_leading_digit_2" in terms
+    assert "modal_cue_after" in terms
+
+
 def test_frame_ontology_terms_from_feature_keys_support_legacy_bare_contextual_predicates() -> None:
     terms = frame_ontology_terms_from_feature_keys(
         [
