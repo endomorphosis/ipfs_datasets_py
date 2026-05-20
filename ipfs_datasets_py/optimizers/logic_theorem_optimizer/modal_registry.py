@@ -61,6 +61,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
@@ -130,6 +134,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -191,6 +199,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
     ),
     (
+        ModalLogicFamily.DYNAMIC.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
@@ -209,6 +221,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+        ModalLogicFamily.EPISTEMIC.value,
     ),
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
@@ -248,6 +264,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
         ModalLogicFamily.FRAME.value,
     ),
     (
@@ -257,6 +277,10 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     (
         ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.ALETHIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -432,6 +456,10 @@ SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
     ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
+    ),
     *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
 )
 
@@ -570,6 +598,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     (
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DOXASTIC.value,
     ),
 )
 
@@ -714,6 +746,8 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "has a duty to",
                     "have a duty to",
                     "under an obligation to",
+                    "is entitled to",
+                    "shall be entitled to",
                 ),
                 (ModalSystem.D, ModalSystem.KD),
             ),
@@ -738,7 +772,14 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "effective date",
                     "effective on first day",
                     "fiscal year",
+                    "fiscal years",
                     "calendar year",
+                    "calendar years",
+                    "for each fiscal year",
+                    "for each of fiscal years",
+                    "for fiscal years",
+                    "for each calendar year",
+                    "for calendar years",
                     "from time to time",
                     "on or after",
                     "beginning on or after",
@@ -803,6 +844,9 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "intend",
                     "intended",
                     "intends",
+                    "intent to",
+                    "with intent to",
+                    "with the intent to",
                     "reasonably believes",
                     "suspect",
                     "suspected",
@@ -837,6 +881,9 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "provided that",
                     "subject to",
                     "as provided by",
+                    "as otherwise provided in",
+                    "as otherwise provided by",
+                    "as otherwise provided under",
                     "except as otherwise provided",
                     "except as provided in",
                     "except as provided by",
@@ -865,6 +912,8 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "subject, however, to",
                     "subject however to",
                     "with respect to",
+                    "insofar as",
+                    "insofar as practicable",
                 ),
                 (ModalSystem.KD,),
             ),
@@ -942,8 +991,9 @@ def supports_signal_free_adaptive_ambiguity_pair(
     resolved_target_family = _resolve_modal_family_name(target_family)
     return (
         resolved_target_family in compiler_ambiguity_policy_targets(predicted_family)
-        or resolved_target_family in signal_free_adaptive_ambiguity_targets(
-            predicted_family
+        or is_signal_free_adaptive_ambiguity_pair(
+            predicted_family,
+            resolved_target_family,
         )
         or resolved_target_family in compiler_required_adaptive_ambiguity_targets(
             predicted_family
@@ -973,6 +1023,19 @@ def signal_free_adaptive_ambiguity_targets(
         for source_family, target_family in SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
         if source_family == resolved_predicted_family
     )
+
+
+def is_signal_free_adaptive_ambiguity_pair(
+    predicted_family: ModalLogicFamily | str,
+    target_family: ModalLogicFamily | str,
+) -> bool:
+    """Return whether a pair is in the signal-free adaptive ambiguity policy."""
+    resolved_predicted_family = _resolve_modal_family_name(predicted_family)
+    resolved_target_family = _resolve_modal_family_name(target_family)
+    return (
+        resolved_predicted_family,
+        resolved_target_family,
+    ) in SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
 
 
 def priority_signal_free_adaptive_ambiguity_targets(
@@ -1071,7 +1134,24 @@ def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
     leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
     leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
     leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
-    for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+    split_tokens: list[str] = []
+    delimiters = ("->", ".", ":", "/", "|")
+    for delimiter in delimiters:
+        if delimiter not in resolved:
+            continue
+        split_tokens.extend(
+            part.strip()
+            for part in resolved.split(delimiter)
+            if str(part).strip()
+        )
+    for token in (
+        resolved,
+        leaf_dot,
+        leaf_colon,
+        leaf_slash,
+        leaf_pipe,
+        *split_tokens,
+    ):
         _remember(token)
         lowered = token.lower()
         _remember(lowered)
@@ -1109,6 +1189,7 @@ __all__ = [
     "ModalSemanticsSpec",
     "ModalSystem",
     "is_normative_modal_family",
+    "is_signal_free_adaptive_ambiguity_pair",
     "prefers_contested_zero_margin_adaptive_ambiguity_pair",
     "priority_signal_free_adaptive_ambiguity_targets",
     "signal_free_adaptive_ambiguity_targets",

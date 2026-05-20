@@ -475,11 +475,10 @@ class ProverRouter:
     ) -> RouterProofResult:
         """Prove using automatic prover selection."""
         start_time = time.time()
-        
+
         try:
             # Select best prover
-            prover_name = self._select_prover_for_formula(formula)
-            prover = self.provers[prover_name]
+            selected_prover = self._select_prover_for_formula(formula)
         except RuntimeError as exc:
             proof_time = time.time() - start_time
             return RouterProofResult(
@@ -490,30 +489,60 @@ class ProverRouter:
                 strategy_used="auto",
                 reason=str(exc),
             )
-        
-        # Prove
-        try:
-            result = self._call_prover(prover_name, prover, formula, axioms, timeout)
-            proof_time = time.time() - start_time
-            
-            return RouterProofResult(
-                is_proved=self._result_is_proved(result),
-                prover_used=prover_name,
-                proof_time=proof_time,
-                all_results={prover_name: result},
-                strategy_used="auto",
-                reason=f"Used {prover_name}"
-            )
-        except Exception as e:
-            proof_time = time.time() - start_time
-            return RouterProofResult(
-                is_proved=False,
-                prover_used=prover_name,
-                proof_time=proof_time,
-                all_results={},
-                strategy_used="auto",
-                reason=f"Error: {str(e)}"
-            )
+
+        # Keep the analyzer-selected prover first, then deterministically
+        # fall back across the remaining available provers.
+        ordered_provers = [selected_prover] + [
+            prover_name
+            for prover_name in self.provers
+            if prover_name != selected_prover
+        ]
+        all_results: Dict[str, Any] = {}
+        first_non_error: Optional[str] = None
+
+        for prover_name in ordered_provers:
+            prover = self.provers[prover_name]
+            try:
+                result = self._call_prover(
+                    prover_name,
+                    prover,
+                    formula,
+                    axioms,
+                    timeout,
+                )
+            except Exception as exc:
+                all_results[prover_name] = f"Error: {str(exc)}"
+                continue
+
+            all_results[prover_name] = result
+            if first_non_error is None:
+                first_non_error = prover_name
+            if self._result_is_proved(result):
+                proof_time = time.time() - start_time
+                return RouterProofResult(
+                    is_proved=True,
+                    prover_used=prover_name,
+                    proof_time=proof_time,
+                    all_results=all_results,
+                    strategy_used="auto",
+                    reason=f"Proved by {prover_name}",
+                )
+
+        proof_time = time.time() - start_time
+        if first_non_error is None:
+            reason = "All provers failed"
+        elif first_non_error == selected_prover:
+            reason = f"Used {selected_prover} (no proof)"
+        else:
+            reason = f"Fell back to {first_non_error} (no proof)"
+        return RouterProofResult(
+            is_proved=False,
+            prover_used=first_non_error,
+            proof_time=proof_time,
+            all_results=all_results,
+            strategy_used="auto",
+            reason=reason,
+        )
     
     def _prove_parallel(
         self,

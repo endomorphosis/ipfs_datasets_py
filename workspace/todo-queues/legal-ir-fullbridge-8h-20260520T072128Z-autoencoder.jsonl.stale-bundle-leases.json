@@ -1,9 +1,9 @@
 {
-  "compiler_ambiguity|modal.compiler.ambiguity|{\"action\":\"add_or_review_modal_ambiguity_policy\",\"family_pairs\":[\"frame->conditional_normative\",\"frame->temporal\"],\"program_synthesis_scope\":\"compiler_ambiguity\",\"target_component\":\"modal.compiler.ambiguity\"}": {
-    "anchor_id": "program-42a43943aa86afb0",
-    "expires_at": "2026-05-20T08:04:49+00:00",
-    "expires_at_epoch": 1779264289.0820665,
+  "compiler_ambiguity|modal.compiler.ambiguity|{\"action\":\"add_or_review_modal_ambiguity_policy\",\"family_pairs\":[\"frame->frame\",\"temporal->conditional_normative\",\"temporal->temporal\"],\"program_synthesis_scope\":\"compiler_ambiguity\",\"target_component\":\"modal.compiler.ambiguity\"}": {
+    "anchor_id": "program-e8c4123559cdb85d",
+    "expires_at": "2026-05-20T14:36:38+00:00",
+    "expires_at_epoch": 1779287798.7372048,
     "selected_count": 1,
-    "worker_id": "codex-compiler_ambiguity-04"
+    "worker_id": "codex-compiler_ambiguity-01"
   }
 }

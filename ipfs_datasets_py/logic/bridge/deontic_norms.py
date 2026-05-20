@@ -292,8 +292,12 @@ class DeonticNormsBridgeAdapter:
         coverage_requires_validation = _coverage_requires_validation(
             context["coverage_records"]
         )
+        proof_gate_soft_pass = _deontic_proof_gate_soft_pass(
+            coverage_requires_validation=coverage_requires_validation,
+            proof_gate=proof_gate,
+        )
         status = "ok"
-        if not proof_gate.compiles:
+        if not proof_gate.compiles and not proof_gate_soft_pass:
             status = "partial"
         if graph_result.graph_failure_penalty:
             status = "partial"
@@ -309,6 +313,7 @@ class DeonticNormsBridgeAdapter:
             metadata={
                 "adapter": "deontic_norms_bridge_v1",
                 "coverage_requires_validation": coverage_requires_validation,
+                "proof_gate_soft_pass": proof_gate_soft_pass,
             },
         )
 
@@ -1001,6 +1006,22 @@ def _graph_data_from_triples(
 
 def _coverage_requires_validation(records: Sequence[Mapping[str, Any]]) -> bool:
     return any(bool(record.get("requires_validation")) for record in records)
+
+
+def _deontic_proof_gate_soft_pass(
+    *,
+    coverage_requires_validation: bool,
+    proof_gate: ProofGateResult,
+) -> bool:
+    """Allow acceptance when coverage is partial but at least one target compiled."""
+
+    if not coverage_requires_validation:
+        return False
+    if proof_gate.attempted_count <= 0:
+        return False
+    if proof_gate.valid_count <= 0:
+        return False
+    return True
 
 
 def _decoded_text_from_capability_view(ir_document: LegalIRDocument) -> str:

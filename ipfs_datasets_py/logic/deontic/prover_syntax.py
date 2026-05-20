@@ -18,7 +18,11 @@ from .formula_builder import (
     build_deontic_formula_from_ir,
     build_deontic_formula_record_from_ir,
 )
-from .ir import LegalNormIR, legal_norm_ir_slot_provenance
+from .ir import (
+    LegalNormIR,
+    canonical_modality_operator,
+    legal_norm_ir_slot_provenance,
+)
 from .decoder import decode_legal_norm_ir
 
 
@@ -1114,7 +1118,7 @@ def _source_deontic_operator(formula: str, norm: LegalNormIR) -> str:
     text = str(formula or "").strip()
     if len(text) > 2 and text[0] in {"O", "P", "F"} and text[1] == "(":
         return text[0]
-    modality = str(norm.modality or "").strip().upper()
+    modality = canonical_modality_operator(norm.modality, norm.norm_type)
     return modality if modality in {"O", "P", "F"} else ""
 
 
@@ -1237,11 +1241,14 @@ def _ir_semantic_fingerprint(
     decoded_slots: Sequence[str],
     grounded_ir_slots: Sequence[str] = (),
 ) -> str:
+    modality = canonical_modality_operator(norm.modality, norm.norm_type) or str(
+        norm.modality or ""
+    )
     return _stable_fingerprint(
         norm.schema_version,
         norm.source_id,
         norm.norm_type,
-        norm.modality,
+        modality,
         norm.actor,
         norm.action,
         formula,

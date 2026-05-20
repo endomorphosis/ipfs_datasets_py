@@ -6,7 +6,7 @@ import re
 from dataclasses import replace
 from typing import Any, Dict, Iterable, List, Mapping, Sequence
 
-from .ir import LegalNormIR
+from .ir import LegalNormIR, canonical_modality_operator
 
 
 _MENTAL_STATE_TERMS = {
@@ -90,10 +90,19 @@ _FORMULA_CONDITION_LIMIT = 3
 _FORMULA_EXCEPTION_LIMIT = 3
 
 
+def _norm_modality(norm: LegalNormIR) -> str:
+    """Return a canonical modality token for typed IR export workflows."""
+
+    canonical = canonical_modality_operator(norm.modality, norm.norm_type)
+    if canonical:
+        return canonical
+    return str(norm.modality or "").strip().upper()
+
+
 def build_deontic_formula_from_ir(norm: LegalNormIR) -> str:
     """Build a deterministic deontic/frame-logic formula from typed IR."""
 
-    operator = norm.modality
+    operator = _norm_modality(norm)
     if operator == "DEF":
         subject = normalize_predicate_name(norm.actor or "DefinedTerm")
         return f"Definition({subject})"
@@ -390,13 +399,13 @@ def _formula_operator(norm: LegalNormIR, action_text: str) -> str:
         or _is_confidentiality_obligation(norm, action_text)
     ):
         return "F"
-    return norm.modality
+    return _norm_modality(norm)
 
 
 def _is_failure_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a prohibition of failing to act is a positive duty."""
 
-    if norm.modality != "F":
+    if _norm_modality(norm) != "F":
         return False
     return bool(re.match(
         r"^(?:fail(?:ure)?|refus(?:e|al)|neglect(?:s|ed|ing)?|omit(?:s|ted|ting)?)"
@@ -1744,7 +1753,7 @@ def _normalize_recordkeeping_light_verb_action(action_text: str) -> str:
 def _is_direct_gerund_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a direct prohibition action starts with a normalized legal gerund."""
 
-    if norm.modality != "F":
+    if _norm_modality(norm) != "F":
         return False
     return bool(re.match(
         r"^(?:disclosing|entering|operating|using|contacting|discharging|removing|altering|destroying|obstructing|interfering|impeding)\b",
@@ -1756,7 +1765,7 @@ def _is_direct_gerund_prohibition(norm: LegalNormIR, action_text: str) -> bool:
 def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether an affirmative duty not to act is a prohibition."""
 
-    if norm.modality != "O":
+    if _norm_modality(norm) != "O":
         return False
     return bool(re.match(
         r"^(?:(?:refrain|abstain|desist|forbear)\s+from|(?:cease|stop))\s+\S"
@@ -1769,7 +1778,7 @@ def _is_refrain_obligation(norm: LegalNormIR, action_text: str) -> bool:
 def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether an affirmative prevention duty is a prohibition."""
 
-    if norm.modality != "O":
+    if _norm_modality(norm) != "O":
         return False
     return bool(re.match(
         r"^(?:prevent|prohibit|bar|block)\s+(?:entry|access|discharge|disclosure|removal|alteration|destruction)\b",
@@ -1781,7 +1790,7 @@ def _is_prevention_obligation(norm: LegalNormIR, action_text: str) -> bool:
 def _is_confidentiality_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether an affirmative confidentiality duty prohibits disclosure."""
 
-    if norm.modality != "O":
+    if _norm_modality(norm) != "O":
         return False
     text = str(action_text or "").strip()
     return bool(
@@ -1797,7 +1806,7 @@ def _is_confidentiality_obligation(norm: LegalNormIR, action_text: str) -> bool:
 def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a duty to ensure compliance embeds the operative action."""
 
-    if norm.modality != "O":
+    if _norm_modality(norm) != "O":
         return False
     return bool(re.match(
         r"^(?:ensure|secure|maintain)\s+compliance\s+with\s+\S",
@@ -1809,7 +1818,7 @@ def _is_compliance_obligation(norm: LegalNormIR, action_text: str) -> bool:
 def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether an access/availability duty embeds the proof action."""
 
-    if norm.modality != "O":
+    if _norm_modality(norm) != "O":
         return False
     text = str(action_text or "").strip()
     return bool(
@@ -1829,7 +1838,7 @@ def _is_access_availability_obligation(norm: LegalNormIR, action_text: str) -> b
 def _is_direct_interference_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a direct prohibition targets interference with a legal process."""
 
-    if norm.modality != "F":
+    if _norm_modality(norm) != "F":
         return False
     return bool(re.match(
         r"^(?:interfere|interferes|obstruct|obstructs|impede|impedes)\s+(?:with\s+)?\S",
@@ -1841,7 +1850,7 @@ def _is_direct_interference_prohibition(norm: LegalNormIR, action_text: str) -> 
 def _is_permission_facilitation_prohibition(norm: LegalNormIR, action_text: str) -> bool:
     """Return whether a prohibition targets facilitating or causing a regulated act."""
 
-    if norm.modality != "F":
+    if _norm_modality(norm) != "F":
         return False
     return bool(re.match(
         r"^(?:permit|allow|authorize|enable|require|compel|direct|coerce|cause|causes|result\s+in)\s+(?:any\s+|a\s+|an\s+|the\s+)?"
@@ -2219,7 +2228,7 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "is_enumerated_child": norm.is_enumerated_child,
         "target_logic": _target_logic_for_norm(norm),
         "formula": formula,
-        "modality": norm.modality,
+        "modality": _norm_modality(norm),
         "norm_type": norm.norm_type,
         "support_span": norm.support_span.to_list(),
         "field_spans": dict(norm.field_spans),
@@ -2506,7 +2515,7 @@ def _stable_formula_id(source_id: str, formula: str) -> str:
 
 
 def _target_logic_for_norm(norm: LegalNormIR) -> str:
-    if norm.modality in {"APP", "EXEMPT", "LIFE"} or norm.norm_type in {
+    if _norm_modality(norm) in {"APP", "EXEMPT", "LIFE"} or norm.norm_type in {
         "applicability",
         "exemption",
         "instrument_lifecycle",
@@ -3459,7 +3468,7 @@ def _deterministic_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     if reference_condition_resolution:
         return reference_condition_resolution
 
-    if norm.modality != "APP" or norm.norm_type != "applicability":
+    if _norm_modality(norm) != "APP" or norm.norm_type != "applicability":
         return {}
 
     allowed_blockers = {"cross_reference_requires_resolution", "llm_repair_required"}
@@ -3532,7 +3541,7 @@ def _standard_exception_formula_resolution(norm: LegalNormIR, blockers: List[str
     non-reference phrase and no precedence/citation review is pending.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if not norm.actor.strip() or not norm.action.strip():
         return {}
@@ -3579,7 +3588,7 @@ def _pure_override_formula_resolution(norm: LegalNormIR, blockers: List[str]) ->
     slot is present. Parser-level theorem promotion remains conservative.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}
@@ -3630,7 +3639,7 @@ def _resolved_reference_exception_formula_resolution(norm: LegalNormIR, blockers
     conservative because precedence and scope review remain visible as blockers.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}
@@ -3707,7 +3716,7 @@ def _resolved_reference_condition_formula_resolution(norm: LegalNormIR, blockers
     resolution. Parser-level theorem promotion remains conservative.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}
@@ -3774,7 +3783,7 @@ def _local_scope_reference_condition_formula_resolution(norm: LegalNormIR, block
     reference resolver.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}
@@ -3840,7 +3849,7 @@ def _local_scope_reference_exception_formula_resolution(norm: LegalNormIR, block
     is present. This does not relax parser-level theorem promotion.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}
@@ -3910,7 +3919,7 @@ def _batch_resolved_reference_exception_formula_resolution(
     as provenance and excluded from the operative formula antecedent.
     """
 
-    if norm.modality not in {"O", "P", "F"}:
+    if _norm_modality(norm) not in {"O", "P", "F"}:
         return {}
     if norm.norm_type not in {"obligation", "permission", "prohibition"}:
         return {}

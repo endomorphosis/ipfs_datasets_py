@@ -1,5 +1,7 @@
 """Tests for Phase 8 local prover syntax validation."""
 
+from dataclasses import replace
+
 from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
 from ipfs_datasets_py.logic.deontic.prover_syntax import (
     _syntax_diagnostics,
@@ -58,6 +60,33 @@ def test_prover_syntax_renders_target_specific_ascii_dialects():
                 connective in expected_formula for connective in ("∀", "∧", "→", "¬")
             )
             assert records[target]["diagnostics"] == []
+
+
+def test_prover_syntax_canonicalizes_textual_modality_tokens_for_typed_ir_obligations():
+    base = LegalNormIR.from_parser_element(
+        extract_normative_elements("The agency shall publish notice.")[0]
+    )
+    variants = [
+        replace(base, modality="obligation"),
+        replace(base, modality="", norm_type="obligation"),
+    ]
+
+    for norm in variants:
+        records = {
+            target.target: target.to_dict()
+            for target in validate_ir_with_provers(norm).targets
+        }
+
+        assert records["fol"]["exported_formula"].startswith("forall x.")
+        assert records["deontic_fol"]["exported_formula"].startswith("O(forall x.")
+        assert records["deontic_cec"]["exported_formula"].startswith("Happens(")
+        assert "HoldsAt(O(" in records["deontic_cec"]["exported_formula"]
+        assert records["deontic_fol"]["target_dialect_profile"][
+            "source_deontic_operator"
+        ] == "O"
+        assert records["deontic_temporal_fol"]["target_dialect_profile"][
+            "source_deontic_operator"
+        ] == "O"
 
 
 def test_prover_syntax_records_carry_decoder_context_for_local_targets():

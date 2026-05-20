@@ -33,6 +33,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_registry import (
     ModalRegistry,
     is_compiler_required_adaptive_ambiguity_pair,
     is_priority_signal_free_adaptive_ambiguity_pair,
+    is_signal_free_adaptive_ambiguity_pair,
     is_normative_modal_family,
     prefers_contested_zero_margin_adaptive_ambiguity_pair,
     priority_signal_free_adaptive_ambiguity_targets,
@@ -68,6 +69,39 @@ def _current_compiler_attr(name: str, fallback: Any) -> Any:
 def _modal_ambiguity_signals(encoding: SpaCyLegalEncoding) -> Mapping[str, bool]:
     resolver = _current_compiler_attr("modal_ambiguity_signals", modal_ambiguity_signals)
     return resolver(encoding)
+
+
+def _canonical_modal_family_token(value: Any) -> str:
+    """Normalize modal-family tokens for policy table lookups."""
+    resolved = str(value or "").strip()
+    if not resolved:
+        return ""
+    candidate_tokens: List[str] = []
+    seen_tokens: set[str] = set()
+
+    def _remember(token: str) -> None:
+        normalized = str(token).strip()
+        if not normalized or normalized in seen_tokens:
+            return
+        seen_tokens.add(normalized)
+        candidate_tokens.append(normalized)
+
+    leaf_dot = resolved.rsplit(".", maxsplit=1)[-1].strip()
+    leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
+    leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
+    leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
+    for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+        _remember(token)
+        lowered = token.lower()
+        _remember(lowered)
+        _remember(lowered.replace("-", "_").replace(" ", "_"))
+
+    for candidate in candidate_tokens:
+        try:
+            return ModalLogicFamily(candidate).value
+        except ValueError:
+            continue
+    return leaf_pipe.lower().replace("-", "_").replace(" ", "_")
 
 
 def _priority_signal_free_adaptive_ambiguity_targets(family: str) -> Sequence[str]:
@@ -106,7 +140,9 @@ def _is_priority_signal_free_adaptive_ambiguity_pair(
     predicted_family: str,
     target_family: str,
 ) -> bool:
-    return target_family in _priority_signal_free_adaptive_ambiguity_targets(
+    return _canonical_modal_family_token(
+        target_family
+    ) in _priority_signal_free_adaptive_ambiguity_targets(
         predicted_family
     )
 
@@ -115,7 +151,9 @@ def _is_compiler_required_adaptive_ambiguity_pair(
     predicted_family: str,
     target_family: str,
 ) -> bool:
-    return target_family in _compiler_required_adaptive_ambiguity_targets(
+    return _canonical_modal_family_token(
+        target_family
+    ) in _compiler_required_adaptive_ambiguity_targets(
         predicted_family
     )
 
@@ -146,18 +184,28 @@ def _supports_signal_free_adaptive_ambiguity_pair(
     predicted_family: str,
     target_family: str,
 ) -> bool:
+    resolved_target_family = _canonical_modal_family_token(target_family)
     return (
         _is_priority_signal_free_adaptive_ambiguity_pair(
             predicted_family,
-            target_family,
+            resolved_target_family,
         )
         or _is_compiler_required_adaptive_ambiguity_pair(
             predicted_family,
-            target_family,
+            resolved_target_family,
         )
-        or target_family
+        or resolved_target_family
         in _signal_free_adaptive_ambiguity_targets(predicted_family)
-        or _is_compiler_ambiguity_policy_pair(predicted_family, target_family)
+        or bool(
+            is_signal_free_adaptive_ambiguity_pair(
+                predicted_family,
+                resolved_target_family,
+            )
+        )
+        or _is_compiler_ambiguity_policy_pair(
+            predicted_family,
+            resolved_target_family,
+        )
     )
 
 
@@ -827,7 +875,24 @@ class DeterministicModalCompiler:
         leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
         leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
         leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
-        for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+        split_tokens: List[str] = []
+        delimiters = ("->", ".", ":", "/", "|")
+        for delimiter in delimiters:
+            if delimiter not in resolved:
+                continue
+            split_tokens.extend(
+                part.strip()
+                for part in resolved.split(delimiter)
+                if str(part).strip()
+            )
+        for token in (
+            resolved,
+            leaf_dot,
+            leaf_colon,
+            leaf_slash,
+            leaf_pipe,
+            *split_tokens,
+        ):
             _remember(token)
             lowered = token.lower()
             _remember(lowered)
@@ -942,15 +1007,31 @@ class DeterministicModalCompiler:
         runner_up_family: Optional[str] = None
         runner_up_share = 0.0
         predicted_margin_to_runner_up: Optional[float] = None
-        if len(ranking) > 1:
+        runner_up_candidate = max(
+            (
+                candidate
+                for candidate in ranking
+                if (
+                    self._canonical_modal_family_name(candidate.get("family"))
+                    or str(candidate.get("family", ""))
+                )
+                != predicted_family
+            ),
+            key=lambda candidate: (
+                self._ranking_share(candidate),
+                str(candidate.get("family", "")),
+            ),
+            default=None,
+        )
+        if runner_up_candidate is not None:
             runner_up_family = (
-                self._canonical_modal_family_name(ranking[1].get("family"))
-                or str(ranking[1]["family"])
+                self._canonical_modal_family_name(runner_up_candidate.get("family"))
+                or str(runner_up_candidate.get("family", ""))
             )
             runner_up_share = float(
                 canonical_family_shares.get(
                     runner_up_family,
-                    self._ranking_share(ranking[1]),
+                    self._ranking_share(runner_up_candidate),
                 )
             )
             predicted_margin_to_runner_up = predicted_share - runner_up_share
@@ -1091,6 +1172,24 @@ class DeterministicModalCompiler:
                 predicted_family,
                 target_family,
             )
+            runner_up_is_compiler_ambiguity_bundle_pair = bool(
+                is_self_pair
+                and runner_up_family is not None
+                and _is_compiler_ambiguity_policy_pair(
+                    predicted_family,
+                    runner_up_family,
+                )
+            )
+            effective_is_compiler_ambiguity_bundle_pair = (
+                is_compiler_ambiguity_bundle_pair
+                or runner_up_is_compiler_ambiguity_bundle_pair
+            )
+            effective_compiler_ambiguity_policy_pair = (
+                f"{predicted_family}->{runner_up_family}"
+                if runner_up_is_compiler_ambiguity_bundle_pair
+                and runner_up_family is not None
+                else f"{predicted_family}->{target_family}"
+            )
             adaptive_priority = self._adaptive_margin_priority(
                 family_margin=family_margin,
                 threshold=threshold,
@@ -1126,6 +1225,20 @@ class DeterministicModalCompiler:
                 "ambiguity_policy_bundle": (
                     "compiler_ambiguity"
                     if is_compiler_ambiguity_bundle_pair
+                    else None
+                ),
+                "runner_up_is_compiler_ambiguity_bundle_pair": (
+                    runner_up_is_compiler_ambiguity_bundle_pair
+                ),
+                "effective_is_compiler_ambiguity_bundle_pair": (
+                    effective_is_compiler_ambiguity_bundle_pair
+                ),
+                "effective_compiler_ambiguity_policy_pair": (
+                    effective_compiler_ambiguity_policy_pair
+                ),
+                "effective_ambiguity_policy_bundle": (
+                    "compiler_ambiguity"
+                    if effective_is_compiler_ambiguity_bundle_pair
                     else None
                 ),
                 "predicted_family": predicted_family,
@@ -1246,7 +1359,7 @@ class DeterministicModalCompiler:
                     compiled_modal_families=compiled_modal_families,
                 )
             )
-        return ambiguities
+        return self._ensure_explicit_adaptive_ambiguities(ambiguities)
 
     def _canonicalized_family_shares(
         self,
@@ -1286,47 +1399,83 @@ class DeterministicModalCompiler:
         predicted_family: str,
         target_signal_by_family: Mapping[str, bool],
     ) -> List[str]:
+        canonical_predicted_family = (
+            DeterministicModalCompiler._canonical_modal_family_name(predicted_family)
+            or str(predicted_family)
+        )
         ordered_targets: List[str] = []
         seen_targets: set[str] = set()
         for target_family in DeterministicModalCompiler._ordered_policy_target_families(
-            predicted_family
+            canonical_predicted_family
         ):
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
         for target_family in target_signal_by_family:
-            if target_family not in seen_targets:
-                ordered_targets.append(target_family)
-                seen_targets.add(target_family)
+            canonical_target_family = (
+                DeterministicModalCompiler._canonical_modal_family_name(target_family)
+                or str(target_family)
+            )
+            if canonical_target_family not in seen_targets:
+                ordered_targets.append(canonical_target_family)
+                seen_targets.add(canonical_target_family)
         return ordered_targets
 
     @staticmethod
     def _ordered_policy_target_families(
         predicted_family: str,
     ) -> List[str]:
+        canonical_predicted_family = (
+            DeterministicModalCompiler._canonical_modal_family_name(predicted_family)
+            or str(predicted_family)
+        )
         ordered_targets: List[str] = []
         seen_targets: set[str] = set()
-        for target_family in _priority_signal_free_adaptive_ambiguity_targets(
-            predicted_family
+        for raw_target_family in _priority_signal_free_adaptive_ambiguity_targets(
+            canonical_predicted_family
         ):
+            target_family = (
+                DeterministicModalCompiler._canonical_modal_family_name(
+                    raw_target_family
+                )
+                or str(raw_target_family)
+            )
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
-        for target_family in _compiler_required_adaptive_ambiguity_targets(
-            predicted_family
+        for raw_target_family in _compiler_required_adaptive_ambiguity_targets(
+            canonical_predicted_family
         ):
+            target_family = (
+                DeterministicModalCompiler._canonical_modal_family_name(
+                    raw_target_family
+                )
+                or str(raw_target_family)
+            )
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
-        for target_family in _compiler_ambiguity_policy_targets(
-            predicted_family
+        for raw_target_family in _compiler_ambiguity_policy_targets(
+            canonical_predicted_family
         ):
+            target_family = (
+                DeterministicModalCompiler._canonical_modal_family_name(
+                    raw_target_family
+                )
+                or str(raw_target_family)
+            )
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
-        for target_family in _signal_free_adaptive_ambiguity_targets(
-            predicted_family
+        for raw_target_family in _signal_free_adaptive_ambiguity_targets(
+            canonical_predicted_family
         ):
+            target_family = (
+                DeterministicModalCompiler._canonical_modal_family_name(
+                    raw_target_family
+                )
+                or str(raw_target_family)
+            )
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
@@ -1339,6 +1488,9 @@ class DeterministicModalCompiler:
         signals: Mapping[str, bool],
         has_frame_scope: bool,
     ) -> Dict[str, bool]:
+        predicted_family = (
+            self._canonical_modal_family_name(predicted_family) or str(predicted_family)
+        )
         target_signal_by_family: Dict[str, bool]
         if predicted_family == ModalLogicFamily.DEONTIC.value:
             target_signal_by_family = {
@@ -1418,6 +1570,10 @@ class DeterministicModalCompiler:
                 ModalLogicFamily.EPISTEMIC.value: bool(
                     signals.get("has_epistemic_scope")
                     or signals.get("has_epistemic_cue")
+                ),
+                ModalLogicFamily.DOXASTIC.value: bool(
+                    signals.get("has_doxastic_scope")
+                    or signals.get("has_doxastic_cue")
                 ),
                 ModalLogicFamily.TEMPORAL.value: bool(
                     signals.get("has_temporal_scope")
@@ -1624,6 +1780,24 @@ class DeterministicModalCompiler:
             resolved_compiled_primary_family,
             resolved_competing_family,
         )
+        runner_up_is_compiler_ambiguity_bundle_pair = bool(
+            is_self_pair
+            and runner_up_family is not None
+            and _is_compiler_ambiguity_policy_pair(
+                resolved_compiled_primary_family,
+                runner_up_family,
+            )
+        )
+        effective_is_compiler_ambiguity_bundle_pair = (
+            is_compiler_ambiguity_bundle_pair
+            or runner_up_is_compiler_ambiguity_bundle_pair
+        )
+        effective_compiler_ambiguity_policy_pair = (
+            f"{resolved_compiled_primary_family}->{runner_up_family}"
+            if runner_up_is_compiler_ambiguity_bundle_pair
+            and runner_up_family is not None
+            else f"{resolved_compiled_primary_family}->{resolved_competing_family}"
+        )
         adaptive_priority = self._adaptive_margin_priority(
             family_margin=family_margin,
             threshold=threshold,
@@ -1666,6 +1840,20 @@ class DeterministicModalCompiler:
             "ambiguity_policy_bundle": (
                 "compiler_ambiguity"
                 if is_compiler_ambiguity_bundle_pair
+                else None
+            ),
+            "runner_up_is_compiler_ambiguity_bundle_pair": (
+                runner_up_is_compiler_ambiguity_bundle_pair
+            ),
+            "effective_is_compiler_ambiguity_bundle_pair": (
+                effective_is_compiler_ambiguity_bundle_pair
+            ),
+            "effective_compiler_ambiguity_policy_pair": (
+                effective_compiler_ambiguity_policy_pair
+            ),
+            "effective_ambiguity_policy_bundle": (
+                "compiler_ambiguity"
+                if effective_is_compiler_ambiguity_bundle_pair
                 else None
             ),
             "predicted_family": resolved_compiled_primary_family,
@@ -1844,6 +2032,19 @@ class DeterministicModalCompiler:
             resolved_compiled_primary_family,
             resolved_compiled_primary_family,
         )
+        runner_up_is_compiler_ambiguity_bundle_pair = _is_compiler_ambiguity_policy_pair(
+            resolved_compiled_primary_family,
+            runner_up_family,
+        )
+        effective_is_compiler_ambiguity_bundle_pair = (
+            is_compiler_ambiguity_bundle_pair
+            or runner_up_is_compiler_ambiguity_bundle_pair
+        )
+        effective_compiler_ambiguity_policy_pair = (
+            f"{resolved_compiled_primary_family}->{runner_up_family}"
+            if runner_up_is_compiler_ambiguity_bundle_pair
+            else f"{resolved_compiled_primary_family}->{resolved_compiled_primary_family}"
+        )
         base_metadata = {
             "adaptive_family_margin_threshold": threshold,
             "adaptive_margin_direction": margin_direction,
@@ -1879,6 +2080,20 @@ class DeterministicModalCompiler:
             "ambiguity_policy_bundle": (
                 "compiler_ambiguity"
                 if is_compiler_ambiguity_bundle_pair
+                else None
+            ),
+            "runner_up_is_compiler_ambiguity_bundle_pair": (
+                runner_up_is_compiler_ambiguity_bundle_pair
+            ),
+            "effective_is_compiler_ambiguity_bundle_pair": (
+                effective_is_compiler_ambiguity_bundle_pair
+            ),
+            "effective_compiler_ambiguity_policy_pair": (
+                effective_compiler_ambiguity_policy_pair
+            ),
+            "effective_ambiguity_policy_bundle": (
+                "compiler_ambiguity"
+                if effective_is_compiler_ambiguity_bundle_pair
                 else None
             ),
             "predicted_family": resolved_compiled_primary_family,

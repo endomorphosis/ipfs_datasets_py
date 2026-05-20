@@ -297,10 +297,11 @@ class BridgeEvaluationReport:
 
     @property
     def accepted(self) -> bool:
+        proof_gate_soft_pass = bool(self.metadata.get("proof_gate_soft_pass"))
         return (
             self.status == "ok"
             and self.ir_document.has_frame_logic
-            and self.proof_gate.compiles
+            and (self.proof_gate.compiles or proof_gate_soft_pass)
             and self.graph_projection.graph_failure_penalty == 0.0
         )
 

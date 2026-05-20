@@ -281,6 +281,48 @@ def test_router_route_accepts_timeout_ms_and_hyphenated_strategy_names() -> None
     assert isinstance(result.is_proved, bool)
 
 
+def test_router_auto_falls_back_when_selected_prover_errors() -> None:
+    from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+    from ipfs_datasets_py.logic.external_provers import prover_router
+
+    class _FailingProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            raise RuntimeError("selected prover failed")
+
+    class _FallbackProver:
+        @staticmethod
+        def prove(*_args, **_kwargs):
+            return True
+
+    formula = parse_tdfol("O(action)")
+    router = prover_router.ProverRouter(
+        enable_z3=False,
+        enable_cvc5=False,
+        enable_lean=False,
+        enable_coq=False,
+        enable_native=False,
+        enable_symbolicai=False,
+        enable_cache=False,
+    )
+    router.provers = {
+        "z3": _FailingProver(),
+        "native": _FallbackProver(),
+    }
+    router._select_prover_for_formula = lambda _formula: "z3"  # type: ignore[method-assign]
+
+    result = router.prove(
+        formula,
+        strategy=prover_router.ProverStrategy.AUTO,
+        timeout=1.0,
+    )
+
+    assert result.is_proved is True
+    assert result.prover_used == "native"
+    assert isinstance(result.all_results["z3"], str)
+    assert result.all_results["native"] is True
+
+
 def test_lazy_installer_normalizes_dotted_and_suffix_prover_names() -> None:
     from ipfs_datasets_py.logic.external_provers import lazy_installer
 

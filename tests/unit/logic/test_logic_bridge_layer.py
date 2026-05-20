@@ -939,6 +939,55 @@ def test_multiview_bridge_accepts_non_normative_statutory_text() -> None:
     assert report.reports["deontic_norms"].accepted is True
 
 
+def test_multiview_bridge_accepts_deontic_soft_pass_with_partial_proof_gate(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+    from ipfs_datasets_py.logic.bridge.types import ProofGateResult
+
+    def _partial_deontic_gate(_records):
+        return ProofGateResult(
+            attempted_count=5,
+            valid_count=1,
+            failed_count=4,
+            verified_by=("deontic:fol",),
+            details=(
+                {
+                    "blocking_failed_targets": [
+                        "deontic_cec",
+                        "deontic_fol",
+                        "deontic_temporal_fol",
+                        "frame_logic",
+                    ],
+                    "passed_targets": ["fol"],
+                    "source_id": "deontic:test-soft-pass",
+                },
+            ),
+        )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.deontic_norms._proof_gate_from_coverage_records",
+        _partial_deontic_gate,
+    )
+
+    report = evaluate_legal_ir_multiview(
+        "The agency shall publish notice before the permit takes effect.",
+        bridge_names=("deontic_norms", "fol_tdfol"),
+        document_id="multiview-deontic-soft-pass",
+        citation="Multiview Deontic Soft Pass",
+        cache=False,
+    )
+
+    deontic_report = report.reports["deontic_norms"]
+    assert deontic_report.proof_gate.compiles is False
+    assert deontic_report.metadata["proof_gate_soft_pass"] is True
+    assert deontic_report.status == "ok"
+    assert deontic_report.accepted is True
+    assert report.accepted_count == 2
+    assert report.acceptance_rate == 1.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+
+
 def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 

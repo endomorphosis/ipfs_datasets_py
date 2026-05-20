@@ -447,32 +447,125 @@ class OklahomaScraper(BaseStateScraper):
             )
             return candidates
 
+        seed_fetch_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_SEED_FETCH_TIMEOUT_SECONDS", "") or "").strip()
+        try:
+            seed_fetch_timeout_seconds = int(seed_fetch_timeout_raw) if seed_fetch_timeout_raw else 90
+        except Exception:
+            seed_fetch_timeout_seconds = 90
+        seed_fetch_timeout_seconds = max(30, min(300, seed_fetch_timeout_seconds))
+
+        seed_archive_timeout_raw = str(
+            os.getenv("STATE_SCRAPER_OK_SEED_ARCHIVE_DISCOVERY_TIMEOUT_SECONDS", "") or ""
+        ).strip()
+        try:
+            seed_archive_timeout_seconds = int(seed_archive_timeout_raw) if seed_archive_timeout_raw else 120
+        except Exception:
+            seed_archive_timeout_seconds = 120
+        seed_archive_timeout_seconds = max(30, min(360, seed_archive_timeout_seconds))
+
+        cdx_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_CDX_DISCOVERY_TIMEOUT_SECONDS", "") or "").strip()
+        try:
+            cdx_timeout_seconds = int(cdx_timeout_raw) if cdx_timeout_raw else 180
+        except Exception:
+            cdx_timeout_seconds = 180
+        cdx_timeout_seconds = max(45, min(480, cdx_timeout_seconds))
+
         self.logger.info(
             "Oklahoma OSCN discovery: seed_scan_start seed_count=%s full_corpus=%s",
             len(self._SEED_INDEX_URLS),
             self._full_corpus_enabled(),
         )
         for seed_url in self._SEED_INDEX_URLS:
+            seed_started_at = time.time()
             self.logger.info(
                 "Oklahoma OSCN discovery: scanning_seed_url=%s candidates_so_far=%s",
                 seed_url,
                 len(candidates),
             )
             _add(seed_url)
-            html = await self._request_text(seed_url, headers=headers, timeout=45)
+            try:
+                html = await asyncio.wait_for(
+                    self._request_text(seed_url, headers=headers, timeout=45),
+                    timeout=float(seed_fetch_timeout_seconds),
+                )
+            except asyncio.TimeoutError:
+                self.logger.warning(
+                    "Oklahoma OSCN discovery: seed_fetch_timeout seed_url=%s timeout_seconds=%s",
+                    seed_url,
+                    seed_fetch_timeout_seconds,
+                )
+                html = ""
+            except Exception as exc:
+                self.logger.warning(
+                    "Oklahoma OSCN discovery: seed_fetch_error seed_url=%s error=%s",
+                    seed_url,
+                    exc,
+                )
+                html = ""
             if not html:
-                for archived_link in await self._discover_links_from_archived_seed(seed_url=seed_url, headers=headers):
+                try:
+                    archived_links = await asyncio.wait_for(
+                        self._discover_links_from_archived_seed(seed_url=seed_url, headers=headers),
+                        timeout=float(seed_archive_timeout_seconds),
+                    )
+                except asyncio.TimeoutError:
+                    self.logger.warning(
+                        "Oklahoma OSCN discovery: archived_seed_timeout seed_url=%s timeout_seconds=%s",
+                        seed_url,
+                        seed_archive_timeout_seconds,
+                    )
+                    archived_links = []
+                except Exception as exc:
+                    self.logger.warning(
+                        "Oklahoma OSCN discovery: archived_seed_error seed_url=%s error=%s",
+                        seed_url,
+                        exc,
+                    )
+                    archived_links = []
+                for archived_link in archived_links:
                     _add(archived_link)
+                self.logger.info(
+                    "Oklahoma OSCN discovery: finished_seed_url=%s candidates_so_far=%s elapsed_seconds=%.2f",
+                    seed_url,
+                    len(candidates),
+                    max(0.0, time.time() - seed_started_at),
+                )
                 continue
             for live_link in self._extract_deliver_document_links(seed_url=seed_url, html=html):
                 _add(live_link)
+            self.logger.info(
+                "Oklahoma OSCN discovery: finished_seed_url=%s candidates_so_far=%s elapsed_seconds=%.2f",
+                seed_url,
+                len(candidates),
+                max(0.0, time.time() - seed_started_at),
+            )
 
         # Archive-driven URL discovery helps when live index pages are sparse.
         self.logger.info(
             "Oklahoma OSCN discovery: cdx_scan_start candidates_so_far=%s",
             len(candidates),
         )
-        for archive_url in await self._discover_oscn_document_urls_via_cdx(headers=headers):
+        try:
+            cdx_discovered_urls = await asyncio.wait_for(
+                self._discover_oscn_document_urls_via_cdx(headers=headers),
+                timeout=float(cdx_timeout_seconds),
+            )
+        except asyncio.TimeoutError:
+            self.logger.warning(
+                "Oklahoma OSCN discovery: cdx_scan_timeout timeout_seconds=%s candidates_so_far=%s",
+                cdx_timeout_seconds,
+                len(candidates),
+            )
+            cdx_discovered_urls = []
+        except Exception as exc:
+            self.logger.warning(
+                "Oklahoma OSCN discovery: cdx_scan_error error=%s candidates_so_far=%s",
+                exc,
+                len(candidates),
+            )
+            cdx_discovered_urls = []
+
+        for archive_url in cdx_discovered_urls:
             _add(archive_url)
         self.logger.info(
             "Oklahoma OSCN discovery: cdx_scan_complete candidates_so_far=%s",

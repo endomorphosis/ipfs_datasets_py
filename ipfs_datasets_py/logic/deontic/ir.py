@@ -698,6 +698,30 @@ def _modality_from_textual_value(value: Any) -> str:
     return ""
 
 
+def canonical_modality_operator(modality: Any, norm_type: Any = "") -> str:
+    """Return a canonical deontic operator from typed IR modality fields."""
+
+    raw_modality = str(modality or "").strip()
+    if raw_modality:
+        upper_modality = raw_modality.upper()
+        if upper_modality in _CANONICAL_MODALITY_OPERATORS:
+            return upper_modality
+        inferred_modality = _modality_from_textual_value(raw_modality)
+        if inferred_modality:
+            return inferred_modality
+
+    normalized_norm_type = str(norm_type or "").strip().lower()
+    mapped_norm_type = _NORM_TYPE_MODALITY_MAP.get(normalized_norm_type)
+    if mapped_norm_type:
+        return mapped_norm_type
+
+    inferred_norm_type = _modality_from_textual_value(normalized_norm_type)
+    if inferred_norm_type:
+        return inferred_norm_type
+
+    return ""
+
+
 def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     """Return a stable deontic operator for parser and detail-only rows.
 
@@ -708,19 +732,17 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     """
 
     for key in ("deontic_operator", "modality"):
-        raw_value = element.get(key)
-        value = str(raw_value or "").strip().upper()
-        if value in _CANONICAL_MODALITY_OPERATORS:
-            return value
-        inferred = _modality_from_textual_value(raw_value)
+        inferred = canonical_modality_operator(
+            element.get(key),
+            element.get("norm_type"),
+        )
         if inferred:
             return inferred
 
-    norm_type = str(element.get("norm_type") or "").strip().lower()
-    mapped_norm_type = _NORM_TYPE_MODALITY_MAP.get(norm_type)
-    if mapped_norm_type:
-        return mapped_norm_type
-    inferred_norm_type = _modality_from_textual_value(norm_type)
+    inferred_norm_type = canonical_modality_operator(
+        "",
+        element.get("norm_type"),
+    )
     if inferred_norm_type:
         return inferred_norm_type
 
@@ -1272,6 +1294,12 @@ class LegalNormIR:
         """Return whether parser warnings block decoder-quality reconstruction."""
 
         return parser_warnings_require_decoder_validation(self.quality.parser_warnings)
+
+    @property
+    def canonical_modality(self) -> str:
+        """Return a canonical modality fallback for typed IR hydration paths."""
+
+        return canonical_modality_operator(self.modality, self.norm_type)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a stable JSON-friendly dictionary."""
