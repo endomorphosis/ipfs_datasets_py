@@ -164,6 +164,9 @@ _USCODE_PROCEDURAL_CLAUSE_VERB_RE = re.compile(
 )
 _USCODE_PROCEDURAL_CLAUSE_MIN_TOKENS = 6
 _USCODE_PROCEDURAL_CLAUSE_MAX_TOKENS = 42
+_USCODE_RESIDUAL_SPAN_MIN_TOKENS = 6
+_USCODE_RESIDUAL_SPAN_MAX_TOKENS = 120
+_USCODE_MAX_RESIDUAL_SPAN_FORMULAS = 3
 
 
 @dataclass(frozen=True)
@@ -321,25 +324,36 @@ class LegalModalParser:
         if fallback_formula is not None:
             formulas.append(fallback_formula)
         elif formulas:
+            residual_segments = self._segments_excluding_spans(
+                segments,
+                spans=[
+                    (
+                        int(formula.provenance.start_char),
+                        int(formula.provenance.end_char),
+                    )
+                    for formula in formulas
+                ],
+            )
             residual_fallback_formula = self.fallback_formula(
                 document_id=resolved_document_id,
                 text=normalized,
                 citation=citation,
                 start_index=len(formulas) + 1,
-                segments=self._segments_excluding_spans(
-                    segments,
-                    spans=[
-                        (
-                            int(formula.provenance.start_char),
-                            int(formula.provenance.end_char),
-                        )
-                        for formula in formulas
-                    ],
-                ),
+                segments=residual_segments,
                 allow_modal_cues=True,
             )
             if residual_fallback_formula is not None:
                 formulas.append(residual_fallback_formula)
+            else:
+                formulas.extend(
+                    self.residual_span_coverage_formulas(
+                        document_id=resolved_document_id,
+                        text=normalized,
+                        citation=citation,
+                        start_index=len(formulas) + 1,
+                        segments=residual_segments,
+                    )
+                )
 
         return ModalIRDocument(
             document_id=resolved_document_id,
@@ -419,6 +433,53 @@ class LegalModalParser:
             allow_modal_cues=allow_modal_cues,
         )
 
+    def residual_span_coverage_formulas(
+        self,
+        *,
+        document_id: str,
+        text: str,
+        citation: Optional[str],
+        start_index: int = 1,
+        segments: Optional[Sequence[LegalSegment]] = None,
+        max_formulas: int = _USCODE_MAX_RESIDUAL_SPAN_FORMULAS,
+    ) -> List[ModalIRFormula]:
+        """Emit bounded frame formulas for uncovered U.S.C. residual spans."""
+        normalized = self.normalize_text(text)
+        if not normalized.strip():
+            return []
+        if max_formulas <= 0:
+            return []
+        if not self._is_uscode_citation(citation):
+            return []
+        profile = self.registry.get_profile(ModalLogicFamily.FRAME)
+        if not profile.operators:
+            return []
+        operator = profile.operators[0]
+        candidate_segments = (
+            list(self.segment(normalized)) if segments is None else list(segments)
+        )
+        if not candidate_segments:
+            return []
+        formulas: List[ModalIRFormula] = []
+        next_index = max(1, int(start_index))
+        for segment in candidate_segments:
+            if len(formulas) >= int(max_formulas):
+                break
+            if not self._is_residual_span_coverage_candidate(segment):
+                continue
+            formulas.append(
+                self._residual_span_coverage_formula(
+                    document_id=document_id,
+                    citation=citation,
+                    segment=segment,
+                    start_index=next_index,
+                    operator=operator,
+                    profile=profile,
+                )
+            )
+            next_index += 1
+        return formulas
+
     def _classify_segment_role(self, text: str) -> str:
         lowered = text.lower()
         if lowered.startswith(("if ", "unless ", "except ", "provided that ", "subject to ")):
@@ -441,6 +502,74 @@ class LegalModalParser:
         if not tokens:
             tokens = _TOKEN_RE.findall(segment_text.lower())
         return "_".join(tokens[:6]) or "unnamed_predicate"
+
+    def _is_residual_span_coverage_candidate(self, segment: LegalSegment) -> bool:
+        normalized = self.normalize_text(segment.text)
+        if not normalized:
+            return False
+        lowered = normalized.lower()
+        token_count = len(_TOKEN_RE.findall(lowered))
+        if (
+            token_count < _USCODE_RESIDUAL_SPAN_MIN_TOKENS
+            or token_count > _USCODE_RESIDUAL_SPAN_MAX_TOKENS
+        ):
+            return False
+        if self.extract_cues(normalized):
+            return False
+        if self._looks_like_heading_without_section_reference(normalized):
+            return False
+        if (
+            _USCODE_CODIFICATION_HINT_RE.search(lowered)
+            or _USCODE_EDITORIAL_STATUS_HINT_RE.search(lowered)
+            or _USCODE_DECLARATIVE_STATEMENT_HINT_RE.search(lowered)
+        ):
+            return False
+        return True
+
+    def _residual_span_coverage_formula(
+        self,
+        *,
+        document_id: str,
+        citation: Optional[str],
+        segment: LegalSegment,
+        start_index: int,
+        operator: ModalOperatorSpec,
+        profile: ModalParseProfile,
+    ) -> ModalIRFormula:
+        predicate = self._predicate_from_segment(
+            segment.text,
+            "__uscode_residual_span_fallback__",
+        )
+        conditions, exceptions = self._conditions_and_exceptions_from_segment(segment.text)
+        token_count = len(_TOKEN_RE.findall(segment.text.lower()))
+        return ModalIRFormula(
+            formula_id=f"{document_id}:f{start_index:04d}",
+            operator=ModalIROperator(
+                family=profile.family.value,
+                system=profile.system.value,
+                symbol=operator.symbol,
+                label=operator.aliases[0] if operator.aliases else operator.symbol,
+            ),
+            predicate=ModalIRPredicate(
+                name=predicate,
+                arguments=[],
+                role=segment.role,
+            ),
+            provenance=ModalIRProvenance(
+                source_id=document_id,
+                start_char=segment.start_char,
+                end_char=segment.end_char,
+                citation=citation,
+            ),
+            conditions=conditions,
+            exceptions=exceptions,
+            metadata={
+                "cue": "__uscode_residual_span_fallback__",
+                "fallback_rule": "uscode_residual_span_coverage_v1",
+                "residual_segment_role": segment.role,
+                "residual_token_count": token_count,
+            },
+        )
 
     def _conditions_and_exceptions_from_segment(
         self,

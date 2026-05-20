@@ -1070,25 +1070,36 @@ class SpaCyModalIRCompiler:
                     formulas.append(fallback_formula)
             else:
                 segments = self._fallback_parser.segment(encoding.normalized_text)
+                residual_segments = self._fallback_parser._segments_excluding_spans(
+                    segments,
+                    spans=[
+                        (
+                            int(formula.provenance.start_char),
+                            int(formula.provenance.end_char),
+                        )
+                        for formula in formulas
+                    ],
+                )
                 residual_fallback_formula = self._fallback_parser.fallback_formula(
                     document_id=encoding.document_id,
                     text=encoding.normalized_text,
                     citation=encoding.citation,
                     start_index=len(formulas) + 1,
-                    segments=self._fallback_parser._segments_excluding_spans(
-                        segments,
-                        spans=[
-                            (
-                                int(formula.provenance.start_char),
-                                int(formula.provenance.end_char),
-                            )
-                            for formula in formulas
-                        ],
-                    ),
+                    segments=residual_segments,
                     allow_modal_cues=True,
                 )
                 if residual_fallback_formula is not None:
                     formulas.append(residual_fallback_formula)
+                else:
+                    formulas.extend(
+                        self._fallback_parser.residual_span_coverage_formulas(
+                            document_id=encoding.document_id,
+                            text=encoding.normalized_text,
+                            citation=encoding.citation,
+                            start_index=len(formulas) + 1,
+                            segments=residual_segments,
+                        )
+                    )
         return ModalIRDocument(
             document_id=encoding.document_id,
             source=encoding.source,

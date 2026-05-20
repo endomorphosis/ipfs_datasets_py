@@ -343,11 +343,18 @@ def _predicate_name(value: Any) -> str:
     text = str(value or "act").strip().lower()
     chars = [char if char.isalnum() else "_" for char in text]
     name = "_".join(part for part in "".join(chars).split("_") if part)
-    return name or "act"
+    if not name:
+        return "act"
+    if not name[0].isalpha():
+        return f"n_{name}"
+    return name
 
 
 def _symbol(value: Any) -> str:
-    return _predicate_name(value) or "actor"
+    symbol = _predicate_name(value)
+    if symbol == "act":
+        return "actor"
+    return symbol
 
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:

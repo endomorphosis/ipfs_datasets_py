@@ -281,6 +281,25 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert target.view_distribution
 
 
+def test_multiview_bridge_accepts_citation_prefixed_statutory_text() -> None:
+    from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
+
+    report = evaluate_legal_ir_multiview(
+        "25 U.S.C. 640d-28: The term Secretary means the Secretary of the Interior.",
+        bridge_names=("modal_frame_logic", "fol_tdfol", "cec_dcec"),
+        document_id="multiview-citation-prefix",
+        citation="25 U.S.C. 640d-28",
+    )
+
+    assert report.accepted_count == 3
+    assert report.acceptance_rate == 1.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
+    fol_records = report.document.views["fol_tdfol.tdfol_formula"].payload["records"]
+    assert fol_records
+    assert fol_records[0]["parse_ok"] is True
+    assert "n_25_usc_640d_28" in fol_records[0]["formula"]
+
+
 def test_logic_manifest_includes_bridge_layer() -> None:
     from ipfs_datasets_py.logic.submodule_registry import logic_integration_manifest
 

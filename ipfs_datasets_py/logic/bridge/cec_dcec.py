@@ -390,7 +390,12 @@ def _compile_dcec_proof_input(formula: Any) -> tuple[bool, str]:
 def _symbol(value: Any) -> str:
     text = str(value or "").strip().lower()
     chars = [char if char.isalnum() else "_" for char in text]
-    return "_".join(part for part in "".join(chars).split("_") if part)
+    name = "_".join(part for part in "".join(chars).split("_") if part)
+    if not name:
+        return ""
+    if not name[0].isalpha():
+        return f"n_{name}"
+    return name
 
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:

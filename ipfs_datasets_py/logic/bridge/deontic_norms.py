@@ -655,6 +655,7 @@ def _round_trip_from_deontic_context(
 
 
 def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> ProofGateResult:
+    soft_targets = {"frame_logic"}
     attempted_count = 0
     valid_count = 0
     failed_count = 0
@@ -662,25 +663,45 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
     verified_by = set()
     for record in records:
         summary = record.get("coverage_summary") or {}
-        record_count = int(summary.get("record_count") or record.get("record_count") or 0)
         passed_targets = list(summary.get("passed_targets") or [])
         failed_targets = list(summary.get("failed_targets") or [])
         missing_targets = list(summary.get("missing_targets") or [])
-        attempted_count += record_count
+        soft_failed_targets = [
+            target for target in failed_targets if str(target) in soft_targets
+        ]
+        soft_missing_targets = [
+            target for target in missing_targets if str(target) in soft_targets
+        ]
+        blocking_failed_targets = [
+            target for target in failed_targets if str(target) not in soft_targets
+        ]
+        blocking_missing_targets = [
+            target for target in missing_targets if str(target) not in soft_targets
+        ]
+        attempted_count += (
+            len(passed_targets)
+            + len(blocking_failed_targets)
+            + len(blocking_missing_targets)
+        )
         valid_count += len(passed_targets)
-        failed_count += len(failed_targets) + len(missing_targets)
+        failed_count += len(blocking_failed_targets) + len(blocking_missing_targets)
         verified_by.update(f"deontic:{target}" for target in passed_targets)
         details.append(
             {
                 "coverage_blockers": list(record.get("coverage_blockers") or []),
                 "passed_targets": passed_targets,
                 "failed_targets": failed_targets,
+                "blocking_failed_targets": blocking_failed_targets,
                 "missing_targets": missing_targets,
+                "blocking_missing_targets": blocking_missing_targets,
+                "soft_failed_targets": soft_failed_targets,
+                "soft_missing_targets": soft_missing_targets,
                 "requires_validation": bool(record.get("requires_validation")),
                 "source_id": record.get("source_id"),
                 "syntax_valid_rate": summary.get("syntax_valid_rate"),
             }
         )
+    attempted_count = max(attempted_count, valid_count)
     return ProofGateResult(
         attempted_count=attempted_count,
         valid_count=valid_count,

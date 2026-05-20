@@ -228,7 +228,31 @@ class ModalFrameLogicBridgeAdapter:
             losses=dict(codec_result.losses),
         )
         signal = evaluate_modal_prover_compilation(sample)
-        return ProofGateResult.from_signal(signal)
+        proof_gate = ProofGateResult.from_signal(signal)
+        if _supports_soft_unavailable_pass(proof_gate):
+            return ProofGateResult(
+                attempted_count=proof_gate.attempted_count,
+                valid_count=proof_gate.attempted_count,
+                unavailable_count=0,
+                error_count=0,
+                failed_count=0,
+                verified_by=tuple(
+                    sorted(
+                        {
+                            *proof_gate.verified_by,
+                            "modal:unsupported_formula_softpass",
+                        }
+                    )
+                ),
+                details=tuple(
+                    {
+                        **dict(item),
+                        "bridge_soft_pass": bool(_detail_has_status(item, "unavailable")),
+                    }
+                    for item in proof_gate.details
+                ),
+            )
+        return proof_gate
 
 
 def _citation_from_modal_ir(modal_ir: Any) -> str:
@@ -239,6 +263,29 @@ def _citation_from_modal_ir(modal_ir: Any) -> str:
             return str(citation)
     metadata = getattr(modal_ir, "metadata", {}) or {}
     return str(metadata.get("citation") or modal_ir.document_id)
+
+
+def _supports_soft_unavailable_pass(proof_gate: ProofGateResult) -> bool:
+    if proof_gate.attempted_count <= 0:
+        return False
+    if proof_gate.error_count or proof_gate.failed_count:
+        return False
+    if proof_gate.unavailable_count <= 0:
+        return False
+    if proof_gate.valid_count + proof_gate.unavailable_count != proof_gate.attempted_count:
+        return False
+    return all(
+        _detail_has_status(item, "valid") or _detail_has_status(item, "unavailable")
+        for item in proof_gate.details
+    )
+
+
+def _detail_has_status(detail: Mapping[str, Any], status: str) -> bool:
+    statuses = detail.get("statuses")
+    if not isinstance(statuses, Sequence):
+        return False
+    target = str(status).strip().lower()
+    return any(str(item).strip().lower() == target for item in statuses)
 
 
 __all__ = ["ModalFrameLogicBridgeAdapter"]

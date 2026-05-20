@@ -140,6 +140,50 @@ def test_compiler_spacy_backend_no_longer_emits_missing_formula_for_regression_c
         assert _missing_modal_formula_count(result) == 0, document_id
 
 
+def test_parser_adds_residual_span_coverage_formula_for_untyped_uscode_segment() -> None:
+    parser = LegalModalParser()
+    modal_ir = parser.parse(
+        (
+            "The Secretary shall publish the annual report. "
+            "Additional implementation details are provided for regional offices and contractors."
+        ),
+        document_id="us-code-25-640d-28-dd2e0dfae14b7385",
+        citation="25 U.S.C. 640d-28",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
+
+
+def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_uscode_segment() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "The Secretary shall publish the annual report. "
+            "Additional implementation details are provided for regional offices and contractors."
+        ),
+        document_id="us-code-25-640d-28-dd2e0dfae14b7385",
+        citation="25 U.S.C. 640d-28",
+    )
+
+    residual_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in residual_formulas)
+    assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
+
+
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
