@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import replace
 import re
+import sys
 
 from ipfs_datasets_py.logic.modal import (
     DeterministicModalCompiler,
@@ -3197,6 +3199,40 @@ def test_modal_compiler_emits_explicit_adaptive_ambiguity_for_recurrent_policy_p
                 == "adaptive_family_margin_low"
                 for ambiguity in ambiguities
             )
+
+
+def test_modal_compiler_resolves_compiler_ambiguity_targets_from_current_module_after_reload(
+    monkeypatch,
+) -> None:
+    module_name = "ipfs_datasets_py.logic.modal.compiler"
+    old_module = importlib.import_module(module_name)
+    old_compiler_class = old_module.DeterministicModalCompiler
+
+    sys.modules.pop(module_name, None)
+    reloaded_module = importlib.import_module(module_name)
+    monkeypatch.setattr(
+        reloaded_module,
+        "priority_signal_free_adaptive_ambiguity_targets",
+        lambda _: (),
+    )
+    monkeypatch.setattr(
+        reloaded_module,
+        "compiler_required_adaptive_ambiguity_targets",
+        lambda _: (),
+    )
+    monkeypatch.setattr(
+        reloaded_module,
+        "compiler_ambiguity_policy_targets",
+        lambda _: ("hybrid",),
+    )
+    monkeypatch.setattr(
+        reloaded_module,
+        "signal_free_adaptive_ambiguity_targets",
+        lambda _: (),
+    )
+
+    compiler = old_compiler_class(ModalCompilerConfig(parser_backend="regex"))
+    assert compiler._ordered_policy_target_families("deontic") == ["hybrid"]
 
 
 def test_modal_compiler_treats_alethic_scope_as_temporal_adaptive_target_signal(

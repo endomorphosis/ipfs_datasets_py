@@ -516,6 +516,7 @@ class ModalLossTodoGenerator:
 
     DEFAULT_THRESHOLDS = {
         "cec_dcec_no_formula_loss": 0.0,
+        "cec_dcec_event_formula_invalid_ratio": 0.0,
         "cec_dcec_validation_failure_ratio": 0.0,
         "cosine_loss": 0.05,
         "cross_entropy_loss": 0.05,
@@ -632,6 +633,10 @@ class ModalLossTodoGenerator:
             "cec_dcec_no_formula_loss": (
                 "repair_cec_dcec_bridge",
                 "Add or repair CEC/DCEC event-calculus records for legal text with no event formulas.",
+            ),
+            "cec_dcec_event_formula_invalid_ratio": (
+                "repair_cec_dcec_bridge",
+                "Repair CEC event-calculus state formulas so bridge exports pass deterministic shape checks.",
             ),
             "cec_dcec_validation_failure_ratio": (
                 "repair_cec_dcec_bridge",

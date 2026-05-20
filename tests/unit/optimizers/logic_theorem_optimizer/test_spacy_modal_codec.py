@@ -70,6 +70,11 @@ _USCODE_25_450_TODO_TEXT = (
     "overnment Publishing Office, www.gpo.gov §450. Transferred Editorial Notes Codification Section 450 was editor"
     "ially reclassified as section 5301 of this title."
 )
+_USCODE_50_2523B_RESIDUAL_SPAN_TEXT = (
+    "Sec. 2523b - Transfer authority and procedures. Administrative notice and hearing "
+    "procedures are established for this section. Editorial Notes Codification Section "
+    "2523b was editorially reclassified as section 3373b of this title."
+)
 _USCODE_25_5396_TODO_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
     "LF-DETERMINATION AND EDUCATION ASSISTANCE SUBCHAPTER V - TRIBAL SELF-GOVERNANCE-INDIAN HEALTH SERVICE Sec. 539"
@@ -3264,6 +3269,34 @@ def test_spacy_compiler_replays_sec_prefixed_transferred_heading_zero_formula_ca
         assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
         assert fallback.metadata["fallback_rule"] == "uscode_transferred_heading_v1"
         assert fallback.provenance.citation == citation
+
+
+def test_spacy_compiler_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        _USCODE_50_2523B_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-50-2523b.-9372ed91908bfe9a",
+        citation="50 U.S.C. 2523b.",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.formulas
+    assert len({formula.formula_id for formula in modal_ir.formulas}) == len(modal_ir.formulas)
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+    residual_formulas = [
+        formula
+        for formula in modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert all(
+        formula.provenance.citation == "50 U.S.C. 2523b."
+        for formula in modal_ir.formulas
+    )
 
 
 def test_spacy_compiler_replays_sec_prefixed_heading_zero_formula_sample_for_15_1693l() -> None:

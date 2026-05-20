@@ -78,6 +78,33 @@ class CecDcecBridgeAdapter:
                 },
                 metadata={"event_count": len(records)},
             ),
+            "event_calculus": LogicIRView(
+                name="event_calculus",
+                format="cec-event-calculus-state-records",
+                source_component="CEC.native",
+                payload={
+                    "records": [
+                        {
+                            "event_calculus_formula": record["event_calculus_formula"],
+                            "event_formula_source": record["event_formula_source"],
+                            "event_formula_syntax_valid": bool(
+                                record["event_formula_syntax_valid"]
+                            ),
+                            "modality": record["modality"],
+                            "source_id": record["source_id"],
+                        }
+                        for record in records
+                    ]
+                },
+                metadata={
+                    "state_formula_count": len(records),
+                    "syntax_valid_count": sum(
+                        1
+                        for record in records
+                        if record["event_formula_syntax_valid"]
+                    ),
+                },
+            ),
             "dcec_formula": LogicIRView(
                 name="dcec_formula",
                 format="dcec-formula-records",
@@ -143,6 +170,12 @@ class CecDcecBridgeAdapter:
                 metadata={
                     "dcec_formula_count": len(records),
                     "deontic_norm_count": len(norms),
+                    "event_formula_count": len(records),
+                    "event_formula_syntax_valid_count": sum(
+                        1
+                        for record in records
+                        if record["event_formula_syntax_valid"]
+                    ),
                 },
             ),
             {
@@ -176,17 +209,35 @@ class CecDcecBridgeAdapter:
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
         attempted = max(1, len(records))
         failure_ratio = max(0.0, (attempted - proof_gate.valid_count) / attempted)
+        event_formula_invalid_ratio = max(
+            0.0,
+            (
+                attempted
+                - sum(
+                    1
+                    for record in records
+                    if record.get("event_formula_syntax_valid")
+                )
+            )
+            / attempted,
+        )
         no_formula_loss = 0.0 if records else 1.0
         round_trip = RoundTripMetrics(
             cosine_similarity=max(0.0, 1.0 - no_formula_loss),
             cosine_loss=no_formula_loss,
-            symbolic_validity_penalty=failure_ratio,
+            symbolic_validity_penalty=max(
+                failure_ratio,
+                event_formula_invalid_ratio,
+            ),
             extra_losses={
                 "cec_dcec_no_formula_loss": no_formula_loss,
                 "cec_dcec_validation_failure_ratio": failure_ratio,
+                "cec_dcec_event_formula_invalid_ratio": event_formula_invalid_ratio,
             },
         )
         status = "ok" if records and proof_gate.compiles else "partial"
+        if event_formula_invalid_ratio > 0.0:
+            status = "partial"
         if graph_result.graph_failure_penalty:
             status = "partial"
         return BridgeEvaluationReport(
@@ -196,7 +247,14 @@ class CecDcecBridgeAdapter:
             round_trip=round_trip,
             proof_gate=proof_gate,
             graph_projection=graph_result,
-            decoded_text=" ".join(str(record.get("formula") or "") for record in records),
+            decoded_text=" ".join(
+                str(
+                    record.get("event_calculus_formula")
+                    or record.get("formula")
+                    or ""
+                )
+                for record in records
+            ),
             status=status,
             metadata={"adapter": "cec_dcec_bridge_v1"},
         )
@@ -221,6 +279,7 @@ def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any
 
 
 def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    event_formula_exports = _event_formula_exports_from_norms(norms)
     records: list[dict[str, Any]] = []
     for index, norm in enumerate(norms):
         actor = _symbol(norm.get("actor"), fallback="actor")
@@ -237,17 +296,41 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             if formula_object is not None and hasattr(formula_object, "to_string")
             else f"{modality}({actor},{event},t0)"
         )
+        proof_input = _proof_input_formula_text(
+            actor=actor,
+            event=event,
+            modality=modality,
+        )
+        event_formula_export = event_formula_exports.get(source_id)
+        if event_formula_export:
+            event_calculus_formula = str(
+                event_formula_export.get("event_calculus_formula") or ""
+            )
+            event_formula_source = str(
+                event_formula_export.get("event_formula_source") or ""
+            )
+            event_formula_syntax_valid = bool(
+                event_formula_export.get("event_formula_syntax_valid")
+            )
+        else:
+            event_calculus_formula = _event_calculus_formula_text(
+                source_id=source_id,
+                deontic_formula=proof_input,
+            )
+            event_formula_source = "cec_dcec_bridge_fallback"
+            event_formula_syntax_valid = _event_calculus_formula_shape_valid(
+                event_calculus_formula
+            )
         valid, validation_reason = _compile_dcec_proof_input(formula_object)
         records.append(
             {
                 "actor": actor,
                 "event": event,
                 "formula": formula,
-                "proof_input": _proof_input_formula_text(
-                    actor=actor,
-                    event=event,
-                    modality=modality,
-                ),
+                "proof_input": proof_input,
+                "event_calculus_formula": event_calculus_formula,
+                "event_formula_source": event_formula_source,
+                "event_formula_syntax_valid": event_formula_syntax_valid,
                 "formula_object": formula_object,
                 "modality": modality,
                 "source_id": source_id,
@@ -315,6 +398,18 @@ def _dcec_frame_logic_triples(
                 {"subject": source_id, "predicate": "formula", "object": str(record.get("formula") or "")},
                 {"subject": source_id, "predicate": "modality", "object": str(record.get("modality") or "")},
                 {"subject": source_id, "predicate": "valid", "object": str(bool(record.get("valid"))).lower()},
+                {
+                    "subject": source_id,
+                    "predicate": "event_calculus_formula",
+                    "object": str(record.get("event_calculus_formula") or ""),
+                },
+                {
+                    "subject": source_id,
+                    "predicate": "event_formula_syntax_valid",
+                    "object": str(
+                        bool(record.get("event_formula_syntax_valid"))
+                    ).lower(),
+                },
             ]
         )
     return [triple for triple in triples if triple["object"]]
@@ -427,6 +522,70 @@ def _proof_input_formula_text(*, actor: str, event: str, modality: str) -> str:
     elif modality == "permitted":
         operator = "P"
     return f"{operator}(happens({actor},{event},t0))"
+
+
+def _event_formula_exports_from_norms(
+    norms: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    exports: dict[str, dict[str, Any]] = {}
+    if not norms:
+        return exports
+    try:
+        from ipfs_datasets_py.logic.deontic.exports import (
+            build_prover_syntax_records_from_ir,
+        )
+        from ipfs_datasets_py.logic.deontic.ir import LegalNormIR
+    except Exception:
+        return exports
+
+    for norm in norms:
+        source_id = str(norm.get("source_id") or "").strip()
+        if not source_id:
+            continue
+        try:
+            norm_object = LegalNormIR.from_parser_element(dict(norm))
+            syntax_records = build_prover_syntax_records_from_ir(
+                norm_object,
+                targets=("deontic_cec",),
+            )
+        except Exception:
+            continue
+        for record in syntax_records:
+            if str(record.get("target") or "").strip() != "deontic_cec":
+                continue
+            exported_formula = str(record.get("exported_formula") or "").strip()
+            if not exported_formula:
+                continue
+            exports[source_id] = {
+                "event_calculus_formula": exported_formula,
+                "event_formula_source": "deontic.prover_syntax",
+                "event_formula_syntax_valid": bool(record.get("syntax_valid") is True),
+            }
+            break
+    return exports
+
+
+def _event_calculus_formula_text(*, source_id: str, deontic_formula: str) -> str:
+    source_symbol = _source_symbol(source_id)
+    return (
+        f"Happens(legal_norm({source_symbol}), t) => "
+        f"HoldsAt({deontic_formula}, t)"
+    )
+
+
+def _event_calculus_formula_shape_valid(formula: str) -> bool:
+    text = str(formula or "").strip()
+    return bool(
+        re.match(
+            r"^Happens\(legal_norm\([A-Za-z0-9_]+\), t\) => HoldsAt\(.+, t\)$",
+            text,
+        )
+    )
+
+
+def _source_symbol(source_id: str) -> str:
+    value = re.sub(r"[^0-9A-Za-z_]+", "_", str(source_id or "unknown")).strip("_")
+    return value or "unknown"
 
 
 def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[str, Any]]:

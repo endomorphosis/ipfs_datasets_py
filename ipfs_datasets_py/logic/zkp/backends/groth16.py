@@ -42,6 +42,7 @@ from ..canonicalization import (
     tdfol_v1_axioms_commitment_hex_v2,
 )
 from ..legal_theorem_semantics import derive_tdfol_v1_trace
+from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
 @dataclass
@@ -57,6 +58,7 @@ class Groth16Backend:
     curve_id: str = "bn254"
     timeout_seconds: int = 30
     binary_path: Optional[str] = None
+    _DEFAULT_CIRCUIT_ID: str = "knowledge_of_axioms"
 
     def _enabled(self) -> bool:
         return os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "1").strip().lower() not in {"0", "false", "no", "off", ""}
@@ -81,8 +83,13 @@ class Groth16Backend:
 
         canonical_axioms = canonicalize_axioms(private_axioms)
 
-        circuit_version = int((metadata or {}).get("circuit_version", 1))
-        ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
+        metadata_dict = dict(metadata or {})
+        circuit_version = int(metadata_dict.get("circuit_version", 1))
+        ruleset_id = str(metadata_dict.get("ruleset_id", "TDFOL_v1"))
+        circuit_ref = self._resolve_circuit_ref(
+            metadata_dict,
+            circuit_version=circuit_version,
+        )
 
         if circuit_version >= 2 and ruleset_id == "TDFOL_v1":
             axioms_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
@@ -108,9 +115,10 @@ class Groth16Backend:
             "security_level": int((metadata or {}).get("security_level", 0)),
             "circuit_version": circuit_version,
             "ruleset_id": ruleset_id,
+            "circuit_ref": circuit_ref,
         }
 
-        seed = (metadata or {}).get("seed")
+        seed = metadata_dict.get("seed")
 
         try:
             return self._ffi().generate_proof(json.dumps(witness), seed=seed)
@@ -122,6 +130,27 @@ class Groth16Backend:
                 "`ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/build.sh`. "
                 f"Original error: {e}"
             )
+
+    def _resolve_circuit_ref(self, metadata: dict[str, Any], *, circuit_version: int) -> str:
+        """Return a versioned circuit_ref consistent with circuit_version."""
+        candidate = str(metadata.get("circuit_ref") or "").strip()
+        default_circuit_id = str(metadata.get("circuit_id") or self._DEFAULT_CIRCUIT_ID).strip()
+        circuit_id = default_circuit_id or self._DEFAULT_CIRCUIT_ID
+
+        if candidate:
+            try:
+                parsed_id, parsed_version = parse_circuit_ref_lenient(
+                    candidate,
+                    legacy_default_version=circuit_version,
+                )
+                circuit_id = parsed_id
+                if parsed_version != circuit_version:
+                    return format_circuit_ref(circuit_id, circuit_version)
+                return format_circuit_ref(circuit_id, parsed_version)
+            except Exception:
+                return format_circuit_ref(circuit_id, circuit_version)
+
+        return format_circuit_ref(circuit_id, circuit_version)
 
     def verify_proof(self, proof: ZKPProof) -> bool:
         if not self._enabled():

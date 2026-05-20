@@ -50,6 +50,11 @@ _USCODE_25_450_TODO_TEXT = (
     "overnment Publishing Office, www.gpo.gov §450. Transferred Editorial Notes Codification Section 450 was editor"
     "ially reclassified as section 5301 of this title."
 )
+_USCODE_50_2523B_RESIDUAL_SPAN_TEXT = (
+    "Sec. 2523b - Transfer authority and procedures. Administrative notice and hearing "
+    "procedures are established for this section. Editorial Notes Codification Section "
+    "2523b was editorially reclassified as section 3373b of this title."
+)
 _USCODE_25_5396_TODO_TEXT = (
     "U.S.C. Title 25 - INDIANS 25 U.S.C. United States Code, 2024 Edition Title 25 - INDIANS CHAPTER 46 - INDIAN SE"
     "LF-DETERMINATION AND EDUCATION ASSISTANCE SUBCHAPTER V - TRIBAL SELF-GOVERNANCE-INDIAN HEALTH SERVICE Sec. 539"
@@ -509,6 +514,32 @@ def test_parser_adds_uscode_codification_fallback_for_known_zero_formula_case() 
     assert fallback.operator.family == "frame"
     assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
     assert fallback.metadata["fallback_rule"] == "uscode_codification_transfer_heading_v1"
+
+
+def test_parser_adds_residual_span_coverage_before_codification_fallback_for_50_2523b_style_text() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        _USCODE_50_2523B_RESIDUAL_SPAN_TEXT,
+        document_id="us-code-50-2523b.-9372ed91908bfe9a",
+        source="us_code",
+        citation="50 U.S.C. 2523b.",
+    )
+
+    assert document.formulas
+    assert len({formula.formula_id for formula in document.formulas}) == len(document.formulas)
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_codification_fallback__"
+    residual_formulas = [
+        formula
+        for formula in document.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_residual_span_coverage_v1"
+    ]
+    assert residual_formulas
+    assert all(
+        formula.provenance.citation == "50 U.S.C. 2523b."
+        for formula in document.formulas
+    )
 
 
 def test_parser_replays_transferred_heading_zero_formula_sample_for_15_688() -> None:

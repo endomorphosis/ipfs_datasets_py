@@ -419,16 +419,25 @@ def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
 
     assert report.adapter_name == "cec_dcec"
     assert report.ir_document.views["cec_events"].metadata["event_count"] >= 1
+    assert report.ir_document.views["event_calculus"].metadata["state_formula_count"] >= 1
     assert report.ir_document.views["dcec_formula"].metadata["formula_count"] >= 1
     assert report.ir_document.has_frame_logic is True
     assert report.graph_projection.neo4j_compatible is True
     assert report.proof_gate.compiles is True
+    event_records = report.ir_document.views["event_calculus"].payload["records"]
+    assert event_records[0]["event_calculus_formula"].startswith("Happens(legal_norm(")
+    assert "=> HoldsAt(" in event_records[0]["event_calculus_formula"]
     formula_records = report.ir_document.views["dcec_formula"].payload["records"]
     assert formula_records
     assert formula_records[0]["formula"].startswith(("O[", "P[", "F["))
     assert "happens(" in formula_records[0]["formula"]
     assert report.proof_gate.details[0]["validation_reason"] == "compiled_dcec_native_container"
     assert "cec_dcec_validation_failure_ratio" in report.round_trip.extra_losses
+    assert "cec_dcec_event_formula_invalid_ratio" in report.round_trip.extra_losses
+    assert any(
+        triple["predicate"] == "event_calculus_formula"
+        for triple in report.ir_document.frame_logic_triples
+    )
 
 
 def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_empty() -> None:
@@ -442,14 +451,19 @@ def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_em
     )
 
     assert report.adapter_name == "cec_dcec"
+    assert report.ir_document.views["event_calculus"].metadata["state_formula_count"] >= 1
     assert report.ir_document.views["dcec_formula"].metadata["formula_count"] >= 1
     assert report.proof_gate.attempted_count >= 1
     assert report.proof_gate.compiles is True
+    event_records = report.ir_document.views["event_calculus"].payload["records"]
+    assert event_records[0]["event_calculus_formula"].startswith("Happens(legal_norm(")
+    assert event_records[0]["event_formula_syntax_valid"] is True
     formula_records = report.ir_document.views["dcec_formula"].payload["records"]
     assert formula_records[0]["proof_input"].startswith(("O(", "P(", "F("))
     assert "happens(" in formula_records[0]["proof_input"]
     assert report.round_trip.extra_losses["cec_dcec_no_formula_loss"] == 0.0
     assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_event_formula_invalid_ratio"] == 0.0
 
 
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
@@ -725,6 +739,33 @@ def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None
     assert report.round_trip.extra_losses["zkp_attestation_missing_loss"] == 0.0
     assert report.round_trip.extra_losses["zkp_verification_failure_ratio"] == 0.0
     assert "zkp:simulated" in report.proof_gate.verified_by
+
+
+def test_zkp_attestation_bridge_records_are_deterministic_for_same_input() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("zkp_attestation")
+    text = "The agency shall publish notice before the permit takes effect."
+
+    first = adapter.evaluate(
+        text,
+        document_id="zkp-bridge-determinism",
+        citation="ZKP Bridge Determinism",
+    )
+    second = adapter.evaluate(
+        text,
+        document_id="zkp-bridge-determinism",
+        citation="ZKP Bridge Determinism",
+    )
+
+    first_records = first.ir_document.views["zkp_attestations"].payload["records"]
+    second_records = second.ir_document.views["zkp_attestations"].payload["records"]
+
+    assert first_records
+    assert second_records
+    assert [record["proof_hash"] for record in first_records] == [
+        record["proof_hash"] for record in second_records
+    ]
 
 
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:

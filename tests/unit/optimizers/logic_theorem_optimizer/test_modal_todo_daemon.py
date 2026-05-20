@@ -170,6 +170,7 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
         sample_id="sample-cross-logic",
         citation="5 U.S.C. 552",
         losses={
+            "cec_dcec_event_formula_invalid_ratio": 1.0,
             "cec_dcec_validation_failure_ratio": 1.0,
             "external_prover_unavailable_loss": 1.0,
             "tdfol_parse_failure_ratio": 1.0,
@@ -183,6 +184,8 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
 
     assert actions_by_loss["tdfol_parse_failure_ratio"].action == "repair_tdfol_bridge_parse"
     assert actions_by_loss["tdfol_parse_failure_ratio"].metadata["program_synthesis_scope"] == "tdfol"
+    assert actions_by_loss["cec_dcec_event_formula_invalid_ratio"].action == "repair_cec_dcec_bridge"
+    assert actions_by_loss["cec_dcec_event_formula_invalid_ratio"].metadata["program_synthesis_scope"] == "cec"
     assert actions_by_loss["cec_dcec_validation_failure_ratio"].action == "repair_cec_dcec_bridge"
     assert actions_by_loss["cec_dcec_validation_failure_ratio"].metadata["program_synthesis_scope"] == "cec"
     assert actions_by_loss["external_prover_unavailable_loss"].action == "repair_external_prover_router"

@@ -161,6 +161,31 @@ class TestZKPProver:
         assert stats['cache_hits'] == 1
         assert proof2.public_inputs["theorem"] == "  Q\n"
         assert proof2.public_inputs["theorem_hash"] == proof1.public_inputs["theorem_hash"]
+
+    def test_simulated_proof_is_deterministic_without_cache(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        theorem = "Q"
+        axioms = ["P", "P -> Q"]
+
+        proof1 = prover.generate_proof(theorem=theorem, private_axioms=axioms)
+        proof2 = prover.generate_proof(theorem=theorem, private_axioms=axioms)
+
+        assert proof1.proof_data == proof2.proof_data
+        assert proof1.public_inputs["theorem_hash"] == proof2.public_inputs["theorem_hash"]
+
+    def test_simulated_public_inputs_include_versioned_circuit_ref(self):
+        prover = ZKPProver(backend="simulated", enable_caching=False)
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={
+                "circuit_ref": "legal_ir_zkp_attestation",
+                "circuit_version": 2,
+            },
+        )
+
+        assert proof.public_inputs["circuit_ref"] == "legal_ir_zkp_attestation@v2"
+        assert proof.public_inputs["circuit_version"] == 2
     
     def test_proof_size_limit(self):
         """

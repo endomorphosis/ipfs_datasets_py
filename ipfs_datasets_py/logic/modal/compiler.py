@@ -94,6 +94,14 @@ def _signal_free_adaptive_ambiguity_targets(family: str) -> Sequence[str]:
     return tuple(resolver(family))
 
 
+def _compiler_ambiguity_policy_targets(family: str) -> Sequence[str]:
+    resolver = _current_compiler_attr(
+        "compiler_ambiguity_policy_targets",
+        compiler_ambiguity_policy_targets,
+    )
+    return tuple(resolver(family))
+
+
 def _is_priority_signal_free_adaptive_ambiguity_pair(
     predicted_family: str,
     target_family: str,
@@ -1297,7 +1305,7 @@ class DeterministicModalCompiler:
             if target_family not in seen_targets:
                 ordered_targets.append(target_family)
                 seen_targets.add(target_family)
-        for target_family in compiler_ambiguity_policy_targets(
+        for target_family in _compiler_ambiguity_policy_targets(
             predicted_family
         ):
             if target_family not in seen_targets:

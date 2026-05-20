@@ -145,6 +145,7 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         source_view="legal_text",
         target_views=(
             "cec_events",
+            "event_calculus",
             "dcec_formula",
             "proof_trace",
             "frame_logic",
@@ -153,6 +154,7 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         loss_names=(
             "cec_dcec_no_formula_loss",
             "cec_dcec_validation_failure_ratio",
+            "cec_dcec_event_formula_invalid_ratio",
         ),
         required_submodules=("CEC",),
         ast_scope="cec",

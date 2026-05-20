@@ -395,7 +395,7 @@
     },
     "1199394bc302d369": {
       "fingerprint": "e41a75fb5009d4762e93a8be52f229d9f48d5bc883662d138bdfceabc1b44e12",
-      "status": "failed_validation",
+      "status": "completed",
       "vector": [
         -0.0901295468211174,
         0.00816288497298956,
@@ -2345,7 +2345,7 @@
     },
     "program-1aabcaee78849110": {
       "fingerprint": "c239d704d40cfe5a25df3c8a88f0c9951ef14926c7e15342899d8776736fa5ea",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.14431923627853394,
         -0.12404818832874298,
@@ -3515,7 +3515,7 @@
     },
     "program-2149fbc5d55f8bf7": {
       "fingerprint": "499c6b293760001d6f8d3777f9147d54b2df16eb68a06a6351937f04a0298fd4",
-      "status": "failed_validation",
+      "status": "completed",
       "vector": [
         -0.11528797447681427,
         -0.08962582796812057,
@@ -6635,7 +6635,7 @@
     },
     "program-31ccbcfc84310259": {
       "fingerprint": "ff5c097953d2335c73c3c9cfd171752c080648ac0b747994f422a3a2fb5909ab",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.12700940668582916,
         -0.10999860614538193,
@@ -7415,7 +7415,7 @@
     },
     "program-35e7ab1989efa5fc": {
       "fingerprint": "5f240dd52a641aa29e050bb332d0d33772475d1dea7534539815b548baa0994b",
-      "status": "claimed",
+      "status": "completed",
       "vector": [
         -0.10882066190242767,
         -0.057750530540943146,
@@ -8195,7 +8195,7 @@
     },
     "program-41ac78511e09f07c": {
       "fingerprint": "a0ea1abd7c45e0c3bfbbbfe1d28bdd69567251b52a6a09b7c8bda1e78416600f",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.11024618148803711,
         -0.12201082706451416,
@@ -8975,7 +8975,7 @@
     },
     "program-576f1cd36de96000": {
       "fingerprint": "74db2ab9889d169660a0392decf0cd0a6806dd45046784bbf0dc81e19c948cb3",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.14345233142375946,
         -0.10854490101337433,
@@ -10145,7 +10145,7 @@
     },
     "program-5f0c1f1cf02c9771": {
       "fingerprint": "758cd9e297b5f45d7bbdd6de77effc37149b119be9b9caa20d671dfcfc27d5a1",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.14300698041915894,
         -0.10739623755216599,
@@ -12875,7 +12875,7 @@
     },
     "program-723b50587c877786": {
       "fingerprint": "5c2b74b8159d6c7938dbca282dda1e1958977b7ed4109a5228af0d03747c0bac",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.1581261157989502,
         -0.10596902668476105,
@@ -17165,7 +17165,7 @@
     },
     "program-985917deb769d601": {
       "fingerprint": "1953866bf22b3d01de60ec281d57fe198b7052048d207065265c46e8392de538",
-      "status": "claimed",
+      "status": "completed",
       "vector": [
         -0.11456956714391708,
         -0.05973827838897705,
@@ -19115,7 +19115,7 @@
     },
     "program-b5ddfec24f34b159": {
       "fingerprint": "d3547a80eb7b8ce697201ae7db61edba940d2a07c344868ffdaccda47cb49d11",
-      "status": "claimed",
+      "status": "completed",
       "vector": [
         -0.10962718725204468,
         -0.0487256683409214,
@@ -21455,7 +21455,7 @@
     },
     "program-bf9d5698f224eb9e": {
       "fingerprint": "729df38c9fd550c1db665b392662806f786e13ba246ef9850e04a9ace2d2bff9",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.13813577592372894,
         -0.11407703161239624,
@@ -24185,7 +24185,7 @@
     },
     "program-d4961bd62846e7fa": {
       "fingerprint": "c55754a776815bb392ea944ee58690b18a6b5ca4bd4c7c9a7cf739ed3880b823",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.11493896692991257,
         -0.08874290436506271,
@@ -25745,7 +25745,7 @@
     },
     "program-efb7a5d79caeea7e": {
       "fingerprint": "293dca62c42eca0b9118fe419c93f0e52aae3ac5986ea42a47a9deaf66c7a30e",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.14222919940948486,
         -0.11819630861282349,
@@ -26135,7 +26135,7 @@
     },
     "program-f0be83c28fb61aa2": {
       "fingerprint": "2df98592de8e6f57e86542d65fdfe91defa19012b24a5ecf3b4279e430732c35",
-      "status": "pending",
+      "status": "claimed",
       "vector": [
         -0.11244338750839233,
         -0.07862189412117004,
@@ -28476,7 +28476,7 @@
   },
   "model": "",
   "provider": "local_adapter",
-  "refreshed_count": 2,
-  "updated_at": "2026-05-20T07:57:25+00:00",
+  "refreshed_count": 0,
+  "updated_at": "2026-05-20T08:01:06+00:00",
   "version": 1
 }

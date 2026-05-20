@@ -322,6 +322,33 @@ class LegalModalParser:
             segments=segments,
         )
         if fallback_formula is not None:
+            residual_segments = self._segments_excluding_spans(
+                segments,
+                spans=[
+                    (
+                        int(fallback_formula.provenance.start_char),
+                        int(fallback_formula.provenance.end_char),
+                    )
+                ],
+            )
+            residual_formulas = self.residual_span_coverage_formulas(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=len(formulas) + 1,
+                segments=residual_segments,
+            )
+            formulas.extend(residual_formulas)
+            if residual_formulas:
+                reindexed_fallback = self.fallback_formula(
+                    document_id=resolved_document_id,
+                    text=normalized,
+                    citation=citation,
+                    start_index=len(formulas) + 1,
+                    segments=segments,
+                )
+                if reindexed_fallback is not None:
+                    fallback_formula = reindexed_fallback
             formulas.append(fallback_formula)
         elif formulas:
             residual_segments = self._segments_excluding_spans(

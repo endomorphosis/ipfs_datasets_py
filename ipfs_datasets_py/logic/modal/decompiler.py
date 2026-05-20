@@ -110,6 +110,10 @@ _USCODE_LEADING_SECTION_REF_RE = re.compile(
     r"^\s*(?:(?:§\s*|sec\.?\s*|section\s+)\d[0-9A-Za-z.\-]*(?:\([^)]+\))*|\d[0-9A-Za-z.\-]*(?:\([^)]+\))*)\s*(?:[.:\-–—]+)?\s*",
     re.IGNORECASE,
 )
+_USCODE_STATUS_LEADING_SECTION_LABEL_RE = re.compile(
+    r"^\s*(?:(?:this|such)\s+)?(?:sections?|sec\.?)\b\s*[,.:;\-–—]*\s*",
+    re.IGNORECASE,
+)
 _SECTION_HEADING_TAIL_SPLIT_RE = re.compile(r"[.;:\n]")
 _STATUTORY_SCOPE_UNITS: tuple[str, ...] = (
     "subparagraph",
@@ -915,7 +919,14 @@ def _status_heading_surface_text(text: str, *, status_keyword: str) -> str:
         return ""
     lowered_text = normalized_text.lower()
     if not lowered_text.startswith(normalized_keyword):
-        return ""
+        stripped_text = _clean_text(
+            _USCODE_STATUS_LEADING_SECTION_LABEL_RE.sub("", normalized_text, count=1)
+        )
+        lowered_stripped_text = stripped_text.lower()
+        if not stripped_text or not lowered_stripped_text.startswith(normalized_keyword):
+            return ""
+        normalized_text = stripped_text
+        lowered_text = lowered_stripped_text
     if lowered_text == normalized_keyword:
         return normalized_text
     if re.match(

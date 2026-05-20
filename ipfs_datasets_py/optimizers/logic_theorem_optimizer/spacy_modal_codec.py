@@ -1158,6 +1158,7 @@ class SpaCyModalIRCompiler:
             )
         if encoding.normalized_text:
             if not formulas:
+                fallback_allow_modal_cues = False
                 fallback_formula = self._fallback_parser.fallback_formula(
                     document_id=encoding.document_id,
                     text=encoding.normalized_text,
@@ -1165,6 +1166,7 @@ class SpaCyModalIRCompiler:
                     start_index=1,
                 )
                 if fallback_formula is None:
+                    fallback_allow_modal_cues = True
                     fallback_formula = self._fallback_parser.fallback_formula(
                         document_id=encoding.document_id,
                         text=encoding.normalized_text,
@@ -1173,6 +1175,35 @@ class SpaCyModalIRCompiler:
                         allow_modal_cues=True,
                     )
                 if fallback_formula is not None:
+                    segments = self._fallback_parser.segment(encoding.normalized_text)
+                    residual_segments = self._fallback_parser._segments_excluding_spans(
+                        segments,
+                        spans=[
+                            (
+                                int(fallback_formula.provenance.start_char),
+                                int(fallback_formula.provenance.end_char),
+                            )
+                        ],
+                    )
+                    residual_formulas = self._fallback_parser.residual_span_coverage_formulas(
+                        document_id=encoding.document_id,
+                        text=encoding.normalized_text,
+                        citation=encoding.citation,
+                        start_index=1,
+                        segments=residual_segments,
+                    )
+                    formulas.extend(residual_formulas)
+                    if residual_formulas:
+                        reindexed_fallback = self._fallback_parser.fallback_formula(
+                            document_id=encoding.document_id,
+                            text=encoding.normalized_text,
+                            citation=encoding.citation,
+                            start_index=len(formulas) + 1,
+                            segments=segments,
+                            allow_modal_cues=fallback_allow_modal_cues,
+                        )
+                        if reindexed_fallback is not None:
+                            fallback_formula = reindexed_fallback
                     formulas.append(fallback_formula)
                 else:
                     formulas.extend(

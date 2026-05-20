@@ -401,6 +401,7 @@ class Groth16Backend(ZKPBackend):
             'theorem': witness.get('theorem', ''),
             'theorem_hash': witness.get('theorem_hash_hex', ''),
             'axioms_commitment': witness.get('axioms_commitment_hex', ''),
+            'circuit_ref': witness.get('circuit_ref', ''),
             'circuit_version': witness.get('circuit_version', 0),
             'ruleset_id': witness.get('ruleset_id', ''),
         }
@@ -536,6 +537,7 @@ class Groth16BackendFallback(ZKPBackend):
                 'theorem': witness.get('theorem', ''),
                 'theorem_hash': witness['theorem_hash_hex'],
                 'axioms_commitment': witness['axioms_commitment_hex'],
+                'circuit_ref': witness.get('circuit_ref', ''),
                 'circuit_version': witness['circuit_version'],
                 'ruleset_id': witness['ruleset_id'],
             },

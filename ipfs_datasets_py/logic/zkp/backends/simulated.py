@@ -13,17 +13,20 @@ from typing import Any
 
 import hashlib
 import json
-import secrets
 import time
 
 from .. import ZKPError, ZKPProof
 from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
+from ..statement import format_circuit_ref, parse_circuit_ref_lenient
 
 
 @dataclass
 class SimulatedBackend:
     backend_id: str = "simulated"
 
+    _DEFAULT_CIRCUIT_ID = "knowledge_of_axioms"
+    _PADDING_LENGTH = 56
+    _U64_MAX = (1 << 64) - 1
 
     def _simulated_proof_layout_metadata(self) -> dict[str, Any]:
         magic = b"SIMZKP\x00\x01"
@@ -51,7 +54,12 @@ class SimulatedBackend:
                     "length": 32,
                     "description": "SHA256(canonicalized axioms JSON)",
                 },
-                {"tag": "padding", "offset": 104, "length": 56, "description": "random bytes"},
+                {
+                    "tag": "padding",
+                    "offset": 104,
+                    "length": 56,
+                    "description": "deterministic pseudo-random bytes derived from theorem/axioms/seed",
+                },
             ],
         }
 
@@ -61,15 +69,25 @@ class SimulatedBackend:
         if not private_axioms:
             raise ZKPError("At least one axiom required")
 
+        metadata_dict = dict(metadata or {})
         circuit_hash = self._hash_circuit(theorem, private_axioms)
         witness = self._compute_witness(private_axioms)
-        proof_data = self._simulate_groth16_proof(circuit_hash=circuit_hash, witness=witness, theorem=theorem)
+        proof_data = self._simulate_groth16_proof(
+            circuit_hash=circuit_hash,
+            witness=witness,
+            theorem=theorem,
+            seed=metadata_dict.get("seed"),
+        )
 
-        circuit_version = int((metadata or {}).get("circuit_version", 1))
-        ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
+        circuit_version = int(metadata_dict.get("circuit_version", 1))
+        ruleset_id = str(metadata_dict.get("ruleset_id", "TDFOL_v1"))
+        circuit_ref = self._resolve_circuit_ref(
+            metadata_dict,
+            circuit_version=circuit_version,
+        )
 
 
-        output_metadata = {**(metadata or {})}
+        output_metadata = {**metadata_dict}
         output_metadata.setdefault("simulated_proof_layout", self._simulated_proof_layout_metadata())
 
         return ZKPProof(
@@ -78,6 +96,7 @@ class SimulatedBackend:
                 "theorem": theorem,
                 "theorem_hash": theorem_hash_hex(theorem),
                 "axioms_commitment": axioms_commitment_hex(private_axioms),
+                "circuit_ref": circuit_ref,
                 "circuit_version": circuit_version,
                 "ruleset_id": ruleset_id,
             },
@@ -133,7 +152,13 @@ class SimulatedBackend:
         witness_data = json.dumps([normalize_text(a) for a in axioms], sort_keys=True)
         return hashlib.sha256(witness_data.encode()).digest()
 
-    def _simulate_groth16_proof(self, circuit_hash: bytes, witness: bytes, theorem: str) -> bytes:
+    def _simulate_groth16_proof(
+        self,
+        circuit_hash: bytes,
+        witness: bytes,
+        theorem: str,
+        seed: Any = None,
+    ) -> bytes:
         proof_inputs = circuit_hash + witness + normalize_text(theorem).encode("utf-8")
         proof_hash = hashlib.sha256(proof_inputs).digest()
 
@@ -142,10 +167,78 @@ class SimulatedBackend:
         # - [8:40]    proof_hash: SHA256(circuit_hash || witness || normalize_text(theorem))
         # - [40:72]   circuit_hash: SHA256(normalized theorem + axiom hashes metadata)
         # - [72:104]  witness: SHA256(canonicalized axioms JSON)
-        # - [104:160] random padding (demo-only; makes bytes look Groth16-ish)
+        # - [104:160] deterministic padding (simulated but stable for attestation views)
         #
         # This is demo-only and intentionally non-verifiable as a real zkSNARK.
         magic = b"SIMZKP\x00\x01"
-        padding = secrets.token_bytes(56)
+        padding = self._deterministic_padding(
+            theorem=theorem,
+            circuit_hash=circuit_hash,
+            witness=witness,
+            proof_hash=proof_hash,
+            seed=seed,
+        )
         simulated_proof = magic + proof_hash + circuit_hash + witness + padding
         return simulated_proof
+
+    def _deterministic_padding(
+        self,
+        *,
+        theorem: str,
+        circuit_hash: bytes,
+        witness: bytes,
+        proof_hash: bytes,
+        seed: Any,
+    ) -> bytes:
+        """Derive stable pseudo-random bytes for simulated proof padding."""
+        seed_material = self._seed_material(seed)
+        seed_len = len(seed_material).to_bytes(2, "big")
+        base = (
+            b"SIMZKP_PAD_V1"
+            + circuit_hash
+            + witness
+            + proof_hash
+            + normalize_text(theorem).encode("utf-8")
+            + seed_len
+            + seed_material
+        )
+        output = bytearray()
+        counter = 0
+        while len(output) < self._PADDING_LENGTH:
+            block = hashlib.sha256(base + counter.to_bytes(4, "big")).digest()
+            output.extend(block)
+            counter += 1
+        return bytes(output[: self._PADDING_LENGTH])
+
+    @staticmethod
+    def _seed_material(seed: Any) -> bytes:
+        if seed is None:
+            return b""
+        if isinstance(seed, bool):
+            raise ZKPError("seed must be a uint64 integer when provided")
+        if isinstance(seed, int):
+            if seed < 0 or seed > SimulatedBackend._U64_MAX:
+                raise ZKPError("seed must be in uint64 range")
+            return seed.to_bytes(8, "big", signed=False)
+        raise ZKPError("seed must be a uint64 integer when provided")
+
+    def _resolve_circuit_ref(self, metadata: dict[str, Any], *, circuit_version: int) -> str:
+        """Return a versioned circuit_ref consistent with circuit_version."""
+        candidate = str(metadata.get("circuit_ref") or "").strip()
+        default_circuit_id = str(metadata.get("circuit_id") or self._DEFAULT_CIRCUIT_ID).strip()
+        circuit_id = default_circuit_id or self._DEFAULT_CIRCUIT_ID
+
+        if candidate:
+            try:
+                parsed_id, parsed_version = parse_circuit_ref_lenient(
+                    candidate,
+                    legacy_default_version=circuit_version,
+                )
+                circuit_id = parsed_id
+                if parsed_version != circuit_version:
+                    return format_circuit_ref(circuit_id, circuit_version)
+                return format_circuit_ref(circuit_id, parsed_version)
+            except Exception:
+                return format_circuit_ref(circuit_id, circuit_version)
+
+        return format_circuit_ref(circuit_id, circuit_version)

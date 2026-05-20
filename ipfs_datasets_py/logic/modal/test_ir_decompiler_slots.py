@@ -545,6 +545,37 @@ def _procedural_keyword_fallback_sample_document() -> ModalIRDocument:
     )
 
 
+def _status_heading_section_label_sample_document() -> ModalIRDocument:
+    source_id = "us-code-48-49.-93d3b52bb4a91e5f"
+    normalized_text = "Section, transferred."
+    formula = ModalIRFormula(
+        formula_id="f-status-heading-section-label",
+        operator=ModalIROperator(
+            family="frame",
+            system="frame",
+            symbol="Frame",
+            label="framed as",
+        ),
+        predicate=ModalIRPredicate(name="uscode_transferred_heading_fallback"),
+        provenance=ModalIRProvenance(
+            source_id=source_id,
+            start_char=0,
+            end_char=len(normalized_text),
+            citation="48 U.S.C. 49.",
+        ),
+        metadata={
+            "cue": "__uscode_transferred_heading_fallback__",
+            "fallback_rule": "uscode_transferred_heading_v1",
+        },
+    )
+    return ModalIRDocument(
+        document_id=source_id,
+        source="us_code",
+        normalized_text=normalized_text,
+        formulas=[formula],
+    )
+
+
 def _typed_clause_scope_sample_document() -> ModalIRDocument:
     source_id = "us-code-7-6409-502d7cea35400f08"
     normalized_text = (
@@ -3452,6 +3483,40 @@ def test_modal_ir_to_flogic_triples_emits_section_heading_tail_for_coarse_fallba
     assert objects("section_heading_tail_token_suffix") == ["improvements"]
     assert objects("fallback_surface_text_token_count") == ["4"]
     assert objects("fallback_surface_text_token_suffix") == ["improvements"]
+
+
+def test_decode_modal_ir_document_normalizes_status_heading_section_label() -> None:
+    decoded = decode_modal_ir_document(_status_heading_section_label_sample_document())
+    slot_map = decoded_modal_phrase_slot_text_map(decoded)
+
+    assert slot_map["fallback_rule"] == ["uscode_transferred_heading_v1"]
+    assert slot_map["status_keyword"] == ["transferred"]
+    assert slot_map["fallback_surface_text"] == ["transferred"]
+    assert slot_map["fallback_surface_text_token"] == ["transferred"]
+    assert slot_map["fallback_surface_text_alnum_segment_count"] == ["1"]
+    assert slot_map["fallback_surface_text_alnum_segment_kind_positioned"] == [
+        "1:alpha"
+    ]
+
+
+def test_modal_ir_to_flogic_triples_normalizes_status_heading_section_label() -> None:
+    triples = modal_ir_to_flogic_triples(_status_heading_section_label_sample_document())
+
+    def objects(predicate: str) -> list[str]:
+        return [
+            triple["object"]
+            for triple in triples
+            if triple.get("predicate") == predicate
+        ]
+
+    assert objects("fallback_rule") == ["uscode_transferred_heading_v1"]
+    assert objects("status_keyword") == ["transferred"]
+    assert objects("fallback_surface_text") == ["transferred"]
+    assert objects("fallback_surface_text_token") == ["transferred"]
+    assert objects("fallback_surface_text_alnum_segment_count") == ["1"]
+    assert objects("fallback_surface_text_alnum_segment_kind_positioned") == [
+        "1:alpha"
+    ]
 
 
 def test_decode_modal_ir_document_emits_procedural_keyword_slots() -> None:
