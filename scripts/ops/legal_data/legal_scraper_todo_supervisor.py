@@ -987,6 +987,37 @@ def _collect_state_rate_analytics(
 
     for state in all_states:
         row = log_data.get(state, {})
+        progress_row = progress_state_results.get(state) if isinstance(progress_state_results, dict) else {}
+        progress_status = (
+            str(progress_row.get("status") or "").strip().lower()
+            if isinstance(progress_row, dict)
+            else ""
+        )
+        timeout_classification = (
+            str(progress_row.get("timeout_classification") or "").strip()
+            if isinstance(progress_row, dict)
+            else ""
+        )
+        completion_mode = (
+            str(progress_row.get("completion_mode") or "").strip()
+            if isinstance(progress_row, dict)
+            else ""
+        )
+        timeout_work_remaining_raw = (
+            progress_row.get("timeout_work_remaining")
+            if isinstance(progress_row, dict)
+            else None
+        )
+        timeout_work_remaining = (
+            bool(timeout_work_remaining_raw)
+            if isinstance(timeout_work_remaining_raw, bool)
+            else None
+        )
+        timeout_promoted_to_success = (
+            bool(progress_row.get("timeout_promoted_to_success"))
+            if isinstance(progress_row, dict)
+            else False
+        )
         is_completed = state in completed_states
         started = bool(row.get("started")) or (int(row.get("line_count", 0)) > 0) or is_completed
         if started:
@@ -1126,6 +1157,7 @@ def _collect_state_rate_analytics(
             "started": started,
             "completed": is_completed,
             "inflight": is_inflight,
+            "progress_status": progress_status,
             "line_count": _safe_int(row.get("line_count"), 0),
             "scraped_event_count": scraped_event_count,
             "progress_event_count": progress_event_count,
@@ -1153,6 +1185,14 @@ def _collect_state_rate_analytics(
             "possibly_stalled": bool(possibly_stalled),
             "possible_stall_seconds": round(possible_stall_seconds, 1),
         }
+        if timeout_classification:
+            state_entry["timeout_classification"] = timeout_classification
+        if completion_mode:
+            state_entry["completion_mode"] = completion_mode
+        if timeout_work_remaining is not None:
+            state_entry["timeout_work_remaining"] = timeout_work_remaining
+        if timeout_promoted_to_success:
+            state_entry["timeout_promoted_to_success"] = True
         state_rows.append(state_entry)
 
         if likely_stalled:
@@ -1212,6 +1252,29 @@ def _collect_state_rate_analytics(
         )
     )
 
+    timeout_while_work_remaining_count = sum(
+        1 for row in state_rows if str(row.get("timeout_classification") or "") == "timeout_while_work_remaining"
+    )
+    timeout_no_remaining_work_count = sum(
+        1
+        for row in state_rows
+        if str(row.get("timeout_classification") or "") in {
+            "timeout_with_no_detectable_remaining_work",
+            "timeout_without_progress_signal_no_remaining_work",
+        }
+    )
+    timeout_unknown_count = sum(
+        1
+        for row in state_rows
+        if str(row.get("timeout_classification") or "").startswith("timeout_")
+        and str(row.get("timeout_classification") or "")
+        not in {
+            "timeout_while_work_remaining",
+            "timeout_with_no_detectable_remaining_work",
+            "timeout_without_progress_signal_no_remaining_work",
+        }
+    )
+
     return {
         "signal_mode": signal_mode,
         "rate_window_seconds": max(60.0, float(rate_window_seconds)),
@@ -1227,6 +1290,9 @@ def _collect_state_rate_analytics(
         "high_confidence_stalled_state_count": len(high_confidence_stalled_states),
         "possibly_stalled_state_count": len(possibly_stalled_states),
         "low_confidence_inactive_state_count": int(low_confidence_inactive_state_count),
+        "timeout_while_work_remaining_count": int(timeout_while_work_remaining_count),
+        "timeout_no_remaining_work_count": int(timeout_no_remaining_work_count),
+        "timeout_unknown_count": int(timeout_unknown_count),
         "started_states": started_states,
         "completed_states": completed_from_progress,
         "inflight_states": inflight_states,

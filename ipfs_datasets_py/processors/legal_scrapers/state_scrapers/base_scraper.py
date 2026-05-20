@@ -2646,6 +2646,16 @@ class BaseStateScraper(ABC):
         max_results: int = 20,
     ) -> List[Dict[str, Any]]:
         """Query the state Common Crawl HF index for this scraper's state."""
+        state_index_enabled = str(
+            os.getenv("STATE_SCRAPER_COMMON_CRAWL_STATE_INDEX_ENABLED", "1")
+        ).strip().lower() not in {"0", "false", "no", "off"}
+        if not state_index_enabled:
+            self.logger.info(
+                "State Common Crawl index lookup disabled by env for %s",
+                self.state_code,
+            )
+            return []
+
         try:
             from ..common_crawl_index_loader import CommonCrawlIndexLoader
         except Exception as e:
@@ -2656,9 +2666,12 @@ class BaseStateScraper(ABC):
             os.getenv("IPFS_DATASETS_PY_COMMON_CRAWL_INDEX_ROOT", "")
             or (Path.cwd() / "data" / "common_crawl_indexes")
         ).strip()
+        hf_fallback_enabled = str(
+            os.getenv("STATE_SCRAPER_COMMON_CRAWL_HF_FALLBACK_ENABLED", "1")
+        ).strip().lower() not in {"0", "false", "no", "off"}
         loader = CommonCrawlIndexLoader(
             local_base_dir=local_index_root,
-            use_hf_fallback=True,
+            use_hf_fallback=hf_fallback_enabled,
         )
         try:
             materialize_local = str(

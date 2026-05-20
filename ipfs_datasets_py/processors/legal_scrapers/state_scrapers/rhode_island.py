@@ -174,6 +174,9 @@ class RhodeIslandScraper(BaseStateScraper):
         match = _SECTION_NUMBER_RE.search(str(link_text or ""))
         if match:
             return match.group(1).strip().rstrip(".")
+        url_match = _SECTION_LINK_RE.search(str(url or ""))
+        if url_match:
+            return url_match.group(3).strip().rstrip(".")
         return (
             self._extract_section_number(link_text)
             or self._derive_section_number_from_url(url)

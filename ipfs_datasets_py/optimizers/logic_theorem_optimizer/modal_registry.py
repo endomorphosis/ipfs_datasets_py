@@ -76,10 +76,6 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
-        ModalLogicFamily.FRAME.value,
-    ),
-    (
-        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
@@ -503,6 +499,12 @@ def _ordered_unique_adaptive_ambiguity_family_pairs(
     return tuple(unique_pairs)
 
 
+COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (
+    _ordered_unique_adaptive_ambiguity_family_pairs(
+        COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS
+    )
+)
+
 COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS = (
     _ordered_unique_adaptive_ambiguity_family_pairs(
         COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS
@@ -632,8 +634,6 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
         ModalLogicFamily.FRAME.value,
         ModalLogicFamily.DOXASTIC.value,
     ),
-    *COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS,
-    *COMPILER_AMBIGUITY_CORE_FAMILY_PAIRS,
 )
 
 PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS = (

@@ -4,6 +4,7 @@ This module contains the scraper for New Hampshire statutes from the official st
 """
 
 import asyncio
+import inspect
 import os
 import time
 from dataclasses import fields as dataclass_fields
@@ -94,10 +95,14 @@ class NewHampshireScraper(BaseStateScraper):
             max_statutes=None if full_corpus_unbounded else max(20, return_threshold * 4),
         )
 
+        archived_title_kwargs: Dict[str, Any] = {
+            "max_statutes": None if full_corpus_unbounded else max(10, return_threshold),
+        }
+        if "checkpoint" in inspect.signature(self._scrape_archived_title_stubs).parameters:
+            archived_title_kwargs["checkpoint"] = checkpoint
         archived_title_stubs = await self._scrape_archived_title_stubs(
             code_name,
-            max_statutes=None if full_corpus_unbounded else max(10, return_threshold),
-            checkpoint=checkpoint,
+            **archived_title_kwargs,
         )
 
         seen = set()
@@ -216,18 +221,64 @@ class NewHampshireScraper(BaseStateScraper):
     async def _fetch_known_rsa_page(self, url: str, timeout_seconds: int = 35) -> bytes:
         # Known official/Wayback RSA pages should be fetched directly before invoking
         # the heavier archival/search fallback stack.
-        lower_url = str(url or "").lower()
+        normalized_url = self._normalize_wayback_like_url(url)
+        lower_url = str(normalized_url or "").lower()
         is_known_rsa = "/rsa/html/" in lower_url and (
             "gencourt.state.nh.us/" in lower_url
             or "gc.nh.gov/" in lower_url
             or "web.archive.org/web/" in lower_url
         )
         if is_known_rsa:
-            for candidate in self._wayback_replay_candidates(self._normalize_wayback_like_url(url)):
+            wayback_candidates = self._wayback_replay_candidates(normalized_url)
+            ordered_candidates: List[str] = []
+            for candidate in wayback_candidates:
+                candidate_text = str(candidate or "").strip()
+                if candidate_text and candidate_text not in ordered_candidates:
+                    ordered_candidates.append(candidate_text)
+            for candidate in ordered_candidates:
                 direct = await self._request_text_direct(candidate, timeout=max(5, timeout_seconds))
                 if direct:
                     return direct.encode("utf-8", errors="replace")
-        return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
+        return await self._fetch_page_content_with_archival_fallback(normalized_url, timeout_seconds=timeout_seconds)
+
+    def _derive_direct_rsa_candidates(self, value: str) -> List[str]:
+        url = str(value or "").strip()
+        if not url:
+            return []
+        out: List[str] = []
+        if "web.archive.org/web/" in url.lower():
+            match = re.search(
+                r"/web/\d+(?:if_|id_)?/(https?://.+)$",
+                url,
+                flags=re.IGNORECASE,
+            )
+            if match:
+                out.append(self._normalize_wayback_like_url(match.group(1)))
+        lower_candidates = [str(candidate or "").strip().lower() for candidate in out]
+        if any("www.gencourt.state.nh.us/" in candidate for candidate in lower_candidates):
+            out.append(
+                re.sub(
+                    r"^https?://www\.gencourt\.state\.nh\.us/",
+                    "https://gc.nh.gov/",
+                    out[0],
+                    flags=re.IGNORECASE,
+                )
+            )
+        elif any("gc.nh.gov/" in candidate for candidate in lower_candidates):
+            out.append(
+                re.sub(
+                    r"^https?://gc\.nh\.gov/",
+                    "https://www.gencourt.state.nh.us/",
+                    out[0],
+                    flags=re.IGNORECASE,
+                )
+            )
+        deduped: List[str] = []
+        for candidate in out:
+            text = str(candidate or "").strip()
+            if text and text not in deduped:
+                deduped.append(text)
+        return deduped
 
     async def _scrape_archived_title_stubs(
         self,
@@ -243,7 +294,7 @@ class NewHampshireScraper(BaseStateScraper):
         root_url = "https://web.archive.org/web/20250124114611/https://www.gencourt.state.nh.us/rsa/html/NHTOC.htm"
 
         try:
-            payload = await self._fetch_known_rsa_page(root_url, timeout_seconds=35)
+            payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
             if not payload:
                 return []
         except Exception:
@@ -321,7 +372,7 @@ class NewHampshireScraper(BaseStateScraper):
             if chapter_fetch_limit is not None and len(chapter_urls) >= chapter_fetch_limit:
                 break
             try:
-                title_payload = await self._fetch_known_rsa_page(title_url, timeout_seconds=35)
+                title_payload = await self._fetch_page_content_with_archival_fallback(title_url, timeout_seconds=35)
                 if not title_payload:
                     continue
             except Exception:
@@ -381,7 +432,7 @@ class NewHampshireScraper(BaseStateScraper):
 
         async def _fetch_chapter_sections(chapter_id: str, chapter_name: str, chapter_url: str) -> List[NormalizedStatute]:
             try:
-                chapter_payload = await self._fetch_known_rsa_page(chapter_url, timeout_seconds=35)
+                chapter_payload = await self._fetch_page_content_with_archival_fallback(chapter_url, timeout_seconds=35)
                 if not chapter_payload:
                     return []
             except Exception:
@@ -415,7 +466,7 @@ class NewHampshireScraper(BaseStateScraper):
             section_statutes: List[NormalizedStatute] = []
             for section_number, section_title, section_url in section_links:
                 try:
-                    section_payload = await self._fetch_known_rsa_page(section_url, timeout_seconds=35)
+                    section_payload = await self._fetch_page_content_with_archival_fallback(section_url, timeout_seconds=35)
                 except Exception:
                     continue
                 section_text = self._extract_statute_text(section_payload)

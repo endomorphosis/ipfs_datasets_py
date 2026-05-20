@@ -78,11 +78,11 @@ def _derive_bounded_scraper_timeouts(per_state_timeout_seconds: float) -> Dict[s
     code_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_CODE_TIMEOUT_FRACTION", 0.8)))
     raw_code_cap = _env_float("STATE_SCRAPER_CODE_TIMEOUT_CAP_SECONDS", 0.0)
     code_cap = bounded_timeout if raw_code_cap <= 0.0 else max(45.0, raw_code_cap)
-    code_timeout = max(5.0, min(bounded_timeout * code_fraction, code_cap))
+    code_timeout = max(0.1, min(bounded_timeout * code_fraction, code_cap))
 
-    fetch_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_FRACTION", 0.35)))
+    fetch_fraction = max(0.05, min(0.99, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_FRACTION", 1.0 / 3.0)))
     fetch_cap = max(12.0, _env_float("STATE_SCRAPER_FETCH_TIMEOUT_CAP_SECONDS", 120.0))
-    fetch_timeout = max(5.0, min(code_timeout * fetch_fraction, fetch_cap))
+    fetch_timeout = max(0.1, min(code_timeout * fetch_fraction, fetch_cap))
 
     return {
         "code_timeout_seconds": float(code_timeout),
@@ -1454,22 +1454,19 @@ def _trim_scraped_statutes_to_max(
         return scraped_statutes, sum(len((block or {}).get("statutes") or []) for block in scraped_statutes)
 
     trimmed: List[Dict[str, Any]] = []
-    remaining = int(max_statutes)
+    per_state_limit = int(max_statutes)
     for block in scraped_statutes:
-        if remaining <= 0:
-            break
         if not isinstance(block, dict):
             continue
 
         statutes = list(block.get("statutes") or [])
-        kept = statutes[:remaining]
+        kept = statutes[:per_state_limit]
 
         out_block = dict(block)
         out_block["statutes"] = kept
         out_block["quality_metrics"] = _compute_state_quality_metrics(kept)
         out_block["quality_flag"] = _should_flag_quality(out_block["quality_metrics"])
         trimmed.append(out_block)
-        remaining -= len(kept)
 
     total = sum(len((block or {}).get("statutes") or []) for block in trimmed)
     return trimmed, total
