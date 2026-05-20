@@ -64,3 +64,21 @@ def test_legal_norm_ir_recovers_textual_modalities_from_legacy_rows() -> None:
     for row, expected in rows:
         ir = LegalNormIR.from_parser_element(row)
         assert ir.modality == expected
+
+
+def test_legal_norm_ir_roundtrip_from_typed_dict_preserves_quality_and_slot_records() -> None:
+    element = extract_normative_elements(
+        "The Secretary shall submit a report to Congress within 30 days."
+    )[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    rehydrated = LegalNormIR.from_parser_element(norm.to_dict())
+
+    assert norm.proof_ready is True
+    assert rehydrated.proof_ready is True
+    assert rehydrated.quality.promotable_to_theorem is True
+    assert rehydrated.quality.export_readiness.get("proof_ready") is True
+    assert rehydrated.source_text == norm.source_text
+    assert rehydrated.temporal_constraints
+    assert rehydrated.temporal_constraints[0].get("type") == "deadline"
+    assert rehydrated.temporal_constraints[0].get("quantity") == 30

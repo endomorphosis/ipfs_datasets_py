@@ -4,7 +4,12 @@ This module contains the scraper for New Hampshire statutes from the official st
 """
 
 import asyncio
-from typing import List, Dict, Optional
+import os
+import time
+from dataclasses import fields as dataclass_fields
+from datetime import datetime
+from pathlib import Path
+from typing import Any, List, Dict, Optional
 import json
 import re
 import urllib.request
@@ -75,6 +80,7 @@ class NewHampshireScraper(BaseStateScraper):
         if max_statutes is not None:
             return_threshold = max(1, min(return_threshold, int(max_statutes)))
         full_corpus_unbounded = self._full_corpus_enabled() and max_statutes is None
+        checkpoint = _NewHampshireCheckpoint(self.state_code)
 
         # Keep archive discovery bounded so state-level scrape timeouts are not exhausted.
         discovery_limit = max(400, return_threshold * 10) if full_corpus_unbounded else max(10, return_threshold)
@@ -82,9 +88,16 @@ class NewHampshireScraper(BaseStateScraper):
             if archived not in candidate_urls:
                 candidate_urls.append(archived)
 
+        resumed_statutes = checkpoint.load(
+            default_state_name=self.state_name,
+            default_code_name=code_name,
+            max_statutes=None if full_corpus_unbounded else max(20, return_threshold * 4),
+        )
+
         archived_title_stubs = await self._scrape_archived_title_stubs(
             code_name,
             max_statutes=None if full_corpus_unbounded else max(10, return_threshold),
+            checkpoint=checkpoint,
         )
 
         seen = set()
@@ -99,7 +112,13 @@ class NewHampshireScraper(BaseStateScraper):
                 merged_keys.add(key)
                 merged.append(statute)
 
+        _merge(resumed_statutes)
+        if resumed_statutes:
+            checkpoint.maybe_write(merged, code_name=code_name, stage_label="resume-seed")
+
         _merge(archived_title_stubs)
+        if archived_title_stubs:
+            checkpoint.maybe_write(merged, code_name=code_name, stage_label="archived-title-stubs")
         if not full_corpus_unbounded and len(merged) >= return_threshold:
             return merged
 
@@ -121,9 +140,12 @@ class NewHampshireScraper(BaseStateScraper):
             )
             statutes = self._filter_section_level(statutes)
             _merge(statutes)
+            if statutes:
+                checkpoint.maybe_write(merged, code_name=code_name, stage_label=f"candidate:{candidate}")
             if not full_corpus_unbounded and len(merged) >= return_threshold:
                 return merged
 
+        checkpoint.write(merged, code_name=code_name, stage_label="complete")
         return merged
 
     async def _scrape_direct_archived_seed_sections(self, code_name: str, max_statutes: int = 1) -> List[NormalizedStatute]:
@@ -205,6 +227,7 @@ class NewHampshireScraper(BaseStateScraper):
         self,
         code_name: str,
         max_statutes: Optional[int] = 100,
+        checkpoint: Optional["_NewHampshireCheckpoint"] = None,
     ) -> List[NormalizedStatute]:
         try:
             from bs4 import BeautifulSoup
@@ -262,6 +285,8 @@ class NewHampshireScraper(BaseStateScraper):
                         structured_data={"skip_hydrate": True, "record_type": "archived_title_stub"},
                     )
                 )
+                if checkpoint is not None:
+                    checkpoint.maybe_write(title_stubs, code_name=code_name, stage_label=f"title:{title_no}")
             if title_url_limit is not None and len(title_urls) >= title_url_limit:
                 break
 
@@ -332,6 +357,8 @@ class NewHampshireScraper(BaseStateScraper):
                             structured_data={"skip_hydrate": True, "record_type": "archived_chapter_stub"},
                         )
                     )
+                    if checkpoint is not None:
+                        checkpoint.maybe_write(out, code_name=code_name, stage_label=f"chapter-stub:{chapter_id}")
 
         if _limit_reached(len(out)):
             return out[:max_statutes]
@@ -445,9 +472,21 @@ class NewHampshireScraper(BaseStateScraper):
                     continue
                 seen_output_keys.add(key)
                 out.append(statute)
+                if checkpoint is not None and (len(out) == 1 or len(out) % 40 == 0):
+                    checkpoint.maybe_write(out, code_name=code_name, stage_label=f"chapter:{chapter_id}")
+                if len(out) == 1 or len(out) % 40 == 0:
+                    self.logger.info(
+                        "New Hampshire archived index: global_total_statutes_so_far=%s chapter=%s",
+                        len(out),
+                        chapter_id,
+                    )
                 if _limit_reached(len(out)):
+                    if checkpoint is not None:
+                        checkpoint.write(out, code_name=code_name, stage_label=f"limit:{chapter_id}")
                     return out[:max_statutes]
 
+        if checkpoint is not None:
+            checkpoint.write(out, code_name=code_name, stage_label="archived-title-stubs-complete")
         return out
 
     def _extract_statute_text(self, payload: bytes) -> str:
@@ -527,6 +566,131 @@ class NewHampshireScraper(BaseStateScraper):
         if not isinstance(parsed, list):
             return []
         return [row for row in parsed[1:] if isinstance(row, list)]
+
+
+_NORMALIZED_STATUTE_FIELD_NAMES = {field.name for field in dataclass_fields(NormalizedStatute)}
+_STATUTE_METADATA_FIELD_NAMES = {field.name for field in dataclass_fields(StatuteMetadata)}
+
+
+def _statute_from_checkpoint_row(
+    row: Dict[str, Any],
+    *,
+    default_state_code: str,
+    default_state_name: str,
+    default_code_name: str,
+) -> Optional[NormalizedStatute]:
+    if not isinstance(row, dict):
+        return None
+    kwargs: Dict[str, Any] = {}
+    for name in _NORMALIZED_STATUTE_FIELD_NAMES:
+        if name in row:
+            kwargs[name] = row.get(name)
+    metadata_payload = kwargs.get("metadata")
+    if isinstance(metadata_payload, dict):
+        metadata_kwargs = {
+            key: metadata_payload.get(key)
+            for key in _STATUTE_METADATA_FIELD_NAMES
+            if key in metadata_payload
+        }
+        history = metadata_kwargs.get("history")
+        if history is None:
+            metadata_kwargs["history"] = []
+        elif not isinstance(history, list):
+            metadata_kwargs["history"] = [str(history)]
+        kwargs["metadata"] = StatuteMetadata(**metadata_kwargs)
+    elif not isinstance(metadata_payload, StatuteMetadata):
+        kwargs["metadata"] = None
+
+    kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
+    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
+    if not kwargs["statute_id"]:
+        return None
+    kwargs["source_url"] = str(kwargs.get("source_url") or "").strip()
+    kwargs["scraped_at"] = str(kwargs.get("scraped_at") or datetime.now().isoformat())
+    kwargs["scraper_version"] = str(kwargs.get("scraper_version") or "1.0")
+    kwargs["structured_data"] = dict(kwargs.get("structured_data") or {})
+    return NormalizedStatute(**kwargs)
+
+
+class _NewHampshireCheckpoint:
+    """Best-effort partial progress checkpoint for New Hampshire archive crawls."""
+
+    def __init__(self, state_code: str) -> None:
+        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        if not raw_dir:
+            self.path: Optional[Path] = None
+        else:
+            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.state_code = state_code.upper()
+        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.last_count = 0
+        self.last_write_ts = 0.0
+
+    def load(
+        self,
+        *,
+        default_state_name: str,
+        default_code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        if not self.path or not self.path.exists():
+            return []
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        rows = payload.get("statutes") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            return []
+        loaded: List[NormalizedStatute] = []
+        seen_keys = set()
+        for row in rows:
+            statute = _statute_from_checkpoint_row(
+                row,
+                default_state_code=self.state_code,
+                default_state_name=default_state_name,
+                default_code_name=default_code_name,
+            )
+            if statute is None:
+                continue
+            key = str(statute.statute_id or statute.source_url or "").strip().lower()
+            if key and key in seen_keys:
+                continue
+            if key:
+                seen_keys.add(key)
+            loaded.append(statute)
+            if max_statutes is not None and len(loaded) >= int(max_statutes):
+                break
+        self.last_count = len(loaded)
+        return loaded
+
+    def maybe_write(self, statutes: List[NormalizedStatute], *, code_name: str, stage_label: str) -> None:
+        count = len(statutes)
+        if not self.path or count <= 0:
+            return
+        if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
+            return
+        self.write(statutes, code_name=code_name, stage_label=stage_label)
+
+    def write(self, statutes: List[NormalizedStatute], *, code_name: str, stage_label: str) -> None:
+        if not self.path or not statutes:
+            return
+        payload = {
+            "state_code": self.state_code,
+            "updated_at": time.time(),
+            "statutes_count": len(statutes),
+            "code_name": code_name,
+            "stage_label": stage_label,
+            "statutes": [statute.to_dict() for statute in statutes],
+        }
+        tmp_path = self.path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp_path.replace(self.path)
+        self.last_count = len(statutes)
+        self.last_write_ts = time.time()
 
 
 # Register this scraper with the registry

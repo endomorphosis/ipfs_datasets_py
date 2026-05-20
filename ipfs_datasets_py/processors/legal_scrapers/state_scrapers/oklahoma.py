@@ -8,7 +8,11 @@ import json
 from ipfs_datasets_py.utils import anyio_compat as asyncio
 import os
 import re
-from typing import Dict, List, Optional, Set
+import time
+from dataclasses import fields as dataclass_fields
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
 from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
@@ -83,9 +87,42 @@ class OklahomaScraper(BaseStateScraper):
             if direct:
                 return direct[:return_threshold]
 
+        checkpoint = _OklahomaCheckpoint(self.state_code)
+        seed_statutes = checkpoint.load(
+            default_state_name=self.state_name,
+            default_code_name=code_name,
+            max_statutes=max(10, return_threshold),
+        )
+        # Bootstrap with a tiny direct OSCN sample even in full-corpus mode so
+        # long candidate-discovery phases still show early real progress.
+        bootstrap_seed_target_raw = str(os.getenv("STATE_SCRAPER_OK_BOOTSTRAP_SEED_COUNT", "") or "").strip()
+        try:
+            bootstrap_seed_target = int(bootstrap_seed_target_raw) if bootstrap_seed_target_raw else 2
+        except Exception:
+            bootstrap_seed_target = 2
+        bootstrap_seed_target = max(1, min(8, bootstrap_seed_target))
+        try:
+            direct_seed = await self._scrape_direct_seed_sections(
+                code_name,
+                max_statutes=bootstrap_seed_target,
+            )
+        except Exception:
+            direct_seed = []
+        if direct_seed:
+            seed_statutes = list(seed_statutes) + list(direct_seed)
+            self.logger.info(
+                "Oklahoma OSCN bootstrap: statutes_so_far=%s direct_seed_sections=%s",
+                len(direct_seed),
+                len(direct_seed),
+            )
         best_archival: List[NormalizedStatute] = []
         for attempt in range(3):
-            archival = await self._scrape_oscn_documents(code_name=code_name, max_statutes=max(10, return_threshold))
+            archival = await self._scrape_oscn_documents(
+                code_name=code_name,
+                max_statutes=max(10, return_threshold),
+                seed_statutes=seed_statutes if attempt == 0 else best_archival,
+                checkpoint=checkpoint,
+            )
             if len(archival) > len(best_archival):
                 best_archival = archival
             if best_archival:
@@ -223,10 +260,28 @@ class OklahomaScraper(BaseStateScraper):
             },
         )
 
-    async def _scrape_oscn_documents(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_oscn_documents(
+        self,
+        code_name: str,
+        max_statutes: int,
+        *,
+        seed_statutes: Optional[List[NormalizedStatute]] = None,
+        checkpoint: Optional["_OklahomaCheckpoint"] = None,
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         statutes: List[NormalizedStatute] = []
-        seen: Set[str] = set()
+        seen_statutes: Set[str] = set()
+        seen_candidate_urls: Set[str] = set()
+
+        for statute in list(seed_statutes or []):
+            dedupe_key = _statute_dedupe_key(statute)
+            if not dedupe_key or dedupe_key in seen_statutes:
+                continue
+            seen_statutes.add(dedupe_key)
+            statutes.append(statute)
+            source_url = str(statute.source_url or "").strip().lower()
+            if source_url:
+                seen_candidate_urls.add(source_url)
 
         candidate_urls = await self._collect_candidate_document_urls(headers=headers)
         self.logger.info(
@@ -238,21 +293,40 @@ class OklahomaScraper(BaseStateScraper):
             if len(statutes) >= max_statutes:
                 break
             dedupe_key = str(link or "").strip().lower()
-            if dedupe_key in seen:
+            if dedupe_key in seen_candidate_urls:
                 continue
-            seen.add(dedupe_key)
+            seen_candidate_urls.add(dedupe_key)
 
             statute = await self._build_statute_from_document_url(code_name=code_name, document_url=link, headers=headers)
             if statute is None:
                 continue
+            statute_key = _statute_dedupe_key(statute)
+            if statute_key and statute_key in seen_statutes:
+                continue
+            if statute_key:
+                seen_statutes.add(statute_key)
             statutes.append(statute)
+            if checkpoint is not None:
+                checkpoint.maybe_write(
+                    statutes,
+                    code_name=code_name,
+                    scanned_candidates=len(seen_candidate_urls),
+                    discovered_candidates=len(candidate_urls),
+                )
             if len(statutes) == 1 or len(statutes) % 25 == 0:
                 self.logger.info(
                     "Oklahoma OSCN crawl: statutes_so_far=%s scanned_candidates=%s",
                     len(statutes),
-                    len(seen),
+                    len(seen_candidate_urls),
                 )
 
+        if checkpoint is not None:
+            checkpoint.write(
+                statutes,
+                code_name=code_name,
+                scanned_candidates=len(seen_candidate_urls),
+                discovered_candidates=len(candidate_urls),
+            )
         return statutes
 
     async def _collect_candidate_document_urls(self, headers: Dict[str, str]) -> List[str]:
@@ -292,7 +366,17 @@ class OklahomaScraper(BaseStateScraper):
             )
             return candidates
 
+        self.logger.info(
+            "Oklahoma OSCN discovery: seed_scan_start seed_count=%s full_corpus=%s",
+            len(self._SEED_INDEX_URLS),
+            self._full_corpus_enabled(),
+        )
         for seed_url in self._SEED_INDEX_URLS:
+            self.logger.info(
+                "Oklahoma OSCN discovery: scanning_seed_url=%s candidates_so_far=%s",
+                seed_url,
+                len(candidates),
+            )
             _add(seed_url)
             html = await self._request_text(seed_url, headers=headers, timeout=45)
             if not html:
@@ -303,8 +387,16 @@ class OklahomaScraper(BaseStateScraper):
                 _add(live_link)
 
         # Archive-driven URL discovery helps when live index pages are sparse.
+        self.logger.info(
+            "Oklahoma OSCN discovery: cdx_scan_start candidates_so_far=%s",
+            len(candidates),
+        )
         for archive_url in await self._discover_oscn_document_urls_via_cdx(headers=headers):
             _add(archive_url)
+        self.logger.info(
+            "Oklahoma OSCN discovery: cdx_scan_complete candidates_so_far=%s",
+            len(candidates),
+        )
 
         self.logger.info(
             "Oklahoma OSCN discovery: total_candidates=%s",
@@ -378,13 +470,20 @@ class OklahomaScraper(BaseStateScraper):
             f"&output=json&filter=statuscode:200&limit={cdx_limit}"
         )
         try:
-            raw = await self._fetch_page_content_with_archival_fallback(
-                cdx_url,
-                timeout_seconds=35,
+            raw = await asyncio.wait_for(
+                self._fetch_page_content_with_archival_fallback(
+                    cdx_url,
+                    timeout_seconds=35,
+                ),
+                timeout=55,
             )
             if not raw:
+                self.logger.info("Oklahoma OSCN CDX discovery: no payload")
                 return []
             payload = json.loads(raw.decode("utf-8", errors="replace"))
+        except asyncio.TimeoutError:
+            self.logger.warning("Oklahoma OSCN CDX discovery timed out after 55s")
+            return []
         except Exception:
             return []
 
@@ -578,3 +677,158 @@ class OklahomaScraper(BaseStateScraper):
 
 # Register this scraper with the registry
 StateScraperRegistry.register("OK", OklahomaScraper)
+
+
+_NORMALIZED_STATUTE_FIELD_NAMES = {field.name for field in dataclass_fields(NormalizedStatute)}
+_STATUTE_METADATA_FIELD_NAMES = {field.name for field in dataclass_fields(StatuteMetadata)}
+
+
+def _statute_dedupe_key(statute: NormalizedStatute) -> str:
+    primary = str(statute.statute_id or "").strip().lower()
+    if primary:
+        return primary
+    source = str(statute.source_url or "").strip().lower()
+    if source:
+        return source
+    return ""
+
+
+def _statute_from_checkpoint_row(
+    row: Dict[str, Any],
+    *,
+    default_state_code: str,
+    default_state_name: str,
+    default_code_name: str,
+) -> Optional[NormalizedStatute]:
+    if not isinstance(row, dict):
+        return None
+    kwargs: Dict[str, Any] = {}
+    for name in _NORMALIZED_STATUTE_FIELD_NAMES:
+        if name in row:
+            kwargs[name] = row.get(name)
+    metadata_payload = kwargs.get("metadata")
+    if isinstance(metadata_payload, dict):
+        metadata_kwargs = {
+            key: metadata_payload.get(key)
+            for key in _STATUTE_METADATA_FIELD_NAMES
+            if key in metadata_payload
+        }
+        history = metadata_kwargs.get("history")
+        if history is None:
+            metadata_kwargs["history"] = []
+        elif not isinstance(history, list):
+            metadata_kwargs["history"] = [str(history)]
+        kwargs["metadata"] = StatuteMetadata(**metadata_kwargs)
+    elif not isinstance(metadata_payload, StatuteMetadata):
+        kwargs["metadata"] = None
+
+    kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
+    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
+    if not kwargs["statute_id"]:
+        return None
+    kwargs["source_url"] = str(kwargs.get("source_url") or "").strip()
+    kwargs["scraped_at"] = str(kwargs.get("scraped_at") or datetime.now().isoformat())
+    kwargs["scraper_version"] = str(kwargs.get("scraper_version") or "1.0")
+    kwargs["structured_data"] = dict(kwargs.get("structured_data") or {})
+    return NormalizedStatute(**kwargs)
+
+
+class _OklahomaCheckpoint:
+    """Best-effort partial progress checkpoint for Oklahoma's long crawl."""
+
+    def __init__(self, state_code: str) -> None:
+        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        if not raw_dir:
+            self.path: Optional[Path] = None
+        else:
+            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.state_code = state_code.upper()
+        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.last_count = 0
+        self.last_write_ts = 0.0
+
+    def load(
+        self,
+        *,
+        default_state_name: str,
+        default_code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        if not self.path or not self.path.exists():
+            return []
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        rows = payload.get("statutes") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            return []
+        loaded: List[NormalizedStatute] = []
+        seen_keys: Set[str] = set()
+        for row in rows:
+            statute = _statute_from_checkpoint_row(
+                row,
+                default_state_code=self.state_code,
+                default_state_name=default_state_name,
+                default_code_name=default_code_name,
+            )
+            if statute is None:
+                continue
+            key = _statute_dedupe_key(statute)
+            if key and key in seen_keys:
+                continue
+            if key:
+                seen_keys.add(key)
+            loaded.append(statute)
+            if max_statutes is not None and len(loaded) >= int(max_statutes):
+                break
+        self.last_count = len(loaded)
+        return loaded
+
+    def maybe_write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        scanned_candidates: int,
+        discovered_candidates: int,
+    ) -> None:
+        count = len(statutes)
+        if not self.path or count <= 0:
+            return
+        if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
+            return
+        self.write(
+            statutes,
+            code_name=code_name,
+            scanned_candidates=scanned_candidates,
+            discovered_candidates=discovered_candidates,
+        )
+
+    def write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        scanned_candidates: int,
+        discovered_candidates: int,
+    ) -> None:
+        if not self.path or not statutes:
+            return
+        payload = {
+            "state_code": self.state_code,
+            "updated_at": time.time(),
+            "statutes_count": len(statutes),
+            "code_name": code_name,
+            "scanned_candidates": int(scanned_candidates),
+            "discovered_candidates": int(discovered_candidates),
+            "statutes": [statute.to_dict() for statute in statutes],
+        }
+        tmp_path = self.path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp_path.replace(self.path)
+        self.last_count = len(statutes)
+        self.last_write_ts = time.time()

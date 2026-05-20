@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
 
@@ -85,6 +86,7 @@ class CecDcecBridgeAdapter:
                     "records": [
                         {
                             "formula": record["formula"],
+                            "proof_input": record["proof_input"],
                             "source_id": record["source_id"],
                             "valid": bool(record["valid"]),
                         }
@@ -211,14 +213,18 @@ class CecDcecBridgeAdapter:
 def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
-    return _list_of_dicts(metadata.get("legal_norm_irs"))
+    norms = _list_of_dicts(metadata.get("legal_norm_irs"))
+    if norms:
+        return norms
+    fallback = _fallback_norm_from_conversion(result=result, text=text)
+    return [fallback] if fallback else []
 
 
 def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for index, norm in enumerate(norms):
-        actor = _symbol(norm.get("actor") or "actor")
-        event = _symbol(norm.get("action") or norm.get("predicate") or "act")
+        actor = _symbol(norm.get("actor"), fallback="actor")
+        event = _symbol(norm.get("action") or norm.get("predicate"), fallback="act")
         modality = _dcec_modality(norm)
         source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
         formula_object = _native_dcec_event_formula(
@@ -237,6 +243,11 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
                 "actor": actor,
                 "event": event,
                 "formula": formula,
+                "proof_input": _proof_input_formula_text(
+                    actor=actor,
+                    event=event,
+                    modality=modality,
+                ),
                 "formula_object": formula_object,
                 "modality": modality,
                 "source_id": source_id,
@@ -250,6 +261,10 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
 
 def _dcec_modality(norm: Mapping[str, Any]) -> str:
     modality = str(norm.get("modality") or norm.get("norm_type") or "").lower()
+    if modality in {"f", "forbidden", "prohibition"}:
+        return "forbidden"
+    if modality in {"p", "permitted", "permission"}:
+        return "permitted"
     if "prohib" in modality or "forbid" in modality:
         return "forbidden"
     if "permit" in modality or "may" in modality:
@@ -269,6 +284,7 @@ def _proof_gate_from_dcec_records(records: Sequence[Mapping[str, Any]]) -> Proof
         details=tuple(
             {
                 "formula": record.get("formula"),
+                "proof_input": record.get("proof_input"),
                 "source_id": record.get("source_id"),
                 "valid": bool(record.get("valid")),
                 "validation_reason": record.get("validation_reason"),
@@ -384,18 +400,124 @@ def _compile_dcec_proof_input(formula: Any) -> tuple[bool, str]:
         container.add_statement(formula)
         return (True, "compiled_dcec_native_container")
     except Exception as exc:
-        return (False, f"native_compile_error:{type(exc).__name__}")
+        return (False, f"native_compile_error:{type(exc).__name__}:{str(exc)[:80]}")
 
 
-def _symbol(value: Any) -> str:
+def _symbol(value: Any, *, fallback: str = "") -> str:
     text = str(value or "").strip().lower()
+    if not text and fallback:
+        text = str(fallback).strip().lower()
     chars = [char if char.isalnum() else "_" for char in text]
-    name = "_".join(part for part in "".join(chars).split("_") if part)
-    if not name:
+    normalized = "_".join(part for part in "".join(chars).split("_") if part)
+    if not normalized and fallback:
+        fallback_text = str(fallback).strip().lower()
+        fallback_chars = [char if char.isalnum() else "_" for char in fallback_text]
+        normalized = "_".join(part for part in "".join(fallback_chars).split("_") if part)
+    if not normalized:
         return ""
-    if not name[0].isalpha():
-        return f"n_{name}"
-    return name
+    if normalized[0].isdigit():
+        normalized = f"sym_{normalized}"
+    return normalized[:96]
+
+
+def _proof_input_formula_text(*, actor: str, event: str, modality: str) -> str:
+    operator = "O"
+    if modality == "forbidden":
+        operator = "F"
+    elif modality == "permitted":
+        operator = "P"
+    return f"{operator}(happens({actor},{event},t0))"
+
+
+def _fallback_norm_from_conversion(*, result: Any, text: str) -> Optional[dict[str, Any]]:
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return None
+
+    output = getattr(result, "output", None)
+    actor = (
+        _fallback_actor_from_conversion_output(output)
+        or _fallback_actor_from_text(normalized_text)
+        or "actor"
+    )
+    action = (
+        _fallback_action_from_conversion_output(output)
+        or _fallback_action_from_text(normalized_text)
+        or "act"
+    )
+    modality = _fallback_modality_from_conversion_output(output=output, text=normalized_text)
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:24]
+    return {
+        "actor": actor,
+        "action": action,
+        "modality": modality,
+        "norm_type": modality,
+        "source_id": f"dcec:fallback:{digest}",
+        "extraction_method": "cec_dcec_fallback_v1",
+    }
+
+
+def _fallback_actor_from_conversion_output(output: Any) -> str:
+    agent = getattr(output, "agent", None)
+    if agent is None:
+        return ""
+    for attribute in ("identifier", "name"):
+        value = getattr(agent, attribute, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return ""
+
+
+def _fallback_action_from_conversion_output(output: Any) -> str:
+    proposition = str(getattr(output, "proposition", "") or "").strip()
+    if not proposition:
+        return ""
+    if proposition in {"UnparsedNonNormativeOrAmbiguousText", "UNPARSED", "unknown"}:
+        return ""
+    return proposition
+
+
+def _fallback_modality_from_conversion_output(*, output: Any, text: str) -> str:
+    operator = str(getattr(getattr(output, "operator", None), "value", "") or "").lower()
+    lowered_text = text.lower()
+    if operator in {"f", "forbidden", "prohibition"}:
+        return "forbidden"
+    if operator in {"p", "permission", "permitted"}:
+        return "permitted"
+    if re.search(r"\b(?:shall\s+not|must\s+not|may\s+not|prohibited|forbidden)\b", lowered_text):
+        return "forbidden"
+    if re.search(r"\b(?:may|can|is\s+authorized\s+to|is\s+permitted\s+to)\b", lowered_text):
+        return "permitted"
+    return "obligated"
+
+
+def _fallback_actor_from_text(text: str) -> str:
+    for pattern in (
+        r"\b(?:the\s+)?([a-z][a-z0-9]*(?:\s+[a-z][a-z0-9]*){0,5})(?:\s*,[^,]{1,120},)?\s+"
+        r"(?:shall|must|may|can|shall\s+not|must\s+not|may\s+not)\b",
+        r"\bthe\s+term\s+([a-z][a-z0-9]*(?:\s+[a-z][a-z0-9]*){0,5})\s+means\b",
+    ):
+        match = re.search(pattern, text.lower())
+        if match:
+            return match.group(1).strip()
+    return "actor"
+
+
+def _fallback_action_from_text(text: str) -> str:
+    lowered = text.lower()
+    for pattern in (
+        r"\b(?:shall\s+not|must\s+not|may\s+not|is\s+prohibited\s+from|is\s+forbidden\s+to)\s+([^.;:]+)",
+        r"\b(?:shall|must|is\s+required\s+to|is\s+obligated\s+to)\s+([^.;:]+)",
+        r"\b(?:may|can|is\s+authorized\s+to|is\s+permitted\s+to)\s+([^.;:]+)",
+    ):
+        match = re.search(pattern, lowered)
+        if match:
+            action = match.group(1).strip()
+            if action:
+                return action
+    if lowered.startswith("in this section") and "means" in lowered:
+        return lowered
+    return lowered[:160]
 
 
 def _list_of_dicts(value: Any) -> list[dict[str, Any]]:

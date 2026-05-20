@@ -1066,8 +1066,25 @@ class SpaCyModalIRCompiler:
                     citation=encoding.citation,
                     start_index=1,
                 )
+                if fallback_formula is None:
+                    fallback_formula = self._fallback_parser.fallback_formula(
+                        document_id=encoding.document_id,
+                        text=encoding.normalized_text,
+                        citation=encoding.citation,
+                        start_index=1,
+                        allow_modal_cues=True,
+                    )
                 if fallback_formula is not None:
                     formulas.append(fallback_formula)
+                else:
+                    formulas.extend(
+                        self._fallback_parser.residual_span_coverage_formulas(
+                            document_id=encoding.document_id,
+                            text=encoding.normalized_text,
+                            citation=encoding.citation,
+                            start_index=1,
+                        )
+                    )
             else:
                 segments = self._fallback_parser.segment(encoding.normalized_text)
                 residual_segments = self._fallback_parser._segments_excluding_spans(

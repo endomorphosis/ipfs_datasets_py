@@ -184,6 +184,36 @@ def test_compiler_spacy_backend_adds_residual_span_coverage_formula_for_untyped_
     assert all(formula.provenance.citation == "25 U.S.C. 640d-28" for formula in residual_formulas)
 
 
+def test_compiler_spacy_backend_recovers_editorial_status_fallback_when_strict_fallback_is_cue_blocked() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    result = compiler.compile(
+        (
+            "U.S.C. Title 16 - CONSERVATION 16 U.S.C. United States Code, 2024 Edition "
+            "Title 16 - CONSERVATION CHAPTER 1 - NATIONAL PARKS, MILITARY PARKS, MONUMENTS, "
+            "AND SEASHORES SUBCHAPTER LXII - MISCELLANEOUS Sec. 452a - Repealed. Pub. L. 113-287, "
+            "§7, Dec. 19, 2014, 128 Stat. 3272 From the U.S. Government Publishing Office, www.gpo.gov "
+            "§452a. Repealed. Pub. L. 113–287, §7, Dec. 19, 2014, 128 Stat. 3272 Section, act Aug. 31, "
+            "1954, ch. 1163, 68 Stat. 1037, related to acquisition of non-Federal land within existing "
+            "boundaries of any National Park. See section 101102 of Title 54, National Park Service "
+            "and Related Programs."
+        ),
+        document_id="us-code-16-452a-3794c1a091ab6acb",
+        citation="16 U.S.C. 452a",
+    )
+
+    editorial_formulas = [
+        formula
+        for formula in result.modal_ir.formulas
+        if formula.metadata.get("fallback_rule") == "uscode_editorial_status_heading_v1"
+    ]
+    assert editorial_formulas
+    assert _missing_modal_formula_count(result) == 0
+    assert all(formula.operator.family == ModalLogicFamily.FRAME.value for formula in editorial_formulas)
+    assert all(formula.provenance.citation == "16 U.S.C. 452a" for formula in editorial_formulas)
+
+
 def test_compiler_emits_explicit_frame_to_conditional_and_temporal_adaptive_pairs() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")

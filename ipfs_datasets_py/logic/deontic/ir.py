@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 
 def _first_text(value: Any) -> str:
@@ -751,8 +751,30 @@ def _slot_detail_records(
     if detail_records:
         return [_with_value_alias(record) for record in detail_records]
 
+    legacy_records: List[Dict[str, Any]] = []
+    legacy_value = element.get(legacy_key)
+    if isinstance(legacy_value, list):
+        for item in legacy_value:
+            if isinstance(item, dict):
+                record = _with_value_alias(dict(item))
+                if default_type and not record.get("type"):
+                    record["type"] = default_type
+                legacy_records.append(record)
+                continue
+            if item is None:
+                continue
+            text = str(item).strip()
+            if not text:
+                continue
+            record = {"value": text}
+            if default_type:
+                record["type"] = default_type
+            legacy_records.append(record)
+        if legacy_records:
+            return legacy_records
+
     records: List[Dict[str, Any]] = []
-    for text in _list_of_strings(element.get(legacy_key)):
+    for text in _list_of_strings(legacy_value):
         record: Dict[str, Any] = {"value": text}
         if default_type:
             record["type"] = default_type
@@ -1070,14 +1092,37 @@ class LegalNormQuality:
 
     @classmethod
     def from_parser_element(cls, element: Dict[str, Any]) -> "LegalNormQuality":
+        nested_quality = element.get("quality")
+        quality = (
+            dict(nested_quality)
+            if isinstance(nested_quality, Mapping)
+            else {}
+        )
         return cls(
-            schema_valid=bool(element.get("schema_valid")),
-            slot_coverage=float(element.get("slot_coverage") or 0.0),
-            scaffold_quality=float(element.get("scaffold_quality") or 0.0),
-            quality_label=str(element.get("quality_label") or ""),
-            parser_warnings=_list_of_strings(element.get("parser_warnings")),
-            promotable_to_theorem=bool(element.get("promotable_to_theorem")),
-            export_readiness=dict(element.get("export_readiness") or {}),
+            schema_valid=bool(quality.get("schema_valid", element.get("schema_valid"))),
+            slot_coverage=float(
+                quality.get("slot_coverage", element.get("slot_coverage")) or 0.0
+            ),
+            scaffold_quality=float(
+                quality.get("scaffold_quality", element.get("scaffold_quality")) or 0.0
+            ),
+            quality_label=str(
+                quality.get("quality_label", element.get("quality_label")) or ""
+            ),
+            parser_warnings=_list_of_strings(
+                quality.get("parser_warnings", element.get("parser_warnings"))
+            ),
+            promotable_to_theorem=bool(
+                quality.get(
+                    "promotable_to_theorem",
+                    element.get("promotable_to_theorem"),
+                )
+            ),
+            export_readiness=dict(
+                quality.get("export_readiness")
+                or element.get("export_readiness")
+                or {}
+            ),
         )
 
 
@@ -1145,7 +1190,7 @@ class LegalNormIR:
             enumeration_label=enumeration_label,
             enumeration_index=derived_index,
             is_enumerated_child=bool(element.get("parent_source_id") or enumeration_label or derived_index),
-            source_text=str(element.get("text") or ""),
+            source_text=str(element.get("text") or element.get("source_text") or ""),
             support_text=str(element.get("support_text") or ""),
             source_span=SourceSpan.from_value(source_span_value),
             support_span=SourceSpan.from_value(element.get("support_span")),
@@ -1184,7 +1229,10 @@ class LegalNormIR:
                 _with_value_alias(record) for record in _list_of_dicts(element.get("resolved_cross_references"))
             ],
             defined_terms=[
-                _with_value_alias(record) for record in _list_of_dicts(element.get("defined_term_refs"))
+                _with_value_alias(record)
+                for record in _list_of_dicts(
+                    element.get("defined_term_refs") or element.get("defined_terms")
+                )
             ],
             penalty=_with_penalty_value_alias(dict(element.get("penalty") or {})),
             procedure=_with_procedure_value_alias(dict(element.get("procedure") or {})),
@@ -1198,7 +1246,7 @@ class LegalNormIR:
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
-            actor_entities=_actor_entities(element),
+            actor_entities=_actor_texts(element.get("actor_entities")) or _actor_entities(element),
             quality=LegalNormQuality.from_parser_element(element),
             definition_scope=dict(element.get("definition_scope") or {}),
         )

@@ -146,7 +146,7 @@ class ExternalProverRouterBridgeAdapter:
         formulas = list(context["formulas"])
         proof_gate = _proof_gate_from_router(router, formulas)
         graph_result = GraphProjectionResult.from_graph_data(context["graph_data"])
-        attempted = max(1, len(formulas))
+        attempted = max(1, int(proof_gate.attempted_count or len(formulas)))
         failure_ratio = max(0.0, (attempted - proof_gate.valid_count) / attempted)
         unavailable_loss = 0.0 if router.get_available_provers() else 1.0
         round_trip = RoundTripMetrics(
@@ -158,7 +158,7 @@ class ExternalProverRouterBridgeAdapter:
                 "external_prover_unavailable_loss": unavailable_loss,
             },
         )
-        status = "ok" if formulas and proof_gate.compiles else "partial"
+        status = "ok" if proof_gate.compiles else "partial"
         if graph_result.graph_failure_penalty:
             status = "partial"
         return BridgeEvaluationReport(
@@ -197,6 +197,8 @@ def _build_router(*, enable_native: bool, enable_external_binaries: bool) -> Any
 def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateResult:
     available = list(router.get_available_provers())
     attempted = len(formulas)
+    if attempted <= 0:
+        return ProofGateResult.disabled(reason="no_router_formulas_available")
     if not available:
         return ProofGateResult(
             attempted_count=attempted,
@@ -314,6 +316,11 @@ def _router_formulas_from_records(records: Sequence[Mapping[str, Any]]) -> list[
             formula_object = coerce_tdfol_formula(record.get("formula"))
         if formula_object is not None:
             formulas.append(formula_object)
+            continue
+        raw_formula = str(record.get("formula") or "").strip()
+        if raw_formula:
+            # Keep a raw fallback for legacy routers that accept formula text.
+            formulas.append(raw_formula)
     return formulas
 
 
@@ -327,15 +334,22 @@ def _route_formula_with_compat(
     """Call a router using route/prove compatibility fallbacks."""
 
     attempts: list[Exception] = []
+    strategy_text = str(getattr(strategy, "value", strategy) or "sequential")
+    timeout_ms = max(1, int(float(timeout or 0.0) * 1000.0))
     for method_name in ("route", "prove"):
         method = getattr(router, method_name, None)
         if not callable(method):
             continue
         for kwargs in (
-            {"axioms": [formula], "strategy": strategy, "timeout": timeout},
-            {"axioms": [formula], "strategy": str(getattr(strategy, "value", strategy) or "sequential"), "timeout": timeout},
-            {"axioms": [formula], "timeout": timeout},
+            {"strategy": strategy, "timeout": timeout},
+            {"strategy": strategy_text, "timeout": timeout},
+            {"strategy": strategy_text, "timeout_ms": timeout_ms},
+            {"axioms": (), "strategy": strategy, "timeout": timeout},
+            {"axioms": (), "strategy": strategy_text, "timeout": timeout},
+            {"axioms": (), "strategy": strategy_text, "timeout_ms": timeout_ms},
+            {"axioms": (), "timeout": timeout},
             {"timeout": timeout},
+            {"timeout_ms": timeout_ms},
             {},
         ):
             try:

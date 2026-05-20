@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import hashlib
 import math
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
@@ -624,6 +626,7 @@ class AdaptiveModalAutoencoder:
         legal_ir_bridge_names: Sequence[str] = (),
         legal_ir_evaluate_provers: Optional[bool] = None,
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+        legal_ir_parallel_workers: Optional[int] = None,
         use_sample_memory: bool = True,
     ) -> AutoencoderEvaluation:
         """Evaluate current encoder/decoder state against legal samples."""
@@ -644,6 +647,7 @@ class AdaptiveModalAutoencoder:
             bridge_names=legal_ir_bridge_names,
             evaluate_provers=legal_ir_evaluate_provers,
             legal_ir_targets=legal_ir_targets,
+            parallel_workers=legal_ir_parallel_workers,
         )
         legal_ir_target_distributions: Mapping[str, Mapping[str, float]] = legal_ir_payload[
             "target_view_distributions_by_sample"
@@ -1656,12 +1660,14 @@ def _legal_ir_target_payload(
     bridge_names: Sequence[str] = (),
     evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
+    parallel_workers: Optional[int] = None,
 ) -> Dict[str, Any]:
     target_items = _legal_ir_target_items(
         samples,
         bridge_names=bridge_names,
         evaluate_provers=evaluate_provers,
         legal_ir_targets=legal_ir_targets,
+        parallel_workers=parallel_workers,
     )
     loss_values: Dict[str, List[float]] = {}
     view_distribution_values: Dict[str, List[float]] = {}
@@ -1711,6 +1717,7 @@ def _legal_ir_target_items(
     bridge_names: Sequence[str] | str,
     evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
+    parallel_workers: Optional[int] = None,
 ) -> List[tuple[str, Any]]:
     if legal_ir_targets is not None:
         if isinstance(legal_ir_targets, Mapping):
@@ -1737,8 +1744,7 @@ def _legal_ir_target_items(
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
-    target_items: List[tuple[str, Any]] = []
-    for sample in samples:
+    def evaluate_sample(sample: LegalSample) -> tuple[str, Any]:
         report = evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=names,
@@ -1748,8 +1754,38 @@ def _legal_ir_target_items(
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
-        target_items.append((sample.sample_id, report.training_target()))
-    return target_items
+        return sample.sample_id, report.training_target()
+
+    worker_count = _legal_ir_parallel_worker_count(
+        requested=parallel_workers,
+        item_count=len(samples),
+    )
+    if worker_count <= 1:
+        return [evaluate_sample(sample) for sample in samples]
+
+    with ThreadPoolExecutor(
+        max_workers=worker_count,
+        thread_name_prefix="legal-ir-target",
+    ) as executor:
+        return list(executor.map(evaluate_sample, samples))
+
+
+def _legal_ir_parallel_worker_count(
+    *,
+    requested: Optional[int],
+    item_count: int,
+) -> int:
+    if item_count <= 1:
+        return 1
+    if requested is None:
+        raw = os.environ.get("IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS", "").strip()
+        if not raw:
+            return 1
+        try:
+            requested = int(raw)
+        except ValueError:
+            return 1
+    return max(1, min(int(requested), int(item_count)))
 
 
 def _normalise_bridge_names(bridge_names: Sequence[str] | str) -> tuple[str, ...]:

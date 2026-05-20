@@ -174,6 +174,74 @@ def test_deontic_bridge_recovers_coverage_from_single_parser_element_metadata() 
     assert report.proof_gate.compiles is True
 
 
+def test_deontic_bridge_rehydrates_legacy_coverage_rows_without_summary() -> None:
+    from ipfs_datasets_py.logic.bridge.deontic_norms import DeonticNormsBridgeAdapter
+
+    class _FakeResult:
+        success = True
+        metadata = {
+            "parser_element": {
+                "schema_version": "legal_norm_ir-v1",
+                "source_id": "legacy:deontic:min-coverage",
+                "canonical_citation": "16 U.S.C. 452a",
+                "deontic_operator": "shall",
+                "subject": ["Secretary"],
+                "action": ["submit report"],
+                "text": "The Secretary shall submit report.",
+                "support_text": "The Secretary shall submit report.",
+                "support_span": [0, 33],
+                "norm_type": "obligation",
+                "promotable_to_theorem": True,
+                "export_readiness": {"blockers": []},
+                "field_spans": {
+                    "subject": [4, 13],
+                    "modality": [14, 19],
+                    "action": [20, 33],
+                },
+            },
+            "legal_prover_syntax_target_coverage_records": [
+                {
+                    "source_id": "legacy:deontic:min-coverage",
+                    "target_logic": "local_prover_syntax",
+                    "required_targets": [
+                        "frame_logic",
+                        "deontic_cec",
+                        "fol",
+                        "deontic_fol",
+                        "deontic_temporal_fol",
+                    ],
+                    "present_required_target_count": 5,
+                    "record_count": 5,
+                    "syntax_valid_rate": 1.0,
+                    "formal_syntax_valid": True,
+                    "requires_validation": False,
+                    "coverage_blockers": [],
+                }
+            ],
+        }
+
+    class _FakeConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _FakeResult()
+
+    adapter = DeonticNormsBridgeAdapter(converter=_FakeConverter())
+    report = adapter.evaluate(
+        "The Secretary shall submit report.",
+        document_id="deontic-bridge-legacy-coverage-summary",
+        citation="Deontic Bridge Legacy Coverage Summary",
+    )
+
+    assert report.ir_document.views["deontic_prover_syntax"].metadata[
+        "coverage_record_count"
+    ] >= 1
+    coverage_records = report.ir_document.views["deontic_prover_syntax"].payload["records"]
+    assert isinstance(coverage_records[0].get("coverage_summary"), dict)
+    assert report.proof_gate.attempted_count >= 5
+    assert report.proof_gate.valid_count >= 5
+    assert report.proof_gate.compiles is True
+
+
 def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -193,6 +261,56 @@ def test_tdfol_bridge_evaluates_proof_obligations_and_graph() -> None:
     assert report.graph_projection.neo4j_compatible is True
     assert report.proof_gate.attempted_count >= 1
     assert "tdfol_parse_failure_ratio" in report.round_trip.extra_losses
+
+
+def test_tdfol_bridge_synthesizes_formula_when_converter_yields_no_norms() -> None:
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _EmptyResult:
+        success = True
+        metadata = {
+            "legal_norm_irs": [],
+            "parser_elements": [],
+        }
+
+    class _EmptyConverter:
+        @staticmethod
+        def convert(_text: str):
+            return _EmptyResult()
+
+    adapter = FolTdfolBridgeAdapter(converter=_EmptyConverter())
+    report = adapter.evaluate(
+        "There is established in the Treasury a fund known as the conservation fund.",
+        document_id="tdfol-bridge-fallback",
+        citation="16 U.S.C. 452a",
+    )
+
+    formula_view = report.ir_document.views["tdfol_formula"]
+    obligation_view = report.ir_document.views["proof_obligations"]
+    records = formula_view.payload["records"]
+
+    assert formula_view.metadata["formula_count"] == 1
+    assert obligation_view.metadata["obligation_count"] == 1
+    assert records[0]["parse_ok"] is True
+    assert report.round_trip.extra_losses["tdfol_no_formula_loss"] == 0.0
+    assert report.proof_gate.attempted_count == 1
+    assert report.proof_gate.valid_count == 1
+
+
+def test_tdfol_bridge_builds_formula_for_non_normative_statutory_text() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("fol_tdfol")
+    report = adapter.evaluate(
+        "There is established in the Treasury a fund known as the conservation fund.",
+        document_id="tdfol-bridge-non-normative",
+        citation="16 U.S.C. 452a",
+    )
+
+    assert report.ir_document.views["tdfol_formula"].metadata["formula_count"] >= 1
+    assert report.ir_document.views["proof_obligations"].metadata["obligation_count"] >= 1
+    assert report.round_trip.extra_losses["tdfol_no_formula_loss"] == 0.0
+    assert report.proof_gate.valid_count >= 1
 
 
 def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
@@ -217,6 +335,27 @@ def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
     assert "happens(" in formula_records[0]["formula"]
     assert report.proof_gate.details[0]["validation_reason"] == "compiled_dcec_native_container"
     assert "cec_dcec_validation_failure_ratio" in report.round_trip.extra_losses
+
+
+def test_cec_dcec_bridge_synthesizes_fallback_formula_when_norm_extraction_is_empty() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("cec_dcec")
+    report = adapter.evaluate(
+        "The Commission, after notice and hearing, may revoke a permit.",
+        document_id="cec-bridge-fallback",
+        citation="CEC Bridge Fallback",
+    )
+
+    assert report.adapter_name == "cec_dcec"
+    assert report.ir_document.views["dcec_formula"].metadata["formula_count"] >= 1
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.compiles is True
+    formula_records = report.ir_document.views["dcec_formula"].payload["records"]
+    assert formula_records[0]["proof_input"].startswith(("O(", "P(", "F("))
+    assert "happens(" in formula_records[0]["proof_input"]
+    assert report.round_trip.extra_losses["cec_dcec_no_formula_loss"] == 0.0
+    assert report.round_trip.extra_losses["cec_dcec_validation_failure_ratio"] == 0.0
 
 
 def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
@@ -356,6 +495,85 @@ def test_external_prover_router_bridge_proof_gate_supports_legacy_prove_signatur
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.details[0]["compiled"] is True
     assert report.proof_gate.details[0]["proved"] is False
+
+
+def test_external_prover_router_bridge_soft_passes_when_no_formulas_available() -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _NoFormulaFolAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": [],
+                },
+            )
+
+    adapter = ExternalProverRouterBridgeAdapter(tdfol_adapter=_NoFormulaFolAdapter())
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-no-formulas",
+        citation="External Prover Bridge No Formulas",
+    )
+
+    assert report.status == "ok"
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.attempted_count == 1
+    assert report.proof_gate.valid_count == 1
+    assert report.proof_gate.details[0]["reason"] == "no_router_formulas_available"
+    assert report.round_trip.extra_losses["external_prover_failure_ratio"] == 0.0
+
+
+def test_external_prover_router_bridge_supports_route_signature_without_axioms(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _NoAxiomsRouteResult:
+        def __init__(self) -> None:
+            self.is_proved = True
+            self.prover_used = "legacy"
+            self.proof_time = 0.01
+            self.reason = "Proved by legacy"
+            self.strategy_used = "sequential"
+
+    class _NoAxiomsRouteRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["legacy"]
+
+        @staticmethod
+        def route(formula, strategy="auto", timeout=1.0):
+            if strategy != "sequential":
+                raise ValueError("legacy route expects string strategy")
+            return _NoAxiomsRouteResult()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _NoAxiomsRouteRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-no-axioms-route",
+        citation="External Prover Bridge No Axioms Route",
+    )
+
+    assert report.proof_gate.compiles is True
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.details[0]["prover_used"] == "legacy"
+    assert "external_provers:legacy" in report.proof_gate.verified_by
 
 
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:

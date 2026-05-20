@@ -18,6 +18,7 @@ import signal
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -673,6 +674,7 @@ def bridge_ir_metric_block(
     bridge_names: Sequence[str],
     *,
     evaluate_provers: Optional[bool] = None,
+    parallel_workers: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
 
@@ -714,8 +716,8 @@ def bridge_ir_metric_block(
 
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
-    for sample in sample_list:
-        multiview = evaluate_legal_ir_multiview(
+    def evaluate_sample(sample: Any) -> Any:
+        return evaluate_legal_ir_multiview(
             sample.text,
             bridge_names=adapter_names,
             document_id=sample.sample_id,
@@ -724,6 +726,21 @@ def bridge_ir_metric_block(
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
+
+    worker_count = _parallel_worker_count(
+        requested=parallel_workers,
+        item_count=len(sample_list),
+    )
+    if worker_count <= 1:
+        multiview_reports = [evaluate_sample(sample) for sample in sample_list]
+    else:
+        with ThreadPoolExecutor(
+            max_workers=worker_count,
+            thread_name_prefix="bridge-ir-metrics",
+        ) as executor:
+            multiview_reports = list(executor.map(evaluate_sample, sample_list))
+
+    for multiview in multiview_reports:
         canonical_values["acceptance_rate"].append(multiview.acceptance_rate)
         canonical_values["graph_failure_penalty"].append(multiview.graph_failure_penalty)
         canonical_values["proof_failure_ratio"].append(multiview.proof_failure_ratio)
@@ -897,6 +914,24 @@ def _mean(values: Sequence[float]) -> float:
     if not values:
         return 0.0
     return round(sum(float(value) for value in values) / len(values), 9)
+
+
+def _parallel_worker_count(
+    *,
+    requested: Optional[int],
+    item_count: int,
+) -> int:
+    if item_count <= 1:
+        return 1
+    if requested is None:
+        raw = os.environ.get("IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS", "").strip()
+        if not raw:
+            return 1
+        try:
+            requested = int(raw)
+        except ValueError:
+            return 1
+    return max(1, min(int(requested), int(item_count)))
 
 
 def _float_or_zero(value: Any) -> float:
@@ -1570,6 +1605,8 @@ def build_paired_daemon_commands(
         str(getattr(args, "bridge_evaluate_provers", True)).lower(),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
+        "--autoencoder-bridge-workers",
+        str(getattr(args, "autoencoder_bridge_workers", 1)),
         "--test-every-cycles",
         str(args.test_every_cycles),
     ]
@@ -3397,6 +3434,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
             "cpu, cuda, or a specific CUDA device such as cuda:0."
         ),
     )
+    parser.add_argument(
+        "--autoencoder-bridge-workers",
+        type=int,
+        default=int(os.environ.get("IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS", "1") or 1),
+        help=(
+            "Parallel workers for per-sample legal IR bridge target evaluation. "
+            "Use values above one when train/validation counts are also above one."
+        ),
+    )
     parser.add_argument("--poll-seconds", type=float, default=5.0)
     parser.add_argument("--test-every-cycles", type=int, default=24)
     parser.add_argument("--worker-id", default=None)
@@ -3957,8 +4003,14 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         save_summary(summary_path, summary)
     bridge_adapters = bridge_loss_adapter_names(args)
     bridge_evaluate_provers = bool(getattr(args, "bridge_evaluate_provers", True))
+    bridge_parallel_workers = max(
+        1,
+        int(getattr(args, "autoencoder_bridge_workers", 1) or 1),
+    )
+    os.environ["IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS"] = str(bridge_parallel_workers)
     summary["bridge_loss_adapters"] = bridge_adapters
     summary["bridge_evaluate_provers"] = bridge_evaluate_provers
+    summary["autoencoder_bridge_workers"] = bridge_parallel_workers
     summary["max_sample_text_chars"] = int(getattr(args, "max_sample_text_chars", 0) or 0)
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)
@@ -4061,11 +4113,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
             )
             before_validation = autoencoder.evaluate(
                 validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
             compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
@@ -4077,11 +4131,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_samples,
                 bridge_adapters,
                 evaluate_provers=bridge_evaluate_provers,
+                parallel_workers=bridge_parallel_workers,
             )
             bridge_ir_validation = bridge_ir_metric_block(
                 validation_samples,
                 bridge_adapters,
                 evaluate_provers=bridge_evaluate_provers,
+                parallel_workers=bridge_parallel_workers,
             )
             run = supervisor.optimize(
                 train_samples,
@@ -4098,11 +4154,13 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
             )
             after_validation = autoencoder.evaluate(
                 validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
                 legal_ir_evaluate_provers=bridge_evaluate_provers,
+                legal_ir_parallel_workers=bridge_parallel_workers,
                 use_sample_memory=False,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)

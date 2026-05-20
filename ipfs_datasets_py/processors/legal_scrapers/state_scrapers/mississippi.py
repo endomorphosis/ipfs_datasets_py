@@ -4,15 +4,21 @@ This module contains the scraper for Mississippi statutes from the official stat
 """
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import json
+import os
 import re
+import time
+from dataclasses import fields as dataclass_fields
+from datetime import datetime
 from html import unescape
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 import urllib.request
 
 from bs4 import BeautifulSoup
 
-from .base_scraper import BaseStateScraper, NormalizedStatute
+from .base_scraper import BaseStateScraper, NormalizedStatute, StatuteMetadata
 from .registry import StateScraperRegistry
 
 
@@ -65,7 +71,19 @@ class MississippiScraper(BaseStateScraper):
             if recovery:
                 return recovery[:limit] if limit is not None else recovery
 
-        archival = await self._scrape_archived_bill_history(code_name=code_name, max_statutes=limit or 1000000)
+        checkpoint = _MississippiCheckpoint(self.state_code)
+        seed_statutes = checkpoint.load(
+            default_state_name=self.state_name,
+            default_code_name=code_name,
+            max_statutes=(limit or 1000000),
+        )
+
+        archival = await self._scrape_archived_bill_history(
+            code_name=code_name,
+            max_statutes=limit or 1000000,
+            seed_statutes=seed_statutes,
+            checkpoint=checkpoint,
+        )
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
             return archival[:limit] if limit is not None else archival
@@ -173,13 +191,32 @@ class MississippiScraper(BaseStateScraper):
         except Exception:
             return ""
 
-    async def _scrape_archived_bill_history(self, code_name: str, max_statutes: int) -> List[NormalizedStatute]:
+    async def _scrape_archived_bill_history(
+        self,
+        code_name: str,
+        max_statutes: int,
+        *,
+        seed_statutes: Optional[List[NormalizedStatute]] = None,
+        checkpoint: Optional["_MississippiCheckpoint"] = None,
+    ) -> List[NormalizedStatute]:
         headers = {"User-Agent": "Mozilla/5.0"}
         bounded_scrape = max_statutes <= 10
         if bounded_scrape:
             headers["X-Bounded-Scrape"] = "1"
         statutes: List[NormalizedStatute] = []
         seen_history_urls = set()
+        seen_statute_keys = set()
+
+        for statute in list(seed_statutes or []):
+            statute_key = _statute_dedupe_key(statute)
+            if statute_key and statute_key in seen_statute_keys:
+                continue
+            if statute_key:
+                seen_statute_keys.add(statute_key)
+            statutes.append(statute)
+            source_url = str(statute.source_url or "").strip()
+            if source_url:
+                seen_history_urls.add(source_url)
 
         for index_url in self._ARCHIVE_INDEX_URLS:
             if len(statutes) >= max_statutes:
@@ -230,7 +267,19 @@ class MississippiScraper(BaseStateScraper):
                             len(statutes),
                         )
                     continue
+                statute_key = _statute_dedupe_key(statute)
+                if statute_key and statute_key in seen_statute_keys:
+                    continue
+                if statute_key:
+                    seen_statute_keys.add(statute_key)
                 statutes.append(statute)
+                if checkpoint is not None:
+                    checkpoint.maybe_write(
+                        statutes,
+                        code_name=code_name,
+                        scanned_history_urls=len(seen_history_urls),
+                        discovered_history_urls=len(history_urls),
+                    )
                 if len(statutes) == 1 or len(statutes) % 25 == 0:
                     self.logger.info(
                         "Mississippi archive history: scanned=%s/%s statutes_so_far=%s",
@@ -242,6 +291,13 @@ class MississippiScraper(BaseStateScraper):
             if statutes:
                 break
 
+        if checkpoint is not None:
+            checkpoint.write(
+                statutes,
+                code_name=code_name,
+                scanned_history_urls=len(seen_history_urls),
+                discovered_history_urls=len(seen_history_urls),
+            )
         return statutes
 
     async def _scrape_common_crawl_code_sections(
@@ -422,3 +478,158 @@ class MississippiScraper(BaseStateScraper):
 
 # Register this scraper with the registry
 StateScraperRegistry.register("MS", MississippiScraper)
+
+
+_NORMALIZED_STATUTE_FIELD_NAMES = {field.name for field in dataclass_fields(NormalizedStatute)}
+_STATUTE_METADATA_FIELD_NAMES = {field.name for field in dataclass_fields(StatuteMetadata)}
+
+
+def _statute_dedupe_key(statute: NormalizedStatute) -> str:
+    primary = str(statute.statute_id or "").strip().lower()
+    if primary:
+        return primary
+    source = str(statute.source_url or "").strip().lower()
+    if source:
+        return source
+    return ""
+
+
+def _statute_from_checkpoint_row(
+    row: Dict[str, Any],
+    *,
+    default_state_code: str,
+    default_state_name: str,
+    default_code_name: str,
+) -> Optional[NormalizedStatute]:
+    if not isinstance(row, dict):
+        return None
+    kwargs: Dict[str, Any] = {}
+    for name in _NORMALIZED_STATUTE_FIELD_NAMES:
+        if name in row:
+            kwargs[name] = row.get(name)
+    metadata_payload = kwargs.get("metadata")
+    if isinstance(metadata_payload, dict):
+        metadata_kwargs = {
+            key: metadata_payload.get(key)
+            for key in _STATUTE_METADATA_FIELD_NAMES
+            if key in metadata_payload
+        }
+        history = metadata_kwargs.get("history")
+        if history is None:
+            metadata_kwargs["history"] = []
+        elif not isinstance(history, list):
+            metadata_kwargs["history"] = [str(history)]
+        kwargs["metadata"] = StatuteMetadata(**metadata_kwargs)
+    elif not isinstance(metadata_payload, StatuteMetadata):
+        kwargs["metadata"] = None
+
+    kwargs["state_code"] = str(kwargs.get("state_code") or default_state_code).upper()
+    kwargs["state_name"] = str(kwargs.get("state_name") or default_state_name).strip() or default_state_name
+    kwargs["code_name"] = str(kwargs.get("code_name") or default_code_name).strip() or default_code_name
+    kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
+    if not kwargs["statute_id"]:
+        return None
+    kwargs["source_url"] = str(kwargs.get("source_url") or "").strip()
+    kwargs["scraped_at"] = str(kwargs.get("scraped_at") or datetime.now().isoformat())
+    kwargs["scraper_version"] = str(kwargs.get("scraper_version") or "1.0")
+    kwargs["structured_data"] = dict(kwargs.get("structured_data") or {})
+    return NormalizedStatute(**kwargs)
+
+
+class _MississippiCheckpoint:
+    """Best-effort partial progress checkpoint for Mississippi archive crawls."""
+
+    def __init__(self, state_code: str) -> None:
+        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        if not raw_dir:
+            self.path: Optional[Path] = None
+        else:
+            self.path = Path(raw_dir).expanduser().resolve() / f"STATE-{state_code.upper()}-partial.json"
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.state_code = state_code.upper()
+        self.interval = max(1, int(float(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", "500") or 500)))
+        self.last_count = 0
+        self.last_write_ts = 0.0
+
+    def load(
+        self,
+        *,
+        default_state_name: str,
+        default_code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        if not self.path or not self.path.exists():
+            return []
+        try:
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        rows = payload.get("statutes") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            return []
+        loaded: List[NormalizedStatute] = []
+        seen_keys = set()
+        for row in rows:
+            statute = _statute_from_checkpoint_row(
+                row,
+                default_state_code=self.state_code,
+                default_state_name=default_state_name,
+                default_code_name=default_code_name,
+            )
+            if statute is None:
+                continue
+            key = _statute_dedupe_key(statute)
+            if key and key in seen_keys:
+                continue
+            if key:
+                seen_keys.add(key)
+            loaded.append(statute)
+            if max_statutes is not None and len(loaded) >= int(max_statutes):
+                break
+        self.last_count = len(loaded)
+        return loaded
+
+    def maybe_write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        scanned_history_urls: int,
+        discovered_history_urls: int,
+    ) -> None:
+        count = len(statutes)
+        if not self.path or count <= 0:
+            return
+        if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
+            return
+        self.write(
+            statutes,
+            code_name=code_name,
+            scanned_history_urls=scanned_history_urls,
+            discovered_history_urls=discovered_history_urls,
+        )
+
+    def write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        scanned_history_urls: int,
+        discovered_history_urls: int,
+    ) -> None:
+        if not self.path or not statutes:
+            return
+        payload = {
+            "state_code": self.state_code,
+            "updated_at": time.time(),
+            "statutes_count": len(statutes),
+            "code_name": code_name,
+            "scanned_history_urls": int(scanned_history_urls),
+            "discovered_history_urls": int(discovered_history_urls),
+            "statutes": [statute.to_dict() for statute in statutes],
+        }
+        tmp_path = self.path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+        tmp_path.replace(self.path)
+        self.last_count = len(statutes)
+        self.last_write_ts = time.time()

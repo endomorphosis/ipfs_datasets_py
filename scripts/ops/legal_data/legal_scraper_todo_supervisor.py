@@ -867,6 +867,11 @@ def _collect_state_rate_analytics(
                 "last_progress_epoch": None,
                 "max_counter": 0,
                 "samples": [],
+                "attempt_count": 0,
+                "current_attempt_start_epoch": None,
+                "current_attempt_last_progress_epoch": None,
+                "current_attempt_max_counter": 0,
+                "current_attempt_samples": [],
             },
         )
         row["line_count"] = int(row.get("line_count", 0)) + 1
@@ -876,6 +881,12 @@ def _collect_state_rate_analytics(
                 row["last_seen_epoch"] = float(ts_epoch)
         if _LOG_STATE_START_RE.search(line):
             row["started"] = True
+            row["attempt_count"] = int(row.get("attempt_count", 0)) + 1
+            if ts_epoch is not None:
+                row["current_attempt_start_epoch"] = float(ts_epoch)
+            row["current_attempt_last_progress_epoch"] = None
+            row["current_attempt_max_counter"] = 0
+            row["current_attempt_samples"] = []
 
         counter: Optional[int] = None
         so_far_match = _LOG_STATUTES_SOFAR_RE.search(line)
@@ -897,6 +908,22 @@ def _collect_state_rate_analytics(
                 prev_progress = row.get("last_progress_epoch")
                 if prev_progress is None or ts_epoch >= float(prev_progress):
                     row["last_progress_epoch"] = float(ts_epoch)
+
+                if int(row.get("attempt_count", 0)) <= 0:
+                    row["attempt_count"] = 1
+                    row["current_attempt_start_epoch"] = float(ts_epoch)
+                row["current_attempt_max_counter"] = max(
+                    int(row.get("current_attempt_max_counter", 0)),
+                    int(counter),
+                )
+                current_samples = list(row.get("current_attempt_samples") or [])
+                current_samples.append((float(ts_epoch), int(counter)))
+                if len(current_samples) > 256:
+                    current_samples = current_samples[-256:]
+                row["current_attempt_samples"] = current_samples
+                current_last_progress = row.get("current_attempt_last_progress_epoch")
+                if current_last_progress is None or ts_epoch >= float(current_last_progress):
+                    row["current_attempt_last_progress_epoch"] = float(ts_epoch)
 
         scraped_match = _LOG_SCRAPED_STATUTES_RE.search(line)
         if scraped_match:
@@ -926,27 +953,57 @@ def _collect_state_rate_analytics(
 
         last_seen_epoch = row.get("last_seen_epoch")
         last_progress_epoch = row.get("last_progress_epoch")
+        current_attempt_last_progress_epoch = row.get("current_attempt_last_progress_epoch")
+        current_attempt_start_epoch = row.get("current_attempt_start_epoch")
         last_seen_age = (
             max(0.0, now_epoch - float(last_seen_epoch))
             if last_seen_epoch is not None
             else -1.0
         )
-        last_progress_age = (
+        global_last_progress_age = (
             max(0.0, now_epoch - float(last_progress_epoch))
             if last_progress_epoch is not None
             else -1.0
         )
-        samples = list(row.get("samples") or [])
+        current_attempt_last_progress_age = (
+            max(0.0, now_epoch - float(current_attempt_last_progress_epoch))
+            if current_attempt_last_progress_epoch is not None
+            else -1.0
+        )
+        current_attempt_start_age = (
+            max(0.0, now_epoch - float(current_attempt_start_epoch))
+            if current_attempt_start_epoch is not None
+            else -1.0
+        )
+        samples = list(row.get("current_attempt_samples") or []) or list(row.get("samples") or [])
         rate_per_minute = _compute_samples_rate_per_minute(
             samples,
             now=now_epoch,
             window_seconds=rate_window_seconds,
         )
         scraped_event_count = _safe_int(row.get("scraped_event_count"), 0)
-        max_counter = _safe_int(row.get("max_counter"), 0)
+        global_max_counter = _safe_int(row.get("max_counter"), 0)
+        current_attempt_max_counter = _safe_int(row.get("current_attempt_max_counter"), 0)
+        max_counter = (
+            current_attempt_max_counter
+            if current_attempt_max_counter > 0
+            else global_max_counter
+        )
+        attempt_count = max(1, _safe_int(row.get("attempt_count"), 0)) if started else _safe_int(row.get("attempt_count"), 0)
+        last_progress_age = (
+            current_attempt_last_progress_age
+            if current_attempt_last_progress_age >= 0
+            else global_last_progress_age
+        )
+        restart_grace_active = (
+            attempt_count > 1
+            and current_attempt_start_age >= 0
+            and current_attempt_start_age < max(900.0, float(state_stall_seconds) * 0.5)
+        )
 
         likely_stalled = (
             is_inflight
+            and not restart_grace_active
             and last_seen_age >= state_stall_seconds
             and (last_progress_age < 0 or last_progress_age >= state_stall_seconds)
         )
@@ -971,8 +1028,18 @@ def _collect_state_rate_analytics(
             "line_count": _safe_int(row.get("line_count"), 0),
             "scraped_event_count": scraped_event_count,
             "max_counter": max_counter,
+            "global_max_counter": global_max_counter,
+            "current_attempt_max_counter": current_attempt_max_counter,
+            "attempt_count": attempt_count,
             "last_seen_age_seconds": round(last_seen_age, 1) if last_seen_age >= 0 else -1.0,
             "last_progress_age_seconds": round(last_progress_age, 1) if last_progress_age >= 0 else -1.0,
+            "current_attempt_last_progress_age_seconds": (
+                round(current_attempt_last_progress_age, 1) if current_attempt_last_progress_age >= 0 else -1.0
+            ),
+            "current_attempt_start_age_seconds": (
+                round(current_attempt_start_age, 1) if current_attempt_start_age >= 0 else -1.0
+            ),
+            "restart_grace_active": bool(restart_grace_active),
             "rate_counter_per_minute": rate_per_minute,
             "likely_stalled": bool(likely_stalled),
             "stall_confidence": confidence if likely_stalled else "",
@@ -991,6 +1058,10 @@ def _collect_state_rate_analytics(
                 "rate_counter_per_minute": rate_per_minute,
                 "scraped_event_count": scraped_event_count,
                 "max_counter": max_counter,
+                "attempt_count": attempt_count,
+                "current_attempt_max_counter": current_attempt_max_counter,
+                "global_max_counter": global_max_counter,
+                "restart_grace_active": bool(restart_grace_active),
             }
             if confidence in {"high", "medium"}:
                 stalled_states.append(stalled_row)

@@ -70,6 +70,8 @@ class DeonticNormsBridgeAdapter:
             formula_records = _formula_records_from_norm_objects(norm_objects)
         if not coverage_records and norm_objects:
             coverage_records = _coverage_records_from_norm_objects(norm_objects)
+        elif _coverage_records_need_rebuild(coverage_records) and norm_objects:
+            coverage_records = _coverage_records_from_norm_objects(norm_objects)
         if not capability_records and norm_objects:
             capability_records = _capability_records_from_norm_objects(norm_objects)
         deontic_exports = _deontic_export_context_from_parser_elements(deontic_source_rows)
@@ -347,6 +349,36 @@ def _coverage_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dic
     )
 
     return build_prover_syntax_target_coverage_records_from_irs(norm_objects)
+
+
+def _coverage_records_need_rebuild(records: Sequence[Mapping[str, Any]]) -> bool:
+    """Return whether persisted coverage rows are too legacy for proof-gate use."""
+
+    if not records:
+        return True
+
+    for record in records:
+        if not isinstance(record, Mapping):
+            return True
+        summary = record.get("coverage_summary")
+        if not isinstance(summary, Mapping):
+            return True
+        required = summary.get("required_targets")
+        status_by_target = summary.get("target_status_by_target")
+        if not isinstance(required, Sequence) or isinstance(required, (str, bytes)):
+            return True
+        if not isinstance(status_by_target, Mapping):
+            return True
+        required_targets = [
+            str(target).strip()
+            for target in required
+            if str(target).strip()
+        ]
+        if not required_targets:
+            return True
+        if any(target not in status_by_target for target in required_targets):
+            return True
+    return False
 
 
 def _capability_records_from_norm_objects(norm_objects: Sequence[Any]) -> list[dict[str, Any]]:
@@ -713,10 +745,10 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
     details = []
     verified_by = set()
     for record in records:
-        summary = record.get("coverage_summary") or {}
-        passed_targets = list(summary.get("passed_targets") or [])
-        failed_targets = list(summary.get("failed_targets") or [])
-        missing_targets = list(summary.get("missing_targets") or [])
+        summary = _coverage_summary_from_record(record)
+        passed_targets = list(summary["passed_targets"])
+        failed_targets = list(summary["failed_targets"])
+        missing_targets = list(summary["missing_targets"])
         soft_failed_targets = [
             target for target in failed_targets if str(target) in soft_targets
         ]
@@ -749,7 +781,7 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
                 "soft_missing_targets": soft_missing_targets,
                 "requires_validation": bool(record.get("requires_validation")),
                 "source_id": record.get("source_id"),
-                "syntax_valid_rate": summary.get("syntax_valid_rate"),
+                "syntax_valid_rate": summary["syntax_valid_rate"],
             }
         )
     attempted_count = max(attempted_count, valid_count)
@@ -760,6 +792,99 @@ def _proof_gate_from_coverage_records(records: Sequence[Mapping[str, Any]]) -> P
         verified_by=tuple(sorted(verified_by)),
         details=tuple(details),
     )
+
+
+def _coverage_summary_from_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    summary = record.get("coverage_summary")
+    if isinstance(summary, Mapping):
+        has_target_lists = any(
+            isinstance(summary.get(key), Sequence) and not isinstance(summary.get(key), (str, bytes))
+            for key in ("passed_targets", "failed_targets", "missing_targets")
+        )
+        if has_target_lists:
+            return {
+                "passed_targets": [
+                    str(target).strip()
+                    for target in summary.get("passed_targets") or []
+                    if str(target).strip()
+                ],
+                "failed_targets": [
+                    str(target).strip()
+                    for target in summary.get("failed_targets") or []
+                    if str(target).strip()
+                ],
+                "missing_targets": [
+                    str(target).strip()
+                    for target in summary.get("missing_targets") or []
+                    if str(target).strip()
+                ],
+                "syntax_valid_rate": summary.get("syntax_valid_rate"),
+            }
+
+    required_targets = _normalized_target_names(record.get("required_targets"))
+    if not required_targets:
+        required_targets = [
+            "frame_logic",
+            "deontic_cec",
+            "fol",
+            "deontic_fol",
+            "deontic_temporal_fol",
+        ]
+
+    blocked = _blocked_targets_from_coverage_blockers(
+        _list_of_strings(record.get("coverage_blockers"))
+    )
+    failed_targets = blocked["failed"]
+    missing_targets = blocked["missing"]
+    skipped_targets = blocked["skipped"]
+    failed_or_missing = set(failed_targets) | set(missing_targets) | set(skipped_targets)
+    present_count = int(record.get("present_required_target_count") or 0)
+    if present_count <= 0:
+        present_count = len(required_targets)
+    present_targets = list(required_targets[:present_count])
+    syntax_valid_rate = _float(record.get("syntax_valid_rate"))
+    formal_syntax_valid = bool(record.get("formal_syntax_valid") is True)
+
+    if (formal_syntax_valid or syntax_valid_rate >= 1.0) and not failed_or_missing:
+        passed_targets = present_targets
+    elif failed_or_missing:
+        passed_targets = [target for target in present_targets if target not in failed_or_missing]
+    else:
+        passed_count = int(round(max(0.0, min(1.0, syntax_valid_rate)) * len(present_targets)))
+        passed_targets = present_targets[:passed_count]
+
+    return {
+        "passed_targets": passed_targets,
+        "failed_targets": failed_targets,
+        "missing_targets": missing_targets,
+        "syntax_valid_rate": syntax_valid_rate,
+    }
+
+
+def _blocked_targets_from_coverage_blockers(
+    blockers: Sequence[str],
+) -> dict[str, list[str]]:
+    missing: list[str] = []
+    failed: list[str] = []
+    skipped: list[str] = []
+    prefixes = (
+        ("missing_prover_syntax_target:", missing),
+        ("failed_prover_syntax_target:", failed),
+        ("skipped_prover_syntax_target:", skipped),
+    )
+    for blocker in blockers:
+        text = str(blocker or "").strip()
+        if not text:
+            continue
+        for prefix, targets in prefixes:
+            if not text.startswith(prefix):
+                continue
+            target = text[len(prefix) :].strip()
+            target = target.split(":", 1)[0].strip()
+            if target and target not in targets:
+                targets.append(target)
+            break
+    return {"missing": missing, "failed": failed, "skipped": skipped}
 
 
 def _frame_logic_triples_from_deontic_records(
@@ -912,6 +1037,24 @@ def _float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _list_of_strings(value: Any) -> list[str]:
+    if isinstance(value, str):
+        value = [value]
+    try:
+        values = list(value)
+    except TypeError:
+        return []
+    return [str(item).strip() for item in values if str(item).strip()]
+
+
+def _normalized_target_names(value: Any) -> list[str]:
+    names: list[str] = []
+    for name in _list_of_strings(value):
+        if name not in names:
+            names.append(name)
+    return names
 
 
 __all__ = ["DeonticNormsBridgeAdapter"]

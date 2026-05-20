@@ -254,10 +254,23 @@ class ProverRouter:
 
         timeout_seconds = float(timeout or self.default_timeout)
         timeout_ms = max(1, int(timeout_seconds * 1000.0))
+        normalized_formula = formula
+        normalized_axioms = axioms
+
+        if prover_name == "native":
+            normalized_formula = self._coerce_native_formula(formula)
+            if axioms:
+                normalized_axioms = [
+                    item
+                    for item in (
+                        self._coerce_native_formula(axiom) for axiom in axioms
+                    )
+                    if item is not None
+                ]
 
         # Native TDFOL prover uses add_axiom(...) + prove(..., timeout_ms=...).
-        if prover_name == "native" and axioms and hasattr(prover, "add_axiom"):
-            for index, axiom in enumerate(axioms):
+        if prover_name == "native" and normalized_axioms and hasattr(prover, "add_axiom"):
+            for index, axiom in enumerate(normalized_axioms):
                 axiom_name = f"router_axiom_{index}"
                 try:
                     prover.add_axiom(axiom, name=axiom_name)
@@ -276,13 +289,34 @@ class ProverRouter:
 
         kwargs: Dict[str, Any] = {}
         if accepts_kwargs or "axioms" in prove_params:
-            kwargs["axioms"] = axioms
+            kwargs["axioms"] = normalized_axioms
         if accepts_kwargs or "timeout" in prove_params:
             kwargs["timeout"] = timeout_seconds
         elif "timeout_ms" in prove_params:
             kwargs["timeout_ms"] = timeout_ms
 
-        return prover.prove(formula, **kwargs)
+        return prover.prove(normalized_formula, **kwargs)
+
+    @staticmethod
+    def _coerce_native_formula(formula: Any) -> Any:
+        """Best-effort conversion of router payloads into native TDFOL formulas."""
+
+        if formula is None:
+            return None
+        if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
+            return formula
+        text = str(formula or "").strip()
+        if not text:
+            return None
+        try:
+            from ..bridge.fol_tdfol import coerce_tdfol_formula
+
+            coerced = coerce_tdfol_formula(text)
+            if coerced is not None:
+                return coerced
+        except Exception:
+            logger.debug("Could not coerce native formula payload", exc_info=True)
+        return formula
 
     @staticmethod
     def _result_is_proved(result: Any) -> bool:

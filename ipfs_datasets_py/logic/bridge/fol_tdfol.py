@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Optional, Sequence
 
@@ -195,7 +196,35 @@ class FolTdfolBridgeAdapter:
 def _deontic_norms_from_text(text: str, *, converter: Any) -> list[dict[str, Any]]:
     result = converter.convert(text)
     metadata = dict(getattr(result, "metadata", {}) or {})
-    return _list_of_dicts(metadata.get("legal_norm_irs"))
+    norms = _list_of_dicts(metadata.get("legal_norm_irs"))
+    if norms:
+        return norms
+
+    legal_norm_ir = metadata.get("legal_norm_ir")
+    if isinstance(legal_norm_ir, Mapping):
+        norms = [dict(legal_norm_ir)]
+    if norms:
+        return norms
+
+    parser_elements = _list_of_dicts(metadata.get("parser_elements"))
+    if not parser_elements:
+        parser_element = metadata.get("parser_element")
+        if isinstance(parser_element, Mapping):
+            parser_elements = [dict(parser_element)]
+    if parser_elements:
+        norms = [
+            _norm_from_parser_element(
+                parser_element,
+                index=index,
+                fallback_text=text,
+            )
+            for index, parser_element in enumerate(parser_elements)
+        ]
+    if norms:
+        return norms
+
+    synthesized = _synthesized_norm_from_text(text)
+    return [synthesized] if synthesized is not None else []
 
 
 def _tdfol_formula_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -377,6 +406,155 @@ def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         return []
     return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _norm_from_parser_element(
+    parser_element: Mapping[str, Any],
+    *,
+    index: int,
+    fallback_text: str,
+) -> dict[str, Any]:
+    source_text = str(
+        parser_element.get("text")
+        or parser_element.get("support_text")
+        or fallback_text
+        or ""
+    ).strip()
+    modality = _normalized_modality(
+        parser_element.get("modality")
+        or parser_element.get("norm_type")
+        or parser_element.get("deontic_operator")
+        or source_text
+    )
+    return {
+        "action": (
+            _first_text_value(parser_element.get("action"))
+            or str(parser_element.get("action_verb") or "")
+            or _infer_action_from_text(source_text or fallback_text)
+        ),
+        "actor": (
+            _first_text_value(parser_element.get("subject"))
+            or str(parser_element.get("actor") or "")
+            or _infer_actor_from_text(source_text or fallback_text)
+        ),
+        "canonical_citation": str(parser_element.get("canonical_citation") or ""),
+        "condition": _first_text_value(parser_element.get("conditions")) or "",
+        "modality": modality,
+        "norm_type": modality,
+        "source_id": str(parser_element.get("source_id") or f"tdfol:parser:{index}"),
+        "source_text": source_text,
+    }
+
+
+def _synthesized_norm_from_text(text: str) -> Optional[dict[str, Any]]:
+    normalized_text = " ".join(str(text or "").split())
+    if not normalized_text:
+        return None
+    digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:12]
+    modality = _normalized_modality(normalized_text)
+    return {
+        "action": _infer_action_from_text(normalized_text),
+        "actor": _infer_actor_from_text(normalized_text),
+        "canonical_citation": _extract_citation_from_text(normalized_text) or "",
+        "condition": "",
+        "modality": modality,
+        "norm_type": modality,
+        "source_id": f"tdfol:text:{digest}",
+        "source_text": normalized_text,
+    }
+
+
+def _normalized_modality(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    if not text:
+        return "statement"
+    if text in {"o", "obl", "obligation", "obligatory"}:
+        return "obligation"
+    if text in {"p", "perm", "permission", "permitted"}:
+        return "permission"
+    if text in {"f", "forbidden", "forbid", "prohibition", "prohibited"}:
+        return "prohibition"
+    if "shall not" in text or "must not" in text or "may not" in text:
+        return "prohibition"
+    if any(token in text for token in ("prohibit", "forbid", "forbidden")):
+        return "prohibition"
+    if re.search(r"\b(shall|must|required|requirement)\b", text):
+        return "obligation"
+    if re.search(r"\b(may|permitted|permission|authorized)\b", text):
+        return "permission"
+    if any(token in text for token in ("means", "defined", "definition", "established")):
+        return "definition"
+    return "statement"
+
+
+def _first_text_value(value: Any) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for item in value:
+            candidate = _first_text_value(item)
+            if candidate:
+                return candidate
+    return ""
+
+
+def _infer_action_from_text(text: str) -> str:
+    tokens = re.findall(r"[a-z0-9]+", str(text or "").lower())
+    if not tokens:
+        return "act"
+    ignored = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "be",
+        "by",
+        "for",
+        "from",
+        "in",
+        "is",
+        "it",
+        "may",
+        "must",
+        "not",
+        "of",
+        "on",
+        "or",
+        "shall",
+        "that",
+        "the",
+        "there",
+        "this",
+        "to",
+        "was",
+        "were",
+    }
+    informative = [token for token in tokens if token not in ignored]
+    action_tokens = informative[:6] if informative else tokens[:3]
+    return " ".join(action_tokens)
+
+
+def _infer_actor_from_text(text: str) -> str:
+    lowered = str(text or "").lower()
+    ignored = {"term", "section", "subsection", "chapter", "title", "part", "clause"}
+    for match in re.finditer(r"\bthe\s+([a-z][a-z0-9_]*)\b", lowered):
+        candidate = match.group(1).strip()
+        if candidate and candidate not in ignored:
+            return candidate
+    return "actor"
+
+
+def _extract_citation_from_text(text: str) -> Optional[str]:
+    match = re.match(
+        r"^\s*([0-9]+\s+u\.?\s*s\.?\s*c\.?\s+[0-9a-z\-\.]+)",
+        str(text or ""),
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+    citation = re.sub(r"\s+", " ", match.group(1)).strip()
+    return citation.upper().replace("U. S. C.", "U.S.C.").replace("U S C", "U.S.C.")
 
 
 __all__ = ["FolTdfolBridgeAdapter", "coerce_tdfol_formula"]
