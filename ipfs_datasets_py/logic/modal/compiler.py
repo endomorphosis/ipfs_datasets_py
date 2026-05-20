@@ -1068,12 +1068,10 @@ class DeterministicModalCompiler:
             predicted_family
         ):
             target_signal_by_family.setdefault(policy_target_family, False)
-        ordered_target_families: List[str] = []
-        if target_signal_by_family:
-            ordered_target_families = self._ordered_adaptive_target_families(
-                predicted_family=predicted_family,
-                target_signal_by_family=target_signal_by_family,
-            )
+        ordered_target_families = self._ordered_adaptive_target_families(
+            predicted_family=predicted_family,
+            target_signal_by_family=target_signal_by_family,
+        )
         ambiguities: List[ModalCompilationAmbiguity] = []
         for target_family in ordered_target_families:
             has_signal = bool(target_signal_by_family.get(target_family, False))
@@ -1601,6 +1599,20 @@ class DeterministicModalCompiler:
                     signals.get("has_dynamic_scope")
                     or signals.get("has_dynamic_cue")
                 ),
+            }
+        elif predicted_family == ModalLogicFamily.DYNAMIC.value:
+            target_signal_by_family = {
+                ModalLogicFamily.TEMPORAL.value: bool(
+                    signals.get("has_temporal_scope")
+                ),
+                ModalLogicFamily.DEONTIC.value: bool(
+                    signals.get("has_deontic_scope")
+                    or signals.get("has_deontic_cue")
+                ),
+                ModalLogicFamily.CONDITIONAL_NORMATIVE.value: bool(
+                    signals.get("has_condition_or_exception_scope")
+                ),
+                ModalLogicFamily.FRAME.value: has_frame_scope,
             }
         elif predicted_family == ModalLogicFamily.ALETHIC.value:
             target_signal_by_family = {
@@ -2186,14 +2198,6 @@ class DeterministicModalCompiler:
         runner_up_priority = bool(runner_up_is_priority_policy_pair)
         if resolved_margin < -resolved_epsilon:
             return "outvoted"
-        if resolved_margin <= resolved_epsilon and direct_priority:
-            return "outvoted"
-        if (
-            resolved_margin <= resolved_epsilon
-            and runner_up_priority
-            and prefer_runner_up_priority_over_contested
-        ):
-            return "outvoted"
         if (
             abs(resolved_margin) <= resolved_epsilon
             and _prefers_contested_zero_margin_adaptive_ambiguity_pair(
@@ -2202,6 +2206,14 @@ class DeterministicModalCompiler:
             )
         ):
             return "contested"
+        if resolved_margin <= resolved_epsilon and direct_priority:
+            return "outvoted"
+        if (
+            resolved_margin <= resolved_epsilon
+            and runner_up_priority
+            and prefer_runner_up_priority_over_contested
+        ):
+            return "outvoted"
         if resolved_margin <= resolved_epsilon and runner_up_priority:
             return "outvoted"
         if resolved_margin <= resolved_epsilon and is_compiler_required_policy_pair:

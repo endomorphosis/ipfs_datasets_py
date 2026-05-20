@@ -92,6 +92,78 @@ async def test_oklahoma_request_text_records_fetch_analytics(monkeypatch: pytest
     assert int(analytics.get("attempted") or 0) > 0
 
 
+def test_wayback_replay_candidates_include_canonical_for_if_marker():
+    scraper = AlabamaScraper("AL", "Alabama")
+    url = (
+        "https://web.archive.org/web/20250124114611if_/"
+        "https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-LXII-649-A.htm"
+    )
+    candidates = scraper._wayback_replay_candidates(url)
+
+    canonical = (
+        "https://web.archive.org/web/20250124114611/"
+        "https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-LXII-649-A.htm"
+    )
+    id_variant = (
+        "https://web.archive.org/web/20250124114611id_/"
+        "https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC-LXII-649-A.htm"
+    )
+
+    assert canonical in candidates
+    assert id_variant in candidates
+
+
+@pytest.mark.anyio
+async def test_new_hampshire_fetch_known_rsa_page_prefers_direct_wayback(monkeypatch: pytest.MonkeyPatch):
+    calls = []
+
+    async def _fake_direct(self, url: str, timeout: int = 20) -> str:
+        calls.append(url)
+        if "/web/20250124114611/" in url and "/if_/" not in url and "/id_/" not in url:
+            return "<html><body>direct-wayback</body></html>"
+        return ""
+
+    async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        raise AssertionError("archival fallback should not be used when direct wayback fetch works")
+
+    monkeypatch.setattr(NewHampshireScraper, "_request_text_direct", _fake_direct)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback)
+
+    scraper = NewHampshireScraper("NH", "New Hampshire")
+    payload = await scraper._fetch_known_rsa_page(
+        "https://web.archive.org/web/20250124114611if_/https://www.gencourt.state.nh.us/rsa/html/NHTOC/NHTOC.htm",
+        timeout_seconds=15,
+    )
+
+    assert b"direct-wayback" in payload
+    assert any("/web/20250124114611/" in url and "/if_/" not in url and "/id_/" not in url for url in calls)
+
+
+@pytest.mark.anyio
+async def test_oklahoma_request_text_prefers_direct_wayback_before_archival(monkeypatch: pytest.MonkeyPatch):
+    async def _fake_live_oscn(self, url: str, headers, timeout: int) -> str:
+        return ""
+
+    async def _fake_wayback(self, url: str, headers, timeout: int) -> str:
+        return "<html><body>oklahoma-wayback-direct</body></html>"
+
+    async def _fake_fallback(self, url: str, timeout_seconds: int = 25) -> bytes:
+        raise AssertionError("archival fallback should not run when direct wayback fetch succeeds")
+
+    monkeypatch.setattr(OklahomaScraper, "_request_live_oscn_text", _fake_live_oscn)
+    monkeypatch.setattr(OklahomaScraper, "_request_wayback_text", _fake_wayback)
+    monkeypatch.setattr(BaseStateScraper, "_fetch_page_content_with_archival_fallback", _fake_fallback)
+
+    scraper = OklahomaScraper("OK", "Oklahoma")
+    text = await scraper._request_text(
+        "https://web.archive.org/web/20250124114611/https://www.oscn.net/applications/oscn/DeliverDocument.asp?CiteID=1",
+        headers={},
+        timeout=20,
+    )
+
+    assert "oklahoma-wayback-direct" in text
+
+
 @pytest.mark.anyio
 async def test_alabama_scrape_uses_archival_fetch_path(monkeypatch: pytest.MonkeyPatch):
     async def _fake_unified_fetch(self, url: str, timeout_seconds: int = 25) -> bytes:

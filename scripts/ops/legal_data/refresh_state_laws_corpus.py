@@ -55,7 +55,28 @@ STATE_CODES_50: List[str] = [
 
 _CORPUS = get_canonical_legal_corpus("state_laws")
 _COMPLETED_STATES_SCHEMA = "ipfs_datasets_py.state_laws_refresh.completed_states.v1"
-_COMPLETE_STATE_STATUSES = {"success", "zero_statutes"}
+_REGISTRY_RECORDABLE_STATE_STATUSES = {"success", "zero_statutes"}
+
+
+def _complete_state_statuses() -> set[str]:
+    """Return registry statuses that should skip future scrape retries.
+
+    `zero_statutes` entries are recorded for observability, but by default they
+    are *not* treated as complete for retry-skipping because they can indicate
+    a transient scraper/source failure. Set
+    `STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE=1` to restore the legacy
+    behavior.
+    """
+
+    statuses = {"success"}
+    if str(os.getenv("STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        statuses.add("zero_statutes")
+    return statuses
 
 
 def _utc_now_iso() -> str:
@@ -92,7 +113,7 @@ def _normalize_completed_states_registry(payload: Any) -> Dict[str, Any]:
         if not isinstance(raw_entry, Mapping):
             continue
         status = str(raw_entry.get("status") or "").strip().lower()
-        if status not in _COMPLETE_STATE_STATUSES:
+        if status not in _REGISTRY_RECORDABLE_STATE_STATUSES:
             continue
         entry: Dict[str, Any] = {"status": status}
         completed_at = str(raw_entry.get("completed_at") or "").strip()
@@ -113,6 +134,16 @@ def _normalize_completed_states_registry(payload: Any) -> Dict[str, Any]:
             value = str(raw_entry.get(key) or "").strip()
             if value:
                 entry[key] = value
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+            value = str(raw_entry.get(key) or "").strip()
+            if value:
+                entry[key] = value
+        timeout_work_remaining = raw_entry.get("timeout_work_remaining")
+        if isinstance(timeout_work_remaining, bool):
+            entry["timeout_work_remaining"] = timeout_work_remaining
+        timeout_promoted = raw_entry.get("timeout_promoted_to_success")
+        if isinstance(timeout_promoted, bool):
+            entry["timeout_promoted_to_success"] = timeout_promoted
         normalized_states[state_code] = entry
 
     normalized["states"] = dict(sorted(normalized_states.items()))
@@ -141,6 +172,7 @@ def _write_completed_states_registry(path: Path, registry: Mapping[str, Any]) ->
 
 
 def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]) -> List[str]:
+    complete_statuses = _complete_state_statuses()
     entries = registry.get("states")
     if not isinstance(entries, Mapping):
         return []
@@ -150,7 +182,7 @@ def _completed_states_to_skip(states: Sequence[str], registry: Mapping[str, Any]
         if not isinstance(entry, Mapping):
             continue
         status = str(entry.get("status") or "").strip().lower()
-        if status in _COMPLETE_STATE_STATUSES:
+        if status in complete_statuses:
             skipped.append(state)
     return skipped
 
@@ -160,6 +192,7 @@ def _prefill_state_results_from_registry(
     states: Sequence[str],
     registry: Mapping[str, Any],
 ) -> Dict[str, Dict[str, Any]]:
+    complete_statuses = _complete_state_statuses()
     entries = registry.get("states")
     if not isinstance(entries, Mapping):
         return {}
@@ -169,7 +202,7 @@ def _prefill_state_results_from_registry(
         if not isinstance(entry, Mapping):
             continue
         status = str(entry.get("status") or "").strip().lower()
-        if status not in _COMPLETE_STATE_STATUSES:
+        if status not in complete_statuses:
             continue
         try:
             statutes_count = int(entry.get("statutes_count") or 0)
@@ -182,6 +215,14 @@ def _prefill_state_results_from_registry(
             "completed_at": str(entry.get("completed_at") or ""),
             "skip_reason": "already_completed_registry",
         }
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+            value = str(entry.get(key) or "").strip()
+            if value:
+                prefilled[state][key] = value
+        if isinstance(entry.get("timeout_work_remaining"), bool):
+            prefilled[state]["timeout_work_remaining"] = bool(entry.get("timeout_work_remaining"))
+        if isinstance(entry.get("timeout_promoted_to_success"), bool):
+            prefilled[state]["timeout_promoted_to_success"] = bool(entry.get("timeout_promoted_to_success"))
     return prefilled
 
 
@@ -200,7 +241,7 @@ def _merge_completed_states_registry(
         if code not in US_STATES or not isinstance(raw_entry, Mapping):
             continue
         status = str(raw_entry.get("status") or "").strip().lower()
-        if status not in _COMPLETE_STATE_STATUSES:
+        if status not in _REGISTRY_RECORDABLE_STATE_STATUSES:
             continue
         prior = states_map.get(code) if isinstance(states_map.get(code), Mapping) else {}
         try:
@@ -217,6 +258,16 @@ def _merge_completed_states_registry(
             "output_root": str(output_root),
             "source_progress_path": str(progress_path),
         }
+        for key in ("completion_mode", "timeout_classification", "timeout_signal_kind", "timeout_original_error"):
+            value = str(raw_entry.get(key) or "").strip()
+            if value:
+                entry[key] = value
+        timeout_work_remaining = raw_entry.get("timeout_work_remaining")
+        if isinstance(timeout_work_remaining, bool):
+            entry["timeout_work_remaining"] = timeout_work_remaining
+        timeout_promoted = raw_entry.get("timeout_promoted_to_success")
+        if isinstance(timeout_promoted, bool):
+            entry["timeout_promoted_to_success"] = timeout_promoted
         states_map[code] = entry
     merged["states"] = dict(sorted(states_map.items()))
     merged["updated_at"] = now
@@ -937,7 +988,30 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                 if statutes_count <= 0 and isinstance(statute_data, dict):
                     statutes_count = len(list(statute_data.get("statutes") or []))
                 error_text = str((state_result or {}).get("error") or "").strip()
+                timeout_diagnostics_raw = (state_result or {}).get("timeout_diagnostics")
+                timeout_diagnostics = (
+                    dict(timeout_diagnostics_raw)
+                    if isinstance(timeout_diagnostics_raw, Mapping)
+                    else {}
+                )
+                timeout_classification = str(timeout_diagnostics.get("classification") or "").strip()
+                timeout_signal_kind = str(timeout_diagnostics.get("signal_kind") or "").strip()
+                timeout_work_remaining_value = timeout_diagnostics.get("work_remaining")
+                timeout_work_remaining = (
+                    timeout_work_remaining_value
+                    if isinstance(timeout_work_remaining_value, bool)
+                    else None
+                )
+                timed_out = bool(timeout_diagnostics.get("timed_out")) or ("timed out" in error_text.lower())
+                timeout_promoted_to_success = bool(
+                    error_text
+                    and timed_out
+                    and statutes_count > 0
+                    and timeout_work_remaining is False
+                )
                 state_status = "error" if error_text else ("zero_statutes" if statutes_count <= 0 else "success")
+                if timeout_promoted_to_success:
+                    state_status = "success"
                 state_name = str((state_result or {}).get("state_name") or (statute_data.get("state_name") if isinstance(statute_data, dict) else "") or "").strip()
                 state_entry = {
                     "state_code": state_code,
@@ -946,7 +1020,19 @@ async def refresh_state_laws_corpus(args: argparse.Namespace) -> Dict[str, Any]:
                     "statutes_count": statutes_count,
                     "completed_at": _utc_now_iso(),
                 }
-                if error_text:
+                if timeout_diagnostics:
+                    state_entry["timeout_diagnostics"] = timeout_diagnostics
+                if timeout_classification:
+                    state_entry["timeout_classification"] = timeout_classification
+                if timeout_signal_kind:
+                    state_entry["timeout_signal_kind"] = timeout_signal_kind
+                if timeout_work_remaining is not None:
+                    state_entry["timeout_work_remaining"] = timeout_work_remaining
+                if timeout_promoted_to_success:
+                    state_entry["completion_mode"] = "timeout_no_remaining_work"
+                    state_entry["timeout_promoted_to_success"] = True
+                    state_entry["timeout_original_error"] = error_text
+                elif error_text:
                     state_entry["error"] = error_text
                 results = progress_state.setdefault("state_results", {})
                 if isinstance(results, dict):

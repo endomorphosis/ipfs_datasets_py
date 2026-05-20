@@ -241,5 +241,58 @@ async def test_state_laws_scraper_timeout_returns_without_waiting_for_blocked_wo
     assert result["state_code"] == "OR"
     assert result["zero_statute"] is True
     assert "timed out" in str(result["error"])
+    assert result.get("timeout_diagnostics", {}).get("classification") == "timeout_without_partial_checkpoint"
 
     await asyncio.sleep(0.25)
+
+
+def test_state_laws_scraper_timeout_checkpoint_diagnostics_work_remaining(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-OK-partial.json"
+    checkpoint_path.write_text(
+        '{"state_code":"OK","scanned_candidates":100,"discovered_candidates":1000,'
+        '"updated_at":1716210000.0,'
+        '"statutes":[{"statute_id":"ok-1","section_number":"1","section_name":"S1","full_text":"§ 1 text"}]}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "OK",
+        "Failed to scrape Oklahoma: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("classification") == "timeout_while_work_remaining"
+    assert diag.get("work_remaining") is True
+    assert diag.get("signal_kind") == "candidate_scan"
+    assert diag.get("progress_scanned") == 100
+    assert diag.get("progress_discovered") == 1000
+
+
+def test_state_laws_scraper_timeout_checkpoint_diagnostics_no_work_remaining(tmp_path, monkeypatch):
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint_path = checkpoint_dir / "STATE-RI-partial.json"
+    checkpoint_path.write_text(
+        '{"state_code":"RI","progress":{"codes_completed":1,"codes_total":1},'
+        '"updated_at":"2026-05-20T15:00:00+00:00",'
+        '"statutes":[{"statute_id":"ri-1","section_number":"1","section_name":"S1","full_text":"§ 1 text"}]}',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR", str(checkpoint_dir))
+
+    result = scraper_module._load_partial_checkpoint_state_result(
+        "RI",
+        "Failed to scrape Rhode Island: timed out after 900 seconds",
+    )
+
+    assert result is not None
+    diag = result.get("timeout_diagnostics") or {}
+    assert diag.get("timed_out") is True
+    assert diag.get("classification") == "timeout_with_no_detectable_remaining_work"
+    assert diag.get("work_remaining") is False
+    assert diag.get("signal_kind") == "codes_progress"

@@ -1423,10 +1423,18 @@ class BaseStateScraper(ABC):
         _add(value)
 
         if "web.archive.org/web/" in value:
-            if "/if_/" not in value:
-                _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", value, count=1))
-            if "/id_/" not in value:
-                _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1id_/\2", value, count=1))
+            # Always include the canonical replay path first, even when the input
+            # already contains `if_`/`id_` markers.
+            canonical = re.sub(
+                r"(web\.archive\.org/web/\d+)(?:if_|id_)/(https?://)",
+                r"\1/\2",
+                value,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+            _add(canonical)
+            _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1if_/\2", canonical, count=1))
+            _add(re.sub(r"(web\.archive\.org/web/\d+)/(https?://)", r"\1id_/\2", canonical, count=1))
 
         # Try scheme-alternate variants last for flaky mirrors.
         seed = list(out)

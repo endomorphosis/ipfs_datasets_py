@@ -17,6 +17,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, contextmanager
@@ -179,7 +180,11 @@ CODEX_SANDBOX_BLOCKER_PATTERNS = (
     "bwrap: loopback: failed rtm_newaddr",
     "operation not permitted",
 )
-CODEX_COMPLETED_WORK_STATUSES = {"created", "applied_to_main"}
+CODEX_COMPLETED_WORK_STATUSES = {
+    "created",
+    "applied_to_main",
+    "main_apply_no_merged_delta",
+}
 CODEX_TRANSIENT_FAILURE_PATTERNS = (
     "selected model is at capacity",
     "temporarily unavailable",
@@ -2278,6 +2283,118 @@ def _commit_repair_worktree_targets(
     }
 
 
+def _resolve_unmerged_targets_with_union(
+    repair_worktree: Path,
+    *,
+    target_files: Sequence[str],
+) -> Dict[str, Any]:
+    """Resolve text merge conflicts by keeping both dirty-main and Codex hunks."""
+    status = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=U", "--", *target_files],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    if status.returncode != 0:
+        return {
+            "status": "unmerged_scan_failed",
+            "exit_code": status.returncode,
+            "stderr_tail": (status.stderr or "")[-500:],
+            "stdout_tail": (status.stdout or "")[-500:],
+        }
+    unmerged_paths = [path for path in status.stdout.splitlines() if path.strip()]
+    if not unmerged_paths:
+        return {"status": "no_unmerged_paths", "paths": []}
+
+    resolved_paths: List[str] = []
+    with tempfile.TemporaryDirectory(prefix="codex-union-merge-") as tmp:
+        tmpdir = Path(tmp)
+        for index, path in enumerate(unmerged_paths, start=1):
+            relative = _safe_repo_relative_path(path)
+            stage_paths: Dict[str, Path] = {}
+            for stage, name in (("1", "base"), ("2", "ours"), ("3", "theirs")):
+                stage_result = subprocess.run(
+                    ["git", "show", f":{stage}:{path}"],
+                    cwd=repair_worktree,
+                    capture_output=True,
+                    timeout=30.0,
+                )
+                if stage_result.returncode != 0:
+                    return {
+                        "status": f"{name}_stage_unavailable",
+                        "path": path,
+                        "exit_code": stage_result.returncode,
+                        "stderr_tail": stage_result.stderr.decode(
+                            "utf-8",
+                            errors="replace",
+                        )[-500:],
+                    }
+                stage_path = tmpdir / f"{index}-{name}"
+                stage_path.write_bytes(stage_result.stdout)
+                stage_paths[name] = stage_path
+
+            merge_file = subprocess.run(
+                [
+                    "git",
+                    "merge-file",
+                    "--union",
+                    "-p",
+                    str(stage_paths["ours"]),
+                    str(stage_paths["base"]),
+                    str(stage_paths["theirs"]),
+                ],
+                cwd=repair_worktree,
+                capture_output=True,
+                timeout=30.0,
+            )
+            if merge_file.returncode != 0:
+                return {
+                    "status": "union_merge_file_failed",
+                    "path": path,
+                    "exit_code": merge_file.returncode,
+                    "stderr_tail": merge_file.stderr.decode(
+                        "utf-8",
+                        errors="replace",
+                    )[-500:],
+                }
+            destination = repair_worktree / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(merge_file.stdout)
+            resolved_paths.append(path)
+
+    add = subprocess.run(
+        ["git", "add", "--", *resolved_paths],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=60.0,
+    )
+    if add.returncode != 0:
+        return {
+            "status": "add_resolved_failed",
+            "paths": resolved_paths,
+            "exit_code": add.returncode,
+            "stderr_tail": (add.stderr or "")[-500:],
+            "stdout_tail": (add.stdout or "")[-500:],
+        }
+    remaining = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=U", "--", *target_files],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    remaining_paths = [
+        path for path in (remaining.stdout or "").splitlines() if path.strip()
+    ]
+    return {
+        "paths": resolved_paths,
+        "remaining_unmerged_paths": remaining_paths,
+        "status": "resolved" if not remaining_paths else "unmerged_paths_remain",
+    }
+
+
 def _repair_codex_diff_against_dirty_targets(
     *,
     diff_content: str,
@@ -2351,8 +2468,15 @@ def _repair_codex_diff_against_dirty_targets(
             "stdout_tail": (apply_codex.stdout or "")[-1000:],
         }
         if apply_codex.returncode != 0:
-            report["status"] = "codex_apply_3way_failed"
-            return report
+            apply_union_repair = _resolve_unmerged_targets_with_union(
+                repair_worktree,
+                target_files=target_files,
+            )
+            report["codex_apply_conflict_resolution"] = dict(apply_union_repair)
+            if apply_union_repair.get("status") != "resolved":
+                report["status"] = "codex_apply_3way_failed"
+                return report
+            report["codex_apply_conflict_resolution_strategy"] = "union"
 
         codex_snapshot = _commit_repair_worktree_targets(
             repair_worktree,
@@ -2405,8 +2529,15 @@ def _repair_codex_diff_against_dirty_targets(
                 timeout=30.0,
             )
             report["merge_status_tail"] = (status.stdout or status.stderr or "")[-1000:]
-            report["status"] = "merge_conflict"
-            return report
+            union_repair = _resolve_unmerged_targets_with_union(
+                repair_worktree,
+                target_files=target_files,
+            )
+            report["conflict_resolution"] = dict(union_repair)
+            if union_repair.get("status") != "resolved":
+                report["status"] = "merge_conflict"
+                return report
+            report["conflict_resolution_strategy"] = "union"
 
         diff = subprocess.run(
             ["git", "diff", "--binary", "HEAD", "--", *target_files],
@@ -2472,6 +2603,11 @@ def _repair_codex_worktree_diff_against_main(
         "mode": "apply_3way",
         "status": "failed",
     }
+    target_files = [
+        str(path)
+        for path in packet.get("main_apply_target_files", [])
+        if str(path).strip()
+    ]
     try:
         manager = WorktreeManager(repo_path=source_repo_root, worktrees_base=repair_base)
         repair_worktree = manager.create_worktree(repair_id, branch="HEAD")
@@ -2488,8 +2624,15 @@ def _repair_codex_worktree_diff_against_main(
             "stdout_tail": (apply_result.stdout or "")[-1000:],
         }
         if apply_result.returncode != 0:
-            report["status"] = "apply_3way_failed"
-            return report
+            apply_union_repair = _resolve_unmerged_targets_with_union(
+                repair_worktree,
+                target_files=target_files,
+            )
+            report["apply_conflict_resolution"] = dict(apply_union_repair)
+            if apply_union_repair.get("status") != "resolved":
+                report["status"] = "apply_3way_failed"
+                return report
+            report["apply_conflict_resolution_strategy"] = "union"
 
         repaired_diff = _codex_worktree_diff(repair_worktree)
         repaired_content = str(repaired_diff.get("diff_content") or "")
@@ -2520,11 +2663,31 @@ def _repair_codex_worktree_diff_against_main(
             }
 
 
+def _repair_status_has_no_remaining_delta(status: str) -> bool:
+    """Return whether merge repair proved the packet is already represented."""
+    return str(status or "").strip().lower() in {
+        "no_codex_snapshot_diff",
+        "no_merged_delta",
+        "no_repaired_diff",
+    }
+
+
 def _default_codex_apply_validation_commands(repo_root: Path) -> List[List[str]]:
     tests = [path for path in CODEX_APPLY_VALIDATION_TESTS if (repo_root / path).exists()]
     if not tests:
         return []
     return [[sys.executable, "-m", "pytest", "-q", *tests]]
+
+
+def _codex_apply_validation_env() -> Dict[str, str]:
+    """Run apply validation without contending with the autoencoder GPU loop."""
+    env = dict(os.environ)
+    allow_cuda = str(
+        env.get("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA") or ""
+    ).strip().lower()
+    if allow_cuda not in {"1", "true", "yes", "on"}:
+        env["CUDA_VISIBLE_DEVICES"] = ""
+    return env
 
 
 def _run_codex_apply_validation(
@@ -2552,6 +2715,7 @@ def _run_codex_apply_validation(
                 command,
                 cwd=repo_root,
                 capture_output=True,
+                env=_codex_apply_validation_env(),
                 text=True,
                 timeout=max(1.0, float(timeout_seconds)),
             )
@@ -2739,6 +2903,15 @@ def apply_codex_worktree_changes_to_main(
                 updated["main_apply_repair_status"] = "repaired"
             else:
                 repair_status = str(repair.get("status") or "failed")
+                if _repair_status_has_no_remaining_delta(repair_status):
+                    updated["patch_path"] = None
+                    updated["patch_status"] = "main_apply_no_merged_delta"
+                    updated["patch_error"] = None
+                    updated["main_apply_status"] = "no_changes"
+                    updated["main_apply_repair_status"] = repair_status
+                    updated["main_apply_error"] = None
+                    _save_packet_if_possible(updated, packet_path)
+                    return updated
                 patch_path = _save_codex_packet_diff_patch(
                     updated,
                     diff_content=diff_content,
@@ -2805,6 +2978,15 @@ def apply_codex_worktree_changes_to_main(
             repair_status = str(
                 dict(updated.get("main_apply_merge_repair", {})).get("status") or ""
             )
+            if _repair_status_has_no_remaining_delta(repair_status):
+                updated["patch_path"] = None
+                updated["patch_status"] = "main_apply_no_merged_delta"
+                updated["patch_error"] = None
+                updated["main_apply_status"] = "no_changes"
+                updated["main_apply_repair_status"] = repair_status
+                updated["main_apply_error"] = None
+                _save_packet_if_possible(updated, packet_path)
+                return updated
             reason = (
                 "apply-check-failed"
                 if not repair_status

@@ -458,17 +458,17 @@ class OklahomaScraper(BaseStateScraper):
             os.getenv("STATE_SCRAPER_OK_SEED_ARCHIVE_DISCOVERY_TIMEOUT_SECONDS", "") or ""
         ).strip()
         try:
-            seed_archive_timeout_seconds = int(seed_archive_timeout_raw) if seed_archive_timeout_raw else 120
+            seed_archive_timeout_seconds = int(seed_archive_timeout_raw) if seed_archive_timeout_raw else 60
         except Exception:
-            seed_archive_timeout_seconds = 120
-        seed_archive_timeout_seconds = max(30, min(360, seed_archive_timeout_seconds))
+            seed_archive_timeout_seconds = 60
+        seed_archive_timeout_seconds = max(20, min(240, seed_archive_timeout_seconds))
 
         cdx_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_CDX_DISCOVERY_TIMEOUT_SECONDS", "") or "").strip()
         try:
-            cdx_timeout_seconds = int(cdx_timeout_raw) if cdx_timeout_raw else 180
+            cdx_timeout_seconds = int(cdx_timeout_raw) if cdx_timeout_raw else 120
         except Exception:
-            cdx_timeout_seconds = 180
-        cdx_timeout_seconds = max(45, min(480, cdx_timeout_seconds))
+            cdx_timeout_seconds = 120
+        cdx_timeout_seconds = max(30, min(360, cdx_timeout_seconds))
 
         self.logger.info(
             "Oklahoma OSCN discovery: seed_scan_start seed_count=%s full_corpus=%s",
@@ -786,6 +786,9 @@ class OklahomaScraper(BaseStateScraper):
         direct_oscn_text = await self._request_live_oscn_text(url, headers=headers, timeout=timeout)
         if direct_oscn_text:
             return direct_oscn_text
+        direct_wayback_text = await self._request_wayback_text(url, headers=headers, timeout=timeout)
+        if direct_wayback_text:
+            return direct_wayback_text
 
         try:
             request_url = self._normalize_wayback_url(url)
@@ -801,6 +804,52 @@ class OklahomaScraper(BaseStateScraper):
             return text
         except Exception:
             return ""
+
+    async def _request_wayback_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+        """Attempt direct Wayback replay fetches before broader fallback chains."""
+        normalized_url = self._normalize_wayback_url(url)
+        lower_url = normalized_url.lower()
+        if "web.archive.org/web/" not in lower_url:
+            return ""
+
+        candidates = self._wayback_replay_candidates(normalized_url)
+        if not candidates:
+            return ""
+
+        request_headers = {
+            "User-Agent": str(headers.get("User-Agent") or "Mozilla/5.0"),
+            "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
+        }
+
+        def _fetch(candidate_url: str) -> str:
+            try:
+                import urllib.request
+
+                request = urllib.request.Request(candidate_url, headers=request_headers)
+                with urllib.request.urlopen(request, timeout=max(5, min(int(timeout or 25), 25))) as response:
+                    return response.read().decode("utf-8", errors="replace")
+            except Exception:
+                return ""
+
+        for candidate in candidates:
+            try:
+                text = await asyncio.wait_for(
+                    asyncio.to_thread(_fetch, candidate),
+                    timeout=max(8, min(int(timeout or 25) + 2, 32)),
+                )
+            except Exception:
+                text = ""
+            if not text:
+                continue
+            if "object moved" in text.lower():
+                continue
+            if self._ANTI_BOT_RE.search(text):
+                continue
+            self._record_fetch_event(provider="requests_wayback_direct", success=True)
+            return text
+
+        self._record_fetch_event(provider="requests_wayback_direct", success=False)
+        return ""
 
     async def _request_live_oscn_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
         """Fetch live OSCN statute pages without invoking broader archival recovery.

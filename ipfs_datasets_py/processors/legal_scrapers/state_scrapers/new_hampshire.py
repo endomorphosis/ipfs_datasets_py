@@ -217,10 +217,16 @@ class NewHampshireScraper(BaseStateScraper):
         # Known official/Wayback RSA pages should be fetched directly before invoking
         # the heavier archival/search fallback stack.
         lower_url = str(url or "").lower()
-        if "gencourt.state.nh.us/rsa/html/" in lower_url or "gc.nh.gov/rsa/html/" in lower_url:
-            direct = await self._request_text_direct(url, timeout=max(5, timeout_seconds))
-            if direct:
-                return direct.encode("utf-8", errors="replace")
+        is_known_rsa = "/rsa/html/" in lower_url and (
+            "gencourt.state.nh.us/" in lower_url
+            or "gc.nh.gov/" in lower_url
+            or "web.archive.org/web/" in lower_url
+        )
+        if is_known_rsa:
+            for candidate in self._wayback_replay_candidates(self._normalize_wayback_like_url(url)):
+                direct = await self._request_text_direct(candidate, timeout=max(5, timeout_seconds))
+                if direct:
+                    return direct.encode("utf-8", errors="replace")
         return await self._fetch_page_content_with_archival_fallback(url, timeout_seconds=timeout_seconds)
 
     async def _scrape_archived_title_stubs(
@@ -308,7 +314,8 @@ class NewHampshireScraper(BaseStateScraper):
 
         chapter_fetch_limit = None if max_statutes is None else max(8, int(max_statutes) * 4)
 
-        for title_url in title_urls:
+        total_titles = len(title_urls)
+        for title_index, title_url in enumerate(title_urls, start=1):
             if _limit_reached(len(out)):
                 break
             if chapter_fetch_limit is not None and len(chapter_urls) >= chapter_fetch_limit:
@@ -359,6 +366,15 @@ class NewHampshireScraper(BaseStateScraper):
                     )
                     if checkpoint is not None:
                         checkpoint.maybe_write(out, code_name=code_name, stage_label=f"chapter-stub:{chapter_id}")
+
+            if title_index == 1 or title_index % 5 == 0:
+                self.logger.info(
+                    "New Hampshire archived index: titles_scanned=%s/%s sections=%s statutes_so_far=%s",
+                    title_index,
+                    total_titles,
+                    len(chapter_urls),
+                    len(out),
+                )
 
         if _limit_reached(len(out)):
             return out[:max_statutes]

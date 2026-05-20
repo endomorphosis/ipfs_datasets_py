@@ -1269,6 +1269,27 @@ def test_supervisor_finalize_program_synthesis_batch_applies_queue_transitions()
     assert applied["failed_validation_count"] == 0
     assert supervisor_applied.queue.get(claimed_applied[0].todo_id).status == "completed"
 
+    supervisor_no_delta = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor_no_delta.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed_no_delta = supervisor_no_delta.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    no_delta = supervisor_no_delta.finalize_program_synthesis_batch(
+        claimed_no_delta,
+        codex_exec_status="succeeded",
+        patch_status="main_apply_no_merged_delta",
+    )
+    assert no_delta["updated"] is True
+    assert no_delta["completed_count"] == 1
+    assert no_delta["failed_validation_count"] == 0
+    assert supervisor_no_delta.queue.get(claimed_no_delta[0].todo_id).status == "completed"
+
 
 def test_supervisor_finalize_requeues_transient_codex_failure() -> None:
     samples = [
@@ -2637,6 +2658,28 @@ def test_codex_work_packet_apply_to_main_detects_baseline_validation_failure(
     )
 
 
+def test_codex_apply_validation_hides_cuda_by_default(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0")
+    monkeypatch.delenv("IPFS_DATASETS_CODEX_APPLY_VALIDATION_ALLOW_CUDA", raising=False)
+
+    validation = runner._run_codex_apply_validation(
+        tmp_path,
+        tmp_path,
+        validation_commands=(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import os; "
+                    "raise SystemExit(0 if os.environ.get('CUDA_VISIBLE_DEVICES') == '' else 1)"
+                ),
+            ],
+        ),
+    )
+
+    assert validation["status"] == "passed"
+
+
 def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_main(tmp_path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -2704,6 +2747,79 @@ def test_codex_work_packet_apply_to_main_repairs_stale_patch_against_current_mai
     )
 
 
+def test_codex_work_packet_apply_to_main_union_repairs_stale_patch_conflict(
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    todo = ModalTodo(
+        todo_id="program-stale-union-repair",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="repair stale apply conflict",
+        sample_ids=["a", "b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": "repair",
+        },
+    )
+    packet = create_codex_work_packet(
+        cycle=1,
+        queue_path=tmp_path / "queue.jsonl",
+        queue_run_id="queue-run",
+        repo_root=repo,
+        run_id="codex-run",
+        todos=[todo],
+        work_dir=tmp_path / "codex-work",
+        worker_id="codex-worker",
+    )
+    (Path(packet["worktree_path"]) / "README.md").write_text(
+        "codex-alpha\nbeta\ngamma\n",
+        encoding="utf-8",
+    )
+    (repo / "README.md").write_text("main-alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "advance main"], cwd=repo, check=True, capture_output=True, text=True)
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        merge_repair_attempts=1,
+        merge_repair_mode="apply_3way",
+        validation_commands=(),
+    )
+
+    merged_text = (repo / "README.md").read_text(encoding="utf-8")
+    repair = updated["main_apply_merge_repair"]
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_repair_status"] == "repaired"
+    assert repair["status"] == "repaired"
+    assert repair["apply_conflict_resolution_strategy"] == "union"
+    assert repair["apply_conflict_resolution"]["status"] == "resolved"
+    assert "main-alpha" in merged_text
+    assert "codex-alpha" in merged_text
+    assert "<<<<<<<" not in merged_text
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
 def test_codex_work_packet_apply_to_main_repairs_dirty_target_in_worktree(tmp_path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -2761,6 +2877,217 @@ def test_codex_work_packet_apply_to_main_repairs_dirty_target_in_worktree(tmp_pa
     assert (repo / "README.md").read_text(encoding="utf-8") == (
         "codex-alpha\nbeta\nmain-gamma\n"
     )
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_union_repairs_dirty_target_conflict(
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    todo = ModalTodo(
+        todo_id="program-dirty-union-repair",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="repair dirty conflict",
+        sample_ids=["a", "b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": "repair",
+        },
+    )
+    packet = create_codex_work_packet(
+        cycle=1,
+        queue_path=tmp_path / "queue.jsonl",
+        queue_run_id="queue-run",
+        repo_root=repo,
+        run_id="codex-run",
+        todos=[todo],
+        work_dir=tmp_path / "codex-work",
+        worker_id="codex-worker",
+    )
+    (Path(packet["worktree_path"]) / "README.md").write_text(
+        "codex-alpha\nbeta\ngamma\n",
+        encoding="utf-8",
+    )
+    (repo / "README.md").write_text("source-alpha\nbeta\ngamma\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        merge_repair_attempts=1,
+        merge_repair_mode="apply_3way",
+        validation_commands=(),
+    )
+
+    merged_text = (repo / "README.md").read_text(encoding="utf-8")
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_repair_status"] == "repaired"
+    assert updated["main_apply_merge_repair"]["status"] == "repaired"
+    assert updated["main_apply_merge_repair"]["conflict_resolution_strategy"] == "union"
+    assert updated["main_apply_merge_repair"]["conflict_resolution"]["status"] == "resolved"
+    assert "source-alpha" in merged_text
+    assert "codex-alpha" in merged_text
+    assert "<<<<<<<" not in merged_text
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_marks_no_merged_delta_as_complete(
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    todo = ModalTodo(
+        todo_id="program-dirty-no-delta",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="recognize superseded dirty repair",
+        sample_ids=["a", "b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": "repair",
+        },
+    )
+    packet = create_codex_work_packet(
+        cycle=1,
+        queue_path=tmp_path / "queue.jsonl",
+        queue_run_id="queue-run",
+        repo_root=repo,
+        run_id="codex-run",
+        todos=[todo],
+        work_dir=tmp_path / "codex-work",
+        worker_id="codex-worker",
+    )
+    (Path(packet["worktree_path"]) / "README.md").write_text(
+        "codex-alpha\nbeta\ngamma\n",
+        encoding="utf-8",
+    )
+    (repo / "README.md").write_text("codex-alpha\nbeta\ngamma\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        merge_repair_attempts=1,
+        merge_repair_mode="apply_3way",
+        validation_commands=(),
+    )
+
+    assert updated["patch_status"] == "main_apply_no_merged_delta"
+    assert updated["main_apply_status"] == "no_changes"
+    assert updated["main_apply_repair_status"] == "no_merged_delta"
+    assert updated["patch_error"] is None
+    assert (repo / "README.md").read_text(encoding="utf-8") == (
+        "codex-alpha\nbeta\ngamma\n"
+    )
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_union_repairs_dirty_and_stale_conflict(
+    tmp_path,
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "Test User"], cwd=repo, check=True)
+    (repo / "README.md").write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "initial"], cwd=repo, check=True, capture_output=True, text=True)
+    todo = ModalTodo(
+        todo_id="program-dirty-stale-union-repair",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="repair dirty stale conflict",
+        sample_ids=["a", "b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": "repair",
+        },
+    )
+    packet = create_codex_work_packet(
+        cycle=1,
+        queue_path=tmp_path / "queue.jsonl",
+        queue_run_id="queue-run",
+        repo_root=repo,
+        run_id="codex-run",
+        todos=[todo],
+        work_dir=tmp_path / "codex-work",
+        worker_id="codex-worker",
+    )
+    (Path(packet["worktree_path"]) / "README.md").write_text(
+        "codex-alpha\nbeta\ngamma\n",
+        encoding="utf-8",
+    )
+    (repo / "README.md").write_text("main-alpha\nbeta\ngamma\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-m", "advance main"], cwd=repo, check=True, capture_output=True, text=True)
+    (repo / "README.md").write_text("source-alpha\nbeta\ngamma\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        merge_repair_attempts=1,
+        merge_repair_mode="apply_3way",
+        validation_commands=(),
+    )
+
+    merged_text = (repo / "README.md").read_text(encoding="utf-8")
+    repair = updated["main_apply_merge_repair"]
+    assert updated["patch_status"] == "applied_to_main"
+    assert updated["main_apply_status"] == "applied"
+    assert updated["main_apply_repair_status"] == "repaired"
+    assert repair["status"] == "repaired"
+    assert repair["codex_apply_conflict_resolution_strategy"] == "union"
+    assert repair["codex_apply_conflict_resolution"]["status"] == "resolved"
+    assert "source-alpha" in merged_text
+    assert "codex-alpha" in merged_text
+    assert "<<<<<<<" not in merged_text
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],

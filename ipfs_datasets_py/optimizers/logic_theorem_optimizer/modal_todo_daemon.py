@@ -1604,7 +1604,11 @@ class ModalTodoSupervisor:
         reason: Optional[str] = None
         outcome = "no_status_change"
 
-        if normalized_patch_status in {"created", "applied_to_main"}:
+        if normalized_patch_status in {
+            "created",
+            "applied_to_main",
+            "main_apply_no_merged_delta",
+        }:
             for todo_id in todo_ids:
                 completed_count += int(self.queue.complete(todo_id))
             outcome = "completed"

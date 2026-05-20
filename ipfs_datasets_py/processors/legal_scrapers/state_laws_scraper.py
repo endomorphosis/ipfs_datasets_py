@@ -10,7 +10,7 @@ from ipfs_datasets_py.utils import anyio_compat as asyncio
 import inspect
 import time
 from typing import Callable, Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 import re
@@ -87,6 +87,123 @@ def _derive_bounded_scraper_timeouts(per_state_timeout_seconds: float) -> Dict[s
     return {
         "code_timeout_seconds": float(code_timeout),
         "fetch_timeout_seconds": float(fetch_timeout),
+    }
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+        text = str(value or "").strip()
+        if not text:
+            return int(default)
+        return int(float(text))
+    except Exception:
+        return int(default)
+
+
+def _coerce_checkpoint_updated_at(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat()
+        except Exception:
+            return ""
+    return str(value).strip()
+
+
+def _derive_timeout_diagnostics_from_checkpoint_payload(
+    *,
+    payload: Dict[str, Any],
+    error_msg: str,
+    statutes_count: int,
+) -> Dict[str, Any]:
+    progress = payload.get("progress") if isinstance(payload.get("progress"), dict) else {}
+    timed_out = "timed out" in str(error_msg or "").lower()
+
+    scanned_candidates = _safe_int(
+        payload.get("scanned_candidates", progress.get("scanned_candidates")),
+        0,
+    )
+    discovered_candidates = _safe_int(
+        payload.get("discovered_candidates", progress.get("discovered_candidates")),
+        0,
+    )
+    scanned_history_urls = _safe_int(
+        payload.get("scanned_history_urls", progress.get("scanned_history_urls")),
+        0,
+    )
+    discovered_history_urls = _safe_int(
+        payload.get("discovered_history_urls", progress.get("discovered_history_urls")),
+        0,
+    )
+    codes_completed = _safe_int(progress.get("codes_completed", payload.get("codes_completed")), 0)
+    codes_total = _safe_int(progress.get("codes_total", payload.get("codes_total")), 0)
+
+    signal_kind = ""
+    scanned = 0
+    discovered = 0
+    if discovered_candidates > 0:
+        signal_kind = "candidate_scan"
+        scanned = scanned_candidates
+        discovered = discovered_candidates
+    elif discovered_history_urls > 0:
+        signal_kind = "history_scan"
+        scanned = scanned_history_urls
+        discovered = discovered_history_urls
+    elif codes_total > 0:
+        signal_kind = "codes_progress"
+        scanned = codes_completed
+        discovered = codes_total
+
+    signal_found = bool(signal_kind)
+    work_remaining: Optional[bool] = None
+    if signal_found:
+        work_remaining = int(scanned) < int(discovered)
+
+    coverage_ratio: Optional[float] = None
+    if signal_found and discovered > 0:
+        coverage_ratio = round(min(1.0, float(scanned) / float(discovered)), 4)
+
+    if timed_out and signal_found and work_remaining is True:
+        classification = "timeout_while_work_remaining"
+    elif timed_out and signal_found and work_remaining is False and statutes_count > 0:
+        classification = "timeout_with_no_detectable_remaining_work"
+    elif timed_out and signal_found:
+        classification = "timeout_with_progress_signal_unknown_completion"
+    elif timed_out:
+        classification = "timeout_without_progress_signal"
+    elif signal_found and work_remaining is False and statutes_count > 0:
+        classification = "error_with_no_detectable_remaining_work"
+    elif signal_found and work_remaining is True:
+        classification = "error_while_work_remaining"
+    else:
+        classification = "error_without_progress_signal"
+
+    return {
+        "timed_out": bool(timed_out),
+        "classification": classification,
+        "signal_found": signal_found,
+        "signal_kind": signal_kind,
+        "work_remaining": work_remaining,
+        "progress_scanned": int(scanned) if signal_found else None,
+        "progress_discovered": int(discovered) if signal_found else None,
+        "coverage_ratio": coverage_ratio,
+        "checkpoint_updated_at": _coerce_checkpoint_updated_at(payload.get("updated_at")),
+        "checkpoint_stage_label": str(payload.get("stage_label") or "").strip(),
+        "checkpoint_counters": {
+            "scanned_candidates": scanned_candidates,
+            "discovered_candidates": discovered_candidates,
+            "scanned_history_urls": scanned_history_urls,
+            "discovered_history_urls": discovered_history_urls,
+            "codes_completed": codes_completed,
+            "codes_total": codes_total,
+        },
     }
 
 
@@ -1017,6 +1134,11 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
     statutes = payload.get("statutes") if isinstance(payload, dict) else None
     if not isinstance(statutes, list) or not statutes:
         return None
+    timeout_diagnostics = _derive_timeout_diagnostics_from_checkpoint_payload(
+        payload=payload,
+        error_msg=error_msg,
+        statutes_count=len(statutes),
+    )
 
     state_name = US_STATES[state_code]
     statute_data = {
@@ -1033,12 +1155,19 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
         "partial_checkpoint": True,
         "partial_checkpoint_path": str(path),
         "partial_checkpoint_error": error_msg,
+        "timeout_diagnostics": timeout_diagnostics,
     }
     quality_metrics = _compute_state_quality_metrics(statutes)
     quality_flag = _should_flag_quality(quality_metrics)
     warnings = [
         f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error",
         error_msg,
+        (
+            f"{state_code} checkpoint timeout_diagnostics="
+            f"{timeout_diagnostics.get('classification')} "
+            f"work_remaining={timeout_diagnostics.get('work_remaining')} "
+            f"signal_kind={timeout_diagnostics.get('signal_kind')}"
+        ),
     ]
     if quality_flag:
         warnings.append(_format_quality_warning(state_code, quality_metrics))
@@ -1052,6 +1181,7 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
         "quality_metrics": quality_metrics,
         "fetch_analytics": {},
         "warnings": warnings,
+        "timeout_diagnostics": timeout_diagnostics,
         "statute_data": statute_data,
     }
 
@@ -1191,6 +1321,19 @@ async def _scrape_state_with_retries(
             if checkpoint_result is not None:
                 result = checkpoint_result
             else:
+                timeout_diagnostics = {
+                    "timed_out": True,
+                    "classification": "timeout_without_partial_checkpoint",
+                    "signal_found": False,
+                    "signal_kind": "",
+                    "work_remaining": None,
+                    "progress_scanned": None,
+                    "progress_discovered": None,
+                    "coverage_ratio": None,
+                    "checkpoint_updated_at": "",
+                    "checkpoint_stage_label": "",
+                    "checkpoint_counters": {},
+                }
                 result = {
                     "state_code": state_code,
                     "state_name": state_name,
@@ -1199,7 +1342,11 @@ async def _scrape_state_with_retries(
                     "zero_statute": True,
                     "low_quality": False,
                     "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
-                    "warnings": [f"{state_code} timed out while scraping"],
+                    "warnings": [
+                        f"{state_code} timed out while scraping",
+                        f"{state_code} timeout_diagnostics={timeout_diagnostics.get('classification')}",
+                    ],
+                    "timeout_diagnostics": timeout_diagnostics,
                     "statute_data": {
                         "state_code": state_code,
                         "state_name": state_name,
@@ -1208,6 +1355,7 @@ async def _scrape_state_with_retries(
                         "error": error_msg,
                         "scraped_at": datetime.now().isoformat(),
                         "statutes": [],
+                        "timeout_diagnostics": timeout_diagnostics,
                     },
                 }
         except Exception as e:
@@ -1218,6 +1366,19 @@ async def _scrape_state_with_retries(
             if checkpoint_result is not None:
                 result = checkpoint_result
             else:
+                timeout_diagnostics = {
+                    "timed_out": "timed out" in str(error_msg).lower(),
+                    "classification": "error_without_partial_checkpoint",
+                    "signal_found": False,
+                    "signal_kind": "",
+                    "work_remaining": None,
+                    "progress_scanned": None,
+                    "progress_discovered": None,
+                    "coverage_ratio": None,
+                    "checkpoint_updated_at": "",
+                    "checkpoint_stage_label": "",
+                    "checkpoint_counters": {},
+                }
                 result = {
                     "state_code": state_code,
                     "state_name": state_name,
@@ -1226,7 +1387,11 @@ async def _scrape_state_with_retries(
                     "zero_statute": True,
                     "low_quality": False,
                     "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
-                    "warnings": [f"{state_code} returned zero statutes"],
+                    "warnings": [
+                        f"{state_code} returned zero statutes",
+                        f"{state_code} timeout_diagnostics={timeout_diagnostics.get('classification')}",
+                    ],
+                    "timeout_diagnostics": timeout_diagnostics,
                     "statute_data": {
                         "state_code": state_code,
                         "state_name": state_name,
@@ -1235,6 +1400,7 @@ async def _scrape_state_with_retries(
                         "error": str(e),
                         "scraped_at": datetime.now().isoformat(),
                         "statutes": [],
+                        "timeout_diagnostics": timeout_diagnostics,
                     },
                 }
 

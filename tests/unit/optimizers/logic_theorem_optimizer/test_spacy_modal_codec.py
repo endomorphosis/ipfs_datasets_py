@@ -9,6 +9,8 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder impor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import ModalTodoSupervisor
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.spacy_modal_codec import (
     _apply_competing_scope_backfill,
+    _apply_directional_modal_family_pair_backfill,
+    _apply_dynamic_competing_scope_soft_cap,
     _apply_frame_competing_scope_soft_cap,
     _apply_temporal_competing_scope_soft_cap,
     _frame_logit_bonus,
@@ -1842,6 +1844,77 @@ def test_spacy_backfill_reinforces_existing_epistemic_weight_for_temporal_compet
     assert counts["epistemic"] > 0.9
 
 
+def test_spacy_directional_backfill_adds_frame_support_for_conditional_statutory_scope() -> None:
+    counts = {
+        "conditional_normative": 2.0,
+        "frame": 0.0,
+    }
+    signals = {
+        "has_condition_or_exception_scope": True,
+        "has_condition_clause": True,
+        "has_exception_clause": False,
+        "has_conditional_scope_phrase": True,
+        "has_conditional_scope_token": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["frame"] > 0.3
+
+
+def test_spacy_directional_backfill_adds_structural_deontic_support_for_temporal_scope() -> None:
+    counts = {
+        "temporal": 0.8,
+        "deontic": 0.05,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_token": True,
+        "has_temporal_scope_phrase": False,
+        "has_temporal_within_scope": False,
+        "has_calendar_date_scope": False,
+        "has_temporal_cue": False,
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": False,
+        "has_deontic_cue": False,
+        "has_statutory_scope_reference": True,
+        "has_frame_context": False,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": False,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["deontic"] > 0.17
+
+
+def test_spacy_directional_backfill_reinforces_frame_to_deontic_with_explicit_scope() -> None:
+    counts = {
+        "frame": 2.0,
+        "deontic": 0.2,
+    }
+    signals = {
+        "has_deontic_scope": True,
+        "has_deontic_scope_phrase": True,
+        "has_deontic_cue": False,
+        "has_frame_context": True,
+        "has_frame_scope_phrase": False,
+        "has_frame_editorial_scope_phrase": False,
+        "has_frame_cue": True,
+        "has_statutory_scope_reference": True,
+    }
+
+    _apply_directional_modal_family_pair_backfill(counts, signals)
+
+    assert counts["deontic"] > 0.85
+
+
 def test_spacy_temporal_scope_boost_is_stronger_with_deontic_cue_competition() -> None:
     base_signals = {
         "has_temporal_scope": True,
@@ -1919,6 +1992,36 @@ def test_spacy_temporal_soft_cap_treats_strong_frame_scope_as_competing_signal()
     _apply_temporal_competing_scope_soft_cap(counts, signals)
 
     assert counts["temporal"] < 4.0
+
+
+def test_spacy_dynamic_soft_cap_treats_strong_temporal_scope_as_competing_signal() -> None:
+    counts = {
+        "dynamic": 4.0,
+        "temporal": 0.12,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+    }
+
+    _apply_dynamic_competing_scope_soft_cap(counts, signals)
+
+    assert counts["dynamic"] < 4.0
+
+
+def test_spacy_backfill_strengthens_temporal_weight_for_dynamic_scope() -> None:
+    counts = {
+        "dynamic": 2.6,
+        "temporal": 0.0,
+    }
+    signals = {
+        "has_temporal_scope": True,
+        "has_temporal_scope_phrase": True,
+    }
+
+    _apply_competing_scope_backfill(counts, signals)
+
+    assert counts["temporal"] > 0.0
 
 
 def test_spacy_scope_boost_strengthens_deontic_and_epistemic_in_frame_context() -> None:

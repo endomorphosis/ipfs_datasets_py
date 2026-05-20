@@ -229,6 +229,9 @@ Notes:
 	at `<output_root>/state_laws_completed_states.json` (default:
 	`~/.ipfs_datasets/state_laws/state_laws_completed_states.json`), and skips
 	those states on later runs unless `--no-skip-completed-states` is set.
+	By default only `status=success` entries are treated as skip-complete; legacy
+	`status=zero_statutes` rows are still recorded for diagnostics but are *not*
+	auto-skipped unless `STATE_LAWS_REGISTRY_TREAT_ZERO_AS_COMPLETE=1` is set.
 	For long-running daemon shards, use `--progress-heartbeat-seconds` so
 	`state_refresh_progress.json` is updated continuously while states are still
 	in-flight.
@@ -237,6 +240,9 @@ Notes:
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states all --no-skip-completed-states --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,IN --completed-states-registry /tmp/state_laws_completed_states.json --json`
 	`.venv/bin/python scripts/ops/legal_data/refresh_state_laws_corpus.py --scrape --states CT,ME --progress-heartbeat-seconds 30 --json`
+	`python3 scripts/ops/legal_data/refresh_state_laws_corpus.py --states MN,NH --dry-run --json` (example: MN already marked complete, NH still queued)
+	To manually pin a state as completed in the shared registry (example: `MN`):
+	`python3 -c "import json,pathlib,datetime; p=pathlib.Path.home()/'.ipfs_datasets/state_laws/state_laws_completed_states.json'; o=json.loads(p.read_text()) if p.exists() else {'schema':'ipfs_datasets_py.state_laws_refresh.completed_states.v1','states':{}}; now=datetime.datetime.now(datetime.timezone.utc).isoformat(); o.setdefault('states',{})['MN']={'status':'success','statutes_count':16389,'completed_at':now,'first_completed_at':o.get('states',{}).get('MN',{}).get('first_completed_at',now),'updated_at':now,'output_root':'manual_seed'}; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(json.dumps(o,indent=2,sort_keys=True)); print(p)"`.
 	When archive providers are rate-limited, set
 	`LEGAL_SCRAPER_DISABLE_ARCHIVE_IS=1` and/or `LEGAL_SCRAPER_DISABLE_WAYBACK=1`,
 	or tune `LEGAL_SCRAPER_ARCHIVE_IS_BACKOFF_SECONDS` and
