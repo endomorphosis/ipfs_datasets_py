@@ -813,20 +813,33 @@ class DeterministicModalCompiler:
         resolved = str(value or "").strip()
         if not resolved:
             return ""
-        leaf = resolved.rsplit(".", maxsplit=1)[-1].strip()
-        for candidate in (
-            resolved,
-            resolved.lower(),
-            leaf,
-            leaf.lower(),
-        ):
+        candidate_tokens: List[str] = []
+        seen_tokens: set[str] = set()
+
+        def _remember(token: str) -> None:
+            normalized = str(token).strip()
+            if not normalized or normalized in seen_tokens:
+                return
+            seen_tokens.add(normalized)
+            candidate_tokens.append(normalized)
+
+        leaf_dot = resolved.rsplit(".", maxsplit=1)[-1].strip()
+        leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
+        leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
+        leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
+        for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+            _remember(token)
+            lowered = token.lower()
+            _remember(lowered)
+            _remember(lowered.replace("-", "_").replace(" ", "_"))
+        for candidate in candidate_tokens:
             if not candidate:
                 continue
             try:
                 return ModalLogicFamily(candidate).value
             except ValueError:
                 continue
-        return leaf.lower()
+        return leaf_pipe.lower().replace("-", "_").replace(" ", "_")
 
     def _adaptive_policy_families(
         self,

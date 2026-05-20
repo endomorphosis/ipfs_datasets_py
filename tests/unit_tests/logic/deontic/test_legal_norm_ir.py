@@ -82,3 +82,22 @@ def test_legal_norm_ir_roundtrip_from_typed_dict_preserves_quality_and_slot_reco
     assert rehydrated.temporal_constraints
     assert rehydrated.temporal_constraints[0].get("type") == "deadline"
     assert rehydrated.temporal_constraints[0].get("quantity") == 30
+
+
+def test_legal_norm_ir_decoder_validation_gate_distinguishes_cross_reference_warning_classes() -> None:
+    cross_reference_only = extract_normative_elements(
+        "This section applies to food carts."
+    )[0]
+    unresolved_exception = extract_normative_elements(
+        "The Secretary shall publish the notice except as provided in section 552."
+    )[0]
+
+    cross_reference_only_ir = LegalNormIR.from_parser_element(cross_reference_only)
+    unresolved_exception_ir = LegalNormIR.from_parser_element(unresolved_exception)
+
+    assert "cross_reference_requires_resolution" in cross_reference_only_ir.blockers
+    assert cross_reference_only_ir.decoder_requires_validation is False
+
+    assert "cross_reference_requires_resolution" in unresolved_exception_ir.blockers
+    assert "exception_requires_scope_review" in unresolved_exception_ir.blockers
+    assert unresolved_exception_ir.decoder_requires_validation is True

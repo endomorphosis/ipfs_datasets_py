@@ -154,7 +154,7 @@ class TDFOLLexer:
         "G": TokenType.ALWAYS,
         "◊": TokenType.EVENTUALLY,
         "<>": TokenType.EVENTUALLY,
-        "F": TokenType.EVENTUALLY,  # Note: conflicts with PROHIBITION
+        "eventually": TokenType.EVENTUALLY,
         "X": TokenType.NEXT,
         "U": TokenType.UNTIL,
         "S": TokenType.SINCE,
@@ -268,6 +268,20 @@ class TDFOLLexer:
 
 class TDFOLParser:
     """Parser for TDFOL formulas."""
+
+    _LOGICAL_PREFIX_OPERATOR_MAP = {
+        TokenType.AND: LogicOperator.AND,
+        TokenType.OR: LogicOperator.OR,
+        TokenType.IMPLIES: LogicOperator.IMPLIES,
+        TokenType.IFF: LogicOperator.IFF,
+        TokenType.XOR: LogicOperator.XOR,
+    }
+    _BINARY_TEMPORAL_OPERATOR_MAP = {
+        TokenType.UNTIL: TemporalOperator.UNTIL,
+        TokenType.SINCE: TemporalOperator.SINCE,
+        TokenType.WEAK_UNTIL: TemporalOperator.WEAK_UNTIL,
+        TokenType.RELEASE: TemporalOperator.RELEASE,
+    }
     
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
@@ -409,6 +423,9 @@ class TDFOLParser:
             return self.parse_temporal(TemporalOperator.ALWAYS)
         elif token.type == TokenType.EVENTUALLY:
             self.advance()
+            # Canonical TDFOL core reserves F(...) for prohibition formulas.
+            if token.value == "F":
+                return self.parse_deontic(DeonticOperator.PROHIBITION)
             return self.parse_temporal(TemporalOperator.EVENTUALLY)
         elif token.type == TokenType.NEXT:
             self.advance()
@@ -421,6 +438,12 @@ class TDFOLParser:
             pass
         
         return self.parse_atomic()
+
+    def _prefix_logical_operator(self, token: Token) -> Optional[LogicOperator]:
+        return self._LOGICAL_PREFIX_OPERATOR_MAP.get(token.type)
+
+    def _binary_temporal_operator(self, token: Token) -> Optional[TemporalOperator]:
+        return self._BINARY_TEMPORAL_OPERATOR_MAP.get(token.type)
     
     def parse_deontic(self, operator: DeonticOperator) -> Formula:
         """Parse deontic formula."""
@@ -440,7 +463,38 @@ class TDFOLParser:
         """Parse atomic formula."""
         if self.current_token().type == TokenType.LPAREN:
             self.advance()
+
+            # Support canonical prefix notation emitted by tdfol_core:
+            # (→ p q), (∧ p q), etc.
+            prefix_token = self.current_token()
+            logical_operator = self._prefix_logical_operator(prefix_token)
+            if logical_operator is not None:
+                self.advance()
+                left = self.parse_formula()
+                right = self.parse_formula()
+                self.expect(TokenType.RPAREN)
+                return BinaryFormula(logical_operator, left, right)
+
+            # Support prefix binary temporal notation if present.
+            temporal_operator = self._binary_temporal_operator(prefix_token)
+            if temporal_operator is not None:
+                self.advance()
+                left = self.parse_formula()
+                right = self.parse_formula()
+                self.expect(TokenType.RPAREN)
+                return BinaryTemporalFormula(temporal_operator, left, right)
+
             formula = self.parse_formula()
+
+            # Support infix temporal binary notation used by BinaryTemporalFormula:
+            # (left U right), (left S right), etc.
+            temporal_operator = self._binary_temporal_operator(self.current_token())
+            if temporal_operator is not None:
+                self.advance()
+                right = self.parse_formula()
+                self.expect(TokenType.RPAREN)
+                return BinaryTemporalFormula(temporal_operator, formula, right)
+
             self.expect(TokenType.RPAREN)
             return formula
         

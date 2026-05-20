@@ -34,14 +34,21 @@ _ATTEMPTED: set[str] = set()
 
 _ALIASES = {
     "z3": "z3",
+    "z3_solver": "z3",
+    "z3prover": "z3",
     "cvc5": "cvc5",
+    "cvc5_prover": "cvc5",
     "lean": "lean",
+    "lean_prover": "lean",
     "lake": "lean",
     "coq": "coq",
+    "coq_prover": "coq",
     "coqc": "coq",
     "coqtop": "coq",
     "symbolicai": "symbolicai",
     "symbolic_ai": "symbolicai",
+    "symbolicai_prover": "symbolicai",
+    "symbolic_ai_prover": "symbolicai",
     "symai": "symbolicai",
     "ergo": "ergoai",
     "ergoai": "ergoai",
@@ -50,6 +57,7 @@ _ALIASES = {
     "ergo_engine": "ergoai",
     "runergo": "ergoai",
     "runergo.sh": "ergoai",
+    "runergo_sh": "ergoai",
 }
 
 _ENV_NAMES = {
@@ -69,7 +77,14 @@ def _truthy(value: str | None) -> bool:
 def normalize_prover_name(prover_name: str) -> str:
     """Return the canonical lazy-installer name for a prover."""
 
-    normalized = str(prover_name or "").strip().lower().replace("-", "_")
+    normalized = (
+        str(prover_name or "")
+        .strip()
+        .lower()
+        .replace("-", "_")
+        .replace(".", "_")
+        .replace(" ", "_")
+    )
     return _ALIASES.get(normalized, normalized)
 
 

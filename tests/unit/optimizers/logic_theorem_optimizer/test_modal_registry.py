@@ -106,6 +106,19 @@ def test_normative_modal_family_helper_handles_strings_and_enums() -> None:
     assert is_normative_modal_family("unknown-family") is False
 
 
+def test_adaptive_policy_helpers_normalize_prefixed_and_separator_family_tokens() -> None:
+    assert is_compiler_ambiguity_policy_pair("modal_family:deontic", "epistemic")
+    assert is_compiler_ambiguity_policy_pair(
+        "flogic:modal_family:frame",
+        "temporal",
+    )
+    assert is_compiler_ambiguity_policy_pair("frame", "conditional-normative")
+    assert supports_signal_free_adaptive_ambiguity_pair(
+        "flogic:modal_family:deontic",
+        "modal_family:temporal",
+    )
+
+
 def test_signal_free_adaptive_ambiguity_pair_policy_covers_required_bundle_pairs() -> None:
     assert supports_signal_free_adaptive_ambiguity_pair(
         "alethic",

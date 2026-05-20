@@ -71,14 +71,14 @@ class ExternalProverRouterBridgeAdapter:
                 source_component="external_provers.router",
                 payload={
                     "records": [
-                        {
-                            "formula": record.get("formula"),
-                            "source_id": record.get("source_id"),
-                        }
-                        for record in records
+                        _public_router_formula_record(record, index)
+                        for index, record in enumerate(records)
                     ]
                 },
-                metadata={"formula_count": len(records)},
+                metadata={
+                    "formula_count": len(records),
+                    "resolved_formula_count": len(formulas),
+                },
             ),
             "frame_logic": LogicIRView(
                 name="frame_logic",
@@ -111,6 +111,7 @@ class ExternalProverRouterBridgeAdapter:
                 metadata={
                     "router_formula_count": len(records),
                     "router_resolved_formula_count": len(formulas),
+                    "router_unresolved_formula_count": max(0, len(records) - len(formulas)),
                 },
             ),
             {
@@ -169,7 +170,7 @@ class ExternalProverRouterBridgeAdapter:
             proof_gate=proof_gate,
             graph_projection=graph_result,
             decoded_text=" ".join(
-                str(record.get("formula") or "")
+                _record_formula_text(record)
                 for record in context["formula_records"]
             ),
             status=status,
@@ -324,17 +325,71 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
 def _router_formulas_from_records(records: Sequence[Mapping[str, Any]]) -> list[Any]:
     formulas: list[Any] = []
     for record in records:
-        formula_object = coerce_tdfol_formula(record.get("formula_object"))
-        if formula_object is None:
-            formula_object = coerce_tdfol_formula(record.get("formula"))
+        formula_object = _record_formula_object(record)
         if formula_object is not None:
             formulas.append(formula_object)
             continue
-        raw_formula = str(record.get("formula") or "").strip()
+        raw_formula = _record_formula_text(record)
         if raw_formula:
             # Keep a raw fallback for legacy routers that accept formula text.
             formulas.append(raw_formula)
     return formulas
+
+
+def _record_formula_object(record: Mapping[str, Any]) -> Any:
+    for key in (
+        "formula_object",
+        "proof_formula_object",
+        "formula",
+        "proof_input",
+        "proof_formula",
+        "tdfol_formula",
+    ):
+        if key not in record:
+            continue
+        value = record.get(key)
+        if value is None:
+            continue
+        formula = coerce_tdfol_formula(value)
+        if formula is not None:
+            return formula
+    return None
+
+
+def _record_formula_text(record: Mapping[str, Any]) -> str:
+    for key in (
+        "formula",
+        "proof_input",
+        "proof_formula",
+        "tdfol_formula",
+    ):
+        if key not in record:
+            continue
+        value = record.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _record_source_id(record: Mapping[str, Any], index: int) -> str:
+    for key in ("source_id", "proof_id", "norm_id", "id"):
+        value = record.get(key)
+        if value is None:
+            continue
+        source_id = str(value).strip()
+        if source_id:
+            return source_id
+    return f"router:formula:{index}"
+
+
+def _public_router_formula_record(record: Mapping[str, Any], index: int) -> dict[str, Any]:
+    return {
+        "formula": _record_formula_text(record),
+        "source_id": _record_source_id(record, index),
+    }
 
 
 def _route_formula_with_compat(
@@ -455,15 +510,14 @@ def _router_frame_logic_triples(
             "object": "external_prover_router_document",
         }
     ]
-    for record in records:
-        source_id = str(record.get("source_id") or "")
-        if not source_id:
-            continue
+    for index, record in enumerate(records):
+        source_id = _record_source_id(record, index)
+        formula_text = _record_formula_text(record)
         triples.extend(
             [
                 {"subject": document_id, "predicate": "routes_formula", "object": source_id},
                 {"subject": source_id, "predicate": "type", "object": "router_formula"},
-                {"subject": source_id, "predicate": "formula", "object": str(record.get("formula") or "")},
+                {"subject": source_id, "predicate": "formula", "object": formula_text},
             ]
         )
     return [triple for triple in triples if triple["object"]]

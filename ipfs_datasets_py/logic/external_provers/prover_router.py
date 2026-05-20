@@ -16,7 +16,7 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 from enum import Enum
 import concurrent.futures
 import inspect
@@ -224,7 +224,34 @@ class ProverRouter:
 
     def route(self, formula, **kwargs) -> RouterProofResult:
         """Public compatibility wrapper for proving through the router."""
-        return self.prove(formula, **kwargs)
+        strategy = kwargs.pop("strategy", None)
+        if strategy is None:
+            for key in ("strategy_name", "strategy_mode", "mode"):
+                if key in kwargs:
+                    strategy = kwargs.pop(key)
+                    break
+
+        timeout = kwargs.pop("timeout", None)
+        timeout_ms = kwargs.pop("timeout_ms", None)
+        if timeout is None and timeout_ms is not None:
+            try:
+                timeout = float(timeout_ms) / 1000.0
+            except (TypeError, ValueError):
+                timeout = None
+
+        axioms = kwargs.pop("axioms", None)
+        if kwargs:
+            logger.debug(
+                "Ignoring unsupported prover router kwargs: %s",
+                sorted(str(key) for key in kwargs),
+            )
+
+        return self.prove(
+            formula,
+            axioms=axioms,
+            strategy=strategy,
+            timeout=timeout,
+        )
 
     @staticmethod
     def _coerce_strategy(strategy: Any) -> ProverStrategy:
@@ -234,8 +261,16 @@ class ProverRouter:
             return strategy
         if strategy is None:
             return ProverStrategy.AUTO
-        text = str(strategy or "").strip().lower()
+        text = (
+            str(strategy or "")
+            .strip()
+            .lower()
+            .replace("-", "_")
+            .replace(" ", "_")
+        )
         if not text:
+            return ProverStrategy.AUTO
+        if text in {"default", "router_default"}:
             return ProverStrategy.AUTO
         for candidate in ProverStrategy:
             if text in {candidate.value, candidate.name.lower()}:
@@ -302,6 +337,24 @@ class ProverRouter:
         """Best-effort conversion of router payloads into native TDFOL formulas."""
 
         if formula is None:
+            return None
+        if isinstance(formula, Mapping):
+            for key in (
+                "formula_object",
+                "proof_formula_object",
+                "formula",
+                "proof_input",
+                "proof_formula",
+                "tdfol_formula",
+            ):
+                if key not in formula:
+                    continue
+                value = formula.get(key)
+                if value is formula:
+                    continue
+                coerced = ProverRouter._coerce_native_formula(value)
+                if coerced is not None:
+                    return coerced
             return None
         if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
             return formula

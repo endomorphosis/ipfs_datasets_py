@@ -236,6 +236,7 @@ def _tdfol_formula_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str,
         records.append(
             {
                 "formula": formula_text,
+                "proof_input": formula_text,
                 "formula_object": formula,
                 "parse_ok": parse_ok,
                 "predicates": sorted(formula.get_predicates()),
@@ -281,8 +282,42 @@ def coerce_tdfol_formula(formula: Any) -> Optional[Any]:
 
     if formula is None:
         return None
+    if isinstance(formula, Mapping):
+        for key in (
+            "formula_object",
+            "proof_formula_object",
+            "formula",
+            "proof_input",
+            "proof_formula",
+            "tdfol_formula",
+        ):
+            if key not in formula:
+                continue
+            value = formula.get(key)
+            if value is formula:
+                continue
+            coerced = coerce_tdfol_formula(value)
+            if coerced is not None:
+                return coerced
+        return None
     if hasattr(formula, "to_string") and hasattr(formula, "get_predicates"):
         return formula
+    if isinstance(formula, Mapping):
+        for key in (
+            "formula_object",
+            "formula",
+            "proof_input",
+            "tdfol_formula",
+            "value",
+            "text",
+        ):
+            candidate = formula.get(key)
+            if candidate is formula:
+                continue
+            coerced = coerce_tdfol_formula(candidate)
+            if coerced is not None:
+                return coerced
+        return None
     text = str(formula or "").strip()
     if not text:
         return None
@@ -366,6 +401,7 @@ def _graph_data_from_triples(
 def _public_formula_record(record: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "formula": record.get("formula"),
+        "proof_input": record.get("proof_input"),
         "parse_ok": bool(record.get("parse_ok")),
         "predicates": list(record.get("predicates") or []),
         "source_id": record.get("source_id"),

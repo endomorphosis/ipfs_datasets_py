@@ -51,6 +51,7 @@ def flogic_triples_to_graph_data(
     metadata: Optional[Mapping[str, Any]] = None,
 ) -> GraphData:
     """Convert F-logic triples into Neo4j-compatible migration graph data."""
+    input_triple_count = len(triples)
     normalized = _normalize_triples(triples)
     node_map: Dict[str, NodeData] = {}
     relationships: List[RelationshipData] = []
@@ -102,6 +103,14 @@ def flogic_triples_to_graph_data(
     }
     if metadata:
         graph_metadata.update(dict(metadata))
+    graph_metadata.update(
+        _projection_alignment_metadata(
+            normalized,
+            input_triple_count=input_triple_count,
+            node_count=len(node_map),
+            relationship_count=len(relationships),
+        )
+    )
     return GraphData(
         nodes=sorted(node_map.values(), key=lambda node: node.id),
         relationships=relationships,
@@ -120,8 +129,8 @@ def modal_ir_to_neo4j_graph_data(
     triples: Optional[Sequence[Mapping[str, Any]]] = None,
 ) -> GraphData:
     """Project a modal IR document into Neo4j-compatible F-logic graph data."""
+    frame_logic = getattr(modal_ir, "frame_logic", None)
     if triples is None:
-        frame_logic = getattr(modal_ir, "frame_logic", None)
         if frame_logic is not None and getattr(frame_logic, "triples", None):
             triples = frame_logic.to_triples()
     if triples is None:
@@ -134,6 +143,16 @@ def modal_ir_to_neo4j_graph_data(
         triples,
         graph_id=f"{modal_ir.document_id}:flogic",
         metadata={
+            "frame_logic_ontology_name": str(
+                getattr(frame_logic, "ontology_name", "") or ""
+            ),
+            "frame_logic_selected_frame": str(
+                (
+                    getattr(frame_logic, "selected_frame", None)
+                    or selected_frame
+                    or ""
+                )
+            ),
             "modal_ir_document_id": modal_ir.document_id,
             "modal_ir_hash": modal_ir.canonical_hash(),
             "modal_ir_version": modal_ir.version,
@@ -301,6 +320,42 @@ def _default_graph_id(triples: Sequence[Mapping[str, str]]) -> str:
     if triples:
         return f"{triples[0]['subject']}:flogic"
     return "modal_flogic_ir"
+
+
+def _projection_alignment_metadata(
+    triples: Sequence[Mapping[str, str]],
+    *,
+    input_triple_count: int,
+    node_count: int,
+    relationship_count: int,
+) -> Dict[str, Any]:
+    subjects = {str(triple["subject"]) for triple in triples}
+    predicates = {str(triple["predicate"]) for triple in triples}
+    objects = {str(triple["object"]) for triple in triples}
+    metadata: Dict[str, Any] = {
+        "flogic_input_triple_count": input_triple_count,
+        "flogic_invalid_triple_count": max(0, input_triple_count - len(triples)),
+        "frame_logic_projection_aligned": relationship_count == len(triples),
+        "frame_logic_projection_node_count": node_count,
+        "frame_logic_projection_relationship_count": relationship_count,
+        "frame_logic_unique_object_count": len(objects),
+        "frame_logic_unique_predicate_count": len(predicates),
+        "frame_logic_unique_subject_count": len(subjects),
+    }
+    selected_frame = _selected_frame_from_triples(triples)
+    if selected_frame:
+        metadata["frame_logic_selected_frame"] = selected_frame
+    return metadata
+
+
+def _selected_frame_from_triples(triples: Sequence[Mapping[str, str]]) -> str:
+    for triple in triples:
+        if str(triple.get("predicate") or "") != "selected_ontology_frame":
+            continue
+        frame = str(triple.get("object") or "").strip()
+        if frame:
+            return frame
+    return ""
 
 
 def _unique(values: Iterable[str]) -> List[str]:

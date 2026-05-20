@@ -1349,6 +1349,20 @@ def test_ir_decoder_record_preserves_blocked_reference_exception_without_promoti
     assert batch_records == [record]
 
 
+def test_ir_decoder_record_does_not_require_validation_for_cross_reference_only_warning():
+    element = extract_normative_elements("This section applies to food carts.")[0]
+    norm = LegalNormIR.from_parser_element(element)
+
+    record = build_decoder_record_from_ir(norm)
+
+    assert "cross_reference_requires_resolution" in record["parser_warnings"]
+    assert "exception_requires_scope_review" not in record["parser_warnings"]
+    assert record["decoded_text"] == "This section applies to food carts."
+    assert record["missing_slots"] == []
+    assert record["requires_validation"] is False
+    assert record["proof_ready"] is False
+
+
 def test_decoder_reconstruction_summary_reports_quality_without_promoting_blockers():
     elements = [
         extract_normative_elements("The tenant must pay rent monthly.")[0],

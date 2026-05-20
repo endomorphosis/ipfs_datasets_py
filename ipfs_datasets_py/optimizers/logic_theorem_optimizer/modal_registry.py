@@ -1054,10 +1054,35 @@ def prefers_contested_zero_margin_adaptive_ambiguity_pair(
 def _resolve_modal_family_name(family: ModalLogicFamily | str) -> str:
     if isinstance(family, ModalLogicFamily):
         return family.value
-    try:
-        return ModalLogicFamily(str(family)).value
-    except ValueError:
-        return str(family).strip().lower()
+    resolved = str(family).strip()
+    if not resolved:
+        return ""
+    candidate_tokens: list[str] = []
+    seen_tokens: set[str] = set()
+
+    def _remember(token: str) -> None:
+        normalized = str(token).strip()
+        if not normalized or normalized in seen_tokens:
+            return
+        seen_tokens.add(normalized)
+        candidate_tokens.append(normalized)
+
+    leaf_dot = resolved.rsplit(".", maxsplit=1)[-1].strip()
+    leaf_colon = leaf_dot.rsplit(":", maxsplit=1)[-1].strip()
+    leaf_slash = leaf_colon.rsplit("/", maxsplit=1)[-1].strip()
+    leaf_pipe = leaf_slash.rsplit("|", maxsplit=1)[-1].strip()
+    for token in (resolved, leaf_dot, leaf_colon, leaf_slash, leaf_pipe):
+        _remember(token)
+        lowered = token.lower()
+        _remember(lowered)
+        _remember(lowered.replace("-", "_").replace(" ", "_"))
+
+    for token in candidate_tokens:
+        try:
+            return ModalLogicFamily(token).value
+        except ValueError:
+            continue
+    return resolved.lower()
 
 
 DEFAULT_MODAL_REGISTRY = ModalRegistry()

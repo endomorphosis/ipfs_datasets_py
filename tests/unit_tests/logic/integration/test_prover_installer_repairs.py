@@ -252,3 +252,38 @@ def test_router_accepts_string_strategy_names() -> None:
     assert result.prover_used == "native"
     assert result.strategy_used == "sequential"
     assert result.is_proved is True
+
+
+def test_router_route_accepts_timeout_ms_and_hyphenated_strategy_names() -> None:
+    from ipfs_datasets_py.logic.TDFOL import parse_tdfol
+    from ipfs_datasets_py.logic.external_provers import prover_router
+
+    formula = parse_tdfol("O(action)")
+    router = prover_router.ProverRouter(
+        enable_z3=False,
+        enable_cvc5=False,
+        enable_lean=False,
+        enable_coq=False,
+        enable_native=True,
+        enable_symbolicai=False,
+        enable_cache=False,
+    )
+
+    result = router.route(
+        formula,
+        strategy="most-capable",
+        timeout_ms=1000,
+        unsupported_legacy_flag=True,
+    )
+
+    assert result.prover_used == "native"
+    assert result.strategy_used == "most_capable"
+    assert isinstance(result.is_proved, bool)
+
+
+def test_lazy_installer_normalizes_dotted_and_suffix_prover_names() -> None:
+    from ipfs_datasets_py.logic.external_provers import lazy_installer
+
+    assert lazy_installer.normalize_prover_name("runergo.sh") == "ergoai"
+    assert lazy_installer.normalize_prover_name("symbolicai-prover") == "symbolicai"
+    assert lazy_installer.normalize_prover_name("cvc5.prover") == "cvc5"

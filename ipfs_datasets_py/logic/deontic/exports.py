@@ -1761,7 +1761,7 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "parser_warnings": list(decoded.parser_warnings),
         "phrase_provenance": phrase_rows,
         "proof_ready": norm.proof_ready,
-        "requires_validation": bool(norm.blockers or decoded.missing_slots),
+        "requires_validation": bool(norm.decoder_requires_validation or decoded.missing_slots),
         "schema_version": norm.schema_version,
     }
 

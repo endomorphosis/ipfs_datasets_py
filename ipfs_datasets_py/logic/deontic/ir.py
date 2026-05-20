@@ -1267,6 +1267,12 @@ class LegalNormIR:
             return _list_of_strings(blockers)
         return list(self.quality.parser_warnings)
 
+    @property
+    def decoder_requires_validation(self) -> bool:
+        """Return whether parser warnings block decoder-quality reconstruction."""
+
+        return parser_warnings_require_decoder_validation(self.quality.parser_warnings)
+
     def to_dict(self) -> Dict[str, Any]:
         """Return a stable JSON-friendly dictionary."""
 
@@ -1307,6 +1313,29 @@ _FIELD_SPAN_ALIASES = {
     "temporal_constraints": ("temporal_constraints", "temporal_constraint"),
     "cross_references": ("cross_references", "cross_reference"),
 }
+
+_DECODER_WARNING_NON_BLOCKERS = {
+    "cross_reference_requires_resolution",
+}
+
+
+def parser_warnings_require_decoder_validation(warnings: Sequence[str]) -> bool:
+    """Return whether parser warnings should block decoder reconstruction quality.
+
+    Decoder reconstruction quality tracks whether normalized phrases can be
+    rebuilt from grounded IR slots. A cross-reference resolution warning can be
+    theorem-gating while still allowing source-grounded reconstruction, so it
+    does not force decoder validation by itself.
+    """
+
+    for warning in warnings:
+        normalized = str(warning or "").strip()
+        if not normalized:
+            continue
+        if normalized in _DECODER_WARNING_NON_BLOCKERS:
+            continue
+        return True
+    return False
 
 
 def legal_norm_ir_slot_provenance(

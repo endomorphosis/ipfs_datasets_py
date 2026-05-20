@@ -407,6 +407,46 @@ def test_tdfol_bridge_builds_formula_for_non_normative_statutory_text() -> None:
     assert report.proof_gate.valid_count >= 1
 
 
+def test_tdfol_bridge_coerce_handles_core_prefix_binary_round_trip() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+        BinaryFormula,
+        Constant,
+        DeonticFormula,
+        DeonticOperator,
+        LogicOperator,
+        Predicate,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    left = Predicate("publish_notice", (Constant("agency"),))
+    right = Predicate("issue_permit", (Constant("agency"),))
+    implication = BinaryFormula(LogicOperator.IMPLIES, left, right)
+    formula = DeonticFormula(DeonticOperator.OBLIGATION, implication)
+
+    text = formula.to_string()
+    coerced = coerce_tdfol_formula(text)
+
+    assert coerced is not None
+    assert coerced.to_string() == text
+
+
+def test_tdfol_bridge_coerce_handles_proof_obligation_payload_mapping() -> None:
+    from ipfs_datasets_py.logic.TDFOL.tdfol_core import DeonticFormula, DeonticOperator
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import coerce_tdfol_formula
+
+    payload = {
+        "formula": "F(disclose_records(agency))",
+        "source_id": "tdfol:norm:test",
+        "target_logic": "TDFOL",
+    }
+
+    coerced = coerce_tdfol_formula(payload)
+
+    assert isinstance(coerced, DeonticFormula)
+    assert coerced.operator == DeonticOperator.PROHIBITION
+    assert coerced.to_string() == payload["formula"]
+
+
 def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
     from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
 
@@ -564,6 +604,57 @@ def test_external_prover_router_bridge_recovers_formulas_without_formula_objects
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.compiles is True
     assert report.ir_document.metadata["router_resolved_formula_count"] >= 1
+
+
+def test_external_prover_router_bridge_recovers_formulas_from_legacy_proof_input_records(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+    from ipfs_datasets_py.logic.bridge.fol_tdfol import FolTdfolBridgeAdapter
+
+    class _NoProverRouter:
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return []
+
+    class _ProofInputOnlyFolAdapter(FolTdfolBridgeAdapter):
+        def encode(self, *args, **kwargs):
+            document, context = super().encode(*args, **kwargs)
+            proof_input_records = []
+            for record in context["formula_records"]:
+                next_record = dict(record)
+                next_record["proof_input"] = next_record.get("formula")
+                next_record.pop("formula_object", None)
+                next_record.pop("formula", None)
+                proof_input_records.append(next_record)
+            return (
+                document,
+                {
+                    **dict(context),
+                    "formula_records": proof_input_records,
+                },
+            )
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _NoProverRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(tdfol_adapter=_ProofInputOnlyFolAdapter())
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-proof-input-only",
+        citation="External Prover Bridge Proof Input Only",
+    )
+
+    records = report.ir_document.views["prover_formulas"].payload["records"]
+    assert records
+    assert records[0]["formula"]
+    assert report.ir_document.metadata["router_resolved_formula_count"] >= 1
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.details[0]["reason"] == "no_provers_available"
 
 
 def test_external_prover_router_bridge_proof_gate_supports_legacy_prove_signature(
