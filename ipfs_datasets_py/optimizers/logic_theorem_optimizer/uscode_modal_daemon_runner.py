@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import random
+import shutil
 import signal
 import subprocess
 import sys
@@ -1983,6 +1984,321 @@ def _run_git_apply_stdin(
     )
 
 
+def _safe_repo_relative_path(path: str) -> Path:
+    relative = Path(path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"unsafe repository-relative path: {path!r}")
+    return relative
+
+
+def _copy_source_path_to_worktree(source_path: Path, destination_path: Path) -> None:
+    if destination_path.exists() or destination_path.is_symlink():
+        if destination_path.is_dir() and not destination_path.is_symlink():
+            shutil.rmtree(destination_path)
+        else:
+            destination_path.unlink()
+
+    if not source_path.exists() and not source_path.is_symlink():
+        return
+
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    if source_path.is_symlink():
+        os.symlink(os.readlink(source_path), destination_path)
+    elif source_path.is_dir():
+        shutil.copytree(source_path, destination_path, symlinks=True)
+    else:
+        shutil.copy2(source_path, destination_path)
+
+
+def _materialize_source_targets_in_worktree(
+    *,
+    source_repo_root: Path,
+    repair_worktree: Path,
+    target_files: Sequence[str],
+) -> None:
+    for path in target_files:
+        relative = _safe_repo_relative_path(path)
+        _copy_source_path_to_worktree(
+            source_repo_root / relative,
+            repair_worktree / relative,
+        )
+
+
+def _git_stdout(
+    repo_root: Path,
+    *args: str,
+    timeout_seconds: float = 60.0,
+) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        timeout=max(1.0, float(timeout_seconds)),
+    )
+    result.check_returncode()
+    return result.stdout.strip()
+
+
+def _commit_repair_worktree_targets(
+    repair_worktree: Path,
+    *,
+    target_files: Sequence[str],
+    message: str,
+) -> Dict[str, Any]:
+    if not target_files:
+        return {
+            "changed": False,
+            "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+            "status": "no_target_files",
+        }
+
+    add = subprocess.run(
+        ["git", "add", "-A", "--", *target_files],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=60.0,
+    )
+    if add.returncode != 0:
+        return {
+            "changed": False,
+            "status": "add_failed",
+            "exit_code": add.returncode,
+            "stderr_tail": (add.stderr or "")[-500:],
+            "stdout_tail": (add.stdout or "")[-500:],
+        }
+
+    diff = subprocess.run(
+        ["git", "diff", "--cached", "--quiet", "--", *target_files],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=30.0,
+    )
+    if diff.returncode == 0:
+        return {
+            "changed": False,
+            "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+            "status": "unchanged",
+        }
+    if diff.returncode != 1:
+        return {
+            "changed": False,
+            "status": "diff_failed",
+            "exit_code": diff.returncode,
+            "stderr_tail": (diff.stderr or "")[-500:],
+            "stdout_tail": (diff.stdout or "")[-500:],
+        }
+
+    commit = subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=codex-daemon@example.invalid",
+            "-c",
+            "user.name=Codex Legal IR Daemon",
+            "commit",
+            "--no-gpg-sign",
+            "-m",
+            message,
+        ],
+        cwd=repair_worktree,
+        capture_output=True,
+        text=True,
+        timeout=120.0,
+    )
+    if commit.returncode != 0:
+        return {
+            "changed": False,
+            "status": "commit_failed",
+            "exit_code": commit.returncode,
+            "stderr_tail": (commit.stderr or "")[-500:],
+            "stdout_tail": (commit.stdout or "")[-500:],
+        }
+
+    return {
+        "changed": True,
+        "commit": _git_stdout(repair_worktree, "rev-parse", "HEAD"),
+        "status": "committed",
+    }
+
+
+def _repair_codex_diff_against_dirty_targets(
+    *,
+    diff_content: str,
+    packet: Mapping[str, Any],
+    source_repo_root: Path,
+    target_files: Sequence[str],
+    dirty_files: Sequence[str],
+) -> Dict[str, Any]:
+    """Merge a packet diff with dirty target files inside a scratch worktree."""
+    packet_path_value = packet.get("packet_path")
+    packet_path = Path(str(packet_path_value)) if packet_path_value else None
+    packet_dir = packet_path.parent if packet_path is not None else Path(".")
+    packet_id = str(packet.get("packet_id") or packet_dir.name)
+    repair_id = _safe_artifact_name(f"{packet_id}-dirty-target-merge")
+    repair_base = packet_dir / "merge-repair-worktrees"
+    repair_base.mkdir(parents=True, exist_ok=True)
+    repair_worktree: Optional[Path] = None
+    report: Dict[str, Any] = {
+        "dirty_files": list(dirty_files),
+        "mode": "dirty_target_worktree_merge",
+        "status": "failed",
+    }
+    try:
+        manager = WorktreeManager(repo_path=source_repo_root, worktrees_base=repair_base)
+        repair_worktree = manager.create_worktree(repair_id, branch="HEAD")
+        report["worktree_path"] = str(repair_worktree)
+        base_commit = _git_stdout(repair_worktree, "rev-parse", "HEAD")
+        report["base_commit"] = base_commit
+
+        _materialize_source_targets_in_worktree(
+            source_repo_root=source_repo_root,
+            repair_worktree=repair_worktree,
+            target_files=target_files,
+        )
+        source_snapshot = _commit_repair_worktree_targets(
+            repair_worktree,
+            target_files=target_files,
+            message=f"{packet_id}: source dirty target snapshot",
+        )
+        report["source_snapshot"] = dict(source_snapshot)
+        if source_snapshot["status"] in {"add_failed", "commit_failed", "diff_failed"}:
+            report["status"] = f"source_snapshot_{source_snapshot['status']}"
+            return report
+        source_commit = str(source_snapshot.get("commit") or base_commit)
+
+        checkout_base = subprocess.run(
+            ["git", "checkout", "--detach", base_commit],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=60.0,
+        )
+        report["checkout_base"] = {
+            "exit_code": checkout_base.returncode,
+            "stderr_tail": (checkout_base.stderr or "")[-500:],
+            "stdout_tail": (checkout_base.stdout or "")[-500:],
+        }
+        if checkout_base.returncode != 0:
+            report["status"] = "checkout_base_failed"
+            return report
+
+        apply_codex = _run_git_apply_stdin(
+            repair_worktree,
+            diff_content,
+            "--3way",
+            timeout_seconds=120.0,
+        )
+        report["codex_apply_3way"] = {
+            "exit_code": apply_codex.returncode,
+            "stderr_tail": (apply_codex.stderr or "")[-1000:],
+            "stdout_tail": (apply_codex.stdout or "")[-1000:],
+        }
+        if apply_codex.returncode != 0:
+            report["status"] = "codex_apply_3way_failed"
+            return report
+
+        codex_snapshot = _commit_repair_worktree_targets(
+            repair_worktree,
+            target_files=target_files,
+            message=f"{packet_id}: codex target snapshot",
+        )
+        report["codex_snapshot"] = dict(codex_snapshot)
+        if codex_snapshot["status"] in {"add_failed", "commit_failed", "diff_failed"}:
+            report["status"] = f"codex_snapshot_{codex_snapshot['status']}"
+            return report
+        if not codex_snapshot.get("changed"):
+            report["status"] = "no_codex_snapshot_diff"
+            return report
+        codex_commit = str(codex_snapshot["commit"])
+
+        checkout_source = subprocess.run(
+            ["git", "checkout", "--detach", source_commit],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=60.0,
+        )
+        report["checkout_source"] = {
+            "exit_code": checkout_source.returncode,
+            "stderr_tail": (checkout_source.stderr or "")[-500:],
+            "stdout_tail": (checkout_source.stdout or "")[-500:],
+        }
+        if checkout_source.returncode != 0:
+            report["status"] = "checkout_source_failed"
+            return report
+
+        merge = subprocess.run(
+            ["git", "merge", "--no-commit", "--no-ff", codex_commit],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=120.0,
+        )
+        report["merge"] = {
+            "exit_code": merge.returncode,
+            "stderr_tail": (merge.stderr or "")[-1000:],
+            "stdout_tail": (merge.stdout or "")[-1000:],
+        }
+        if merge.returncode != 0:
+            status = subprocess.run(
+                ["git", "status", "--porcelain", "--", *target_files],
+                cwd=repair_worktree,
+                capture_output=True,
+                text=True,
+                timeout=30.0,
+            )
+            report["merge_status_tail"] = (status.stdout or status.stderr or "")[-1000:]
+            report["status"] = "merge_conflict"
+            return report
+
+        diff = subprocess.run(
+            ["git", "diff", "--binary", "HEAD", "--", *target_files],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=60.0,
+        )
+        diff.check_returncode()
+        names = subprocess.run(
+            ["git", "diff", "--name-only", "-z", "HEAD", "--", *target_files],
+            cwd=repair_worktree,
+            capture_output=True,
+            text=True,
+            timeout=30.0,
+        )
+        names.check_returncode()
+        repaired_content = diff.stdout
+        repaired_targets = [path for path in names.stdout.split("\0") if path]
+        report["target_files"] = repaired_targets
+        if not repaired_content.strip():
+            report["status"] = "no_merged_delta"
+            return report
+        report["diff_content"] = repaired_content
+        report["status"] = "repaired"
+        return report
+    except (OSError, RuntimeError, subprocess.SubprocessError, ValueError) as exc:
+        report["status"] = "dirty_target_repair_exception"
+        report["error"] = str(exc)
+        return report
+    finally:
+        if repair_worktree is not None:
+            cleanup = subprocess.run(
+                ["git", "worktree", "remove", str(repair_worktree), "--force"],
+                cwd=source_repo_root,
+                capture_output=True,
+                text=True,
+                timeout=60.0,
+            )
+            report["cleanup"] = {
+                "exit_code": cleanup.returncode,
+                "stderr_tail": (cleanup.stderr or "")[-500:],
+                "stdout_tail": (cleanup.stdout or "")[-500:],
+            }
+
+
 def _repair_codex_worktree_diff_against_main(
     *,
     diff_content: str,
@@ -2243,18 +2559,58 @@ def apply_codex_worktree_changes_to_main(
         dirty_files = []
         updated["main_apply_dirty_check_error"] = str(exc)
     if dirty_files:
-        patch_path = _save_codex_packet_diff_patch(
-            updated,
-            diff_content=diff_content,
-            reason="dirty-target",
-        )
-        updated["patch_path"] = str(patch_path) if patch_path is not None else None
-        updated["patch_status"] = "main_apply_dirty_target"
-        updated["patch_error"] = "target checkout has local edits in Codex target files"
         updated["main_apply_dirty_files"] = dirty_files
-        updated["main_apply_error"] = updated["patch_error"]
-        _save_packet_if_possible(updated, packet_path)
-        return updated
+        normalized_repair_mode = str(merge_repair_mode or "off").strip().lower()
+        if normalized_repair_mode == "apply_3way" and int(merge_repair_attempts) > 0:
+            repair = _repair_codex_diff_against_dirty_targets(
+                diff_content=diff_content,
+                packet=updated,
+                source_repo_root=source_repo_root,
+                target_files=target_files,
+                dirty_files=dirty_files,
+            )
+            repaired_diff_content = str(repair.get("diff_content") or "")
+            repair.pop("diff_content", None)
+            updated["main_apply_merge_repair"] = dict(repair)
+            if repaired_diff_content.strip():
+                diff_content = repaired_diff_content
+                target_files = [
+                    str(path)
+                    for path in updated["main_apply_merge_repair"].get(
+                        "target_files",
+                        target_files,
+                    )
+                ]
+                updated["main_apply_target_files"] = target_files
+                updated["main_apply_repair_status"] = "repaired"
+            else:
+                repair_status = str(repair.get("status") or "failed")
+                patch_path = _save_codex_packet_diff_patch(
+                    updated,
+                    diff_content=diff_content,
+                    reason=f"dirty-target-{repair_status}",
+                )
+                updated["patch_path"] = str(patch_path) if patch_path is not None else None
+                updated["patch_status"] = "main_apply_dirty_target_repair_failed"
+                updated["patch_error"] = (
+                    "target checkout has local edits in Codex target files; "
+                    f"dirty-target worktree merge repair failed: {repair_status}"
+                )
+                updated["main_apply_error"] = updated["patch_error"]
+                _save_packet_if_possible(updated, packet_path)
+                return updated
+        else:
+            patch_path = _save_codex_packet_diff_patch(
+                updated,
+                diff_content=diff_content,
+                reason="dirty-target",
+            )
+            updated["patch_path"] = str(patch_path) if patch_path is not None else None
+            updated["patch_status"] = "main_apply_dirty_target"
+            updated["patch_error"] = "target checkout has local edits in Codex target files"
+            updated["main_apply_error"] = updated["patch_error"]
+            _save_packet_if_possible(updated, packet_path)
+            return updated
 
     check = _run_git_apply_stdin(source_repo_root, diff_content, "--check")
     updated["main_apply_check"] = {

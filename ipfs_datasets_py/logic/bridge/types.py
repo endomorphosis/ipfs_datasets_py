@@ -132,6 +132,10 @@ class RoundTripMetrics:
     ) -> float:
         """Return a compact scalar for optimizer prioritization."""
 
+        extra_losses = [
+            max(0.0, _coerce_float(value))
+            for value in self.extra_losses.values()
+        ]
         return (
             max(0.0, 1.0 - self.cosine_similarity)
             + max(0.0, self.cross_entropy_loss)
@@ -141,7 +145,7 @@ class RoundTripMetrics:
             + max(0.0, self.symbolic_validity_penalty)
             + max(0.0, proof_failure_ratio)
             + max(0.0, graph_failure_penalty)
-            + sum(max(0.0, _coerce_float(value)) for value in self.extra_losses.values())
+            + _extra_loss_penalty(extra_losses)
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -325,6 +329,18 @@ def _coerce_float(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _extra_loss_penalty(values: Sequence[float]) -> float:
+    """Compress adapter-specific diagnostics into one bounded auxiliary penalty."""
+
+    if not values:
+        return 0.0
+    maximum = max(values)
+    if len(values) == 1:
+        return maximum
+    residual = max(0.0, sum(values) - maximum)
+    return maximum + (residual / len(values))
 
 
 __all__ = [

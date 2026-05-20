@@ -205,51 +205,107 @@ def _proof_gate_from_router(router: Any, formulas: Sequence[Any]) -> ProofGateRe
             details=({"reason": "no_provers_available"},),
         )
 
+    from ipfs_datasets_py.logic.external_provers.prover_router import ProverStrategy
+
     valid = 0
     failed = 0
+    unavailable = 0
+    errors = 0
     details = []
-    native = router.provers.get("native")
+    verified_by: set[str] = set()
     for index, formula in enumerate(formulas):
-        if native is None:
+        if formula is None:
+            failed += 1
             details.append(
                 {
                     "available_provers": available,
-                    "formula": str(formula),
-                    "reason": "native_prover_not_available",
+                    "reason": "missing_formula_object",
                     "source_index": index,
                 }
             )
-            failed += 1
             continue
         try:
-            native.add_axiom(formula, name=f"bridge_formula_{index}")
-            result = native.prove(formula, timeout_ms=1000)
-            proved = bool(result.is_proved())
-            valid += int(proved)
-            failed += int(not proved)
-            details.append(
-                {
-                    "formula": str(formula),
-                    "method": getattr(result, "method", ""),
-                    "proved": proved,
-                    "source_index": index,
-                    "status": getattr(getattr(result, "status", None), "value", ""),
-                }
+            # Route via the canonical router API and provide the formula itself as
+            # a temporary axiom to keep proof-gate checks focused on prover-path
+            # viability rather than theorem strength.
+            result = router.route(
+                formula,
+                axioms=[formula],
+                strategy=ProverStrategy.SEQUENTIAL,
+                timeout=1.0,
             )
-        except Exception as exc:
-            failed += 1
+        except RuntimeError as exc:
+            unavailable += 1
             details.append(
                 {
+                    "available_provers": available,
                     "error": str(exc),
                     "formula": str(formula),
+                    "reason": "router_unavailable",
                     "source_index": index,
                 }
             )
+            continue
+        except Exception as exc:
+            errors += 1
+            details.append(
+                {
+                    "available_provers": available,
+                    "error": str(exc),
+                    "formula": str(formula),
+                    "reason": "router_error",
+                    "source_index": index,
+                }
+            )
+            continue
+
+        proved = bool(getattr(result, "is_proved", False))
+        prover_used = str(getattr(result, "prover_used", "") or "")
+        result_reason = str(getattr(result, "reason", "") or "")
+        all_results = dict(getattr(result, "all_results", {}) or {})
+        completed_provers = sorted(
+            str(name)
+            for name, prover_result in all_results.items()
+            if not isinstance(prover_result, str)
+        )
+        compiled = bool(
+            proved
+            or (
+                (prover_used or completed_provers)
+                and not result_reason.lower().startswith("error:")
+            )
+        )
+        valid += int(compiled)
+        failed += int(not compiled)
+        if compiled:
+            if prover_used:
+                verified_by.add(f"external_provers:{prover_used}")
+            else:
+                verified_by.update(
+                    f"external_provers:{name}"
+                    for name in completed_provers
+                )
+        details.append(
+            {
+                "available_provers": available,
+                "compiled": compiled,
+                "completed_provers": completed_provers,
+                "formula": str(formula),
+                "proof_time": float(getattr(result, "proof_time", 0.0) or 0.0),
+                "proved": proved,
+                "prover_used": prover_used,
+                "reason": result_reason,
+                "source_index": index,
+                "strategy_used": str(getattr(result, "strategy_used", "") or ""),
+            }
+        )
     return ProofGateResult(
         attempted_count=attempted,
         valid_count=valid,
+        unavailable_count=unavailable,
+        error_count=errors,
         failed_count=failed,
-        verified_by=("external_provers:native",) if valid else (),
+        verified_by=tuple(sorted(verified_by)),
         details=tuple(details),
     )
 

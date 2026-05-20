@@ -266,10 +266,13 @@ class DeonticNormsBridgeAdapter:
             context["parser_metrics"],
             context["deontic_exports"],
         )
+        coverage_requires_validation = _coverage_requires_validation(
+            context["coverage_records"]
+        )
         status = "ok"
         if not ir_document.views["deontic_ir"].metadata.get("norm_count"):
             status = "partial"
-        if _coverage_requires_validation(context["coverage_records"]):
+        if not proof_gate.compiles:
             status = "partial"
         if graph_result.graph_failure_penalty:
             status = "partial"
@@ -284,9 +287,7 @@ class DeonticNormsBridgeAdapter:
             status=status,
             metadata={
                 "adapter": "deontic_norms_bridge_v1",
-                "coverage_requires_validation": _coverage_requires_validation(
-                    context["coverage_records"]
-                ),
+                "coverage_requires_validation": coverage_requires_validation,
             },
         )
 

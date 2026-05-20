@@ -189,6 +189,53 @@ def test_external_prover_router_bridge_uses_native_prover_gate() -> None:
     assert "external_prover_unavailable_loss" in report.round_trip.extra_losses
 
 
+def test_external_prover_router_bridge_proof_gate_routes_external_when_native_disabled(
+    monkeypatch,
+) -> None:
+    from ipfs_datasets_py.logic.bridge.external_prover_router import (
+        ExternalProverRouterBridgeAdapter,
+    )
+
+    class _FakeRouteResult:
+        def __init__(self) -> None:
+            self.is_proved = True
+            self.prover_used = "symbolicai"
+            self.proof_time = 0.01
+            self.reason = "Proved by symbolicai"
+            self.strategy_used = "sequential"
+
+    class _FakeRouter:
+        provers = {"symbolicai": object()}
+
+        @staticmethod
+        def get_available_provers() -> list[str]:
+            return ["symbolicai"]
+
+        @staticmethod
+        def route(*_args, **_kwargs):
+            return _FakeRouteResult()
+
+    monkeypatch.setattr(
+        "ipfs_datasets_py.logic.bridge.external_prover_router._build_router",
+        lambda **_kwargs: _FakeRouter(),
+    )
+
+    adapter = ExternalProverRouterBridgeAdapter(
+        enable_native=False,
+        enable_external_binaries=True,
+    )
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="external-prover-bridge-external-only",
+        citation="External Prover Bridge External Only",
+    )
+
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.valid_count == report.proof_gate.attempted_count
+    assert report.proof_gate.compiles is True
+    assert "external_provers:symbolicai" in report.proof_gate.verified_by
+
+
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:
     from ipfs_datasets_py.logic.bridge import evaluate_legal_ir_multiview
 
@@ -211,10 +258,15 @@ def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> Non
     assert "fol_tdfol.proof_obligations" in report.document.views
     assert report.document.metadata["view_count"] == report.view_count
     assert report.failures == {}
+    assert report.accepted_count == 2
+    assert report.acceptance_rate == 1.0
     assert report.total_loss > 0.0
     assert report.view_coverage_loss() == 0.0
+    assert report.canonical_loss_vector()["legal_ir_multiview_acceptance_loss"] == 0.0
     assert report.canonical_loss_vector()["legal_ir_multiview_total_loss"] == report.total_loss
     assert report.canonical_loss_vector()["legal_ir_multiview_view_coverage_loss"] == 0.0
+    assert report.reports["deontic_norms"].metadata["coverage_requires_validation"] is True
+    assert report.reports["deontic_norms"].accepted is True
     assert report.loss_vector()[
         "deontic_norms.deontic_quality_requires_validation_loss"
     ] == 1.0

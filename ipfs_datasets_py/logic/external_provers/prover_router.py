@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 import concurrent.futures
+import inspect
 import time
 import logging
 
@@ -224,6 +225,70 @@ class ProverRouter:
     def route(self, formula, **kwargs) -> RouterProofResult:
         """Public compatibility wrapper for proving through the router."""
         return self.prove(formula, **kwargs)
+
+    def _call_prover(
+        self,
+        prover_name: str,
+        prover: Any,
+        formula: Any,
+        axioms: Optional[List],
+        timeout: float,
+    ) -> Any:
+        """Call one prover while normalizing signature differences."""
+
+        timeout_seconds = float(timeout or self.default_timeout)
+        timeout_ms = max(1, int(timeout_seconds * 1000.0))
+
+        # Native TDFOL prover uses add_axiom(...) + prove(..., timeout_ms=...).
+        if prover_name == "native" and axioms and hasattr(prover, "add_axiom"):
+            for index, axiom in enumerate(axioms):
+                axiom_name = f"router_axiom_{index}"
+                try:
+                    prover.add_axiom(axiom, name=axiom_name)
+                except TypeError:
+                    prover.add_axiom(axiom)
+
+        try:
+            prove_params = inspect.signature(prover.prove).parameters
+        except (TypeError, ValueError):
+            prove_params = {}
+
+        accepts_kwargs = any(
+            param.kind == inspect.Parameter.VAR_KEYWORD
+            for param in prove_params.values()
+        )
+
+        kwargs: Dict[str, Any] = {}
+        if accepts_kwargs or "axioms" in prove_params:
+            kwargs["axioms"] = axioms
+        if accepts_kwargs or "timeout" in prove_params:
+            kwargs["timeout"] = timeout_seconds
+        elif "timeout_ms" in prove_params:
+            kwargs["timeout_ms"] = timeout_ms
+
+        return prover.prove(formula, **kwargs)
+
+    @staticmethod
+    def _result_is_proved(result: Any) -> bool:
+        """Return True when a prover result indicates a valid proof."""
+
+        if result is None:
+            return False
+
+        is_proved = getattr(result, "is_proved", None)
+        if callable(is_proved):
+            try:
+                return bool(is_proved())
+            except Exception:
+                return False
+
+        if hasattr(result, "is_valid"):
+            return bool(getattr(result, "is_valid"))
+
+        if isinstance(result, bool):
+            return result
+
+        return False
     
     def _select_prover_for_formula(self, formula) -> str:
         """Select best prover for a formula based on characteristics.
@@ -308,17 +373,28 @@ class ProverRouter:
         """Prove using automatic prover selection."""
         start_time = time.time()
         
-        # Select best prover
-        prover_name = self._select_prover_for_formula(formula)
-        prover = self.provers[prover_name]
+        try:
+            # Select best prover
+            prover_name = self._select_prover_for_formula(formula)
+            prover = self.provers[prover_name]
+        except RuntimeError as exc:
+            proof_time = time.time() - start_time
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=None,
+                proof_time=proof_time,
+                all_results={},
+                strategy_used="auto",
+                reason=str(exc),
+            )
         
         # Prove
         try:
-            result = prover.prove(formula, axioms=axioms, timeout=timeout)
+            result = self._call_prover(prover_name, prover, formula, axioms, timeout)
             proof_time = time.time() - start_time
             
             return RouterProofResult(
-                is_proved=result.is_proved() if hasattr(result, 'is_proved') else result.is_valid,
+                is_proved=self._result_is_proved(result),
                 prover_used=prover_name,
                 proof_time=proof_time,
                 all_results={prover_name: result},
@@ -345,11 +421,21 @@ class ProverRouter:
         """Prove using all provers in parallel."""
         start_time = time.time()
         all_results = {}
+
+        if not self.provers:
+            return RouterProofResult(
+                is_proved=False,
+                prover_used=None,
+                proof_time=0.0,
+                all_results={},
+                strategy_used="parallel",
+                reason="No provers available",
+            )
         
         def prove_with_prover(prover_name: str, prover):
             """Wrapper for parallel execution."""
             try:
-                result = prover.prove(formula, axioms=axioms, timeout=timeout)
+                result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 return (prover_name, result, None)
             except Exception as e:
                 return (prover_name, None, str(e))
@@ -369,7 +455,7 @@ class ProverRouter:
         
         # Find first successful proof
         for prover_name, result in all_results.items():
-            if result and hasattr(result, 'is_proved') and result.is_proved():
+            if self._result_is_proved(result):
                 return RouterProofResult(
                     is_proved=True,
                     prover_used=prover_name,
@@ -401,10 +487,10 @@ class ProverRouter:
         # Try provers in order
         for prover_name, prover in self.provers.items():
             try:
-                result = prover.prove(formula, axioms=axioms, timeout=timeout)
+                result = self._call_prover(prover_name, prover, formula, axioms, timeout)
                 all_results[prover_name] = result
                 
-                if result.is_proved() if hasattr(result, 'is_proved') else result.is_valid:
+                if self._result_is_proved(result):
                     proof_time = time.time() - start_time
                     return RouterProofResult(
                         is_proved=True,
@@ -438,10 +524,16 @@ class ProverRouter:
         if 'z3' in self.provers:
             start_time = time.time()
             try:
-                result = self.provers['z3'].prove(formula, axioms=axioms, timeout=timeout)
+                result = self._call_prover(
+                    "z3",
+                    self.provers["z3"],
+                    formula,
+                    axioms,
+                    timeout,
+                )
                 proof_time = time.time() - start_time
                 return RouterProofResult(
-                    is_proved=result.is_proved(),
+                    is_proved=self._result_is_proved(result),
                     prover_used='z3',
                     proof_time=proof_time,
                     all_results={'z3': result},
@@ -466,10 +558,16 @@ class ProverRouter:
             if prover_name in self.provers:
                 start_time = time.time()
                 try:
-                    result = self.provers[prover_name].prove(formula, axioms=axioms, timeout=timeout)
+                    result = self._call_prover(
+                        prover_name,
+                        self.provers[prover_name],
+                        formula,
+                        axioms,
+                        timeout,
+                    )
                     proof_time = time.time() - start_time
                     return RouterProofResult(
-                        is_proved=result.is_proved() if hasattr(result, 'is_proved') else result.is_valid,
+                        is_proved=self._result_is_proved(result),
                         prover_used=prover_name,
                         proof_time=proof_time,
                         all_results={prover_name: result},
@@ -512,7 +610,7 @@ class ProverRouter:
         
         # If any proved, return first proof
         for prover_name, prover_result in result.all_results.items():
-            if hasattr(prover_result, 'is_proved') and prover_result.is_proved():
+            if self._result_is_proved(prover_result):
                 return prover_result
         
         # Otherwise return first result
