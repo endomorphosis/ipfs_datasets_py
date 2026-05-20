@@ -1,9 +1,58 @@
 {
-  "compiler_ambiguity|modal.compiler.ambiguity|{\"action\":\"add_or_review_modal_ambiguity_policy\",\"family_pairs\":[\"deontic->deontic\",\"temporal->deontic\"],\"program_synthesis_scope\":\"compiler_ambiguity\",\"target_component\":\"modal.compiler.ambiguity\"}": {
-    "anchor_id": "program-170621852f76396e",
-    "expires_at": "2026-05-20T07:40:31+00:00",
-    "expires_at_epoch": 1779262831.8993604,
+  "cec|CEC.native|{\"action\":\"repair_cec_dcec_bridge\",\"family_pairs\":[],\"program_synthesis_scope\":\"cec\",\"target_component\":\"CEC.native\"}": {
+    "anchor_id": "program-2eae962b94ee815d",
+    "expires_at": "2026-05-20T07:54:36+00:00",
+    "expires_at_epoch": 1779263676.2114418,
     "selected_count": 1,
-    "worker_id": "codex-compiler_ambiguity-03"
+    "worker_id": "codex-cec"
+  },
+  "compiler_parser|modal.compiler|{\"action\":\"increase_modal_ir_span_coverage\",\"family_pairs\":[],\"program_synthesis_scope\":\"compiler_parser\",\"target_component\":\"modal.compiler\"}": {
+    "anchor_id": "1199394bc302d369",
+    "expires_at": "2026-05-20T07:54:33+00:00",
+    "expires_at_epoch": 1779263673.4192429,
+    "selected_count": 1,
+    "worker_id": "codex-compiler_parser"
+  },
+  "deontic|deontic.ir|{\"action\":\"repair_deontic_bridge_quality_gate\",\"family_pairs\":[],\"program_synthesis_scope\":\"deontic\",\"target_component\":\"deontic.ir\"}": {
+    "anchor_id": "37b2314e6617787a",
+    "expires_at": "2026-05-20T07:54:32+00:00",
+    "expires_at_epoch": 1779263672.4193234,
+    "selected_count": 1,
+    "worker_id": "codex-deontic-01"
+  },
+  "external_provers|external_provers.router|{\"action\":\"repair_external_prover_router\",\"family_pairs\":[],\"program_synthesis_scope\":\"external_provers\",\"target_component\":\"external_provers.router\"}": {
+    "anchor_id": "program-77ee40efdfc82f41",
+    "expires_at": "2026-05-20T07:54:35+00:00",
+    "expires_at_epoch": 1779263675.8893695,
+    "selected_count": 1,
+    "worker_id": "codex-external_provers"
+  },
+  "ir_decompiler|modal.ir_decompiler|{\"action\":\"refine_typed_ir_or_decompiler_slots\",\"family_pairs\":[],\"program_synthesis_scope\":\"ir_decompiler\",\"target_component\":\"modal.ir_decompiler\"}": {
+    "anchor_id": "program-2149fbc5d55f8bf7",
+    "expires_at": "2026-05-20T07:54:33+00:00",
+    "expires_at_epoch": 1779263673.1595702,
+    "selected_count": 1,
+    "worker_id": "codex-ir_decompiler"
+  },
+  "knowledge_graphs|knowledge_graphs.neo4j_compat|{\"action\":\"repair_multiview_legal_ir_graph_projection\",\"family_pairs\":[],\"program_synthesis_scope\":\"knowledge_graphs\",\"target_component\":\"knowledge_graphs.neo4j_compat\"}": {
+    "anchor_id": "program-95967358760b66e2",
+    "expires_at": "2026-05-20T07:54:32+00:00",
+    "expires_at_epoch": 1779263672.6375606,
+    "selected_count": 1,
+    "worker_id": "codex-knowledge_graphs"
+  },
+  "tdfol|TDFOL.prover|{\"action\":\"repair_tdfol_bridge_parse\",\"family_pairs\":[],\"program_synthesis_scope\":\"tdfol\",\"target_component\":\"TDFOL.prover\"}": {
+    "anchor_id": "program-66cb7aaffc9e7174",
+    "expires_at": "2026-05-20T07:54:35+00:00",
+    "expires_at_epoch": 1779263675.3780472,
+    "selected_count": 1,
+    "worker_id": "codex-tdfol"
+  },
+  "zkp|zkp.circuits|{\"action\":\"repair_zkp_attestation_bridge\",\"family_pairs\":[],\"program_synthesis_scope\":\"zkp\",\"target_component\":\"zkp.circuits\"}": {
+    "anchor_id": "program-6552d7fcecf3c96f",
+    "expires_at": "2026-05-20T07:54:34+00:00",
+    "expires_at_epoch": 1779263674.4210405,
+    "selected_count": 1,
+    "worker_id": "codex-zkp"
   }
 }

@@ -1603,6 +1603,20 @@ class ModalTodoSupervisor:
             for todo_id in todo_ids:
                 completed_count += int(self.queue.complete(todo_id))
             outcome = "completed"
+        elif normalized_patch_status.startswith("main_apply_baseline_validation_failed"):
+            reason = "main_apply_baseline_validation_failed"
+            for todo_id in todo_ids:
+                todo = self.queue.get(todo_id)
+                if todo is None:
+                    continue
+                if int(todo.metadata.get("transient_failure_count", 0)) >= 3:
+                    failed_validation_count += int(
+                        self.queue.fail_validation(todo_id, reason=reason)
+                    )
+                    continue
+                todo.requeue(reason)
+                requeued_count += 1
+            outcome = "requeued" if requeued_count else "failed_validation"
         elif normalized_exec_status == "transient_failure":
             reason = "codex_exec_transient_failure"
             for todo_id in todo_ids:

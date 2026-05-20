@@ -3042,6 +3042,32 @@ def test_spacy_encoder_treats_the_following_as_non_temporal_list_intro() -> None
     )
 
 
+def test_spacy_encoder_treats_following_section_reference_as_non_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "The requirements in the following section shall apply to the agency.",
+        document_id="sample-following-section-reference",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "following"
+        for cue in encoding.cues
+    )
+
+
+def test_spacy_encoder_treats_editorial_after_reference_as_non_temporal_cue() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    encoding = encoder.encode(
+        "Section 83 of this title after editorial reclassification shall apply.",
+        document_id="sample-after-editorial-reference",
+    )
+
+    assert not any(
+        cue.family == "temporal" and cue.cue.lower() == "after"
+        for cue in encoding.cues
+    )
+
+
 def test_spacy_encoder_extracts_conditional_cue_except_as_provided_in() -> None:
     encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
     encoding = encoder.encode(

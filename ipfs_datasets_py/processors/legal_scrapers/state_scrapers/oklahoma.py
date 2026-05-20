@@ -284,11 +284,33 @@ class OklahomaScraper(BaseStateScraper):
                 seen_candidate_urls.add(source_url)
 
         candidate_urls = await self._collect_candidate_document_urls(headers=headers)
+        candidate_timeout_raw = str(os.getenv("STATE_SCRAPER_OK_CANDIDATE_TIMEOUT_SECONDS", "") or "").strip()
+        try:
+            candidate_timeout_seconds = int(candidate_timeout_raw) if candidate_timeout_raw else 75
+        except Exception:
+            candidate_timeout_seconds = 75
+        candidate_timeout_seconds = max(20, min(240, candidate_timeout_seconds))
+        heartbeat_raw = str(os.getenv("STATE_SCRAPER_OK_SCAN_HEARTBEAT_SECONDS", "") or "").strip()
+        try:
+            scan_heartbeat_seconds = int(heartbeat_raw) if heartbeat_raw else 30
+        except Exception:
+            scan_heartbeat_seconds = 30
+        scan_heartbeat_seconds = max(10, min(180, scan_heartbeat_seconds))
+        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_OK_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        try:
+            scan_heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 200
+        except Exception:
+            scan_heartbeat_every = 200
+        scan_heartbeat_every = max(25, min(1000, scan_heartbeat_every))
         self.logger.info(
             "Oklahoma OSCN crawl: discovered_candidate_urls=%s max_statutes=%s",
             len(candidate_urls),
             max_statutes,
         )
+        crawl_started_at = time.time()
+        last_scan_heartbeat_at = crawl_started_at
+        timeout_count = 0
+        error_count = 0
         for link in candidate_urls:
             if len(statutes) >= max_statutes:
                 break
@@ -296,8 +318,59 @@ class OklahomaScraper(BaseStateScraper):
             if dedupe_key in seen_candidate_urls:
                 continue
             seen_candidate_urls.add(dedupe_key)
+            scanned_candidates = len(seen_candidate_urls)
 
-            statute = await self._build_statute_from_document_url(code_name=code_name, document_url=link, headers=headers)
+            now = time.time()
+            if (
+                scanned_candidates == 1
+                or scanned_candidates % scan_heartbeat_every == 0
+                or now - last_scan_heartbeat_at >= scan_heartbeat_seconds
+            ):
+                elapsed = max(1.0, now - crawl_started_at)
+                scan_rate_per_min = (float(scanned_candidates) / elapsed) * 60.0
+                self.logger.info(
+                    "Oklahoma OSCN crawl: scanned_candidates=%s statutes_so_far=%s discovered_candidates=%s scan_rate_per_min=%.2f",
+                    scanned_candidates,
+                    len(statutes),
+                    len(candidate_urls),
+                    scan_rate_per_min,
+                )
+                if checkpoint is not None and statutes:
+                    checkpoint.write(
+                        statutes,
+                        code_name=code_name,
+                        scanned_candidates=scanned_candidates,
+                        discovered_candidates=len(candidate_urls),
+                    )
+                last_scan_heartbeat_at = now
+
+            try:
+                statute = await asyncio.wait_for(
+                    self._build_statute_from_document_url(
+                        code_name=code_name,
+                        document_url=link,
+                        headers=headers,
+                    ),
+                    timeout=float(candidate_timeout_seconds),
+                )
+            except asyncio.TimeoutError:
+                timeout_count += 1
+                self.logger.warning(
+                    "Oklahoma OSCN crawl: candidate_timeout scanned_candidates=%s timeout_seconds=%s url=%s",
+                    scanned_candidates,
+                    candidate_timeout_seconds,
+                    link,
+                )
+                continue
+            except Exception as exc:
+                error_count += 1
+                self.logger.warning(
+                    "Oklahoma OSCN crawl: candidate_error scanned_candidates=%s url=%s error=%s",
+                    scanned_candidates,
+                    link,
+                    exc,
+                )
+                continue
             if statute is None:
                 continue
             statute_key = _statute_dedupe_key(statute)
@@ -320,6 +393,14 @@ class OklahomaScraper(BaseStateScraper):
                     len(seen_candidate_urls),
                 )
 
+        self.logger.info(
+            "Oklahoma OSCN crawl: completed statutes=%s scanned_candidates=%s discovered_candidates=%s timeout_count=%s error_count=%s",
+            len(statutes),
+            len(seen_candidate_urls),
+            len(candidate_urls),
+            timeout_count,
+            error_count,
+        )
         if checkpoint is not None:
             checkpoint.write(
                 statutes,

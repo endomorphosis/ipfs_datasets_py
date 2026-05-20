@@ -1011,10 +1011,14 @@ class DeterministicModalCompiler:
                 predicted_family,
                 target_family,
             )
-            is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
+            direct_is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
                 predicted_family,
                 target_family,
-            ) or runner_up_is_priority_policy_pair
+            )
+            is_priority_policy_pair = (
+                direct_is_priority_policy_pair
+                or runner_up_is_priority_policy_pair
+            )
             is_compiler_required_policy_pair = (
                 _is_compiler_required_adaptive_ambiguity_pair(
                     predicted_family,
@@ -1043,6 +1047,8 @@ class DeterministicModalCompiler:
                 target_family=target_family,
                 is_priority_policy_pair=is_priority_policy_pair,
                 is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+                direct_is_priority_policy_pair=direct_is_priority_policy_pair,
+                runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
             )
             requires_rule = margin_direction == "outvoted"
             explicit_type = self._adaptive_margin_explicit_type(
@@ -1547,10 +1553,14 @@ class DeterministicModalCompiler:
                 runner_up_family,
             )
         )
-        is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
+        direct_is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
             resolved_compiled_primary_family,
             resolved_competing_family,
-        ) or runner_up_is_priority_policy_pair
+        )
+        is_priority_policy_pair = (
+            direct_is_priority_policy_pair
+            or runner_up_is_priority_policy_pair
+        )
         is_compiler_required_policy_pair = (
             _is_compiler_required_adaptive_ambiguity_pair(
                 resolved_compiled_primary_family,
@@ -1564,6 +1574,9 @@ class DeterministicModalCompiler:
             target_family=resolved_competing_family,
             is_priority_policy_pair=is_priority_policy_pair,
             is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+            direct_is_priority_policy_pair=direct_is_priority_policy_pair,
+            runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
+            prefer_runner_up_priority_over_contested=True,
         )
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
@@ -1761,10 +1774,14 @@ class DeterministicModalCompiler:
                 runner_up_family,
             )
         )
-        is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
+        direct_is_priority_policy_pair = _is_priority_signal_free_adaptive_ambiguity_pair(
             resolved_compiled_primary_family,
             resolved_compiled_primary_family,
-        ) or runner_up_is_priority_policy_pair
+        )
+        is_priority_policy_pair = (
+            direct_is_priority_policy_pair
+            or runner_up_is_priority_policy_pair
+        )
         is_compiler_required_policy_pair = (
             _is_compiler_required_adaptive_ambiguity_pair(
                 resolved_compiled_primary_family,
@@ -1778,6 +1795,9 @@ class DeterministicModalCompiler:
             target_family=resolved_compiled_primary_family,
             is_priority_policy_pair=is_priority_policy_pair,
             is_compiler_required_policy_pair=is_compiler_required_policy_pair,
+            direct_is_priority_policy_pair=direct_is_priority_policy_pair,
+            runner_up_is_priority_policy_pair=runner_up_is_priority_policy_pair,
+            prefer_runner_up_priority_over_contested=True,
         )
         requires_rule = margin_direction == "outvoted"
         explicit_type = self._adaptive_margin_explicit_type(
@@ -1914,11 +1934,30 @@ class DeterministicModalCompiler:
         target_family: str,
         is_priority_policy_pair: bool,
         is_compiler_required_policy_pair: bool,
+        direct_is_priority_policy_pair: Optional[bool] = None,
+        runner_up_is_priority_policy_pair: bool = False,
+        prefer_runner_up_priority_over_contested: bool = False,
         epsilon: float = 1e-12,
     ) -> str:
         """Classify adaptive low-margin conflicts as contested vs. outvoted."""
         resolved_margin = float(family_margin)
         resolved_epsilon = max(0.0, float(epsilon))
+        direct_priority = (
+            bool(direct_is_priority_policy_pair)
+            if direct_is_priority_policy_pair is not None
+            else bool(is_priority_policy_pair)
+        )
+        runner_up_priority = bool(runner_up_is_priority_policy_pair)
+        if resolved_margin < -resolved_epsilon:
+            return "outvoted"
+        if resolved_margin <= resolved_epsilon and direct_priority:
+            return "outvoted"
+        if (
+            resolved_margin <= resolved_epsilon
+            and runner_up_priority
+            and prefer_runner_up_priority_over_contested
+        ):
+            return "outvoted"
         if (
             abs(resolved_margin) <= resolved_epsilon
             and _prefers_contested_zero_margin_adaptive_ambiguity_pair(
@@ -1927,12 +1966,9 @@ class DeterministicModalCompiler:
             )
         ):
             return "contested"
-        if resolved_margin < -resolved_epsilon:
+        if resolved_margin <= resolved_epsilon and runner_up_priority:
             return "outvoted"
-        if resolved_margin <= resolved_epsilon and (
-            is_priority_policy_pair
-            or is_compiler_required_policy_pair
-        ):
+        if resolved_margin <= resolved_epsilon and is_compiler_required_policy_pair:
             return "outvoted"
         return "contested"
 

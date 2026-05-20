@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import signal
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -1309,6 +1310,50 @@ def test_supervisor_finalize_requeues_transient_codex_failure() -> None:
     assert todo.metadata["transient_failure_count"] == 1
 
 
+def test_supervisor_finalize_requeues_baseline_validation_failure() -> None:
+    samples = [
+        build_us_code_sample(
+            title="5",
+            section="552",
+            text="The agency must provide notice within 30 days.",
+        ),
+        build_us_code_sample(
+            title="5",
+            section="553",
+            text="The agency must provide notice before adopting a rule.",
+        ),
+    ]
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=2)
+    )
+    supervisor.seed_program_synthesis_from_introspection(
+        samples,
+        autoencoder=AdaptiveModalAutoencoder(feature_family_logit_scale=1.0),
+    )
+    claimed = supervisor.claim_program_synthesis_batch(
+        worker_id="codex-worker",
+        max_items=1,
+    )
+    assert claimed
+
+    requeued = supervisor.finalize_program_synthesis_batch(
+        claimed,
+        codex_exec_status="succeeded",
+        patch_status="main_apply_baseline_validation_failed_rolled_back",
+    )
+
+    todo = supervisor.queue.get(claimed[0].todo_id)
+    assert requeued["updated"] is True
+    assert requeued["outcome"] == "requeued"
+    assert requeued["requeued_count"] == 1
+    assert requeued["failed_validation_count"] == 0
+    assert requeued["reason"] == "main_apply_baseline_validation_failed"
+    assert todo is not None
+    assert todo.status == "pending"
+    assert todo.claimed_by is None
+    assert todo.metadata["transient_failure_count"] == 1
+
+
 def test_supervisor_transient_requeue_has_retry_limit() -> None:
     samples = [
         build_us_code_sample(
@@ -2549,6 +2594,36 @@ def test_codex_work_packet_apply_to_main_can_commit_applied_diff(tmp_path) -> No
         text=True,
     ).stdout
     assert status == ""
+
+    subprocess.run(
+        ["git", "worktree", "remove", packet["worktree_path"], "--force"],
+        cwd=repo,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_codex_work_packet_apply_to_main_detects_baseline_validation_failure(
+    tmp_path,
+) -> None:
+    repo, packet = _create_git_repo_with_program_synthesis_packet(tmp_path)
+    readme = Path(packet["worktree_path"]) / "README.md"
+    readme.write_text("test repo\nbaseline red packet edit\n", encoding="utf-8")
+
+    updated = apply_codex_worktree_changes_to_main(
+        packet,
+        validation_commands=(
+            [sys.executable, "-c", "raise SystemExit(1)"],
+        ),
+    )
+
+    assert updated["patch_status"] == "main_apply_baseline_validation_failed_rolled_back"
+    assert updated["main_apply_status"] == "failed"
+    assert updated["main_apply_validation"]["status"] == "failed"
+    assert updated["main_apply_baseline_validation"]["status"] == "failed"
+    assert updated["main_apply_rollback"]["exit_code"] == 0
+    assert (repo / "README.md").read_text(encoding="utf-8") == "test repo\n"
 
     subprocess.run(
         ["git", "worktree", "remove", packet["worktree_path"], "--force"],

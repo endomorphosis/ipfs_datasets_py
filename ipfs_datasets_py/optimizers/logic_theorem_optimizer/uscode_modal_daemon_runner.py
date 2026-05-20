@@ -2859,18 +2859,40 @@ def apply_codex_worktree_changes_to_main(
             "stderr_tail": (rollback.stderr or "")[-500:],
             "stdout_tail": (rollback.stdout or "")[-500:],
         }
+        baseline_validation: Dict[str, Any] = {"status": "skipped", "commands": []}
+        if rollback.returncode == 0:
+            baseline_validation_dir = packet_dir / "baseline-validation"
+            baseline_validation_dir.mkdir(parents=True, exist_ok=True)
+            baseline_validation = _run_codex_apply_validation(
+                source_repo_root,
+                baseline_validation_dir,
+                validation_commands=validation_commands,
+                timeout_seconds=validation_timeout_seconds,
+            )
+        updated["main_apply_baseline_validation"] = baseline_validation
         patch_path = _save_codex_packet_diff_patch(
             updated,
             diff_content=diff_content,
             reason="validation-failed",
         )
         updated["patch_path"] = str(patch_path) if patch_path is not None else None
-        updated["patch_status"] = (
-            "main_apply_validation_failed_rolled_back"
-            if rollback.returncode == 0
-            else "main_apply_validation_failed_rollback_failed"
-        )
-        updated["patch_error"] = f"validation {validation['status']}"
+        if baseline_validation["status"] not in {"passed", "skipped"}:
+            updated["patch_status"] = (
+                "main_apply_baseline_validation_failed_rolled_back"
+                if rollback.returncode == 0
+                else "main_apply_baseline_validation_failed_rollback_failed"
+            )
+            updated["patch_error"] = (
+                f"baseline validation {baseline_validation['status']} "
+                f"after packet validation {validation['status']}"
+            )
+        else:
+            updated["patch_status"] = (
+                "main_apply_validation_failed_rolled_back"
+                if rollback.returncode == 0
+                else "main_apply_validation_failed_rollback_failed"
+            )
+            updated["patch_error"] = f"validation {validation['status']}"
         updated["main_apply_error"] = updated["patch_error"]
         _save_packet_if_possible(updated, packet_path)
         return updated

@@ -424,6 +424,44 @@ _NON_TEMPORAL_WITHIN_PHRASE_RE = re.compile(
 _NON_TEMPORAL_FOLLOWING_PREFIX_TOKENS = frozenset(
     {"the", "these", "those", "such"}
 )
+_NON_TEMPORAL_AFTER_PREFIX_TOKENS = frozenset(
+    {"the", "this", "that", "these", "those", "such"}
+)
+_NON_TEMPORAL_AFTER_CONTEXT_TOKENS = frozenset(
+    {
+        "article",
+        "chapter",
+        "clause",
+        "codification",
+        "division",
+        "editorial",
+        "note",
+        "notes",
+        "paragraph",
+        "part",
+        "provision",
+        "provisions",
+        "reclassification",
+        "renumbering",
+        "revision",
+        "section",
+        "subchapter",
+        "subclause",
+        "subparagraph",
+        "subpart",
+        "subsection",
+        "subtitle",
+        "title",
+    }
+)
+_NON_TEMPORAL_AFTER_PHRASE_RE = re.compile(
+    r"^\s+(?:the\s+)?(?:"
+    r"article|chapter|clause|codification|division|editorial|note|notes|paragraph|"
+    r"part|provision|provisions|reclassification|renumbering|revision|section|"
+    r"subchapter|subclause|subparagraph|subpart|subsection|subtitle|title"
+    r")\b",
+    re.IGNORECASE,
+)
 _FRAME_CONTEXT_TOKENS = frozenset(
     {
         "administrator",
@@ -859,6 +897,16 @@ class SpaCyLegalEncoder:
                                 )
                             ):
                                 continue
+                            if (
+                                lowered_cue == "after"
+                                and not self._is_temporal_sequence_after_cue(
+                                    normalized_text=normalized,
+                                    tokens=tokens,
+                                    start_char=match.start(),
+                                    end_char=match.end(),
+                                )
+                            ):
+                                continue
                         token_indices = [
                             index
                             for index, start, end in token_spans
@@ -952,15 +1000,22 @@ class SpaCyLegalEncoder:
     ) -> bool:
         """Treat list-introducing `the following` as non-temporal context."""
         preceding: Optional[SpaCyTokenFeature] = None
-        lookahead: List[SpaCyTokenFeature] = []
+        lookahead = _lookahead_tokens(tokens, end_char, limit=3)
         for token in tokens:
             if token.end_char <= start_char:
                 preceding = token
                 continue
-            if token.start_char >= end_char:
-                lookahead.append(token)
-                if len(lookahead) >= 3:
-                    break
+            break
+        if lookahead:
+            first = lookahead[0].normalized().lower()
+            second = lookahead[1].normalized().lower() if len(lookahead) > 1 else ""
+            if first in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS:
+                return True
+            if (
+                first in _NON_TEMPORAL_WITHIN_PREFIX_TOKENS
+                and second in _NON_TEMPORAL_WITHIN_CONTEXT_TOKENS
+            ):
+                return True
         if preceding is None:
             return False
         preceding_normalized = preceding.normalized().lower()
@@ -985,6 +1040,44 @@ class SpaCyLegalEncoder:
         ):
             return True
         return False
+
+    def _is_temporal_sequence_after_cue(
+        self,
+        *,
+        normalized_text: str,
+        tokens: Sequence[SpaCyTokenFeature],
+        start_char: int,
+        end_char: int,
+    ) -> bool:
+        """Treat `after` as temporal only when local context is time-like."""
+        trailing = normalized_text[end_char : end_char + 80]
+        if _CALENDAR_DATE_RE.search(trailing):
+            return True
+        lookahead = _lookahead_tokens(tokens, end_char, limit=4)
+        for token in lookahead:
+            normalized = token.normalized().lower()
+            if normalized in _TEMPORAL_BY_CONTEXT_TOKENS:
+                return True
+            if normalized in _MONTH_NAME_TOKENS:
+                return True
+            if normalized in (_TEMPORAL_SCOPE_TOKENS - {"after"}):
+                return True
+            if re.fullmatch(r"\d{1,4}", token.text):
+                return True
+        if not lookahead:
+            return False
+        first = lookahead[0].normalized().lower()
+        second = lookahead[1].normalized().lower() if len(lookahead) > 1 else ""
+        if first in _NON_TEMPORAL_AFTER_CONTEXT_TOKENS:
+            return False
+        if (
+            first in _NON_TEMPORAL_AFTER_PREFIX_TOKENS
+            and second in _NON_TEMPORAL_AFTER_CONTEXT_TOKENS
+        ):
+            return False
+        if _NON_TEMPORAL_AFTER_PHRASE_RE.match(trailing):
+            return False
+        return True
 
     def _cue_feature(
         self,

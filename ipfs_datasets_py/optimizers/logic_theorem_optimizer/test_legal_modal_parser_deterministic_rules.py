@@ -415,6 +415,75 @@ def test_compiler_emits_explicit_temporal_to_deontic_adaptive_pair() -> None:
     )
 
 
+def test_compiler_preserves_temporal_to_deontic_adaptive_logits_evidence_margins() -> None:
+    compiler = DeterministicModalCompiler(
+        config=ModalCompilerConfig(parser_backend="spacy")
+    )
+    evidence_cases = (
+        (
+            "us-code-33-2607-b8ef0bc32f81c11c",
+            -0.405328772342,
+            0.555328772342,
+        ),
+        (
+            "us-code-42-14713-to-14715-589d92b207fe177e",
+            -0.386346721929,
+            0.536346721929,
+        ),
+    )
+
+    for document_id, expected_margin, expected_priority in evidence_cases:
+        predicted_share = 0.70
+        target_share = predicted_share + expected_margin
+
+        def _mock_adaptive_family_ranking_from_logits(_encoding):
+            return [
+                {
+                    "family": ModalLogicFamily.TEMPORAL.value,
+                    "count": 0,
+                    "logit": 1.3,
+                    "share_raw": predicted_share,
+                    "share": predicted_share,
+                    "source": "logit_softmax_fallback",
+                },
+                {
+                    "family": ModalLogicFamily.DEONTIC.value,
+                    "count": 0,
+                    "logit": 0.9,
+                    "share_raw": target_share,
+                    "share": target_share,
+                    "source": "logit_softmax_fallback",
+                },
+            ]
+
+        compiler._adaptive_family_ranking_from_logits = _mock_adaptive_family_ranking_from_logits  # type: ignore[method-assign]
+
+        result = compiler.compile(
+            (
+                "Within 30 days after June 1, 2030, and before the end of the "
+                "fiscal year, annual publication occurs."
+            ),
+            document_id=f"compiler-ambiguity-temporal-deontic-{document_id}",
+        )
+        matches = [
+            ambiguity
+            for ambiguity in result.ambiguities
+            if ambiguity.ambiguity_type == "adaptive_temporal_deontic_outvoted_margin_low"
+            and ambiguity.metadata.get("adaptive_predicted_family_source")
+            == "adaptive_logits"
+        ]
+        assert matches, document_id
+        ambiguity = matches[0]
+        assert ambiguity.severity == "requires_rule"
+        assert ambiguity.metadata.get("is_compiler_ambiguity_bundle_pair") is True
+        assert ambiguity.metadata.get("ambiguity_policy_bundle") == "compiler_ambiguity"
+        assert ambiguity.metadata.get("predicted_family") == ModalLogicFamily.TEMPORAL.value
+        assert ambiguity.metadata.get("target_family") == ModalLogicFamily.DEONTIC.value
+        assert abs(float(ambiguity.metadata["family_margin_raw"]) - expected_margin) <= 1e-12
+        assert abs(float(ambiguity.metadata["priority"]) - expected_priority) <= 1e-12
+        assert abs(float(ambiguity.metadata["adaptive_priority"]) - expected_priority) <= 1e-12
+
+
 def test_compiler_emits_explicit_temporal_to_epistemic_adaptive_pair_from_low_margin_logits() -> None:
     compiler = DeterministicModalCompiler(
         config=ModalCompilerConfig(parser_backend="spacy")
