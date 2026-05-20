@@ -844,6 +844,7 @@ class AdaptiveModalAutoencoder:
                 reconstruction_loss=mse_loss(sample.embedding_vector, decoded),
                 legal_ir_view_cross_entropy_loss=legal_ir_view_cross_entropy_loss,
                 legal_ir_view_distribution=legal_ir_view_distribution,
+                legal_ir_predicted_view_distribution=legal_ir_predicted_view_distribution,
             ),
         )
 
@@ -1625,6 +1626,7 @@ class AdaptiveModalAutoencoder:
         reconstruction_loss: float,
         legal_ir_view_cross_entropy_loss: float = 0.0,
         legal_ir_view_distribution: Optional[Mapping[str, float]] = None,
+        legal_ir_predicted_view_distribution: Optional[Mapping[str, float]] = None,
     ) -> List[str]:
         focus: List[str] = []
         if not sample.modal_ir.formulas:
@@ -1635,12 +1637,68 @@ class AdaptiveModalAutoencoder:
             focus.append("refine_typed_ir_or_decompiler_slots")
         if legal_ir_view_cross_entropy_loss > 0.05:
             distribution = legal_ir_view_distribution or {}
+            predicted_distribution = legal_ir_predicted_view_distribution or {}
             focus.append("repair_multiview_legal_ir_loss")
-            if any(str(name).startswith("deontic.") for name in distribution):
-                focus.append("repair_deontic_bridge_quality_gate")
+            focus.extend(
+                _legal_ir_program_synthesis_focus(
+                    distribution,
+                    predicted_distribution=predicted_distribution,
+                )
+            )
         if sample.selected_frame:
             focus.append("audit_frame_logic_terms")
         return _unique_preserve_order(focus)
+
+
+def _legal_ir_program_synthesis_focus(
+    target_distribution: Mapping[str, float],
+    *,
+    predicted_distribution: Optional[Mapping[str, float]] = None,
+) -> List[str]:
+    """Return bridge-specific repair focus items from LegalIR view mismatch."""
+
+    target = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(target_distribution or {}).items()
+        if float(value) > 0.0
+    }
+    if not target:
+        return []
+    predicted = {
+        str(name): max(0.0, float(value))
+        for name, value in dict(predicted_distribution or {}).items()
+    }
+
+    def needs_attention(component: str) -> bool:
+        target_value = float(target.get(component, 0.0))
+        if target_value <= 0.0:
+            return False
+        predicted_value = float(predicted.get(component, 0.0))
+        return target_value >= 0.03 or predicted_value + 0.01 < target_value
+
+    def has_component(*prefixes: str) -> bool:
+        return any(
+            needs_attention(component)
+            and any(component == prefix or component.startswith(prefix) for prefix in prefixes)
+            for component in target
+        )
+
+    focus: List[str] = []
+    if has_component("deontic."):
+        focus.append("repair_deontic_bridge_quality_gate")
+    if has_component("TDFOL.", "fol."):
+        focus.append("repair_tdfol_bridge_parse")
+    if has_component("CEC."):
+        focus.append("repair_cec_dcec_bridge")
+    if has_component("external_provers."):
+        focus.append("repair_external_prover_router")
+    if has_component("knowledge_graphs."):
+        focus.append("repair_multiview_legal_ir_graph_projection")
+    if has_component("modal.frame_logic", "flogic."):
+        focus.append("repair_flogic_ontology_constraints")
+    if has_component("zkp."):
+        focus.append("repair_zkp_attestation_bridge")
+    return focus
 
 
 def _observed_family_distribution(sample: LegalSample) -> Dict[str, float]:

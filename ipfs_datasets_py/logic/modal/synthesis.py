@@ -153,6 +153,72 @@ def synthesis_hints_from_autoencoder_introspection(
             )
         )
 
+    if "repair_tdfol_bridge_parse" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_tdfol_bridge_parse",
+                target_component="TDFOL.prover",
+                rationale="The canonical LegalIR target includes TDFOL proof-obligation views that the adaptive view model cannot yet reconstruct confidently.",
+            )
+        )
+
+    if "repair_cec_dcec_bridge" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_cec_dcec_bridge",
+                target_component="CEC.native",
+                rationale="The canonical LegalIR target includes CEC/DCEC event-calculus views that the adaptive view model cannot yet reconstruct confidently.",
+            )
+        )
+
+    if "repair_external_prover_router" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_external_prover_router",
+                target_component="external_provers.router",
+                rationale="The canonical LegalIR target includes external prover-router views that the adaptive view model cannot yet reconstruct confidently.",
+            )
+        )
+
+    if "repair_multiview_legal_ir_graph_projection" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_multiview_legal_ir_graph_projection",
+                target_component="knowledge_graphs.neo4j_compat",
+                rationale="The canonical LegalIR target includes graph projection views that need better alignment with frame-logic IR.",
+            )
+        )
+
+    if "repair_flogic_ontology_constraints" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_flogic_ontology_constraints",
+                target_component="modal.frame_logic",
+                rationale="The canonical LegalIR target includes frame-logic views that need stronger ontology constraints.",
+            )
+        )
+
+    if "repair_zkp_attestation_bridge" in focus:
+        hints.append(
+            _logic_view_hint(
+                sample_id,
+                introspection,
+                action="repair_zkp_attestation_bridge",
+                target_component="zkp.circuits",
+                rationale="The canonical LegalIR target includes ZKP proof-attestation views that the adaptive view model cannot yet reconstruct confidently.",
+            )
+        )
+
     if "audit_frame_logic_terms" in focus:
         frame_features = _frame_features(introspection)
         hints.append(
@@ -228,6 +294,37 @@ def _hint(
         rationale=rationale,
         priority=round(max(0.0, float(priority)), 12),
         evidence=evidence_dict,
+    )
+
+
+def _logic_view_hint(
+    sample_id: str,
+    introspection: Mapping[str, Any],
+    *,
+    action: str,
+    target_component: str,
+    rationale: str,
+) -> ModalProgramSynthesisHint:
+    return _hint(
+        sample_id,
+        action=action,
+        target_component=target_component,
+        rationale=rationale,
+        priority=max(
+            0.05,
+            float(introspection.get("legal_ir_view_cross_entropy_loss") or 0.0),
+        ),
+        evidence={
+            "legal_ir_predicted_view_distribution": dict(
+                introspection.get("legal_ir_predicted_view_distribution") or {}
+            ),
+            "legal_ir_view_cross_entropy_loss": introspection.get(
+                "legal_ir_view_cross_entropy_loss"
+            ),
+            "legal_ir_view_distribution": dict(
+                introspection.get("legal_ir_view_distribution") or {}
+            ),
+        },
     )
 
 

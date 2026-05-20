@@ -173,6 +173,24 @@ _SPECS: tuple[LogicBridgeSpec, ...] = (
         required_submodules=("external_provers",),
         ast_scope="external_provers",
     ),
+    LogicBridgeSpec(
+        name="zkp_attestation",
+        target_component="zkp.circuits",
+        adapter_module="ipfs_datasets_py.logic.bridge.zkp_attestation",
+        adapter_class="ZkpAttestationBridgeAdapter",
+        description="Formal proof obligations -> ZKP proof attestation views and graph records.",
+        roles=("legal_ir", "zkp", "proof_attestation", "circuit", "loss"),
+        source_view="formal_formula",
+        target_views=("zkp_attestations", "zkp_public_inputs", "frame_logic", "neo4j_graph_data"),
+        loss_names=(
+            "zkp_attestation_missing_loss",
+            "zkp_verification_failure_ratio",
+            "zkp_proof_failure_ratio",
+            "zkp_graph_failure_penalty",
+        ),
+        required_submodules=("zkp",),
+        ast_scope="zkp",
+    ),
 )
 
 _SPECS_BY_NAME: Mapping[str, LogicBridgeSpec] = {spec.name: spec for spec in _SPECS}

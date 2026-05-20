@@ -1214,25 +1214,29 @@ async def _scrape_state_with_retries(
             state_name = US_STATES[state_code]
             error_msg = f"Failed to scrape {state_name} using state-specific scraper: {str(e)}"
             logger.error(error_msg)
-            result = {
-                "state_code": state_code,
-                "state_name": state_name,
-                "error": error_msg,
-                "statutes_count": 0,
-                "zero_statute": True,
-                "low_quality": False,
-                "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
-                "warnings": [f"{state_code} returned zero statutes"],
-                "statute_data": {
+            checkpoint_result = _load_partial_checkpoint_state_result(state_code, error_msg)
+            if checkpoint_result is not None:
+                result = checkpoint_result
+            else:
+                result = {
                     "state_code": state_code,
                     "state_name": state_name,
-                    "title": f"{state_name} Laws",
-                    "source": "Official State Legislative Website",
-                    "error": str(e),
-                    "scraped_at": datetime.now().isoformat(),
-                    "statutes": [],
-                },
-            }
+                    "error": error_msg,
+                    "statutes_count": 0,
+                    "zero_statute": True,
+                    "low_quality": False,
+                    "quality_metrics": {"total": 0, "nav_like_ratio": 0.0, "fallback_section_ratio": 0.0, "numeric_section_name_ratio": 0.0, "scaffold_ratio": 0.0},
+                    "warnings": [f"{state_code} returned zero statutes"],
+                    "statute_data": {
+                        "state_code": state_code,
+                        "state_name": state_name,
+                        "title": f"{state_name} Laws",
+                        "source": "Official State Legislative Website",
+                        "error": str(e),
+                        "scraped_at": datetime.now().isoformat(),
+                        "statutes": [],
+                    },
+                }
 
         if best is None:
             best = result
@@ -1284,18 +1288,22 @@ def _trim_scraped_statutes_to_max(
         return scraped_statutes, sum(len((block or {}).get("statutes") or []) for block in scraped_statutes)
 
     trimmed: List[Dict[str, Any]] = []
+    remaining = int(max_statutes)
     for block in scraped_statutes:
+        if remaining <= 0:
+            break
         if not isinstance(block, dict):
             continue
 
         statutes = list(block.get("statutes") or [])
-        kept = statutes[:max_statutes]
+        kept = statutes[:remaining]
 
         out_block = dict(block)
         out_block["statutes"] = kept
         out_block["quality_metrics"] = _compute_state_quality_metrics(kept)
         out_block["quality_flag"] = _should_flag_quality(out_block["quality_metrics"])
         trimmed.append(out_block)
+        remaining -= len(kept)
 
     total = sum(len((block or {}).get("statutes") or []) for block in trimmed)
     return trimmed, total

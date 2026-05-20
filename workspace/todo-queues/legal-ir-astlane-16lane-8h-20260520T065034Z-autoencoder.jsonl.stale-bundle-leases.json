@@ -1,0 +1,9 @@
+{
+  "bridge|bridge.contracts|{\"action\":\"repair_multiview_legal_ir_loss\",\"family_pairs\":[],\"program_synthesis_scope\":\"bridge\",\"target_component\":\"bridge.contracts\"}": {
+    "anchor_id": "89d0a99afd458cec",
+    "expires_at": "2026-05-20T06:57:46+00:00",
+    "expires_at_epoch": 1779260266.3042855,
+    "selected_count": 1,
+    "worker_id": "codex-bridge"
+  }
+}

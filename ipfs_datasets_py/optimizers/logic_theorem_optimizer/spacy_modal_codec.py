@@ -31,12 +31,17 @@ _CLAUSE_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_'-]*")
 _CONDITION_PREFIXES = ("provided that", "subject to", "if", "when", "before", "upon")
 _EXCEPTION_PREFIXES = ("except that", "except as", "unless", "except")
 _CONDITIONAL_SCOPE_PHRASES = (
+    "application of",
+    "application to",
+    "applicability of",
+    "applicable to",
     "any person who",
     "any person that",
     "any individual who",
     "any entity that",
     "whoever",
     "as provided by",
+    "as provided in",
     "except as provided by",
     "in the case of",
     "in the event that",
@@ -48,16 +53,24 @@ _CONDITIONAL_SCOPE_PHRASES = (
     "to the extent provided",
     "except to the extent",
     "except as otherwise provided",
+    "under terms or conditions",
     "under terms and conditions",
+    "under such terms or conditions",
     "under such terms and conditions",
+    "on such terms or conditions",
     "on such terms and conditions",
+    "upon terms or conditions",
     "upon terms and conditions",
+    "upon such terms or conditions",
     "upon such terms and conditions",
     "subject only to",
     "subject, however, to",
     "subject however to",
+    "subject to terms or conditions",
     "subject to terms and conditions",
+    "subject to such terms or conditions",
     "subject to such terms and conditions",
+    "subject to the terms or conditions",
     "subject to the terms and conditions",
 )
 _STATUTORY_SCOPE_REFERENCE_PHRASES = (
@@ -174,6 +187,8 @@ _TEMPORAL_SCOPE_PHRASES = (
     "at such times as",
     "at the time",
     "as soon as practicable",
+    "after notice and hearing",
+    "after notice and opportunity for hearing",
     "beginning on or after",
     "calendar year",
     "during the pendency of",
@@ -196,6 +211,7 @@ _TEMPORAL_SCOPE_PHRASES = (
     "on or after",
     "period beginning on",
     "period ending on",
+    "effective dates",
     "date of enactment",
     "on the date of enactment",
     "while pending",
@@ -617,6 +633,7 @@ _DEONTIC_SCOPE_PHRASES = (
     "requirement that",
     "requirements for",
     "is liable for",
+    "shall issue",
     "shall be fined",
     "shall be imprisoned",
     "is prohibited from",
@@ -2709,7 +2726,7 @@ def _apply_competing_scope_backfill(
         )
     if (
         temporal_count >= _TEMPORAL_FRAME_SCOPE_BACKFILL_TRIGGER
-        and frame_count <= 0.0
+        and frame_count <= _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_TRIGGER
         and (
             bool(signals.get("has_frame_context"))
             or bool(signals.get("has_frame_scope_phrase"))
@@ -2725,7 +2742,7 @@ def _apply_competing_scope_backfill(
         ):
             frame_backfill = max(
                 frame_backfill,
-                _FRAME_MODERATE_COMPETING_SCOPE_BACKFILL_WEIGHT,
+                _FRAME_COMPETING_SCOPE_BACKFILL_WEIGHT,
             )
         counts[frame_family] = max(
             float(counts.get(frame_family, 0.0)),
@@ -2918,6 +2935,10 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
             deontic_bonus += 0.1
         if bool(signals.get("has_temporal_scope")):
             deontic_bonus += 0.35
+            if bool(signals.get("has_deontic_cue")) and not bool(
+                signals.get("has_deontic_scope_phrase")
+            ):
+                deontic_bonus += 0.1
         if has_statutory_frame_context and bool(
             signals.get("has_deontic_scope_phrase")
             or signals.get("has_deontic_cue")
@@ -2953,7 +2974,7 @@ def _scope_signal_family_logit_boosts(signals: Mapping[str, bool]) -> Dict[str, 
                 temporal_bonus += 0.15
                 if bool(signals.get("has_deontic_cue")) and not bool(
                     signals.get("has_deontic_scope_phrase")
-                ):
+                ) and not bool(signals.get("has_statutory_scope_reference")):
                     temporal_bonus += 0.15
         if bool(signals.get("has_condition_or_exception_scope")) and has_strong_temporal_scope:
             temporal_bonus += 0.15

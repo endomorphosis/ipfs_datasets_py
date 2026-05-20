@@ -29,6 +29,7 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
         "external_prover_router",
         "fol_tdfol",
         "modal_frame_logic",
+        "zkp_attestation",
     } <= names
     assert manifest["implemented_bridges"] == [
         "modal_frame_logic",
@@ -36,6 +37,7 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
         "fol_tdfol",
         "cec_dcec",
         "external_prover_router",
+        "zkp_attestation",
     ]
     assert bridge_name_for_component("modal.frame_logic") == "modal_frame_logic"
     assert bridge_name_for_component("modal.frame_logic.audit") == "modal_frame_logic"
@@ -48,6 +50,7 @@ def test_bridge_manifest_exposes_optimizer_lanes() -> None:
         bridge_name_for_component("external_provers.router")
         == "external_prover_router"
     )
+    assert bridge_name_for_component("zkp.circuits") == "zkp_attestation"
 
 
 def test_bridge_import_is_lightweight() -> None:
@@ -700,6 +703,28 @@ def test_external_prover_router_bridge_supports_route_signature_without_axioms(
     assert report.proof_gate.valid_count == report.proof_gate.attempted_count
     assert report.proof_gate.details[0]["prover_used"] == "legacy"
     assert "external_provers:legacy" in report.proof_gate.verified_by
+
+
+def test_zkp_attestation_bridge_evaluates_proof_attestations_and_graph() -> None:
+    from ipfs_datasets_py.logic.bridge import load_logic_bridge_adapter
+
+    adapter = load_logic_bridge_adapter("zkp_attestation")
+    report = adapter.evaluate(
+        "The agency shall publish notice before the permit takes effect.",
+        document_id="zkp-bridge-smoke",
+        citation="ZKP Bridge Smoke",
+    )
+
+    assert report.adapter_name == "zkp_attestation"
+    assert report.ir_document.views["zkp_attestations"].metadata["attestation_count"] >= 1
+    assert report.ir_document.views["zkp_public_inputs"].metadata["record_count"] >= 1
+    assert report.ir_document.has_frame_logic is True
+    assert report.graph_projection.neo4j_compatible is True
+    assert report.proof_gate.attempted_count >= 1
+    assert report.proof_gate.compiles is True
+    assert report.round_trip.extra_losses["zkp_attestation_missing_loss"] == 0.0
+    assert report.round_trip.extra_losses["zkp_verification_failure_ratio"] == 0.0
+    assert "zkp:simulated" in report.proof_gate.verified_by
 
 
 def test_multiview_bridge_evaluation_builds_canonical_legal_ir_document() -> None:

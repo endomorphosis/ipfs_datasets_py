@@ -4,6 +4,7 @@ This module contains the scraper for Mississippi statutes from the official stat
 """
 
 from ipfs_datasets_py.utils import anyio_compat as asyncio
+import inspect
 import json
 import os
 import re
@@ -77,12 +78,55 @@ class MississippiScraper(BaseStateScraper):
             default_code_name=code_name,
             max_statutes=(limit or 1000000),
         )
+        if self._full_corpus_enabled():
+            common_crawl_seed_target_raw = str(
+                os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_SEED_TARGET", "") or ""
+            ).strip()
+            try:
+                common_crawl_seed_target = int(common_crawl_seed_target_raw) if common_crawl_seed_target_raw else 600
+            except Exception:
+                common_crawl_seed_target = 600
+            common_crawl_seed_target = max(25, min(2000, common_crawl_seed_target))
+            common_crawl_seed = await self._scrape_common_crawl_code_sections(
+                code_name=code_name,
+                max_statutes=common_crawl_seed_target,
+            )
+            if common_crawl_seed:
+                merged_seed: List[NormalizedStatute] = []
+                seen_seed_keys = set()
+                for statute in list(seed_statutes) + list(common_crawl_seed):
+                    statute_key = _statute_dedupe_key(statute)
+                    if statute_key and statute_key in seen_seed_keys:
+                        continue
+                    if statute_key:
+                        seen_seed_keys.add(statute_key)
+                    merged_seed.append(statute)
+                seed_statutes = merged_seed[: (limit or 1000000)]
+                checkpoint.maybe_write(
+                    seed_statutes,
+                    code_name=code_name,
+                    scanned_history_urls=len(seed_statutes),
+                    discovered_history_urls=len(seed_statutes),
+                )
+                self.logger.info(
+                    "Mississippi full-corpus common-crawl seeds: statutes_so_far=%s target=%s",
+                    len(seed_statutes),
+                    common_crawl_seed_target,
+                )
 
+        archival_kwargs: Dict[str, Any] = {}
+        try:
+            archival_params = inspect.signature(self._scrape_archived_bill_history).parameters
+        except Exception:
+            archival_params = {}
+        if "seed_statutes" in archival_params:
+            archival_kwargs["seed_statutes"] = seed_statutes
+        if "checkpoint" in archival_params:
+            archival_kwargs["checkpoint"] = checkpoint
         archival = await self._scrape_archived_bill_history(
             code_name=code_name,
             max_statutes=limit or 1000000,
-            seed_statutes=seed_statutes,
-            checkpoint=checkpoint,
+            **archival_kwargs,
         )
         if archival and (not self._full_corpus_enabled() or max_statutes is not None):
             self.logger.info(f"Mississippi archive history fallback: Scraped {len(archival)} records")
@@ -345,6 +389,12 @@ class MississippiScraper(BaseStateScraper):
                     },
                 )
             )
+            if len(statutes) == 1 or len(statutes) % 50 == 0:
+                self.logger.info(
+                    "Mississippi common-crawl recovery: statutes_so_far=%s candidates_scanned=%s",
+                    len(statutes),
+                    len(candidates),
+                )
         return statutes
 
     def _extract_ms_common_crawl_section_number(self, source_url: str, text: str) -> str:

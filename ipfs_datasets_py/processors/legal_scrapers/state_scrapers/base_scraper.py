@@ -306,6 +306,8 @@ class BaseStateScraper(ABC):
         self._ipfs_page_cache_metadata_dir.mkdir(parents=True, exist_ok=True)
         self._ipfs_page_cache_index_path = self._ipfs_page_cache_metadata_dir / "index.json"
         self._ipfs_page_cache_index = self._load_ipfs_page_cache_index()
+        self._partial_checkpoint_last_write_at = 0.0
+        self._partial_checkpoint_last_count = 0
 
     @staticmethod
     def _env_bool(name: str, *, default: bool) -> bool:
@@ -372,6 +374,201 @@ class BaseStateScraper(ABC):
         if default is None:
             return None
         return max(1, int(default))
+
+    def _partial_checkpoint_path(self) -> Optional[Path]:
+        raw_dir = str(os.getenv("STATE_SCRAPER_PARTIAL_CHECKPOINT_DIR") or "").strip()
+        if not raw_dir:
+            return None
+        try:
+            base_dir = Path(raw_dir).expanduser().resolve()
+            base_dir.mkdir(parents=True, exist_ok=True)
+            return base_dir / f"STATE-{self.state_code.upper()}-partial.json"
+        except Exception:
+            return None
+
+    def _coerce_checkpoint_row_to_statute(
+        self,
+        row: Dict[str, Any],
+        *,
+        code_name: str,
+    ) -> Optional[NormalizedStatute]:
+        if not isinstance(row, dict):
+            return None
+        field_names = set(getattr(NormalizedStatute, "__dataclass_fields__", {}).keys())
+        kwargs: Dict[str, Any] = {
+            key: row.get(key)
+            for key in field_names
+            if key in row
+        }
+        kwargs["state_code"] = str(kwargs.get("state_code") or self.state_code).upper()
+        kwargs["state_name"] = str(kwargs.get("state_name") or self.state_name).strip() or self.state_name
+        kwargs["code_name"] = str(kwargs.get("code_name") or code_name).strip() or code_name
+        kwargs["statute_id"] = str(kwargs.get("statute_id") or "").strip()
+        kwargs["source_url"] = str(kwargs.get("source_url") or "").strip()
+        kwargs["scraped_at"] = str(kwargs.get("scraped_at") or datetime.now().isoformat())
+        kwargs["scraper_version"] = str(kwargs.get("scraper_version") or "1.0")
+        if not kwargs["statute_id"]:
+            return None
+
+        topics = kwargs.get("topics")
+        if topics is None:
+            kwargs["topics"] = []
+        elif not isinstance(topics, list):
+            kwargs["topics"] = [str(topics)]
+
+        keywords = kwargs.get("keywords")
+        if keywords is None:
+            kwargs["keywords"] = []
+        elif not isinstance(keywords, list):
+            kwargs["keywords"] = [str(keywords)]
+
+        structured = kwargs.get("structured_data")
+        if not isinstance(structured, dict):
+            kwargs["structured_data"] = {}
+
+        metadata_payload = kwargs.get("metadata")
+        if isinstance(metadata_payload, dict):
+            metadata_fields = set(getattr(StatuteMetadata, "__dataclass_fields__", {}).keys())
+            metadata_kwargs = {
+                key: metadata_payload.get(key)
+                for key in metadata_fields
+                if key in metadata_payload
+            }
+            history = metadata_kwargs.get("history")
+            if history is None:
+                metadata_kwargs["history"] = []
+            elif not isinstance(history, list):
+                metadata_kwargs["history"] = [str(history)]
+            kwargs["metadata"] = StatuteMetadata(**metadata_kwargs)
+        elif not isinstance(metadata_payload, StatuteMetadata):
+            kwargs["metadata"] = None
+
+        try:
+            return NormalizedStatute(**kwargs)
+        except Exception:
+            return None
+
+    def _checkpoint_statute_key(self, statute: NormalizedStatute) -> str:
+        statute_id = str(getattr(statute, "statute_id", "") or "").strip().lower()
+        if statute_id:
+            return statute_id
+        source_url = str(getattr(statute, "source_url", "") or "").strip().lower()
+        if source_url:
+            return source_url
+        return ""
+
+    def _load_partial_checkpoint_statutes(
+        self,
+        *,
+        code_name: str,
+        max_statutes: Optional[int] = None,
+    ) -> List[NormalizedStatute]:
+        checkpoint_path = self._partial_checkpoint_path()
+        if checkpoint_path is None or not checkpoint_path.exists():
+            return []
+        try:
+            payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        except Exception:
+            return []
+        rows = payload.get("statutes") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            return []
+
+        loaded: List[NormalizedStatute] = []
+        seen_keys = set()
+        for row in rows:
+            statute = self._coerce_checkpoint_row_to_statute(row, code_name=code_name)
+            if statute is None:
+                continue
+            key = self._checkpoint_statute_key(statute)
+            if key and key in seen_keys:
+                continue
+            if key:
+                seen_keys.add(key)
+            loaded.append(statute)
+            if max_statutes is not None and len(loaded) >= int(max_statutes):
+                break
+
+        if loaded:
+            self._partial_checkpoint_last_count = len(loaded)
+            self._partial_checkpoint_last_write_at = datetime.now().timestamp()
+            self.logger.info(
+                "%s resumed %s statutes from partial checkpoint (%s)",
+                self.state_code,
+                len(loaded),
+                checkpoint_path,
+            )
+        return loaded
+
+    def _write_partial_checkpoint(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        stage_label: str,
+        force: bool = False,
+        extra: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        checkpoint_path = self._partial_checkpoint_path()
+        if checkpoint_path is None:
+            return False
+        if not isinstance(statutes, list) or not statutes:
+            return False
+
+        count = len(statutes)
+        now_ts = datetime.now().timestamp()
+        write_every = max(
+            1,
+            self._env_int("STATE_SCRAPER_PARTIAL_CHECKPOINT_INTERVAL", default=250),
+        )
+        min_seconds = max(
+            0,
+            self._env_int("STATE_SCRAPER_PARTIAL_CHECKPOINT_MIN_SECONDS", default=20),
+        )
+        if not force:
+            delta_count = count - int(self._partial_checkpoint_last_count or 0)
+            delta_seconds = now_ts - float(self._partial_checkpoint_last_write_at or 0.0)
+            if delta_count < write_every and delta_seconds < float(min_seconds):
+                return False
+
+        serialized_rows: List[Dict[str, Any]] = []
+        for statute in statutes:
+            if not isinstance(statute, NormalizedStatute):
+                continue
+            try:
+                serialized_rows.append(statute.to_dict())
+            except Exception:
+                continue
+        if not serialized_rows:
+            return False
+
+        payload: Dict[str, Any] = {
+            "state_code": self.state_code,
+            "state_name": self.state_name,
+            "code_name": str(code_name or ""),
+            "stage_label": str(stage_label or ""),
+            "updated_at": datetime.now().isoformat(),
+            "statutes_count": len(serialized_rows),
+            "statutes": serialized_rows,
+        }
+        if isinstance(extra, dict) and extra:
+            payload["progress"] = dict(extra)
+
+        try:
+            checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+            tmp_path = checkpoint_path.with_suffix(".tmp")
+            tmp_path.write_text(
+                json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str) + "\n",
+                encoding="utf-8",
+            )
+            tmp_path.replace(checkpoint_path)
+        except Exception as exc:
+            self.logger.debug("Failed writing partial checkpoint for %s: %s", self.state_code, exc)
+            return False
+
+        self._partial_checkpoint_last_count = count
+        self._partial_checkpoint_last_write_at = now_ts
+        return True
 
     def _load_ipfs_page_cache_index(self) -> Dict[str, Dict[str, Any]]:
         if not self._ipfs_page_cache_index_path.exists():
@@ -631,7 +828,7 @@ class BaseStateScraper(ABC):
         
         self.logger.info(f"Scraping {len(codes)} codes for {self.state_name}")
         
-        for code_info in codes:
+        for code_index, code_info in enumerate(codes, start=1):
             if max_statutes and len(all_statutes) >= max_statutes:
                 break
             
@@ -684,13 +881,30 @@ class BaseStateScraper(ABC):
                 
                 all_statutes.extend(statutes)
                 self.logger.info(f"Scraped {len(statutes)} statutes from {code_name}")
+                self._write_partial_checkpoint(
+                    all_statutes,
+                    code_name=code_name,
+                    stage_label=f"scrape_all:{code_index}",
+                    extra={
+                        "codes_total": len(codes),
+                        "codes_completed": code_index,
+                        "latest_code_name": code_name,
+                        "latest_code_statutes": len(statutes),
+                    },
+                )
                 
             except Exception as e:
                 self.logger.error(f"Failed to scrape {code_name}: {e}")
             
             # Rate limiting
             time.sleep(rate_limit_delay)
-        
+        self._write_partial_checkpoint(
+            all_statutes,
+            code_name="scrape_all",
+            stage_label="scrape_all:complete",
+            force=True,
+            extra={"codes_total": len(codes), "codes_completed": len(codes)},
+        )
         return all_statutes
     
     def _identify_legal_area(self, text: str) -> str:
@@ -1894,11 +2108,35 @@ class BaseStateScraper(ABC):
             max_sections = max(1, scan_limit)
         elif self._full_corpus_enabled():
             max_sections = None
-        
-        statutes = []
+        full_corpus_mode = self._full_corpus_enabled() and max_sections is None
+        progress_log_every = max(10, _env_int("STATE_SCRAPER_PROGRESS_LOG_EVERY", 25))
+        statutes: List[NormalizedStatute] = []
         seen_source_urls = set()
+        legal_area = self._identify_legal_area(code_name)
 
-        def _extract_statutes_from_soup(soup, page_url: str) -> int:
+        if full_corpus_mode:
+            resumed_statutes = self._load_partial_checkpoint_statutes(
+                code_name=code_name,
+                max_statutes=None,
+            )
+            for resumed in resumed_statutes:
+                if max_sections is not None and len(statutes) >= max_sections:
+                    break
+                resumed_url = self._canonicalize_statute_url(str(resumed.source_url or "").strip())
+                if resumed_url and resumed_url in seen_source_urls:
+                    continue
+                if resumed_url:
+                    resumed.source_url = resumed_url
+                    seen_source_urls.add(resumed_url)
+                statutes.append(resumed)
+            if statutes:
+                self.logger.info(
+                    "%s generic scrape resume: statutes_so_far=%s",
+                    self.state_code,
+                    len(statutes),
+                )
+
+        def _extract_statutes_from_soup(soup, page_url: str, *, pages_scanned: int) -> int:
             """Extract probable statute anchors from one page soup into `statutes`."""
             section_links = soup.find_all('a', href=True)
             section_count = 0
@@ -1950,8 +2188,64 @@ class BaseStateScraper(ABC):
                 statutes.append(statute)
                 seen_source_urls.add(link_url)
                 section_count += 1
+                if len(statutes) == 1 or len(statutes) % progress_log_every == 0:
+                    self.logger.info(
+                        "Generic scrape progress: state=%s code=%s statutes_so_far=%s pages_scanned=%s source_url=%s",
+                        self.state_code,
+                        code_name,
+                        len(statutes),
+                        pages_scanned,
+                        page_url,
+                    )
 
             return section_count
+
+        def _collect_discovery_urls_from_soup(
+            soup: Any,
+            page_url: str,
+            *,
+            max_urls: int,
+        ) -> List[str]:
+            discovery_urls: List[str] = []
+            discovery_keywords = (
+                "statute",
+                "statutes",
+                "code",
+                "codes",
+                "law",
+                "laws",
+                "title",
+                "chapter",
+                "article",
+                "revised",
+                "consolidated",
+                "constitution",
+            )
+            page_parsed = urlparse(str(page_url or ""))
+            page_host = str(page_parsed.netloc or "").lower()
+            discovery_seen = set()
+            for link in soup.find_all("a", href=True):
+                if len(discovery_urls) >= max(1, int(max_urls)):
+                    break
+                link_text = (link.get_text(" ", strip=True) or "").lower()
+                href = str(link.get("href", "") or "")
+                href_l = href.lower()
+                if not any(k in link_text or k in href_l for k in discovery_keywords):
+                    continue
+                abs_url = self._canonicalize_statute_url(urljoin(page_url, href))
+                if not abs_url.startswith("http"):
+                    continue
+                parsed = urlparse(abs_url)
+                host = str(parsed.netloc or "").lower()
+                same_host = bool(host and page_host and host == page_host)
+                wayback_pair = "web.archive.org" in {host, page_host}
+                if not same_host and not wayback_pair:
+                    continue
+                if abs_url in discovery_seen:
+                    continue
+                discovery_seen.add(abs_url)
+                discovery_urls.append(abs_url)
+            return discovery_urls
         
         try:
             page_bytes = await self._fetch_page_content_with_archival_fallback(code_url, timeout_seconds=45)
@@ -1959,55 +2253,122 @@ class BaseStateScraper(ABC):
                 raise RuntimeError(f"Failed to retrieve code page: {code_url}")
 
             soup = BeautifulSoup(page_bytes, 'html.parser')
+            pages_scanned = 1
+            visited_pages = {self._canonicalize_statute_url(code_url)}
+            section_count = _extract_statutes_from_soup(
+                soup,
+                code_url,
+                pages_scanned=pages_scanned,
+            )
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="generic:landing",
+                extra={
+                    "pages_scanned": pages_scanned,
+                    "sections_extracted": int(section_count),
+                    "source_url": code_url,
+                },
+            )
 
-            # Extract legal area from code name
-            legal_area = self._identify_legal_area(code_name)
-
-            section_count = _extract_statutes_from_soup(soup, code_url)
-
-            # If the landing page yields very few statute links, try one-hop discovery
-            # pages that look like code/statute indexes.
-            if len(statutes) < min(10, max_sections or 10):
-                discovery_urls = []
-                discovery_seen = set()
-                discovery_keywords = (
-                    "statute", "statutes", "code", "codes", "law", "laws",
-                    "title", "chapter", "revised", "consolidated", "constitution"
+            enable_discovery = full_corpus_mode or len(statutes) < min(10, max_sections or 10)
+            if enable_discovery:
+                discovery_depth = max(
+                    1,
+                    _env_int(
+                        "STATE_SCRAPER_GENERIC_DISCOVERY_DEPTH",
+                        2 if full_corpus_mode else 1,
+                    ),
                 )
-
-                for link in soup.find_all('a', href=True):
-                    if len(discovery_urls) >= 8:
-                        break
-                    link_text = (link.get_text(" ", strip=True) or "").lower()
-                    href = str(link.get('href', '') or '')
-                    href_l = href.lower()
-                    if not any(k in link_text or k in href_l for k in discovery_keywords):
-                        continue
-                    from urllib.parse import urljoin
-                    abs_url = urljoin(code_url, href)
-                    abs_url = self._canonicalize_statute_url(abs_url)
-                    if not abs_url.startswith("http"):
-                        continue
-                    if abs_url in discovery_seen:
-                        continue
-                    discovery_seen.add(abs_url)
-                    discovery_urls.append(abs_url)
-
-                for discovery_url in discovery_urls:
+                fanout_limit = max(
+                    4,
+                    _env_int(
+                        "STATE_SCRAPER_GENERIC_DISCOVERY_FANOUT",
+                        24 if full_corpus_mode else 8,
+                    ),
+                )
+                page_budget = max(
+                    1,
+                    _env_int(
+                        "STATE_SCRAPER_GENERIC_MAX_PAGES",
+                        240 if full_corpus_mode else 12,
+                    ),
+                )
+                discovery_queue: List[tuple[str, int]] = [
+                    (url, 1)
+                    for url in _collect_discovery_urls_from_soup(
+                        soup,
+                        code_url,
+                        max_urls=fanout_limit,
+                    )
+                ]
+                queued_urls = {url for url, _ in discovery_queue}
+                queue_index = 0
+                while queue_index < len(discovery_queue):
                     if max_sections is not None and len(statutes) >= max_sections:
                         break
+                    if pages_scanned >= page_budget:
+                        break
+
+                    discovery_url, depth = discovery_queue[queue_index]
+                    queue_index += 1
+                    canonical_discovery_url = self._canonicalize_statute_url(discovery_url)
+                    if canonical_discovery_url in visited_pages:
+                        continue
+                    visited_pages.add(canonical_discovery_url)
+
                     try:
                         discovery_bytes = await self._fetch_page_content_with_archival_fallback(
-                            discovery_url,
+                            canonical_discovery_url,
                             timeout_seconds=35,
                         )
                         if not discovery_bytes:
                             continue
-                        discovery_soup = BeautifulSoup(discovery_bytes, 'html.parser')
-                        section_count += _extract_statutes_from_soup(discovery_soup, discovery_url)
+                        discovery_soup = BeautifulSoup(discovery_bytes, "html.parser")
+                        pages_scanned += 1
+                        extracted = _extract_statutes_from_soup(
+                            discovery_soup,
+                            canonical_discovery_url,
+                            pages_scanned=pages_scanned,
+                        )
+                        section_count += extracted
+                        self._write_partial_checkpoint(
+                            statutes,
+                            code_name=code_name,
+                            stage_label=f"generic:depth{depth}",
+                            extra={
+                                "pages_scanned": pages_scanned,
+                                "sections_extracted": int(section_count),
+                                "source_url": canonical_discovery_url,
+                                "discovery_depth": depth,
+                                "queue_size": len(discovery_queue),
+                            },
+                        )
+                        if depth >= discovery_depth:
+                            continue
+                        for child_url in _collect_discovery_urls_from_soup(
+                            discovery_soup,
+                            canonical_discovery_url,
+                            max_urls=fanout_limit,
+                        ):
+                            if child_url in visited_pages or child_url in queued_urls:
+                                continue
+                            discovery_queue.append((child_url, depth + 1))
+                            queued_urls.add(child_url)
                     except Exception:
                         continue
-            
+
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="generic:complete",
+                force=True,
+                extra={
+                    "pages_scanned": pages_scanned,
+                    "sections_extracted": int(section_count),
+                    "source_url": code_url,
+                },
+            )
             self.logger.info(f"Scraped {len(statutes)} sections from {code_name}")
             
         except Exception as e:
@@ -2071,7 +2432,31 @@ class BaseStateScraper(ABC):
             self.logger.error(f"Required library not available: {e}")
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
-        statutes = []
+        full_corpus_mode = self._full_corpus_enabled() and max_sections is None
+        progress_log_every = max(10, _env_int("STATE_SCRAPER_PROGRESS_LOG_EVERY", 25))
+        statutes: List[NormalizedStatute] = []
+        seen_source_urls = set()
+        if full_corpus_mode:
+            resumed_statutes = self._load_partial_checkpoint_statutes(
+                code_name=code_name,
+                max_statutes=None,
+            )
+            for resumed in resumed_statutes:
+                if max_sections is not None and len(statutes) >= max_sections:
+                    break
+                resumed_url = self._canonicalize_statute_url(str(resumed.source_url or "").strip())
+                if resumed_url and resumed_url in seen_source_urls:
+                    continue
+                if resumed_url:
+                    resumed.source_url = resumed_url
+                    seen_source_urls.add(resumed_url)
+                statutes.append(resumed)
+            if statutes:
+                self.logger.info(
+                    "%s playwright scrape resume: statutes_so_far=%s",
+                    self.state_code,
+                    len(statutes),
+                )
         
         try:
             async with acquire_playwright_slot():
@@ -2121,6 +2506,8 @@ class BaseStateScraper(ABC):
                                 continue
 
                             link_url = self._canonicalize_statute_url(link_url)
+                            if link_url in seen_source_urls:
+                                continue
 
                             if not self._is_probable_statute_link(link_text, link_url, code_url):
                                 continue
@@ -2148,7 +2535,30 @@ class BaseStateScraper(ABC):
                             )
 
                             statutes.append(statute)
+                            seen_source_urls.add(link_url)
                             section_count += 1
+                            if len(statutes) == 1 or len(statutes) % progress_log_every == 0:
+                                self.logger.info(
+                                    "Playwright scrape progress: state=%s code=%s statutes_so_far=%s source_url=%s",
+                                    self.state_code,
+                                    code_name,
+                                    len(statutes),
+                                    code_url,
+                                )
+                                self._write_partial_checkpoint(
+                                    statutes,
+                                    code_name=code_name,
+                                    stage_label="playwright:progress",
+                                    extra={"source_url": code_url, "sections_extracted": section_count},
+                                )
+
+                        self._write_partial_checkpoint(
+                            statutes,
+                            code_name=code_name,
+                            stage_label="playwright:complete",
+                            force=True,
+                            extra={"source_url": code_url, "sections_extracted": section_count},
+                        )
 
                         self.logger.info(f"Scraped {len(statutes)} sections using Playwright from {code_name}")
 

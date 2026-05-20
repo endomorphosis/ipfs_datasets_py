@@ -137,6 +137,10 @@ COMPILER_REQUIRED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] =
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
     ),
     (
@@ -256,7 +260,15 @@ COMPILER_AMBIGUITY_POLICY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...] = (
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.EPISTEMIC.value,
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
@@ -272,6 +284,34 @@ ZERO_MARGIN_CONTESTED_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ..
     (
         ModalLogicFamily.EPISTEMIC.value,
         ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.FRAME.value,
+    ),
+    (
+        ModalLogicFamily.FRAME.value,
+        ModalLogicFamily.TEMPORAL.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.CONDITIONAL_NORMATIVE.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.DEONTIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.FRAME.value,
     ),
 )
 
@@ -529,6 +569,10 @@ PRIORITY_SIGNAL_FREE_ADAPTIVE_AMBIGUITY_FAMILY_PAIRS: Tuple[Tuple[str, str], ...
     ),
     (
         ModalLogicFamily.TEMPORAL.value,
+        ModalLogicFamily.EPISTEMIC.value,
+    ),
+    (
+        ModalLogicFamily.TEMPORAL.value,
         ModalLogicFamily.FRAME.value,
     ),
     (
@@ -692,6 +736,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 ("obligation", "obligatory"),
                 (
                     "shall",
+                    "shall issue",
                     "must",
                     "required",
                     "obligated",
@@ -720,6 +765,7 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "within",
                     "by",
                     "effective date",
+                    "effective dates",
                     "effective on first day",
                     "fiscal year",
                     "calendar year",
@@ -733,7 +779,18 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                 ),
                 (ModalSystem.LTL, ModalSystem.CTL),
             ),
-            _op("X", ("next",), ("next", "after", "following"), (ModalSystem.LTL, ModalSystem.CTL)),
+            _op(
+                "X",
+                ("next",),
+                (
+                    "next",
+                    "after",
+                    "following",
+                    "after notice and hearing",
+                    "after notice and opportunity for hearing",
+                ),
+                (ModalSystem.LTL, ModalSystem.CTL),
+            ),
         ),
         semantics=ModalSemanticsSpec(tree_time=True),
         description="Deadlines, effective dates, and temporal scopes.",
@@ -819,6 +876,10 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "to the extent that",
                     "in the event that",
                     "in the case of",
+                    "application of",
+                    "application to",
+                    "applicability of",
+                    "applicable to",
                     "provided, however, that",
                     "only if",
                     "for purposes of",
@@ -827,13 +888,21 @@ DEFAULT_MODAL_PROFILES: Tuple[ModalParseProfile, ...] = (
                     "notwithstanding",
                     "pursuant to",
                     "under terms and conditions",
+                    "under terms or conditions",
                     "under such terms and conditions",
+                    "under such terms or conditions",
                     "on such terms and conditions",
+                    "on such terms or conditions",
                     "upon terms and conditions",
+                    "upon terms or conditions",
                     "upon such terms and conditions",
+                    "upon such terms or conditions",
                     "subject to terms and conditions",
+                    "subject to terms or conditions",
                     "subject to such terms and conditions",
+                    "subject to such terms or conditions",
                     "subject to the terms and conditions",
+                    "subject to the terms or conditions",
                     "subject only to",
                     "subject, however, to",
                     "subject however to",

@@ -2762,6 +2762,35 @@ def test_spacy_codec_backfills_conditional_share_for_dense_temporal_scope_with_c
     assert conditional_share > 0.0
 
 
+def test_spacy_codec_treats_as_provided_in_as_explicit_conditional_scope_phrase() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    sample = build_us_code_sample(
+        title="21",
+        section="404c",
+        text=(
+            "Within 30 days and no later than January 1, 2030, the effective date "
+            "applies as provided in subsection (b)."
+        ),
+    )
+    encoding = codec.encode_sample(sample)
+    signals = modal_ambiguity_signals(encoding)
+    ranking = ranked_modal_families(encoding)
+
+    assert not any(cue.family == "conditional_normative" for cue in encoding.cues)
+    assert signals["has_temporal_scope"] is True
+    assert signals["has_statutory_scope_reference"] is True
+    assert signals["has_conditional_scope_phrase"] is True
+    conditional_share = next(
+        float(item["share"])
+        for item in ranking
+        if item["family"] == "conditional_normative"
+    )
+    assert conditional_share > 0.0
+
+
 def test_spacy_codec_backfills_epistemic_share_for_dense_temporal_scope_with_epistemic_tokens() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
@@ -2845,6 +2874,53 @@ def test_spacy_codec_backfills_frame_share_for_dense_temporal_scope_with_frame_c
         if item["family"] == "frame"
     )
     assert frame_share > 0.0
+
+
+def test_spacy_codec_strengthens_frame_share_for_sparse_frame_cues_in_dense_temporal_scope() -> None:
+    codec = SpaCyModalCodec(
+        encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),
+        decoder=SpaCyModalDecoder(),
+    )
+    baseline = build_us_code_sample(
+        title="12",
+        section="1824a",
+        text=(
+            "Within 30 days and no later than January 1, 2030, this authority "
+            "remains effective."
+        ),
+    )
+    competing = build_us_code_sample(
+        title="12",
+        section="1824b",
+        text=(
+            "Within 30 days and no later than January 1, 2030, this authority "
+            "remains effective under this section."
+        ),
+    )
+    baseline_encoding = codec.encode_sample(baseline)
+    competing_encoding = codec.encode_sample(competing)
+    baseline_signals = modal_ambiguity_signals(baseline_encoding)
+    competing_signals = modal_ambiguity_signals(competing_encoding)
+    baseline_ranking = ranked_modal_families(baseline_encoding)
+    competing_ranking = ranked_modal_families(competing_encoding)
+
+    baseline_frame_share = next(
+        float(item["share"])
+        for item in baseline_ranking
+        if item["family"] == "frame"
+    )
+    competing_frame_share = next(
+        float(item["share"])
+        for item in competing_ranking
+        if item["family"] == "frame"
+    )
+    assert baseline_signals["has_temporal_scope"] is True
+    assert competing_signals["has_temporal_scope"] is True
+    assert baseline_signals["has_statutory_scope_reference"] is False
+    assert competing_signals["has_statutory_scope_reference"] is True
+    assert baseline_ranking[0]["family"] == "temporal"
+    assert competing_ranking[0]["family"] == "temporal"
+    assert competing_frame_share > baseline_frame_share
 
 
 def test_spacy_encoder_extracts_conditional_terms_and_conditions_cue() -> None:

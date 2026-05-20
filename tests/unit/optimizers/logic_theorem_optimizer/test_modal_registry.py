@@ -39,7 +39,9 @@ def test_deontic_profile_has_expected_operators_and_serial_semantics() -> None:
     assert profile.semantics.serial is True
     assert {"O", "P", "F"}.issubset(symbols)
     assert {"shall", "must", "may", "prohibited"}.issubset(cue_terms)
-    assert {"has a duty to", "under an obligation to"}.issubset(cue_terms)
+    assert {"has a duty to", "under an obligation to", "shall issue"}.issubset(
+        cue_terms
+    )
 
 
 def test_frame_profile_is_bm25_ontology_grounded() -> None:
@@ -71,6 +73,7 @@ def test_temporal_profile_includes_deadline_and_calendar_scope_cues() -> None:
     assert "fiscal year" in cue_terms
     assert "from time to time" in cue_terms
     assert "on or after" in cue_terms
+    assert "after notice and opportunity for hearing" in cue_terms
 
 
 def test_doxastic_profile_includes_belief_and_intent_inflections() -> None:
@@ -277,6 +280,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     assert ("frame", "temporal") in required_pairs
     assert ("temporal", "conditional_normative") in required_pairs
     assert ("temporal", "deontic") in required_pairs
+    assert ("temporal", "epistemic") in required_pairs
     assert ("temporal", "temporal") in required_pairs
     assert compiler_required_adaptive_ambiguity_targets("alethic") == (
         "deontic",
@@ -314,6 +318,7 @@ def test_compiler_required_adaptive_ambiguity_bundle_covers_deontic_conflict_pai
     )
     assert compiler_required_adaptive_ambiguity_targets("temporal") == (
         "deontic",
+        "epistemic",
         "conditional_normative",
         "frame",
         "temporal",
@@ -347,6 +352,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
         ("frame", "frame"),
         ("hybrid", "frame"),
         ("temporal", "deontic"),
+        ("temporal", "epistemic"),
         ("temporal", "conditional_normative"),
         ("temporal", "frame"),
         ("temporal", "temporal"),
@@ -388,6 +394,7 @@ def test_compiler_ambiguity_policy_pair_helper_matches_declared_bundle() -> None
     assert is_compiler_ambiguity_policy_pair("frame", "frame") is True
     assert is_compiler_ambiguity_policy_pair("hybrid", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "deontic") is True
+    assert is_compiler_ambiguity_policy_pair("temporal", "epistemic") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "conditional_normative") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "frame") is True
     assert is_compiler_ambiguity_policy_pair("temporal", "temporal") is True
@@ -466,16 +473,17 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
         "epistemic",
         "dynamic",
         "temporal",
-        "frame",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
+        "epistemic",
         "conditional_normative",
         "frame",
         "temporal",
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
+        "epistemic",
         "conditional_normative",
         "frame",
         "temporal",
@@ -488,6 +496,7 @@ def test_compiler_ambiguity_policy_targets_are_ordered_and_directional() -> None
     )
     assert compiler_ambiguity_policy_targets("temporal") == (
         "deontic",
+        "epistemic",
         "conditional_normative",
         "frame",
         "temporal",
@@ -608,6 +617,7 @@ def test_priority_signal_free_adaptive_ambiguity_pair_policy_is_directional() ->
     )
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "deontic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "alethic")
+    assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "epistemic")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "frame")
     assert is_priority_signal_free_adaptive_ambiguity_pair("temporal", "temporal")
     assert is_priority_signal_free_adaptive_ambiguity_pair("hybrid", "frame")
@@ -645,6 +655,7 @@ def test_priority_signal_free_adaptive_targets_are_ordered_directional_subsets()
         "conditional_normative",
         "deontic",
         "alethic",
+        "epistemic",
         "frame",
         "temporal",
     )
@@ -684,6 +695,7 @@ def test_priority_signal_free_policy_covers_recurrent_compiler_ambiguity_pairs()
         ("deontic", "frame"),
         ("deontic", "temporal"),
         ("conditional_normative", "temporal"),
+        ("temporal", "epistemic"),
         ("temporal", "frame"),
         ("temporal", "temporal"),
         ("epistemic", "deontic"),

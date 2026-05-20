@@ -63,6 +63,7 @@ PROGRAM_SYNTHESIS_ACTION_TARGETS = {
     "repair_multiview_legal_ir_view_coverage": "bridge.contracts",
     "repair_flogic_ontology_constraints": "modal.frame_logic",
     "repair_tdfol_bridge_parse": "TDFOL.prover",
+    "repair_zkp_attestation_bridge": "zkp.circuits",
 }
 
 AUTOENCODER_TRAINABLE_ACTIONS = {
@@ -282,6 +283,8 @@ def _bridge_loss_prefix(name: str) -> str:
     ).strip("_")
     if normalized == "deontic_norms":
         return "deontic"
+    if normalized == "zkp_attestation":
+        return "zkp"
     return normalized or "bridge"
 
 
@@ -552,6 +555,10 @@ class ModalLossTodoGenerator:
         "tdfol_no_formula_loss": 0.0,
         "tdfol_parse_failure_ratio": 0.0,
         "text_reconstruction_loss": 0.0,
+        "zkp_attestation_missing_loss": 0.0,
+        "zkp_graph_failure_penalty": 0.0,
+        "zkp_proof_failure_ratio": 0.0,
+        "zkp_verification_failure_ratio": 0.0,
     }
 
     def __init__(
@@ -741,6 +748,22 @@ class ModalLossTodoGenerator:
             "tdfol_parse_failure_ratio": (
                 "repair_tdfol_bridge_parse",
                 "Improve TDFOL parser compatibility so bridge formulas compile into prover inputs.",
+            ),
+            "zkp_attestation_missing_loss": (
+                "repair_zkp_attestation_bridge",
+                "Wire formal proof obligations into ZKP attestation records for the canonical LegalIR.",
+            ),
+            "zkp_graph_failure_penalty": (
+                "repair_zkp_attestation_bridge",
+                "Repair ZKP attestation graph records so proof evidence imports into the Neo4j-compatible graph layer.",
+            ),
+            "zkp_proof_failure_ratio": (
+                "repair_zkp_attestation_bridge",
+                "Repair ZKP proof-attestation verification so proof records satisfy the circuit bridge.",
+            ),
+            "zkp_verification_failure_ratio": (
+                "repair_zkp_attestation_bridge",
+                "Repair ZKP proof verification so generated proof attestations validate deterministically.",
             ),
         }.get(
             loss_name,

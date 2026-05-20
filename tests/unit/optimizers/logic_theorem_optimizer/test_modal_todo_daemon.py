@@ -172,6 +172,7 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
             "cec_dcec_validation_failure_ratio": 1.0,
             "external_prover_unavailable_loss": 1.0,
             "tdfol_parse_failure_ratio": 1.0,
+            "zkp_verification_failure_ratio": 1.0,
         },
         parser_formula_count=1,
     )
@@ -187,6 +188,10 @@ def test_loss_generator_routes_cross_logic_bridge_losses_to_ast_scopes() -> None
     assert actions_by_loss["external_prover_unavailable_loss"].metadata[
         "program_synthesis_scope"
     ] == "external_provers"
+    assert actions_by_loss["zkp_verification_failure_ratio"].action == "repair_zkp_attestation_bridge"
+    assert actions_by_loss["zkp_verification_failure_ratio"].metadata[
+        "program_synthesis_scope"
+    ] == "zkp"
 
 
 def test_queue_claims_multiple_pending_todos_at_once() -> None:
@@ -774,6 +779,7 @@ def test_default_bridge_loss_adapters_cover_registered_logic_views() -> None:
         "fol_tdfol",
         "cec_dcec",
         "external_prover_router",
+        "zkp_attestation",
     ]
 
 
@@ -924,6 +930,55 @@ def test_program_synthesis_generator_uses_legal_ir_view_introspection() -> None:
     assert by_action["repair_deontic_bridge_quality_gate"].metadata[
         "program_synthesis_scope"
     ] == "deontic"
+
+
+def test_program_synthesis_generator_fans_out_legal_ir_view_introspection() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552",
+        text="The agency shall publish notice before the permit takes effect.",
+    )
+    autoencoder = AdaptiveModalAutoencoder(feature_family_logit_scale=1.0)
+    autoencoder.evaluate(
+        [sample],
+        legal_ir_targets={
+            sample.sample_id: SimpleNamespace(
+                losses={"legal_ir_multiview_total_loss": 0.5},
+                view_distribution={
+                    "CEC.native": 0.14,
+                    "TDFOL.prover": 0.12,
+                    "deontic.ir": 0.10,
+                    "external_provers.router": 0.08,
+                    "knowledge_graphs.neo4j_compat": 0.18,
+                    "zkp.circuits": 0.10,
+                },
+            )
+        },
+    )
+    supervisor = ModalTodoSupervisor(
+        policy=ModalOptimizerPolicy(program_synthesis_min_support=1),
+        bridge_names=("deontic_norms", "fol_tdfol", "cec_dcec", "external_prover_router", "zkp_attestation"),
+    )
+
+    seeded = supervisor.seed_program_synthesis_from_introspection(
+        [sample],
+        autoencoder=autoencoder,
+    )
+
+    scopes = {
+        todo.metadata["program_synthesis_scope"]
+        for todo in seeded
+        if todo.metadata["optimizer_role"] == "program_synthesis"
+    }
+    assert {
+        "bridge",
+        "cec",
+        "deontic",
+        "external_provers",
+        "knowledge_graphs",
+        "tdfol",
+        "zkp",
+    } <= scopes
 
 
 def test_supervisor_optimizes_autoencoder_first_and_leaves_program_synthesis_backlog() -> None:
@@ -2065,6 +2120,125 @@ def test_vector_claim_target_file_lane_waits_when_claimed_packet_overlaps(tmp_pa
     assert queue.get("program-registry-pending").status == "pending"
     assert status["pending"] == 1
     assert report["mode"] == "vector_target_file_lanes_busy"
+    assert report["target_file_lane_locked_count"] == 1
+
+
+def test_vector_claim_ast_lane_allows_disjoint_modal_family_pairs(tmp_path, monkeypatch) -> None:
+    active = ModalTodo(
+        todo_id="program-ambiguity-active",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="active ambiguity repair",
+        sample_ids=["a"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=10.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": json.dumps(
+                {
+                    "action": "add_or_review_modal_ambiguity_policy",
+                    "family_pairs": ["frame->deontic"],
+                    "program_synthesis_scope": "compiler_ambiguity",
+                    "target_component": "modal.compiler.ambiguity",
+                }
+            ),
+        },
+    )
+    active.claim("other-codex-worker")
+    blocked = ModalTodo(
+        todo_id="program-ambiguity-blocked",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="same family-pair ambiguity repair",
+        sample_ids=["b"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=9.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": json.dumps(
+                {
+                    "action": "add_or_review_modal_ambiguity_policy",
+                    "family_pairs": ["frame->deontic"],
+                    "program_synthesis_scope": "compiler_ambiguity",
+                    "target_component": "modal.compiler.ambiguity",
+                }
+            ),
+        },
+    )
+    allowed = ModalTodo(
+        todo_id="program-ambiguity-allowed",
+        action="add_or_review_modal_ambiguity_policy",
+        objective="different family-pair ambiguity repair",
+        sample_ids=["c"],
+        citations=[],
+        loss_name="autoencoder_residual_cluster",
+        loss_value=1.0,
+        priority=8.0,
+        metadata={
+            "optimizer_role": "program_synthesis",
+            "program_synthesis_scope": "compiler_ambiguity",
+            "target_component": "modal.compiler.ambiguity",
+            "semantic_bundle_key": json.dumps(
+                {
+                    "action": "add_or_review_modal_ambiguity_policy",
+                    "family_pairs": ["temporal->frame"],
+                    "program_synthesis_scope": "compiler_ambiguity",
+                    "target_component": "modal.compiler.ambiguity",
+                }
+            ),
+        },
+    )
+    queue_path = tmp_path / "queue.jsonl"
+    ModalTodoQueue([active, blocked, allowed]).save_jsonl(queue_path)
+
+    def fake_vector_index(*, args, index_path, todos):
+        todo_list = list(todos)
+        return (
+            {item.todo_id: [1.0, 0.0] for item in todo_list},
+            {
+                "backend": "embeddings_router",
+                "fallback_reason": "",
+                "indexed_count": len(todo_list),
+                "path": str(index_path),
+                "provider": "local_adapter",
+                "refreshed_count": len(todo_list),
+            },
+        )
+
+    monkeypatch.setattr(runner, "_update_codex_task_vector_index", fake_vector_index)
+    args = SimpleNamespace(
+        codex_scope="compiler_ambiguity",
+        codex_lane_lock_mode="ast",
+        codex_target_file_lane_lock_seconds=600.0,
+        codex_target_file_lane_lock_scopes="all",
+        codex_vector_index_path=None,
+        codex_vector_min_similarity=0.55,
+        codex_vector_fill_min_similarity=None,
+        codex_vector_min_bundle_size=1,
+        codex_vector_max_bundle_wait_seconds=0.0,
+        max_items=3,
+    )
+
+    claimed, queue, status, report = runner._claim_vector_program_synthesis_batch(
+        args=args,
+        queue_path=queue_path,
+        worker_id="codex-worker",
+        policy=ModalOptimizerPolicy(),
+        execution_mode="codex_cli_executor",
+        summary={},
+    )
+
+    assert [todo.todo_id for todo in claimed] == ["program-ambiguity-allowed"]
+    assert queue.get("program-ambiguity-blocked").status == "pending"
+    assert queue.get("program-ambiguity-allowed").status == "claimed"
+    assert status["claimed"] == 2
+    assert report["target_file_lane_lock_mode"] == "ast"
     assert report["target_file_lane_locked_count"] == 1
 
 

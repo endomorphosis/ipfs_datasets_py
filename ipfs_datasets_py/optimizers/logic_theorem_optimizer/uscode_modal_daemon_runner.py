@@ -189,6 +189,7 @@ CODEX_TRANSIENT_FAILURE_PATTERNS = (
 CODEX_BUNDLE_MODES = ("priority", "semantic", "vector")
 CODEX_MERGE_REPAIR_MODES = ("off", "apply_3way")
 CODEX_VECTOR_FALLBACK_MODES = ("hash", "priority")
+CODEX_LANE_LOCK_MODES = ("target_file", "ast", "hybrid")
 CODEX_APPLY_VALIDATION_TESTS = (
     "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
     "tests/unit/optimizers/logic_theorem_optimizer/test_spacy_modal_codec.py",
@@ -246,6 +247,11 @@ def _todo_program_synthesis_scope(todo: ModalTodo) -> str:
     return str(todo.metadata.get("program_synthesis_scope") or "").strip()
 
 
+def _codex_lane_lock_mode(args: argparse.Namespace) -> str:
+    raw = str(getattr(args, "codex_lane_lock_mode", "target_file") or "").strip().lower()
+    return raw if raw in CODEX_LANE_LOCK_MODES else "target_file"
+
+
 def _codex_target_file_lane_lock_scopes(args: argparse.Namespace) -> Optional[set[str]]:
     raw = str(
         getattr(args, "codex_target_file_lane_lock_scopes", "compiler_registry") or ""
@@ -268,6 +274,69 @@ def _target_file_lane_lock_enabled_for(
     return _todo_program_synthesis_scope(todo) in lock_scopes
 
 
+def _todo_modal_family_pairs(todo: ModalTodo) -> List[str]:
+    pairs: List[str] = []
+    semantic_bundle_key = todo.metadata.get("semantic_bundle_key")
+    if isinstance(semantic_bundle_key, str) and semantic_bundle_key.strip():
+        try:
+            parsed = json.loads(semantic_bundle_key)
+        except json.JSONDecodeError:
+            parsed = {}
+        if isinstance(parsed, Mapping):
+            for pair in parsed.get("family_pairs") or []:
+                value = str(pair).strip()
+                if value and value not in pairs:
+                    pairs.append(value)
+
+    for evidence in todo.metadata.get("hint_evidence") or []:
+        if not isinstance(evidence, Mapping):
+            continue
+        predicted = str(evidence.get("predicted_family") or "").strip()
+        target = str(evidence.get("target_family") or "").strip()
+        if not predicted or not target:
+            continue
+        value = f"{predicted}->{target}"
+        if value not in pairs:
+            pairs.append(value)
+    return pairs
+
+
+def _stable_lane_fragment(value: str) -> str:
+    return hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+
+
+def _todo_ast_lane_keys(todo: ModalTodo) -> List[str]:
+    scope = _todo_program_synthesis_scope(todo) or "unknown"
+    target_component = str(todo.metadata.get("target_component") or "").strip()
+    base = f"ast:{scope}:{target_component or todo.action}"
+    keys: List[str] = []
+
+    family_pairs = _todo_modal_family_pairs(todo)
+    if family_pairs and scope in {"compiler_ambiguity", "compiler_registry"}:
+        for pair in family_pairs:
+            keys.append(f"{base}:family:{pair}")
+        return keys
+
+    semantic_bundle_key = str(todo.metadata.get("semantic_bundle_key") or "").strip()
+    if semantic_bundle_key:
+        return [f"{base}:semantic:{_stable_lane_fragment(semantic_bundle_key)}"]
+
+    action = str(todo.action or "").strip()
+    return [f"{base}:action:{action}"]
+
+
+def _todo_lane_lock_keys(todo: ModalTodo, *, mode: str) -> List[str]:
+    if mode == "ast":
+        return _todo_ast_lane_keys(todo)
+    if mode == "hybrid":
+        keys: List[str] = []
+        for value in [*_todo_ast_lane_keys(todo), *_todo_target_file_hints(todo)]:
+            if value not in keys:
+                keys.append(value)
+        return keys
+    return _todo_target_file_hints(todo)
+
+
 def _active_target_file_locks(
     queue: ModalTodoQueue,
     *,
@@ -275,8 +344,9 @@ def _active_target_file_locks(
     worker_id: str,
     max_age_seconds: float,
     lock_scopes: Optional[set[str]],
+    lane_lock_mode: str = "target_file",
 ) -> Dict[str, List[str]]:
-    """Return currently claimed target-file lanes that should block new work."""
+    """Return currently claimed lanes that should block new work."""
     if max_age_seconds <= 0.0:
         return {}
     now = time.time()
@@ -288,18 +358,20 @@ def _active_target_file_locks(
             continue
         if todo.claimed_at and _claimed_todo_age_seconds(todo, now=now) > max_age_seconds:
             continue
-        for file_path in _todo_target_file_hints(todo):
-            locks.setdefault(file_path, []).append(todo.todo_id)
+        for lane_key in _todo_lane_lock_keys(todo, mode=lane_lock_mode):
+            locks.setdefault(lane_key, []).append(todo.todo_id)
     return locks
 
 
 def _target_file_lane_conflicts(
     todo: ModalTodo,
     active_locks: Mapping[str, Sequence[str]],
+    *,
+    lane_lock_mode: str = "target_file",
 ) -> List[str]:
     if not active_locks:
         return []
-    return sorted(set(_todo_target_file_hints(todo)) & set(active_locks))
+    return sorted(set(_todo_lane_lock_keys(todo, mode=lane_lock_mode)) & set(active_locks))
 
 
 def _codex_stale_bundle_lease_path(queue_path: Path) -> Path:
@@ -1235,19 +1307,25 @@ def _claim_vector_program_synthesis_batch(
             float(getattr(args, "codex_target_file_lane_lock_seconds", 0.0) or 0.0),
         )
         target_lane_lock_scopes = _codex_target_file_lane_lock_scopes(args)
+        lane_lock_mode = _codex_lane_lock_mode(args)
         active_target_locks = _active_target_file_locks(
             snapshot_queue,
             optimizer_role=policy.program_synthesis_role,
             worker_id=worker_id,
             max_age_seconds=target_lane_lock_seconds,
             lock_scopes=target_lane_lock_scopes,
+            lane_lock_mode=lane_lock_mode,
         )
         candidates = [
             todo
             for todo in raw_candidates
             if not (
                 _target_file_lane_lock_enabled_for(todo, target_lane_lock_scopes)
-                and _target_file_lane_conflicts(todo, active_target_locks)
+                and _target_file_lane_conflicts(
+                    todo,
+                    active_target_locks,
+                    lane_lock_mode=lane_lock_mode,
+                )
             )
         ]
         all_program_todos = _program_synthesis_queue_todos(
@@ -1270,6 +1348,7 @@ def _claim_vector_program_synthesis_batch(
         "mode": "vector",
         "oldest_candidate_age_seconds": round(_oldest_todo_age_seconds(candidates), 3),
         "selected_count": 0,
+        "target_file_lane_lock_mode": lane_lock_mode,
         "target_file_lane_lock_seconds": target_lane_lock_seconds,
         "target_file_lane_lock_scopes": (
             "all" if target_lane_lock_scopes is None else sorted(target_lane_lock_scopes)
@@ -1574,6 +1653,8 @@ def _build_codex_child_command(
         str(getattr(args, "codex_target_file_lane_lock_seconds", 0.0)),
         "--codex-target-file-lane-lock-scopes",
         str(getattr(args, "codex_target_file_lane_lock_scopes", "compiler_registry")),
+        "--codex-lane-lock-mode",
+        str(getattr(args, "codex_lane_lock_mode", "target_file")),
         "--codex-task-embeddings-provider",
         str(getattr(args, "codex_task_embeddings_provider", "local_adapter")),
         "--codex-task-embeddings-batch-size",
@@ -3605,6 +3686,16 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--codex-lane-lock-mode",
+        choices=CODEX_LANE_LOCK_MODES,
+        default="target_file",
+        help=(
+            "Conflict key used by Codex lane locks. 'target_file' serializes shared "
+            "file hints; 'ast' serializes inferred AST/write-scope keys such as "
+            "modal family-pair lanes; 'hybrid' applies both."
+        ),
+    )
+    parser.add_argument(
         "--codex-vector-index-path",
         default=None,
         help="Optional JSON path for the Codex TODO vector index cache.",
@@ -4440,6 +4531,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_claimed_total": 0,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
@@ -4475,6 +4567,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
     summary.setdefault("codex_apply_mode", args.codex_apply_mode)
     summary.setdefault("codex_bundle_mode", args.codex_bundle_mode)
     summary.setdefault("codex_commit_mode", args.codex_commit_mode)
+    summary.setdefault("codex_lane_lock_mode", args.codex_lane_lock_mode)
     summary.setdefault("codex_merge_repair_attempts", args.codex_merge_repair_attempts)
     summary.setdefault("codex_merge_repair_mode", args.codex_merge_repair_mode)
     summary.setdefault("codex_scope", args.codex_scope)
@@ -4499,6 +4592,7 @@ def run_codex_program_synthesis_daemon(args: argparse.Namespace) -> int:
             "codex_bundle_mode": args.codex_bundle_mode,
             "codex_commit_mode": args.codex_commit_mode,
             "codex_exec_mode": args.codex_exec_mode,
+            "codex_lane_lock_mode": args.codex_lane_lock_mode,
             "codex_merge_repair_attempts": args.codex_merge_repair_attempts,
             "codex_merge_repair_mode": args.codex_merge_repair_mode,
             "codex_scope": args.codex_scope,
