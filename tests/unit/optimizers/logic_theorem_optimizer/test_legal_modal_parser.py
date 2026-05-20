@@ -1133,6 +1133,27 @@ def test_parser_replays_heading_only_zero_formula_cases_for_25_422_48_1572_and_4
         assert fallback.provenance.citation == citation
 
 
+def test_parser_adds_residual_heading_fallback_when_modal_cues_cover_other_segments() -> None:
+    parser = LegalModalParser()
+    document = parser.parse(
+        (
+            "Sec. 124 - Administrative notice and hearing procedures. "
+            "The Secretary shall issue a decision within 30 days."
+        ),
+        document_id="us-code-25-124-d6ef602ae0d2e2b8",
+        source="us_code",
+        citation="25 U.S.C. 124",
+    )
+
+    assert document.formulas
+    assert any(formula.operator.family == "deontic" for formula in document.formulas)
+    fallback = document.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    assert fallback.provenance.citation == "25 U.S.C. 124"
+
+
 def test_parser_treats_may_date_literals_as_temporal_context_for_7_7913() -> None:
     parser = LegalModalParser()
     document = parser.parse(

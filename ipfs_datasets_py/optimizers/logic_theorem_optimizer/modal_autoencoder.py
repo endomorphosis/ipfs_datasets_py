@@ -622,6 +622,7 @@ class AdaptiveModalAutoencoder:
         samples: Iterable[LegalSample],
         *,
         legal_ir_bridge_names: Sequence[str] = (),
+        legal_ir_evaluate_provers: Optional[bool] = None,
         legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
         use_sample_memory: bool = True,
     ) -> AutoencoderEvaluation:
@@ -641,6 +642,7 @@ class AdaptiveModalAutoencoder:
         legal_ir_payload = _legal_ir_target_payload(
             sample_list,
             bridge_names=legal_ir_bridge_names,
+            evaluate_provers=legal_ir_evaluate_provers,
             legal_ir_targets=legal_ir_targets,
         )
         legal_ir_target_distributions: Mapping[str, Mapping[str, float]] = legal_ir_payload[
@@ -1652,11 +1654,13 @@ def _legal_ir_target_payload(
     samples: Sequence[LegalSample],
     *,
     bridge_names: Sequence[str] = (),
+    evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]] = None,
 ) -> Dict[str, Any]:
     target_items = _legal_ir_target_items(
         samples,
         bridge_names=bridge_names,
+        evaluate_provers=evaluate_provers,
         legal_ir_targets=legal_ir_targets,
     )
     loss_values: Dict[str, List[float]] = {}
@@ -1705,6 +1709,7 @@ def _legal_ir_target_items(
     samples: Sequence[LegalSample],
     *,
     bridge_names: Sequence[str] | str,
+    evaluate_provers: Optional[bool] = None,
     legal_ir_targets: Optional[Mapping[str, Any] | Sequence[Any]],
 ) -> List[tuple[str, Any]]:
     if legal_ir_targets is not None:
@@ -1738,6 +1743,7 @@ def _legal_ir_target_items(
             sample.text,
             bridge_names=names,
             document_id=sample.sample_id,
+            evaluate_provers=evaluate_provers,
             citation=sample.citation,
             source=sample.source,
             source_embedding=sample.embedding_vector,

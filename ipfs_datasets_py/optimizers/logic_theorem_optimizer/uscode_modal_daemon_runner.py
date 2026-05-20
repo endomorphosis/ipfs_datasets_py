@@ -172,6 +172,7 @@ CODEX_ACTION_FILE_HINTS = {
 
 CODEX_SANDBOX_FALLBACK = "danger-full-access"
 CODEX_SANDBOX_BLOCKER_PATTERNS = (
+    "blocked by execution environment",
     "blocked by the execution sandbox",
     "bwrap: loopback: failed rtm_newaddr",
     "operation not permitted",
@@ -444,6 +445,40 @@ def row_to_sample(row: Mapping[str, Any]):
     return USCodeParquetRecord.from_row(row).to_sample()
 
 
+def _row_text_within_limit(row: Mapping[str, Any], max_text_chars: int) -> bool:
+    if max_text_chars <= 0:
+        return True
+    return len(str(row.get("text") or "")) <= max_text_chars
+
+
+def _sample_one_row(
+    laws_table: Any,
+    rng: random.Random,
+    *,
+    selected_indices: set[int],
+    blocked_sample_ids: AbstractSet[str] = frozenset(),
+    max_sample_text_chars: int = 0,
+    max_attempts: int = 5000,
+) -> tuple[int, Any, int]:
+    attempts = 0
+    while attempts < max_attempts:
+        attempts += 1
+        index = rng.randrange(laws_table.num_rows)
+        if index in selected_indices:
+            continue
+        row = laws_table.take([index]).to_pylist()[0]
+        if not _row_text_within_limit(row, max_sample_text_chars):
+            continue
+        sample = row_to_sample(row)
+        if sample.sample_id in blocked_sample_ids:
+            continue
+        selected_indices.add(index)
+        return index, sample, attempts
+    raise RuntimeError(
+        "Unable to sample a U.S. Code row matching daemon sampling constraints"
+    )
+
+
 def sample_train_validation_rows(
     laws_table,
     rng: random.Random,
@@ -451,31 +486,51 @@ def sample_train_validation_rows(
     train_count: int,
     validation_count: int,
     blocked_validation_sample_ids: set[str],
+    max_sample_text_chars: int = 0,
 ):
-    train_indices = rng.sample(range(laws_table.num_rows), train_count)
-    train_rows = laws_table.take(train_indices).to_pylist()
-    train_samples = [row_to_sample(row) for row in train_rows]
-    selected_indices = set(train_indices)
+    selected_indices: set[int] = set()
+    train_indices = []
+    train_samples = []
+    train_sampling_attempts = 0
+    max_train_attempts = max(5000, train_count * 1000)
+    for _ in range(train_count):
+        index, sample, attempts = _sample_one_row(
+            laws_table,
+            rng,
+            selected_indices=selected_indices,
+            max_sample_text_chars=max_sample_text_chars,
+            max_attempts=max_train_attempts,
+        )
+        train_indices.append(index)
+        train_samples.append(sample)
+        train_sampling_attempts += attempts
     validation_indices = []
     validation_samples = []
     attempts = 0
-    max_attempts = max(1000, validation_count * 100)
+    max_attempts = max(5000, validation_count * 1000)
     while len(validation_samples) < validation_count and attempts < max_attempts:
-        attempts += 1
-        index = rng.randrange(laws_table.num_rows)
-        if index in selected_indices:
-            continue
-        sample = row_to_sample(laws_table.take([index]).to_pylist()[0])
-        if sample.sample_id in blocked_validation_sample_ids:
-            continue
-        selected_indices.add(index)
+        index, sample, sample_attempts = _sample_one_row(
+            laws_table,
+            rng,
+            selected_indices=selected_indices,
+            blocked_sample_ids=blocked_validation_sample_ids,
+            max_sample_text_chars=max_sample_text_chars,
+            max_attempts=max_attempts - attempts,
+        )
+        attempts += sample_attempts
         validation_indices.append(index)
         validation_samples.append(sample)
     if len(validation_samples) < validation_count:
         raise RuntimeError(
             "Unable to sample enough validation rows without prior sample-memory exposure"
         )
-    return train_indices, train_samples, validation_indices, validation_samples, attempts
+    return (
+        train_indices,
+        train_samples,
+        validation_indices,
+        validation_samples,
+        train_sampling_attempts + attempts,
+    )
 
 
 def metric_block(evaluation) -> Dict[str, Any]:
@@ -615,6 +670,8 @@ BRIDGE_ROUND_TRIP_METRIC_NAMES = (
 def bridge_ir_metric_block(
     samples: Sequence[Any],
     bridge_names: Sequence[str],
+    *,
+    evaluate_provers: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """Aggregate bridge-level compiler/prover/KG diagnostics by adapter."""
 
@@ -662,6 +719,7 @@ def bridge_ir_metric_block(
             bridge_names=adapter_names,
             document_id=sample.sample_id,
             citation=sample.citation,
+            evaluate_provers=evaluate_provers,
             source=sample.source,
             source_embedding=sample.embedding_vector,
         )
@@ -885,6 +943,15 @@ def bridge_loss_adapter_names(args: argparse.Namespace) -> List[str]:
         for name in (part.strip() for part in raw.split(","))
         if name and name.lower() not in {"none", "off", "false"}
     ]
+
+
+def parse_bool_flag(value: Any) -> bool:
+    normalized = str(value).strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"expected boolean flag, got {value!r}")
 
 
 def codex_loop_execution_mode(args: argparse.Namespace) -> str:
@@ -1488,6 +1555,8 @@ def build_paired_daemon_commands(
         str(args.train_count),
         "--validation-count",
         str(args.validation_count),
+        "--max-sample-text-chars",
+        str(getattr(args, "max_sample_text_chars", 0)),
         "--max-inner-iterations",
         str(args.max_inner_iterations),
         "--max-items",
@@ -1496,6 +1565,8 @@ def build_paired_daemon_commands(
         str(args.learning_rate),
         "--bridge-loss-adapters",
         str(getattr(args, "bridge_loss_adapters", DEFAULT_BRIDGE_LOSS_ADAPTERS)),
+        "--bridge-evaluate-provers",
+        str(getattr(args, "bridge_evaluate_provers", True)).lower(),
         "--autoencoder-device",
         str(getattr(args, "autoencoder_device", "auto")),
         "--test-every-cycles",
@@ -2492,11 +2563,12 @@ def _run_codex_exec_attempt(
         "exec",
         "--cd",
         str(worktree_path),
-        "--sandbox",
-        sandbox,
-        "--output-last-message",
-        str(last_message_path),
     ]
+    if str(sandbox).strip().lower() == CODEX_SANDBOX_FALLBACK:
+        cmd.append("--dangerously-bypass-approvals-and-sandbox")
+    else:
+        cmd.extend(["--sandbox", sandbox])
+    cmd.extend(["--output-last-message", str(last_message_path)])
     if model:
         cmd.extend(["--model", model])
     cmd.append("-")
@@ -2878,6 +2950,7 @@ def initial_summary(args: argparse.Namespace, *, log_path: Path, queue_path: Pat
         "best_validation_logic_bridge_acceptance": -1.0,
         "best_validation_logic_bridge_proof_failure_ratio": 1.0e12,
         "best_validation_logic_bridge_total_loss": 1.0e12,
+        "bridge_evaluate_provers": bool(getattr(args, "bridge_evaluate_provers", True)),
         "bridge_loss_adapters": bridge_loss_adapter_names(args),
         "bridge_loss_failures": 0,
         "bridge_loss_samples": 0,
@@ -2931,6 +3004,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--duration-seconds", type=float, default=3600.0)
     parser.add_argument("--train-count", type=int, default=4)
     parser.add_argument("--validation-count", type=int, default=4)
+    parser.add_argument(
+        "--max-sample-text-chars",
+        type=int,
+        default=0,
+        help=(
+            "Skip randomly sampled U.S. Code rows whose text exceeds this many "
+            "characters. Zero keeps the full corpus eligible."
+        ),
+    )
     parser.add_argument("--max-inner-iterations", type=int, default=3)
     parser.add_argument("--max-items", type=int, default=8)
     parser.add_argument("--learning-rate", type=float, default=0.35)
@@ -2940,6 +3022,15 @@ def build_uscode_modal_daemon_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Comma-separated logic bridge adapters that add compiler/prover/graph "
             "losses to optimizer TODO generation; use 'none' to disable."
+        ),
+    )
+    parser.add_argument(
+        "--bridge-evaluate-provers",
+        type=parse_bool_flag,
+        default=True,
+        help=(
+            "Whether bridge scoring should run expensive theorem-prover gates. "
+            "Use false for daemon health checks that need fast compiler/KG/TODO cycles."
         ),
     )
     parser.add_argument(
@@ -3509,7 +3600,10 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         )
         save_summary(summary_path, summary)
     bridge_adapters = bridge_loss_adapter_names(args)
+    bridge_evaluate_provers = bool(getattr(args, "bridge_evaluate_provers", True))
     summary["bridge_loss_adapters"] = bridge_adapters
+    summary["bridge_evaluate_provers"] = bridge_evaluate_provers
+    summary["max_sample_text_chars"] = int(getattr(args, "max_sample_text_chars", 0) or 0)
     summary.setdefault("bridge_loss_failures", 0)
     summary.setdefault("bridge_loss_samples", 0)
     summary.setdefault("bridge_loss_signals", 0)
@@ -3564,7 +3658,11 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
     supervisor = ModalTodoSupervisor(
         queue=queue,
         bridge_names=bridge_adapters,
-        bridge_loss_evaluator=bridge_loss_evaluator_for_names(bridge_adapters),
+        bridge_evaluate_provers=bridge_evaluate_provers,
+        bridge_loss_evaluator=bridge_loss_evaluator_for_names(
+            bridge_adapters,
+            evaluate_provers=bridge_evaluate_provers,
+        ),
     )
     rng = random.Random(int(summary.get("seed", 0)) + int(summary.get("cycles", 0)) + 1)
     blocked_validation_sample_ids = set(state.decoded_embeddings) | set(state.family_logits)
@@ -3574,6 +3672,7 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
         args.run_id,
         {
             "bridge_loss_adapters": bridge_adapters,
+            "bridge_evaluate_provers": bridge_evaluate_provers,
             "event": "detached_runner_started",
         },
     )
@@ -3600,14 +3699,17 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 train_count=args.train_count,
                 validation_count=args.validation_count,
                 blocked_validation_sample_ids=blocked_validation_sample_ids,
+                max_sample_text_chars=int(getattr(args, "max_sample_text_chars", 0) or 0),
             )
             before_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
             )
             before_validation = autoencoder.evaluate(
                 validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
                 use_sample_memory=False,
             )
             compiler_ir_train = compiler_ir_metric_block(train_samples, feature_codec)
@@ -3615,8 +3717,16 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
                 validation_samples,
                 feature_codec,
             )
-            bridge_ir_train = bridge_ir_metric_block(train_samples, bridge_adapters)
-            bridge_ir_validation = bridge_ir_metric_block(validation_samples, bridge_adapters)
+            bridge_ir_train = bridge_ir_metric_block(
+                train_samples,
+                bridge_adapters,
+                evaluate_provers=bridge_evaluate_provers,
+            )
+            bridge_ir_validation = bridge_ir_metric_block(
+                validation_samples,
+                bridge_adapters,
+                evaluate_provers=bridge_evaluate_provers,
+            )
             run = supervisor.optimize(
                 train_samples,
                 validation_samples=validation_samples,
@@ -3631,10 +3741,12 @@ def run_guarded_uscode_modal_daemon(args: argparse.Namespace) -> int:
             after_train = autoencoder.evaluate(
                 train_samples,
                 legal_ir_bridge_names=bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
             )
             after_validation = autoencoder.evaluate(
                 validation_samples,
                 legal_ir_bridge_names=bridge_adapters,
+                legal_ir_evaluate_provers=bridge_evaluate_provers,
                 use_sample_memory=False,
             )
             blocked_validation_sample_ids.update(sample.sample_id for sample in train_samples)

@@ -3702,6 +3702,29 @@ def test_spacy_compiler_replays_heading_only_zero_formula_cases_for_25_422_48_15
         assert fallback.provenance.citation == citation
 
 
+def test_spacy_compiler_adds_residual_heading_fallback_when_modal_cues_cover_other_segments() -> None:
+    encoder = SpaCyLegalEncoder(model_name="definitely_missing_legal_model")
+    compiler = SpaCyModalIRCompiler()
+    encoding = encoder.encode(
+        (
+            "Sec. 124 - Administrative notice and hearing procedures. "
+            "The Secretary shall issue a decision within 30 days."
+        ),
+        document_id="us-code-25-124-d6ef602ae0d2e2b8",
+        citation="25 U.S.C. 124",
+        source="us_code",
+    )
+    modal_ir = compiler.compile(encoding)
+
+    assert modal_ir.formulas
+    assert any(formula.operator.family == "deontic" for formula in modal_ir.formulas)
+    fallback = modal_ir.formulas[-1]
+    assert fallback.operator.family == "frame"
+    assert fallback.metadata["cue"] == "__uscode_section_heading_fallback__"
+    assert fallback.metadata["fallback_rule"] == "uscode_section_heading_v1"
+    assert fallback.provenance.citation == "25 U.S.C. 124"
+
+
 def test_spacy_decoder_vector_and_family_logits_are_deterministic() -> None:
     codec = SpaCyModalCodec(
         encoder=SpaCyLegalEncoder(model_name="definitely_missing_legal_model"),

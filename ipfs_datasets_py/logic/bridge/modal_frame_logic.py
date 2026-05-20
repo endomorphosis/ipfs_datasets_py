@@ -90,6 +90,10 @@ class ModalFrameLogicBridgeAdapter:
                 title=title,
                 section=section or document_id or codec_result.modal_ir.document_id,
             )
+        else:
+            proof_gate = ProofGateResult.disabled(
+                "modal prover gate disabled for fast bridge evaluation"
+            )
 
         round_trip = RoundTripMetrics.from_loss_mapping(codec_result.losses)
         status = "ok" if ir_document.has_frame_logic and graph_result.graph_failure_penalty == 0.0 else "partial"

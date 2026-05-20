@@ -188,6 +188,8 @@ class LossSnapshot:
 
 def bridge_loss_evaluator_for_names(
     bridge_names: Sequence[str],
+    *,
+    evaluate_provers: Optional[bool] = None,
 ) -> BridgeLossEvaluator:
     """Build a lazy bridge evaluator that returns optimizer-visible losses.
 
@@ -216,6 +218,7 @@ def bridge_loss_evaluator_for_names(
                     sample.text,
                     bridge_names=names,
                     document_id=sample.sample_id,
+                    evaluate_provers=evaluate_provers,
                     citation=sample.citation,
                     source=sample.source,
                     source_embedding=sample.embedding_vector,
@@ -1272,6 +1275,7 @@ class ModalTodoSupervisor:
         program_synthesis_generator: Optional[ModalProgramSynthesisTodoGenerator] = None,
         bridge_loss_evaluator: Optional[BridgeLossEvaluator] = None,
         bridge_names: Sequence[str] = (),
+        bridge_evaluate_provers: Optional[bool] = None,
     ) -> None:
         self.policy = policy or ModalOptimizerPolicy()
         self.queue = queue or ModalTodoQueue()
@@ -1288,11 +1292,15 @@ class ModalTodoSupervisor:
                 and str(name).strip().lower() not in {"none", "off", "false"}
             )
         )
+        self.bridge_evaluate_provers = bridge_evaluate_provers
         self.bridge_loss_evaluator = (
             bridge_loss_evaluator
             if bridge_loss_evaluator is not None
             else (
-                bridge_loss_evaluator_for_names(self.bridge_names)
+                bridge_loss_evaluator_for_names(
+                    self.bridge_names,
+                    evaluate_provers=self.bridge_evaluate_provers,
+                )
                 if self.bridge_names
                 else None
             )
@@ -1371,6 +1379,7 @@ class ModalTodoSupervisor:
         kwargs: Dict[str, Any] = {"use_sample_memory": use_sample_memory}
         if self.bridge_names:
             kwargs["legal_ir_bridge_names"] = self.bridge_names
+            kwargs["legal_ir_evaluate_provers"] = self.bridge_evaluate_provers
         return autoencoder.evaluate(list(samples), **kwargs)
 
     def seed_program_synthesis_from_introspection(

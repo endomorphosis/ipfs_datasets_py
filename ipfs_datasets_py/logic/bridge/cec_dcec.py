@@ -220,18 +220,29 @@ def _dcec_records(norms: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         actor = _symbol(norm.get("actor") or "actor")
         event = _symbol(norm.get("action") or norm.get("predicate") or "act")
         modality = _dcec_modality(norm)
-        formula = f"{modality}({actor},{event},t0)"
-        valid = bool(actor and event and modality)
+        source_id = str(norm.get("source_id") or f"dcec:norm:{index}")
+        formula_object = _native_dcec_event_formula(
+            actor=actor,
+            event=event,
+            modality=modality,
+        )
+        formula = (
+            str(formula_object.to_string())
+            if formula_object is not None and hasattr(formula_object, "to_string")
+            else f"{modality}({actor},{event},t0)"
+        )
+        valid, validation_reason = _compile_dcec_proof_input(formula_object)
         records.append(
             {
                 "actor": actor,
                 "event": event,
                 "formula": formula,
+                "formula_object": formula_object,
                 "modality": modality,
-                "source_id": str(norm.get("source_id") or f"dcec:norm:{index}"),
+                "source_id": source_id,
                 "source_norm": dict(norm),
                 "valid": valid,
-                "validation_reason": "syntactic_dcec_record" if valid else "empty_dcec_record",
+                "validation_reason": validation_reason,
             }
         )
     return records
@@ -254,7 +265,7 @@ def _proof_gate_from_dcec_records(records: Sequence[Mapping[str, Any]]) -> Proof
         attempted_count=attempted,
         valid_count=valid,
         failed_count=failed,
-        verified_by=("dcec:syntax",) if valid else (),
+        verified_by=("dcec:native_compile",) if valid else (),
         details=tuple(
             {
                 "formula": record.get("formula"),
@@ -316,6 +327,64 @@ def _citation_from_norms(norms: Sequence[Mapping[str, Any]]) -> Optional[str]:
         return None
     citation = norms[0].get("canonical_citation")
     return str(citation) if citation else None
+
+
+def _native_dcec_event_formula(*, actor: str, event: str, modality: str) -> Any:
+    if not actor or not event:
+        return None
+    from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        AtomicFormula,
+        DeonticFormula,
+        DeonticOperator,
+        Function,
+        FunctionTerm,
+        Predicate,
+        Sort,
+    )
+
+    agent_sort = Sort("Agent")
+    event_sort = Sort("Event")
+    moment_sort = Sort("Moment")
+    actor_term = FunctionTerm(Function(actor, [], agent_sort), [])
+    event_term = FunctionTerm(Function(event, [], event_sort), [])
+    moment_term = FunctionTerm(Function("t0", [], moment_sort), [])
+    happens_predicate = Predicate(
+        "happens",
+        [agent_sort, event_sort, moment_sort],
+    )
+    happens_formula = AtomicFormula(
+        happens_predicate,
+        [actor_term, event_term, moment_term],
+    )
+    return DeonticFormula(
+        _deontic_operator_for_modality(modality),
+        happens_formula,
+        agent=actor_term,
+    )
+
+
+def _deontic_operator_for_modality(modality: str) -> Any:
+    from ipfs_datasets_py.logic.CEC.native.dcec_core import DeonticOperator
+
+    normalized = str(modality or "").strip().lower()
+    if normalized == "forbidden":
+        return DeonticOperator.PROHIBITION
+    if normalized == "permitted":
+        return DeonticOperator.PERMISSION
+    return DeonticOperator.OBLIGATION
+
+
+def _compile_dcec_proof_input(formula: Any) -> tuple[bool, str]:
+    if formula is None:
+        return (False, "missing_actor_or_event_symbol")
+    try:
+        from ipfs_datasets_py.logic.CEC.native.dcec_namespace import DCECContainer
+
+        container = DCECContainer()
+        container.add_statement(formula)
+        return (True, "compiled_dcec_native_container")
+    except Exception as exc:
+        return (False, f"native_compile_error:{type(exc).__name__}")
 
 
 def _symbol(value: Any) -> str:

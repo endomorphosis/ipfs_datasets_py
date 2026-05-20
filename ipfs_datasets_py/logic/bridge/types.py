@@ -196,6 +196,17 @@ class ProofGateResult:
             details=tuple(getattr(signal, "details", ()) or ()),
         )
 
+    @classmethod
+    def disabled(cls, reason: str = "proof gate disabled") -> "ProofGateResult":
+        """Return a successful no-op gate for explicit fast-path evaluations."""
+
+        return cls(
+            attempted_count=1,
+            valid_count=1,
+            verified_by=("proof-gate:disabled",),
+            details=({"reason": reason, "skipped": True},),
+        )
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "attempted_count": self.attempted_count,

@@ -113,6 +113,46 @@ def test_optimizer_target_file_hints_resolve_to_repo_paths() -> None:
     assert missing == {}
 
 
+def test_bridge_loss_names_are_known_to_todo_generator() -> None:
+    from ipfs_datasets_py.logic.bridge import logic_bridge_specs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+        ModalLossTodoGenerator,
+    )
+
+    thresholds = set(ModalLossTodoGenerator.DEFAULT_THRESHOLDS)
+    missing = {
+        spec.name: [
+            loss_name
+            for loss_name in spec.loss_names
+            if loss_name not in thresholds and loss_name != "cosine_similarity"
+        ]
+        for spec in logic_bridge_specs(implemented_only=True)
+    }
+    missing = {
+        bridge_name: loss_names
+        for bridge_name, loss_names in missing.items()
+        if loss_names
+    }
+
+    assert missing == {}
+
+
+def test_program_synthesis_actions_have_optimizer_file_hints() -> None:
+    from ipfs_datasets_py.logic.submodule_registry import logic_optimizer_target_file_hints
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_todo_daemon import (
+        PROGRAM_SYNTHESIS_ACTION_TARGETS,
+    )
+
+    hints = logic_optimizer_target_file_hints()
+    missing = {
+        action: target_component
+        for action, target_component in PROGRAM_SYNTHESIS_ACTION_TARGETS.items()
+        if target_component not in hints
+    }
+
+    assert missing == {}
+
+
 def test_modal_frame_logic_bridge_remains_neo4j_compatible() -> None:
     from ipfs_datasets_py.logic.modal import (
         DeterministicModalLogicCodec,

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 from dataclasses import dataclass, field
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .registry import load_logic_bridge_adapter, logic_bridge_spec, logic_bridge_specs
 from .types import BridgeEvaluationReport, LegalIRDocument, LogicIRView
+
+_MULTIVIEW_CACHE_MAX_ITEMS = 1024
+_MULTIVIEW_EVALUATION_CACHE: Dict[str, "MultiViewLegalIRReport"] = {}
 
 
 @dataclass(frozen=True)
@@ -257,23 +261,41 @@ def evaluate_legal_ir_multiview(
     text: str,
     *,
     bridge_names: Optional[Sequence[str]] = None,
+    cache: bool = True,
     citation: Optional[str] = None,
     document_id: Optional[str] = None,
+    evaluate_provers: Optional[bool] = None,
     source: str = "us_code",
     source_embedding: Optional[Sequence[float]] = None,
 ) -> MultiViewLegalIRReport:
     """Evaluate legal text through multiple bridge adapters as one IR document."""
 
     names = _bridge_names(bridge_names)
+    cache_key = _multiview_cache_key(
+        text,
+        bridge_names=names,
+        citation=citation,
+        document_id=document_id,
+        evaluate_provers=evaluate_provers,
+        source=source,
+        source_embedding=source_embedding,
+    )
+    if cache:
+        cached = _MULTIVIEW_EVALUATION_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
     reports: Dict[str, BridgeEvaluationReport] = {}
     failures: Dict[str, str] = {}
     for name in names:
         try:
             adapter = load_logic_bridge_adapter(name)
-            reports[name] = adapter.evaluate(
+            reports[name] = _evaluate_adapter(
+                adapter,
                 text,
                 citation=citation,
                 document_id=document_id,
+                evaluate_provers=evaluate_provers,
                 source=source,
                 source_embedding=source_embedding,
             )
@@ -289,12 +311,81 @@ def evaluate_legal_ir_multiview(
         reports=reports,
         source=source,
     )
-    return MultiViewLegalIRReport(
+    result = MultiViewLegalIRReport(
         bridge_names=names,
         document=document,
         reports=reports,
         failures=failures,
     )
+    if cache:
+        if len(_MULTIVIEW_EVALUATION_CACHE) >= _MULTIVIEW_CACHE_MAX_ITEMS:
+            _MULTIVIEW_EVALUATION_CACHE.pop(next(iter(_MULTIVIEW_EVALUATION_CACHE)))
+        _MULTIVIEW_EVALUATION_CACHE[cache_key] = result
+    return result
+
+
+def _multiview_cache_key(
+    text: str,
+    *,
+    bridge_names: Sequence[str],
+    citation: Optional[str],
+    document_id: Optional[str],
+    evaluate_provers: Optional[bool],
+    source: str,
+    source_embedding: Optional[Sequence[float]],
+) -> str:
+    digest = hashlib.sha256()
+    for value in (
+        "\0".join(bridge_names),
+        citation or "",
+        document_id or "",
+        str(evaluate_provers),
+        source,
+        text or "",
+        _source_embedding_digest(source_embedding),
+    ):
+        digest.update(str(value).encode("utf-8"))
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _source_embedding_digest(source_embedding: Optional[Sequence[float]]) -> str:
+    if source_embedding is None:
+        return ""
+    digest = hashlib.sha256()
+    for value in source_embedding:
+        try:
+            digest.update(f"{float(value):.9g},".encode("ascii"))
+        except (TypeError, ValueError):
+            digest.update(str(value).encode("utf-8"))
+            digest.update(b",")
+    return digest.hexdigest()
+
+
+def _evaluate_adapter(
+    adapter: Any,
+    text: str,
+    *,
+    citation: Optional[str],
+    document_id: Optional[str],
+    evaluate_provers: Optional[bool],
+    source: str,
+    source_embedding: Optional[Sequence[float]],
+) -> BridgeEvaluationReport:
+    kwargs: Dict[str, Any] = {
+        "citation": citation,
+        "document_id": document_id,
+        "source": source,
+        "source_embedding": source_embedding,
+    }
+    if evaluate_provers is not None:
+        try:
+            parameters = inspect.signature(adapter.evaluate).parameters
+        except (TypeError, ValueError):
+            parameters = {}
+        if "evaluate_provers" in parameters:
+            kwargs["evaluate_provers"] = bool(evaluate_provers)
+    return adapter.evaluate(text, **kwargs)
 
 
 def _bridge_names(bridge_names: Optional[Sequence[str]]) -> tuple[str, ...]:

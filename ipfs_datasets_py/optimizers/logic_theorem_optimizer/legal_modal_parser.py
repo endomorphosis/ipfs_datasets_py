@@ -320,6 +320,26 @@ class LegalModalParser:
         )
         if fallback_formula is not None:
             formulas.append(fallback_formula)
+        elif formulas:
+            residual_fallback_formula = self.fallback_formula(
+                document_id=resolved_document_id,
+                text=normalized,
+                citation=citation,
+                start_index=len(formulas) + 1,
+                segments=self._segments_excluding_spans(
+                    segments,
+                    spans=[
+                        (
+                            int(formula.provenance.start_char),
+                            int(formula.provenance.end_char),
+                        )
+                        for formula in formulas
+                    ],
+                ),
+                allow_modal_cues=True,
+            )
+            if residual_fallback_formula is not None:
+                formulas.append(residual_fallback_formula)
 
         return ModalIRDocument(
             document_id=resolved_document_id,
@@ -341,6 +361,7 @@ class LegalModalParser:
         citation: Optional[str],
         start_index: int = 1,
         segments: Optional[Sequence[LegalSegment]] = None,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         """Return a deterministic fallback formula for known U.S. Code heading forms."""
         normalized = self.normalize_text(text)
@@ -355,6 +376,7 @@ class LegalModalParser:
             citation=citation,
             segments=candidate_segments,
             start_index=start_index,
+            allow_modal_cues=allow_modal_cues,
         )
         if fallback_formula is not None:
             return fallback_formula
@@ -364,6 +386,7 @@ class LegalModalParser:
             citation=citation,
             segments=candidate_segments,
             start_index=start_index,
+            allow_modal_cues=allow_modal_cues,
         )
         if fallback_formula is not None:
             return fallback_formula
@@ -373,6 +396,7 @@ class LegalModalParser:
             citation=citation,
             segments=candidate_segments,
             start_index=start_index,
+            allow_modal_cues=allow_modal_cues,
         )
         if fallback_formula is not None:
             return fallback_formula
@@ -382,6 +406,7 @@ class LegalModalParser:
             citation=citation,
             segments=candidate_segments,
             start_index=start_index,
+            allow_modal_cues=allow_modal_cues,
         )
         if fallback_formula is not None:
             return fallback_formula
@@ -391,6 +416,7 @@ class LegalModalParser:
             citation=citation,
             segments=candidate_segments,
             start_index=start_index,
+            allow_modal_cues=allow_modal_cues,
         )
 
     def _classify_segment_role(self, text: str) -> str:
@@ -450,6 +476,37 @@ class LegalModalParser:
         digest = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest()[:16]
         return f"legal-text-{digest}"
 
+    def _segments_excluding_spans(
+        self,
+        segments: Sequence[LegalSegment],
+        *,
+        spans: Sequence[tuple[int, int]],
+    ) -> List[LegalSegment]:
+        if not spans:
+            return list(segments)
+        return [
+            segment
+            for segment in segments
+            if not any(
+                self._spans_overlap(
+                    segment.start_char,
+                    segment.end_char,
+                    span_start,
+                    span_end,
+                )
+                for span_start, span_end in spans
+            )
+        ]
+
+    @staticmethod
+    def _spans_overlap(
+        left_start: int,
+        left_end: int,
+        right_start: int,
+        right_end: int,
+    ) -> bool:
+        return max(int(left_start), int(right_start)) < min(int(left_end), int(right_end))
+
     def _uscode_codification_fallback_formula(
         self,
         *,
@@ -458,12 +515,13 @@ class LegalModalParser:
         citation: Optional[str],
         segments: Sequence[LegalSegment],
         start_index: int,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if self.extract_cues(normalized_text):
+        if not allow_modal_cues and self.extract_cues(normalized_text):
             return None
 
         candidate_segment: Optional[LegalSegment] = None
@@ -654,12 +712,13 @@ class LegalModalParser:
         citation: Optional[str],
         segments: Sequence[LegalSegment],
         start_index: int,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if self.extract_cues(normalized_text):
+        if not allow_modal_cues and self.extract_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -732,12 +791,13 @@ class LegalModalParser:
         citation: Optional[str],
         segments: Sequence[LegalSegment],
         start_index: int,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         if not normalized_text.strip():
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if self.extract_cues(normalized_text):
+        if not allow_modal_cues and self.extract_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -816,13 +876,14 @@ class LegalModalParser:
         citation: Optional[str],
         segments: Sequence[LegalSegment],
         start_index: int,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         """Emit frame IR for compact U.S.C. section-heading lines with no modal cues."""
         if not normalized_text.strip():
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if self.extract_cues(normalized_text):
+        if not allow_modal_cues and self.extract_cues(normalized_text):
             return None
 
         citation_section = self._citation_section_token(citation)
@@ -951,13 +1012,14 @@ class LegalModalParser:
         citation: Optional[str],
         segments: Sequence[LegalSegment],
         start_index: int,
+        allow_modal_cues: bool = False,
     ) -> Optional[ModalIRFormula]:
         """Recover frame IR from short citation-bound procedural clauses with no modal cues."""
         if not normalized_text.strip():
             return None
         if not self._is_uscode_citation(citation):
             return None
-        if self.extract_cues(normalized_text):
+        if not allow_modal_cues and self.extract_cues(normalized_text):
             return None
 
         candidate_segment: Optional[LegalSegment] = None

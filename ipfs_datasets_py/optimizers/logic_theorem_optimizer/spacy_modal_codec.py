@@ -1058,15 +1058,37 @@ class SpaCyModalIRCompiler:
                     },
                 )
             )
-        if not formulas and encoding.normalized_text:
-            fallback_formula = self._fallback_parser.fallback_formula(
-                document_id=encoding.document_id,
-                text=encoding.normalized_text,
-                citation=encoding.citation,
-                start_index=1,
-            )
-            if fallback_formula is not None:
-                formulas.append(fallback_formula)
+        if encoding.normalized_text:
+            if not formulas:
+                fallback_formula = self._fallback_parser.fallback_formula(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=1,
+                )
+                if fallback_formula is not None:
+                    formulas.append(fallback_formula)
+            else:
+                segments = self._fallback_parser.segment(encoding.normalized_text)
+                residual_fallback_formula = self._fallback_parser.fallback_formula(
+                    document_id=encoding.document_id,
+                    text=encoding.normalized_text,
+                    citation=encoding.citation,
+                    start_index=len(formulas) + 1,
+                    segments=self._fallback_parser._segments_excluding_spans(
+                        segments,
+                        spans=[
+                            (
+                                int(formula.provenance.start_char),
+                                int(formula.provenance.end_char),
+                            )
+                            for formula in formulas
+                        ],
+                    ),
+                    allow_modal_cues=True,
+                )
+                if residual_fallback_formula is not None:
+                    formulas.append(residual_fallback_formula)
         return ModalIRDocument(
             document_id=encoding.document_id,
             source=encoding.source,

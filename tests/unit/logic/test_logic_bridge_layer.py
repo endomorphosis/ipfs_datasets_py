@@ -163,6 +163,11 @@ def test_cec_dcec_bridge_evaluates_event_formulas_and_graph() -> None:
     assert report.ir_document.has_frame_logic is True
     assert report.graph_projection.neo4j_compatible is True
     assert report.proof_gate.compiles is True
+    formula_records = report.ir_document.views["dcec_formula"].payload["records"]
+    assert formula_records
+    assert formula_records[0]["formula"].startswith(("O[", "P[", "F["))
+    assert "happens(" in formula_records[0]["formula"]
+    assert report.proof_gate.details[0]["validation_reason"] == "compiled_dcec_native_container"
     assert "cec_dcec_validation_failure_ratio" in report.round_trip.extra_losses
 
 
