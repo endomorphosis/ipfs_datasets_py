@@ -257,6 +257,40 @@ class WalletInvocation:
 
 
 @dataclass
+class WalletRecoveryBundleRecord:
+    """Encrypted recovery material stored without server plaintext access."""
+
+    bundle_id: str
+    wallet_id: str
+    actor_did: str = ""
+    encrypted_bundle: Dict[str, Any] = field(default_factory=dict)
+    wrapping_method: str = "passphrase"
+    kdf: Dict[str, Any] = field(default_factory=dict)
+    recovery_hint: str = ""
+    public_metadata: Dict[str, Any] = field(default_factory=dict)
+    status: str = "active"
+    created_at: str = field(default_factory=utc_now)
+    updated_at: str = field(default_factory=utc_now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class WalletRecordMetadataRecord:
+    """Mutable wallet-owned metadata attached to one stored record."""
+
+    wallet_id: str
+    record_id: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    created_at: str = field(default_factory=utc_now)
+    updated_at: str = field(default_factory=utc_now)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
 class GrantReceipt:
     """Durable, owner-facing receipt for a wallet sharing grant."""
 

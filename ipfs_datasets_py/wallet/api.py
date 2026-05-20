@@ -7,11 +7,15 @@ browser clients can treat Python as the wallet implementation boundary.
 from __future__ import annotations
 
 import base64
+import hashlib
+import hmac
 import json
+import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any, Dict, List, Mapping, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Header, Query, UploadFile
 from pydantic import BaseModel, Field
 
 from . import DataWalletError, WalletService
@@ -52,12 +56,31 @@ class WalletApprovalsResponse(BaseModel):
     approvals: List[Dict[str, Any]]
 
 
+class WalletRecoveryBundleRequest(BaseModel):
+    actor_did: str
+    encrypted_bundle: Dict[str, Any]
+    wrapping_method: str = "passphrase"
+    kdf: Dict[str, Any] = Field(default_factory=dict)
+    recovery_hint: str = ""
+    public_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AddTextDocumentRequest(BaseModel):
     actor_did: str
     text: str
     filename: str = "document.txt"
     title: str | None = None
     key_hex: str | None = None
+
+
+class WalletRecordMetadataRequest(BaseModel):
+    actor_did: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DeleteWalletRecordRequest(BaseModel):
+    actor_did: str
+    unpin_ipfs: bool = True
 
 
 class RecordGrantRequest(BaseModel):
@@ -115,6 +138,46 @@ class ThresholdApprovalCreateRequest(BaseModel):
 
 class ThresholdApprovalDecisionRequest(BaseModel):
     approver_did: str
+
+
+class RevokeGrantRequest(BaseModel):
+    actor_did: str
+
+
+class EmergencyRevokeRequest(BaseModel):
+    actor_did: str
+    actor_key_hex: str | None = None
+    approval_id: str | None = None
+    rotate_keys: bool = True
+    reason: str | None = None
+
+
+class WalletControllerRequest(BaseModel):
+    actor_did: str
+    controller_did: str
+    controller_key_hex: str | None = None
+    approval_id: str | None = None
+
+
+class WalletDeviceRequest(BaseModel):
+    actor_did: str
+    device_did: str
+    device_key_hex: str | None = None
+    approval_id: str | None = None
+
+
+class WalletRecoveryPolicyRequest(BaseModel):
+    actor_did: str
+    contact_dids: List[str] = Field(default_factory=list)
+    threshold: int = 1
+    approval_id: str | None = None
+
+
+class WalletControllerRecoveryRequest(BaseModel):
+    actor_did: str
+    controller_did: str
+    controller_key_hex: str | None = None
+    approval_id: str | None = None
 
 
 class RotateRecordKeyRequest(BaseModel):
@@ -244,6 +307,8 @@ class ExportBundleStorageRequest(BaseModel):
 
 router = APIRouter(tags=["wallet"])
 
+_MAGIC_UCAN_CONTEXT = "abby-magic-ucan-v1"
+
 
 def default_wallet_dir() -> Path:
     return Path.home() / ".ipfs_datasets" / "wallet" / "manifests"
@@ -255,6 +320,95 @@ def default_blob_dir() -> Path:
 
 def wallet_path(wallet_dir: Path, wallet_id: str) -> Path:
     return wallet_dir / f"{wallet_id}.json"
+
+
+def _magic_login_secret() -> str:
+    return str(os.getenv("WALLET_MAGIC_LOGIN_SECRET") or "").strip()
+
+
+def _base64url_encode_bytes(value: bytes) -> str:
+    return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+
+def _base64url_decode_to_bytes(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode(f"{value}{padding}".encode("ascii"))
+
+
+def _hmac_base64url(secret: str, value: str) -> str:
+    return _base64url_encode_bytes(hmac.new(secret.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).digest())
+
+
+def _extract_bearer_token(authorization: str | None) -> str:
+    raw = str(authorization or "").strip()
+    if not raw:
+        return ""
+    scheme, _, token = raw.partition(" ")
+    if scheme.lower() != "bearer":
+        return ""
+    return token.strip()
+
+
+def _verify_magic_ucan(token: str) -> Dict[str, Any]:
+    secret = _magic_login_secret()
+    if not secret:
+        raise RuntimeError("WALLET_MAGIC_LOGIN_SECRET is required for passwordless login")
+    parts = str(token or "").strip().split(".")
+    if len(parts) != 3 or parts[0] != _MAGIC_UCAN_CONTEXT:
+        raise ValueError("UCAN token is malformed")
+    _, payload_encoded, signature = parts
+    expected = _hmac_base64url(secret, f"{_MAGIC_UCAN_CONTEXT}.{payload_encoded}")
+    if not hmac.compare_digest(signature, expected):
+        raise ValueError("UCAN signature is invalid")
+    try:
+        payload = json.loads(_base64url_decode_to_bytes(payload_encoded).decode("utf-8"))
+    except Exception as exc:
+        raise ValueError("UCAN payload is malformed") from exc
+    if not isinstance(payload, dict) or payload.get("profile") != _MAGIC_UCAN_CONTEXT:
+        raise ValueError("UCAN payload is malformed")
+    expires_at = int(payload.get("expiresAt") or 0)
+    if not expires_at or expires_at <= int(time.time() * 1000):
+        raise ValueError("UCAN token is expired")
+    return payload
+
+
+def _capability_resource_matches(pattern: str, resource: str) -> bool:
+    if pattern == "*" or pattern == resource:
+        return True
+    if pattern.endswith("/*") and resource.startswith(pattern[:-1]):
+        return True
+    return False
+
+
+def _require_magic_ucan(
+    *,
+    authorization: str | None,
+    wallet_id: str,
+    ability: str,
+    resource: str,
+) -> Dict[str, Any]:
+    token = _extract_bearer_token(authorization)
+    if not token:
+        raise HTTPException(status_code=401, detail="recovery UCAN authorization required")
+    try:
+        payload = _verify_magic_ucan(token)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    if str(payload.get("walletId") or "") != str(wallet_id):
+        raise HTTPException(status_code=403, detail="UCAN wallet scope does not match")
+    capabilities = payload.get("capabilities")
+    if not isinstance(capabilities, list):
+        raise HTTPException(status_code=403, detail="UCAN has no capabilities")
+    for capability in capabilities:
+        if not isinstance(capability, Mapping):
+            continue
+        if str(capability.get("can") or "") != ability:
+            continue
+        if _capability_resource_matches(str(capability.get("with") or ""), resource):
+            return payload
+    raise HTTPException(status_code=403, detail="UCAN does not allow this recovery action")
 
 
 def _new_service(blob_dir: Path) -> WalletService:
@@ -288,9 +442,12 @@ def _sorted_records(service: WalletService, wallet_id: str, data_type: str | Non
         if data_type and record.data_type != data_type:
             continue
         payload = record.to_dict()
+        metadata_key = service._record_metadata_key(wallet_id, record.record_id)
+        metadata_record = service.record_metadata.get(metadata_key)
+        payload["metadata"] = dict(metadata_record.metadata) if metadata_record else {}
         version = service.versions.get(record.current_version_id)
         if version is not None:
-            payload["metadata"] = {
+            payload["storage_metadata"] = {
                 "encrypted_payload_ref": version.encrypted_payload_ref.to_dict(),
                 "encrypted_metadata_ref": (
                     version.encrypted_metadata_ref.to_dict() if version.encrypted_metadata_ref else None
@@ -471,6 +628,204 @@ def get_wallet(wallet_id: str) -> Dict[str, Any]:
     return service.get_wallet(wallet_id).to_dict()
 
 
+@router.post("/wallets/{wallet_id}/controllers")
+def add_wallet_controller(wallet_id: str, request: WalletControllerRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.add_controller(
+            wallet_id,
+            actor_did=request.actor_did,
+            controller_did=request.controller_did,
+            controller_secret=_optional_hex_key(request.controller_key_hex),
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/controllers/remove")
+def remove_wallet_controller(wallet_id: str, request: WalletControllerRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.remove_controller(
+            wallet_id,
+            actor_did=request.actor_did,
+            controller_did=request.controller_did,
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/devices")
+def add_wallet_device(wallet_id: str, request: WalletDeviceRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.add_device(
+            wallet_id,
+            actor_did=request.actor_did,
+            device_did=request.device_did,
+            device_secret=_optional_hex_key(request.device_key_hex),
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/devices/revoke")
+def revoke_wallet_device(wallet_id: str, request: WalletDeviceRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.revoke_device(
+            wallet_id,
+            actor_did=request.actor_did,
+            device_did=request.device_did,
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/recovery-policy")
+def set_wallet_recovery_policy(wallet_id: str, request: WalletRecoveryPolicyRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.set_recovery_policy(
+            wallet_id,
+            actor_did=request.actor_did,
+            contact_dids=request.contact_dids,
+            threshold=request.threshold,
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/recovery-bundles")
+def store_wallet_recovery_bundle(wallet_id: str, request: WalletRecoveryBundleRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        bundle = service.store_recovery_bundle(
+            wallet_id,
+            actor_did=request.actor_did,
+            encrypted_bundle=request.encrypted_bundle,
+            wrapping_method=request.wrapping_method,
+            kdf=request.kdf,
+            recovery_hint=request.recovery_hint,
+            public_metadata=request.public_metadata,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return {
+            "bundle": bundle.to_dict(),
+            "privacy": {
+                "server_can_decrypt": False,
+                "plaintext_wallet_key_received": False,
+                "authorization_model": "wallet actor creates encrypted recovery material; magic-login UCAN can only read encrypted bundles",
+            },
+        }
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/wallets/{wallet_id}/recovery-bundles/latest")
+def get_latest_wallet_recovery_bundle(
+    wallet_id: str,
+    authorization: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    resource = f"wallet://{wallet_id}/recovery-bundles/latest"
+    ucan = _require_magic_ucan(
+        authorization=authorization,
+        wallet_id=wallet_id,
+        ability="wallet/recovery/read_encrypted",
+        resource=resource,
+    )
+    service = _load_wallet_service(wallet_id)
+    try:
+        bundle = service.latest_recovery_bundle(wallet_id)
+        return {
+            "bundle": bundle.to_dict(),
+            "ucan": {
+                "profile": str(ucan.get("profile") or ""),
+                "audience": str(ucan.get("aud") or ""),
+                "capabilities": ucan.get("capabilities") or [],
+                "expires_at": int(ucan.get("expiresAt") or 0),
+            },
+            "privacy": {
+                "server_can_decrypt": False,
+                "plaintext_wallet_key_returned": False,
+            },
+        }
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/wallets/{wallet_id}/recovery-bundles/{bundle_id}")
+def get_wallet_recovery_bundle(
+    wallet_id: str,
+    bundle_id: str,
+    authorization: str | None = Header(default=None),
+) -> Dict[str, Any]:
+    resource = f"wallet://{wallet_id}/recovery-bundles/{bundle_id}"
+    ucan = _require_magic_ucan(
+        authorization=authorization,
+        wallet_id=wallet_id,
+        ability="wallet/recovery/read_encrypted",
+        resource=resource,
+    )
+    service = _load_wallet_service(wallet_id)
+    try:
+        bundle = service.get_recovery_bundle(wallet_id, bundle_id)
+        return {
+            "bundle": bundle.to_dict(),
+            "ucan": {
+                "profile": str(ucan.get("profile") or ""),
+                "audience": str(ucan.get("aud") or ""),
+                "capabilities": ucan.get("capabilities") or [],
+                "expires_at": int(ucan.get("expiresAt") or 0),
+            },
+            "privacy": {
+                "server_can_decrypt": False,
+                "plaintext_wallet_key_returned": False,
+            },
+        }
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/controllers/recover")
+def recover_wallet_controller(wallet_id: str, request: WalletControllerRecoveryRequest) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        wallet = service.recover_controller(
+            wallet_id,
+            actor_did=request.actor_did,
+            controller_did=request.controller_did,
+            controller_secret=_optional_hex_key(request.controller_key_hex),
+            approval_id=request.approval_id,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return wallet.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @router.get("/wallets/{wallet_id}/records", response_model=WalletRecordsResponse)
 def list_wallet_records(wallet_id: str, data_type: Optional[str] = Query(default=None)) -> WalletRecordsResponse:
     service = _load_wallet_service(wallet_id)
@@ -598,6 +953,48 @@ async def add_binary_document(
         )
         _save_wallet_snapshot(service, wallet_dir, wallet_id)
         return record.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.patch("/wallets/{wallet_id}/records/{record_id}/metadata")
+def update_wallet_record_metadata(
+    wallet_id: str,
+    record_id: str,
+    request: WalletRecordMetadataRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        record = service.update_record_metadata(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            metadata=request.metadata,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return record
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete("/wallets/{wallet_id}/records/{record_id}")
+def delete_wallet_record(
+    wallet_id: str,
+    record_id: str,
+    request: DeleteWalletRecordRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        result = service.delete_record(
+            wallet_id,
+            record_id,
+            actor_did=request.actor_did,
+            unpin_ipfs=request.unpin_ipfs,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return result
     except (DataWalletError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -812,6 +1209,44 @@ def delegate_wallet_grant(
         )
         _save_wallet_snapshot(service, wallet_dir, wallet_id)
         return grant.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/grants/{grant_id}/revoke")
+def revoke_wallet_grant(
+    wallet_id: str,
+    grant_id: str,
+    request: RevokeGrantRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        grant = service.revoke_grant(wallet_id, grant_id, actor_did=request.actor_did)
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return grant.to_dict()
+    except (DataWalletError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/wallets/{wallet_id}/emergency-revoke")
+def emergency_revoke_wallet(
+    wallet_id: str,
+    request: EmergencyRevokeRequest,
+) -> Dict[str, Any]:
+    service = _load_wallet_service(wallet_id)
+    wallet_dir = default_wallet_dir()
+    try:
+        report = service.emergency_revoke(
+            wallet_id,
+            actor_did=request.actor_did,
+            actor_secret=_optional_hex_key(request.actor_key_hex),
+            approval_id=request.approval_id,
+            rotate_keys=request.rotate_keys,
+            reason=request.reason,
+        )
+        _save_wallet_snapshot(service, wallet_dir, wallet_id)
+        return report
     except (DataWalletError, ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

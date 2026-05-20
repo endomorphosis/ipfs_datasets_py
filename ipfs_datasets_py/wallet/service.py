@@ -8,7 +8,7 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from .analytics import aggregate_count, aggregate_count_by_fields, contribution_nullifier, make_contribution
 from .audit import append_audit_event
@@ -60,6 +60,8 @@ from .models import (
     StorageRef,
     StorageReplicaStatus,
     Wallet,
+    WalletRecordMetadataRecord,
+    WalletRecoveryBundleRecord,
     WalletStorageHealthReport,
     WalletInvocation,
     utc_now,
@@ -144,6 +146,8 @@ class DataWalletService:
         self.analytics_query_budget_spent: Dict[str, float] = {}
         self.access_requests: Dict[str, AccessRequest] = {}
         self.approval_requests: Dict[str, ApprovalRequest] = {}
+        self.recovery_bundles: Dict[str, WalletRecoveryBundleRecord] = {}
+        self.record_metadata: Dict[str, WalletRecordMetadataRecord] = {}
         self.audit_events: Dict[str, List[AuditEvent]] = {}
         self._principal_secrets: Dict[str, bytes] = {}
 
@@ -190,6 +194,10 @@ class DataWalletService:
 
     def get_wallet(self, wallet_id: str) -> Wallet:
         return self._wallet(wallet_id)
+
+    @staticmethod
+    def _record_metadata_key(wallet_id: str, record_id: str) -> str:
+        return f"{wallet_id}:{record_id}"
 
     def add_controller(
         self,
@@ -447,6 +455,257 @@ class DataWalletService:
             },
         )
         return wallet
+
+    def _wallet_principals(self, wallet_id: str) -> set[str]:
+        wallet = self._wallet(wallet_id)
+        return {
+            str(wallet.owner_did),
+            *[str(item) for item in wallet.controller_dids],
+            *[str(item) for item in wallet.device_dids],
+        }
+
+    def store_recovery_bundle(
+        self,
+        wallet_id: str,
+        *,
+        actor_did: str,
+        encrypted_bundle: Dict[str, Any],
+        wrapping_method: str,
+        kdf: Dict[str, Any] | None = None,
+        recovery_hint: str = "",
+        public_metadata: Dict[str, Any] | None = None,
+    ) -> WalletRecoveryBundleRecord:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        if not isinstance(encrypted_bundle, dict) or not encrypted_bundle:
+            raise ValueError("encrypted_bundle is required")
+        now = utc_now()
+        record = WalletRecoveryBundleRecord(
+            bundle_id=f"recovery-bundle-{uuid.uuid4().hex}",
+            wallet_id=wallet_id,
+            actor_did=actor,
+            encrypted_bundle=dict(encrypted_bundle),
+            wrapping_method=str(wrapping_method or "").strip() or "passphrase",
+            kdf=dict(kdf or {}),
+            recovery_hint=str(recovery_hint or "").strip(),
+            public_metadata=dict(public_metadata or {}),
+            created_at=now,
+            updated_at=now,
+        )
+        self.recovery_bundles[record.bundle_id] = record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="wallet/recovery_bundle/store",
+            resource=f"wallet://{wallet_id}/recovery-bundles/{record.bundle_id}",
+            decision="allow",
+            details={
+                "bundle_id": record.bundle_id,
+                "wrapping_method": record.wrapping_method,
+                "server_can_decrypt": False,
+            },
+        )
+        return record
+
+    def update_record_metadata(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        metadata: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        record = self._record(wallet_id, record_id)
+        key = self._record_metadata_key(wallet_id, record_id)
+        now = utc_now()
+        existing = self.record_metadata.get(key)
+        next_record = WalletRecordMetadataRecord(
+            wallet_id=wallet_id,
+            record_id=record_id,
+            metadata={**(existing.metadata if existing else {}), **dict(metadata or {})},
+            created_at=existing.created_at if existing else now,
+            updated_at=now,
+        )
+        self.record_metadata[key] = next_record
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="record/metadata_update",
+            resource=resource_for_record(wallet_id, record_id),
+            decision="allow",
+            details={"metadata_keys": sorted(next_record.metadata.keys())},
+        )
+        payload = record.to_dict()
+        payload["metadata"] = dict(next_record.metadata)
+        return payload
+
+    @staticmethod
+    def _record_delete_cids(metadata: Mapping[str, Any], versions: List[DataVersion]) -> List[str]:
+        cids: List[str] = []
+
+        def add(value: Any) -> None:
+            raw = str(value or "").strip()
+            if not raw:
+                return
+            if raw.startswith("ipfs://"):
+                raw = raw.removeprefix("ipfs://").split("/", 1)[0]
+            elif "://" in raw:
+                return
+            if raw and raw not in cids:
+                cids.append(raw)
+
+        for key in (
+            "ipfsCid",
+            "ipfsRootCid",
+            "metadataCid",
+            "metadataIpldCid",
+            "encryptedPayloadCid",
+            "encryptedMetadataCid",
+        ):
+            add(metadata.get(key))
+        for link in metadata.get("ipldLinks") or []:
+            if isinstance(link, Mapping):
+                add(link.get("cid"))
+                add(link.get("target"))
+        for version in versions:
+            add(getattr(version.encrypted_payload_ref, "uri", ""))
+            if version.encrypted_metadata_ref is not None:
+                add(getattr(version.encrypted_metadata_ref, "uri", ""))
+        return cids
+
+    @staticmethod
+    def _unpin_cids(cids: List[str]) -> List[Dict[str, Any]]:
+        if not cids:
+            return []
+        try:
+            from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
+
+            backend = get_ipfs_backend()
+        except Exception as exc:
+            return [{"cid": cid, "ok": False, "error": str(exc)} for cid in cids]
+        results: List[Dict[str, Any]] = []
+        for cid in cids:
+            try:
+                backend.unpin(cid)
+                results.append({"cid": cid, "ok": True})
+            except Exception as exc:
+                results.append({"cid": cid, "ok": False, "error": str(exc)})
+        return results
+
+    def delete_record(
+        self,
+        wallet_id: str,
+        record_id: str,
+        *,
+        actor_did: str,
+        unpin_ipfs: bool = True,
+    ) -> Dict[str, Any]:
+        actor = str(actor_did or "").strip()
+        if not actor:
+            raise ValueError("actor_did is required")
+        if actor not in self._wallet_principals(wallet_id):
+            raise AccessDeniedError("actor_did is not authorized for this wallet")
+        self._wallet(wallet_id)
+        record = self._record(wallet_id, record_id)
+        metadata_key = self._record_metadata_key(wallet_id, record_id)
+        metadata_record = self.record_metadata.get(metadata_key)
+        metadata = dict(metadata_record.metadata) if metadata_record else {}
+        versions = [version for version in self.versions.values() if version.record_id == record_id]
+        proof_ids = {
+            proof_id
+            for proof_id, proof in self.proofs.items()
+            if proof.wallet_id == wallet_id and record_id in proof.witness_record_ids
+        }
+        artifact_ids = {
+            artifact_id
+            for artifact_id, artifact in self.derived_artifacts.items()
+            if artifact.wallet_id == wallet_id and record_id in artifact.source_record_ids
+        }
+        cids = self._record_delete_cids(metadata, versions)
+        unpin_results = self._unpin_cids(cids) if unpin_ipfs else []
+        metadata_deleted = metadata_key in self.record_metadata
+
+        self.records.pop(record.record_id, None)
+        for version in versions:
+            self.versions.pop(version.version_id, None)
+        for proof_id in proof_ids:
+            self.proofs.pop(proof_id, None)
+        for artifact_id in artifact_ids:
+            self.derived_artifacts.pop(artifact_id, None)
+        self.record_metadata.pop(metadata_key, None)
+
+        resource = resource_for_record(wallet_id, record_id)
+        for grant in self.grants.values():
+            if grant.status == "active" and resource in grant.resources:
+                grant.status = "revoked"
+        for receipt in self.grant_receipts.values():
+            if receipt.status == "active" and resource in receipt.resources:
+                receipt.status = "revoked"
+        for request in self.access_requests.values():
+            if request.status in {"pending", "approved"} and resource in request.resources:
+                request.status = "revoked"
+
+        append_audit_event(
+            self.audit_events[wallet_id],
+            wallet_id=wallet_id,
+            actor_did=actor,
+            action="record/delete",
+            resource=resource,
+            decision="allow",
+            details={
+                "artifact_ids": sorted(artifact_ids),
+                "ipfs_cids": cids,
+                "proof_ids": sorted(proof_ids),
+                "unpin_attempted": unpin_ipfs,
+                "version_ids": [version.version_id for version in versions],
+            },
+        )
+        return {
+            "artifact_ids": sorted(artifact_ids),
+            "deleted": True,
+            "ipfs_cids": cids,
+            "metadata_deleted": metadata_deleted,
+            "proof_ids": sorted(proof_ids),
+            "record_id": record_id,
+            "unpin_results": unpin_results,
+            "version_ids": [version.version_id for version in versions],
+            "wallet_id": wallet_id,
+        }
+
+    def list_recovery_bundles(self, wallet_id: str) -> List[WalletRecoveryBundleRecord]:
+        self._wallet(wallet_id)
+        return [
+            record
+            for record in sorted(
+                self.recovery_bundles.values(),
+                key=lambda item: (item.created_at, item.bundle_id),
+                reverse=True,
+            )
+            if record.wallet_id == wallet_id and record.status == "active"
+        ]
+
+    def latest_recovery_bundle(self, wallet_id: str) -> WalletRecoveryBundleRecord:
+        bundles = self.list_recovery_bundles(wallet_id)
+        if not bundles:
+            raise ValueError("No recovery bundle is available for this wallet")
+        return bundles[0]
+
+    def get_recovery_bundle(self, wallet_id: str, bundle_id: str) -> WalletRecoveryBundleRecord:
+        self._wallet(wallet_id)
+        record = self.recovery_bundles.get(str(bundle_id or "").strip())
+        if record is None or record.wallet_id != wallet_id or record.status != "active":
+            raise ValueError("Recovery bundle not found")
+        return record
 
     def request_approval(
         self,
@@ -3348,6 +3607,16 @@ class DataWalletService:
             for receipt in self.grant_receipts.values()
             if receipt.wallet_id == wallet_id
         )
+        recovery_bundle_ids = sorted(
+            record.bundle_id
+            for record in self.recovery_bundles.values()
+            if record.wallet_id == wallet_id
+        )
+        record_metadata_ids = sorted(
+            key
+            for key, record in self.record_metadata.items()
+            if record.wallet_id == wallet_id
+        )
         return {
             "wallet": wallet.to_dict(),
             "records": [self.records[record_id].to_dict() for record_id in record_ids],
@@ -3385,6 +3654,12 @@ class DataWalletService:
             "approvals": [self.approval_requests[approval_id].to_dict() for approval_id in approval_ids],
             "access_requests": [
                 self.access_requests[request_id].to_dict() for request_id in access_request_ids
+            ],
+            "recovery_bundles": [
+                self.recovery_bundles[bundle_id].to_dict() for bundle_id in recovery_bundle_ids
+            ],
+            "record_metadata": [
+                self.record_metadata[key].to_dict() for key in record_metadata_ids
             ],
             "audit_events": [
                 event.to_dict() for event in self.audit_events.get(wallet_id, [])
@@ -3862,6 +4137,11 @@ class DataWalletService:
             self.approval_requests[approval_data["approval_id"]] = ApprovalRequest(**approval_data)
         for request_data in snapshot.get("access_requests", []):
             self.access_requests[request_data["request_id"]] = AccessRequest(**request_data)
+        for bundle_data in snapshot.get("recovery_bundles", []):
+            self.recovery_bundles[bundle_data["bundle_id"]] = WalletRecoveryBundleRecord(**bundle_data)
+        for metadata_data in snapshot.get("record_metadata", []):
+            key = self._record_metadata_key(metadata_data["wallet_id"], metadata_data["record_id"])
+            self.record_metadata[key] = WalletRecordMetadataRecord(**metadata_data)
         return wallet
 
     def get_wallet_manifest_canonical(self, wallet_id: str) -> str:

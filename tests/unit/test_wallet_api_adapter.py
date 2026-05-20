@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import json
 from pathlib import Path
+import time
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -20,6 +24,35 @@ def make_client(tmp_path, monkeypatch):
     app = FastAPI()
     app.include_router(router)
     return TestClient(app), wallet_dir, blob_dir
+
+
+def make_magic_ucan(wallet_id: str, *, expires_in_ms: int = 60_000) -> str:
+    encoded = base64.urlsafe_b64encode(
+        json.dumps(
+            {
+                "profile": "abby-magic-ucan-v1",
+                "walletId": wallet_id,
+                "aud": "did:abby:contact:test",
+                "capabilities": [
+                    {
+                        "can": "wallet/recovery/read_encrypted",
+                        "with": f"wallet://{wallet_id}/recovery-bundles/*",
+                    }
+                ],
+                "expiresAt": int(time.time() * 1000) + expires_in_ms,
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    ).decode("ascii").rstrip("=")
+    signature = base64.urlsafe_b64encode(
+        hmac.new(
+            b"test-secret",
+            f"abby-magic-ucan-v1.{encoded}".encode("utf-8"),
+            hashlib.sha256,
+        ).digest()
+    ).decode("ascii").rstrip("=")
+    return f"abby-magic-ucan-v1.{encoded}.{signature}"
 
 
 def test_wallet_api_create_and_get_wallet(tmp_path, monkeypatch):
@@ -460,3 +493,372 @@ def test_wallet_api_export_routes(tmp_path, monkeypatch):
     assert import_response.status_code == 200
     assert import_response.json()["wallet_id"] == wallet_id
     assert import_response.json()["record_count"] == 1
+
+
+def test_wallet_api_delegate_grant_route(tmp_path, monkeypatch):
+    client, _wallet_dir, _blob_dir = make_client(tmp_path, monkeypatch)
+
+    wallet_response = client.post("/wallets", json={"owner_did": "did:key:owner"})
+    assert wallet_response.status_code == 200
+    wallet_id = wallet_response.json()["wallet_id"]
+
+    document_response = client.post(
+        f"/wallets/{wallet_id}/documents/text",
+        json={
+            "actor_did": "did:key:owner",
+            "key_hex": "11" * 32,
+            "filename": "benefits.txt",
+            "text": "SNAP approval letter and utility shutoff risk.",
+        },
+    )
+    assert document_response.status_code == 200
+    record_id = document_response.json()["record_id"]
+
+    approval_response = client.post(
+        f"/wallets/{wallet_id}/approvals",
+        json={
+            "requested_by": "did:key:owner",
+            "operation": "grant/create",
+            "resources": [f"wallet://{wallet_id}/records/{record_id}"],
+            "abilities": ["record/analyze", "record/share"],
+        },
+    )
+    assert approval_response.status_code == 200
+    approval_id = approval_response.json()["approval_id"]
+
+    approval_decision_response = client.post(
+        f"/wallets/{wallet_id}/approvals/{approval_id}/approve",
+        json={"approver_did": "did:key:owner"},
+    )
+    assert approval_decision_response.status_code == 200
+
+    parent_grant_response = client.post(
+        f"/wallets/{wallet_id}/records/{record_id}/grants",
+        json={
+            "issuer_did": "did:key:owner",
+            "issuer_key_hex": "11" * 32,
+            "audience_did": "did:key:delegate",
+            "audience_key_hex": "22" * 32,
+            "abilities": ["record/analyze", "record/share"],
+            "approval_id": approval_id,
+            "max_delegation_depth": 1,
+            "output_types": ["summary"],
+        },
+    )
+    assert parent_grant_response.status_code == 200
+    parent_grant_id = parent_grant_response.json()["grant_id"]
+
+    delegated_grant_response = client.post(
+        f"/wallets/{wallet_id}/grants/{parent_grant_id}/delegate",
+        json={
+            "issuer_did": "did:key:delegate",
+            "issuer_key_hex": "22" * 32,
+            "audience_did": "did:key:viewer",
+            "audience_key_hex": "33" * 32,
+            "resources": [f"wallet://{wallet_id}/records/{record_id}"],
+            "abilities": ["record/analyze"],
+            "caveats": {"purpose": "service_matching", "output_types": ["summary"]},
+        },
+    )
+    assert delegated_grant_response.status_code == 200
+    delegated_grant = delegated_grant_response.json()
+    assert delegated_grant["audience_did"] == "did:key:viewer"
+    assert parent_grant_id in delegated_grant.get("proof_chain", [])
+
+
+def test_wallet_api_revoke_and_emergency_revoke_routes(tmp_path, monkeypatch):
+    client, _wallet_dir, _blob_dir = make_client(tmp_path, monkeypatch)
+
+    wallet_response = client.post("/wallets", json={"owner_did": "did:key:owner"})
+    assert wallet_response.status_code == 200
+    wallet_id = wallet_response.json()["wallet_id"]
+
+    document_response = client.post(
+        f"/wallets/{wallet_id}/documents/text",
+        json={
+            "actor_did": "did:key:owner",
+            "key_hex": "11" * 32,
+            "filename": "benefits.txt",
+            "text": "SNAP approval letter and utility shutoff risk.",
+        },
+    )
+    assert document_response.status_code == 200
+    record_id = document_response.json()["record_id"]
+
+    grant_approval_response = client.post(
+        f"/wallets/{wallet_id}/approvals",
+        json={
+            "requested_by": "did:key:owner",
+            "operation": "grant/create",
+            "resources": [f"wallet://{wallet_id}/records/{record_id}"],
+            "abilities": ["record/analyze"],
+        },
+    )
+    assert grant_approval_response.status_code == 200
+    grant_approval_id = grant_approval_response.json()["approval_id"]
+
+    grant_approval_decision_response = client.post(
+        f"/wallets/{wallet_id}/approvals/{grant_approval_id}/approve",
+        json={"approver_did": "did:key:owner"},
+    )
+    assert grant_approval_decision_response.status_code == 200
+
+    first_grant_response = client.post(
+        f"/wallets/{wallet_id}/records/{record_id}/grants",
+        json={
+            "issuer_did": "did:key:owner",
+            "issuer_key_hex": "11" * 32,
+            "audience_did": "did:key:guest1",
+            "audience_key_hex": "22" * 32,
+            "abilities": ["record/analyze"],
+            "approval_id": grant_approval_id,
+        },
+    )
+    assert first_grant_response.status_code == 200
+    first_grant_id = first_grant_response.json()["grant_id"]
+
+    second_grant_response = client.post(
+        f"/wallets/{wallet_id}/records/{record_id}/grants",
+        json={
+            "issuer_did": "did:key:owner",
+            "issuer_key_hex": "11" * 32,
+            "audience_did": "did:key:guest2",
+            "audience_key_hex": "33" * 32,
+            "abilities": ["record/analyze"],
+            "approval_id": grant_approval_id,
+        },
+    )
+    assert second_grant_response.status_code == 200
+    second_grant_id = second_grant_response.json()["grant_id"]
+
+    revoke_response = client.post(
+        f"/wallets/{wallet_id}/grants/{first_grant_id}/revoke",
+        json={"actor_did": "did:key:owner"},
+    )
+    assert revoke_response.status_code == 200
+    assert revoke_response.json()["status"] == "revoked"
+
+    emergency_approval_response = client.post(
+        f"/wallets/{wallet_id}/approvals",
+        json={
+            "requested_by": "did:key:owner",
+            "operation": "wallet/emergency_revoke",
+            "resources": [f"wallet://{wallet_id}"],
+            "abilities": [],
+        },
+    )
+    assert emergency_approval_response.status_code == 200
+    emergency_approval_id = emergency_approval_response.json()["approval_id"]
+
+    emergency_approval_decision_response = client.post(
+        f"/wallets/{wallet_id}/approvals/{emergency_approval_id}/approve",
+        json={"approver_did": "did:key:owner"},
+    )
+    assert emergency_approval_decision_response.status_code == 200
+
+    emergency_revoke_response = client.post(
+        f"/wallets/{wallet_id}/emergency-revoke",
+        json={
+            "actor_did": "did:key:owner",
+            "actor_key_hex": "11" * 32,
+            "approval_id": emergency_approval_id,
+            "rotate_keys": False,
+            "reason": "incident response test",
+        },
+    )
+    assert emergency_revoke_response.status_code == 200
+    report = emergency_revoke_response.json()
+    assert second_grant_id in report["revoked_grant_ids"]
+    assert report["revoked_grant_count"] >= 1
+
+
+def test_wallet_api_admin_mutation_routes(tmp_path, monkeypatch):
+    client, _wallet_dir, _blob_dir = make_client(tmp_path, monkeypatch)
+
+    wallet_response = client.post("/wallets", json={"owner_did": "did:key:owner"})
+    assert wallet_response.status_code == 200
+    wallet_id = wallet_response.json()["wallet_id"]
+
+    def admin_approval(operation: str, requested_by: str = "did:key:owner") -> str:
+        approval_response = client.post(
+            f"/wallets/{wallet_id}/approvals",
+            json={
+                "requested_by": requested_by,
+                "operation": operation,
+                "resources": [f"wallet://{wallet_id}"],
+                "abilities": ["wallet/admin"],
+            },
+        )
+        assert approval_response.status_code == 200
+        approval_id = approval_response.json()["approval_id"]
+        approval_decision_response = client.post(
+            f"/wallets/{wallet_id}/approvals/{approval_id}/approve",
+            json={"approver_did": requested_by},
+        )
+        assert approval_decision_response.status_code == 200
+        return approval_id
+
+    add_controller_response = client.post(
+        f"/wallets/{wallet_id}/controllers",
+        json={
+            "actor_did": "did:key:owner",
+            "controller_did": "did:key:controller2",
+            "approval_id": admin_approval("wallet/controller_add"),
+        },
+    )
+    assert add_controller_response.status_code == 200
+    assert "did:key:controller2" in add_controller_response.json()["controller_dids"]
+
+    remove_controller_response = client.post(
+        f"/wallets/{wallet_id}/controllers/remove",
+        json={
+            "actor_did": "did:key:owner",
+            "controller_did": "did:key:controller2",
+            "approval_id": admin_approval("wallet/controller_remove"),
+        },
+    )
+    assert remove_controller_response.status_code == 200
+    assert "did:key:controller2" not in remove_controller_response.json()["controller_dids"]
+
+    add_first_device_response = client.post(
+        f"/wallets/{wallet_id}/devices",
+        json={
+            "actor_did": "did:key:owner",
+            "device_did": "did:key:device1",
+            "approval_id": admin_approval("wallet/device_add"),
+        },
+    )
+    assert add_first_device_response.status_code == 200
+
+    add_second_device_response = client.post(
+        f"/wallets/{wallet_id}/devices",
+        json={
+            "actor_did": "did:key:owner",
+            "device_did": "did:key:device2",
+            "approval_id": admin_approval("wallet/device_add"),
+        },
+    )
+    assert add_second_device_response.status_code == 200
+
+    revoke_device_response = client.post(
+        f"/wallets/{wallet_id}/devices/revoke",
+        json={
+            "actor_did": "did:key:owner",
+            "device_did": "did:key:device2",
+            "approval_id": admin_approval("wallet/device_revoke"),
+        },
+    )
+    assert revoke_device_response.status_code == 200
+    assert "did:key:device2" not in revoke_device_response.json()["device_dids"]
+
+    recovery_policy_response = client.post(
+        f"/wallets/{wallet_id}/recovery-policy",
+        json={
+            "actor_did": "did:key:owner",
+            "contact_dids": ["did:key:recovery1"],
+            "threshold": 1,
+            "approval_id": admin_approval("wallet/recovery_policy_set"),
+        },
+    )
+    assert recovery_policy_response.status_code == 200
+    assert recovery_policy_response.json()["governance_policy"]["recovery_policy"]["threshold"] == 1
+
+    recover_controller_response = client.post(
+        f"/wallets/{wallet_id}/controllers/recover",
+        json={
+            "actor_did": "did:key:recovery1",
+            "controller_did": "did:key:controller3",
+            "approval_id": admin_approval("wallet/controller_recover", requested_by="did:key:recovery1"),
+        },
+    )
+    assert recover_controller_response.status_code == 200
+    assert "did:key:controller3" in recover_controller_response.json()["controller_dids"]
+
+
+def test_wallet_api_recovery_bundle_routes(tmp_path, monkeypatch):
+    monkeypatch.setenv("WALLET_MAGIC_LOGIN_SECRET", "test-secret")
+    client, _wallet_dir, _blob_dir = make_client(tmp_path, monkeypatch)
+
+    wallet_response = client.post("/wallets", json={"owner_did": "did:key:owner"})
+    assert wallet_response.status_code == 200
+    wallet_id = wallet_response.json()["wallet_id"]
+
+    store_response = client.post(
+        f"/wallets/{wallet_id}/recovery-bundles",
+        json={
+            "actor_did": "did:key:owner",
+            "encrypted_bundle": {"ciphertext": "abc123", "wrapped_key": "keywrap"},
+            "wrapping_method": "passphrase",
+            "kdf": {"name": "argon2id"},
+            "recovery_hint": "local test bundle",
+            "public_metadata": {"device": "browser"},
+        },
+    )
+    assert store_response.status_code == 200
+    bundle = store_response.json()["bundle"]
+
+    headers = {"authorization": f"Bearer {make_magic_ucan(wallet_id)}"}
+
+    latest_response = client.get(f"/wallets/{wallet_id}/recovery-bundles/latest", headers=headers)
+    assert latest_response.status_code == 200
+    assert latest_response.json()["bundle"]["bundle_id"] == bundle["bundle_id"]
+    assert latest_response.json()["privacy"]["server_can_decrypt"] is False
+
+    get_response = client.get(
+        f"/wallets/{wallet_id}/recovery-bundles/{bundle['bundle_id']}",
+        headers=headers,
+    )
+    assert get_response.status_code == 200
+    assert get_response.json()["bundle"]["recovery_hint"] == "local test bundle"
+
+
+def test_wallet_api_record_metadata_and_delete_routes(tmp_path, monkeypatch):
+    client, _wallet_dir, _blob_dir = make_client(tmp_path, monkeypatch)
+
+    wallet_response = client.post("/wallets", json={"owner_did": "did:key:owner"})
+    assert wallet_response.status_code == 200
+    wallet_id = wallet_response.json()["wallet_id"]
+
+    document_response = client.post(
+        f"/wallets/{wallet_id}/documents/text",
+        json={
+            "actor_did": "did:key:owner",
+            "key_hex": "11" * 32,
+            "filename": "benefits.txt",
+            "text": "SNAP approval letter and utility shutoff risk.",
+        },
+    )
+    assert document_response.status_code == 200
+    record_id = document_response.json()["record_id"]
+
+    metadata_response = client.patch(
+        f"/wallets/{wallet_id}/records/{record_id}/metadata",
+        json={
+            "actor_did": "did:key:owner",
+            "metadata": {
+                "fileName": "benefits-letter.txt",
+                "privacyProfileStatus": "ready",
+                "ipfsCid": "bafybeigdyrztmetadataexample1234567890",
+            },
+        },
+    )
+    assert metadata_response.status_code == 200
+    assert metadata_response.json()["metadata"]["fileName"] == "benefits-letter.txt"
+
+    records_response = client.get(f"/wallets/{wallet_id}/records")
+    assert records_response.status_code == 200
+    assert records_response.json()["records"][0]["metadata"]["fileName"] == "benefits-letter.txt"
+
+    delete_response = client.request(
+        "DELETE",
+        f"/wallets/{wallet_id}/records/{record_id}",
+        json={"actor_did": "did:key:owner", "unpin_ipfs": False},
+    )
+    assert delete_response.status_code == 200
+    delete_result = delete_response.json()
+    assert delete_result["deleted"] is True
+    assert delete_result["metadata_deleted"] is True
+
+    records_after_response = client.get(f"/wallets/{wallet_id}/records")
+    assert records_after_response.status_code == 200
+    assert records_after_response.json()["records"] == []
