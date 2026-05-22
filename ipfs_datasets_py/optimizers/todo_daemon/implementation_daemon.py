@@ -70,6 +70,7 @@ GENERATED_WORKTREE_DIR_NAMES = {
 GENERATED_WORKTREE_SUFFIXES = (".pyc", ".pyo")
 UNTRACKED_WORKTREE_CONTEXT_PREFIXES = (
     "docs/",
+    "implementation_plan/",
     "scripts/",
     "scraper/",
     "tests/",
@@ -93,7 +94,7 @@ codex_bin="$1"
 copilot_bin="$2"
 workspace="$3"
 if [[ -n "$codex_bin" ]]; then
-    if "$codex_bin" exec --full-auto -C "$workspace" - < "$prompt_file"; then
+    if "$codex_bin" exec --dangerously-bypass-approvals-and-sandbox -C "$workspace" - < "$prompt_file"; then
         exit 0
     else
         rc=$?
@@ -2553,7 +2554,14 @@ class PortalImplementationDaemon:
         if copilot:
             return _copilot_fallback_command(codex=codex, copilot=copilot, workspace_path=workspace_path)
         if codex:
-            return [codex, "exec", "--full-auto", "-C", str(workspace_path), "-"]
+            return [
+                codex,
+                "exec",
+                "--dangerously-bypass-approvals-and-sandbox",
+                "-C",
+                str(workspace_path),
+                "-",
+            ]
         raise RuntimeError(
             "No implementation command configured. Install codex or copilot, or set IMPLEMENTATION_DAEMON_COMMAND."
         )
