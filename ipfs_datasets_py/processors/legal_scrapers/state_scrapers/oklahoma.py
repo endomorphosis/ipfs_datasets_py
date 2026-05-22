@@ -307,6 +307,17 @@ class OklahomaScraper(BaseStateScraper):
             len(candidate_urls),
             max_statutes,
         )
+        if checkpoint is not None:
+            checkpoint.maybe_write(
+                statutes,
+                code_name=code_name,
+                scanned_candidates=len(seen_candidate_urls),
+                discovered_candidates=len(candidate_urls),
+                progress={
+                    "crawl_phase": "candidate_discovery_complete",
+                    "seed_statutes": len(statutes),
+                },
+            )
         crawl_started_at = time.time()
         last_scan_heartbeat_at = crawl_started_at
         timeout_count = 0
@@ -335,12 +346,18 @@ class OklahomaScraper(BaseStateScraper):
                     len(candidate_urls),
                     scan_rate_per_min,
                 )
-                if checkpoint is not None and statutes:
+                if checkpoint is not None:
                     checkpoint.write(
                         statutes,
                         code_name=code_name,
                         scanned_candidates=scanned_candidates,
                         discovered_candidates=len(candidate_urls),
+                        progress={
+                            "crawl_phase": "candidate_scan",
+                            "scan_rate_per_minute": round(scan_rate_per_min, 4),
+                            "timeout_count": int(timeout_count),
+                            "error_count": int(error_count),
+                        },
                     )
                 last_scan_heartbeat_at = now
 
@@ -385,6 +402,11 @@ class OklahomaScraper(BaseStateScraper):
                     code_name=code_name,
                     scanned_candidates=len(seen_candidate_urls),
                     discovered_candidates=len(candidate_urls),
+                    progress={
+                        "crawl_phase": "candidate_scan",
+                        "timeout_count": int(timeout_count),
+                        "error_count": int(error_count),
+                    },
                 )
             if len(statutes) == 1 or len(statutes) % 25 == 0:
                 self.logger.info(
@@ -407,6 +429,11 @@ class OklahomaScraper(BaseStateScraper):
                 code_name=code_name,
                 scanned_candidates=len(seen_candidate_urls),
                 discovered_candidates=len(candidate_urls),
+                progress={
+                    "crawl_phase": "complete",
+                    "timeout_count": int(timeout_count),
+                    "error_count": int(error_count),
+                },
             )
         return statutes
 
@@ -783,12 +810,25 @@ class OklahomaScraper(BaseStateScraper):
         return match.group(1) if match else ""
 
     async def _request_text(self, url: str, headers: Dict[str, str], timeout: int) -> str:
+        normalized_url = str(url or "").strip()
         direct_oscn_text = await self._request_live_oscn_text(url, headers=headers, timeout=timeout)
         if direct_oscn_text:
             return direct_oscn_text
         direct_wayback_text = await self._request_wayback_text(url, headers=headers, timeout=timeout)
         if direct_wayback_text:
             return direct_wayback_text
+        heavy_fallback_for_deliver_raw = str(
+            os.getenv("STATE_SCRAPER_OK_HEAVY_FALLBACK_FOR_DELIVERDOCUMENT", "") or ""
+        ).strip().lower()
+        heavy_fallback_for_deliver = heavy_fallback_for_deliver_raw in {"1", "true", "yes", "on"}
+        if (
+            "oscn.net/applications/oscn/deliverdocument.asp" in normalized_url.lower()
+            and not heavy_fallback_for_deliver
+        ):
+            # DeliverDocument pages are already handled by direct live/Wayback probes
+            # above. Skipping unified archival fallback here avoids repeatedly
+            # invoking throttled search providers for thousands of candidates.
+            return ""
 
         try:
             request_url = self._normalize_wayback_url(url)
@@ -1018,9 +1058,11 @@ class _OklahomaCheckpoint:
         code_name: str,
         scanned_candidates: int,
         discovered_candidates: int,
+        progress: Optional[Dict[str, Any]] = None,
     ) -> None:
         count = len(statutes)
-        if not self.path or count <= 0:
+        has_progress = isinstance(progress, dict) and bool(progress)
+        if not self.path or (count <= 0 and not has_progress):
             return
         if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
             return
@@ -1029,6 +1071,7 @@ class _OklahomaCheckpoint:
             code_name=code_name,
             scanned_candidates=scanned_candidates,
             discovered_candidates=discovered_candidates,
+            progress=progress,
         )
 
     def write(
@@ -1038,8 +1081,10 @@ class _OklahomaCheckpoint:
         code_name: str,
         scanned_candidates: int,
         discovered_candidates: int,
+        progress: Optional[Dict[str, Any]] = None,
     ) -> None:
-        if not self.path or not statutes:
+        has_progress = isinstance(progress, dict) and bool(progress)
+        if not self.path or (not statutes and not has_progress):
             return
         payload = {
             "state_code": self.state_code,
@@ -1050,6 +1095,8 @@ class _OklahomaCheckpoint:
             "discovered_candidates": int(discovered_candidates),
             "statutes": [statute.to_dict() for statute in statutes],
         }
+        if has_progress:
+            payload["progress"] = dict(progress or {})
         tmp_path = self.path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
         tmp_path.replace(self.path)

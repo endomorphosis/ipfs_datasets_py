@@ -79,6 +79,9 @@ class MississippiScraper(BaseStateScraper):
             max_statutes=(limit or 1000000),
         )
         if self._full_corpus_enabled():
+            use_common_crawl_seed = str(
+                os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_FULL_CORPUS_SEEDS_ENABLED", "1")
+            ).strip().lower() not in {"0", "false", "no", "off"}
             common_crawl_seed_target_raw = str(
                 os.getenv("STATE_SCRAPER_MS_COMMON_CRAWL_SEED_TARGET", "") or ""
             ).strip()
@@ -87,32 +90,63 @@ class MississippiScraper(BaseStateScraper):
             except Exception:
                 common_crawl_seed_target = 600
             common_crawl_seed_target = max(25, min(2000, common_crawl_seed_target))
-            common_crawl_seed = await self._scrape_common_crawl_code_sections(
-                code_name=code_name,
-                max_statutes=common_crawl_seed_target,
-            )
-            if common_crawl_seed:
-                merged_seed: List[NormalizedStatute] = []
-                seen_seed_keys = set()
-                for statute in list(seed_statutes) + list(common_crawl_seed):
-                    statute_key = _statute_dedupe_key(statute)
-                    if statute_key and statute_key in seen_seed_keys:
-                        continue
-                    if statute_key:
-                        seen_seed_keys.add(statute_key)
-                    merged_seed.append(statute)
-                seed_statutes = merged_seed[: (limit or 1000000)]
-                checkpoint.maybe_write(
-                    seed_statutes,
+            if use_common_crawl_seed:
+                common_crawl_seed = await self._scrape_common_crawl_code_sections(
                     code_name=code_name,
-                    scanned_history_urls=len(seed_statutes),
-                    discovered_history_urls=len(seed_statutes),
+                    max_statutes=common_crawl_seed_target,
                 )
+                if common_crawl_seed:
+                    merged_seed: List[NormalizedStatute] = []
+                    seen_seed_keys = set()
+                    for statute in list(seed_statutes) + list(common_crawl_seed):
+                        statute_key = _statute_dedupe_key(statute)
+                        if statute_key and statute_key in seen_seed_keys:
+                            continue
+                        if statute_key:
+                            seen_seed_keys.add(statute_key)
+                        merged_seed.append(statute)
+                    seed_statutes = merged_seed[: (limit or 1000000)]
+                    checkpoint.maybe_write(
+                        seed_statutes,
+                        code_name=code_name,
+                        scanned_history_urls=len(seed_statutes),
+                        discovered_history_urls=len(seed_statutes),
+                    )
+                    self.logger.info(
+                        "Mississippi full-corpus common-crawl seeds: statutes_so_far=%s target=%s",
+                        len(seed_statutes),
+                        common_crawl_seed_target,
+                    )
+            else:
                 self.logger.info(
-                    "Mississippi full-corpus common-crawl seeds: statutes_so_far=%s target=%s",
-                    len(seed_statutes),
-                    common_crawl_seed_target,
+                    "Mississippi full-corpus common-crawl seeds disabled by env STATE_SCRAPER_MS_COMMON_CRAWL_FULL_CORPUS_SEEDS_ENABLED"
                 )
+
+            if not seed_statutes:
+                reader_seed_limit_raw = str(
+                    os.getenv("STATE_SCRAPER_MS_READER_SEED_TARGET", "") or ""
+                ).strip()
+                try:
+                    reader_seed_limit = int(reader_seed_limit_raw) if reader_seed_limit_raw else 2
+                except Exception:
+                    reader_seed_limit = 2
+                reader_seed_limit = max(1, min(8, reader_seed_limit))
+                reader_seed = await self._scrape_jina_justia_seed_sections(
+                    code_name=code_name,
+                    max_statutes=reader_seed_limit,
+                )
+                if reader_seed:
+                    seed_statutes = list(reader_seed)
+                    checkpoint.maybe_write(
+                        seed_statutes,
+                        code_name=code_name,
+                        scanned_history_urls=0,
+                        discovered_history_urls=0,
+                    )
+                    self.logger.info(
+                        "Mississippi full-corpus bootstrap via non-throttled reader seeds: statutes_so_far=%s",
+                        len(seed_statutes),
+                    )
 
         archival_kwargs: Dict[str, Any] = {}
         try:

@@ -142,24 +142,49 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
         payload.get("discovered_history_urls", progress.get("discovered_history_urls")),
         0,
     )
+    scanned_laws = _safe_int(
+        payload.get("scanned_laws", progress.get("scanned_laws")),
+        0,
+    )
+    discovered_laws = _safe_int(
+        payload.get("discovered_laws", progress.get("discovered_laws")),
+        0,
+    )
+    titles_scanned = _safe_int(
+        payload.get("titles_scanned", progress.get("titles_scanned")),
+        0,
+    )
+    discovered_titles = _safe_int(
+        payload.get("discovered_titles", progress.get("discovered_titles")),
+        0,
+    )
+    chapters_scanned = _safe_int(
+        payload.get("chapters_scanned", progress.get("chapters_scanned")),
+        0,
+    )
+    discovered_chapters = _safe_int(
+        payload.get("discovered_chapters", progress.get("discovered_chapters")),
+        0,
+    )
     codes_completed = _safe_int(progress.get("codes_completed", payload.get("codes_completed")), 0)
     codes_total = _safe_int(progress.get("codes_total", payload.get("codes_total")), 0)
 
     signal_kind = ""
     scanned = 0
     discovered = 0
-    if discovered_candidates > 0:
-        signal_kind = "candidate_scan"
-        scanned = scanned_candidates
-        discovered = discovered_candidates
-    elif discovered_history_urls > 0:
-        signal_kind = "history_scan"
-        scanned = scanned_history_urls
-        discovered = discovered_history_urls
-    elif codes_total > 0:
-        signal_kind = "codes_progress"
-        scanned = codes_completed
-        discovered = codes_total
+    for kind, scanned_value, discovered_value in (
+        ("candidate_scan", scanned_candidates, discovered_candidates),
+        ("history_scan", scanned_history_urls, discovered_history_urls),
+        ("law_page_scan", scanned_laws, discovered_laws),
+        ("title_scan", titles_scanned, discovered_titles),
+        ("chapter_scan", chapters_scanned, discovered_chapters),
+        ("codes_progress", codes_completed, codes_total),
+    ):
+        if discovered_value > 0:
+            signal_kind = kind
+            scanned = scanned_value
+            discovered = discovered_value
+            break
 
     signal_found = bool(signal_kind)
     work_remaining: Optional[bool] = None
@@ -172,13 +197,13 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
 
     if timed_out and signal_found and work_remaining is True:
         classification = "timeout_while_work_remaining"
-    elif timed_out and signal_found and work_remaining is False and statutes_count > 0:
+    elif timed_out and signal_found and work_remaining is False:
         classification = "timeout_with_no_detectable_remaining_work"
     elif timed_out and signal_found:
         classification = "timeout_with_progress_signal_unknown_completion"
     elif timed_out:
         classification = "timeout_without_progress_signal"
-    elif signal_found and work_remaining is False and statutes_count > 0:
+    elif signal_found and work_remaining is False:
         classification = "error_with_no_detectable_remaining_work"
     elif signal_found and work_remaining is True:
         classification = "error_while_work_remaining"
@@ -201,6 +226,12 @@ def _derive_timeout_diagnostics_from_checkpoint_payload(
             "discovered_candidates": discovered_candidates,
             "scanned_history_urls": scanned_history_urls,
             "discovered_history_urls": discovered_history_urls,
+            "scanned_laws": scanned_laws,
+            "discovered_laws": discovered_laws,
+            "titles_scanned": titles_scanned,
+            "discovered_titles": discovered_titles,
+            "chapters_scanned": chapters_scanned,
+            "discovered_chapters": discovered_chapters,
             "codes_completed": codes_completed,
             "codes_total": codes_total,
         },
@@ -1132,13 +1163,18 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
     except Exception:
         return None
     statutes = payload.get("statutes") if isinstance(payload, dict) else None
-    if not isinstance(statutes, list) or not statutes:
+    if not isinstance(statutes, list):
         return None
+    progress = payload.get("progress") if isinstance(payload.get("progress"), dict) else {}
     timeout_diagnostics = _derive_timeout_diagnostics_from_checkpoint_payload(
         payload=payload,
         error_msg=error_msg,
         statutes_count=len(statutes),
     )
+    signal_found = bool(timeout_diagnostics.get("signal_found"))
+    has_progress_fields = bool(progress)
+    if len(statutes) <= 0 and not signal_found and not has_progress_fields:
+        return None
 
     state_name = US_STATES[state_code]
     statute_data = {
@@ -1146,8 +1182,8 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
         "state_name": state_name,
         "title": f"{state_name} Laws",
         "source": "Official State Legislative Website",
-        "source_url": "",
-        "official_url": "",
+        "source_url": str(payload.get("source_url") or ""),
+        "official_url": str(payload.get("official_url") or ""),
         "scraped_at": datetime.now().isoformat(),
         "statutes": statutes,
         "schema_version": "1.0",
@@ -1159,8 +1195,18 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
     }
     quality_metrics = _compute_state_quality_metrics(statutes)
     quality_flag = _should_flag_quality(quality_metrics)
+    zero_statute = len(statutes) <= 0
+    if zero_statute:
+        recovery_note = (
+            f"{state_code} recovered timeout diagnostics from partial checkpoint with "
+            "no statutes yet persisted"
+        )
+    else:
+        recovery_note = (
+            f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error"
+        )
     warnings = [
-        f"{state_code} recovered {len(statutes)} statutes from partial checkpoint after timeout/error",
+        recovery_note,
         error_msg,
         (
             f"{state_code} checkpoint timeout_diagnostics="
@@ -1176,7 +1222,7 @@ def _load_partial_checkpoint_state_result(state_code: str, error_msg: str) -> Op
         "state_name": state_name,
         "error": error_msg,
         "statutes_count": len(statutes),
-        "zero_statute": False,
+        "zero_statute": bool(zero_statute),
         "low_quality": quality_flag,
         "quality_metrics": quality_metrics,
         "fetch_analytics": {},

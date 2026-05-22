@@ -54,6 +54,14 @@ _LOG_SCRAPED_STATUTES_RE = re.compile(r"Scraped\s+(\d+)\s+(?:statutes|sections)\
 _LOG_STATUTES_SOFAR_RE = re.compile(r"statutes_so_far=(\d+)", flags=re.IGNORECASE)
 _LOG_COUNTER_EQ_RE = re.compile(r"\b(?:statutes|records|sections|pages)=(\d+)\b", flags=re.IGNORECASE)
 _LOG_SCANNED_SECTIONS_RE = re.compile(r"scanned_sections=\d+/\d+", flags=re.IGNORECASE)
+_LOG_SCANNED_DISCOVERED_PAIR_RE = re.compile(
+    r"\bscanned_(?P<label>[a-z_]+)\s*=\s*(?P<scanned>\d+)\b.*?\bdiscovered_(?P=label)\s*=\s*(?P<discovered>\d+)\b",
+    flags=re.IGNORECASE,
+)
+_LOG_SCANNED_TOTAL_RE = re.compile(
+    r"\b(?P<label>(?:scanned_[a-z_]+|titles_scanned|scanned_sections|scanned_laws))\s*=\s*(?P<scanned>\d+)\s*/\s*(?P<discovered>\d+)\b",
+    flags=re.IGNORECASE,
+)
 
 
 def utc_now() -> str:
@@ -770,6 +778,99 @@ def _read_tail_text(path: Path, *, max_bytes: int = 4_000_000) -> str:
     return text
 
 
+def _new_state_log_row() -> Dict[str, Any]:
+    return {
+        "started": False,
+        "line_count": 0,
+        "scraped_event_count": 0,
+        "scraped_event_max": 0,
+        "last_seen_epoch": None,
+        "last_progress_epoch": None,
+        "max_counter": 0,
+        "samples": [],
+        "progress_event_count": 0,
+        "progress_event_samples": [],
+        "last_progress_signal_epoch": None,
+        "attempt_count": 0,
+        "current_attempt_start_epoch": None,
+        "current_attempt_last_progress_epoch": None,
+        "current_attempt_max_counter": 0,
+        "current_attempt_samples": [],
+        "current_attempt_progress_event_count": 0,
+        "current_attempt_progress_event_samples": [],
+        "current_attempt_last_progress_signal_epoch": None,
+        "current_attempt_counter_reset_count": 0,
+        "current_attempt_last_counter": None,
+        "work_signal_kind": "",
+        "work_scanned": 0,
+        "work_discovered": 0,
+        "work_samples": [],
+        "work_last_progress_epoch": None,
+        "current_attempt_work_samples": [],
+        "current_attempt_work_last_progress_epoch": None,
+    }
+
+
+def _coerce_epoch(value: Any) -> Optional[float]:
+    if isinstance(value, (int, float)):
+        try:
+            return float(value)
+        except Exception:
+            return None
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except Exception:
+        return _safe_iso_to_epoch(text)
+
+
+def _load_partial_checkpoint_payloads(output_dir: Path) -> Dict[str, Dict[str, Any]]:
+    checkpoints_dir = output_dir / "partial_checkpoints"
+    if not checkpoints_dir.exists():
+        return {}
+    out: Dict[str, Dict[str, Any]] = {}
+    for path in sorted(checkpoints_dir.glob("STATE-*-partial.json")):
+        payload = _read_json(path)
+        if not isinstance(payload, dict):
+            continue
+        state = str(payload.get("state_code") or "").strip().upper()
+        if len(state) != 2 or not state.isalpha():
+            continue
+        payload["_path"] = str(path)
+        out[state] = payload
+    return out
+
+
+def _extract_checkpoint_work_signal(payload: Dict[str, Any]) -> Tuple[str, int, int]:
+    if not isinstance(payload, dict):
+        return "", 0, 0
+
+    progress = payload.get("progress") if isinstance(payload.get("progress"), dict) else {}
+    # Try the richer progress payload first, then fall back to top-level counters.
+    sources: List[Dict[str, Any]] = []
+    if isinstance(progress, dict):
+        sources.append(progress)
+    sources.append(payload)
+    candidate_pairs = [
+        ("scanned_candidates", "discovered_candidates", "candidates"),
+        ("scanned_history_urls", "discovered_history_urls", "history_urls"),
+        ("scanned_laws", "discovered_laws", "laws"),
+        ("titles_scanned", "discovered_titles", "titles"),
+        ("chapters_scanned", "discovered_chapters", "chapters"),
+        ("scanned_sections", "discovered_sections", "sections"),
+    ]
+    for src in sources:
+        for scanned_key, discovered_key, label in candidate_pairs:
+            discovered = _safe_int(src.get(discovered_key), 0)
+            if discovered <= 0:
+                continue
+            scanned = _safe_int(src.get(scanned_key), 0)
+            return label, max(0, scanned), max(0, discovered)
+    return "", 0, 0
+
+
 def _compute_samples_rate_per_minute(samples: List[Tuple[float, int]], *, now: float, window_seconds: float) -> Optional[float]:
     if len(samples) < 2:
         return None
@@ -838,6 +939,7 @@ def _collect_state_rate_analytics(
     signal_mode = "live_progress" if progress_path else "log_only"
 
     log_data: Dict[str, Dict[str, Any]] = {}
+    partial_checkpoints = _load_partial_checkpoint_payloads(output_dir)
     tail_text = _read_tail_text(log_path)
     for line in tail_text.splitlines():
         match = _LOG_STATE_RE.search(line)
@@ -857,32 +959,7 @@ def _collect_state_rate_analytics(
         state = str(match.group(1) or "").upper().strip()
         if not state:
             continue
-        row = log_data.setdefault(
-            state,
-            {
-                "started": False,
-                "line_count": 0,
-                "scraped_event_count": 0,
-                "scraped_event_max": 0,
-                "last_seen_epoch": None,
-                "last_progress_epoch": None,
-                "max_counter": 0,
-                "samples": [],
-                "progress_event_count": 0,
-                "progress_event_samples": [],
-                "last_progress_signal_epoch": None,
-                "attempt_count": 0,
-                "current_attempt_start_epoch": None,
-                "current_attempt_last_progress_epoch": None,
-                "current_attempt_max_counter": 0,
-                "current_attempt_samples": [],
-                "current_attempt_progress_event_count": 0,
-                "current_attempt_progress_event_samples": [],
-                "current_attempt_last_progress_signal_epoch": None,
-                "current_attempt_counter_reset_count": 0,
-                "current_attempt_last_counter": None,
-            },
-        )
+        row = log_data.setdefault(state, _new_state_log_row())
         row["line_count"] = int(row.get("line_count", 0)) + 1
         if ts_epoch is not None:
             prev_seen = row.get("last_seen_epoch")
@@ -901,15 +978,33 @@ def _collect_state_rate_analytics(
             row["current_attempt_last_progress_signal_epoch"] = None
             row["current_attempt_counter_reset_count"] = 0
             row["current_attempt_last_counter"] = None
+            row["current_attempt_work_samples"] = []
+            row["current_attempt_work_last_progress_epoch"] = None
 
         counter: Optional[int] = None
         so_far_match = _LOG_STATUTES_SOFAR_RE.search(line)
+        eq_counters = [_safe_int(match.group(1), 0) for match in _LOG_COUNTER_EQ_RE.finditer(line)]
         if so_far_match:
             counter = _safe_int(so_far_match.group(1), 0)
+            if counter <= 0 and eq_counters:
+                counter = max(eq_counters)
+        elif eq_counters:
+            counter = max(eq_counters)
+
+        work_signal_kind = ""
+        work_scanned = 0
+        work_discovered = 0
+        scanned_discovered_match = _LOG_SCANNED_DISCOVERED_PAIR_RE.search(line)
+        if scanned_discovered_match:
+            work_signal_kind = str(scanned_discovered_match.group("label") or "").strip().lower() or "scanned_discovered"
+            work_scanned = _safe_int(scanned_discovered_match.group("scanned"), 0)
+            work_discovered = _safe_int(scanned_discovered_match.group("discovered"), 0)
         else:
-            eq_match = _LOG_COUNTER_EQ_RE.search(line)
-            if eq_match:
-                counter = _safe_int(eq_match.group(1), 0)
+            scanned_total_match = _LOG_SCANNED_TOTAL_RE.search(line)
+            if scanned_total_match:
+                work_signal_kind = str(scanned_total_match.group("label") or "").strip().lower() or "scan_total"
+                work_scanned = _safe_int(scanned_total_match.group("scanned"), 0)
+                work_discovered = _safe_int(scanned_total_match.group("discovered"), 0)
 
         progress_signal = False
         if counter is not None:
@@ -945,6 +1040,26 @@ def _collect_state_rate_analytics(
                 if current_last_progress is None or ts_epoch >= float(current_last_progress):
                     row["current_attempt_last_progress_epoch"] = float(ts_epoch)
 
+        if work_signal_kind and work_discovered > 0:
+            progress_signal = True
+            row["work_signal_kind"] = work_signal_kind
+            row["work_scanned"] = max(_safe_int(row.get("work_scanned"), 0), int(work_scanned))
+            row["work_discovered"] = max(_safe_int(row.get("work_discovered"), 0), int(work_discovered))
+            if ts_epoch is not None:
+                work_samples = list(row.get("work_samples") or [])
+                work_samples.append((float(ts_epoch), int(work_scanned)))
+                if len(work_samples) > 256:
+                    work_samples = work_samples[-256:]
+                row["work_samples"] = work_samples
+                row["work_last_progress_epoch"] = float(ts_epoch)
+
+                current_work_samples = list(row.get("current_attempt_work_samples") or [])
+                current_work_samples.append((float(ts_epoch), int(work_scanned)))
+                if len(current_work_samples) > 256:
+                    current_work_samples = current_work_samples[-256:]
+                row["current_attempt_work_samples"] = current_work_samples
+                row["current_attempt_work_last_progress_epoch"] = float(ts_epoch)
+
         scraped_match = _LOG_SCRAPED_STATUTES_RE.search(line)
         if scraped_match:
             progress_signal = True
@@ -975,7 +1090,82 @@ def _collect_state_rate_analytics(
             if current_attempt_progress_signal is None or ts_epoch >= float(current_attempt_progress_signal):
                 row["current_attempt_last_progress_signal_epoch"] = float(ts_epoch)
 
-    all_states = _normalize_states(states) or progress_states or sorted(log_data.keys())
+    # Merge partial checkpoint signals so stalled-state detection still works
+    # when shard log files are sparse or redirected elsewhere.
+    for state, checkpoint_payload in partial_checkpoints.items():
+        row = log_data.setdefault(state, _new_state_log_row())
+        row["started"] = True
+        row["line_count"] = max(1, _safe_int(row.get("line_count"), 0))
+
+        updated_epoch = _coerce_epoch(checkpoint_payload.get("updated_at"))
+        if updated_epoch is not None:
+            prev_seen = row.get("last_seen_epoch")
+            if prev_seen is None or updated_epoch >= float(prev_seen):
+                row["last_seen_epoch"] = float(updated_epoch)
+
+        checkpoint_counter = _safe_int(checkpoint_payload.get("statutes_count"), 0)
+        if checkpoint_counter <= 0:
+            statutes_rows = checkpoint_payload.get("statutes")
+            if isinstance(statutes_rows, list):
+                checkpoint_counter = len(statutes_rows)
+        if checkpoint_counter > 0 and updated_epoch is not None:
+            row["max_counter"] = max(_safe_int(row.get("max_counter"), 0), int(checkpoint_counter))
+            row["current_attempt_max_counter"] = max(
+                _safe_int(row.get("current_attempt_max_counter"), 0),
+                int(checkpoint_counter),
+            )
+            samples = list(row.get("samples") or [])
+            samples.append((float(updated_epoch), int(checkpoint_counter)))
+            if len(samples) > 256:
+                samples = samples[-256:]
+            row["samples"] = samples
+            current_samples = list(row.get("current_attempt_samples") or [])
+            current_samples.append((float(updated_epoch), int(checkpoint_counter)))
+            if len(current_samples) > 256:
+                current_samples = current_samples[-256:]
+            row["current_attempt_samples"] = current_samples
+            row["last_progress_epoch"] = float(updated_epoch)
+            row["current_attempt_last_progress_epoch"] = float(updated_epoch)
+            row["progress_event_count"] = max(1, _safe_int(row.get("progress_event_count"), 0))
+            row["current_attempt_progress_event_count"] = max(
+                1,
+                _safe_int(row.get("current_attempt_progress_event_count"), 0),
+            )
+            row["last_progress_signal_epoch"] = float(updated_epoch)
+            row["current_attempt_last_progress_signal_epoch"] = float(updated_epoch)
+
+        work_kind, work_scanned, work_discovered = _extract_checkpoint_work_signal(checkpoint_payload)
+        if work_kind and work_discovered > 0:
+            row["work_signal_kind"] = str(work_kind)
+            row["work_scanned"] = max(_safe_int(row.get("work_scanned"), 0), int(work_scanned))
+            row["work_discovered"] = max(_safe_int(row.get("work_discovered"), 0), int(work_discovered))
+            if updated_epoch is not None:
+                work_samples = list(row.get("work_samples") or [])
+                work_samples.append((float(updated_epoch), int(work_scanned)))
+                if len(work_samples) > 256:
+                    work_samples = work_samples[-256:]
+                row["work_samples"] = work_samples
+                row["work_last_progress_epoch"] = float(updated_epoch)
+                current_work_samples = list(row.get("current_attempt_work_samples") or [])
+                current_work_samples.append((float(updated_epoch), int(work_scanned)))
+                if len(current_work_samples) > 256:
+                    current_work_samples = current_work_samples[-256:]
+                row["current_attempt_work_samples"] = current_work_samples
+                row["current_attempt_work_last_progress_epoch"] = float(updated_epoch)
+                row["progress_event_count"] = max(1, _safe_int(row.get("progress_event_count"), 0))
+                row["current_attempt_progress_event_count"] = max(
+                    1,
+                    _safe_int(row.get("current_attempt_progress_event_count"), 0),
+                )
+                row["last_progress_signal_epoch"] = float(updated_epoch)
+                row["current_attempt_last_progress_signal_epoch"] = float(updated_epoch)
+
+    all_states = _uniq(
+        _normalize_states(states)
+        + progress_states
+        + sorted(log_data.keys())
+        + sorted(partial_checkpoints.keys())
+    )
     state_rows: List[Dict[str, Any]] = []
     started_states: List[str] = []
     completed_from_progress: List[str] = []
@@ -1107,6 +1297,14 @@ def _collect_state_rate_analytics(
         ):
             rate_per_minute = progress_event_rate_per_minute
         attempt_count = max(1, _safe_int(row.get("attempt_count"), 0)) if started else _safe_int(row.get("attempt_count"), 0)
+        work_signal_kind = str(row.get("work_signal_kind") or "").strip().lower()
+        work_scanned = _safe_int(row.get("work_scanned"), 0)
+        work_discovered = _safe_int(row.get("work_discovered"), 0)
+        work_remaining_estimate: Optional[bool] = None
+        work_coverage_ratio: Optional[float] = None
+        if work_signal_kind and work_discovered > 0:
+            work_remaining_estimate = work_scanned < work_discovered
+            work_coverage_ratio = round(min(1.0, float(work_scanned) / float(work_discovered)), 4)
         progress_age_candidates = [
             value
             for value in (
@@ -1185,6 +1383,15 @@ def _collect_state_rate_analytics(
             "possibly_stalled": bool(possibly_stalled),
             "possible_stall_seconds": round(possible_stall_seconds, 1),
         }
+        if work_signal_kind and work_discovered > 0:
+            state_entry["work_signal_kind"] = work_signal_kind
+            state_entry["work_scanned"] = int(work_scanned)
+            state_entry["work_discovered"] = int(work_discovered)
+            state_entry["work_coverage_ratio"] = work_coverage_ratio
+            if work_remaining_estimate is not None:
+                state_entry["work_remaining_estimate"] = work_remaining_estimate
+            if max_counter <= 0 and work_remaining_estimate is True:
+                state_entry["progress_mode"] = "discovery_only_no_statute_growth_yet"
         if timeout_classification:
             state_entry["timeout_classification"] = timeout_classification
         if completion_mode:

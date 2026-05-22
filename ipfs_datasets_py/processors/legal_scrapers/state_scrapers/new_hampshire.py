@@ -9,6 +9,7 @@ import os
 import time
 from dataclasses import fields as dataclass_fields
 from datetime import datetime
+from pathlib import PurePosixPath
 from pathlib import Path
 from typing import Any, List, Dict, Optional
 import json
@@ -280,6 +281,56 @@ class NewHampshireScraper(BaseStateScraper):
                 deduped.append(text)
         return deduped
 
+    def _derive_section_number_from_href(self, *, chapter_id: str, section_url: str, href_text: str) -> str:
+        chapter = str(chapter_id or "").strip()
+        if not chapter:
+            return ""
+        normalized_url = self._normalize_wayback_like_url(section_url)
+        lower_url = normalized_url.lower()
+        if "/rsa/html/" not in lower_url:
+            return ""
+        try:
+            path_part = normalized_url.split("://", 1)[-1].split("/", 1)[-1]
+        except Exception:
+            path_part = normalized_url
+        if not path_part:
+            return ""
+        basename = PurePosixPath(path_part).name
+        if not basename.lower().endswith(".htm"):
+            return ""
+        stem = basename[:-4].strip()
+        if not stem:
+            return ""
+        stem = re.sub(r"[^0-9A-Za-z:-]", "", stem)
+        if not stem:
+            return ""
+        chapter_lower = chapter.lower()
+        stem_lower = stem.lower()
+        if stem_lower.startswith(chapter_lower + "-"):
+            suffix = stem[len(chapter) + 1 :].strip()
+            if suffix:
+                return f"{chapter}:{suffix}"
+        if stem_lower.startswith(chapter_lower + ":"):
+            suffix = stem[len(chapter) + 1 :].strip()
+            if suffix:
+                return f"{chapter}:{suffix}"
+        if stem_lower == chapter_lower:
+            fallback_match = re.search(r"\b([0-9A-Za-z:.-]{2,})\b", str(href_text or ""))
+            if fallback_match:
+                candidate = fallback_match.group(1).strip()
+                if candidate and candidate.lower() != chapter_lower:
+                    return candidate
+            return ""
+        if ":" in stem:
+            return stem
+        # Last-resort: treat `<chapter>-<suffix>` as `<chapter>:<suffix>` when possible.
+        suffix_match = re.match(rf"^{re.escape(chapter_lower)}-([0-9A-Za-z.-]+)$", stem_lower)
+        if suffix_match:
+            suffix = str(suffix_match.group(1) or "").strip()
+            if suffix:
+                return f"{chapter}:{suffix}"
+        return ""
+
     async def _scrape_archived_title_stubs(
         self,
         code_name: str,
@@ -296,8 +347,38 @@ class NewHampshireScraper(BaseStateScraper):
         try:
             payload = await self._fetch_page_content_with_archival_fallback(root_url, timeout_seconds=35)
             if not payload:
+                if checkpoint is not None:
+                    checkpoint.write(
+                        [],
+                        code_name=code_name,
+                        stage_label="root-unavailable",
+                        progress={
+                            "titles_scanned": 0,
+                            "discovered_titles": 0,
+                            "chapters_scanned": 0,
+                            "discovered_chapters": 0,
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                            "fetch_status": "root_unavailable",
+                        },
+                    )
                 return []
         except Exception:
+            if checkpoint is not None:
+                checkpoint.write(
+                    [],
+                    code_name=code_name,
+                    stage_label="root-fetch-error",
+                    progress={
+                        "titles_scanned": 0,
+                        "discovered_titles": 0,
+                        "chapters_scanned": 0,
+                        "discovered_chapters": 0,
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                        "fetch_status": "root_fetch_error",
+                    },
+                )
             return []
 
         soup = BeautifulSoup(payload, "html.parser")
@@ -346,6 +427,22 @@ class NewHampshireScraper(BaseStateScraper):
                     checkpoint.maybe_write(title_stubs, code_name=code_name, stage_label=f"title:{title_no}")
             if title_url_limit is not None and len(title_urls) >= title_url_limit:
                 break
+
+        if checkpoint is not None and not title_urls:
+            checkpoint.write(
+                title_stubs,
+                code_name=code_name,
+                stage_label="title-discovery-empty",
+                progress={
+                    "titles_scanned": 0,
+                    "discovered_titles": 0,
+                    "chapters_scanned": 0,
+                    "discovered_chapters": 0,
+                    "codes_completed": 0,
+                    "codes_total": 1,
+                    "fetch_status": "no_titles_discovered",
+                },
+            )
 
         if title_urls:
             self.logger.info(
@@ -426,6 +523,19 @@ class NewHampshireScraper(BaseStateScraper):
                     len(chapter_urls),
                     len(out),
                 )
+                if checkpoint is not None:
+                    checkpoint.maybe_write(
+                        out,
+                        code_name=code_name,
+                        stage_label=f"title-scan:{title_index}",
+                        progress={
+                            "titles_scanned": int(title_index),
+                            "discovered_titles": int(total_titles),
+                            "discovered_chapters": int(len(chapter_urls)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
 
         if _limit_reached(len(out)):
             return out[:max_statutes]
@@ -447,10 +557,23 @@ class NewHampshireScraper(BaseStateScraper):
                 if not href.endswith(".htm"):
                     continue
                 match = self._NH_SECTION_LINK_RE.match(text)
-                if not match:
-                    continue
-                section_number = match.group(1).strip()
-                section_title = match.group(2).strip().rstrip(".")
+                section_url = self._normalize_wayback_like_url(urljoin(chapter_url, href))
+                section_number = ""
+                section_title = ""
+                if match:
+                    section_number = match.group(1).strip()
+                    section_title = match.group(2).strip().rstrip(".")
+                else:
+                    section_number = self._derive_section_number_from_href(
+                        chapter_id=chapter_id,
+                        section_url=section_url,
+                        href_text=text,
+                    )
+                    if not section_number:
+                        continue
+                    section_title = text.strip().rstrip(".")
+                if not section_title:
+                    section_title = f"Section {section_number}"
                 section_key = section_number.lower()
                 if section_key in seen_local:
                     continue
@@ -459,7 +582,7 @@ class NewHampshireScraper(BaseStateScraper):
                     (
                         section_number,
                         section_title,
-                        self._normalize_wayback_like_url(urljoin(chapter_url, href)),
+                        section_url,
                     )
                 )
 
@@ -524,15 +647,51 @@ class NewHampshireScraper(BaseStateScraper):
                 len(chapter_urls),
                 len(chapters_to_fetch),
             )
-        for section_batch in await asyncio.gather(
+            if checkpoint is not None:
+                checkpoint.maybe_write(
+                    out,
+                    code_name=code_name,
+                    stage_label="chapter-discovery",
+                    progress={
+                        "titles_scanned": int(total_titles),
+                        "discovered_titles": int(total_titles),
+                        "chapters_scanned": 0,
+                        "discovered_chapters": int(len(chapters_to_fetch)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
+        chapter_batches = await asyncio.gather(
             *[
                 _bounded_fetch(chapter_id, chapter_name, chapter_url)
                 for chapter_id, chapter_name, chapter_url in chapters_to_fetch
             ],
             return_exceptions=True,
+        )
+        for chapter_index, ((chapter_id, _chapter_name, _chapter_url), section_batch) in enumerate(
+            zip(chapters_to_fetch, chapter_batches),
+            start=1,
         ):
             if isinstance(section_batch, Exception):
                 continue
+            if checkpoint is not None and (
+                chapter_index == 1
+                or chapter_index % 20 == 0
+                or chapter_index == len(chapters_to_fetch)
+            ):
+                checkpoint.maybe_write(
+                    out,
+                    code_name=code_name,
+                    stage_label=f"chapter-scan:{chapter_index}",
+                    progress={
+                        "titles_scanned": int(total_titles),
+                        "discovered_titles": int(total_titles),
+                        "chapters_scanned": int(chapter_index),
+                        "discovered_chapters": int(len(chapters_to_fetch)),
+                        "codes_completed": 0,
+                        "codes_total": 1,
+                    },
+                )
             for statute in section_batch:
                 key = str(statute.statute_id or statute.source_url or "").strip().lower()
                 if not key or key in seen_output_keys:
@@ -540,7 +699,19 @@ class NewHampshireScraper(BaseStateScraper):
                 seen_output_keys.add(key)
                 out.append(statute)
                 if checkpoint is not None and (len(out) == 1 or len(out) % 40 == 0):
-                    checkpoint.maybe_write(out, code_name=code_name, stage_label=f"chapter:{chapter_id}")
+                    checkpoint.maybe_write(
+                        out,
+                        code_name=code_name,
+                        stage_label=f"chapter:{chapter_id}",
+                        progress={
+                            "titles_scanned": int(total_titles),
+                            "discovered_titles": int(total_titles),
+                            "chapters_scanned": int(chapter_index),
+                            "discovered_chapters": int(len(chapters_to_fetch)),
+                            "codes_completed": 0,
+                            "codes_total": 1,
+                        },
+                    )
                 if len(out) == 1 or len(out) % 40 == 0:
                     self.logger.info(
                         "New Hampshire archived index: global_total_statutes_so_far=%s chapter=%s",
@@ -549,11 +720,35 @@ class NewHampshireScraper(BaseStateScraper):
                     )
                 if _limit_reached(len(out)):
                     if checkpoint is not None:
-                        checkpoint.write(out, code_name=code_name, stage_label=f"limit:{chapter_id}")
+                        checkpoint.write(
+                            out,
+                            code_name=code_name,
+                            stage_label=f"limit:{chapter_id}",
+                            progress={
+                                "titles_scanned": int(total_titles),
+                                "discovered_titles": int(total_titles),
+                                "chapters_scanned": int(chapter_index),
+                                "discovered_chapters": int(len(chapters_to_fetch)),
+                                "codes_completed": 1,
+                                "codes_total": 1,
+                            },
+                        )
                     return out[:max_statutes]
 
         if checkpoint is not None:
-            checkpoint.write(out, code_name=code_name, stage_label="archived-title-stubs-complete")
+            checkpoint.write(
+                out,
+                code_name=code_name,
+                stage_label="archived-title-stubs-complete",
+                progress={
+                    "titles_scanned": int(total_titles),
+                    "discovered_titles": int(total_titles),
+                    "chapters_scanned": int(len(chapters_to_fetch)),
+                    "discovered_chapters": int(len(chapters_to_fetch)),
+                    "codes_completed": 1,
+                    "codes_total": 1,
+                },
+            )
         return out
 
     def _extract_statute_text(self, payload: bytes) -> str:
@@ -734,16 +929,33 @@ class _NewHampshireCheckpoint:
         self.last_count = len(loaded)
         return loaded
 
-    def maybe_write(self, statutes: List[NormalizedStatute], *, code_name: str, stage_label: str) -> None:
+    def maybe_write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        stage_label: str,
+        progress: Optional[Dict[str, Any]] = None,
+    ) -> None:
         count = len(statutes)
-        if not self.path or count <= 0:
+        has_progress = isinstance(progress, dict) and bool(progress)
+        if not self.path:
+            return
+        if count <= 0 and not has_progress:
             return
         if count - self.last_count < self.interval and time.time() - self.last_write_ts < 120:
             return
-        self.write(statutes, code_name=code_name, stage_label=stage_label)
+        self.write(statutes, code_name=code_name, stage_label=stage_label, progress=progress)
 
-    def write(self, statutes: List[NormalizedStatute], *, code_name: str, stage_label: str) -> None:
-        if not self.path or not statutes:
+    def write(
+        self,
+        statutes: List[NormalizedStatute],
+        *,
+        code_name: str,
+        stage_label: str,
+        progress: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        if not self.path:
             return
         payload = {
             "state_code": self.state_code,
@@ -753,6 +965,8 @@ class _NewHampshireCheckpoint:
             "stage_label": stage_label,
             "statutes": [statute.to_dict() for statute in statutes],
         }
+        if isinstance(progress, dict) and progress:
+            payload["progress"] = dict(progress)
         tmp_path = self.path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
         tmp_path.replace(self.path)

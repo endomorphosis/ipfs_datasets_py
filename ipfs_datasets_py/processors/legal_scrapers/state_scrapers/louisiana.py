@@ -5,6 +5,7 @@ This module contains the scraper for Louisiana statutes from the official state 
 
 import re
 import json
+import os
 import urllib.request
 import urllib.parse
 from html import unescape
@@ -200,10 +201,39 @@ class LouisianaScraper(BaseStateScraper):
             max_statutes,
             source_kind,
         )
+        heartbeat_every_raw = str(os.getenv("STATE_SCRAPER_LA_SCAN_HEARTBEAT_EVERY", "") or "").strip()
+        try:
+            heartbeat_every = int(heartbeat_every_raw) if heartbeat_every_raw else 250
+        except Exception:
+            heartbeat_every = 250
+        heartbeat_every = max(25, min(2000, heartbeat_every))
+        discovered_total = len(law_urls)
 
         for law_index, law_url in enumerate(law_urls, start=1):
             if len(statutes) >= max_statutes:
                 break
+
+            if law_index == 1 or law_index % heartbeat_every == 0:
+                self.logger.info(
+                    "Louisiana law-page crawl: scanned_laws=%s/%s statutes_so_far=%s",
+                    law_index,
+                    discovered_total,
+                    len(statutes),
+                )
+                if statutes:
+                    self._write_partial_checkpoint(
+                        statutes,
+                        code_name=code_name,
+                        stage_label="louisiana-law-page-scan",
+                        extra={
+                            "scanned_laws": int(law_index),
+                            "discovered_laws": int(discovered_total),
+                            "codes_completed": 1,
+                            "codes_total": 1,
+                            "source_kind": source_kind,
+                            "discovery_method": discovery_method,
+                        },
+                    )
 
             law_html = await self._request_text(law_url=law_url, headers=headers, timeout=45)
             if not law_html:
@@ -249,7 +279,35 @@ class LouisianaScraper(BaseStateScraper):
                     len(law_urls),
                     len(statutes),
                 )
+                self._write_partial_checkpoint(
+                    statutes,
+                    code_name=code_name,
+                    stage_label="louisiana-law-page-progress",
+                    extra={
+                        "scanned_laws": int(law_index),
+                        "discovered_laws": int(discovered_total),
+                        "codes_completed": 1,
+                        "codes_total": 1,
+                        "source_kind": source_kind,
+                        "discovery_method": discovery_method,
+                    },
+                )
 
+        if statutes:
+            self._write_partial_checkpoint(
+                statutes,
+                code_name=code_name,
+                stage_label="louisiana-law-page-complete",
+                force=True,
+                extra={
+                    "scanned_laws": int(discovered_total),
+                    "discovered_laws": int(discovered_total),
+                    "codes_completed": 1,
+                    "codes_total": 1,
+                    "source_kind": source_kind,
+                    "discovery_method": discovery_method,
+                },
+            )
         return statutes
 
     async def _discover_live_toc_title_pages(self, limit: int) -> List[str]:
